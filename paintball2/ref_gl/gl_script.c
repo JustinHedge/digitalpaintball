@@ -379,11 +379,15 @@ int RS_BlendID (char *blend)
 int RS_FuncName (char *text)
 {
 	if (!_stricmp (text, "static"))			// static
-		return 0;
+		return RSCRIPT_STATIC; // jitrscript (defines)
 	else if (!_stricmp (text, "sine"))		// sine wave
-		return 1;
+		return RSCRIPT_SINE;
 	else if (!_stricmp (text, "cosine"))	// cosine wave
-		return 2;
+		return RSCRIPT_COSINE;
+	else if (!_stricmp(text, "sinabs"))		// sine wave, only positive - jitrscript
+		return RSCRIPT_SINABS;
+	else if (!_stricmp(text, "cosabs"))		// cosine wave, only positive - jitrscript
+		return RSCRIPT_COSABS;
 
 	return 0;
 }
@@ -514,6 +518,20 @@ void rs_stage_rotate (rs_stage_t *stage, char **token)
 	stage->rot_speed = (float)atof(*token);
 }
 
+// scaleadd adds to the normal scale offering more dynamic options to scaling.
+void rs_stage_scaleadd (rs_stage_t *stage, char **token) // jitrscript
+{
+	*token = strtok (NULL, TOK_DELIMINATORS);
+	stage->scaleadd.typeX = RS_FuncName(*token);
+	*token = strtok (NULL, TOK_DELIMINATORS);
+	stage->scaleadd.scaleX = atof(*token);
+	
+	*token = strtok (NULL, TOK_DELIMINATORS);
+	stage->scaleadd.typeY = RS_FuncName(*token);
+	*token = strtok (NULL, TOK_DELIMINATORS);
+	stage->scaleadd.scaleY = atof(*token);
+}
+
 void rs_stage_scale (rs_stage_t *stage, char **token)
 {
 	*token = strtok (NULL, TOK_DELIMINATORS);
@@ -548,6 +566,7 @@ static rs_stagekey_t rs_stagekeys[] =
 	{	"alphamask",	&rs_stage_alphamask		},
 	{	"rotate",		&rs_stage_rotate		},
 	{	"scale",		&rs_stage_scale			},
+	{	"scaleadd",		&rs_stage_scaleadd		}, // jitrscript
 	{	"offset",		&rs_stage_offset		}, // jitrscript
 
 	{	NULL,			NULL					}
@@ -755,13 +774,13 @@ void RS_SetTexcoords (rs_stage_t *stage, float *os, float *ot, msurface_t *fa)
 	// scale
 	if (stage->scale.scaleX) {
 		switch (stage->scale.typeX) {
-		case 0:	// static
+		case RSCRIPT_STATIC:	// static
 			*os *= stage->scale.scaleX;
 			break;
-		case 1:	// sine
+		case RSCRIPT_SINE:	// sine
 			*os *= stage->scale.scaleX*sin(rs_realtime*0.05);
 			break;
-		case 2:	// cosine
+		case RSCRIPT_COSINE:	// cosine
 			*os *= stage->scale.scaleX*cos(rs_realtime*0.05);
 			break;
 		}
@@ -769,13 +788,13 @@ void RS_SetTexcoords (rs_stage_t *stage, float *os, float *ot, msurface_t *fa)
 
 	if (stage->scale.scaleY) {
 		switch (stage->scale.typeY) {
-		case 0:	// static
+		case RSCRIPT_STATIC:	// static
 			*ot *= stage->scale.scaleY;
 			break;
-		case 1:	// sine
+		case RSCRIPT_SINE:	// sine
 			*ot *= stage->scale.scaleY*sin(rs_realtime*0.05);
 			break;
-		case 2:	// cosine
+		case RSCRIPT_COSINE:	// cosine
 			*ot *= stage->scale.scaleY*cos(rs_realtime*0.05);
 			break;
 		}
@@ -805,28 +824,91 @@ void RS_SetTexcoords2D (rs_stage_t *stage, float *os, float *ot)
 	// scale
 	if (stage->scale.scaleX) {
 		switch (stage->scale.typeX) {
-		case 0:	// static
+		case RSCRIPT_STATIC:	// static
 			*os *= stage->scale.scaleX;
 			break;
-		case 1:	// sine
+		case RSCRIPT_SINE:	// sine
 			*os *= stage->scale.scaleX*sin(rs_realtime*0.05);
 			break;
-		case 2:	// cosine
+		case RSCRIPT_COSINE:	// cosine
 			*os *= stage->scale.scaleX*cos(rs_realtime*0.05);
+			break;
+		case RSCRIPT_SINABS: // jitrscript
+			*os *= stage->scale.scaleX*(sin(rs_realtime*0.05)+1.0);
+			break;
+		case RSCRIPT_COSABS: // jitrscript
+			*os *= stage->scale.scaleX*(cos(rs_realtime*0.05)+1.0);
 			break;
 		}
 	}
 
 	if (stage->scale.scaleY) {
 		switch (stage->scale.typeY) {
-		case 0:	// static
+		case RSCRIPT_STATIC:	// static
 			*ot *= stage->scale.scaleY;
 			break;
-		case 1:	// sine
+		case RSCRIPT_SINE:	// sine
 			*ot *= stage->scale.scaleY*sin(rs_realtime*0.05);
 			break;
-		case 2:	// cosine
+		case RSCRIPT_COSINE:	// cosine
 			*ot *= stage->scale.scaleY*cos(rs_realtime*0.05);
+			break;
+		case RSCRIPT_SINABS: // jitrscript
+			*ot *= stage->scale.scaleY*(sin(rs_realtime*0.05)+1.0);
+			break;
+		case RSCRIPT_COSABS: // jitrscript
+			*ot *= stage->scale.scaleY*(cos(rs_realtime*0.05)+1.0);
+			break;
+		}
+	}
+
+	// scaleadd -- jitrscript
+	if (stage->scaleadd.scaleX) // jitrscript
+	{
+		switch (stage->scaleadd.typeX) 
+		{
+		case 0:	// static
+			if(*os > 0)
+				*os += stage->scaleadd.scaleX;
+			else
+				*os -= stage->scaleadd.scaleX;
+			break;
+		case 1:	// sine (probably won't get used, but just for completeness)
+			if(*os > 0)
+				*os += stage->scaleadd.scaleX*sin(rs_realtime*0.05);
+			else
+				*os -= stage->scaleadd.scaleX*sin(rs_realtime*0.05);
+			break;
+		case 2:	// cosine
+			if(*os > 0)
+				*os += stage->scaleadd.scaleX*cos(rs_realtime*0.05);
+			else
+				*os -= stage->scaleadd.scaleX*cos(rs_realtime*0.05);
+			break;
+		}
+	}
+
+	if (stage->scaleadd.scaleY) // jitrscript
+	{
+		switch (stage->scaleadd.typeY)
+		{
+		case 0:	// static
+			if(*ot > 0)
+				*ot += stage->scaleadd.scaleY;
+			else
+				*ot -= stage->scaleadd.scaleY;
+			break;
+		case 1:	// sine
+			if(*ot > 0)
+				*ot += stage->scaleadd.scaleY*sin(rs_realtime*0.05);
+			else
+				*ot -= stage->scaleadd.scaleY*sin(rs_realtime*0.05);
+			break;
+		case 2:	// cosine
+			if(*ot > 0)
+				*ot += stage->scaleadd.scaleY*cos(rs_realtime*0.05);
+			else
+				*ot -= stage->scaleadd.scaleY*cos(rs_realtime*0.05);
 			break;
 		}
 	}

@@ -56,6 +56,7 @@ typedef struct rs_stage_s {
 	alphashift_t			alphashift;		// alpha shifting
 	rs_scroll_t				scroll;			// tcmod
 	rs_scale_t				scale;			// tcmod
+	rs_scale_t				scaleadd;		// jitrscript
 	rs_offset_t				offset;			// jitrscript
 
 	float					rot_speed;		// rotate speed (0 for no rotate);
