@@ -628,7 +628,19 @@ void SCR_TimeRefresh_f (void)
 
 	start = Sys_Milliseconds ();
 
-	if (Cmd_Argc() == 2)
+	if (Cmd_Argc() == 3) // jitest
+	{
+		re.BeginFrame(0);
+		for (i=0 ; i<128 ; i++)
+		{
+			cl.refdef.viewangles[1] = i/128.0*360.0;
+			re.RenderFrame(&cl.refdef);
+			
+			re.EndFrame();
+		}
+		re.EndFrame();
+	}
+	else if (Cmd_Argc() == 2)
 	{	// run without page flipping
 		re.BeginFrame( 0 );
 		for (i=0 ; i<128 ; i++)
@@ -1113,7 +1125,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			width = atoi(token);
 			token = COM_Parse (&s);
 			value = cl.frame.playerstate.stats[atoi(token)];
-			SCR_DrawField (x, y, 0, width, value);
+			SCR_DrawField(x, y, 0, width, value);
 			continue;
 		}
 
@@ -1312,7 +1324,7 @@ is based on the stats array
 */
 void SCR_DrawStats (void)
 {
-	SCR_ExecuteLayoutString (cl.configstrings[CS_STATUSBAR]);
+	SCR_DrawHUD();
 }
 
 
@@ -1531,8 +1543,8 @@ void SCR_UpdateScreen (void)
 				SCR_DrawStats();
 				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 1)
 					SCR_DrawLayout();
-				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 2)
-					CL_DrawInventory();
+				//if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 2)
+				//	CL_DrawInventory();
 
 				CL_DrawItemPickups(); // jit
 				// jitodo -- call client scoreboard display here

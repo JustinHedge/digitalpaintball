@@ -93,6 +93,7 @@ typedef enum {false, true}	qboolean;
 // paintball2 stuff:
 #define PRINT_DIALOG		11		// pops up a dailog on the client
 #define PRINT_ITEM			12		// for item pickup notifications.
+#define PRINT_EVENT			13		// for events (such as flag captures)
 
 
 
@@ -108,12 +109,12 @@ typedef enum {false, true}	qboolean;
 // destination class for gi.multicast()
 typedef enum
 {
-MULTICAST_ALL,
-MULTICAST_PHS,
-MULTICAST_PVS,
-MULTICAST_ALL_R,
-MULTICAST_PHS_R,
-MULTICAST_PVS_R
+	MULTICAST_ALL,
+	MULTICAST_PHS,
+	MULTICAST_PVS,
+	MULTICAST_ALL_R,
+	MULTICAST_PHS_R,
+	MULTICAST_PVS_R
 } multicast_t;
 
 
@@ -1037,24 +1038,59 @@ typedef enum
 
 
 // player_state->stats[] indexes
-#define STAT_HEALTH_ICON		0
+//#define STAT_HEALTH_ICON		0
 #define	STAT_HEALTH				1
-#define	STAT_AMMO_ICON			2
+//#define	STAT_AMMO_ICON			2
 #define	STAT_AMMO				3
-#define	STAT_ARMOR_ICON			4
-#define	STAT_ARMOR				5
-#define	STAT_SELECTED_ICON		6
-#define	STAT_PICKUP_ICON		7
-#define	STAT_PICKUP_STRING		8
-#define	STAT_TIMER_ICON			9
-#define	STAT_TIMER				10
-#define	STAT_HELPICON			11
-#define	STAT_SELECTED_ITEM		12
+//#define	STAT_ARMOR_ICON			4
+//#define	STAT_ARMOR				5
+//#define	STAT_SELECTED_ICON		6
+//#define	STAT_PICKUP_ICON		7
+//#define	STAT_PICKUP_STRING		8
+//#define	STAT_TIMER_ICON			9
+//#define	STAT_TIMER				10
+//#define	STAT_HELPICON			11
+//#define	STAT_SELECTED_ITEM		12
+//#define	STAT_LAYOUTS			13
+//#define	STAT_FRAGS				14
+//#define	STAT_FLASHES			15		// cleared each frame, 1 = health, 2 = armor
+//#define STAT_CHASE				16
+//#define STAT_SPECTATOR			17
+
+// jithud -- Paintball2 HUD stuff.
+#define	STAT_CO2_12G			1
+#define	STAT_CO2_7OZ			2
+#define	STAT_CO2_12OZ			3
+#define	STAT_CO2_20OZ			4
+#define	STAT_CO2BAR				5
+#define	STAT_PB_MASK			6
+#define STAT_PB_HOPPER			7
+#define STAT_PB_BARREL			8
+#define STAT_PB_PAINTCOUNT		9
+#define STAT_PB_GRENADE			10
+// 11 ***unused***
+//#define STAT_PB_PAINTGREN		10
+//#define STAT_PB_SMOKEGREN		11
+#define STAT_GUNTEMP			12
 #define	STAT_LAYOUTS			13
 #define	STAT_FRAGS				14
 #define	STAT_FLASHES			15		// cleared each frame, 1 = health, 2 = armor
-#define STAT_CHASE				16
-#define STAT_SPECTATOR			17
+#define STAT_ALIVE_TEAM3		16
+#define STAT_ALIVE_TEAM4		17
+#define STAT_PB_TEAM1			18
+#define STAT_PB_TEAM2			19
+#define STAT_PB_TEAM3			20
+#define STAT_PB_TEAM4			21
+#define STAT_SCORE_TEAM1		22
+#define STAT_SCORE_TEAM2		23
+#define STAT_SCORE_TEAM3		24
+#define STAT_SCORE_TEAM4		25
+#define STAT_TIMELEFT			26 // jit - finally found one unused :)
+#define STAT_ALIVE_TEAM1		27
+#define STAT_ALIVE_TEAM2		28
+#define	STAT_STREAK				29
+#define	STAT_ID					30 // Player ID
+#define STAT_UNUSED				31
 
 #define	MAX_STATS				32
 
