@@ -1237,7 +1237,8 @@ static void M_KBAction(menu_screen_t *menu, MENU_ACTION action)
 
 static qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 {
-	menu_widget_t* newSelection=NULL;
+	menu_widget_t *newSelection = NULL;
+	menu_widget_t *widget = NULL;
 	m_mouse.cursorpic = i_cursor;
 
 	if (!menu)
@@ -1285,6 +1286,30 @@ static qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 			break;
 		case M_ACTION_EXECUTE:
 			widget_execute(newSelection);
+			break;
+		case M_ACTION_SCROLLUP:
+			if((widget = newSelection)->type == WIDGET_TYPE_SELECT ||
+				(newSelection->parent && 
+				(widget = newSelection->parent)->type == WIDGET_TYPE_SELECT))
+			{
+				if(widget->select_vstart > 0)
+				{
+					widget->select_vstart --;
+					widget->modified = true;
+				}
+			}
+			break;
+		case M_ACTION_SCROLLDOWN:
+			if((widget = newSelection)->type == WIDGET_TYPE_SELECT ||
+				(newSelection->parent &&
+				(widget = newSelection->parent)->type == WIDGET_TYPE_SELECT))
+			{
+				if(widget->select_totalitems - widget->select_vstart - widget->select_rows > 0)
+				{
+					widget->select_vstart ++;
+					widget->modified = true;
+				}
+			}
 			break;
 		case M_ACTION_NONE:
 		default:
@@ -1553,6 +1578,12 @@ void M_Keydown (int key)
 			break;
 		case K_MOUSEMOVE:
 			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_HILIGHT);
+			break;
+		case K_MWHEELUP:
+			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_SCROLLUP);
+			break;
+		case K_MWHEELDOWN:
+			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_SCROLLDOWN);
 			break;
 		case K_DOWNARROW:
 			M_HilightNextWidget(m_menu_screens[m_menudepth-1]);
