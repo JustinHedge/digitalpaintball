@@ -567,6 +567,7 @@ void M_ForceMenuOff (void);
 void M_AddToServerList (netadr_t adr, char *info);
 void M_MouseMove(int mx, int my); // jitmenu
 void M_RefreshMenu(); // jitmenu
+void M_ReloadMenu(); // jitmenu
 qboolean M_MenuActive(void); // jitmenu
 
 int strlen_noformat(const unsigned char *s);

@@ -495,9 +495,9 @@ void CL_ParseServerData (void)
 	{
 		// seperate the printfs so the server message can have a color
 		//Com_Printf("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
-		Com_Printf("\n\n %c%c\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n", CHAR_COLOR, 240); // jittext
+		Com_Printf("\n\n %c%c\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n", CHAR_COLOR, ';'); // jittext
 		//Com_Printf ("%c%s\n", 2, str);
-		Com_Printf ("%c%c%s\n\n", CHAR_COLOR, '`', str); // jittext
+		Com_Printf ("%c%c%s\n\n", CHAR_COLOR, COLOR_MAPNAME, str); // jittext
 
 		// need to prep refresh at next oportunity
 		cl.refresh_prepped = false;
@@ -905,11 +905,19 @@ void CL_ParseServerMessage (void)
 			{
 				S_StartLocalSound ("misc/talk.wav");
 				// jittext con.ormask = 128;
+				if(cl_timestamp->value) // jittext / jitcolor
+					Com_Printf("%c%c[%s] %s", timestamp, CHAR_COLOR, COLOR_CHAT, MSG_ReadString(&net_message));
+				else
+					Com_Printf ("%c%c%s", CHAR_COLOR, COLOR_CHAT, MSG_ReadString (&net_message));
 			}
-			if(cl_timestamp->value) // jit:
-				Com_Printf("[%s] %s", timestamp, MSG_ReadString(&net_message));
 			else
-				Com_Printf ("%s", MSG_ReadString (&net_message));
+			{
+				if(cl_timestamp->value) // jit:
+					Com_Printf("[%s] %s", timestamp, MSG_ReadString(&net_message));
+				else
+					Com_Printf ("%s", MSG_ReadString (&net_message));
+			}
+
 			con.ormask = 0;
 			break;
 			

@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t	*freelook;
 
+/* jitserverlist / jitmenu - removed
 cvar_t	*adr0;
 cvar_t	*adr1;
 cvar_t	*adr2;
@@ -58,7 +59,7 @@ cvar_t	*adr29;
 cvar_t	*adr30;
 cvar_t	*adr31;
 cvar_t	*adr32;
-
+*/
 cvar_t	*cl_stereo_separation;
 cvar_t	*cl_stereo;
 
@@ -122,7 +123,7 @@ cvar_t	*cl_timestamp; // jit
 cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_drawhud; // jithud
 
-cvar_t	*serverlist; // jitserverlist
+cvar_t	*serverlist_source; // jitserverlist / jitmenu
 
 client_static_t	cls;
 client_state_t	cl;
@@ -912,15 +913,14 @@ void CL_ParseStatusMessage (void)
 CL_PingServers_f
 =================
 */
-#define MAX_LOCAL_SERVERS 32
 void CL_PingServers_f (void)
 {
-	int			i;
 	netadr_t	adr;
-	char		name[32];
-	char		*adrstring;
+	char		name[64]; // jitserverlist - increased
 	cvar_t		*noudp;
 	cvar_t		*noipx;
+	FILE		*serverlist; // jitserverlist / jitmenu
+	extern int	m_serverPingSartTime;
 
 	NET_Config (true);		// allow remote
 
@@ -943,23 +943,31 @@ void CL_PingServers_f (void)
 		Netchan_OutOfBandPrint (NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
 	}
 
-	// send a packet to each address book entry
-	for (i=0 ; i<MAX_LOCAL_SERVERS; i++)
-	{
-		Com_sprintf (name, sizeof(name), "adr%i", i);
-		adrstring = Cvar_VariableString (name);
-		if (!adrstring || !adrstring[0])
-			continue;
+	// jitserverlist / jitmenu -- ping all the servers in the list:
+	serverlist = fopen(va("%s/servers.txt", FS_Gamedir()), "r");
 
-		Com_Printf ("pinging %s...\n", adrstring);
-		if (!NET_StringToAdr (adrstring, &adr))
+	m_serverPingSartTime = Sys_Milliseconds(); // jitserverlist
+
+	if(serverlist)
+	{
+		while(!feof(serverlist))
 		{
-			Com_Printf ("Bad address: %s\n", adrstring);
-			continue;
+			fscanf(serverlist, "%s", &name);
+			if(name && *name)
+			{
+				Com_Printf ("pinging %s...\n", name);
+				if (!NET_StringToAdr (name, &adr))
+				{
+					Com_Printf ("Bad address: %s\n", name);
+					continue;
+				}
+				if (!adr.port)
+					adr.port = BigShort(PORT_SERVER);
+				Netchan_OutOfBandPrint (NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
+			}
 		}
-		if (!adr.port)
-			adr.port = BigShort(PORT_SERVER);
-		Netchan_OutOfBandPrint (NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
+
+		fclose(serverlist);
 	}
 }
 
@@ -1560,6 +1568,7 @@ void CL_InitLocal (void)
 
 	CL_InitInput ();
 
+/*	jitserver / jitmenu -- removed
 	adr0 = Cvar_Get( "adr0", "", CVAR_ARCHIVE );
 	adr1 = Cvar_Get( "adr1", "", CVAR_ARCHIVE );
 	adr2 = Cvar_Get( "adr2", "", CVAR_ARCHIVE );
@@ -1594,6 +1603,7 @@ void CL_InitLocal (void)
 	adr30 = Cvar_Get( "adr30", "", CVAR_ARCHIVE );
 	adr31 = Cvar_Get( "adr31", "", CVAR_ARCHIVE );
 	adr32 = Cvar_Get( "adr32", "", CVAR_ARCHIVE );
+	*/
 //
 // register our variables
 //
@@ -1610,7 +1620,7 @@ void CL_InitLocal (void)
 	cl_autoskins = Cvar_Get ("cl_autoskins", "0", 0);
 	cl_predict = Cvar_Get ("cl_predict", "1", 0);
 	cl_minfps = Cvar_Get ("cl_minfps", "0", 0);
-	cl_maxfps = Cvar_Get ("cl_maxfps", "0", CVAR_ARCHIVE); // jit, default to 60
+	cl_maxfps = Cvar_Get ("cl_maxfps", "0", CVAR_ARCHIVE); // jit, default to 0
 	cl_locknetfps = Cvar_Get ("cl_locknetfps", "0", CVAR_ARCHIVE); // jitnetfps
 	cl_cmdrate = Cvar_Get ("cl_cmdrate", "60", CVAR_ARCHIVE); // jitnetfps
 	cl_sleep = Cvar_Get ("cl_sleep", "1", CVAR_ARCHIVE); // jit/pooy
@@ -1631,8 +1641,8 @@ void CL_InitLocal (void)
 	if(cl_hudscale->value < 1.0)
 		Cvar_Set("cl_hudscale","1");
 	hudscale = cl_hudscale->value;
-	serverlist = Cvar_Get("serverlist", 
-		"www.planetquake.com/digitalpaint/servers.txt", CVAR_ARCHIVE); // jitserverlist
+	serverlist_source = Cvar_Get("serverlist_source", 
+		"www.planetquake.com/digitalpaint/servers.txt", CVAR_ARCHIVE); // jitserverlist / jitmenu
 	// ===
 
 	cl_run = Cvar_Get ("cl_run", "1", CVAR_ARCHIVE); // jit, default to 1
@@ -2102,6 +2112,7 @@ void CL_Init (void)
 	FS_ExecAutoexec ();
 	Con_ToggleConsole_f(); // jitspoe -- start with console down
 	Con_ToggleConsole_f(); // jitspoe -- lift it up again if in play
+	M_Menu_Main_f (); // jitmenu
 	Cbuf_Execute ();
 }
 

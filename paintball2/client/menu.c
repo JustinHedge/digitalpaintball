@@ -28,13 +28,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu.h"
 
 #define MAX_MENU_SCREENS 32
+#define INITIAL_SERVERLIST_SIZE 32
 
 int				m_menudepth	= 0;
 menu_screen_t	*root_menu	= NULL;
 menu_screen_t	*m_menu_screens[MAX_MENU_SCREENS];
 menu_mouse_t	m_mouse; // jitmouse
 int				scale;
-
+static float	oldscale = 0;
+m_serverlist_t	m_serverlist;
+int				m_serverPingSartTime;
 
 qboolean widget_is_selectable(menu_widget_t *widget)
 {
@@ -50,10 +53,14 @@ void M_ForceMenuOff (void)
 	cls.key_dest = key_game;
 	Key_ClearStates ();
 	Cvar_Set ("paused", "0");
+
+	if(oldscale && (oldscale != cl_hudscale->value))
+		Cvar_SetValue("cl_hudscale", oldscale);
 }
 
 void M_Menu_Main_f (void)
 {
+	// jitodo -- different menu in-game
 	Cbuf_AddText("menu main\n");
 
 	
@@ -110,7 +117,7 @@ int strlen_noformat(const unsigned char *s)
 	return count;
 }
 
-void free_string_array(char *array[], int size)
+void *free_string_array(char *array[], int size)
 {
 	int i;
 
@@ -121,6 +128,7 @@ void free_string_array(char *array[], int size)
 
 		Z_Free(array);
 	}
+	return NULL;
 }
 
 static void FreeFileList( char **list, int n )
@@ -155,18 +163,23 @@ menu_widget_t *free_widgets(menu_widget_t *widget)
 		Z_Free(widget->command);
 	if(widget->cvar)
 		Z_Free(widget->cvar);
+	if(widget->cvar_default)
+		Z_Free(widget->cvar_default);
 	if(widget->hovertext)
 		Z_Free(widget->hovertext);
 	if(widget->text)
 		Z_Free(widget->text);
-	if(widget->select_map)
-		free_string_array(widget->select_map, widget->select_totalitems);
-	if(widget->select_list)
+	if(!(widget->flags & WIDGET_FLAG_SERVERLIST)) // don't free the serverlist!
 	{
-		if(widget->flags & WIDGET_FLAG_FILELIST)
-			FreeFileList(widget->select_list, widget->select_totalitems+1);
-		else
-			free_string_array(widget->select_list, widget->select_totalitems);
+		if(widget->select_map)
+			free_string_array(widget->select_map, widget->select_totalitems);
+		if(widget->select_list)
+		{
+			if(widget->flags & WIDGET_FLAG_FILELIST)
+				FreeFileList(widget->select_list, widget->select_totalitems+1);
+			else
+				free_string_array(widget->select_list, widget->select_totalitems);
+		}
 	}
 	Z_Free(widget);
 
@@ -177,7 +190,7 @@ menu_widget_t* M_GetNewBlankMenuWidget()
 {
 	menu_widget_t *widget;
 
-	widget = Z_Malloc(sizeof(menu_widget_t)); // todo: should prolly free this at some point...
+	widget = Z_Malloc(sizeof(menu_widget_t));
 	memset(widget, 0, sizeof(menu_widget_t));
 
 	widget->enabled = true;
@@ -367,10 +380,18 @@ void update_select_subwidgets(menu_widget_t *widget)
 	char temp;
 	int width, x, y;
 
+	if(widget->flags & WIDGET_FLAG_SERVERLIST)
+	{
+		widget->select_map = m_serverlist.ips;
+		widget->select_list = m_serverlist.info;
+		widget->select_totalitems = m_serverlist.numservers;
+		widget->flags |= WIDGET_FLAG_USEMAP;
+	}
+
 	// find which position should be selected:
 	if(widget->cvar)
 	{
-		s = Cvar_Get(widget->cvar, "", CVAR_ARCHIVE)->string;
+		s = Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->string;
 
 		widget->select_pos = -1; // nothing selected;
 
@@ -398,12 +419,12 @@ void update_select_subwidgets(menu_widget_t *widget)
 	if(widget->subwidget)
 		widget->subwidget = free_widgets(widget->subwidget);
 
-	x = widget->x;
-	y = widget->y;	
+	x = (widget->widgetCorner.x - (viddef.width - 320*scale)/2)/scale; // jitodo -- adjust for y, too
+	y = (widget->widgetCorner.y - (viddef.height - 240*scale)/2)/scale;	
 
 	width = widget->select_width;
-	if(width < 4)
-		width = 4;
+	if(width < 3)
+		width = 3;
 
 	// create the vertical scrollbar.
 	if(widget->select_totalitems > widget->select_rows)
@@ -450,6 +471,7 @@ void update_select_subwidgets(menu_widget_t *widget)
 	for(i = widget->select_vstart; i < widget->select_totalitems
 		&& i < widget->select_rows + widget->select_vstart;	i++)
 	{
+		// jitodo -- should make sure strlen(select_list[i]) > select_hstart, otherwise bad mem!
 		if(strlen(widget->select_list[i] + widget->select_hstart) > width)
 		{
 			nullpos = widget->select_list[i] + widget->select_hstart + width;
@@ -587,8 +609,9 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 			}
 			break;
 		case WIDGET_TYPE_SELECT:
-			widget->widgetSize.x = widget->select_width * TEXT_WIDTH + SELECT_HSPACING_UNSCALED*2;
-			widget->widgetSize.y = widget->select_rows * TEXT_HEIGHT + SELECT_VSPACING_UNSCALED*2;
+			widget->widgetSize.x = widget->select_width * TEXT_WIDTH + SELECT_HSPACING*2;
+			widget->widgetSize.y = widget->select_rows * 
+				(TEXT_HEIGHT+SELECT_VSPACING) + SELECT_VSPACING;
 			break;
 		}
 
@@ -608,6 +631,7 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 			case WIDGET_TYPE_SLIDER:
 			case WIDGET_TYPE_CHECKBOX:
 			case WIDGET_TYPE_FIELD:
+			case WIDGET_TYPE_SELECT:
 				widget->textCorner.x -= (8*scale + widget->widgetSize.x);
 				break;
 			default:
@@ -621,6 +645,7 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 			case WIDGET_TYPE_SLIDER:
 			case WIDGET_TYPE_CHECKBOX:
 			case WIDGET_TYPE_FIELD:
+			case WIDGET_TYPE_SELECT:
 				widget->textCorner.x += (8*scale + widget->widgetSize.x);
 				break;
 			default:
@@ -780,7 +805,7 @@ void M_UpdateSlider(menu_widget_t *widget)
 {
 	float value;
 	if(widget->cvar)
-		value = Cvar_Get(widget->cvar, "0", CVAR_ARCHIVE)->value;
+		value = Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->value;
 	else
 		return;
 
@@ -833,7 +858,7 @@ void toggle_checkbox(menu_widget_t *widget)
 {
 	if(widget->cvar)
 	{
-		if(Cvar_Get(widget->cvar, "0", CVAR_ARCHIVE)->value)
+		if(Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->value)
 			Cvar_SetValue(widget->cvar, 0.0f);
 		else
 			Cvar_SetValue(widget->cvar, 1.0f);	
@@ -941,7 +966,7 @@ void field_adjustCursor(menu_widget_t *widget)
 
 	// jitodo -- compensate for color formatting
 	if(widget->cvar)
-		string_len = strlen(Cvar_Get(widget->cvar, "", CVAR_ARCHIVE)->string);
+		string_len = strlen(Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->string);
 
 	if(pos < 0)
 		pos = 0;
@@ -1145,6 +1170,9 @@ void M_PopMenu (void)
 		//Com_Error (ERR_FATAL, "M_PopMenu: depth < 1");
 		m_menudepth = 1;
 	m_menudepth--;
+
+	if(oldscale && (oldscale != cl_hudscale->value))
+		Cvar_SetValue("cl_hudscale", oldscale);
 /*
 	m_drawfunc = m_layers[m_menudepth].draw;
 	m_keyfunc = m_layers[m_menudepth].key;
@@ -1179,7 +1207,7 @@ void M_InsertField (int key)
 	if (!widget || widget->type != WIDGET_TYPE_FIELD || !widget->cvar)
 		return;
 
-	strcpy(s, Cvar_Get(widget->cvar, "", CVAR_ARCHIVE)->string);
+	strcpy(s, Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->string);
 	cursorpos = widget->field_cursorpos;
 	maxlength = widget->field_width;
 	//start = widget->field_start;
@@ -1244,7 +1272,7 @@ void M_InsertField (int key)
 	{
 		cursorpos = strlen(s);
 	}
-	else if(key > 32 && key < 127)
+	else if(key >= 32 && key < 127)
 	{
 		// color codes
 		if(keydown[K_CTRL]) // jitconsole / jittext
@@ -1363,24 +1391,6 @@ void M_Keydown (int key)
 
 
 
-void M_AddToServerList (netadr_t adr, char *info)
-{
-/*	int		i;
-
-	if (m_num_servers == MAX_LOCAL_SERVERS)
-		return;
-	while ( *info == ' ' )
-		info++;
-
-	// ignore if duplicated
-	for (i=0 ; i<m_num_servers ; i++)
-		if (!strcmp(info, local_server_names[i]))
-			return;
-
-	local_server_netadr[m_num_servers] = adr;
-	strncpy (local_server_names[m_num_servers], info, sizeof(local_server_names[0])-1);
-	m_num_servers++;*/
-}
 
 select_map_list_t *get_new_select_map_list(char *cvar_string, char *string)
 {
@@ -1423,7 +1433,7 @@ void select_begin_list(menu_widget_t *widget, char *buf)
 		token = COM_Parse(&buf);
 	
 		// read map pair from file.
-		while(strcmp(token, "end") != 0)
+		while(token && strlen(token) && strcmp(token, "end") != 0)
 		{
 			strcpy(cvar_string, token);
 			token = COM_Parse(&buf);
@@ -1451,10 +1461,6 @@ void select_begin_list(menu_widget_t *widget, char *buf)
 		}
 	}
 	else if(strstr(token, "single") || strstr(token, "list"))
-	{
-		// jitodo
-	}
-	else if(strstr(token, "file"))
 	{
 		// jitodo
 	}
@@ -1567,7 +1573,7 @@ int M_WidgetGetAlign(const char *s)
 	return WIDGET_HALIGN_LEFT; // default top/left
 }
 
-
+// same thing as strdup, only uses Z_Malloc
 char *text_copy(const char *in)
 {
 	char *out;
@@ -1576,6 +1582,32 @@ char *text_copy(const char *in)
 	strcpy(out, in);
 
 	return out;
+}
+
+void widget_complete(menu_widget_t *widget)
+{
+	if(widget->cvar && !widget->cvar_default)
+		widget->cvar_default = text_copy("");
+
+	switch(widget->type)
+	{
+	case WIDGET_TYPE_SELECT:
+
+		// put the selection in the middle of the widget (for long lists)
+		if(widget->select_pos > 0)
+		{
+			widget->select_vstart = widget->select_pos - (widget->select_rows / 2);
+			if(widget->select_vstart < 0)
+				widget->select_vstart = 0;
+			if(widget->select_totalitems - widget->select_vstart < widget->select_rows)
+				widget->select_vstart = widget->select_totalitems - widget->select_rows;
+		}
+
+		update_select_subwidgets(widget);
+
+		break;
+	}
+
 }
 
 void menu_from_file(menu_screen_t *menu)
@@ -1626,6 +1658,7 @@ void menu_from_file(menu_screen_t *menu)
 						}
 						else
 						{
+							widget_complete(widget);
 							widget = widget->next = M_GetNewBlankMenuWidget();
 						}
 						widget->y = y;
@@ -1643,6 +1676,8 @@ void menu_from_file(menu_screen_t *menu)
 						widget->selectedtext = text_copy(COM_Parse(&buf));
 					else if(strcmp(token, "cvar") == 0)
 						widget->cvar = text_copy(COM_Parse(&buf));
+					else if(strcmp(token, "cvar_default") == 0)
+						widget->cvar_default = text_copy(COM_Parse(&buf));
 					else if(strcmp(token, "command") == 0 || strcmp(token, "cmd") == 0)
 						widget->command = text_copy(COM_Parse(&buf));
 					else if(strcmp(token, "pic") == 0)
@@ -1714,11 +1749,16 @@ void menu_from_file(menu_screen_t *menu)
 						select_begin_list(widget, buf);
 					else if(strstr(token, "file"))
 						select_begin_file_list(widget, COM_Parse(&buf));
+					else if(strstr(token, "serverlist"))
+						widget->flags |= WIDGET_FLAG_SERVERLIST;
 					else if(strstr(token, "strip"))
 						select_strip_from_list(widget, COM_Parse(&buf));
 
 					token = COM_Parse(&buf);
 				}
+
+				if(widget)
+					widget_complete(widget);
 			}
 			else
 				M_ErrorMenu(menu, "Invalid menu version.");
@@ -1767,33 +1807,7 @@ menu_screen_t* M_FindMenuScreen(const char *menu_name)
 }
 
 
-void M_Menu_f (void)
-{
-	char *menuname;
-	menuname = Cmd_Argv(1);
-
-	if(strcmp(menuname, "pop") == 0 || strcmp(menuname, "back") == 0)
-		M_PopMenu();
-	else if(strcmp(menuname, "off") == 0 || strcmp(menuname, "close") == 0)
-		M_ForceMenuOff();
-	else
-	{
-		menu_screen_t *menu;
-		menu = M_FindMenuScreen(Cmd_Argv(1));
-
-		M_PushMenuScreen(menu);
-	}
-}
-
-void M_Init (void)
-{
-	memset(&m_mouse, 0, sizeof(m_mouse));
-	m_mouse.cursorpic = i_cursor;
-	Cmd_AddCommand("menu", M_Menu_f);
-}
-
-
-void refresh_menu_screen(menu_screen_t *menu)
+static void reload_menu_screen(menu_screen_t *menu)
 {
 //	menu_widget_t *widgetnext;
 //	menu_widget_t *widget;
@@ -1814,6 +1828,37 @@ void refresh_menu_screen(menu_screen_t *menu)
 	menu_from_file(menu); // reload data from file
 }
 
+// flag widget and all of its children as modified
+static void refresh_menu_widget(menu_widget_t *widget)
+{
+	widget->modified = true;
+
+	widget = widget->subwidget;
+	while(widget)
+	{
+		refresh_menu_widget(widget);
+		widget = widget->next;
+	}
+}
+
+// flag widgets as modified:
+static void refresh_menu_screen(menu_screen_t *menu)
+{
+	menu_widget_t *widget;
+
+	if(!menu)
+		return;
+
+	widget = menu->widget;
+
+	while(widget)
+	{
+		refresh_menu_widget(widget);
+		widget = widget->next;
+	}
+}
+
+// Flag all widgets as modified so they update
 void M_RefreshMenu(void)
 {
 	menu_screen_t *menu;
@@ -1825,6 +1870,416 @@ void M_RefreshMenu(void)
 		menu = menu->next;
 	}
 }
+
+// Load menu scripts back from disk
+void M_ReloadMenu(void)
+{
+	menu_screen_t *menu;
+
+	menu = root_menu;
+	while(menu)
+	{
+		reload_menu_screen(menu);
+		menu = menu->next;
+	}
+}
+
+// Print server list to console
+void M_ServerlistPrint_f(void)
+{
+	int i;
+
+	for(i=0; i<m_serverlist.numservers; i++)
+		Com_Printf("%d) %s %s\n", i+1, m_serverlist.ips[i], m_serverlist.info[i]);
+		
+}
+/*
+static serverlist_node_t *new_serverlist_node()
+{
+	serverlist_node_t *node;
+	node = Z_Malloc(sizeof(serverlist_node_t));
+	memset(node, 0, sizeof(serverlist_node_t));
+	return node;
+}*/
+
+// free single node
+/*static void free_serverlist_node(serverlist_node_t *node)
+{
+	if(node->info)
+		Z_Free(node->info);
+	Z_Free(node);
+}
+
+// recursively free all nodes
+static void free_serverlist(serverlist_node_t *node)
+{
+	if(node)
+	{
+		free_serverlist(node->next);
+		free_serverlist_node(node);
+	}
+}
+*/
+static void free_menu_serverlist()
+{
+	if(m_serverlist.info)
+		free_string_array(m_serverlist.info, m_serverlist.numservers);
+	if(m_serverlist.ips)
+		free_string_array(m_serverlist.ips, m_serverlist.numservers);
+//	free_serverlist(m_serverlist.list);
+
+	memset(&m_serverlist, 0, sizeof(m_serverlist_t));
+}
+
+// parse info string into server name, players, maxplayers
+// note! modifies string!
+static void update_serverlist_server(m_serverlist_server_t *server, char *info, int ping)
+{
+	char *s;
+
+	// start at end of string:
+	s = strlen(info) + info; 
+
+	// find max players
+	while(s > info && *s != '/')
+		s--;
+
+	server->maxplayers = atoi(s+1);
+
+	// find current number of players:
+	*s = 0;
+	s--;
+	while(s > info && *s >= '0' && *s <= '9')
+		s--;
+
+	server->players = atoi(s+1);
+	
+	// find map name:
+	while(s > info && *s == 32) // clear whitespace;
+		s--;
+	*(s+1) = 0;
+	while(s > info && *s > 32)
+		s--;
+
+	server->mapname = text_copy(s+1);
+
+	// servername is what's left over:
+	*s = 0;
+	server->servername = text_copy(info);
+
+	// and the ping
+	server->ping = ping;
+}
+/*
+static m_serverlist_server_t *new_serverlist_server(netadr_t adr, char *info, int ping)
+{
+	m_serverlist_server_t *server;
+
+	server = Z_Malloc(sizeof(m_serverlist_server_t));
+	server->adr = adr;
+	update_serverlist_server(server, info, ping);
+}*/
+#define SERVER_NAME_MAXLENGTH 19
+#define MAP_NAME_MAXLENGTH 8
+static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
+{
+	static char info[64];
+	char stemp=0, mtemp=0;
+
+	// jitodo -- should compensate for colored text in server name.
+
+	// truncate name if too long:
+	if(strlen_noformat(server->servername) > SERVER_NAME_MAXLENGTH)
+	{
+		stemp = server->servername[SERVER_NAME_MAXLENGTH];
+		server->servername[SERVER_NAME_MAXLENGTH] = 0;
+	}
+	if(strlen(server->mapname) > MAP_NAME_MAXLENGTH)
+	{
+		mtemp = server->servername[MAP_NAME_MAXLENGTH];
+		server->mapname[MAP_NAME_MAXLENGTH] = 0;
+	}
+
+	// assumes SERVER_NAME_MAXLENGTH is 19 vv
+	Com_sprintf(info, sizeof(info), "%-19s %-3d %-8s %d/%d", 
+		server->servername, server->ping, server->mapname,
+		server->players, server->maxplayers);
+
+	if(stemp)
+		server->servername[SERVER_NAME_MAXLENGTH] = stemp;
+	if(mtemp)
+		server->mapname[MAP_NAME_MAXLENGTH] = mtemp;
+
+	return info;
+}
+
+void M_AddToServerList (netadr_t adr, char *info)
+{
+	int i;
+	char addrip[32];
+	int ping;
+
+	ping = Sys_Milliseconds() - m_serverPingSartTime;
+	if(ping>999)
+		ping = 999;
+
+	if(adr.type == NA_IP) // jitodo -- what do I do with the other types!?
+	{
+		Com_sprintf(addrip, sizeof(addrip), 
+			"%d.%d.%d.%d:%d", adr.ip[0], adr.ip[1], adr.ip[2], adr.ip[3], ntohs(adr.port));
+	}
+	else if(adr.type == NA_IPX)
+	{
+		Com_sprintf(addrip, sizeof(addrip), 
+			"%02x%02x%02x%02x:%02x%02x%02x%02x%02x%02x:%i", adr.ipx[0], adr.ipx[1],
+			adr.ipx[2], adr.ipx[3], adr.ipx[4], adr.ipx[5], adr.ipx[6], adr.ipx[7],
+			adr.ipx[8], adr.ipx[9], ntohs(adr.port));
+	}
+	else if(adr.type == NA_LOOPBACK)
+	{
+		strcpy(addrip, "loopback");
+	}
+	else
+		return;
+
+	// Tell the widget the serverlist has updated:
+	if(m_menudepth)
+		refresh_menu_screen(m_menu_screens[m_menudepth-1]);
+
+	// jitodo
+
+	// check if server exists in current serverlist:
+	for(i=0; i<m_serverlist.numservers; i++)
+	{
+		if(strcmp(addrip, m_serverlist.ips[i]) == 0)
+		{
+			// update info from server:
+			Z_Free(m_serverlist.info[i]);
+			update_serverlist_server(&m_serverlist.server[i], info, ping);
+			m_serverlist.info[i] = text_copy(format_info_from_serverlist_server(&m_serverlist.server[i]));
+			//m_serverlist.info[i] = text_copy(va("%3d %s", ping, info));
+			//todo - updateinfo
+			//added = true;
+			return;
+		}
+	}
+
+	// doesn't exist.  Add it.
+	i++;
+
+	// List too big?  Alloc more memory:
+	// STL would be useful about now
+	if(i > m_serverlist.actualsize) 
+	{
+		char **tempinfo;
+		char **tempips;
+		m_serverlist_server_t *tempserver;
+
+		tempinfo = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2); // double size
+		tempips = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2); // double size
+		tempserver = Z_Malloc(sizeof(m_serverlist_server_t)*m_serverlist.actualsize*2);
+
+		for(i=0; i<m_serverlist.actualsize; i++)
+		{
+			tempinfo[i] = m_serverlist.info[i];
+			tempips[i] = m_serverlist.ips[i];
+			tempserver[i] = m_serverlist.server[i];
+		}
+
+		Z_Free(m_serverlist.info);
+		Z_Free(m_serverlist.ips);
+		Z_Free(m_serverlist.server);
+
+		m_serverlist.info = tempinfo; // jitodo - test -- will this work?? (update widget??)
+		m_serverlist.ips = tempips;
+		m_serverlist.server = tempserver;
+
+		m_serverlist.actualsize *= 2;
+	}
+
+	// add data to serverlist:
+	m_serverlist.ips[m_serverlist.numservers] = text_copy(addrip);
+	//m_serverlist.server[m_serverlist.numservers] = new_serverlist_server(adr, info, ping);
+	update_serverlist_server(&m_serverlist.server[m_serverlist.numservers], info, ping);
+	//m_serverlist.info[m_serverlist.numservers] = text_copy(va("%3d %s", ping, info));
+	m_serverlist.info[m_serverlist.numservers] =
+		text_copy(format_info_from_serverlist_server(&m_serverlist.server[m_serverlist.numservers]));
+	
+	m_serverlist.numservers++;
+}
+
+// color servers grey and re-ping them
+void M_ServerlistRefresh_f(void)
+{
+	char *str;
+	int i;
+
+	for(i=0; i<m_serverlist.numservers; i++)
+	{
+		str = text_copy(va("%c5%s", CHAR_COLOR, m_serverlist.info[i])); // color grey
+		Z_Free(m_serverlist.info[i]);
+		m_serverlist.info[i] = str;
+	}
+	CL_PingServers_f();
+}
+
+
+// download servers.txt from a remote location and store
+// on the client's drive.
+#ifdef WIN32
+void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate thread so it doesn't "lock up"
+{
+	SOCKET serverListSocket;
+	char *s;
+
+	serverListSocket = NET_TCPSocket(0);	// Create the socket descriptor
+	if (serverListSocket == 0)
+		return; // No socket created
+
+	s = strstr(serverlist_source->string, "/");
+	if(s)
+		*s = 0;
+	if(!NET_TCPConnect(serverListSocket, serverlist_source->string, 80))
+		return;	// Couldn't connect
+	
+	// We're connected! Lets ask for the list
+	{
+		char msg[256];
+		int len, bytes_sent;
+
+		if(s)
+			*s = '/';
+		sprintf(msg, "GET %s HTTP/1.0\n\n", s);
+
+		len = strlen(msg);
+		bytes_sent = send(serverListSocket, msg, len, 0);
+		if  (bytes_sent < len)
+		{
+			Com_Printf ("HTTP Server did not accept request, aborting\n");
+			closesocket(serverListSocket);
+			return;
+		}
+	}
+
+	// We've sent our request... Lets read in what they've got for us
+	{
+		char *buffer	= malloc(32767);	
+		char *current	= buffer;
+		char *found		= NULL;
+		int WhichOn		= 0;
+		FILE			*serverlistfile;
+		int numread = 0;
+		int bytes_read = 0;
+
+		serverlistfile = fopen(va("%s/servers.txt", FS_Gamedir()), "w");
+
+		// Read in up to 32767 bytes
+		while ( numread < 32760 && 0 < (bytes_read = recv(serverListSocket, buffer + numread, 32766 - numread, 0)))
+		{
+			numread += bytes_read;
+		};
+
+		if (bytes_read == -1)
+		{
+			Com_Printf ("WARNING: recv(): %s", NET_ErrorString());
+			free(buffer);
+			closesocket(serverListSocket);
+			return;
+		}
+
+		closesocket(serverListSocket);
+
+		// Okay! We have our data... now lets parse it! =)
+		current = buffer;
+
+		// find \n\n, thats the end of header/beginning of the data
+		while (*current != '\n' || *(current+2) != '\n')
+		{
+			if (current > buffer + numread) {
+				free(buffer); return; 
+			}
+			current ++;
+		};
+		current = current + 3; // skip the trailing \n.  We're at the beginning of the data now
+		
+		while (current < buffer + numread) {
+			found = current;												// Mark the beginning of the line
+			while (*current != 13) {										// Find the end of the line
+				current ++; 
+				if (current > buffer + numread) { free(buffer); return; }	// Exit if we run out of room
+				if (*(current-1) == 'X' && *(current) == 13) {				// Exit if we find a X\n on a new line
+					goto done; 
+				}
+			}
+			*current = 0;													// NULL terminate the string
+			fprintf(serverlistfile, "%s\n", found);							// Copy line to local file
+			current += 2;													// Start at the next line
+		};
+done:
+		fclose(serverlistfile);
+		free(buffer);
+
+		M_ServerlistRefresh_f();
+		return;
+	}
+}
+// ACT */
+// ]===
+#else
+void M_ServerlistUpdate_f(void)
+{
+	Con_Print("'nix support under construction!\n"); // todo
+}
+#endif
+
+void M_Menu_f (void)
+{
+	char *menuname;
+	menuname = Cmd_Argv(1);
+
+	
+
+	if(strcmp(menuname, "pop") == 0 || strcmp(menuname, "back") == 0)
+		M_PopMenu();
+	else if(strcmp(menuname, "off") == 0 || strcmp(menuname, "close") == 0)
+		M_ForceMenuOff();
+	else
+	{
+		menu_screen_t *menu;
+		menu = M_FindMenuScreen(Cmd_Argv(1));
+
+		// hardcoded hack so gamma image is correct:
+		if(strcmp(menuname, "setup_gamma") == 0)
+		{
+			oldscale = cl_hudscale->value;
+			Cvar_Set("cl_hudscale", "2");
+		}
+		else
+			oldscale = 0;
+
+		M_PushMenuScreen(menu);
+	}
+}
+
+void M_Init (void)
+{
+	memset(&m_mouse, 0, sizeof(m_mouse));
+	m_mouse.cursorpic = i_cursor;
+
+	// Init server list:
+	memset(&m_serverlist, 0, sizeof(m_serverlist_t));
+	m_serverlist.info = Z_Malloc(sizeof(char*)*INITIAL_SERVERLIST_SIZE); 
+	m_serverlist.ips = Z_Malloc(sizeof(char*)*INITIAL_SERVERLIST_SIZE);
+	m_serverlist.server = Z_Malloc(sizeof(m_serverlist_server_t)*INITIAL_SERVERLIST_SIZE);
+	m_serverlist.actualsize = INITIAL_SERVERLIST_SIZE;
+
+	Cmd_AddCommand("menu", M_Menu_f);
+	Cmd_AddCommand("serverlist_update", M_ServerlistUpdate_f);
+	Cmd_AddCommand("serverlist_refresh", M_ServerlistRefresh_f);
+	Cmd_AddCommand("serverlist_print", M_ServerlistPrint_f);
+}
+
+
 
 void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, SLIDER_SELECTED slider_selected)
 {
@@ -1879,7 +2334,7 @@ float M_SliderGetPos(menu_widget_t *widget)
 	sliderdiff = widget->slider_max - widget->slider_min;
 
 	if(widget->cvar)
-		retval = Cvar_Get(widget->cvar, "0", CVAR_ARCHIVE)->value;
+		retval = Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->value;
 	else
 		retval = 0;
 
@@ -1930,7 +2385,7 @@ void M_DrawField(menu_widget_t *widget)
 	int nullpos;
 
 	if(widget->cvar)
-		cvar_string = Cvar_Get(widget->cvar, "", CVAR_ARCHIVE)->string;
+		cvar_string = Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->string;
 	else
 		cvar_string = "";
 
@@ -2082,7 +2537,7 @@ void M_DrawWidget (menu_widget_t *widget)
 				widget->slider_hover, widget->slider_selected);
 			break;
 		case WIDGET_TYPE_CHECKBOX:
-			if(widget->cvar && Cvar_Get(widget->cvar, "0", CVAR_ARCHIVE)->value)
+			if(widget->cvar && Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->value)
 				checkbox_checked = true;
 			else
 				checkbox_checked = false;
@@ -2195,4 +2650,5 @@ qboolean M_MenuActive()
 {
 	return (m_menudepth != 0);
 }
-// ]===
+
+

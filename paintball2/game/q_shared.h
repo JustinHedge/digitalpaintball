@@ -1206,5 +1206,6 @@ extern int vidref_val;
 #define CHAR_COLOR		136
 
 #define COLOR_CHAT		('z'+16)
+#define COLOR_MAPNAME	']'
 
 

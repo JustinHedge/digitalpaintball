@@ -1398,7 +1398,7 @@ void SCR_UpdateScreen (void)
 
 	for ( i = 0; i < numframes; i++ )
 	{
-		if(cl_hudscale->modified) // jithudscale
+		if(cl_hudscale->modified) // jithudscale / jitmenu
 		{
 			M_RefreshMenu();
 			cl_hudscale->modified = false;

@@ -27,6 +27,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "qmenu.h"
 
+#ifdef WIN32
+///* ACT
+// For socket stuff
+#include "winsock.h"
+
+// From net_wins.c
+int NET_TCPSocket (int port);	
+int NET_TCPConnect(SOCKET sockfd, char *net_remote_address, int port);
+char *NET_ErrorString (void);
+
+#endif
+
+extern cvar_t *serverlist_source; // jitserverlist
+
 #define TEXT_WIDTH_UNSCALED		8
 #define TEXT_HEIGHT_UNSCALED	8
 
@@ -67,6 +81,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SELECT_HSPACING_UNSCALED	2
 #define SELECT_VSPACING_UNSCALED	2
 
+#define SELECT_HSPACING		(SELECT_HSPACING_UNSCALED*scale)
+#define SELECT_VSPACING		(SELECT_VSPACING_UNSCALED*scale)
+
 #define SELECT_BACKGROUND_SIZE		4
 
 #define SCROLL_ARROW_WIDTH_UNSCALED	8
@@ -84,6 +101,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define WIDGET_FLAG_FLOAT		64
 #define WIDGET_FLAG_INT			128
 #define WIDGET_FLAG_FILELIST	256
+#define WIDGET_FLAG_SERVERLIST	512
 
 typedef enum {
 	WIDGET_TYPE_UNKNOWN	= 0,
@@ -118,19 +136,19 @@ typedef enum {
 	SLIDER_SELECTED_KNOB
 } SLIDER_SELECTED;
 
-#ifndef _WINDEF_
-typedef struct _POINT {
+//#ifndef _WINDEF_
+typedef struct POINT_S {
 	int x;
 	int y;
-} POINT;
+} point_t;
 
-typedef struct _RECT {
+typedef struct RECT_S {
 	int bottom;
 	int right;
 	int left;
 	int top;
-} RECT;
-#endif
+} rect_t;
+//#endif
 
 typedef struct MENU_MOUSE_S {
 	int x;
@@ -158,6 +176,7 @@ typedef struct MENU_WIDGET_S {
 	qboolean modified;	// drawing information changed
 	char *command;		// command executed when widget activated
 	char *cvar;			// cvar widget reads and/or modifies
+	char *cvar_default;	// set cvar to this value if unset
 	int x;				// position from 0 (left) to 320 (right)
 	int y;				// position from 0 (top) to 240 (bottom)
 	WIDGET_HALIGN halign;	// horizontal alignment relative to x, y coords
@@ -205,11 +224,11 @@ typedef struct MENU_WIDGET_S {
 	char	**select_map;
 
 	// Drawing Information
-	POINT widgetCorner;
-	POINT widgetSize;
-	POINT textCorner;
-	POINT textSize;
-	RECT mouseBoundaries;
+	point_t widgetCorner;
+	point_t widgetSize;
+	point_t textCorner;
+	point_t textSize;
+	rect_t mouseBoundaries;
 
 	// callback function
 	void (*callback)(struct MENU_WIDGET_S *widget);
@@ -226,6 +245,32 @@ typedef struct MENU_SCREEN_S {
 	menu_widget_t *hover_widget;
 	struct MENU_SCREEN_S *next;
 } menu_screen_t;
+
+/*typedef struct SERVERLIST_NODE_S {
+	netadr_t adr;
+	char *info;
+	// jitodo
+	// ...
+	struct SERVERLIST_NODE_S *next;
+} serverlist_node_t;*/
+
+typedef struct M_SERVERLIST_SERVER_S {
+	netadr_t adr;
+	char *servername;
+	char *mapname;
+	int players;
+	int maxplayers;
+	int ping;
+} m_serverlist_server_t;
+
+typedef struct M_SERVERLIST_S {
+	int numservers;
+	int actualsize;
+	char **ips;
+	char **info;
+	m_serverlist_server_t *server;
+	//serverlist_node_t *list;
+} m_serverlist_t;
 
 extern cvar_t *cl_hudscale;
 
