@@ -589,5 +589,17 @@ extern image_t		*i_net;
 extern image_t		*i_pause;
 extern image_t		*i_loading;
 extern image_t		*i_backtile;
+// jitmenu:
+extern image_t		*i_slider1l;
+extern image_t		*i_slider1r;
+extern image_t		*i_slider1lh;
+extern image_t		*i_slider1rh;
+extern image_t		*i_slider1ls;
+extern image_t		*i_slider1rs;
+extern image_t		*i_slider1t;
+extern image_t		*i_slider1th;
+extern image_t		*i_slider1b;
+extern image_t		*i_slider1bh;
+extern image_t		*i_slider1bs;
 
 extern int hudscale; // jithudscale
