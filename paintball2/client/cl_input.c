@@ -463,6 +463,7 @@ void CL_SendCmd (void)
 	usercmd_t	*cmd, *oldcmd;
 	usercmd_t	nullcmd;
 	int			checksumIndex;
+	extern cvar_t *cl_drawfps; // jitest
 
 	// build a command even if not connected
 
@@ -476,7 +477,7 @@ void CL_SendCmd (void)
 	if(!cl_locknetfps->value) // jitnetfps
 	{
 		static usercmd_t oldcmd;
-		int ppsstate;
+		float ppsstate;
 		static int ppscount = 0;
 		static unsigned old_frame_time = 0;
 
@@ -487,8 +488,8 @@ void CL_SendCmd (void)
 		if(ppsstate < 5)
 			ppsstate = 5;
 
-		if ((cl.time+1000) < ppscount)
-			ppscount=cl.time+1000/ppsstate;
+		if ((cl.time + 1000) < ppscount)
+			ppscount = cl.time + 1000 / ppsstate;
 
 		if (cl.time > ppscount ||
 			cmd->buttons != oldcmd.buttons ||
@@ -497,7 +498,11 @@ void CL_SendCmd (void)
 			cmd->sidemove != oldcmd.sidemove ||
 			cmd->upmove != oldcmd.upmove) // user input has changed (jitodo -- check for text cmds)
 		{
-			ppscount = cl.time + 1000/ppsstate;
+			if (cl.time > ppscount)
+				ppscount = cl.time - (cl.time-ppscount) + 1000.0f/ppsstate+0.5f;
+			else
+				ppscount = cl.time + 1000.0f/ppsstate+0.5f;
+
 			memcpy(&oldcmd, cmd, sizeof(usercmd_t));
 			old_frame_time = sys_frame_time;
 		}
@@ -512,7 +517,7 @@ void CL_SendCmd (void)
 	if (cls.state == ca_disconnected || cls.state == ca_connecting)
 		return;
 
-	if ( cls.state == ca_connected)
+	if (cls.state == ca_connected)
 	{
 		if (cls.netchan.message.cursize	|| curtime - cls.netchan.last_sent > 1000 )
 			Netchan_Transmit (&cls.netchan, 0, NULL); // buf.data);	 - jit, kill warning
@@ -576,7 +581,35 @@ void CL_SendCmd (void)
 	// deliver the message
 	//
 	Netchan_Transmit(&cls.netchan, buf.cursize, buf.data);
+
+	if (cl_drawfps->value) // jitest
+	{
+		static char s[16];
+		static int framecount = 0;
+		static int lasttime = 0;
+
+		if(!(framecount & 0xF)) // once every 16 frames
+		{
+			register float t;
+			t = curtime-lasttime;
+//			t = cls.realtime - cls.last_transmit_time;
+
+			t /= 1000.0f;
+			Com_sprintf(s, sizeof(s), "%3.0fpps", framecount/t);
+			//fpscounter = cl.time + 100; 
+			lasttime = curtime;
+			framecount = 0;
+		}
+
+		framecount ++;
+
+		//re.DrawString(viddef.width-42*hudscale, 72*hudscale, s);
+		Com_Printf("%s\n", s);
+	}
+
 	cls.last_transmit_time = cls.realtime;
+
+
 
 	//if(cl_locknetfps->value) // jitodo download2 check here
 	//{
