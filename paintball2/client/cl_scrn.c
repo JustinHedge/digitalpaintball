@@ -1351,6 +1351,7 @@ void SCR_UpdateScreen (void)
 	int i;
 	float separation[2] = { 0, 0 };
 	extern cvar_t *cl_hudscale;
+	static float old_hudscale_val = 0.0f;
 
 	// if the screen is disabled (loading plaque is up, or vid mode changing)
 	// do nothing at all
@@ -1368,6 +1369,15 @@ void SCR_UpdateScreen (void)
 		return;				// not initialized yet
 
 	// jithudscale:
+	if(cl_hudscale->modified)
+		cl_hudscale->modified = false;
+
+	if(old_hudscale_val != cl_hudscale->value)
+	{
+		cl_hudscale->modified = true;
+        old_hudscale_val = cl_hudscale->value;
+	}
+
 	if(cl_hudscale->value < 1.0 || cl_hudscale->value > viddef.width/320.0) // jithudscale
 		Cvar_SetValue("cl_hudscale", viddef.width/320.0f); // jithudscale
 	
