@@ -559,10 +559,13 @@ void CL_TrapParticles (entity_t *ent);
 //
 void M_Init (void);
 void M_Keydown (int key);
+void M_Keyup (int key); // jitmenu
 void M_Draw (void);
 void M_Menu_Main_f (void);
 void M_ForceMenuOff (void);
 void M_AddToServerList (netadr_t adr, char *info);
+void M_MouseMove(int mx, int my); // jitmenu
+qboolean M_MenuActive(void); // jitmenu
 
 //
 // cl_inv.c
@@ -603,3 +606,6 @@ extern image_t		*i_slider1bh;
 extern image_t		*i_slider1bs;
 
 extern int hudscale; // jithudscale
+
+
+
