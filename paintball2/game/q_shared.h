@@ -1208,4 +1208,24 @@ extern int vidref_val;
 #define COLOR_CHAT		('z'+16)
 #define COLOR_MAPNAME	']'
 
+// =======
+// jithash
+typedef struct hash_node_s {
+	void *data;
+	char *key;
+	struct hash_node_s *next;
+} hash_node_t;
 
+typedef struct hash_table_s {
+	int sizemask; // number of nodes in table, also doubles as a mask, so should be something like 0xFF
+	void (*free_func)(void *data); // function to call when freeing elements
+	hash_node_t **table;
+} hash_table_t;
+
+void hash_table_init(hash_table_t *table, unsigned int size, void *free_func);
+void hash_table_clear(hash_table_t *table);
+void hash_add(hash_table_t *table, const unsigned char *key, void *data);
+void *hash_get(hash_table_t *table, const unsigned char *key);
+void hash_delete(hash_table_t *table, const unsigned char *key);
+// jithash
+// ========

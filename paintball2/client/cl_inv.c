@@ -103,7 +103,7 @@ void CL_DrawInventory (void)
 	// repaint everything next frame
 	SCR_DirtyScreen ();
 
-	re.DrawPic2 (x, y+8, i_inventory);
+	//re.DrawPic2 (x, y+8, i_inventory);
 
 	y += 24;
 	x += 24;

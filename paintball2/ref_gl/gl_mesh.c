@@ -242,11 +242,100 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 
 	GL_LerpVerts( paliashdr->num_xyz, v, ov, verts, lerp, move, frontv, backv );
 
-		qglEnableClientState( GL_COLOR_ARRAY );
+	//qglEnableClientState( GL_COLOR_ARRAY );
 
-		rs = (rscript_t*)currententity->model->script[currententity->skinnum];
-		if (!rs) {
+	rs = (rscript_t*)currententity->model->script[currententity->skinnum];
+	if (!rs)
+	{
 #ifdef BEEFQUAKERENDER // jit3dfx
+		while (1)
+		{
+			// get the vertex count and primitive type
+			count = *order++;
+			va=0;
+			if (!count)
+				break;		// done
+			if (count < 0) {
+				count = -count;
+				mode=GL_TRIANGLE_FAN;
+			} else
+				mode=GL_TRIANGLE_STRIP;
+
+			do {
+				// texture coordinates come from the draw list
+				index_xyz = order[2];
+				l = shadedots[verts[index_xyz].lightnormalindex];
+
+				VA_SetElem2(tex_array[va],((float *)order)[0], ((float *)order)[1]);
+				VA_SetElem3(vert_array[va],s_lerped[index_xyz][0],s_lerped[index_xyz][1],s_lerped[index_xyz][2]);
+				VA_SetElem4(col_array[va],l* shadelight[0], l*shadelight[1], l*shadelight[2], alpha);
+				va++;
+				order += 3;
+			} while (--count);
+			qglDrawArrays(mode,0,va);
+		}
+#else // old q2 code (with shells removed):
+		if ( gl_vertex_arrays->value )
+		{
+#if 1
+			float colorArray[MAX_VERTS*4];
+
+			qglEnableClientState( GL_VERTEX_ARRAY );
+			qglVertexPointer( 3, GL_FLOAT, 16, s_lerped );	// padded for SIMD
+
+			qglEnableClientState( GL_COLOR_ARRAY );
+			qglColorPointer( 3, GL_FLOAT, 0, colorArray );
+
+			//
+			// pre light everything
+			//
+			for ( i = 0; i < paliashdr->num_xyz; i++ )
+			{
+				float l = shadedots[verts[i].lightnormalindex];
+
+				colorArray[i*3+0] = l * shadelight[0];
+				colorArray[i*3+1] = l * shadelight[1];
+				colorArray[i*3+2] = l * shadelight[2];
+			}
+
+			if ( qglLockArraysEXT != 0 )
+				qglLockArraysEXT( 0, paliashdr->num_xyz );
+
+			while (1)
+			{
+				// get the vertex count and primitive type
+				count = *order++;
+				if (!count)
+					break;		// done
+				if (count < 0)
+				{
+					count = -count;
+					qglBegin (GL_TRIANGLE_FAN);
+				}
+				else
+				{
+					qglBegin (GL_TRIANGLE_STRIP);
+				}
+
+				do
+				{
+					// texture coordinates come from the draw list
+					qglTexCoord2f (((float *)order)[0], ((float *)order)[1]);
+					index_xyz = order[2];
+					order += 3;
+					qglArrayElement( index_xyz );
+
+				} while (--count);
+
+				qglEnd ();
+			}
+
+			if ( qglUnlockArraysEXT != 0 )
+				qglUnlockArraysEXT();
+			
+			qglDisableClientState(GL_VERTEX_ARRAY); // jit
+			qglDisableClientState(GL_COLOR_ARRAY); // jit
+#else // (temp) testing beefquake code
 			while (1)
 			{
 				// get the vertex count and primitive type
@@ -264,7 +353,7 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 					// texture coordinates come from the draw list
 					index_xyz = order[2];
 					l = shadedots[verts[index_xyz].lightnormalindex];
-			
+
 					VA_SetElem2(tex_array[va],((float *)order)[0], ((float *)order)[1]);
 					VA_SetElem3(vert_array[va],s_lerped[index_xyz][0],s_lerped[index_xyz][1],s_lerped[index_xyz][2]);
 					VA_SetElem4(col_array[va],l* shadelight[0], l*shadelight[1], l*shadelight[2], alpha);
@@ -273,7 +362,10 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 				} while (--count);
 				qglDrawArrays(mode,0,va);
 			}
-#else
+#endif
+		}
+		else // (!gl_vertex_arrays->value)
+		{
 			while (1)
 			{
 				// get the vertex count and primitive type
@@ -299,45 +391,47 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 
 					// normals and vertexes come from the frame list
 					l = shadedots[verts[index_xyz].lightnormalindex];
-					
-					qglColor4f (l* shadelight[0], l*shadelight[1], 
-						l*shadelight[2], alpha);
+
+					qglColor4f (l* shadelight[0], l*shadelight[1], l*shadelight[2], alpha);
 					qglVertex3fv (s_lerped[index_xyz]);
 				} while (--count);
 
 				qglEnd ();
 			}
+		}
 #endif
-		} else {
-			while (1)
-			{
-				// get the vertex count and primitive type
-				count = *order++;
-				if (!count)
-					break;		// done
+	}
+	else // skin has rscript:
+	{
+		while (1)
+		{
+			// get the vertex count and primitive type
+			count = *order++;
+			if (!count)
+				break;		// done
 
-				if (count < 0) {
-					count = -count;
-					mode=GL_TRIANGLE_FAN;
-				} else
-					mode=GL_TRIANGLE_STRIP;
+			if (count < 0) {
+				count = -count;
+				mode=GL_TRIANGLE_FAN;
+			} else
+				mode=GL_TRIANGLE_STRIP;
 
 
-				stage=rs->stage;
-				tmp_count=count;
-				tmp_order=order;
-				while (stage) {
-					count=tmp_count;
-					order=tmp_order;
-					va=0;
+			stage=rs->stage;
+			tmp_count=count;
+			tmp_order=order;
+			while (stage) {
+				count=tmp_count;
+				order=tmp_order;
+				va=0;
 
-					if (stage->anim_count)
-						GL_Bind(RS_Animate(stage));
-					else
-						GL_Bind(stage->texture->texnum);
+				if (stage->anim_count)
+					GL_Bind(RS_Animate(stage));
+				else
+					GL_Bind(stage->texture->texnum);
 
-					if (stage->scroll.speedX) {
-						switch(stage->scroll.typeX) {
+				if (stage->scroll.speedX) {
+					switch(stage->scroll.typeX) {
 							case 0:	// static
 								txm=rs_realtime*stage->scroll.speedX;
 								break;
@@ -347,12 +441,12 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 							case 2:	// cosine
 								txm=cos(rs_realtime*stage->scroll.speedX);
 								break;
-						}
-					} else
-						txm=0;
+					}
+				} else
+					txm=0;
 
-					if (stage->scroll.speedY) {
-						switch(stage->scroll.typeY) {
+				if (stage->scroll.speedY) {
+					switch(stage->scroll.typeY) {
 							case 0:	// static
 								tym=rs_realtime*stage->scroll.speedY;
 								break;
@@ -362,102 +456,102 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 							case 2:	// cosine
 								tym=cos(rs_realtime*stage->scroll.speedY);
 								break;
-						}
-					} else
-						tym=0;
-
-					if (stage->blendfunc.blend) {
-						qglBlendFunc(stage->blendfunc.source,stage->blendfunc.dest);
-						GLSTATE_ENABLE_BLEND
-					} else {
-						GLSTATE_DISABLE_BLEND
 					}
+				} else
+					tym=0;
 
-					if (stage->alphashift.min || stage->alphashift.speed) {
-						if (!stage->alphashift.speed && stage->alphashift.min > 0) 
-						{
+				if (stage->blendfunc.blend) {
+					qglBlendFunc(stage->blendfunc.source,stage->blendfunc.dest);
+					GLSTATE_ENABLE_BLEND
+				} else {
+					GLSTATE_DISABLE_BLEND
+				}
+
+				if (stage->alphashift.min || stage->alphashift.speed) {
+					if (!stage->alphashift.speed && stage->alphashift.min > 0) 
+					{
+						alpha=stage->alphashift.min;
+					} 
+					else if (stage->alphashift.speed) 
+					{
+						alpha = sin(rs_realtime * stage->alphashift.speed);
+						if (alpha < 0) 
+							alpha=-alpha;
+						if (alpha > stage->alphashift.max) 
+							alpha=stage->alphashift.max;
+						if (alpha < stage->alphashift.min) 
 							alpha=stage->alphashift.min;
-						} 
-						else if (stage->alphashift.speed) 
-						{
-							alpha = sin(rs_realtime * stage->alphashift.speed);
-							if (alpha < 0) 
-								alpha=-alpha;
-							if (alpha > stage->alphashift.max) 
-								alpha=stage->alphashift.max;
-							if (alpha < stage->alphashift.min) 
-								alpha=stage->alphashift.min;
-						}
 					}
-					else
-						alpha=1.0f;
+				}
+				else
+					alpha=1.0f;
 
-					if (stage->envmap)
-					{
-						qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-						qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-						GLSTATE_ENABLE_TEXGEN
-					}
-					if (stage->alphamask)
-					{
-						GLSTATE_ENABLE_ALPHATEST
-					}
-					else
-					{
-						GLSTATE_DISABLE_ALPHATEST
-					}
+				if (stage->envmap)
+				{
+					qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
+					qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
+					GLSTATE_ENABLE_TEXGEN
+				}
+				if (stage->alphamask)
+				{
+					GLSTATE_ENABLE_ALPHATEST
+				}
+				else
+				{
+					GLSTATE_DISABLE_ALPHATEST
+				}
 #ifdef BEEFQUAKERENDER // jit3dfx
-					do
-					{
-						// texture coordinates come from the draw list
-						index_xyz = order[2];
-					
-						l = shadedots[verts[index_xyz].lightnormalindex];
-		
-						VA_SetElem2(tex_array[va],((float *)order)[0]+txm,
-							((float *)order)[1]+tym);
-						VA_SetElem3(vert_array[va],s_lerped[index_xyz][0],
-							s_lerped[index_xyz][1],s_lerped[index_xyz][2]);
-						VA_SetElem4(col_array[va],l* shadelight[0],
-							l*shadelight[1], l*shadelight[2], alpha);
-						va++;
-						order += 3;
-					} while (--count);
-					qglDrawArrays(mode,0,va);
+				do
+				{
+					// texture coordinates come from the draw list
+					index_xyz = order[2];
+
+					l = shadedots[verts[index_xyz].lightnormalindex];
+
+					VA_SetElem2(tex_array[va],((float *)order)[0]+txm,
+						((float *)order)[1]+tym);
+					VA_SetElem3(vert_array[va],s_lerped[index_xyz][0],
+						s_lerped[index_xyz][1],s_lerped[index_xyz][2]);
+					VA_SetElem4(col_array[va],l* shadelight[0],
+						l*shadelight[1], l*shadelight[2], alpha);
+					va++;
+					order += 3;
+				} while (--count);
+				qglDrawArrays(mode,0,va);
 
 #else
-					qglBegin(mode);
-					do
-					{
-						// texture coordinates come from the draw list
-						qglTexCoord2f (((float *)order)[0]+txm,
-							((float *)order)[1]+tym);
-						index_xyz = order[2];
-						order += 3;
+				qglBegin(mode);
+				do
+				{
+					// texture coordinates come from the draw list
+					qglTexCoord2f (((float *)order)[0]+txm,
+						((float *)order)[1]+tym);
+					index_xyz = order[2];
+					order += 3;
 
-						// normals and vertexes come from the frame list
-						l = shadedots[verts[index_xyz].lightnormalindex];
+					// normals and vertexes come from the frame list
+					l = shadedots[verts[index_xyz].lightnormalindex];
 
-						qglColor4f (l* shadelight[0], l*shadelight[1], 
-							l*shadelight[2], alpha);
-						qglVertex3fv (s_lerped[index_xyz]);
-					} while (--count);
-					qglEnd();
+					qglColor4f (l* shadelight[0], l*shadelight[1], 
+						l*shadelight[2], alpha);
+					qglVertex3fv (s_lerped[index_xyz]);
+				} while (--count);
+				qglEnd();
 #endif
-					
-					GLSTATE_DISABLE_ALPHATEST
-					GLSTATE_DISABLE_BLEND
-					qglColor4f(1,1,1,1);
-					qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-					GLSTATE_DISABLE_TEXGEN
 
-					stage=stage->next;
-				}
+				GLSTATE_DISABLE_ALPHATEST;
+				GLSTATE_DISABLE_BLEND;
+				qglColor4f(1,1,1,1);
+				qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				GLSTATE_DISABLE_TEXGEN;
+
+				stage=stage->next;
 			}
 		}
+	}
 
-		qglDisableClientState( GL_COLOR_ARRAY );
-		qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
+	//qglDisableClientState( GL_COLOR_ARRAY );
+	//qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
 }
 
 
@@ -1013,15 +1107,13 @@ void R_DrawAliasModel (entity_t *e)
 	qglShadeModel (GL_SMOOTH);
 
 ///	GL_TexEnv( GL_MODULATE );
+	GL_TexEnv( GL_COMBINE_EXT ); // jitbright
 	
 
 	if ( currententity->flags & RF_TRANSLUCENT )
 	{
 		GLSTATE_ENABLE_BLEND
 	}
-	//else
-		GL_TexEnv( GL_COMBINE_EXT ); // jitbright
-
 
 	if ( (currententity->frame >= paliashdr->num_frames) 
 		|| (currententity->frame < 0) )

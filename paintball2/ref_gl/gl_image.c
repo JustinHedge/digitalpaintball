@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "jpeglib.h"
 
 image_t		gltextures[MAX_GLTEXTURES];
+hash_table_t gltextures_hash; // jithash
 int			numgltextures;
 int			base_textureid;		// gltextures[i] = base_textureid+i
 
@@ -210,7 +211,7 @@ gltmode_t gl_solid_modes[] = {
 GL_TextureMode
 ===============
 */
-void GL_TextureMode( char *string )
+void GL_TextureMode(const char *string )
 {
 	int		i;
 	image_t	*glt;
@@ -425,7 +426,7 @@ PCX LOADING
 LoadPCX
 ==============
 */
-void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *height)
+void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int *height)
 {
 	byte	*raw;
 	pcx_t	*pcx;
@@ -2233,7 +2234,7 @@ GL_LoadPic
 This is also used as an entry point for the generated r_notexture
 ================
 */
-image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t type, int bits)
+image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetype_t type, int bits)
 {
 	image_t		*image;
 	int			i;
@@ -2264,15 +2265,16 @@ image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t t
 
 	// ===
 	// jit -- paintball2 texture fix
-	if( !Q_strcasecmp(name,"textures/pball/b_flag1.jpg") ||
-		!Q_strcasecmp(name,"textures/pball/y_flag1.jpg") || 
-		!Q_strcasecmp(name,"textures/pball/p_flag1.jpg") || 
-		!Q_strcasecmp(name,"textures/pball/r_flag1.jpg"))
+	// jitodo -- move these to rscripts, this is an ugly hack.
+	if( !Q_strcasecmp(name,"textures/pball/b_flag1") ||
+		!Q_strcasecmp(name,"textures/pball/y_flag1") || 
+		!Q_strcasecmp(name,"textures/pball/p_flag1") || 
+		!Q_strcasecmp(name,"textures/pball/r_flag1"))
 	{
 		image->width = 96;
 		image->height = 96;
 	}
-	else if(!Q_strcasecmp(name,"textures/pball/ksplat2.jpg"))
+	else if(!Q_strcasecmp(name,"textures/pball/ksplat2"))
 	{
 		image->width = 288;
 		image->height = 128;
@@ -2336,6 +2338,7 @@ nonscrap:
 		image->th = 1;
 	}
 
+
 	return image;
 }
 
@@ -2354,8 +2357,9 @@ image_t *GL_LoadWal (char *name)
 	ri.FS_LoadFile (name, (void **)&mt);
 	if (!mt)
 	{
-		ri.Con_Printf (PRINT_ALL, "GL_FindImage: can't load %s\n", name);
-		return r_notexture;
+		//ri.Con_Printf (PRINT_ALL, "GL_FindImage: can't load %s\n", name);
+		//return r_notexture;
+		return NULL; // jithash / jittexture
 	}
 
 	width = LittleLong (mt->width);
@@ -2369,160 +2373,69 @@ image_t *GL_LoadWal (char *name)
 	return image;
 }
 
-/*
-===============
-GL_FindImage
-
-Finds or loads the given image
-===============
-*/
-char override=0;
-
-image_t	*GL_FindImage (char *name, imagetype_t type)
+image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage / jithash
 {
-	image_t	*image;
-	int		i, len;
-	byte	*pic, *palette;
-	int		width, height;
-	extern cvar_t *gl_highres_textures;
+	static unsigned char tempname[MAX_QPATH];
+	byte *pic=NULL, *palette=NULL;
+	int width, height;
+	image_t *image;
 
-	if (!name)
-		return NULL;	//	ri.Sys_Error (ERR_DROP, "GL_FindImage: NULL name");
-	len = strlen(name);
-	if (len<5)
-		return NULL;	//	ri.Sys_Error (ERR_DROP, "GL_FindImage: bad name: %s", name);
+	// Try TGA:
+	sprintf(tempname, "%s.tga", name);
+	LoadTGA(tempname, &pic, &width, &height);
 
-	// look for it
-	for (i=0, image=gltextures ; i<numgltextures ; i++,image++)
+	if(pic)
 	{
-		if (!strcmp(name, image->name))
-		{
-			image->registration_sequence = registration_sequence;
-			image->alreadyloaded = true;
-			return image;
-		}
-	}
-
-	//
-	// load the pic from disk
-	//
-
-	pic = NULL;
-	palette = NULL;
-
-	if (strcmp(name+len-4, ".tga") && strcmp(name+len-4, ".cin") && !override)
-	{	// Targa override crap
-		char s[128];
-
-		override=1;
-		strcpy(s,name);
-		s[len-3]='t'; s[len-2]='g'; s[len-1]='a';
-		image = GL_FindImage(s,type);
-		if (image) {
-			override=0;
-			return image;
-		}
-	}
-	if (strcmp(name+len-4, ".jpg") && strcmp(name+len-4, ".cin") && !override)
-	{	// Jpeg override crap
-		char s[MAX_QPATH];
-		char s_high[MAX_QPATH];
-		char *finger;
-
-		override=1;
-		strcpy(s,name);
-		s[len-3]='j'; s[len-2]='p'; s[len-1]='g';
-		// ==[
-		// jithighres
-		if(gl_highres_textures->value)
-		{
-			// here we add "hr4/" to the directory, like:
-			// textures/pball/whatever.jpg becomes:
-			// textures/pball/hr4/whatever.jpg
-			strcpy(s_high, s);
-			finger = strstr(s_high, ".jpg") + 4;
-			while(finger>s_high && *finger != '/')
-			{
-				*(finger+4) = *finger;
-				finger--;
-			}
-			
-			*(finger+1) = 'h'; *(finger+2) = 'r';
-			*(finger+3) = '4'; *(finger+4) = '/';
-			image = GL_FindImage(s_high,type);
-			if (image)
-			{
-				override=0;
-				// scale the texture appropriately (/4x each way)
-				if(!image->alreadyloaded)
-				{
-					image->width /= 4;
-					image->height /= 4;
-				}
-				
-				return image;
-			}
-		}
-		// ]==
-
-		// didn't find high res version (or highres_textures is off)
-		image = GL_FindImage(s,type);
-		if (image)
-		{
-			override=0;
-			return image;
-		}
-	}
-	
-	override=0;
-	if (!strcmp(name+len-4, ".pcx"))
-	{
-		LoadPCX (name, &pic, &palette, &width, &height);
-		if (!pic)
-			return NULL; // ri.Sys_Error (ERR_DROP, "GL_FindImage: can't load %s", name);
-		image = GL_LoadPic (name, pic, width, height, type, 8);
-		image->alreadyloaded = false; // jithighres
-	}
-	else if (!strcmp(name+len-4, ".wal"))
-	{
-		image = GL_LoadWal (name);
-		image->alreadyloaded = false; // jithighres
-	}
-	else if (!strcmp(name+len-4, ".tga"))
-	{
-		LoadTGA (name, &pic, &width, &height);
-		if (!pic)
-			return NULL; // ri.Sys_Error (ERR_DROP, "GL_FindImage: can't load %s", name);
-		image = GL_LoadPic (name, pic, width, height, type, 32);
-		image->alreadyloaded = false; // jithighres
-	}
-	else if (!strcmp(name+len-4, ".cin")) // Heffo
-	{										// WHY .cin files? because we can!
-		cinematics_t *newcin;
-
-		newcin = CIN_OpenCin(name);
-		if(!newcin)
-			return NULL;
-
-		pic = malloc(256*256*4);
-		memset(pic, 192, (256*256*4));
-
-		image = GL_LoadPic (name, pic, 256, 256, type, 32);
-
-		newcin->texnum = image->texnum;
-		image->is_cin = true;
-		image->alreadyloaded = false; // jithighres
-	}
-	else if (!strcmp(name+len-4, ".jpg")) // Heffo - JPEG support
-	{
-		LoadJPG(name, &pic, &width, &height);
-		if(!pic)
-			return NULL;
-
 		image = GL_LoadPic(name, pic, width, height, type, 32);
-		image->alreadyloaded = false; // jithighres
-	} else
-		return NULL;	//	ri.Sys_Error (ERR_DROP, "GL_FindImage: bad extension on: %s", name);
+	}
+	else
+	{
+		// Try JPG:
+		sprintf(tempname, "%s.jpg", name);
+		LoadJPG(tempname, &pic, &width, &height);
+
+		if(pic)
+		{
+			image = GL_LoadPic(name, pic, width, height, type, 32);
+		}
+		else
+		{
+			// Try CIN: (or not)
+			/*cinematics_t *newcin;
+
+			sprintf(tempname, "%s.cin", name);
+
+			newcin = CIN_OpenCin(name);
+
+			if(newcin)
+			{
+				pic = malloc(256*256*4);
+				memset(pic, 192, (256*256*4));
+
+				image = GL_LoadPic(name, pic, 256, 256, type, 32);
+
+				newcin->texnum = image->texnum;
+				image->is_cin = true;
+			}
+			else*/
+			{
+				// Try PCX:
+				sprintf(tempname, "%s.pcx", name);
+				LoadPCX(tempname, &pic, &palette, &width, &height);
+
+				if(pic)
+				{
+					image = GL_LoadPic(name, pic, width, height, type, 8);
+				}
+				else
+				{
+					// Try WAL:
+					sprintf(tempname, "%s.wal", name);
+					image = GL_LoadWal(tempname);					
+				}
+			}
+		}
+	}
 
 	if (pic)
 		free(pic);
@@ -2531,13 +2444,252 @@ image_t	*GL_FindImage (char *name, imagetype_t type)
 
 	return image;
 }
+			
+/*
+===============
+GL_FindImage
+
+Finds or loads the given image
+===============
+*/
+//char override=0;
+
+
+image_t	*GL_FindImage (const char *name, imagetype_t type)
+{
+	image_t	*image;
+	int		i, len;
+	const char *in;
+	char *out;
+//	byte	*pic, *palette;
+//	int		width, height;
+	extern cvar_t *gl_highres_textures;
+	extern cvar_t *gl_hash_textures; // jithash
+	static unsigned char tempname[MAX_QPATH];
+	static unsigned char name_noext[MAX_QPATH];
+
+	if (!name)
+		return NULL;	//	ri.Sys_Error (ERR_DROP, "GL_FindImage: NULL name");
+	len = strlen(name);
+	if (len<5)
+		return NULL;	//	ri.Sys_Error (ERR_DROP, "GL_FindImage: bad name: %s", name);
+
+	// look for it
+
+	// strip extension:
+	in = name;
+	out = name_noext;
+	while (*in && *in != '.')
+		*out++ = tolower(*in++);
+	*out = 0;
+
+	if(gl_hash_textures->value) // jithash
+	{
+		image = hash_get(&gltextures_hash, name_noext);
+
+		if(image)
+		{
+			image->registration_sequence = registration_sequence;
+			return image;
+		}
+	}
+	else
+	{
+		for (i=0, image=gltextures ; i<numgltextures ; i++,image++)
+		{
+			if (!strcmp(name_noext, image->name))
+			{
+				image->registration_sequence = registration_sequence;
+				return image;
+			}
+		}
+	}
+
+	//
+	// load the pic from disk
+	//
+
+	if(gl_highres_textures->value) // jithighres
+	{
+		static unsigned char name_hr4_noext[MAX_QPATH];
+		int len;
+		unsigned char *s;
+
+		// insert hr4/ before the filename:
+		len = strlen(name_noext);
+		s = name_noext + len - 1; // start at the end of the string and work backwards.
+		while(s > name_noext && *s != '/' && *s != '\\') // till we hit '/'
+			s --;
+		*s = 0; // temporarily terminate it at the '/'
+		sprintf(name_hr4_noext, "%s/hr4/%s", name_noext, s+1);
+		*s = '/'; // put the '/' back.
+
+		image = GL_LoadImage(name_hr4_noext, type);
+
+		if(image)
+		{
+			image->width /= 4;
+			image->height /= 4;
+			strcpy(image->name, name_noext);
+
+			hash_add(&gltextures_hash, name_noext, image); // jithash
+
+			return image;
+		}
+	}
+
+	image = GL_LoadImage(name_noext, type);
+
+	if(!image)
+	{
+		ri.Con_Printf (PRINT_ALL, "GL_FindImage: can't load %s\n", name_noext);
+		image = r_notexture;
+	}
+
+	image->rscript = RS_FindScript(name_noext); // jitrscript
+	if(image->rscript)
+		image->rscript->img_ptr = image; // jitrscript -- point back to this image
+
+	hash_add(&gltextures_hash, name_noext, image); // jithash
+
+	return image;
+
+	
+
+	// jithash: all the following has been removed.  File extensions ignored now.
+
+	//pic = NULL;
+	//palette = NULL;
+	//if (strcmp(name+len-4, ".tga") && strcmp(name+len-4, ".cin") && !override)
+	//{	// Targa override crap
+	//	char s[128];
+
+	//	override=1;
+	//	strcpy(s,name);
+	//	s[len-3]='t'; s[len-2]='g'; s[len-1]='a';
+	//	image = GL_FindImage(s,type);
+	//	if (image) {
+	//		override=0;
+	//		return image;
+	//	}
+	//}
+	//if (strcmp(name+len-4, ".jpg") && strcmp(name+len-4, ".cin") && !override)
+	//{	// Jpeg override crap
+	//	char s[MAX_QPATH];
+	//	char s_high[MAX_QPATH];
+	//	char *finger;
+
+	//	override=1;
+	//	strcpy(s,name);
+	//	s[len-3]='j'; s[len-2]='p'; s[len-1]='g';
+	//	// ==[
+	//	// jithighres
+	//	if(gl_highres_textures->value)
+	//	{
+	//		// here we add "hr4/" to the directory, like:
+	//		// textures/pball/whatever.jpg becomes:
+	//		// textures/pball/hr4/whatever.jpg
+	//		strcpy(s_high, s);
+	//		finger = strstr(s_high, ".jpg") + 4;
+	//		while(finger>s_high && *finger != '/')
+	//		{
+	//			*(finger+4) = *finger;
+	//			finger--;
+	//		}
+	//		
+	//		*(finger+1) = 'h'; *(finger+2) = 'r';
+	//		*(finger+3) = '4'; *(finger+4) = '/';
+	//		image = GL_FindImage(s_high,type);
+	//		if (image)
+	//		{
+	//			override=0;
+	//			// scale the texture appropriately (/4x each way)
+	//			if(!image->alreadyloaded)
+	//			{
+	//				image->width /= 4;
+	//				image->height /= 4;
+	//			}
+	//			
+	//			return image;
+	//		}
+	//	}
+	//	// ]==
+
+	//	// didn't find high res version (or highres_textures is off)
+	//	image = GL_FindImage(s,type);
+	//	if (image)
+	//	{
+	//		override=0;
+	//		return image;
+	//	}
+	//}
+	//
+	//override=0;
+	//if (!strcmp(name+len-4, ".pcx"))
+	//{
+	//	LoadPCX (name, &pic, &palette, &width, &height);
+	//	if (!pic)
+	//		return NULL; // ri.Sys_Error (ERR_DROP, "GL_FindImage: can't load %s", name);
+	//	image = GL_LoadPic (name, pic, width, height, type, 8);
+	//	image->alreadyloaded = false; // jithighres
+	//}
+	//else if (!strcmp(name+len-4, ".wal"))
+	//{
+	//	image = GL_LoadWal (name);
+	//	image->alreadyloaded = false; // jithighres
+	//}
+	//else if (!strcmp(name+len-4, ".tga"))
+	//{
+	//	LoadTGA (name, &pic, &width, &height);
+	//	if (!pic)
+	//		return NULL; // ri.Sys_Error (ERR_DROP, "GL_FindImage: can't load %s", name);
+	//	image = GL_LoadPic (name, pic, width, height, type, 32);
+	//	image->alreadyloaded = false; // jithighres
+	//}
+	//else if (!strcmp(name+len-4, ".cin")) // Heffo
+	//{										// WHY .cin files? because we can!
+	//	cinematics_t *newcin;
+
+	//	newcin = CIN_OpenCin(name);
+	//	if(!newcin)
+	//		return NULL;
+
+	//	pic = malloc(256*256*4);
+	//	memset(pic, 192, (256*256*4));
+
+	//	image = GL_LoadPic (name, pic, 256, 256, type, 32);
+
+	//	newcin->texnum = image->texnum;
+	//	image->is_cin = true;
+	//	image->alreadyloaded = false; // jithighres
+	//}
+	//else if (!strcmp(name+len-4, ".jpg")) // Heffo - JPEG support
+	//{
+	//	LoadJPG(name, &pic, &width, &height);
+	//	if(!pic)
+	//		return NULL;
+
+	//	image = GL_LoadPic(name, pic, width, height, type, 32);
+	//	image->alreadyloaded = false; // jithighres
+	//} else
+	//	return NULL;	//	ri.Sys_Error (ERR_DROP, "GL_FindImage: bad extension on: %s", name);
+
+
+
+	/*if (pic)
+		free(pic);
+	if (palette)
+		free(palette);
+
+	return image; */
+}
 
 /*
 ===============
 R_RegisterSkin
 ===============
 */
-struct image_s *R_RegisterSkin (char *name)
+struct image_s *R_RegisterSkin (const char *name)
 {
 	return GL_FindImage (name, it_skin);
 }
@@ -2574,6 +2726,7 @@ void GL_FreeUnusedImages (void)
 			CIN_FreeCin(image->texnum);
 
 		// free it
+		hash_delete(&gltextures_hash, image->name);
 		qglDeleteTextures (1, &image->texnum);
 		memset (image, 0, sizeof(*image));
 	}
@@ -2686,11 +2839,18 @@ void	GL_InitImages (void)
 	}*/
 }
 
+
+
 /*
 ===============
 GL_ShutdownImages
 ===============
 */
+void GL_ShutdownImage(void *data) // jithash -- called from hash free function
+{
+	// guess we don't need this since the image is deleted using the below function:
+}
+
 void	GL_ShutdownImages (void)
 {
 	int		i;
@@ -2705,9 +2865,19 @@ void	GL_ShutdownImages (void)
 		if(image->is_cin)
 			CIN_FreeCin(image->texnum);
 
+		if(image->rscript) // jitrscript
+			image->rscript->img_ptr = NULL;
+
 		// free it
 		qglDeleteTextures (1, &image->texnum);
+
 		memset (image, 0, sizeof(*image));
 	}
+
+	hash_table_clear(&gltextures_hash); // jithash
 }
 
+void init_image_hash_tables() // jithash
+{
+	hash_table_init(&gltextures_hash, 0x1FF, GL_ShutdownImage);
+}

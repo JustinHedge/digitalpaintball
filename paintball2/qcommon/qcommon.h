@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #define	VERSION		2.0 // jitversion (was 3.21)
-#define BUILD		9 // jitversion / jitbuild -- Paintball2 build number
-#define BUILD_S		"9" // jitversion, for strings.
+#define BUILD		10 // jitversion / jitbuild -- Paintball2 build number
+#define BUILD_S		"10" // jitversion, for strings.
 
 #define	BASEDIRNAME	"pball" // jit, was "baseq2"
 

@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qgl.h"
 
-#define	REF_VERSION	"PB2GL 0.09" // jitversion / jitbuild
+#define	REF_VERSION	"PB2GL 0.10" // jitversion / jitbuild
 
 // up / down
 #define	PITCH	0
@@ -302,12 +302,12 @@ int		Draw_GetPalette (void);
 
 void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight);
 
-struct image_s *R_RegisterSkin (char *name);
+struct image_s *R_RegisterSkin(const char *name);
 
-void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *height);
-image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t type, int bits);
-image_t	*GL_FindImage (char *name, imagetype_t type);
-void	GL_TextureMode( char *string );
+void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int *height);
+image_t *GL_LoadPic (const char *name, byte *pic, int width, int height, imagetype_t type, int bits);
+image_t	*GL_FindImage (const char *name, imagetype_t type);
+void	GL_TextureMode(const char *string );
 void	GL_ImageList_f (void);
 
 void	GL_InitImages (void);
@@ -484,8 +484,13 @@ void		GLimp_LogNewFrame( void );
 // #define BEEFQUAKERENDER // this must be off for 3dfx compatibilty (jit3dfx)
 
 #if 1
+//#define Z_Malloc(a) ri.Z_Malloc(a)
+//#define Z_Free(a) ri.Z_Free(a)
 #define malloc(a) ri.Z_Malloc(a) // jitmalloc
 #define free(a) ri.Z_Free(a)
+#else
+#define Z_Malloc(a) malloc(a)
+#define Z_Free(a) free(a)
 #endif
 
 #define RSCRIPT_STATIC 0 // jitrscript
@@ -496,4 +501,6 @@ void		GLimp_LogNewFrame( void );
 #define RSCRIPT_CONST  5 // jitrscript (for nonanimated rotations)
 
 extern unsigned char lightmap_gammatable[256]; // jitgamma
+
+void init_image_hash_tables(); // jithash
 

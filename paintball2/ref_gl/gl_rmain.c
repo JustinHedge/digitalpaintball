@@ -155,6 +155,8 @@ cvar_t	*gl_textshadow; // jittext
 cvar_t	*gl_brightness; // jit
 cvar_t	*gl_autobrightness; // jit
 cvar_t	*gl_showbbox; // jit / Guy
+cvar_t	*gl_hash_textures; // jithash
+cvar_t	*gl_free_unused_textures; // jitfreeunused
 //cvar_t	*gl_modulate;
 cvar_t	*gl_lightmapgamma; // jitgamma
 cvar_t	*cl_hudscale; // jithudscale
@@ -1420,7 +1422,7 @@ void R_Register( void )
 	gl_particle_att_b = ri.Cvar_Get("gl_particle_att_b", "0.0", CVAR_ARCHIVE);
 	gl_particle_att_c = ri.Cvar_Get("gl_particle_att_c", "0.01", CVAR_ARCHIVE);
 	gl_texture_saturation = ri.Cvar_Get("gl_texture_saturation", "1", CVAR_ARCHIVE); // jitsaturation
-	gl_highres_textures = ri.Cvar_Get("gl_highres_textures", "0", CVAR_ARCHIVE); // jithighres
+	gl_highres_textures = ri.Cvar_Get("gl_highres_textures", "1", CVAR_ARCHIVE); // jithighres
 	gl_lightmap_saturation = ri.Cvar_Get("gl_lightmap_saturation", "1", CVAR_ARCHIVE); // jitsaturation / jitlight
 	gl_anisotropy = ri.Cvar_Get("gl_anisotropy", "0", CVAR_ARCHIVE); // jitanisotropy
 	gl_overbright = ri.Cvar_Get("gl_overbright", "1", CVAR_ARCHIVE); // jitbright
@@ -1430,6 +1432,8 @@ void R_Register( void )
 //	gl_modulate = ri.Cvar_Get("gl_modulate", "1.6", CVAR_ARCHIVE); // jit, default to 1.6
 	gl_lightmapgamma = ri.Cvar_Get("gl_lightmapgamma", ".6", CVAR_ARCHIVE); // jitgamma
 	gl_textshadow = ri.Cvar_Get("gl_textshadow", "1", CVAR_ARCHIVE); // jittext
+	gl_hash_textures = ri.Cvar_Get("gl_hash_textures", "1", CVAR_ARCHIVE); // jithash
+	gl_free_unused_textures = ri.Cvar_Get("gl_free_unused_textures", "1", CVAR_ARCHIVE); // jitfreeunused
 	
 	cl_hudscale = ri.Cvar_Get("cl_hudscale", "2", CVAR_ARCHIVE); // jithudscale
 
@@ -2302,10 +2306,10 @@ void R_DrawBeam( entity_t *e )
 //===================================================================
 
 
-void	R_BeginRegistration (char *map);
-struct model_s	*R_RegisterModel (char *name);
-struct image_s	*R_RegisterSkin (char *name);
-void R_SetSky (char *name, float rotate, vec3_t axis);
+void	R_BeginRegistration (const char *map);
+struct model_s	*R_RegisterModel (const char *name);
+struct image_s	*R_RegisterSkin (const char *name);
+void R_SetSky (const char *name, float rotate, vec3_t axis);
 void	R_EndRegistration (void);
 
 void	R_RenderFrame (refdef_t *fd);

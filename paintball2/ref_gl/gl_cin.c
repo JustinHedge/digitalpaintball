@@ -43,7 +43,7 @@ cblock_t Huff1Decompress (cblock_t in);
 byte *CIN_ReadNextFrame (void);
 void CIN_RunCinematic (void);
 qboolean CIN_DrawCinematic (void);
-void CIN_PlayCinematic (char *arg);
+void CIN_PlayCinematic (const char *arg);
 void CIN_StartCinematic (void);
 
 cinematics_t	*cin;
@@ -472,49 +472,49 @@ CIN_PlayCinematic
  
 ==================
 */
-void CIN_PlayCinematic (char *arg)
+void CIN_PlayCinematic(const char *arg)
 {
- int  size;
- 
- cin->frame = 0;
- 
- size = ri.FS_LoadFile(arg, (void **)&cin->cinematic_file);
- if(size == -1)
- {
-  ri.Sys_Error (ERR_DROP, "Cinematic %s not found.\n", arg);
-  cin->time = 0; // done
-  return;
- }
- 
- cin->offset = cin->cinematic_file;
- 
- cin->width = GetInteger(cin->offset); cin->offset += 4;
- cin->height = GetInteger(cin->offset); cin->offset += 4;
- cin->s_rate = GetInteger(cin->offset); cin->offset += 4;
- cin->s_width = GetInteger(cin->offset); cin->offset += 4;
- cin->s_channels = GetInteger(cin->offset); cin->offset += 4;
- 
- for( cin->p2_width = 2 ; cin->p2_width <= cin->width ; cin->p2_width <<= 1 );
- cin->p2_width >>= 1;
- 
- if(cin->p2_width >= MAX_SCALE_SIZE)
- {
-  cin->p2_width = MAX_SCALE_SIZE;
- }
- 
- for( cin->p2_height = 2 ; cin->p2_height <= cin->height ; cin->p2_height <<= 1 );
- cin->p2_height >>= 1;
- 
- if(cin->p2_height >= MAX_SCALE_SIZE)
- {
-  cin->p2_height = MAX_SCALE_SIZE;
- }
- 
- Huff1TableInit ();
- 
- cin->frame = 0;
- cin->pic = CIN_ReadNextFrame ();
- cin->time = Sys_Milliseconds();
+	int  size;
+
+	cin->frame = 0;
+
+	size = ri.FS_LoadFile(arg, (void **)&cin->cinematic_file);
+	if(size == -1)
+	{
+		ri.Sys_Error (ERR_DROP, "Cinematic %s not found.\n", arg);
+		cin->time = 0; // done
+		return;
+	}
+
+	cin->offset = cin->cinematic_file;
+
+	cin->width = GetInteger(cin->offset); cin->offset += 4;
+	cin->height = GetInteger(cin->offset); cin->offset += 4;
+	cin->s_rate = GetInteger(cin->offset); cin->offset += 4;
+	cin->s_width = GetInteger(cin->offset); cin->offset += 4;
+	cin->s_channels = GetInteger(cin->offset); cin->offset += 4;
+
+	for( cin->p2_width = 2 ; cin->p2_width <= cin->width ; cin->p2_width <<= 1 );
+	cin->p2_width >>= 1;
+
+	if(cin->p2_width >= MAX_SCALE_SIZE)
+	{
+		cin->p2_width = MAX_SCALE_SIZE;
+	}
+
+	for( cin->p2_height = 2 ; cin->p2_height <= cin->height ; cin->p2_height <<= 1 );
+	cin->p2_height >>= 1;
+
+	if(cin->p2_height >= MAX_SCALE_SIZE)
+	{
+		cin->p2_height = MAX_SCALE_SIZE;
+	}
+
+	Huff1TableInit ();
+
+	cin->frame = 0;
+	cin->pic = CIN_ReadNextFrame ();
+	cin->time = Sys_Milliseconds();
 }
 
 /*
@@ -539,7 +539,7 @@ CIN_OpenCin
 ==================
 */
 cinematics_t cinpool[8];
-cinematics_t *CIN_OpenCin (char *name)
+cinematics_t *CIN_OpenCin(const char *name)
 {
 	int i;
 

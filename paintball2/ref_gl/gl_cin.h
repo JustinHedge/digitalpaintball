@@ -35,7 +35,7 @@ typedef struct
 
 } cinematics_t;
 
-cinematics_t *CIN_OpenCin (char *name);
+cinematics_t *CIN_OpenCin (const char *name);
 void CIN_ProcessCins(void);
 void CIN_FreeCin (int texnum);
 

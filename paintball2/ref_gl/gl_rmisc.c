@@ -91,9 +91,9 @@ void R_InitNoTexture (void) /// jit, renamed
 			notex[y][x][2] = missing_texture[x][y]*8;  // jit
 			notex[y][x][3] = 255;*/
 			// jit: tweaked to look like quake3's missing textures
-			notex[y][x][0] = (1+missing_texture[x][y])*127;
-			notex[y][x][1] = (1+missing_texture[x][y])*127;
-			notex[y][x][2] = (1+missing_texture[x][y])*127;
+			notex[y][x][0] = (1+missing_texture[x][y]*2)*85;
+			notex[y][x][1] = (1+missing_texture[x][y]*2)*85;
+			notex[y][x][2] = (1+missing_texture[x][y]*2)*85;
 			notex[y][x][3] = 255;
 		}
 	}

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 
 image_t		*i_conback;
-image_t		*i_inventory;
+//image_t		*i_inventory;
 image_t		*i_net;
 image_t		*i_pause;
 image_t		*i_loading;
@@ -59,7 +59,7 @@ image_t		*i_cursor_text;
 void CL_InitImages()
 {
 	i_conback = re.DrawFindPic("conback");
-	i_inventory = re.DrawFindPic("inventory");
+	//i_inventory = re.DrawFindPic("inventory");
 	i_net = re.DrawFindPic("net");
 	i_pause = re.DrawFindPic("pause");
 	i_loading = re.DrawFindPic("loading");

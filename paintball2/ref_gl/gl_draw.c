@@ -61,6 +61,17 @@ void Draw_InitLocal (void)
 		Sys_Error("Invalid or missing char_colors.tga.");
 	}
 }
+void Draw_InitLocalOld (void) // jitest
+{
+	int width, height;
+	void LoadTGA (char *name, byte **pic, int *width, int *height);
+	// load console characters (don't bilerp characters)
+	draw_chars = GL_FindImage ("pics/conchars.pcx", it_pic);
+	GL_Bind( draw_chars->texnum );
+	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	LoadTGA("pics/char_colors.tga", &char_colors, &width, &height); // jittext
+}
 
 /*
 ================
@@ -331,9 +342,9 @@ image_t	*Draw_FindPic (char *name)
 	else
 		gl = GL_FindImage (name+1, it_pic);
 
-	if (gl)
+	/*if (gl)
 		if (gl != r_notexture)
-			strcpy(gl->bare_name,name);
+			strcpy(gl->bare_name,name);*/
 
 	if(!gl) // jit -- remove "can't find pic" spam
 		return r_notexture;
@@ -386,9 +397,10 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 		GLSTATE_DISABLE_ALPHATEST
 	}
 
-	rs = RS_FindScript(gl->name); // jitrscript
+	/*rs = RS_FindScript(gl->name); // jitrscript
 	if(!rs)
-		rs = RS_FindScript(gl->bare_name);
+		rs = RS_FindScript(gl->bare_name);*/
+	rs = gl->rscript; // jitrscript
 
 #ifdef BEEFQUAKERENDER // jit3dfx
 	VA_SetElem2(vert_array[0],x, y);

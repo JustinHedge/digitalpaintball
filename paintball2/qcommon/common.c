@@ -1418,7 +1418,7 @@ void Qcommon_Init (int argc, char **argv)
 {
 	char *s;
 
-	if (setjmp (abortframe) )
+	if (setjmp (abortframe))
 		Sys_Error ("Error during initialization");
 
 	z_chain.next = z_chain.prev = &z_chain;

@@ -89,6 +89,7 @@ typedef struct rscript_s {
 	rs_stage_t				*stage;		// first rendering stage
 	struct rscript_s		*next;		// next script in linked list
 
+	image_t					*img_ptr;	// jitrscript -- pointer back to the image using the script
 } rscript_t;
 
 typedef struct rs_scriptkey_s

@@ -561,8 +561,12 @@ void CL_SendCmd (void)
 
 		if (cl.time>ppscount)
 		{
+			//static int temp = 0;
+			//temp++;
 			Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);
-			ppscount=cl.time+1000/ppsstate;
+			ppscount = cl.time + 1000/ppsstate;
+			//if(temp>100)
+			//	temp = 0; // jitodo / jitest (for breakpoint)
 		}
 		else
 		{

@@ -1315,6 +1315,7 @@ void R_EndRegistration (void)
 {
 	int		i;
 	model_t	*mod;
+	extern cvar_t *gl_free_unused_textures; // jitfreeunused
 
 	for (i=0, mod=mod_known ; i<mod_numknown ; i++, mod++)
 	{
@@ -1327,7 +1328,8 @@ void R_EndRegistration (void)
 	}
 
 	RS_UpdateRegistration();
-	GL_FreeUnusedImages ();
+	if(gl_free_unused_textures->value) // jitfreeunused
+		GL_FreeUnusedImages ();
 }
 
 

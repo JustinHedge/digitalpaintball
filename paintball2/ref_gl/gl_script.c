@@ -66,6 +66,9 @@ void RS_ResetScript (rscript_t *rs)
 {
 	rs_stage_t		*stage = rs->stage, *tmp_stage;
 	anim_stage_t	*anim, *tmp_anim;
+	
+	if(rs->img_ptr) // jitrscript
+		rs->img_ptr->rscript = NULL;
 
 	rs->name[0] = 0;
 	
@@ -194,17 +197,18 @@ rs_stage_t *RS_NewStage (rscript_t *rs)
 		stage = stage->next;
 	}
 
-	/*jit stage->anim_stage = NULL;
-	stage->next = NULL;
-	stage->last_anim = NULL;
+	///*jit stage->anim_stage = NULL;
+	//stage->next = NULL;
+	//stage->last_anim = NULL;
 
-	RS_ClearStage (stage); 
-	*/
+	//RS_ClearStage (stage); 
+	//*/
 
 	// jitrscript:
 	memset(stage, 0, sizeof(rs_stage_t)); // clear EVERYTHING
 	stage->lightmap = true;
-	strncpy (stage->name, "pics/noimage.tga", sizeof(stage->name));
+	//strncpy (stage->name, "pics/noimage.tga", sizeof(stage->name));
+	strncpy (stage->name, "pics/noimage", sizeof(stage->name));
 
 	return stage;
 }
@@ -669,7 +673,10 @@ void RS_LoadScript(char *script)
 		if (!_stricmp (token, "/*") || !_stricmp (token, "["))
 			ignored++;
 		else if (!_stricmp (token, "*/") || !_stricmp (token, "]"))
+		{
 			ignored--;
+			token = strtok (NULL, TOK_DELIMINATORS); // jitrscript (don't make rscripts named "*/")
+		}
 
 		if (!inscript && !ignored) 
 		{
@@ -678,10 +685,20 @@ void RS_LoadScript(char *script)
 			} else {
 				rs = RS_FindScript(token);
 
-				if (rs)
-					RS_FreeScript(rs);
+				if (rs) {
+					image_t *image;
 
-				rs = RS_NewScript(token);
+					// jitrscript: if we have a texture pointing to this, update the pointer!
+					image = rs->img_ptr;
+
+					RS_FreeScript(rs);
+					rs = RS_NewScript(token);
+					
+					if(image)
+						image->rscript = rs;
+				} else {
+					rs = RS_NewScript(token);
+				}
 			}
 		} else if (inscript && !ignored) {
 			if (!_stricmp(token, "}")) {

@@ -164,7 +164,7 @@ typedef enum
 typedef struct image_s
 {
 	char	name[MAX_QPATH];			// game path, including extension
-	char	bare_name[MAX_QPATH];		// filename only, as called when searching
+	//char	bare_name[MAX_QPATH];		// filename only, as called when searching
 	imagetype_t	type;
 	int		width, height;				// source image
 	int		upload_width, upload_height;	// after power of two and picmip
@@ -178,9 +178,9 @@ typedef struct image_s
 	qboolean paletted;
 
 	qboolean is_cin;					// Heffo - To identify a cin texture's image_t
-	qboolean alreadyloaded;				// jithighres
+	//qboolean alreadyloaded;				// jithighres
+	struct rscript_s *rscript; // jitrscript
 } image_t;
-
 
 #define	API_VERSION		3
 

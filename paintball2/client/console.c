@@ -730,7 +730,7 @@ void Con_DrawConsole (float frac)
 		//re.DrawChar (viddef.width-44*hudscale+x*8*hudscale, lines-12*hudscale, 128 + version[x] );
 		re.DrawChar (viddef.width-168*hudscale+x*8*hudscale, lines-12*hudscale, 128 + version[x] ); // jit
 	*/
-	re.DrawString(viddef.width-168*hudscale, lines-12*hudscale, version);
+	re.DrawString(viddef.width-176*hudscale, lines-12*hudscale, version);
 
 	if(cls.key_dest == key_menu)
 		return; // jitmenu

@@ -591,12 +591,12 @@ qboolean GLimp_InitGL (void)
 	RS_ScanPathForScripts(ri.FS_Gamedir());		// load all found scripts
 
 	// Vertex arrays
-	qglEnableClientState (GL_VERTEX_ARRAY);
+	/*qglEnableClientState (GL_VERTEX_ARRAY);
 	qglEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
 	qglTexCoordPointer (2, GL_FLOAT, sizeof(tex_array[0]), tex_array[0]);
 	qglVertexPointer (3, GL_FLOAT, sizeof(vert_array[0]), vert_array[0]);
-	qglColorPointer (4, GL_FLOAT, sizeof(col_array[0]), col_array[0]);
+	qglColorPointer (4, GL_FLOAT, sizeof(col_array[0]), col_array[0]);*/
 
 	
 	/*
@@ -610,6 +610,8 @@ qboolean GLimp_InitGL (void)
 
 	if (gl_state.gammaramp && vid_gamma_hw->value) // jitgamma
 		vid_gamma->modified = true;
+
+	init_image_hash_tables(); // jithash
 
 	return true;
 
