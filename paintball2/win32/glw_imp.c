@@ -64,7 +64,7 @@ static qboolean VerifyDriver( void )
 /*
 ** VID_CreateWindow
 */
-#define	WINDOW_CLASS_NAME	"Paintball II" // jit
+#define	WINDOW_CLASS_NAME	"Paintball 2" // jit
 
 qboolean VID_CreateWindow( int width, int height, qboolean fullscreen )
 {
