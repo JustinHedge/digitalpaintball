@@ -39,6 +39,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "console.h"
 #include "cdaudio.h"
 
+// ===
+// jitmultithreading
+#ifdef WIN32 
+#include "../win32/pthread.h"
+#include "../win32/semaphore.h"
+#include "../win32/sched.h"
+#else
+#include <pthread.h>
+#include <semaphore.h>
+#include <sched.h>
+#endif
+// ===
+
+
 //=============================================================================
 
 typedef struct

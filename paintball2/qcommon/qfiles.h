@@ -33,6 +33,10 @@ The .pak files are just a linear collapse of a directory tree
 
 #define IDPAKHEADER		(('K'<<24)+('C'<<16)+('A'<<8)+'P')
 
+#ifdef WIN32 // jitfilemap
+//#define USEFILEMAP 1
+#endif
+
 typedef struct
 {
 	char	name[56];

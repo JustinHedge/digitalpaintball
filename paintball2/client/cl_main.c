@@ -904,7 +904,11 @@ void CL_ParseStatusMessage (void)
 CL_PingServers_f
 =================
 */
-void CL_PingServers_f (void)
+// jitodo -- make this multithreaded and add some time between each server request.
+static qboolean refreshing = false;
+static pthread_t pingthread;
+
+void *CL_PingServers_multithreaded (void *ptr) // jitmultithreading
 {
 	netadr_t	adr;
 	char		name[64]; // jitserverlist - increased
@@ -913,7 +917,7 @@ void CL_PingServers_f (void)
 	FILE		*serverlist; // jitserverlist / jitmenu
 	extern int	m_serverPingSartTime;
 
-	NET_Config (true);		// allow remote
+	NET_Config(true);		// allow remote
 
 	// send a broadcast packet
 	Com_Printf ("pinging broadcast...\n");
@@ -923,7 +927,7 @@ void CL_PingServers_f (void)
 	{
 		adr.type = NA_BROADCAST;
 		adr.port = BigShort(PORT_SERVER);
-		Netchan_OutOfBandPrint (NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
+		Netchan_OutOfBandPrint(NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
 	}
 
 	noipx = Cvar_Get ("noipx", "0", CVAR_NOSET);
@@ -941,12 +945,16 @@ void CL_PingServers_f (void)
 
 	if(serverlist)
 	{
+		char buff[256];
+
 		while(!feof(serverlist))
 		{
 			fscanf(serverlist, "%s", &name);
+
 			if(name && *name)
 			{
 				Com_Printf ("pinging %s...\n", name);
+
 				if (!NET_StringToAdr (name, &adr))
 				{
 					Com_Printf ("Bad address: %s\n", name);
@@ -956,15 +964,29 @@ void CL_PingServers_f (void)
 				if (!adr.port)
 					adr.port = BigShort(PORT_SERVER);
 
-				Netchan_OutOfBandPrint (NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
+				Netchan_OutOfBandPrint(NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
 
 				// jitserverlist -- add to list and get ping request time:
-				//sprintf(buff, "%s unknown 0/0", name);
-				//M_AddToServerList(adr, buff, true);
+				sprintf(buff, "%s --- 0/0", name);
+				M_AddToServerList(adr, buff, true);
 			}
+
+			Sleep(16);
 		}
 
 		fclose(serverlist);
+	}
+
+	refreshing = false;
+	return NULL;
+}
+
+void CL_PingServers_f (void) // jitmultithreading
+{
+	if (!refreshing)
+	{
+		refreshing = true;
+		pthread_create(&pingthread, NULL, CL_PingServers_multithreaded, NULL);
 	}
 }
 
@@ -980,14 +1002,15 @@ void CL_Skins_f (void)
 {
 	int		i;
 
-	for (i=0 ; i<MAX_CLIENTS ; i++)
+	for (i=0; i<MAX_CLIENTS; i++)
 	{
 		if (!cl.configstrings[CS_PLAYERSKINS+i][0])
 			continue;
-		Com_Printf ("client %i: %s\n", i, cl.configstrings[CS_PLAYERSKINS+i]); 
-		SCR_UpdateScreen ();
-		Sys_SendKeyEvents ();	// pump message loop
-		CL_ParseClientinfo (i);
+
+		Com_Printf("client %i: %s\n", i, cl.configstrings[CS_PLAYERSKINS+i]); 
+		SCR_UpdateScreen();
+		Sys_SendKeyEvents();	// pump message loop
+		CL_ParseClientinfo(i);
 	}
 }
 
@@ -1601,9 +1624,9 @@ void CL_InitLocal (void)
 	memset(&cls, 0, sizeof(client_static_t)); // jitdownload -- didn't like that this wasn't initialized
 
 	cls.state = ca_disconnected;
-	cls.realtime = Sys_Milliseconds ();
+	cls.realtime = Sys_Milliseconds();
 
-	CL_InitInput ();
+	CL_InitInput();
 
 	// jitmenu - adr cvars removed
 
@@ -1649,6 +1672,7 @@ void CL_InitLocal (void)
 
 	serverlist_source =	Cvar_Get("serverlist_source", 
 		"http://www.planetquake.com/digitalpaint/servers.txt", CVAR_ARCHIVE); // jitserverlist / jitmenu
+
 	// ===
 
 	cl_run =			Cvar_Get("cl_run", "1", CVAR_ARCHIVE); // jit, default to 1

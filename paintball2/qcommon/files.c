@@ -19,7 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "qcommon.h"
-
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include <io.h>
 
 // define this to dissalow any data but the demo pak file
@@ -242,6 +244,7 @@ int FS_FOpenFile (const char *filename, FILE **file)
 		// look through all the pak file elements
 			pak = search->pack;
 			for (i=0 ; i<pak->numfiles ; i++)
+			{
 				if (!Q_strcasecmp (pak->files[i].name, filename))
 				{	// found it!
 					file_from_pak = 1;
@@ -253,6 +256,7 @@ int FS_FOpenFile (const char *filename, FILE **file)
 					fseek (*file, pak->files[i].filepos, SEEK_SET);
 					return pak->files[i].filelen;
 				}
+			}
 		}
 		else
 		{		
@@ -393,8 +397,54 @@ Filename are reletive to the quake search path
 a null buffer will just return the file length without loading
 ============
 */
+
 int FS_LoadFile (const char *path, void **buffer)
 {
+// ===
+// jitfilemap
+#if USEFILEMAP
+	HANDLE hFileMap;
+	HANDLE hFile;
+	int len;
+	char fullpath[_MAX_PATH];
+
+	_makepath(fullpath, NULL, FS_Gamedir(), path, NULL);
+	hFile = CreateFile(fullpath, GENERIC_READ, FILE_SHARE_READ, NULL,
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	if (!hFile || hFile == INVALID_HANDLE_VALUE)
+	{
+		if (buffer)
+			*buffer = NULL;
+
+		return -1;
+	}
+
+	len = GetFileSize(hFile, NULL);
+
+	if (!buffer)
+	{
+		CloseHandle(hFile);
+		return len;
+	}
+
+	hFileMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+
+	if (!hFileMap || hFileMap == INVALID_HANDLE_VALUE)
+	{
+		// probably won't ever happen, but just in case.
+		*buffer = NULL;
+		CloseHandle(hFile);
+		return -1;
+	}
+
+	*buffer = MapViewOfFile(hFileMap, FILE_MAP_READ, 0, 0, 0);
+	CloseHandle(hFileMap);
+	CloseHandle(hFile);
+
+	return len;
+
+#else // linux lacks some of Windows' cooler features. ;)
 	FILE	*h;
 	byte	*buf;
 	int		len;
@@ -402,7 +452,7 @@ int FS_LoadFile (const char *path, void **buffer)
 	buf = NULL;	// quiet compiler warning
 
 // look for it in the filesystem or pack files
-	len = FS_FOpenFile (path, &h);
+	len = FS_FOpenFile(path, &h);
 	if (!h)
 	{
 		if (buffer)
@@ -424,6 +474,9 @@ int FS_LoadFile (const char *path, void **buffer)
 	fclose (h);
 
 	return len;
+#endif
+// jitfilemap
+// ===
 }
 
 
@@ -434,7 +487,11 @@ FS_FreeFile
 */
 void FS_FreeFile (void *buffer)
 {
-	Z_Free (buffer);
+#if (defined(WIN32) && USEFILEMAP) // jitest
+	UnmapViewOfFile(buffer);
+#else
+	Z_Free(buffer);
+#endif
 }
 
 /*

@@ -41,6 +41,7 @@ PFNGLGETFINALCOMBINERINPUTPARAMETERIVNVPROC		qglGetFinalCombinerInputParameteriv
 //****************************************************************************
 
 cvar_t	*gl_debug; // jit
+cvar_t	*gl_sgis_generate_mipmap;
 
 void R_Clear (void);
 
@@ -679,7 +680,7 @@ R_DrawParticles
 */
 void R_DrawParticles (void)
 {
-	if ( gl_ext_pointparameters->value && qglPointParameterfEXT )
+	if (gl_ext_pointparameters->value && qglPointParameterfEXT)
 	{
 		int i;
 		unsigned char color[4];
@@ -715,102 +716,6 @@ void R_DrawParticles (void)
 	}
 }
 
-/* jit -- MrG's old particle system -- replaced with the original due to flicker issues.
-void R_DrawParticles (void)
-{
-	const particle_t *p;
-	int				i;//,k;
-//	vec3_t			up, right;
-	float			scale, r,g,b;
-
-#if 0 // jit, disabled new particles
-		qglDepthMask( GL_FALSE );		// no z buffering
-		GLSTATE_ENABLE_BLEND
-		GL_TexEnv( GL_MODULATE );
-		qglEnable( GL_TEXTURE_2D );
-		qglBlendFunc   (GL_SRC_ALPHA, GL_ONE);	
-		qglEnableClientState( GL_COLOR_ARRAY );
-
-		GL_Bind(r_particletexture->texnum);
-
-		VectorScale (vup, 1.5, up);
-		VectorScale (vright, 1.5, right);
-
-		for ( p = r_newrefdef.particles, i=0, k=0 ; i < r_newrefdef.num_particles; i++,p++,k+=4)
-		{
-			// hack a scale up to keep particles from disapearing
-			scale = ( p->origin[0] - r_origin[0] ) * vpn[0] + 
-				    ( p->origin[1] - r_origin[1] ) * vpn[1] +
-				    ( p->origin[2] - r_origin[2] ) * vpn[2];
-
-			scale = (scale < 20) ? 1 : 1 + scale * 0.0004;
-
-			r = d_8to24tablef[p->color & 0xFF][0];
-			g = d_8to24tablef[p->color & 0xFF][1];
-			b = d_8to24tablef[p->color & 0xFF][2];
-
-			VA_SetElem2(tex_array[k],0,0);
-			VA_SetElem4(col_array[k],r,g,b,p->alpha);
-			VA_SetElem3(vert_array[k],p->origin[0] - (up[0]*scale) - (right[0]*scale),p->origin[1] - (up[1]*scale) - (right[1]*scale),p->origin[2] - (up[2]*scale) - (right[2]*scale));
-
-			VA_SetElem2(tex_array[k+1],1,0);
-			VA_SetElem4(col_array[k+1],r,g,b,p->alpha);
-			VA_SetElem3(vert_array[k+1],p->origin[0] + (up[0]*scale) - (right[0]*scale),p->origin[1] + (up[1]*scale) - (right[1]*scale),p->origin[2] + (up[2]*scale) - (right[2]*scale));
-
-			VA_SetElem2(tex_array[k+2],1,1);
-			VA_SetElem4(col_array[k+2],r,g,b,p->alpha);
-			VA_SetElem3(vert_array[k+2],p->origin[0] + (right[0]*scale) + (up[0]*scale),p->origin[1] + (right[1]*scale) + (up[1]*scale),p->origin[2] + (right[2]*scale) + (up[2]*scale));
-
-			VA_SetElem2(tex_array[k+3],0,1);
-			VA_SetElem4(col_array[k+3],r,g,b,p->alpha);
-			VA_SetElem3(vert_array[k+3],p->origin[0] + (right[0]*scale) - (up[0]*scale),p->origin[1] + (right[1]*scale) - (up[1]*scale),p->origin[2] + (right[2]*scale) - (up[2]*scale));
-		}
-
-		qglDrawArrays(GL_QUADS,0,k);
-		GLSTATE_DISABLE_BLEND
-		qglColor3f(1,1,1);
-		qglDepthMask(1);		// back to normal Z buffering
-		GL_TexEnv(GL_REPLACE);
-		qglBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		qglDisableClientState(GL_COLOR_ARRAY);
-
-#else
-
-	if ( gl_ext_pointparameters->value && qglPointParameterfEXT )
-	{
-		qglDepthMask( GL_FALSE );
-		GLSTATE_ENABLE_BLEND
-		qglDisable( GL_TEXTURE_2D );
-
-		qglPointSize( gl_particle_size->value );
-
-		qglEnableClientState( GL_COLOR_ARRAY );
-		qglDisableClientState( GL_TEXTURE_COORD_ARRAY );
-		for ( i = 0, p = r_newrefdef.particles; i < r_newrefdef.num_particles; i++, p++ )
-		{
-			r = ( d_8to24table[p->color & 0xFF] ) & 0xFF;
-			g = ( d_8to24table[p->color & 0xFF] >> 8 ) & 0xFF;
-			b = ( d_8to24table[p->color & 0xFF] >> 16 ) & 0xFF;
-
-			r*=0.003921568627450980392156862745098f;
-			g*=0.003921568627450980392156862745098f;
-			b*=0.003921568627450980392156862745098f;
-
-			VA_SetElem4(col_array[i],r,g,b,p->alpha);
-			VA_SetElem3(vert_array[i],p->origin[0],p->origin[1],p->origin[2]);
-		}
-		qglDrawArrays(GL_POINTS,0,r_newrefdef.num_particles);
-		qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
-		qglDisableClientState( GL_COLOR_ARRAY );
-
-		GLSTATE_DISABLE_BLEND
-		qglDepthMask( GL_TRUE );
-		qglEnable( GL_TEXTURE_2D );
-
-	}
-#endif
-}
-*/
 
 /*
 ============
@@ -822,9 +727,6 @@ void R_PolyBlend (void)
 	// === 
 	// jit
 
-	// removed these so ppl can't cheat:
-//	if (!gl_polyblend->value)
-//		return;
 	static float autobright=0;
 	vec3_t shadelight;
 	float shadeavg;
@@ -1134,9 +1036,18 @@ void R_Clear (void)
 	if (gl_ztrick->value)
 	{
 		static int trickframe;
+		int clearbits = 0;
 
 		if (gl_clear->value || fogenabled) // jitfog
-			qglClear (GL_COLOR_BUFFER_BIT);
+			clearbits = GL_COLOR_BUFFER_BIT;
+
+		if (have_stencil && gl_shadows->value == 2) // Stencil shadows - MrG
+		{
+			qglClearStencil(0);
+			clearbits |= GL_STENCIL_BUFFER_BIT;
+		}
+
+		qglClear(clearbits);
 
 		trickframe++;
 
@@ -1155,10 +1066,18 @@ void R_Clear (void)
 	}
 	else
 	{
+		int clearbits = GL_DEPTH_BUFFER_BIT;
+
 		if (gl_clear->value || fogenabled) // jitfog
-			qglClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		else
-			qglClear(GL_DEPTH_BUFFER_BIT);
+			clearbits |= GL_COLOR_BUFFER_BIT;
+	
+		if (have_stencil && gl_shadows->value == 2) // Stencil shadows - MrG
+		{
+			qglClearStencil(0);
+			clearbits |= GL_STENCIL_BUFFER_BIT;
+		}
+
+		qglClear(clearbits);
 
 		gldepthmin = 0;
 		gldepthmax = 1;
@@ -1166,13 +1085,6 @@ void R_Clear (void)
 	}
 
 	qglDepthRange(gldepthmin, gldepthmax);
-
-	// Stencil shadows - MrG
-	if (have_stencil && gl_shadows->value == 2)
-	{
-		qglClearStencil(0);
-		qglClear(GL_STENCIL_BUFFER_BIT);
-	}
 }
 
 /*
@@ -1309,8 +1221,8 @@ void R_SetGL2D()
 		qglBindTexture(gl_state.tex_rectangle, blurtex); // jitblur
 		//qglCopyTexImage2D(GL_TEXTURE_RECTANGLE_NV,0,GL_RGB,0,0,vid.width,vid.height,0);
 		qglCopyTexImage2D(gl_state.tex_rectangle,0,GL_RGB,0,0,vid.width,vid.height,0); // jitblur
-		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 	GLSTATE_DISABLE_BLEND
 	GLSTATE_ENABLE_ALPHATEST
@@ -1489,38 +1401,38 @@ void R_Register( void )
 	gl_polyblend = ri.Cvar_Get ("gl_polyblend", "1", 0);
 	gl_flashblend = ri.Cvar_Get ("gl_flashblend", "0", 0);
 	gl_playermip = ri.Cvar_Get ("gl_playermip", "0", 0);
-	gl_monolightmap = ri.Cvar_Get( "gl_monolightmap", "0", 0 );
-	gl_driver = ri.Cvar_Get( "gl_driver", "opengl32", CVAR_ARCHIVE );
-	gl_texturemode = ri.Cvar_Get( "gl_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE ); // jit
-	gl_texturealphamode = ri.Cvar_Get( "gl_texturealphamode", "default", CVAR_ARCHIVE );
-	gl_texturesolidmode = ri.Cvar_Get( "gl_texturesolidmode", "default", CVAR_ARCHIVE );
-	gl_lockpvs = ri.Cvar_Get( "gl_lockpvs", "0", 0 );
+	gl_monolightmap = ri.Cvar_Get("gl_monolightmap", "0", 0);
+	gl_driver = ri.Cvar_Get("gl_driver", "opengl32", CVAR_ARCHIVE);
+	gl_texturemode = ri.Cvar_Get("gl_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE); // jit
+	gl_texturealphamode = ri.Cvar_Get("gl_texturealphamode", "default", CVAR_ARCHIVE);
+	gl_texturesolidmode = ri.Cvar_Get("gl_texturesolidmode", "default", CVAR_ARCHIVE);
+	gl_lockpvs = ri.Cvar_Get("gl_lockpvs", "0", 0);
 
-	gl_vertex_arrays = ri.Cvar_Get( "gl_vertex_arrays", "0", CVAR_ARCHIVE );
+	gl_vertex_arrays = ri.Cvar_Get("gl_vertex_arrays", "0", CVAR_ARCHIVE);
 
-	gl_ext_multitexture = ri.Cvar_Get( "gl_ext_multitexture", "1", CVAR_ARCHIVE );
-	gl_ext_pointparameters = ri.Cvar_Get( "gl_ext_pointparameters", "1", CVAR_ARCHIVE );
-	gl_ext_compiled_vertex_array = ri.Cvar_Get( "gl_ext_compiled_vertex_array", "1", CVAR_ARCHIVE );
-	gl_ext_texture_compression = ri.Cvar_Get( "gl_ext_texture_compression", "0", CVAR_ARCHIVE ); // Heffo - ARB Texture Compression
+	gl_ext_multitexture = ri.Cvar_Get("gl_ext_multitexture", "1", CVAR_ARCHIVE);
+	gl_ext_pointparameters = ri.Cvar_Get("gl_ext_pointparameters", "1", CVAR_ARCHIVE);
+	gl_ext_compiled_vertex_array = ri.Cvar_Get("gl_ext_compiled_vertex_array", "1", CVAR_ARCHIVE);
+	gl_ext_texture_compression = ri.Cvar_Get("gl_ext_texture_compression", "0", CVAR_ARCHIVE); // Heffo - ARB Texture Compression
 
-	gl_screenshot_jpeg = ri.Cvar_Get( "gl_screenshot_jpeg", "1", CVAR_ARCHIVE );					// Heffo - JPEG Screenshots
-	gl_screenshot_jpeg_quality = ri.Cvar_Get( "gl_screenshot_jpeg_quality", "85", CVAR_ARCHIVE );	// Heffo - JPEG Screenshots
+	gl_screenshot_jpeg = ri.Cvar_Get("gl_screenshot_jpeg", "1", CVAR_ARCHIVE);					// Heffo - JPEG Screenshots
+	gl_screenshot_jpeg_quality = ri.Cvar_Get("gl_screenshot_jpeg_quality", "85", CVAR_ARCHIVE);	// Heffo - JPEG Screenshots
 
-	gl_stainmaps = ri.Cvar_Get( "gl_stainmaps", "1", CVAR_ARCHIVE );	// stainmaps
-	gl_motionblur = ri.Cvar_Get( "gl_motionblur", "0", CVAR_ARCHIVE );	// motionblur
+	gl_stainmaps = ri.Cvar_Get("gl_stainmaps", "1", CVAR_ARCHIVE);	// stainmaps
+	gl_motionblur = ri.Cvar_Get("gl_motionblur", "0", CVAR_ARCHIVE);	// motionblur
 	vid_gamma_hw = ri.Cvar_Get("vid_gamma_hw", "0", CVAR_ARCHIVE);		// hardware gamma
 
-	gl_drawbuffer = ri.Cvar_Get( "gl_drawbuffer", "GL_BACK", 0 );
-	gl_swapinterval = ri.Cvar_Get( "gl_swapinterval", "1", CVAR_ARCHIVE );
+	gl_drawbuffer = ri.Cvar_Get("gl_drawbuffer", "GL_BACK", 0);
+	gl_swapinterval = ri.Cvar_Get("gl_swapinterval", "1", CVAR_ARCHIVE);
 
-	gl_saturatelighting = ri.Cvar_Get( "gl_saturatelighting", "0", 0 );
+	gl_saturatelighting = ri.Cvar_Get("gl_saturatelighting", "0", 0);
 
-	gl_3dlabs_broken = ri.Cvar_Get( "gl_3dlabs_broken", "1", CVAR_ARCHIVE );
+	gl_3dlabs_broken = ri.Cvar_Get("gl_3dlabs_broken", "1", CVAR_ARCHIVE);
 
-	vid_fullscreen = ri.Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE );
-	vid_gamma = ri.Cvar_Get( "vid_gamma", "1.0", CVAR_ARCHIVE );
+	vid_fullscreen = ri.Cvar_Get("vid_fullscreen", "0", CVAR_ARCHIVE);
+	vid_gamma = ri.Cvar_Get("vid_gamma", "1.0", CVAR_ARCHIVE);
 	vid_lighten = ri.Cvar_Get("vid_lighten", "0", CVAR_ARCHIVE); // jitgamma
-	vid_ref = ri.Cvar_Get( "vid_ref", "pbgl", CVAR_ARCHIVE );
+	vid_ref = ri.Cvar_Get("vid_ref", "pbgl", CVAR_ARCHIVE);
 
 	r_caustics = ri.Cvar_Get("r_caustics", "2", CVAR_ARCHIVE); // jitcaustics
 
@@ -1644,27 +1556,28 @@ qboolean R_Init(void *hinstance, void *hWnd)
 {	
 	char renderer_buffer[1000];
 	char vendor_buffer[1000];
-	int		err;
-	int		j;
+	int err;
+	int j;
 	extern float r_turbsin[256];
 
-	gl_debug = ri.Cvar_Get ("gl_debug", "1", CVAR_ARCHIVE ); // jit
+	gl_debug = ri.Cvar_Get("gl_debug", "1", CVAR_ARCHIVE); // jit
+	gl_sgis_generate_mipmap = ri.Cvar_Get("gl_sgis_generate_mipmap", "0", CVAR_ARCHIVE); // jit
 
-	for ( j = 0; j < 256; j++ )
+	for (j = 0; j < 256; j++)
 	{
 		r_turbsin[j] *= 0.5;
 	}
 
-	ri.Con_Printf (PRINT_ALL, "ref_gl version: "REF_VERSION"\n");
+	ri.Con_Printf(PRINT_ALL, "ref_gl version: "REF_VERSION"\n");
 
-	Draw_GetPalette ();
+	Draw_GetPalette();
 
 	R_Register();
 
 	// initialize our QGL dynamic bindings
-	if ( !QGL_Init( gl_driver->string ) )
+	if (!QGL_Init(gl_driver->string))
 	{
-		ri.Con_Printf (PRINT_ALL, "ref_gl::R_Init() - could not load \"%s\"\n", gl_driver->string );
+		ri.Con_Printf(PRINT_ALL, "ref_gl::R_Init() - could not load \"%s\"\n", gl_driver->string);
 
 		// if glide2x detects a voodoo present, switch modes to
 		// 3dfxgl, fullscreen, 640x480.
@@ -1824,54 +1737,57 @@ qboolean R_Init(void *hinstance, void *hWnd)
 	/*
 	** grab extensions
 	*/
-	if ( strstr( gl_config.extensions_string, "GL_EXT_compiled_vertex_array" ) || 
-		 strstr( gl_config.extensions_string, "GL_SGI_compiled_vertex_array" ) )
+	if (strstr(gl_config.extensions_string, "GL_EXT_compiled_vertex_array") || 
+		 strstr(gl_config.extensions_string, "GL_SGI_compiled_vertex_array"))
 	{
-		if(gl_debug->value)// jit
-			ri.Con_Printf( PRINT_ALL, "...enabling GL_EXT_compiled_vertex_array\n" );
-		qglLockArraysEXT = ( void * ) qwglGetProcAddress( "glLockArraysEXT" );
-		qglUnlockArraysEXT = ( void * ) qwglGetProcAddress( "glUnlockArraysEXT" );
+		if (gl_debug->value)// jit
+			ri.Con_Printf(PRINT_ALL, "...enabling GL_EXT_compiled_vertex_array\n");
+
+		qglLockArraysEXT = (void*)qwglGetProcAddress("glLockArraysEXT");
+		qglUnlockArraysEXT = (void*)qwglGetProcAddress("glUnlockArraysEXT");
 	}
 	else if(gl_debug->value)
 	{
-		ri.Con_Printf( PRINT_ALL, "...GL_EXT_compiled_vertex_array not found\n" );
+		ri.Con_Printf(PRINT_ALL, "...GL_EXT_compiled_vertex_array not found\n");
 	}
 
 #ifdef _WIN32
-	if ( strstr( gl_config.extensions_string, "WGL_EXT_swap_control" ) )
+	if (strstr(gl_config.extensions_string, "WGL_EXT_swap_control"))
 	{
-		qwglSwapIntervalEXT = ( BOOL (WINAPI *)(int)) qwglGetProcAddress( "wglSwapIntervalEXT" );
+		qwglSwapIntervalEXT = (BOOL (WINAPI*)(int))qwglGetProcAddress("wglSwapIntervalEXT");
+
 		if(gl_debug->value) // jit
-			ri.Con_Printf( PRINT_ALL, "...enabling WGL_EXT_swap_control\n" );
+			ri.Con_Printf(PRINT_ALL, "...enabling WGL_EXT_swap_control\n");
 	}
 	else if(gl_debug->value)
 	{
-		ri.Con_Printf( PRINT_ALL, "...WGL_EXT_swap_control not found\n" );
+		ri.Con_Printf(PRINT_ALL, "...WGL_EXT_swap_control not found\n");
 	}
 #endif
 
-	if ( strstr( gl_config.extensions_string, "GL_EXT_point_parameters" ) )
+	if (strstr(gl_config.extensions_string, "GL_EXT_point_parameters"))
 	{
-		if ( gl_ext_pointparameters->value )
+		if (gl_ext_pointparameters->value)
 		{
-			qglPointParameterfEXT = ( void (APIENTRY *)( GLenum, GLfloat ) ) qwglGetProcAddress( "glPointParameterfEXT" );
-			qglPointParameterfvEXT = ( void (APIENTRY *)( GLenum, const GLfloat * ) ) qwglGetProcAddress( "glPointParameterfvEXT" );
+			qglPointParameterfEXT = (void (APIENTRY*)(GLenum, GLfloat))qwglGetProcAddress("glPointParameterfEXT");
+			qglPointParameterfvEXT = (void (APIENTRY*)(GLenum, const GLfloat*))qwglGetProcAddress("glPointParameterfvEXT");
+
 			if(gl_debug->value)
-				ri.Con_Printf( PRINT_ALL, "...using GL_EXT_point_parameters\n" );
+				ri.Con_Printf(PRINT_ALL, "...using GL_EXT_point_parameters\n");
 		}
 		else if(gl_debug->value) // jit
 		{
-			ri.Con_Printf( PRINT_ALL, "...ignoring GL_EXT_point_parameters\n" );
+			ri.Con_Printf(PRINT_ALL, "...ignoring GL_EXT_point_parameters\n");
 		}
 	}
 	else if(gl_debug->value) // jit
 	{
-		ri.Con_Printf( PRINT_ALL, "...GL_EXT_point_parameters not found\n" );
+		ri.Con_Printf(PRINT_ALL, "...GL_EXT_point_parameters not found\n");
 	}
 
-	if ( strstr( gl_config.extensions_string, "GL_ARB_multitexture" ) )
+	if (strstr(gl_config.extensions_string, "GL_ARB_multitexture"))
 	{
-		if ( gl_ext_multitexture->value )
+		if (gl_ext_multitexture->value)
 		{
 			if(gl_debug->value)
 				ri.Con_Printf(PRINT_ALL, "...using GL_ARB_multitexture\n");
@@ -1936,15 +1852,24 @@ qboolean R_Init(void *hinstance, void *hWnd)
 	gl_state.texshaders = false;
 	// ===
 
-	if ( strstr( gl_config.extensions_string, "GL_SGIS_generate_mipmap" ) )
+	if (strstr(gl_config.extensions_string, "GL_SGIS_generate_mipmap"))
+	{
+		if (gl_sgis_generate_mipmap->value)
+		{
+			if(gl_debug->value)
+				ri.Con_Printf(PRINT_ALL, "...using GL_SGIS_generate_mipmap\n");
+
+			gl_state.sgis_mipmap = true;
+		}
+		else
+			gl_state.sgis_mipmap = false;
+	}
+	else
 	{
 		if(gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...using GL_SGIS_generate_mipmap\n");
-		gl_state.sgis_mipmap=true;
-	} else {
-		if(gl_debug->value)
 			ri.Con_Printf(PRINT_ALL, "...GL_SGIS_generate_mipmap not found\n");
-		gl_state.sgis_mipmap=false;
+
+		gl_state.sgis_mipmap = false;
 	}
 
 	if ( strstr( gl_config.extensions_string, "GL_NV_texture_rectangle" ) )

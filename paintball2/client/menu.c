@@ -42,6 +42,7 @@ static menu_widget_t	*m_active_bind_widget = NULL;
 static char				*m_active_bind_command = NULL;
 static menu_screen_t	*m_current_menu;
 static hash_table_t		named_widgets_hash;
+static sem_t			m_sem_serverlist;
 
 // Project-wide Globals
 int		m_serverPingSartTime;
@@ -2250,9 +2251,8 @@ void M_RefreshActiveMenu (void)
 // Load menu scripts back from disk
 void M_ReloadMenu (void)
 {
-	menu_screen_t *menu;
+	menu_screen_t *menu = root_menu;
 
-	menu = root_menu;
 	while(menu)
 	{
 		reload_menu_screen(menu);
@@ -2320,6 +2320,12 @@ static void update_serverlist_server(m_serverlist_server_t *server, char *info, 
 	server->ping = ping;
 }
 
+static void set_serverlist_server_pingtime (m_serverlist_server_t *server, int pingtime)
+{
+	server->ping_request_time = pingtime;
+}
+
+
 #define SERVER_NAME_MAXLENGTH 19
 #define MAP_NAME_MAXLENGTH 8
 static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
@@ -2357,6 +2363,7 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 
 	if(stemp)
 		server->servername[SERVER_NAME_MAXLENGTH] = stemp;
+
 	if(mtemp)
 		server->mapname[MAP_NAME_MAXLENGTH] = mtemp;
 
@@ -2369,8 +2376,8 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	char addrip[32];
 	int ping;
 	qboolean added = false;
-
-	ping = Sys_Milliseconds() - m_serverPingSartTime;
+	
+	//ping = Sys_Milliseconds() - m_serverPingSartTime;
 
 	if(adr.type == NA_IP)
 	{
@@ -2391,15 +2398,26 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	else
 		return;
 
+	sem_wait(&m_sem_serverlist); // jitmultithreading
+
 	// check if server exists in current serverlist:
 	for(i=0; i<m_serverlist.numservers; i++)
 	{
 		if(Q_streq(addrip, m_serverlist.ips[i]))
 		{
 			// update info from server:
-			update_serverlist_server(&m_serverlist.server[i], info, ping);
-			Z_Free(m_serverlist.info[i]);
-			m_serverlist.info[i] = text_copy(format_info_from_serverlist_server(&m_serverlist.server[i]));
+			if (pinging)
+			{
+				set_serverlist_server_pingtime(&m_serverlist.server[i], Sys_Milliseconds());
+			}
+			else
+			{
+				ping = Sys_Milliseconds() - m_serverlist.server[i].ping_request_time;
+				update_serverlist_server(&m_serverlist.server[i], info, ping);
+				Z_Free(m_serverlist.info[i]);
+				m_serverlist.info[i] = text_copy(format_info_from_serverlist_server(&m_serverlist.server[i]));
+			}
+
 			added = true;
 			break;
 		}
@@ -2440,6 +2458,14 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 		}
 
 		// add data to serverlist:
+		if (pinging)
+		{
+			set_serverlist_server_pingtime(&m_serverlist.server[m_serverlist.numservers], Sys_Milliseconds());
+			ping = 999;
+		}
+		else
+			ping = Sys_Milliseconds() - m_serverlist.server[m_serverlist.numservers].ping_request_time;
+
 		m_serverlist.ips[m_serverlist.numservers] = text_copy(addrip);
 		update_serverlist_server(&m_serverlist.server[m_serverlist.numservers], info, ping);
 		m_serverlist.info[m_serverlist.numservers] =
@@ -2449,6 +2475,8 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 
 	// Tell the widget the serverlist has updated:
 	M_RefreshActiveMenu();
+
+	sem_post(&m_sem_serverlist); // jitmultithreading
 }
 
 // color servers grey and re-ping them
@@ -2463,6 +2491,8 @@ void M_ServerlistRefresh_f(void)
 		Z_Free(m_serverlist.info[i]);
 		m_serverlist.info[i] = str;
 	}
+
+	// jitodo -- make this multithreaded and add some time between each server request.
 	CL_PingServers_f();
 }
 
@@ -2498,12 +2528,14 @@ void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate t
 	{
 		s += 7; // skip past the "http://"
 		i = 0;
+
 		while(*s && *s != '/')
 		{
 			svlist_domain[i] = *s;
 			s++;
 			i++;
 		}
+
 		svlist_domain[i] = 0; // terminate string
 	}
 
@@ -2522,6 +2554,7 @@ void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate t
 
 		len = strlen(msg);
 		bytes_sent = send(serverListSocket, msg, len, 0);
+
 		if  (bytes_sent < len)
 		{
 			Com_Printf ("HTTP Server did not accept request, aborting\n");
@@ -2540,11 +2573,6 @@ void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate t
 		int numread = 0;
 		int bytes_read = 0;
 
-		serverlistfile = fopen(va("%s/servers.txt", FS_Gamedir()), "w");
-
-		if(!serverlistfile)
-			return;
-
 		// Read in up to 32767 bytes
 		while (numread < 32760 && 0 < (bytes_read = recv(serverListSocket, buffer + numread, 32766 - numread, 0)))
 		{
@@ -2562,6 +2590,7 @@ void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate t
 		closesocket(serverListSocket);
 
 		// Okay! We have our data... now lets parse it! =)
+		buffer[numread] = 0; // terminate data.
 		current = buffer;
 
 		// find \n\n, thats the end of header/beginning of the data
@@ -2572,16 +2601,22 @@ void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate t
 				free(buffer);
 				return; 
 			}
-			current ++;
+
+			current++;
 		};
 
 		current = current + 3; // skip the trailing \n.  We're at the beginning of the data now
+
+		serverlistfile = fopen(va("%s/servers.txt", FS_Gamedir()), "w");
+
+		if(!serverlistfile)
+			return;
 		
 		while (current < buffer + numread)
 		{
 			found = current;						// Mark the beginning of the line
 
-			while (*current != 13)
+			while (*current && *current != 13)
 			{										// Find the end of the line
 				current ++; 
 				
@@ -2658,6 +2693,8 @@ void M_Init (void)
 {
 	memset(&m_mouse, 0, sizeof(m_mouse));
 	m_mouse.cursorpic = i_cursor;
+
+	sem_init(&m_sem_serverlist, 0, 1); // jitmultithreading - init semaphores
 
 	// Init server list:
 	memset(&m_serverlist, 0, sizeof(m_serverlist_t));

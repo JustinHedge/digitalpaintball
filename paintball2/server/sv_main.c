@@ -963,31 +963,31 @@ Only called at quake2.exe startup, not for each game
 */
 void SV_Init (void)
 {
-	SV_InitOperatorCommands	();
+	SV_InitOperatorCommands();
 
-	rcon_password = Cvar_Get ("rcon_password", "", 0);
-	Cvar_Get ("skill", "1", 0);
-	Cvar_Get ("deathmatch", "0", CVAR_LATCH);
-	Cvar_Get ("coop", "0", CVAR_LATCH);
-	Cvar_Get ("dmflags", va("%i", DF_INSTANT_ITEMS), CVAR_SERVERINFO);
-	Cvar_Get ("fraglimit", "50", CVAR_SERVERINFO); // jit, was 0
-	Cvar_Get ("timelimit", "20", CVAR_SERVERINFO); // jit, was 0
-	Cvar_Get ("cheats", "0", CVAR_SERVERINFO|CVAR_LATCH);
-	Cvar_Get ("protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO|CVAR_NOSET);;
-	maxclients = Cvar_Get ("maxclients", "1", CVAR_SERVERINFO | CVAR_LATCH);
-	hostname = Cvar_Get ("hostname", "Paintball 2.0 (build " BUILD_S ")", CVAR_SERVERINFO | CVAR_ARCHIVE);
-	timeout = Cvar_Get ("timeout", "125", 0);
-	zombietime = Cvar_Get ("zombietime", "2", 0);
-	sv_showclamp = Cvar_Get ("showclamp", "0", 0);
-	sv_paused = Cvar_Get ("paused", "0", 0);
-	sv_timedemo = Cvar_Get ("timedemo", "0", 0);
-	sv_enforcetime = Cvar_Get ("sv_enforcetime", "1", 0); // jit -- default to 1 to prevent speed hacks.
+	rcon_password = Cvar_Get("rcon_password", "", 0);
+	Cvar_Get("skill", "1", 0);
+	Cvar_Get("deathmatch", "0", CVAR_LATCH);
+	Cvar_Get("coop", "0", CVAR_LATCH);
+	Cvar_Get("dmflags", va("%i", DF_INSTANT_ITEMS), CVAR_SERVERINFO);
+	Cvar_Get("fraglimit", "50", CVAR_SERVERINFO); // jit, was 0
+	Cvar_Get("timelimit", "20", CVAR_SERVERINFO); // jit, was 0
+	Cvar_Get("cheats", "0", CVAR_SERVERINFO|CVAR_LATCH);
+	Cvar_Get("protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO|CVAR_NOSET);;
+	maxclients     = Cvar_Get("maxclients", "1", CVAR_SERVERINFO | CVAR_LATCH);
+	hostname       = Cvar_Get("hostname", "Paintball 2.0 (build " BUILD_S ")", CVAR_SERVERINFO | CVAR_ARCHIVE);
+	timeout        = Cvar_Get("timeout", "125", 0);
+	zombietime     = Cvar_Get("zombietime", "2", 0);
+	sv_showclamp   = Cvar_Get("showclamp", "0", 0);
+	sv_paused      = Cvar_Get("paused", "0", 0);
+	sv_timedemo    = Cvar_Get("timedemo", "0", 0);
+	sv_enforcetime = Cvar_Get("sv_enforcetime", "1", 0); // jit -- default to 1 to prevent speed hacks.
 //	allow_fastdownloads = Cvar_Get("allow_fast_downloads", "1", CVAR_ARCHIVE); // jitdownload (incomplete)
-	allow_download = Cvar_Get ("allow_download", "1", CVAR_ARCHIVE);
-	allow_download_players  = Cvar_Get ("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1
-	allow_download_models = Cvar_Get ("allow_download_models", "1", CVAR_ARCHIVE);
-	allow_download_sounds = Cvar_Get ("allow_download_sounds", "1", CVAR_ARCHIVE);
-	allow_download_maps	  = Cvar_Get ("allow_download_maps", "1", CVAR_ARCHIVE);
+	allow_download          = Cvar_Get("allow_download", "1", CVAR_ARCHIVE);
+	allow_download_players  = Cvar_Get("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1
+	allow_download_models   = Cvar_Get("allow_download_models", "1", CVAR_ARCHIVE);
+	allow_download_sounds   = Cvar_Get("allow_download_sounds", "1", CVAR_ARCHIVE);
+	allow_download_maps	    = Cvar_Get("allow_download_maps", "1", CVAR_ARCHIVE);
 
 	sv_noreload = Cvar_Get ("sv_noreload", "0", 0);
 

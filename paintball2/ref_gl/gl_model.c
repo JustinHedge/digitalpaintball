@@ -956,40 +956,43 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 
 	loadmodel->type = mod_brush;
 	if (loadmodel != mod_known)
-		ri.Sys_Error (ERR_DROP, "Loaded a brush model after the world");
+		ri.Sys_Error(ERR_DROP, "Loaded a brush model after the world");
 
-	header = (dheader_t *)buffer;
+	header = (dheader_t*)buffer;
 
-	i = LittleLong (header->version);
+	i = LittleLong(header->version);
 	if (i != BSPVERSION)
-		ri.Sys_Error (ERR_DROP, "Mod_LoadBrushModel: %s has wrong version number (%i should be %i)", mod->name, i, BSPVERSION);
+		ri.Sys_Error(ERR_DROP, "Mod_LoadBrushModel: %s has wrong version number (%i should be %i)",
+			mod->name, i, BSPVERSION);
 
 // swap all the lumps
-	mod_base = (byte *)header;
+	mod_base = (byte*)header;
 
-	for (i=0 ; i<sizeof(dheader_t)*0.25 ; i++)
-		((int *)header)[i] = LittleLong ( ((int *)header)[i]);
+#ifndef USEFILEMAP // jitfilemap
+	for (i=0; i<sizeof(dheader_t)*0.25; i++)
+		((int*)header)[i] = LittleLong(((int*)header)[i]);
+#endif
 
 // load into heap
 	
-	Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
-	Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
-	Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
-	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
-	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);
-	Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
-	Mod_LoadFaces (&header->lumps[LUMP_FACES]);
-	Mod_LoadMarksurfaces (&header->lumps[LUMP_LEAFFACES]);
-	Mod_LoadVisibility (&header->lumps[LUMP_VISIBILITY]);
-	Mod_LoadLeafs (&header->lumps[LUMP_LEAFS]);
-	Mod_LoadNodes (&header->lumps[LUMP_NODES]);
-	Mod_LoadSubmodels (&header->lumps[LUMP_MODELS]);
+	Mod_LoadVertexes(&header->lumps[LUMP_VERTEXES]);
+	Mod_LoadEdges(&header->lumps[LUMP_EDGES]);
+	Mod_LoadSurfedges(&header->lumps[LUMP_SURFEDGES]);
+	Mod_LoadLighting(&header->lumps[LUMP_LIGHTING]);
+	Mod_LoadPlanes(&header->lumps[LUMP_PLANES]);
+	Mod_LoadTexinfo(&header->lumps[LUMP_TEXINFO]);
+	Mod_LoadFaces(&header->lumps[LUMP_FACES]);
+	Mod_LoadMarksurfaces(&header->lumps[LUMP_LEAFFACES]);
+	Mod_LoadVisibility(&header->lumps[LUMP_VISIBILITY]);
+	Mod_LoadLeafs(&header->lumps[LUMP_LEAFS]);
+	Mod_LoadNodes(&header->lumps[LUMP_NODES]);
+	Mod_LoadSubmodels(&header->lumps[LUMP_MODELS]);
 	mod->numframes = 2;		// regular and alternate animation
 	
 //
 // set up the submodels
 //
-	for (i=0 ; i<mod->numsubmodels ; i++)
+	for (i=0; i < mod->numsubmodels; i++)
 	{
 		model_t	*starmod;
 

@@ -71,8 +71,8 @@ void Draw_InitLocalOld (void) // jitest
 	// load console characters (don't bilerp characters)
 	draw_chars = GL_FindImage ("pics/conchars.pcx", it_pic);
 	GL_Bind( draw_chars->texnum );
-	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	LoadTGA("pics/char_colors.tga", &char_colors, &width, &height); // jittext
 }
 
@@ -152,6 +152,9 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 	qboolean		passagain = false;
 	qboolean		italicized = false;
 	qboolean		underlined = false;
+
+	if (!*s)
+		return;
 
 	textscale = (int)cl_hudscale->value;
 
@@ -404,7 +407,7 @@ Draw_StretchPic
 =============
 */
 void RS_SetTexcoords2D (rs_stage_t *stage, float *os, float *ot); // jit
-
+#define USEQUADS
 void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 {
 	rscript_t *rs;
@@ -438,17 +441,36 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 		qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
-		GL_Bind (gl->texnum);
-		qglBegin (GL_QUADS);
-		qglTexCoord2f (gl->sl, gl->tl);
-		qglVertex2f (x, y);
-		qglTexCoord2f (gl->sh, gl->tl);
-		qglVertex2f (x+w, y);
-		qglTexCoord2f (gl->sh, gl->th);
-		qglVertex2f (x+w, y+h);
-		qglTexCoord2f (gl->sl, gl->th);
-		qglVertex2f (x, y+h);
-		qglEnd ();
+		GL_Bind(gl->texnum);
+#ifdef USEQUADS
+		qglBegin(GL_QUADS);
+		qglTexCoord2f(gl->sl, gl->tl);
+		qglVertex2f(x, y);
+		qglTexCoord2f(gl->sh, gl->tl);
+		qglVertex2f(x+w, y);
+		qglTexCoord2f(gl->sh, gl->th);
+		qglVertex2f(x+w, y+h);
+		qglTexCoord2f(gl->sl, gl->th);
+		qglVertex2f(x, y+h);
+		qglEnd();
+#else
+		qglBegin(GL_TRIANGLES);
+		qglTexCoord2f(gl->sl, gl->tl);
+		qglVertex2f(x, y);
+		qglTexCoord2f(gl->sh, gl->tl);
+		qglVertex2f(x+w, y);
+		qglTexCoord2f(gl->sh, gl->th);
+		qglVertex2f(x+w, y+h);
+
+		qglTexCoord2f(gl->sh, gl->th);
+		qglVertex2f(x+w, y+h);
+		qglTexCoord2f(gl->sl, gl->th);
+		qglVertex2f(x, y+h);
+		qglTexCoord2f(gl->sl, gl->tl);
+		qglVertex2f(x, y);
+		qglEnd();
+#endif
+
 
 	}
 	else
@@ -564,6 +586,7 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 				GLSTATE_DISABLE_ALPHATEST
 			}
 
+#ifdef USEQUADS
 			qglBegin(GL_QUADS);
 
 			s = stage_pic->sl;//0.0f;//gl->sl; //
@@ -588,6 +611,43 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 			qglVertex2f(x, y+h);
 
 			qglEnd();
+#else // testing to see if tri's are faster on ati's drivers
+			qglBegin(GL_TRIANGLES);
+
+			s = stage_pic->sl;//0.0f;//gl->sl; //
+			t = stage_pic->tl;//0.0f;//gl->tl; //
+			RS_SetTexcoords2D(stage, &s, &t);
+			qglTexCoord2f(s+txm, t+tym);
+			qglVertex2f(x, y);
+			s = stage_pic->sh;//1.0f;//gl->sh; //
+			t = stage_pic->tl;//0.0f;//gl->tl;//
+			RS_SetTexcoords2D(stage, &s, &t);
+			qglTexCoord2f(s+txm, t+tym);
+			qglVertex2f(x+w, y);
+			s = stage_pic->sh;//1.0f;//gl->sh;//
+			t = stage_pic->th;//1.0f;//gl->th;//
+			RS_SetTexcoords2D(stage, &s, &t);
+			qglTexCoord2f(s+txm, t+tym);
+			qglVertex2f(x+w, y+h);
+
+			s = stage_pic->sh;//1.0f;//gl->sh;//
+			t = stage_pic->th;//1.0f;//gl->th;//
+			RS_SetTexcoords2D(stage, &s, &t);
+			qglTexCoord2f(s+txm, t+tym);
+			qglVertex2f(x+w, y+h);
+			s = stage_pic->sl;//0.0f;//gl->sl;//
+			t = stage_pic->th;//1.0f;//gl->th;//
+			RS_SetTexcoords2D(stage, &s, &t);
+			qglTexCoord2f(s+txm, t+tym);
+			qglVertex2f(x, y+h);
+			s = stage_pic->sl;//0.0f;//gl->sl; //
+			t = stage_pic->tl;//0.0f;//gl->tl; //
+			RS_SetTexcoords2D(stage, &s, &t);
+			qglTexCoord2f(s+txm, t+tym);
+			qglVertex2f(x, y);
+
+			qglEnd();
+#endif
 
 			//jit qglColor4f(1,1,1,1);
 			//jit qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -895,10 +955,12 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 					   GL_UNSIGNED_BYTE, 
 					   image8 );
 	}
-	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	if ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) {
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	if ((gl_config.renderer == GL_RENDERER_MCD) || (gl_config.renderer & GL_RENDERER_RENDITION))
+	{
 		GLSTATE_DISABLE_ALPHATEST
 	}
 
@@ -911,21 +973,22 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 	VA_SetElem2(vert_array[2],x+w, y+h);
 	VA_SetElem2(tex_array[3],0, t);
 	VA_SetElem2(vert_array[3],x, y+h);
-	qglDrawArrays (GL_QUADS, 0, 4);
+	qglDrawArrays(GL_QUADS, 0, 4);
 #else
-	qglBegin (GL_QUADS);
-	qglTexCoord2f (0, 0);
-	qglVertex2f (x, y);
-	qglTexCoord2f (1, 0);
-	qglVertex2f (x+w, y);
-	qglTexCoord2f (1, t);
-	qglVertex2f (x+w, y+h);
-	qglTexCoord2f (0, t);
-	qglVertex2f (x, y+h);
-	qglEnd ();
+	qglBegin(GL_QUADS);
+	qglTexCoord2f(0, 0);
+	qglVertex2f(x, y);
+	qglTexCoord2f(1, 0);
+	qglVertex2f(x+w, y);
+	qglTexCoord2f(1, t);
+	qglVertex2f(x+w, y+h);
+	qglTexCoord2f(0, t);
+	qglVertex2f(x, y+h);
+	qglEnd();
 #endif
 
-	if ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) )  {
+	if ((gl_config.renderer == GL_RENDERER_MCD) || (gl_config.renderer & GL_RENDERER_RENDITION))
+	{
 		GLSTATE_ENABLE_ALPHATEST
 	}
 }

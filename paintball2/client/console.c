@@ -47,7 +47,7 @@ void Draw_StringLen (int x, int y, char *str, int len) // pooy
 
 int CharOffset (unsigned char *s, int charcount) // pooy
 {
-	char *start = s;
+	unsigned char *start = s;
 
 	for ( ; *s && charcount; s++)
 	{

@@ -136,26 +136,30 @@ void GL_Bind (int texnum)
 
 	if (gl_nobind->value && draw_chars)		// performance evaluation option
 		texnum = draw_chars->texnum;
-	if ( gl_state.currenttextures[gl_state.currenttmu] == texnum)
+
+	if (gl_state.currenttextures[gl_state.currenttmu] == texnum)
 		return;
+
 	gl_state.currenttextures[gl_state.currenttmu] = texnum;
-	qglBindTexture (GL_TEXTURE_2D, texnum);
+	qglBindTexture(GL_TEXTURE_2D, texnum);
 }
 
-void GL_MBind( GLenum target, int texnum )
+void GL_MBind (GLenum target, int texnum)
 {
-	GL_SelectTexture( target );
-	if ( target == GL_TEXTURE0 )
+	GL_SelectTexture(target);
+
+	if (target == GL_TEXTURE0)
 	{
-		if ( gl_state.currenttextures[0] == texnum )
+		if (gl_state.currenttextures[0] == texnum)
 			return;
 	}
 	else
 	{
-		if ( gl_state.currenttextures[1] == texnum )
+		if (gl_state.currenttextures[1] == texnum)
 			return;
 	}
-	GL_Bind( texnum );
+
+	GL_Bind(texnum);
 }
 
 typedef struct
@@ -234,11 +238,11 @@ void GL_TextureMode(const char *string )
 	// change all the existing mipmap texture objects
 	for (i=0, glt=gltextures ; i<numgltextures ; i++, glt++)
 	{
-		if (glt->type != it_pic && glt->type != it_sky )
+		if (glt->type != it_pic && glt->type != it_sky)
 		{
-			GL_Bind (glt->texnum);
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+			GL_Bind(glt->texnum);
+			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 		}
 	}
 }
@@ -441,7 +445,7 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 	//
 	// load the file
 	//
-	len = ri.FS_LoadFile (filename, (void **)&raw);
+	len = ri.FS_LoadFile(filename, (void **)&raw);
 	if (!raw)
 	{
 		//ri.Con_Printf (PRINT_DEVELOPER, "Bad pcx file %s\n", filename);
@@ -453,6 +457,9 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 	//
 	pcx = (pcx_t *)raw;
 
+#ifndef USEFILEMAP // jitfilemap
+	// note: Filemapping prevents write access, but since it only works on windows
+	// and windows only works on little-endian computers, this conversion is unneccessary.
     pcx->xmin = LittleShort(pcx->xmin);
     pcx->ymin = LittleShort(pcx->ymin);
     pcx->xmax = LittleShort(pcx->xmax);
@@ -461,6 +468,7 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
     pcx->vres = LittleShort(pcx->vres);
     pcx->bytes_per_line = LittleShort(pcx->bytes_per_line);
     pcx->palette_type = LittleShort(pcx->palette_type);
+#endif
 
 	raw = &pcx->data;
 
@@ -471,7 +479,7 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 		|| pcx->xmax >= 640
 		|| pcx->ymax >= 480)
 	{
-		ri.Con_Printf (PRINT_ALL, "Bad pcx file %s\n", filename);
+		ri.Con_Printf(PRINT_ALL, "Bad pcx file %s\n", filename);
 		return;
 	}
 
@@ -1885,7 +1893,6 @@ GLint Mesa_gluBuild2DMipmaps(GLenum target, GLint components,
 }
 // ]===
 
-#if 1 // jit3dfx
 qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, qboolean sharp)
 {
 	int			samples;
@@ -1893,7 +1900,8 @@ qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, q
 	int			scaled_width, scaled_height;
 	int			i, c;
 	byte		*scan;
-	int comp;
+	int			comp;
+	int			max_size;
 
 	uploaded_paletted = false;
 
@@ -1901,9 +1909,10 @@ qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, q
 	c = width*height;
 	scan = ((byte *)data) + 3;
 	samples = gl_solid_format;
-	for (i=0 ; i<c ; i++, scan += 4)
+
+	for (i=0; i<c; i++, scan += 4)
 	{
-		if ( *scan != 255 )
+		if (*scan != 255)
 		{
 			samples = gl_alpha_format;
 			break;
@@ -1915,36 +1924,29 @@ qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, q
 
 	//Heffo - ARB Texture Compression
 	if (samples == gl_solid_format)
-		comp = (gl_state.texture_compression) ? GL_COMPRESSED_RGB_ARB : gl_tex_solid_format;
+		comp = (gl_state.texture_compression && mipmap) ? GL_COMPRESSED_RGB_ARB : gl_tex_solid_format;
 	else if (samples == gl_alpha_format)
-		comp = (gl_state.texture_compression) ? GL_COMPRESSED_RGBA_ARB : gl_tex_alpha_format;
-
+		comp = (gl_state.texture_compression && mipmap) ? GL_COMPRESSED_RGBA_ARB : gl_tex_alpha_format;
 
 	// find sizes to scale to
+	qglGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
+	scaled_width = nearest_power_of_2(width);
+	scaled_height = nearest_power_of_2(height);
+
+	if (mipmap) // jittexture
 	{
-		int max_size;
-
-		qglGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
-		scaled_width = nearest_power_of_2(width);
-		scaled_height = nearest_power_of_2(height);
-
-		if (mipmap) // jittexture
-		{
-			scaled_width >>= (int)gl_picmip->value;
-			scaled_height >>= (int)gl_picmip->value;
-
-
-		}
-
-		if (scaled_width > max_size)
-			scaled_width = max_size;
-		if (scaled_height > max_size)
-			scaled_height = max_size;
-		if (scaled_width <= 0) // jitex
-			scaled_width = 1;
-		if (scaled_height <= 0) // jitex
-			scaled_height = 1; 
+		scaled_width >>= (int)gl_picmip->value;
+		scaled_height >>= (int)gl_picmip->value;
 	}
+
+	if (scaled_width > max_size)
+		scaled_width = max_size;
+	if (scaled_height > max_size)
+		scaled_height = max_size;
+	if (scaled_width <= 0) // jitex
+		scaled_width = 1;
+	if (scaled_height <= 0) // jitex
+		scaled_height = 1; 
 
 	if (scaled_width != width || scaled_height != height)
 	{
@@ -1953,270 +1955,68 @@ qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, q
 	}
 	else
 	{
-		scaled_width=width;
-		scaled_height=height;
-		scaled=data;
+		scaled_width = width;
+		scaled_height = height;
+		scaled = data;
 	}
 
 	// ===
 	// jithudscale -- clean up hud images
-#if 0
-	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (mipmap) ? gl_filter_min : gl_filter_max);
-	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-#else
 	if(mipmap)
 	{
-		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-		//qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+
 		if(gl_anisotropy->value) // jitanisotropy
 		{
 			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
 			                 gl_anisotropy->value);
 		}
 		else
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 	}
 	else
 	{
 		if(sharp)
 		{
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		}
 		else
 		{
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
+			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 		}
 	}
-#endif
 	// ===
-	if (mipmap) {
-//		if (!gl_state.gammaramp)
-// jitgamma			GL_LightScaleTexture (scaled, scaled_width, scaled_height, !mipmap);
+
+	if (mipmap)
+	{
 		if (gl_state.sgis_mipmap) 
 		{
 			qglTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, true);
-			qglTexImage2D (GL_TEXTURE_2D, 0, comp, scaled_width, 
+			qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, 
 				scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 		} 
 		else
 		{
-			/*if(glw_state.minidriver) */ 
-				Mesa_gluBuild2DMipmaps (GL_TEXTURE_2D, comp, scaled_width,
-					scaled_height, GL_RGBA, GL_UNSIGNED_BYTE, scaled); // jit3dfx
-			/*else
-				gluBuild2DMipmaps (GL_TEXTURE_2D, comp, scaled_width,
-					scaled_height, GL_RGBA, GL_UNSIGNED_BYTE, scaled);*/
+			Mesa_gluBuild2DMipmaps(GL_TEXTURE_2D, comp, scaled_width,
+				scaled_height, GL_RGBA, GL_UNSIGNED_BYTE, scaled); // jit3dfx
 		}
 	} 
 	else 
-	{ 
-//		if (!gl_state.gammaramp)
-// jitgamma			GL_LightScaleTexture (scaled, scaled_width, scaled_height, !mipmap );
-		qglTexImage2D (GL_TEXTURE_2D, 0, comp, scaled_width, 
+	{
+		qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, 
 			scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 	}
+
 	if (scaled_width != width || scaled_height != height)
 		free(scaled);
 
 	upload_width=scaled_width; upload_height = scaled_height;
 
-
-
 	return (samples == gl_alpha_format || samples == GL_COMPRESSED_RGBA_ARB);
 }
 
-
-#else ////////////////// jit3dfx testing
-
-//
-//qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, qboolean sharp)
-//{
-//	int			samples;
-//	unsigned	scaled[256*256];
-//	unsigned char paletted_texture[256*256];
-//	int			scaled_width, scaled_height;
-//	int			i, c;
-//	byte		*scan;
-//	int comp;
-//
-//	uploaded_paletted = false;
-//
-//	for (scaled_width = 1 ; scaled_width < width ; scaled_width<<=1)
-//		;
-//	if (gl_round_down->value && scaled_width > width && mipmap)
-//		scaled_width >>= 1;
-//	for (scaled_height = 1 ; scaled_height < height ; scaled_height<<=1)
-//		;
-//	if (gl_round_down->value && scaled_height > height && mipmap)
-//		scaled_height >>= 1;
-//
-//	// let people sample down the world textures for speed
-//	if (mipmap)
-//	{
-//		scaled_width >>= (int)gl_picmip->value;
-//		scaled_height >>= (int)gl_picmip->value;
-//	}
-//
-//	// don't ever bother with >256 textures
-//	if (scaled_width > 256)
-//		scaled_width = 256;
-//	if (scaled_height > 256)
-//		scaled_height = 256;
-//
-//	if (scaled_width < 1)
-//		scaled_width = 1;
-//	if (scaled_height < 1)
-//		scaled_height = 1;
-//
-//	upload_width = scaled_width;
-//	upload_height = scaled_height;
-//
-//	if (scaled_width * scaled_height > sizeof(scaled)/4)
-//		ri.Sys_Error (ERR_DROP, "GL_Upload32: too big");
-//
-//	// scan the texture for any non-255 alpha
-//	c = width*height;
-//	scan = ((byte *)data) + 3;
-//	samples = gl_solid_format;
-//	for (i=0 ; i<c ; i++, scan += 4)
-//	{
-//		if ( *scan != 255 )
-//		{
-//			samples = gl_alpha_format;
-//			break;
-//		}
-//	}
-//
-//	if (samples == gl_solid_format)
-//	    comp = gl_tex_solid_format;
-//	else if (samples == gl_alpha_format)
-//	    comp = gl_tex_alpha_format;
-//	else {
-//	    ri.Con_Printf (PRINT_ALL,
-//			   "Unknown number of texture components %i\n",
-//			   samples);
-//	    comp = samples;
-//	}
-//
-//#if 0
-//	if (mipmap)
-//		gluBuild2DMipmaps (GL_TEXTURE_2D, samples, width, height, GL_RGBA, GL_UNSIGNED_BYTE, trans);
-//	else if (scaled_width == width && scaled_height == height)
-//		qglTexImage2D (GL_TEXTURE_2D, 0, comp, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
-//	else
-//	{
-//		gluScaleImage (GL_RGBA, width, height, GL_UNSIGNED_BYTE, trans,
-//			scaled_width, scaled_height, GL_UNSIGNED_BYTE, scaled);
-//		qglTexImage2D (GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-//	}
-//#else
-//
-//	if (scaled_width == width && scaled_height == height)
-//	{
-//		if (!mipmap)
-//		{
-//			/*if ( qglColorTableEXT && gl_ext_palettedtexture->value && samples == gl_solid_format )
-//			{
-//				uploaded_paletted = true;
-//				GL_BuildPalettedTexture( paletted_texture, ( unsigned char * ) data, scaled_width, scaled_height );
-//				qglTexImage2D( GL_TEXTURE_2D,
-//							  0,
-//							  GL_COLOR_INDEX8_EXT,
-//							  scaled_width,
-//							  scaled_height,
-//							  0,
-//							  GL_COLOR_INDEX,
-//							  GL_UNSIGNED_BYTE,
-//							  paletted_texture );
-//			}
-//			else*/
-//			{
-//				qglTexImage2D (GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-//			}
-//			goto done;
-//		}
-//		memcpy (scaled, data, width*height*4);
-//	}
-//	else
-//		GL_ResampleTexture (data, width, height, scaled, scaled_width, scaled_height);
-//
-////	GL_LightScaleTexture (scaled, scaled_width, scaled_height, !mipmap );
-//
-///*	if ( qglColorTableEXT && gl_ext_palettedtexture->value && ( samples == gl_solid_format ) )
-//	{
-//		uploaded_paletted = true;
-//		GL_BuildPalettedTexture( paletted_texture, ( unsigned char * ) scaled, scaled_width, scaled_height );
-//		qglTexImage2D( GL_TEXTURE_2D,
-//					  0,
-//					  GL_COLOR_INDEX8_EXT,
-//					  scaled_width,
-//					  scaled_height,
-//					  0,
-//					  GL_COLOR_INDEX,
-//					  GL_UNSIGNED_BYTE,
-//					  paletted_texture );
-//	}
-//	else*/
-//	{
-//		qglTexImage2D( GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled );
-//	}
-//
-//	if (mipmap)
-//	{
-//		int		miplevel;
-//
-//		miplevel = 0;
-//		while (scaled_width > 1 || scaled_height > 1)
-//		{
-//			GL_MipMap ((byte *)scaled, scaled_width, scaled_height);
-//			scaled_width >>= 1;
-//			scaled_height >>= 1;
-//			if (scaled_width < 1)
-//				scaled_width = 1;
-//			if (scaled_height < 1)
-//				scaled_height = 1;
-//			miplevel++;
-///*			if ( qglColorTableEXT && gl_ext_palettedtexture->value && samples == gl_solid_format )
-//			{
-//				uploaded_paletted = true;
-//				GL_BuildPalettedTexture( paletted_texture, ( unsigned char * ) scaled, scaled_width, scaled_height );
-//				qglTexImage2D( GL_TEXTURE_2D,
-//							  miplevel,
-//							  GL_COLOR_INDEX8_EXT,
-//							  scaled_width,
-//							  scaled_height,
-//							  0,
-//							  GL_COLOR_INDEX,
-//							  GL_UNSIGNED_BYTE,
-//							  paletted_texture );
-//			}
-//			else*/
-//			{
-//				qglTexImage2D (GL_TEXTURE_2D, miplevel, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-//			}
-//		}
-//	}
-//done: ;
-//#endif
-//
-//
-//	if (mipmap)
-//	{
-//		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-//		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-//	}
-//	else
-//	{
-//		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
-//		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-//	}
-//
-//	return (samples == gl_alpha_format);
-//}
-
-#endif
 
 /*
 ===============
@@ -2312,7 +2112,7 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 {
 	image_t		*image;
 	int			i;
-	qboolean sharp = false; // jit, for images we don't want filtered.
+	qboolean	sharp = false; // jit, for images we don't want filtered.
 
 	// find a free image_t
 	for (i=0, image=gltextures ; i<numgltextures ; i++,image++)
@@ -2320,16 +2120,20 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 		if (!image->texnum)
 			break;
 	}
+
 	if (i == numgltextures)
 	{
 		if (numgltextures == MAX_GLTEXTURES)
 			ri.Sys_Error (ERR_DROP, "MAX_GLTEXTURES");
+
 		numgltextures++;
 	}
+
 	image = &gltextures[i];
 
 	if (strlen(name) >= sizeof(image->name))
 		ri.Sys_Error (ERR_DROP, "Draw_LoadPic: \"%s\" is too long", name);
+
 	strcpy (image->name, name);
 	image->registration_sequence = registration_sequence;
 	
@@ -2340,10 +2144,10 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 	// ===
 	// jit -- paintball2 texture fix
 	// jitodo -- move these to rscripts, this is an ugly hack.
-	if( !Q_strcasecmp(name,"textures/pball/b_flag1") ||
-		!Q_strcasecmp(name,"textures/pball/y_flag1") || 
-		!Q_strcasecmp(name,"textures/pball/p_flag1") || 
-		!Q_strcasecmp(name,"textures/pball/r_flag1"))
+	if( !Q_strcasecmp(name, "textures/pball/b_flag1") ||
+		!Q_strcasecmp(name, "textures/pball/y_flag1") || 
+		!Q_strcasecmp(name, "textures/pball/p_flag1") || 
+		!Q_strcasecmp(name, "textures/pball/r_flag1"))
 	{
 		image->width = 96;
 		image->height = 96;
@@ -2361,8 +2165,6 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 	// jit
 	// ===
 
-
-
 	if (type == it_skin && bits == 8)
 		R_FloodFillSkin(pic, width, height);
 
@@ -2374,16 +2176,20 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 		int		i, j, k;
 		int		texnum;
 
-		texnum = Scrap_AllocBlock (image->width, image->height, &x, &y);
+		texnum = Scrap_AllocBlock(image->width, image->height, &x, &y);
+
 		if (texnum == -1)
 			goto nonscrap;
+
 		scrap_dirty = true;
 
 		// copy the texels into the scrap block
 		k = 0;
+
 		for (i=0 ; i<image->height ; i++)
 			for (j=0 ; j<image->width ; j++, k++)
 				scrap_texels[texnum][(y+i)*BLOCK_WIDTH + x + j] = pic[k];
+
 		image->texnum = TEXNUM_SCRAPS + texnum;
 		image->scrap = true;
 		image->has_alpha = true;
@@ -2411,7 +2217,6 @@ nonscrap:
 		image->tl = 0;
 		image->th = 1;
 	}
-
 
 	return image;
 }

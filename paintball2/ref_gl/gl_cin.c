@@ -460,8 +460,8 @@ qboolean CIN_DrawCinematic (void)
 
 	qglTexImage2D (GL_TEXTURE_2D, 0, gl_tex_solid_format, cin->p2_width, cin->p2_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 
-	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	return true;
 }

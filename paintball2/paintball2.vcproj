@@ -245,6 +245,31 @@
 			<Tool
 				Name="VCWebDeploymentTool"/>
 		</Configuration>
+		<Configuration
+			Name="Release No Opt|Win32"
+			IntermediateDirectory="Release No Opt"
+			ConfigurationType="1">
+			<Tool
+				Name="VCCLCompilerTool"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"/>
+			<Tool
+				Name="VCMIDLTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+		</Configuration>
 	</Configurations>
 	<Files>
 		<Filter
@@ -342,6 +367,9 @@
 				</File>
 				<File
 					RelativePath=".\client\cl_inv.c">
+				</File>
+				<File
+					RelativePath="client\cl_loc.c">
 				</File>
 				<File
 					RelativePath=".\client\cl_main.c">
@@ -447,6 +475,9 @@
 				RelativePath="client\menu.h">
 			</File>
 			<File
+				RelativePath="win32\pthread.h">
+			</File>
+			<File
 				RelativePath=".\game\q_shared.h">
 			</File>
 			<File
@@ -459,7 +490,13 @@
 				RelativePath=".\client\ref.h">
 			</File>
 			<File
+				RelativePath="win32\sched.h">
+			</File>
+			<File
 				RelativePath=".\client\screen.h">
+			</File>
+			<File
+				RelativePath="win32\semaphore.h">
 			</File>
 			<File
 				RelativePath=".\server\server.h">
@@ -532,6 +569,9 @@
 		</Filter>
 		<File
 			RelativePath="..\pball\menus\main.txt">
+		</File>
+		<File
+			RelativePath="win32\pthreadVC.lib">
 		</File>
 	</Files>
 	<Globals>

@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glw_win.h"
 #include "winquake.h"
 
-static qboolean GLimp_SwitchFullscreen( int width, int height );
+static qboolean GLimp_SwitchFullscreen (int width, int height);
 qboolean GLimp_InitGL (void);
 
 glwstate_t glw_state;
@@ -47,15 +47,17 @@ extern cvar_t *vid_ref;
 
 qboolean have_stencil = false; // Stencil shadows - MrG
 
-static qboolean VerifyDriver( void )
+static qboolean VerifyDriver (void)
 {
 	char buffer[1024];
 
 	strcpy(buffer, qglGetString(GL_RENDERER));
 	strlwr(buffer);
+
 	if (Q_streq(buffer, "gdi generic"))
 		if (!glw_state.mcd_accelerated)
 			return false;
+
 	return true;
 }
 
@@ -66,7 +68,7 @@ static qboolean VerifyDriver( void )
 */
 #define	WINDOW_CLASS_NAME	"Paintball 2" // jit
 
-qboolean VID_CreateWindow( int width, int height, qboolean fullscreen )
+qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
 {
 	WNDCLASS		wc;
 	RECT			r;
@@ -82,13 +84,13 @@ qboolean VID_CreateWindow( int width, int height, qboolean fullscreen )
     wc.cbWndExtra    = 0;
     wc.hInstance     = glw_state.hInstance;
     wc.hIcon         = 0;
-    wc.hCursor       = LoadCursor (NULL,IDC_ARROW);
-	wc.hbrBackground = (void *)COLOR_GRAYTEXT;
+    wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
+	wc.hbrBackground = (void*)COLOR_GRAYTEXT;
     wc.lpszMenuName  = 0;
     wc.lpszClassName = WINDOW_CLASS_NAME;
 
-    if (!RegisterClass (&wc) )
-		ri.Sys_Error (ERR_FATAL, "Couldn't register window class");
+    if (!RegisterClass(&wc))
+		ri.Sys_Error(ERR_FATAL, "Couldn't register window class");
 
 	if (fullscreen)
 	{
@@ -106,7 +108,7 @@ qboolean VID_CreateWindow( int width, int height, qboolean fullscreen )
 	r.right  = width;
 	r.bottom = height;
 
-	AdjustWindowRect (&r, stylebits, FALSE);
+	AdjustWindowRect(&r, stylebits, FALSE);
 
 	w = r.right - r.left;
 	h = r.bottom - r.top;
@@ -118,8 +120,8 @@ qboolean VID_CreateWindow( int width, int height, qboolean fullscreen )
 	}
 	else
 	{
-		vid_xpos = ri.Cvar_Get ("vid_xpos", "0", 0);
-		vid_ypos = ri.Cvar_Get ("vid_ypos", "0", 0);
+		vid_xpos = ri.Cvar_Get("vid_xpos", "0", 0);
+		vid_ypos = ri.Cvar_Get("vid_ypos", "0", 0);
 		x = vid_xpos->value;
 		y = vid_ypos->value;
 	}
@@ -127,7 +129,7 @@ qboolean VID_CreateWindow( int width, int height, qboolean fullscreen )
 	glw_state.hWnd = CreateWindowEx (
 		 exstyle, 
 		 WINDOW_CLASS_NAME,
-		 WINDOW_CLASS_NAME, // jit, was "BeefQuake"
+		 WINDOW_CLASS_NAME,
 		 stylebits,
 		 x, y, w, h,
 		 NULL,
@@ -136,15 +138,15 @@ qboolean VID_CreateWindow( int width, int height, qboolean fullscreen )
 		 NULL);
 
 	if (!glw_state.hWnd)
-		ri.Sys_Error (ERR_FATAL, "Couldn't create window");
+		ri.Sys_Error(ERR_FATAL, "Couldn't create window");
 
-	ShowWindow( glw_state.hWnd, SW_SHOW );
-	UpdateWindow( glw_state.hWnd );
+	ShowWindow(glw_state.hWnd, SW_SHOW);
+	UpdateWindow(glw_state.hWnd);
 
 	// init all the gl stuff for the window
-	if (!GLimp_InitGL ())
+	if (!GLimp_InitGL())
 	{
-		ri.Con_Printf( PRINT_ALL, "VID_CreateWindow() - GLimp_InitGL failed\n");
+		ri.Con_Printf(PRINT_ALL, "VID_CreateWindow() - GLimp_InitGL failed\n");
 		return false;
 	}
 
@@ -335,36 +337,39 @@ void GLimp_Shutdown( void )
 
 	if ( qwglMakeCurrent && !qwglMakeCurrent( NULL, NULL ) )
 		ri.Con_Printf( PRINT_ALL, "ref_gl::R_Shutdown() - wglMakeCurrent failed\n");
+
 	if ( glw_state.hGLRC )
 	{
 		if (  qwglDeleteContext && !qwglDeleteContext( glw_state.hGLRC ) )
 			ri.Con_Printf( PRINT_ALL, "ref_gl::R_Shutdown() - wglDeleteContext failed\n");
 		glw_state.hGLRC = NULL;
 	}
+
 	if (glw_state.hDC)
 	{
 		if ( !ReleaseDC( glw_state.hWnd, glw_state.hDC ) )
 			ri.Con_Printf( PRINT_ALL, "ref_gl::R_Shutdown() - ReleaseDC failed\n" );
 		glw_state.hDC   = NULL;
 	}
+
 	if (glw_state.hWnd)
 	{
-		ShowWindow (glw_state.hWnd, SW_HIDE); // jit -- destroy leftovers in taskbar (credit: Tomaz)
-		DestroyWindow (	glw_state.hWnd );
+		ShowWindow(glw_state.hWnd, SW_HIDE); // jit -- destroy leftovers in taskbar (credit: Tomaz)
+		DestroyWindow(glw_state.hWnd);
 		glw_state.hWnd = NULL;
 	}
 
-	if ( glw_state.log_fp )
+	if (glw_state.log_fp)
 	{
-		fclose( glw_state.log_fp );
+		fclose(glw_state.log_fp);
 		glw_state.log_fp = 0;
 	}
 
-	UnregisterClass (WINDOW_CLASS_NAME, glw_state.hInstance);
+	UnregisterClass(WINDOW_CLASS_NAME, glw_state.hInstance);
 
-	if ( gl_state.fullscreen )
+	if (gl_state.fullscreen)
 	{
-		ChangeDisplaySettings( 0, 0 );
+		ChangeDisplaySettings(0, 0);
 		gl_state.fullscreen = false;
 	}
 }
@@ -449,14 +454,14 @@ qboolean GLimp_InitGL (void)
     int  pixelformat;
 	cvar_t *stereo;
 	
-	stereo = ri.Cvar_Get( "cl_stereo", "0", 0 );
+	stereo = ri.Cvar_Get("cl_stereo", "0", 0);
 
 	/*
 	** set PFD_STEREO if necessary
 	*/
-	if ( stereo->value != 0 )
+	if (stereo->value)
 	{
-		ri.Con_Printf( PRINT_ALL, "...attempting to use stereo\n" );
+		ri.Con_Printf(PRINT_ALL, "...attempting to use stereo\n");
 		pfd.dwFlags |= PFD_STEREO;
 		gl_state.stereo_enabled = true;
 	}
@@ -468,7 +473,7 @@ qboolean GLimp_InitGL (void)
 	/*
 	** figure out if we're running on a minidriver or not
 	*/
-	if ( strstr( gl_driver->string, "opengl32" ) != 0 )
+	if (strstr(gl_driver->string, "opengl32"))
 		glw_state.minidriver = false;
 	else
 		glw_state.minidriver = true;
@@ -476,44 +481,48 @@ qboolean GLimp_InitGL (void)
 	/*
 	** Get a DC for the specified window
 	*/
-	if ( glw_state.hDC != NULL )
-		ri.Con_Printf( PRINT_ALL, "GLimp_Init() - non-NULL DC exists\n" );
+	if (glw_state.hDC != NULL)
+		ri.Con_Printf(PRINT_ALL, "GLimp_Init() - non-NULL DC exists\n");
 
-    if ( ( glw_state.hDC = GetDC( glw_state.hWnd ) ) == NULL )
+    if ((glw_state.hDC = GetDC(glw_state.hWnd)) == NULL)
 	{
-		ri.Con_Printf( PRINT_ALL, "GLimp_Init() - GetDC failed\n" );
+		ri.Con_Printf(PRINT_ALL, "GLimp_Init() - GetDC failed\n");
 		return false;
 	}
 
-	if ( glw_state.minidriver )
+	if (glw_state.minidriver)
 	{
-		if ( (pixelformat = qwglChoosePixelFormat( glw_state.hDC, &pfd)) == 0 )
+		if ((pixelformat = qwglChoosePixelFormat(glw_state.hDC, &pfd)) == 0)
 		{
-			ri.Con_Printf (PRINT_ALL, "GLimp_Init() - qwglChoosePixelFormat failed\n");
+			ri.Con_Printf(PRINT_ALL, "GLimp_Init() - qwglChoosePixelFormat failed\n");
 			return false;
 		}
-		if ( qwglSetPixelFormat( glw_state.hDC, pixelformat, &pfd) == FALSE )
+
+		if (qwglSetPixelFormat(glw_state.hDC, pixelformat, &pfd) == FALSE)
 		{
-			ri.Con_Printf (PRINT_ALL, "GLimp_Init() - qwglSetPixelFormat failed\n");
+			ri.Con_Printf(PRINT_ALL, "GLimp_Init() - qwglSetPixelFormat failed\n");
 			return false;
 		}
-		qwglDescribePixelFormat( glw_state.hDC, pixelformat, sizeof( pfd ), &pfd );
+
+		qwglDescribePixelFormat(glw_state.hDC, pixelformat, sizeof(pfd), &pfd);
 	}
 	else
 	{
-		if ( ( pixelformat = ChoosePixelFormat( glw_state.hDC, &pfd)) == 0 )
+		if ((pixelformat = ChoosePixelFormat(glw_state.hDC, &pfd)) == 0)
 		{
 			ri.Con_Printf (PRINT_ALL, "GLimp_Init() - ChoosePixelFormat failed\n");
 			return false;
 		}
-		if ( SetPixelFormat( glw_state.hDC, pixelformat, &pfd) == FALSE )
+
+		if (SetPixelFormat(glw_state.hDC, pixelformat, &pfd) == FALSE)
 		{
 			ri.Con_Printf (PRINT_ALL, "GLimp_Init() - SetPixelFormat failed\n");
 			return false;
 		}
-		DescribePixelFormat( glw_state.hDC, pixelformat, sizeof( pfd ), &pfd );
 
-		if ( !( pfd.dwFlags & PFD_GENERIC_ACCELERATED ) )
+		DescribePixelFormat(glw_state.hDC, pixelformat, sizeof(pfd), &pfd);
+
+		if (!(pfd.dwFlags & PFD_GENERIC_ACCELERATED))
 		{
 			extern cvar_t *gl_allow_software;
 
@@ -531,10 +540,10 @@ qboolean GLimp_InitGL (void)
 	/*
 	** report if stereo is desired but unavailable
 	*/
-	if ( !( pfd.dwFlags & PFD_STEREO ) && ( stereo->value != 0 ) ) 
+	if (!(pfd.dwFlags & PFD_STEREO) && (stereo->value != 0)) 
 	{
-		ri.Con_Printf( PRINT_ALL, "...failed to select stereo pixel format\n" );
-		ri.Cvar_SetValue( "cl_stereo", 0 );
+		ri.Con_Printf(PRINT_ALL, "...failed to select stereo pixel format\n");
+		ri.Cvar_SetValue("cl_stereo", 0);
 		gl_state.stereo_enabled = false;
 	}
 
@@ -542,17 +551,15 @@ qboolean GLimp_InitGL (void)
 	** startup the OpenGL subsystem by creating a context and making
 	** it current
 	*/
-	if ( ( glw_state.hGLRC = qwglCreateContext( glw_state.hDC ) ) == 0 )
+	if ((glw_state.hGLRC = qwglCreateContext(glw_state.hDC)) == 0)
 	{
 		ri.Con_Printf (PRINT_ALL, "GLimp_Init() - qwglCreateContext failed\n");
-
 		goto fail;
 	}
 
-    if ( !qwglMakeCurrent( glw_state.hDC, glw_state.hGLRC ) )
+    if (!qwglMakeCurrent(glw_state.hDC, glw_state.hGLRC))
 	{
 		ri.Con_Printf (PRINT_ALL, "GLimp_Init() - qwglMakeCurrent failed\n");
-
 		goto fail;
 	}
 
@@ -571,12 +578,14 @@ qboolean GLimp_InitGL (void)
 	{
 		char buffer[1024];
 
-		strcpy( buffer, qglGetString( GL_RENDERER ) );
+		strcpy( buffer, qglGetString(GL_RENDERER));
+
 		if (!((int)pfd.cStencilBits))  // jit
 		{
 			if(gl_debug->value)
 				ri.Con_Printf(PRINT_ALL, "... No stencil buffer\n");
-			have_stencil=false;
+
+			have_stencil = false;
 		} 
 		else 
 		{
@@ -584,10 +593,12 @@ qboolean GLimp_InitGL (void)
 			{
 				if(gl_debug->value)
 					ri.Con_Printf(PRINT_ALL, "... Using stencil buffer\n");
+
 				have_stencil = true; // Stencil shadows - MrG
 			}
 		}
 	}
+
 	RS_ScanPathForScripts(ri.FS_Gamedir());		// load all found scripts
 
 	// Vertex arrays
@@ -806,16 +817,16 @@ void UpdateGammaRamp (void)
 /*
 ** GLimp_AppActivate
 */
-void GLimp_AppActivate( qboolean active )
+void GLimp_AppActivate (qboolean active)
 {
-	if ( active )
+	if (active)
 	{
-		SetForegroundWindow( glw_state.hWnd );
-		ShowWindow( glw_state.hWnd, SW_RESTORE );
+		SetForegroundWindow(glw_state.hWnd);
+		ShowWindow(glw_state.hWnd, SW_RESTORE);
 	}
 	else
 	{
-		if ( vid_fullscreen->value )
-			ShowWindow( glw_state.hWnd, SW_MINIMIZE );
+		if (vid_fullscreen->value)
+			ShowWindow(glw_state.hWnd, SW_MINIMIZE);
 	}
 }
