@@ -480,3 +480,14 @@ void		GLimp_LogNewFrame( void );
 
 
 // #define BEEFQUAKERENDER // this must be off for 3dfx compatibilty (jit3dfx)
+
+#if 1
+#define malloc(a) ri.Z_Malloc(a) // jitmalloc
+#define free(a) ri.Z_Free(a)
+#endif
+
+#define RSCRIPT_STATIC 0 // jitrscript
+#define RSCRIPT_SINE   1
+#define RSCRIPT_COSINE 2
+#define RSCRIPT_SINABS 3
+#define RSCRIPT_COSABS 4
