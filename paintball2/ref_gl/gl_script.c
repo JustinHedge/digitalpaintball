@@ -62,6 +62,30 @@ int RS_Animate (rs_stage_t *stage)
 	return anim->texture->texnum;
 }
 
+image_t *RS_Animate_image (rs_stage_t *stage) // jitrscript
+{
+	anim_stage_t *anim;
+	float time;
+	
+	anim = stage->last_anim;
+	time = rs_realtime * 1000 - (stage->last_anim_time + stage->anim_delay);
+
+	
+	while (stage->last_anim_time < rs_realtime)
+	{
+		anim = anim->next;
+	
+		if (!anim)
+			anim = stage->anim_stage;
+
+		stage->last_anim_time += stage->anim_delay;
+	}
+
+	stage->last_anim = anim;
+
+	return anim->texture;
+}
+
 void RS_ResetScript (rscript_t *rs)
 {
 	rs_stage_t		*stage = rs->stage, *tmp_stage;

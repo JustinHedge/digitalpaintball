@@ -329,6 +329,9 @@
 					RelativePath=".\client\cl_fx.c">
 				</File>
 				<File
+					RelativePath="client\cl_hud.c">
+				</File>
+				<File
 					RelativePath=".\client\cl_images.c">
 				</File>
 				<File
@@ -350,7 +353,7 @@
 					RelativePath=".\client\cl_pred.c">
 				</File>
 				<File
-					RelativePath="cl_scores.c">
+					RelativePath="client\cl_scores.c">
 				</File>
 				<File
 					RelativePath=".\client\cl_scrn.c">

@@ -1153,44 +1153,41 @@ void R_Clear (void)
 			qglClear (GL_COLOR_BUFFER_BIT);
 
 		trickframe++;
+
 		if (trickframe & 1)
 		{
 			gldepthmin = 0;
 			gldepthmax = 0.49999;
-			qglDepthFunc (GL_LEQUAL);
+			qglDepthFunc(GL_LEQUAL);
 		}
 		else
 		{
 			gldepthmin = 1;
 			gldepthmax = 0.5;
-			qglDepthFunc (GL_GEQUAL);
+			qglDepthFunc(GL_GEQUAL);
 		}
 	}
 	else
 	{
 		if (gl_clear->value || fogenabled) // jitfog
-			qglClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			qglClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		else
-			qglClear (GL_DEPTH_BUFFER_BIT);
+			qglClear(GL_DEPTH_BUFFER_BIT);
+
 		gldepthmin = 0;
 		gldepthmax = 1;
-		qglDepthFunc (GL_LEQUAL);
+		qglDepthFunc(GL_LEQUAL);
 	}
 
-	qglDepthRange (gldepthmin, gldepthmax);
+	qglDepthRange(gldepthmin, gldepthmax);
 
 	// Stencil shadows - MrG
-	if (have_stencil && gl_shadows->value == 2) {
-//		qglClearStencil(1);
+	if (have_stencil && gl_shadows->value == 2)
+	{
 		qglClearStencil(0);
 		qglClear(GL_STENCIL_BUFFER_BIT);
 	}
 }
-
-/*void R_Flash( void ) killed, jit
-{
-	R_PolyBlend ();
-}*/
 
 /*
 ================
@@ -1207,9 +1204,6 @@ void R_RenderView (refdef_t *fd)
 	if (r_norefresh->value)
 		return;
 
-//	if(gl_modulate->value > 2.0) // jit - limit
-//		ri.Cvar_SetValue( "gl_modulate", 2 );  // jit
-
 	r_newrefdef = *fd;
 
 	if (!r_worldmodel && !( r_newrefdef.rdflags & RDF_NOWORLDMODEL ) )
@@ -1221,7 +1215,7 @@ void R_RenderView (refdef_t *fd)
 		c_alias_polys = 0;
 	}
 
-	// <!-- jitfog -- enable fog rendering
+	// === jitfog -- enable fog rendering
 	if(fogenabled)
 	{
 		if(fogdistance)
@@ -1240,7 +1234,7 @@ void R_RenderView (refdef_t *fd)
 		qglEnable(GL_FOG);
 		//qglHint(GL_FOG_HINT, GL_NICEST);
 	}
-	// jit -->
+	// jit ===
 
 	R_PushDlights();
 
@@ -2138,7 +2132,7 @@ void R_BeginFrame( float camera_separation )
 	/*
 	** change modes if necessary
 	*/
-	if ( gl_mode->modified || vid_fullscreen->modified )
+	if (gl_mode->modified || vid_fullscreen->modified)
 	{	// FIXME: only restart if CDS is required
 		cvar_t	*ref;
 
@@ -2146,18 +2140,18 @@ void R_BeginFrame( float camera_separation )
 		ref->modified = true;
 	}
 
-	if ( gl_log->modified )
+	if (gl_log->modified)
 	{
-		GLimp_EnableLogging( gl_log->value );
+		GLimp_EnableLogging(gl_log->value);
 		gl_log->modified = false;
 	}
 
-	if ( gl_log->value )
+	if (gl_log->value)
 	{
 		GLimp_LogNewFrame();
 	}
 
-	if ( vid_gamma->modified )
+	if (vid_gamma->modified)
 	{
 		vid_gamma->modified = false;
 
@@ -2165,16 +2159,16 @@ void R_BeginFrame( float camera_separation )
 		{
 			UpdateGammaRamp();
 		} 
-		else if ( gl_config.renderer & ( GL_RENDERER_VOODOO ) ) 
+		else if (gl_config.renderer & GL_RENDERER_VOODOO) 
 		{
 			char envbuffer[1024];
 			float g;
 
-			g = 2.0 * ( 0.8 - ( vid_gamma->value - 0.5 ) ) + 1.0F;
-			Com_sprintf( envbuffer, sizeof(envbuffer), "SSTV2_GAMMA=%f", g );
-			putenv( envbuffer );
-			Com_sprintf( envbuffer, sizeof(envbuffer), "SST_GAMMA=%f", g );
-			putenv( envbuffer );
+			g = 2.0 * (0.8 - (vid_gamma->value - 0.5)) + 1.0F;
+			Com_sprintf(envbuffer, sizeof(envbuffer), "SSTV2_GAMMA=%f", g);
+			putenv(envbuffer);
+			Com_sprintf(envbuffer, sizeof(envbuffer), "SST_GAMMA=%f", g);
+			putenv(envbuffer);
 		}
 	}
 
@@ -2187,9 +2181,7 @@ void R_BeginFrame( float camera_separation )
 		} 
 	}
 
-
-
-	GLimp_BeginFrame( camera_separation );
+	GLimp_BeginFrame(camera_separation);
 
 	/*
 	** go into 2D mode
@@ -2209,37 +2201,37 @@ void R_BeginFrame( float camera_separation )
 	/*
 	** draw buffer stuff
 	*/
-	if ( gl_drawbuffer->modified )
+	if (gl_drawbuffer->modified)
 	{
 		gl_drawbuffer->modified = false;
 
 		if (gl_state.camera_separation == 0 || !gl_state.stereo_enabled)
 		{
 			if (Q_strcasecmp(gl_drawbuffer->string, "GL_FRONT") == 0)
-				qglDrawBuffer( GL_FRONT );
+				qglDrawBuffer(GL_FRONT);
 			else
-				qglDrawBuffer( GL_BACK );
+				qglDrawBuffer(GL_BACK);
 		}
 	}
 
 	/*
 	** texturemode stuff
 	*/
-	if ( gl_texturemode->modified )
+	if (gl_texturemode->modified)
 	{
-		GL_TextureMode( gl_texturemode->string );
+		GL_TextureMode(gl_texturemode->string);
 		gl_texturemode->modified = false;
 	}
 
-	if ( gl_texturealphamode->modified )
+	if (gl_texturealphamode->modified)
 	{
-		GL_TextureAlphaMode( gl_texturealphamode->string );
+		GL_TextureAlphaMode(gl_texturealphamode->string);
 		gl_texturealphamode->modified = false;
 	}
 
-	if ( gl_texturesolidmode->modified )
+	if (gl_texturesolidmode->modified)
 	{
-		GL_TextureSolidMode( gl_texturesolidmode->string );
+		GL_TextureSolidMode(gl_texturesolidmode->string);
 		gl_texturesolidmode->modified = false;
 	}
 
@@ -2251,7 +2243,7 @@ void R_BeginFrame( float camera_separation )
 	//
 	// clear screen if desired
 	//
-	R_Clear ();
+	R_Clear();
 }
 
 /*
