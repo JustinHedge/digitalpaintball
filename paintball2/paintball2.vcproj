@@ -323,6 +323,9 @@
 					RelativePath=".\client\cl_cin.c">
 				</File>
 				<File
+					RelativePath="client\cl_decode.c">
+				</File>
+				<File
 					RelativePath=".\client\cl_ents.c">
 				</File>
 				<File
@@ -363,9 +366,6 @@
 				</File>
 				<File
 					RelativePath=".\client\cl_view.c">
-				</File>
-				<File
-					RelativePath="client\encode_bin_str.c">
 				</File>
 			</Filter>
 			<Filter
