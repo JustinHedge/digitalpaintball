@@ -577,7 +577,6 @@ static void rs_stage_anim (rs_stage_t *stage, char **token)
 
 static void rs_stage_envmap (rs_stage_t *stage, char **token)
 {
-	//stage->envmap = true;
 	stage->tcGen = TC_GEN_ENVIRONMENT;
 }
 
@@ -1470,16 +1469,15 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 					case TC_GEN_BASE:
 						os = v[3];
 						ot = v[4];
-
 						break;
 					case TC_GEN_ENVIRONMENT:
 						RS_SetEnvmap(v, &os, &ot, surf->plane->normal);
-
 						break;
 					case TC_GEN_VECTOR:
-						os = DotProduct(stage->tcGenVec[0], v) + stage->tcGenVec[0][3];
-						ot = DotProduct(stage->tcGenVec[1], v) + stage->tcGenVec[1][3];
-
+						// Note: unless we add support for a 4th value, stage->tcGenVec[x][3] == 0.
+						// Commented out to (maybe) improve speed.
+						os = DotProduct(stage->tcGenVec[0], v);// always 0: + stage->tcGenVec[0][3];
+						ot = DotProduct(stage->tcGenVec[1], v);// always 0: + stage->tcGenVec[1][3];
 						break;
 					}
 

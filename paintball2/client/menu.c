@@ -232,9 +232,8 @@ static menu_widget_t *free_widgets(menu_widget_t *widget)
 	if(widget->name)
 	{
 		remove_named_widget(widget);
-		Z_Free(widget->command);
+		Z_Free(widget->name);
 	}
-
 	if(widget->command)
 		Z_Free(widget->command);
 	if(widget->doubleclick)

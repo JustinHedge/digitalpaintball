@@ -254,6 +254,7 @@ static int startpos = 0;
 static void event_print (char *s)
 {
 	startpos--;
+
 	if(startpos<0)
 		startpos = MAX_EVENT_STRINGS - 1;
 
@@ -282,7 +283,7 @@ void CL_DrawEventStrings (void)
 			}
 
 			re.DrawStringAlpha(viddef.width/2-4*hudscale*strlen_noformat(event_strings[j]),
-				viddef.height/2+(16+i*8)*hudscale, event_strings[j], alpha);
+				viddef.height/2+(32+i*8)*hudscale, event_strings[j], alpha);
 		}
 		else
 		{
@@ -294,6 +295,9 @@ void CL_DrawEventStrings (void)
 	re.DrawStringAlpha(0, 0, "", 1.0f);
 }
 
+
+extern cvar_t *cl_timestamp;
+extern char timestamp[24];
 void CL_ParsePrintEvent (const char *str) // jitevents
 {
 	unsigned int event;
@@ -316,7 +320,10 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		sprintf(event_text, "(null)");
 	}
 
-	Com_Printf("%s\n", event_text);
+	if (cl_timestamp->value)
+		Com_Printf("[%s] %s\n", timestamp, event_text);
+	else
+		Com_Printf("%s\n", event_text);
 	
 	// handle special cases of events here...
 	switch(event)
@@ -343,6 +350,9 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 	case EVENT_ROUNDOVER:
 		event_print(event_text);
 		break;
+	case EVENT_OVERTIME:
+		event_print(event_text);
+		break;
 	case EVENT_ROUNDSTART:
 		cl_scores_setisalive_all(true);
 		cl_scores_sethasflag_all(false);
@@ -354,6 +364,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 				sprintf(event_text, "Admin (%s) killed you.", name_from_index(index_array[3]));
 			else
 				sprintf(event_text, "Admin killed you.");
+
 			event_print(event_text);
 		}
 		break;
@@ -405,7 +416,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		cl_scores_setisalive(index_array[3], false);
 
 		if (index_array[2] == cl.playernum)
-			sprintf(event_text, "%cYou eliminated your teammate!!", CHAR_ITALICS);
+			sprintf(event_text, "%cYou eliminated your teammate!", CHAR_ITALICS);
 		else if (index_array[3] == cl.playernum)
 			sprintf(event_text, "Your teammate (%s) eliminated you.", name_from_index(index_array[2]));
 		else

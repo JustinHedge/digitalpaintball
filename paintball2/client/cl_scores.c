@@ -100,7 +100,7 @@ int cl_scores_get_team (int client)
 
 int cl_scores_get_isalive (int client)
 {
-	return cl_scores[client].isalive;
+	return (cls.gametype == GAMETYPE_DM) || cl_scores[client].isalive; // todo - move dm check to set_isalive
 }
 
 void init_cl_scores (void)
@@ -265,14 +265,6 @@ static void RequestPings()
 		lastrequest = cls.realtime;
 	}
 }
-
-#define GAMETYPE_NONE	-1
-#define GAMETYPE_DM		0
-#define GAMETYPE_1FLAG	1	
-#define GAMETYPE_2FLAG	2
-#define GAMETYPE_SIEGE	3	
-#define GAMETYPE_KOTH	4
-#define GAMETYPE_ELIM	5
 
 // sort the scoreboard.
 static int cl_sorted_scorelist[MAX_CLIENTS];

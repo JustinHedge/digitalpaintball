@@ -571,6 +571,13 @@ int  CL_ScoresDemoData (int startindex, unsigned char **sptr);
 unsigned char cl_scores_get_team_textcolor (int client);
 void init_cl_scores (void);
 void shutdown_cl_scores (void);
+#define GAMETYPE_NONE	-1
+#define GAMETYPE_DM		0
+#define GAMETYPE_1FLAG	1	
+#define GAMETYPE_2FLAG	2
+#define GAMETYPE_SIEGE	3	
+#define GAMETYPE_KOTH	4
+#define GAMETYPE_ELIM	5
 
 //
 // cl_decode.c

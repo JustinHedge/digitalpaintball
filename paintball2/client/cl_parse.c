@@ -1113,7 +1113,7 @@ void SHOWNET (char *s)
 }
 
 extern cvar_t *cl_timestamp; // jit
-static char timestamp[24];
+char timestamp[24];
 
 static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 {
@@ -1141,7 +1141,7 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 		Com_Printf("%c%c[%s] %c%s%s%s%c%c%s%s %s%s",
 			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
 			timestamp, cl_scores_get_team_splat(idx), 
-			cl_scores_get_isalive(idx) ? "" : "[ELIM]",
+			cl_scores_get_isalive(idx) ? "" : "[ELIM] ",
 			(isteam || isprivate) ? "(" : "", name_from_index(idx),
 			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
 			(isteam || isprivate) ? ")" : "", 
@@ -1150,7 +1150,7 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 	else
 		Com_Printf("%c%c%c%s%s%s%c%c%s%s %s%s", cl_scores_get_team_splat(idx),
 			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
-			cl_scores_get_isalive(idx) ? "" : "[ELIM]",
+			cl_scores_get_isalive(idx) ? "" : "[ELIM] ", // jitodo - [OBS]
 			(isteam || isprivate) ? "(" : "", name_from_index(idx),
 			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
 			(isteam || isprivate) ? ")" : "", 
