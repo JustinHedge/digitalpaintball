@@ -673,27 +673,40 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 		return;
 
 	// Stencil shadows - MrG
-	if (have_stencil && gl_shadows->value == 2) {
+	if (have_stencil && gl_shadows->value == 2)
+	{
 		qglEnable(GL_STENCIL_TEST);
-		qglStencilFunc(GL_GREATER,2,2);
-		qglStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+		qglStencilFunc(GL_GREATER, 2, 2);
+		qglStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	}
 	// End Stencil shadows - MrG
 
-	qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	qglEnableClientState( GL_COLOR_ARRAY );
+	//qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	//qglEnableClientState(GL_COLOR_ARRAY);
+	qglDisable(GL_TEXTURE_2D);
+	qglColor4f(0, 0, 0, 0.2f);
+
+
 	while (1)
 	{
 		// get the vertex count and primitive type
 		count = *order++;
 		va=0;
+
 		if (!count)
-			break;		// done
-		if (count < 0) {
+			break;		// done.
+
+		if (count < 0)
+		{
 			count = -count;
-			mode=GL_TRIANGLE_FAN;
-		} else
-			mode=GL_TRIANGLE_STRIP;
+			//mode = GL_TRIANGLE_FAN;
+			qglBegin(GL_TRIANGLE_FAN); // jit
+		}
+		else
+		{
+			//mode = GL_TRIANGLE_STRIP;
+			qglBegin(GL_TRIANGLE_STRIP);
+		}
 
 		do
 		{
@@ -701,18 +714,25 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 			point[1] = s_lerped[order[2]][1] - shadevector[1]*(s_lerped[order[2]][2]+lheight);
 			point[2] = height;
 
-			VA_SetElem3(vert_array[va],point[0],point[1],point[2]);
-			VA_SetElem4(col_array[va],0, 0, 0, 0.2f);
+			//VA_SetElem3(vert_array[va],point[0],point[1],point[2]);
+			//VA_SetElem4(col_array[va],0, 0, 0, 0.2f);
+			qglVertex3fv(point); // jit
 			order += 3;
-			va++;
+			//va++;
 		} while (--count);
+
+		qglEnd (); // jit
+
 		// jitest if ( qglLockArraysEXT != 0 ) qglLockArraysEXT( 0, paliashdr->num_xyz );
-		qglDrawArrays(mode,0,va);
+		//qglDrawArrays(mode,0,va);
 		// jitest if ( qglUnlockArraysEXT != 0 ) qglUnlockArraysEXT();
 	}	
-	qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	qglDisableClientState( GL_COLOR_ARRAY );
-	if (have_stencil && gl_shadows->value == 2) {
+
+	//qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	//qglDisableClientState(GL_COLOR_ARRAY);
+
+	if (have_stencil && gl_shadows->value == 2)
+	{
 		qglDisable(GL_STENCIL_TEST); // Stencil shadows - MrG
 	}
 
@@ -1205,14 +1225,14 @@ void R_DrawAliasModel (entity_t *e)
 		qglPushMatrix ();
 
 		// Dont rotate shadows on ungodly axis' - MrG
-		qglTranslatef (e->origin[0],  e->origin[1],  e->origin[2]);
-		qglRotatef (e->angles[1],  0, 0, 1);
+		qglTranslatef(e->origin[0],  e->origin[1],  e->origin[2]);
+		qglRotatef(e->angles[1],  0, 0, 1);
 		// End
 
-		qglDisable (GL_TEXTURE_2D);
+		qglDisable(GL_TEXTURE_2D);
 		GLSTATE_ENABLE_BLEND
-		GL_DrawAliasShadow (paliashdr, currententity->frame );
-		qglEnable (GL_TEXTURE_2D);
+		GL_DrawAliasShadow(paliashdr, currententity->frame);
+		qglEnable(GL_TEXTURE_2D);
 		GLSTATE_DISABLE_BLEND
 		qglPopMatrix ();
 	}
