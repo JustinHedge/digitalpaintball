@@ -166,7 +166,8 @@ clients along with it.
 
 ================
 */
-void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate, qboolean attractloop, qboolean loadgame)
+void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate, 
+					 qboolean attractloop, qboolean loadgame)
 {
 	int			i;
 	unsigned	checksum;
@@ -256,12 +257,15 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 	sv.state = ss_loading;
 	Com_SetServerState (sv.state);
 
-	// load and spawn all other entities
-	ge->SpawnEntities ( sv.name, CM_EntityString(), spawnpoint );
+	//if(!sv.attractloop) // jitdemo -- don't spawn game stuff while demo is playing!
+	{
+		// load and spawn all other entities
+		ge->SpawnEntities ( sv.name, CM_EntityString(), spawnpoint );
 
-	// run two frames to allow everything to settle
-	ge->RunFrame ();
-	ge->RunFrame ();
+		// run two frames to allow everything to settle
+		ge->RunFrame ();
+		ge->RunFrame ();
+	}
 
 	// all precaches are complete
 	sv.state = serverstate;
@@ -364,6 +368,7 @@ void SV_InitGame (void)
 
 	// init game
 	SV_InitGameProgs ();
+
 	for (i=0 ; i<maxclients->value ; i++)
 	{
 		ent = EDICT_NUM(i+1);

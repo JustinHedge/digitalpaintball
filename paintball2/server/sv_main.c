@@ -383,20 +383,23 @@ gotnewcl:
 	newcl->challenge = challenge; // save challenge for checksumming
 
 	// get the game a chance to reject this connection or modify the userinfo
-	if (!(ge->ClientConnect (ent, userinfo)))
+	//if(!sv.attractloop) // jitdemo - don't call game functions for demo plays
 	{
-		if (*Info_ValueForKey (userinfo, "rejmsg")) 
-			Netchan_OutOfBandPrint (NS_SERVER, adr, "print\n%s\nConnection refused.\n",  
-				Info_ValueForKey (userinfo, "rejmsg"));
-		else
-			Netchan_OutOfBandPrint (NS_SERVER, adr, "print\nConnection refused.\n" );
-		Com_DPrintf ("Game rejected a connection.\n");
-		return;
-	}
+		if (!(ge->ClientConnect (ent, userinfo)))
+		{
+			if (*Info_ValueForKey (userinfo, "rejmsg")) 
+				Netchan_OutOfBandPrint (NS_SERVER, adr, "print\n%s\nConnection refused.\n",  
+					Info_ValueForKey (userinfo, "rejmsg"));
+			else
+				Netchan_OutOfBandPrint (NS_SERVER, adr, "print\nConnection refused.\n" );
+			Com_DPrintf ("Game rejected a connection.\n");
+			return;
+		}
 
-	// parse some info from the info strings
-	strncpy (newcl->userinfo, userinfo, sizeof(newcl->userinfo)-1);
-	SV_UserinfoChanged (newcl);
+		// parse some info from the info strings
+		strncpy (newcl->userinfo, userinfo, sizeof(newcl->userinfo)-1);
+		SV_UserinfoChanged (newcl);
+	}
 
 	// send the connect packet to the client
 	Netchan_OutOfBandPrint (NS_SERVER, adr, "client_connect");
