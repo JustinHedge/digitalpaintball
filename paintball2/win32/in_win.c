@@ -133,7 +133,7 @@ int			window_center_x, window_center_y;
 RECT		window_rect;
 
 // ++ ARTHUR [9/06/03]
-qboolean q_get_cursor_pos(int* x, int* y)
+/*qboolean q_get_cursor_pos(int* x, int* y)
 {
 	POINT		mousePos;
 //	RECT		window;
@@ -149,7 +149,7 @@ qboolean q_get_cursor_pos(int* x, int* y)
     *x = mousePos.x - clientSize.x;
 	*y = mousePos.y - clientSize.y;
 	return true;
-}
+}*/
 // -- ARTHUR
 
 /*
