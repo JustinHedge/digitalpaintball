@@ -33,4 +33,3 @@ void IN_Move (usercmd_t *cmd);
 
 void IN_Activate (qboolean active);
 
-qboolean q_get_cursor_pos(int* x, int* y); // ++ ARTHUR [9/06/03]

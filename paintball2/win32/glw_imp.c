@@ -331,10 +331,6 @@ void GLimp_Shutdown( void )
 //jitgamma	if(vid_gamma_hw->value && gl_state.gammaramp)
 //		SetDeviceGammaRamp(glw_state.hDC, original_ramp);
 
-	RS_FreeAllScripts();	// unload rscript
-	if(char_colors) // for some reason this is null if you have an invalid refresh setting
-		free(char_colors); // jittext
-
 	if ( qwglMakeCurrent && !qwglMakeCurrent( NULL, NULL ) )
 		ri.Con_Printf( PRINT_ALL, "ref_gl::R_Shutdown() - wglMakeCurrent failed\n");
 
@@ -599,7 +595,7 @@ qboolean GLimp_InitGL (void)
 		}
 	}
 
-	RS_ScanPathForScripts(ri.FS_Gamedir());		// load all found scripts
+//jitrscript - moved	RS_ScanPathForScripts(ri.FS_Gamedir());		// load all found scripts
 
 	// Vertex arrays
 	/*qglEnableClientState (GL_VERTEX_ARRAY);
@@ -621,8 +617,6 @@ qboolean GLimp_InitGL (void)
 
 	if (gl_state.gammaramp && vid_gamma_hw->value) // jitgamma
 		vid_gamma->modified = true;
-
-	init_image_hash_tables(); // jithash
 
 	return true;
 

@@ -221,10 +221,10 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
                  tex_state1;
 
 
-        GL_SelectTexture(GL_TEXTURE0);
+        GL_SelectTexture(QGL_TEXTURE0);
         qglGetTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_state0);
 
-        GL_SelectTexture(GL_TEXTURE1);
+        GL_SelectTexture(QGL_TEXTURE1);
         qglGetTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_state1);
 
         GL_EnableMultitexture(false);
@@ -250,10 +250,10 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
         qglEnable(GL_TEXTURE_2D);
         GL_EnableMultitexture(true);
         
-        GL_SelectTexture(GL_TEXTURE0);
+        GL_SelectTexture(QGL_TEXTURE0);
         GL_TexEnv(tex_state0);
 
-        GL_SelectTexture(GL_TEXTURE1);
+        GL_SelectTexture(QGL_TEXTURE1);
         GL_TexEnv(tex_state1);
     }
 
@@ -1050,7 +1050,7 @@ dynamic:
 			R_BuildLightMap(surf, (void*)temp, smax*4);
 			R_SetCacheState(surf);
 
-			GL_MBind(GL_TEXTURE1, gl_state.lightmap_textures + surf->lightmaptexturenum);
+			GL_MBind(QGL_TEXTURE1, gl_state.lightmap_textures + surf->lightmaptexturenum);
 
 			lmtex = surf->lightmaptexturenum;
 
@@ -1068,7 +1068,7 @@ dynamic:
 
 			R_BuildLightMap(surf, (void*)temp, smax*4);
 
-			GL_MBind(GL_TEXTURE1, gl_state.lightmap_textures + 0);
+			GL_MBind(QGL_TEXTURE1, gl_state.lightmap_textures + 0);
 
 			lmtex = 0;
 
@@ -1082,14 +1082,14 @@ dynamic:
 
 		c_brush_polys++;
 
-		GL_MBind(GL_TEXTURE1, gl_state.lightmap_textures + lmtex);
+		GL_MBind(QGL_TEXTURE1, gl_state.lightmap_textures + lmtex);
 
 //==========
 //PGM
 		if (surf->texinfo->flags & SURF_FLOWING)
 		{
 			float scroll;
-			GL_MBind(GL_TEXTURE0, image->texnum);
+			GL_MBind(QGL_TEXTURE0, image->texnum);
 	
 			scroll = -64 * ((r_newrefdef.time*0.025 /* / 40.0*/) - (int)(r_newrefdef.time*0.025 /* / 40.0 */));
 			if(scroll == 0.0)
@@ -1101,8 +1101,8 @@ dynamic:
 				qglBegin(GL_POLYGON);
 				for (i=0; i< nv; i++, v+= VERTEXSIZE)
 				{
-					qglMTexCoord2fSGIS(GL_TEXTURE0, (v[3]+scroll), v[4]);
-					qglMTexCoord2fSGIS(GL_TEXTURE1, v[5], v[6]);
+					qglMTexCoord2fSGIS(QGL_TEXTURE0, (v[3]+scroll), v[4]);
+					qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
 					qglVertex3fv(v);
 				}
 				qglEnd();
@@ -1116,7 +1116,7 @@ dynamic:
 			}
 			else
 			{
-				GL_MBind(GL_TEXTURE0, image->texnum);
+				GL_MBind(QGL_TEXTURE0, image->texnum);
 
 				for (p = surf->polys; p; p = p->chain)
 				{
@@ -1124,8 +1124,8 @@ dynamic:
 					qglBegin(GL_POLYGON);
 					for (i=0; i<nv; i++, v+=VERTEXSIZE)
 					{
-						qglMTexCoord2fSGIS(GL_TEXTURE0, v[3], v[4]);
-						qglMTexCoord2fSGIS(GL_TEXTURE1, v[5], v[6]);
+						qglMTexCoord2fSGIS(QGL_TEXTURE0, v[3], v[4]);
+						qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
 						qglVertex3fv(v);
 					}
 					qglEnd();
@@ -1138,14 +1138,14 @@ dynamic:
 	else
 	{
 		c_brush_polys++;
-		GL_MBind(GL_TEXTURE1, gl_state.lightmap_textures + lmtex);
+		GL_MBind(QGL_TEXTURE1, gl_state.lightmap_textures + lmtex);
 //==========
 //PGM
 		if (surf->texinfo->flags & SURF_FLOWING)
 		{
 			float scroll;
 
-			GL_MBind(GL_TEXTURE0, image->texnum);
+			GL_MBind(QGL_TEXTURE0, image->texnum);
 		
 			scroll = -64 * ((r_newrefdef.time*0.025  /* / 40.0 */) - (int)(r_newrefdef.time*0.025 /* / 40.0 */));
 
@@ -1158,8 +1158,8 @@ dynamic:
 				qglBegin(GL_POLYGON);
 				for (i=0; i<nv; i++, v+=VERTEXSIZE)
 				{
-					qglMTexCoord2fSGIS(GL_TEXTURE0, (v[3]+scroll), v[4]);
-					qglMTexCoord2fSGIS(GL_TEXTURE1, v[5], v[6]);
+					qglMTexCoord2fSGIS(QGL_TEXTURE0, (v[3]+scroll), v[4]);
+					qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
 					qglVertex3fv (v);
 				}
 				qglEnd();
@@ -1175,7 +1175,7 @@ dynamic:
 			}
 			else
 			{
-				GL_MBind(GL_TEXTURE0, image->texnum);
+				GL_MBind(QGL_TEXTURE0, image->texnum);
 #ifdef COLORNODES
 				GL_TexEnv(GL_COMBINE_EXT); // jitest
 #endif
@@ -1186,8 +1186,8 @@ dynamic:
 					qglBegin(GL_POLYGON);
 					for (i=0 ; i<nv; i++, v+=VERTEXSIZE)
 					{
-						qglMTexCoord2fSGIS(GL_TEXTURE0, v[3], v[4]);
-						qglMTexCoord2fSGIS(GL_TEXTURE1, v[5], v[6]);
+						qglMTexCoord2fSGIS(QGL_TEXTURE0, v[3], v[4]);
+						qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
 						qglVertex3fv(v);
 					}
 					qglEnd();
@@ -1346,31 +1346,31 @@ void R_DrawBrushModel (entity_t *e)
 		vec3_t	temp;
 		vec3_t	forward, right, up;
 
-		VectorCopy (modelorg, temp);
-		AngleVectors (e->angles, forward, right, up);
-		modelorg[0] = DotProduct (temp, forward);
-		modelorg[1] = -DotProduct (temp, right);
-		modelorg[2] = DotProduct (temp, up);
+		VectorCopy(modelorg, temp);
+		AngleVectors(e->angles, forward, right, up);
+		modelorg[0] = DotProduct(temp, forward);
+		modelorg[1] = -DotProduct(temp, right);
+		modelorg[2] = DotProduct(temp, up);
 	}
 
-    qglPushMatrix ();
-e->angles[0] = -e->angles[0];	// stupid quake bug
-e->angles[2] = -e->angles[2];	// stupid quake bug
+	qglPushMatrix();
+	e->angles[0] = -e->angles[0];	// stupid quake bug
+	e->angles[2] = -e->angles[2];	// stupid quake bug
 	R_RotateForEntity (e);
-e->angles[0] = -e->angles[0];	// stupid quake bug
-e->angles[2] = -e->angles[2];	// stupid quake bug
+	e->angles[0] = -e->angles[0];	// stupid quake bug
+	e->angles[2] = -e->angles[2];	// stupid quake bug
 
-	GL_EnableMultitexture( true );
-	GL_SelectTexture( GL_TEXTURE0);
-	GL_TexEnv( GL_REPLACE );
-	GL_SelectTexture( GL_TEXTURE1);
-//	GL_TexEnv( GL_MODULATE );
-	GL_TexEnv( GL_COMBINE_EXT ); // jitbright
+	GL_EnableMultitexture(true);
+	GL_SelectTexture(QGL_TEXTURE0);
+	GL_TexEnv(GL_REPLACE);
+	GL_SelectTexture(QGL_TEXTURE1);
+//	GL_TexEnv(GL_MODULATE);
+	GL_TexEnv(GL_COMBINE_EXT); // jitbright
 
-	R_DrawInlineBModel ();
-	GL_EnableMultitexture( false );
+	R_DrawInlineBModel();
+	GL_EnableMultitexture(false);
 
-	qglPopMatrix ();
+	qglPopMatrix();
 }
 
 /*
@@ -1573,9 +1573,9 @@ void R_DrawWorld (void)
 	if (qglMTexCoord2fSGIS)
 	{
 		GL_EnableMultitexture(true);
-		GL_SelectTexture(GL_TEXTURE0);
+		GL_SelectTexture(QGL_TEXTURE0);
 		GL_TexEnv(GL_REPLACE);
-		GL_SelectTexture(GL_TEXTURE1);
+		GL_SelectTexture(QGL_TEXTURE1);
 
 		if (gl_lightmap->value)
 			GL_TexEnv(GL_REPLACE);
@@ -1923,22 +1923,22 @@ GL_BeginBuildingLightmaps
 */
 void GL_BeginBuildingLightmaps (model_t *m)
 {
-	static lightstyle_t	lightstyles[MAX_LIGHTSTYLES];
-	int				i;
-	unsigned		dummy[128*128];
+	static lightstyle_t lightstyles[MAX_LIGHTSTYLES];
+	int i;
+	unsigned dummy[128*128];
 
-	memset( gl_lms.allocated, 0, sizeof(gl_lms.allocated) );
+	memset(gl_lms.allocated, 0, sizeof(gl_lms.allocated));
 
 	r_framecount = 1;		// no dlightcache
 
-	GL_EnableMultitexture( true );
-	GL_SelectTexture( GL_TEXTURE1);
+	GL_EnableMultitexture(true);
+	GL_SelectTexture(QGL_TEXTURE1);
 
 	/*
 	** setup the base lightstyles so the lightmaps won't have to be regenerated
 	** the first time they're seen
 	*/
-	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
+	for (i=0; i<MAX_LIGHTSTYLES; i++)
 	{
 		lightstyles[i].rgb[0] = 1;
 		lightstyles[i].rgb[1] = 1;

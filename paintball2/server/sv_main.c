@@ -176,7 +176,7 @@ The second parameter should be the current protocol version number.
 */
 void SVC_Info (void)
 {
-	char	string[64];
+	char	string[256]; // jit (was 64)
 	int		i, count;
 	int		version;
 
@@ -186,18 +186,21 @@ void SVC_Info (void)
 	version = atoi (Cmd_Argv(1));
 
 	if (version != PROTOCOL_VERSION)
-		Com_sprintf (string, sizeof(string), "%s: wrong version\n", hostname->string, sizeof(string));
+	{
+		Com_sprintf(string, sizeof(string), "%s: wrong version\n", hostname->string, sizeof(string));
+	}
 	else
 	{
 		count = 0;
-		for (i=0 ; i<maxclients->value ; i++)
+
+		for (i=0; i<maxclients->value; i++)
 			if (svs.clients[i].state >= cs_connected)
 				count++;
 
-		Com_sprintf (string, sizeof(string), "%16s %8s %2i/%2i\n", hostname->string, sv.name, count, (int)maxclients->value);
+		Com_sprintf(string, sizeof(string), "%16s %8s %2i/%2i\n", hostname->string, sv.name, count, (int)maxclients->value);
 	}
 
-	Netchan_OutOfBandPrint (NS_SERVER, net_from, "info\n%s", string);
+	Netchan_OutOfBandPrint(NS_SERVER, net_from, "info\n%s", string);
 }
 
 /*
@@ -279,26 +282,23 @@ void SVC_DirectConnect (void)
 	int			challenge;
 
 	adr = net_from;
-
 	Com_DPrintf("SVC_DirectConnect ()\n");
-
 	version = atoi(Cmd_Argv(1));
+
 	if (version != PROTOCOL_VERSION)
 	{
-		Netchan_OutOfBandPrint (NS_SERVER, adr, "print\nServer is version %4.2f.\n", VERSION);
+		Netchan_OutOfBandPrint(NS_SERVER, adr, "print\nServer is version %4.2f.\n", VERSION);
 		Com_DPrintf("    rejected connect from version %i\n", version);
 		return;
 	}
 
 	qport = atoi(Cmd_Argv(2));
-
 	challenge = atoi(Cmd_Argv(3));
-
-	strncpy (userinfo, Cmd_Argv(4), sizeof(userinfo)-1);
+	strncpy(userinfo, Cmd_Argv(4), sizeof(userinfo)-1);
 	userinfo[sizeof(userinfo) - 1] = 0;
 
 	// force the IP key/value pair so the game can filter based on ip
-	Info_SetValueForKey (userinfo, "ip", NET_AdrToString(net_from));
+	Info_SetValueForKey(userinfo, "ip", NET_AdrToString(net_from));
 
 	// attractloop servers are ONLY for local clients
 	if (sv.attractloop)
@@ -486,39 +486,40 @@ connectionless packets.
 */
 void SV_ConnectionlessPacket (void)
 {
-	char	*s;
-	char	*c;
+	char *s, *c;
 
-	if(net_message.cursize > 800) // 1024 is the absolute largest, but nothing should be over 600 unless it's malicious.
-		return; // jitsecurity -- fix from Echon.
+	// jitsecurity -- fix from Echon.
+	// 1024 is the absolute largest, but nothing should be over 600 unless it's malicious.
+	if (net_message.cursize > 800)
+	{
+		Com_Printf("Connectionless packet > 800 bytes from %s\n", NET_AdrToString(net_from));
+		return;
+	}
 
-	MSG_BeginReading (&net_message);
-	MSG_ReadLong (&net_message);		// skip the -1 marker
-
-	s = MSG_ReadStringLine (&net_message);
-
-	Cmd_TokenizeString (s, false);
-
+	MSG_BeginReading(&net_message);
+	MSG_ReadLong(&net_message);		// skip the -1 marker
+	s = MSG_ReadStringLine(&net_message);
+	Cmd_TokenizeString(s, false);
 	c = Cmd_Argv(0);
-	Com_DPrintf ("Packet %s : %s\n", NET_AdrToString(net_from), c);
+	Com_DPrintf("Packet %s : %s\n", NET_AdrToString(net_from), c);
 
 	if (Q_streq(c, "ping"))
-		SVC_Ping ();
+		SVC_Ping();
 	else if (Q_streq(c, "ack"))
-		SVC_Ack ();
-	else if (Q_streq(c,"status"))
-		SVC_Status ();
-	else if (Q_streq(c,"info"))
-		SVC_Info ();
-	else if (Q_streq(c,"getchallenge"))
-		SVC_GetChallenge ();
-	else if (Q_streq(c,"connect"))
-		SVC_DirectConnect ();
+		SVC_Ack();
+	else if (Q_streq(c, "status"))
+		SVC_Status();
+	else if (Q_streq(c, "info"))
+		SVC_Info();
+	else if (Q_streq(c, "getchallenge"))
+		SVC_GetChallenge();
+	else if (Q_streq(c, "connect"))
+		SVC_DirectConnect();
 	else if (Q_streq(c, "rcon"))
-		SVC_RemoteCommand ();
+		SVC_RemoteCommand();
 	else
-		Com_Printf ("bad connectionless packet from %s:\n%s\n"
-		, NET_AdrToString (net_from), s);
+		Com_Printf("bad connectionless packet from %s:\n%s\n",
+			NET_AdrToString(net_from), s);
 }
 
 
@@ -613,12 +614,12 @@ void SV_ReadPackets (void)
 	client_t	*cl;
 	int			qport;
 
-	while (NET_GetPacket (NS_SERVER, &net_from, &net_message))
+	while (NET_GetPacket(NS_SERVER, &net_from, &net_message))
 	{
 		// check for connectionless packet (0xffffffff) first
-		if (*(int *)net_message.data == -1)
+		if (*(int*)net_message.data == -1)
 		{
-			SV_ConnectionlessPacket ();
+			SV_ConnectionlessPacket();
 			continue;
 		}
 
@@ -844,13 +845,8 @@ void Master_Heartbeat (void)
 	char		*string;
 	int			i;
 
-	// pgm post3.19 change, cvar pointer not validated before dereferencing
-	if (!dedicated || !dedicated->value)
-		return;		// only dedicated servers send heartbeats
-
-	// pgm post3.19 change, cvar pointer not validated before dereferencing
-	if (!public_server || !public_server->value)
-		return;		// a private dedicated game
+	if (!dedicated || !dedicated->value || !public_server || !public_server->value)
+		return;		// only dedicated public servers send heartbeats
 
 	// check for time wraparound
 	if (svs.last_heartbeat > svs.realtime)
@@ -865,12 +861,14 @@ void Master_Heartbeat (void)
 	string = SV_StatusString();
 
 	// send to group master
-	for (i=0 ; i<MAX_MASTERS ; i++)
+	for (i=0; i<MAX_MASTERS; i++)
+	{
 		if (master_adr[i].port)
 		{
-			Com_Printf ("Sending heartbeat to %s\n", NET_AdrToString (master_adr[i]));
-			Netchan_OutOfBandPrint (NS_SERVER, master_adr[i], "heartbeat\n%s", string);
+			Com_Printf("Sending heartbeat to %s\n", NET_AdrToString(master_adr[i]));
+			Netchan_OutOfBandPrint(NS_SERVER, master_adr[i], "heartbeat\n%s", string);
 		}
+	}
 }
 
 /*
@@ -989,14 +987,10 @@ void SV_Init (void)
 	allow_download_sounds   = Cvar_Get("allow_download_sounds", "1", CVAR_ARCHIVE);
 	allow_download_maps	    = Cvar_Get("allow_download_maps", "1", CVAR_ARCHIVE);
 
-	sv_noreload = Cvar_Get ("sv_noreload", "0", 0);
-
+	sv_noreload = Cvar_Get("sv_noreload", "0", 0);
 	sv_airaccelerate = Cvar_Get("sv_airaccelerate", "0", CVAR_LATCH);
-
-	public_server = Cvar_Get ("public", "0", 0);
-
-	sv_reconnect_limit = Cvar_Get ("sv_reconnect_limit", "3", CVAR_ARCHIVE);
-
+	public_server = Cvar_Get("public", "0", 0);
+	sv_reconnect_limit = Cvar_Get("sv_reconnect_limit", "3", CVAR_ARCHIVE);
 	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
 }
 

@@ -40,3 +40,4 @@ void CIN_ProcessCins(void);
 void CIN_FreeCin (int texnum);
 
 extern cinematics_t	*cin;
+

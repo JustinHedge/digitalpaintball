@@ -124,8 +124,11 @@ void init_cl_scores (void)
 
 void shutdown_cl_scores (void) // jitodo
 {
-	Z_Free(cl_scores_nums);
-	Z_Free(cl_scores_info);
+	if (cl_scores_nums)
+		Z_Free(cl_scores_nums);
+
+	if (cl_scores_info)
+		Z_Free(cl_scores_info);
 }
 
 void cl_scores_setping (int client, int ping)
@@ -133,7 +136,7 @@ void cl_scores_setping (int client, int ping)
 	cl_scores[client].ping = ping;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_setstarttime (int client, int time)
@@ -141,7 +144,7 @@ void cl_scores_setstarttime (int client, int time)
 	cl_scores[client].starttime = time;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_setkills (int client, int kills)
@@ -149,7 +152,7 @@ void cl_scores_setkills (int client, int kills)
 	cl_scores[client].kills = kills;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_setdeaths (int client, int deaths)
@@ -157,7 +160,7 @@ void cl_scores_setdeaths (int client, int deaths)
 	cl_scores[client].deaths = deaths;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_setgrabs (int client, int grabs)
@@ -165,7 +168,7 @@ void cl_scores_setgrabs (int client, int grabs)
 	cl_scores[client].grabs = grabs;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_setcaps (int client, int caps)
@@ -173,7 +176,7 @@ void cl_scores_setcaps (int client, int caps)
 	cl_scores[client].caps = caps;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_setteam (int client, char team)
@@ -181,7 +184,7 @@ void cl_scores_setteam (int client, char team)
 	cl_scores[client].team = team;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_setisalive (int client, qboolean alive)
@@ -193,7 +196,7 @@ void cl_scores_setisalive (int client, qboolean alive)
 	if (!alive)
 		cl_scores_sethasflag(client, false);
 
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_setisalive_all (qboolean alive)
@@ -205,7 +208,7 @@ void cl_scores_setisalive_all (qboolean alive)
 			cl_scores[i].isalive = alive;
 
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_sethasflag_all (qboolean hasflag)
@@ -217,21 +220,21 @@ void cl_scores_sethasflag_all (qboolean hasflag)
 			cl_scores[i].hasflag = hasflag;
 
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_sethasflag (int client, qboolean hasflag)
 {
 	cl_scores[client].hasflag = hasflag;
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_setinuse (int client, qboolean inuse)
 {
 	cl_scores[client].inuse = inuse;
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_setinuse_all (qboolean inuse)
@@ -242,14 +245,14 @@ void cl_scores_setinuse_all (qboolean inuse)
 		cl_scores[i].inuse = inuse;
 
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 void cl_scores_clear (int client)
 {
 	memset(&cl_scores[client], 0, sizeof(cl_score_t));
 	cl_scores_modified = true;
-	M_RefreshWidget("scores");
+	M_RefreshWidget("scores", true);
 }
 
 
@@ -315,7 +318,7 @@ static void SortScores (void)
 	}
 }
 
-int strpos_noformat(const unsigned char *in_str, int pos)
+int strpos_noformat (const unsigned char *in_str, int pos)
 {
 	int count = 0;
 	const unsigned char *s;
@@ -325,17 +328,13 @@ int strpos_noformat(const unsigned char *in_str, int pos)
 	while(*s)
 	{
 		if(*(s+1) && (*s == CHAR_UNDERLINE || *s == CHAR_ENDFORMAT || *s == CHAR_ITALICS))
-		{
-			// don't count character
-		}
+			{ } // don't count character
 		else if(*(s+1) && *s == CHAR_COLOR)
-		{
 			s++; // skip two characters.
-		}
 		else
 			count++;
 
-		if(count >= pos)
+		if (count >= pos)
 			return (s-in_str);
 
 		s++;

@@ -20,7 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_misc.c
 
 #include "gl_local.h"
+#ifdef WIN32
 #include "jpeglib.h" //Heffo - JPEG Screenshots
+#else
+#include <jpeglib.h>
+#endif
 
 /*
 ==================
@@ -138,7 +142,7 @@ typedef struct _TargaHeader {
 void apply_gamma(byte *rgbdata, int w, int h)
 {
 	register int i,j,k;
-	extern WORD gamma_ramp[3][256];
+	extern unsigned short gamma_ramp[3][256];
 
 	if(!vid_gamma_hw->value || !gl_state.gammaramp ||
 		!ri.Cvar_Get("gl_screenshot_applygamma", "0", CVAR_ARCHIVE)->value)
@@ -403,11 +407,19 @@ void GL_SetDefaultState( void )
 	}
 }
 
-void GL_UpdateSwapInterval()
+void GL_UpdateSwapInterval (void)
 {
-	gl_swapinterval->modified = false;
+        if (gl_swapinterval->modified)
+        {
+                gl_swapinterval->modified = false;
 
-	if (!gl_state.stereo_enabled) 
-		if (qwglSwapIntervalEXT)
-			qwglSwapIntervalEXT(gl_swapinterval->value);
+                if (!gl_state.stereo_enabled)
+                {
+#ifdef _WIN32
+			if (qwglSwapIntervalEXT)
+				qwglSwapIntervalEXT(gl_swapinterval->value);
+#endif
+		}
+	}
 }
+

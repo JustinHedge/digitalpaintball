@@ -20,7 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_main.c  -- client main loop
 
 #include "client.h"
+#ifdef WIN32
 #include <windows.h> // jit/pooy
+#endif
 
 cvar_t	*freelook;
 
@@ -269,6 +271,7 @@ void CL_Record_f (void)
 	Com_Printf("recording to %s.\n", name);
 	FS_CreatePath(name);
 	cls.demofile = fopen(name, "wb");
+
 	if (!cls.demofile)
 	{
 		Com_Printf("ERROR: couldn't open.\n");
@@ -291,7 +294,6 @@ void CL_Record_f (void)
 	MSG_WriteByte(&buf, 1);	// demos are always attract loops
 	MSG_WriteString(&buf, cl.gamedir);
 	MSG_WriteShort(&buf, cl.playernum);
-
 	MSG_WriteString(&buf, cl.configstrings[CS_NAME]);
 
 	// configstrings
@@ -315,6 +317,7 @@ void CL_Record_f (void)
 
 	// baselines
 	memset(&nullstate, 0, sizeof(nullstate));
+
 	for (i=0; i<MAX_EDICTS; i++)
 	{
 		ent = &cl_entities[i].baseline;
@@ -338,16 +341,15 @@ void CL_Record_f (void)
 	MSG_WriteString(&buf, "precache\n");
 
 	// write it to the demo file
-
 	len = LittleLong(buf.cursize);
 	fwrite(&len, 4, 1, cls.demofile);
 	fwrite(buf.data, buf.cursize, 1, cls.demofile);
 
 	// jitscores -- we need to write the known score data here, otherwise
 	// demos will be messed up.
-	i = 0;
-	while (i=CL_ScoresDemoData(i, &scorestr))
-	{
+	i = CL_ScoresDemoData(0, &scorestr);
+
+	do {
 		SZ_Init(&buf, buf_data, sizeof(buf_data));
 		MSG_WriteByte(&buf, svc_print);
 		MSG_WriteByte(&buf, PRINT_SCOREDATA);
@@ -355,7 +357,7 @@ void CL_Record_f (void)
 		len = LittleLong(buf.cursize);
 		fwrite(&len, 4, 1, cls.demofile);
 		fwrite(buf.data, buf.cursize, 1, cls.demofile);
-	}
+	} while ((i = CL_ScoresDemoData(i, &scorestr)));
 
 	// the rest of the demo file will be individual frames
 }
@@ -508,16 +510,16 @@ connect.
 ======================
 */
 char lastservername[MAX_OSPATH]; // jitdownload
+void clearfaileddownloads(); // jitdownload
 
 void CL_SendConnectPacket (void)
 {
-	netadr_t	adr;
-	int		port;
-	extern void clearfaileddownloads(); // jitdownload
+	netadr_t adr;
+	int port;
 
-	if (!NET_StringToAdr (cls.servername, &adr))
+	if (!NET_StringToAdr(cls.servername, &adr))
 	{
-		Com_Printf ("Bad server address\n");
+		Com_Printf("Bad server address: \"%s\"\n", cls.servername); // jit
 		cls.connect_time = 0;
 		return;
 	}
@@ -534,13 +536,12 @@ void CL_SendConnectPacket (void)
 	// ===
 
 	if (adr.port == 0)
-		adr.port = BigShort (PORT_SERVER);
+		adr.port = BigShort(PORT_SERVER);
 
-	port = Cvar_VariableValue ("qport");
+	port = Cvar_VariableValue("qport");
 	userinfo_modified = false;
-
-	Netchan_OutOfBandPrint (NS_CLIENT, adr, "connect %i %i %i \"%s\"\n",
-		PROTOCOL_VERSION, port, cls.challenge, Cvar_Userinfo() );
+	Netchan_OutOfBandPrint(NS_CLIENT, adr, "connect %i %i %i \"%s\"\n",
+		PROTOCOL_VERSION, port, cls.challenge, Cvar_Userinfo());
 }
 
 /*
@@ -575,7 +576,7 @@ void CL_CheckForResend (void)
 
 	if (!NET_StringToAdr (cls.servername, &adr))
 	{
-		Com_Printf ("Bad server address\n");
+		Com_Printf("Bad server address: \"%s\"\n", cls.servername); // jit
 		cls.state = ca_disconnected;
 		return;
 	}
@@ -585,6 +586,7 @@ void CL_CheckForResend (void)
 	cls.connect_time = cls.realtime;	// for retransmit requests
 
 	Com_Printf ("Connecting to %s...\n", cls.servername);
+	cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 
 	Netchan_OutOfBandPrint (NS_CLIENT, adr, "getchallenge\n");
 }
@@ -604,7 +606,7 @@ void CL_Connect_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("usage: connect <server>\n");
+		Com_Printf("usage: connect <server>\n");
 		return;	
 	}
 	
@@ -625,6 +627,43 @@ void CL_Connect_f (void)
 	cls.connect_time = -99999;	// CL_CheckForResend() will fire immediately
 }
 
+void CL_ParseURL_f (void) // jiturl
+{
+	char buff[1024];
+	char *s, *s1;
+
+	if (Cmd_Argc() < 2)
+	{
+		Com_Printf("usage: parse_url <url>\n");
+		return;
+	}
+
+	if (!(s = strstr(Cmd_Argv(1), ":/")) && !(s = strstr(Cmd_Argv(1), ":\\")))
+	{
+		Com_Printf("Invalid URL: \"%s\"\n", Cmd_Argv(1));
+		return;
+	}
+
+	s++;
+
+	while (*s == '/' || *s == '\\')
+		s++;
+
+	Com_sprintf(buff, sizeof(buff)-8, "connect %s\n", s);
+	s = strchr(buff, '/');
+	s1 = strchr(buff, '\\');
+
+	if (s1 > s)
+		s = s1;
+
+	if (s)
+	{
+		s[0] = '\n';
+		s[1] = '\0';
+	}
+
+	Cbuf_AddText(buff);
+}
 
 /*
 =====================
@@ -837,8 +876,9 @@ void CL_Changing_f (void)
 		return;
 
 	SCR_BeginLoadingPlaque();
-	cls.state = ca_connected;	// not active anymore, but not disconnected
+	cls.state = ca_connected; // not active anymore, but not disconnected
 	Com_Printf("\nChanging map...\n");
+	cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 }
 
 
@@ -861,6 +901,7 @@ void CL_Reconnect_f (void)
 	if (cls.state == ca_connected)
 	{
 		Com_Printf("reconnecting...\n");
+		cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 		cls.state = ca_connected;
 		MSG_WriteChar(&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString(&cls.netchan.message, "new");		
@@ -875,10 +916,13 @@ void CL_Reconnect_f (void)
 			cls.connect_time = cls.realtime - 1500;
 		}
 		else
+		{
 			cls.connect_time = -99999; // fire immediately
+		}
 
 		cls.state = ca_connecting;
 		Com_Printf("reconnecting...\n");
+		cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 	}
 }
 
@@ -1371,7 +1415,7 @@ void CL_RequestNextDownload (void)
 					!= cl.configstrings[CS_SKY])) // jitfog
 				{
 					char *temp; // jitfog
-					if(temp=strchr(cl.configstrings[CS_SKY], ' '))  // jitfog
+					if ((temp=strchr(cl.configstrings[CS_SKY], ' ')))  // jitfog
 						*temp='\0';
 					
 					/*if (n & 1)
@@ -1660,6 +1704,7 @@ void CL_InitLocal (void)
 
 	Cmd_AddCommand("connect", CL_Connect_f);
 	Cmd_AddCommand("reconnect", CL_Reconnect_f);
+	Cmd_AddCommand("parse_url", CL_ParseURL_f); // jiturl
 
 	Cmd_AddCommand("rcon", CL_Rcon_f);
 
@@ -2073,8 +2118,9 @@ void CL_Init (void)
 	net_message.maxsize = sizeof(net_message_buffer);
 
 	init_cl_scores(); // jitscores
+	init_cl_vote(); // jitvote
 	M_Init();
-	Serverlist_Init();
+	Serverlist_Init(); // jitserverlist
 	
 	SCR_Init();
 	cls.disable_screen = true;	// don't draw yet
@@ -2116,7 +2162,6 @@ void CL_Shutdown(void)
 	isdown = true;
 
 	CL_WriteConfiguration("config.cfg"); 
-	Serverlist_Shutdown();
 
 	CDAudio_Shutdown();
 	S_Shutdown();
@@ -2124,7 +2169,10 @@ void CL_Shutdown(void)
 	VID_Shutdown();
 
 	if (!dedicated->value)
+	{
 		shutdown_cl_scores(); // jitscores
+		Serverlist_Shutdown();
+	}
 }
 
 

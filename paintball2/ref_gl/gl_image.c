@@ -20,15 +20,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "gl_local.h"
 #include "gl_cin.h"
+#ifdef WIN32
 #include "jpeglib.h"
+#else
+#include <jpeglib.h>
+#endif
+#include <ctype.h>
 
 image_t		gltextures[MAX_GLTEXTURES];
 hash_table_t gltextures_hash; // jithash
 int			numgltextures;
 int			base_textureid;		// gltextures[i] = base_textureid+i
-
-static byte			 intensitytable[256];
-static unsigned char gammatable[256];
 
 cvar_t		*intensity;
 
@@ -48,35 +50,36 @@ int		gl_tex_alpha_format = 4;
 int		gl_filter_min = GL_LINEAR_MIPMAP_LINEAR;	// default to trilinear filtering - MrG
 int		gl_filter_max = GL_LINEAR;
 
-void GL_EnableMultitexture( qboolean enable )
+void GL_EnableMultitexture (qboolean enable)
 {
-	if ( !qglSelectTextureSGIS && !qglActiveTextureARB )
+	if (!qglSelectTextureSGIS && !qglActiveTextureARB)
 		return;
 
-	if ( enable )
+	if (enable)
 	{
-		GL_SelectTexture( GL_TEXTURE1 );
-		qglEnable( GL_TEXTURE_2D );
-		GL_TexEnv( GL_REPLACE );
+		GL_SelectTexture(QGL_TEXTURE1);
+		qglEnable(GL_TEXTURE_2D);
+		GL_TexEnv(GL_REPLACE);
 	}
 	else
 	{
-		GL_SelectTexture( GL_TEXTURE1 );
-		qglDisable( GL_TEXTURE_2D );
-		GL_TexEnv( GL_REPLACE );
+		GL_SelectTexture(QGL_TEXTURE1);
+		qglDisable(GL_TEXTURE_2D);
+		GL_TexEnv(GL_REPLACE);
 	}
-	GL_SelectTexture( GL_TEXTURE0 );
-	GL_TexEnv( GL_REPLACE );
+
+	GL_SelectTexture(QGL_TEXTURE0);
+	GL_TexEnv(GL_REPLACE);
 }
 
-void GL_SelectTexture( GLenum texture )
+void GL_SelectTexture (GLenum texture)
 {
 	int tmu;
 
-	if ( !qglSelectTextureSGIS && !qglActiveTextureARB )
+	if (!qglSelectTextureSGIS && !qglActiveTextureARB)
 		return;
 
-	if ( texture == GL_TEXTURE0 )
+	if (texture == QGL_TEXTURE0)
 	{
 		tmu = 0;
 	}
@@ -111,9 +114,9 @@ void GL_TexEnv(GLenum mode)
 	static int lastmodes[2] = { -1, -1 };
 	if (mode != lastmodes[gl_state.currenttmu])
 	{
-		if(GL_COMBINE_EXT == mode) // a bit of a hack...
+		if (GL_COMBINE_EXT == mode) // a bit of a hack...
 		{
-			if(gl_state.texture_combine && gl_overbright->value)
+			if (gl_state.texture_combine && gl_overbright->value)
 			{
 				//qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
 				qglTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
@@ -148,7 +151,7 @@ void GL_MBind (GLenum target, int texnum)
 {
 	GL_SelectTexture(target);
 
-	if (target == GL_TEXTURE0)
+	if (target == QGL_TEXTURE0)
 	{
 		if (gl_state.currenttextures[0] == texnum)
 			return;
@@ -220,7 +223,7 @@ void GL_TextureMode(const char *string )
 	int		i;
 	image_t	*glt;
 
-	for (i=0 ; i< NUM_GL_MODES ; i++)
+	for (i=0; i< NUM_GL_MODES; i++)
 	{
 		if (!Q_strcasecmp(modes[i].name, string))
 			break;
@@ -236,7 +239,7 @@ void GL_TextureMode(const char *string )
 	gl_filter_max = modes[i].maximize;
 
 	// change all the existing mipmap texture objects
-	for (i=0, glt=gltextures ; i<numgltextures ; i++, glt++)
+	for (i=0, glt=gltextures; i<numgltextures; i++, glt++)
 	{
 		if (glt->type != it_pic && glt->type != it_sky)
 		{
@@ -256,7 +259,7 @@ void GL_TextureAlphaMode( char *string )
 {
 	int		i;
 
-	for (i=0 ; i< NUM_GL_ALPHA_MODES ; i++)
+	for (i=0; i< NUM_GL_ALPHA_MODES; i++)
 	{
 		if (!Q_strcasecmp( gl_alpha_modes[i].name, string))
 			break;
@@ -280,7 +283,7 @@ void GL_TextureSolidMode( char *string )
 {
 	int		i;
 
-	for (i=0 ; i< NUM_GL_SOLID_MODES ; i++)
+	for (i=0; i< NUM_GL_SOLID_MODES; i++)
 	{
 		if (!Q_strcasecmp(gl_solid_modes[i].name, string))
 			break;
@@ -314,7 +317,7 @@ void	GL_ImageList_f (void)
 	ri.Con_Printf (PRINT_ALL, "------------------\n");
 	texels = 0;
 
-	for (i=0, image=gltextures ; i<numgltextures ; i++, image++)
+	for (i=0, image=gltextures; i<numgltextures; i++, image++)
 	{
 		if (image->texnum <= 0)
 			continue;
@@ -371,15 +374,15 @@ int Scrap_AllocBlock (int w, int h, int *x, int *y)
 	int		best, best2;
 	int		texnum;
 
-	for (texnum=0 ; texnum<MAX_SCRAPS ; texnum++)
+	for (texnum=0; texnum<MAX_SCRAPS; texnum++)
 	{
 		best = BLOCK_HEIGHT;
 
-		for (i=0 ; i<BLOCK_WIDTH-w ; i++)
+		for (i=0; i<BLOCK_WIDTH-w; i++)
 		{
 			best2 = 0;
 
-			for (j=0 ; j<w ; j++)
+			for (j=0; j<w; j++)
 			{
 				if (scrap_allocated[texnum][i+j] >= best)
 					break;
@@ -396,7 +399,7 @@ int Scrap_AllocBlock (int w, int h, int *x, int *y)
 		if (best + h > BLOCK_HEIGHT)
 			continue;
 
-		for (i=0 ; i<w ; i++)
+		for (i=0; i<w; i++)
 			scrap_allocated[texnum][*x + i] = best + h;
 
 		return texnum;
@@ -445,7 +448,7 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 	//
 	// load the file
 	//
-	len = ri.FS_LoadFile(filename, (void **)&raw);
+	len = ri.FS_LoadFile(filename, &raw);
 	if (!raw)
 	{
 		//ri.Con_Printf (PRINT_DEVELOPER, "Bad pcx file %s\n", filename);
@@ -483,10 +486,8 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 		return;
 	}
 
-	out = malloc ( (pcx->ymax+1) * (pcx->xmax+1) );
-
+	out = malloc((pcx->ymax+1)*(pcx->xmax+1));
 	*pic = out;
-
 	pix = out;
 
 	if (palette)
@@ -500,13 +501,13 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 	if (height)
 		*height = pcx->ymax+1;
 
-	for (y=0 ; y<=pcx->ymax ; y++, pix += pcx->xmax+1)
+	for (y=0; y<=pcx->ymax; y++, pix += pcx->xmax+1)
 	{
-		for (x=0 ; x<=pcx->xmax ; )
+		for (x=0; x<=pcx->xmax; )
 		{
 			dataByte = *raw++;
 
-			if((dataByte & 0xC0) == 0xC0)
+			if ((dataByte & 0xC0) == 0xC0)
 			{
 				runLength = dataByte & 0x3F;
 				dataByte = *raw++;
@@ -675,7 +676,7 @@ void LoadTGA (char *name, byte **pic, int *width, int *height)
 	else if (targa_header.image_type==10)
 	{
 		// Runlength encoded RGB images
-		unsigned char red,green,blue,alphabyte,packetHeader,packetSize,j;
+		unsigned char red=0,green=0,blue=0,alphabyte=255,packetHeader,packetSize,j;
 
 		for(row=rows-1; row>=0; row--)
 		{
@@ -837,7 +838,7 @@ void LoadJPG (char *filename, byte **pic, int *width, int *height)
 
 	// Load JPEG file into memory
 	rawsize = ri.FS_LoadFile(filename, (void **)&rawdata);
-	if(!rawdata)
+	if (!rawdata)
 		return;	
 
 	// Knightmare- check for bad data
@@ -864,7 +865,7 @@ void LoadJPG (char *filename, byte **pic, int *width, int *height)
 	jpeg_start_decompress(&cinfo);
 
 	// Check Colour Components
-	if(cinfo.output_components != 3)
+	if (cinfo.output_components != 3)
 	{
 		ri.Con_Printf(PRINT_ALL, "Invalid JPEG colour components\n");
 		jpeg_destroy_decompress(&cinfo);
@@ -874,7 +875,7 @@ void LoadJPG (char *filename, byte **pic, int *width, int *height)
 
 	// Allocate Memory for decompressed image
 	rgbadata = malloc(cinfo.output_width * cinfo.output_height * 4);
-	if(!rgbadata)
+	if (!rgbadata)
 	{
 		ri.Con_Printf(PRINT_ALL, "Insufficient RAM for JPEG buffer\n");
 		jpeg_destroy_decompress(&cinfo);
@@ -887,7 +888,7 @@ void LoadJPG (char *filename, byte **pic, int *width, int *height)
 
 	// Allocate Scanline buffer
 	scanline = malloc(cinfo.output_width * 3);
-	if(!scanline)
+	if (!scanline)
 	{
 		ri.Con_Printf(PRINT_ALL, "Insufficient RAM for JPEG scanline buffer\n");
 		free(rgbadata);
@@ -1030,24 +1031,24 @@ void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,
 	fracstep = inwidth*0x10000/outwidth;
 
 	frac = fracstep>>2;
-	for (i=0 ; i<outwidth ; i++)
+	for (i=0; i<outwidth; i++)
 	{
 		p1[i] = 4*(frac>>16);
 		frac += fracstep;
 	}
 	frac = 3*(fracstep>>2);
-	for (i=0 ; i<outwidth ; i++)
+	for (i=0; i<outwidth; i++)
 	{
 		p2[i] = 4*(frac>>16);
 		frac += fracstep;
 	}
 
-	for (i=0 ; i<outheight ; i++, out += outwidth)
+	for (i=0; i<outheight; i++, out += outwidth)
 	{
 		inrow = in + inwidth*(int)((i+0.25)*inheight/outheight);
 		inrow2 = in + inwidth*(int)((i+0.75)*inheight/outheight);
 		frac = fracstep >> 1;
-		for (j=0 ; j<outwidth ; j++)
+		for (j=0; j<outwidth; j++)
 		{
 			pix1 = (byte *)inrow + p1[j];
 			pix2 = (byte *)inrow + p2[j];
@@ -1079,7 +1080,7 @@ lighting range
 		p = (byte *)in;
 
 		c = inwidth*inheight;
-		for (i=0 ; i<c ; i++, p+=4)
+		for (i=0; i<c; i++, p+=4)
 		{
 			p[0] = gammatable[p[0]];
 			p[1] = gammatable[p[1]];
@@ -1094,7 +1095,7 @@ lighting range
 		p = (byte *)in;
 
 		c = inwidth*inheight;
-		for (i=0 ; i<c ; i++, p+=4)
+		for (i=0; i<c; i++, p+=4)
 		{
 			p[0] = gammatable[intensitytable[p[0]]];
 			p[1] = gammatable[intensitytable[p[1]]];
@@ -1116,17 +1117,18 @@ void GL_MipMap (byte *in, int width, int height)
 	int		i, j;
 	byte	*out;
 
-	width <<=2;
+	width <<= 2;
 	height >>= 1;
 	out = in;
-	for (i=0 ; i<height ; i++, in+=width)
+
+	for (i=0; i<height; i++, in+=width)
 	{
-		for (j=0 ; j<width ; j+=8, out+=4, in+=8)
+		for (j=0; j<width; j+=8, out+=4, in+=8)
 		{
-			out[0] = (in[0] + in[4] + in[width+0] + in[width+4])>>2;
-			out[1] = (in[1] + in[5] + in[width+1] + in[width+5])>>2;
-			out[2] = (in[2] + in[6] + in[width+2] + in[width+6])>>2;
-			out[3] = (in[3] + in[7] + in[width+3] + in[width+7])>>2;
+			out[0] = (in[0] + in[4] + in[width+0] + in[width+4]) >> 2;
+			out[1] = (in[1] + in[5] + in[width+1] + in[width+5]) >> 2;
+			out[2] = (in[2] + in[6] + in[width+2] + in[width+6]) >> 2;
+			out[3] = (in[3] + in[7] + in[width+3] + in[width+7]) >> 2;
 		}
 	}
 }
@@ -1161,15 +1163,19 @@ void GL_BuildPalettedTexture( unsigned char *paletted_texture, unsigned char *sc
 int		upload_width, upload_height;
 qboolean uploaded_paletted;
 
-int nearest_power_of_2(int size)
+static int nearest_power_of_2 (int size)
 {
 	int i = 2;
 
-	while (1) {
+	while (1)
+	{
 		i <<= 1;
+
 		if (size == i)
 			return i;
-		if (size > i && size < (i <<1)) {
+
+		if (size > i && size < (i <<1))
+		{
 			if (size >= ((i+(i<<1))/2))
 				return i<<1;
 			else
@@ -1192,7 +1198,7 @@ void desaturate_texture(unsigned *udata, int width, int height) // jitsaturation
 
 	size = width*height*4;
 
-	for(i=0; i<size; i+=4)
+	for (i=0; i<size; i+=4)
 	{
 		r = data[i];
 		g = data[i+1];
@@ -1213,701 +1219,57 @@ void desaturate_texture(unsigned *udata, int width, int height) // jitsaturation
  */
 #define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
 
-/* To work around optimizer bug in MSVC4.1 */
-#if defined(__WIN32__) && !defined(OPENSTEP)
-void
-dummy(GLuint j, GLuint k)
-{
-}
-#else
-#define dummy(J, K)
-#endif
 
-/*
- * Find the value nearest to n which is also a power of two.
- */
-static GLint round2(GLint n)
-{
-   GLint m;
-
-   for (m = 1; m < n; m *= 2);
-
-   /* m>=n */
-   if (m - n <= n - m / 2) {
-      return m;
-   }
-   else {
-      return m / 2;
-   }
-}
-
-/*
- * Given an pixel format and datatype, return the number of bytes to
- * store one pixel.
- */
-static GLint
-bytes_per_pixel(GLenum format, GLenum type)
-{
-   GLint n, m;
-
-   switch (format) {
-   case GL_COLOR_INDEX:
-   case GL_STENCIL_INDEX:
-   case GL_DEPTH_COMPONENT:
-   case GL_RED:
-   case GL_GREEN:
-   case GL_BLUE:
-   case GL_ALPHA:
-   case GL_LUMINANCE:
-      n = 1;
-      break;
-   case GL_LUMINANCE_ALPHA:
-      n = 2;
-      break;
-   case GL_RGB:
-   case GL_BGR:
-      n = 3;
-      break;
-   case GL_RGBA:
-   case GL_BGRA:
-#ifdef GL_EXT_abgr
-   case GL_ABGR_EXT:
-#endif
-      n = 4;
-      break;
-   default:
-      n = 0;
-   }
-
-   switch (type) {
-   case GL_UNSIGNED_BYTE:
-      m = sizeof(GLubyte);
-      break;
-   case GL_BYTE:
-      m = sizeof(GLbyte);
-      break;
-   case GL_BITMAP:
-      m = 1;
-      break;
-   case GL_UNSIGNED_SHORT:
-      m = sizeof(GLushort);
-      break;
-   case GL_SHORT:
-      m = sizeof(GLshort);
-      break;
-   case GL_UNSIGNED_INT:
-      m = sizeof(GLuint);
-      break;
-   case GL_INT:
-      m = sizeof(GLint);
-      break;
-   case GL_FLOAT:
-      m = sizeof(GLfloat);
-      break;
-   default:
-      m = 0;
-   }
-
-   return n * m;
-}
-
-GLint Mesa_gluScaleImage(GLenum format,
-	      GLsizei widthin, GLsizei heightin,
-	      GLenum typein, const void *datain,
-	      GLsizei widthout, GLsizei heightout,
-	      GLenum typeout, void *dataout)
-{
-   GLint components, i, j, k;
-   GLfloat *tempin, *tempout;
-   GLfloat sx, sy;
-   GLint unpackrowlength, unpackalignment, unpackskiprows, unpackskippixels;
-   GLint packrowlength, packalignment, packskiprows, packskippixels;
-   GLint sizein, sizeout;
-   GLint rowstride, rowlen;
-
-
-   /* Determine number of components per pixel */
-   switch (format) {
-   case GL_COLOR_INDEX:
-   case GL_STENCIL_INDEX:
-   case GL_DEPTH_COMPONENT:
-   case GL_RED:
-   case GL_GREEN:
-   case GL_BLUE:
-   case GL_ALPHA:
-   case GL_LUMINANCE:
-      components = 1;
-      break;
-   case GL_LUMINANCE_ALPHA:
-      components = 2;
-      break;
-   case GL_RGB:
-   case GL_BGR:
-      components = 3;
-      break;
-   case GL_RGBA:
-   case GL_BGRA:
-#ifdef GL_EXT_abgr
-   case GL_ABGR_EXT:
-#endif
-      components = 4;
-      break;
-   default:
-      return GLU_INVALID_ENUM;
-   }
-
-   /* Determine bytes per input datum */
-   switch (typein) {
-   case GL_UNSIGNED_BYTE:
-      sizein = sizeof(GLubyte);
-      break;
-   case GL_BYTE:
-      sizein = sizeof(GLbyte);
-      break;
-   case GL_UNSIGNED_SHORT:
-      sizein = sizeof(GLushort);
-      break;
-   case GL_SHORT:
-      sizein = sizeof(GLshort);
-      break;
-   case GL_UNSIGNED_INT:
-      sizein = sizeof(GLuint);
-      break;
-   case GL_INT:
-      sizein = sizeof(GLint);
-      break;
-   case GL_FLOAT:
-      sizein = sizeof(GLfloat);
-      break;
-   case GL_BITMAP:
-      /* not implemented yet */
-   default:
-      return GL_INVALID_ENUM;
-   }
-
-   /* Determine bytes per output datum */
-   switch (typeout) {
-   case GL_UNSIGNED_BYTE:
-      sizeout = sizeof(GLubyte);
-      break;
-   case GL_BYTE:
-      sizeout = sizeof(GLbyte);
-      break;
-   case GL_UNSIGNED_SHORT:
-      sizeout = sizeof(GLushort);
-      break;
-   case GL_SHORT:
-      sizeout = sizeof(GLshort);
-      break;
-   case GL_UNSIGNED_INT:
-      sizeout = sizeof(GLuint);
-      break;
-   case GL_INT:
-      sizeout = sizeof(GLint);
-      break;
-   case GL_FLOAT:
-      sizeout = sizeof(GLfloat);
-      break;
-   case GL_BITMAP:
-      /* not implemented yet */
-   default:
-      return GL_INVALID_ENUM;
-   }
-
-   /* Get glPixelStore state */
-   qglGetIntegerv(GL_UNPACK_ROW_LENGTH, &unpackrowlength);
-   qglGetIntegerv(GL_UNPACK_ALIGNMENT, &unpackalignment);
-   qglGetIntegerv(GL_UNPACK_SKIP_ROWS, &unpackskiprows);
-   qglGetIntegerv(GL_UNPACK_SKIP_PIXELS, &unpackskippixels);
-   qglGetIntegerv(GL_PACK_ROW_LENGTH, &packrowlength);
-   qglGetIntegerv(GL_PACK_ALIGNMENT, &packalignment);
-   qglGetIntegerv(GL_PACK_SKIP_ROWS, &packskiprows);
-   qglGetIntegerv(GL_PACK_SKIP_PIXELS, &packskippixels);
-
-   /* Allocate storage for intermediate images */
-   tempin = (GLfloat *) malloc(widthin * heightin
-			       * components * sizeof(GLfloat));
-   if (!tempin) {
-      return GLU_OUT_OF_MEMORY;
-   }
-   tempout = (GLfloat *) malloc(widthout * heightout
-				* components * sizeof(GLfloat));
-   if (!tempout) {
-      free(tempin);
-      return GLU_OUT_OF_MEMORY;
-   }
-
-
-   /*
-    * Unpack the pixel data and convert to floating point
-    */
-
-   if (unpackrowlength > 0) {
-      rowlen = unpackrowlength;
-   }
-   else {
-      rowlen = widthin;
-   }
-   if (sizein >= unpackalignment) {
-      rowstride = components * rowlen;
-   }
-   else {
-      rowstride = unpackalignment / sizein
-	 * CEILING(components * rowlen * sizein, unpackalignment);
-   }
-
-   switch (typein) {
-   case GL_UNSIGNED_BYTE:
-      k = 0;
-      for (i = 0; i < heightin; i++) {
-	 GLubyte *ubptr = (GLubyte *) datain
-	    + i * rowstride
-	    + unpackskiprows * rowstride + unpackskippixels * components;
-	 for (j = 0; j < widthin * components; j++) {
-	    dummy(j, k);
-	    tempin[k++] = (GLfloat) * ubptr++;
-	 }
-      }
-      break;
-   case GL_BYTE:
-      k = 0;
-      for (i = 0; i < heightin; i++) {
-	 GLbyte *bptr = (GLbyte *) datain
-	    + i * rowstride
-	    + unpackskiprows * rowstride + unpackskippixels * components;
-	 for (j = 0; j < widthin * components; j++) {
-	    dummy(j, k);
-	    tempin[k++] = (GLfloat) * bptr++;
-	 }
-      }
-      break;
-   case GL_UNSIGNED_SHORT:
-      k = 0;
-      for (i = 0; i < heightin; i++) {
-	 GLushort *usptr = (GLushort *) datain
-	    + i * rowstride
-	    + unpackskiprows * rowstride + unpackskippixels * components;
-	 for (j = 0; j < widthin * components; j++) {
-	    dummy(j, k);
-	    tempin[k++] = (GLfloat) * usptr++;
-	 }
-      }
-      break;
-   case GL_SHORT:
-      k = 0;
-      for (i = 0; i < heightin; i++) {
-	 GLshort *sptr = (GLshort *) datain
-	    + i * rowstride
-	    + unpackskiprows * rowstride + unpackskippixels * components;
-	 for (j = 0; j < widthin * components; j++) {
-	    dummy(j, k);
-	    tempin[k++] = (GLfloat) * sptr++;
-	 }
-      }
-      break;
-   case GL_UNSIGNED_INT:
-      k = 0;
-      for (i = 0; i < heightin; i++) {
-	 GLuint *uiptr = (GLuint *) datain
-	    + i * rowstride
-	    + unpackskiprows * rowstride + unpackskippixels * components;
-	 for (j = 0; j < widthin * components; j++) {
-	    dummy(j, k);
-	    tempin[k++] = (GLfloat) * uiptr++;
-	 }
-      }
-      break;
-   case GL_INT:
-      k = 0;
-      for (i = 0; i < heightin; i++) {
-	 GLint *iptr = (GLint *) datain
-	    + i * rowstride
-	    + unpackskiprows * rowstride + unpackskippixels * components;
-	 for (j = 0; j < widthin * components; j++) {
-	    dummy(j, k);
-	    tempin[k++] = (GLfloat) * iptr++;
-	 }
-      }
-      break;
-   case GL_FLOAT:
-      k = 0;
-      for (i = 0; i < heightin; i++) {
-	 GLfloat *fptr = (GLfloat *) datain
-	    + i * rowstride
-	    + unpackskiprows * rowstride + unpackskippixels * components;
-	 for (j = 0; j < widthin * components; j++) {
-	    dummy(j, k);
-	    tempin[k++] = *fptr++;
-	 }
-      }
-      break;
-   default:
-      return GLU_INVALID_ENUM;
-   }
-
-
-   /*
-    * Scale the image!
-    */
-
-   if (widthout > 1)
-      sx = (GLfloat) (widthin - 1) / (GLfloat) (widthout - 1);
-   else
-      sx = (GLfloat) (widthin - 1);
-   if (heightout > 1)
-      sy = (GLfloat) (heightin - 1) / (GLfloat) (heightout - 1);
-   else
-      sy = (GLfloat) (heightin - 1);
-
-/*#define POINT_SAMPLE*/
-#ifdef POINT_SAMPLE
-   for (i = 0; i < heightout; i++) {
-      GLint ii = i * sy;
-      for (j = 0; j < widthout; j++) {
-	 GLint jj = j * sx;
-
-	 GLfloat *src = tempin + (ii * widthin + jj) * components;
-	 GLfloat *dst = tempout + (i * widthout + j) * components;
-
-	 for (k = 0; k < components; k++) {
-	    *dst++ = *src++;
-	 }
-      }
-   }
-#else
-   if (sx < 1.0 && sy < 1.0) {
-      /* magnify both width and height:  use weighted sample of 4 pixels */
-      GLint i0, i1, j0, j1;
-      GLfloat alpha, beta;
-      GLfloat *src00, *src01, *src10, *src11;
-      GLfloat s1, s2;
-      GLfloat *dst;
-
-      for (i = 0; i < heightout; i++) {
-	 i0 = i * sy;
-	 i1 = i0 + 1;
-	 if (i1 >= heightin)
-	    i1 = heightin - 1;
-/*	 i1 = (i+1) * sy - EPSILON;*/
-	 alpha = i * sy - i0;
-	 for (j = 0; j < widthout; j++) {
-	    j0 = j * sx;
-	    j1 = j0 + 1;
-	    if (j1 >= widthin)
-	       j1 = widthin - 1;
-/*	    j1 = (j+1) * sx - EPSILON; */
-	    beta = j * sx - j0;
-
-	    /* compute weighted average of pixels in rect (i0,j0)-(i1,j1) */
-	    src00 = tempin + (i0 * widthin + j0) * components;
-	    src01 = tempin + (i0 * widthin + j1) * components;
-	    src10 = tempin + (i1 * widthin + j0) * components;
-	    src11 = tempin + (i1 * widthin + j1) * components;
-
-	    dst = tempout + (i * widthout + j) * components;
-
-	    for (k = 0; k < components; k++) {
-	       s1 = *src00++ * (1.0 - beta) + *src01++ * beta;
-	       s2 = *src10++ * (1.0 - beta) + *src11++ * beta;
-	       *dst++ = s1 * (1.0 - alpha) + s2 * alpha;
-	    }
-	 }
-      }
-   }
-   else {
-      /* shrink width and/or height:  use an unweighted box filter */
-      GLint i0, i1;
-      GLint j0, j1;
-      GLint ii, jj;
-      GLfloat sum, *dst;
-
-      for (i = 0; i < heightout; i++) {
-	 i0 = i * sy;
-	 i1 = i0 + 1;
-	 if (i1 >= heightin)
-	    i1 = heightin - 1;
-/*	 i1 = (i+1) * sy - EPSILON; */
-	 for (j = 0; j < widthout; j++) {
-	    j0 = j * sx;
-	    j1 = j0 + 1;
-	    if (j1 >= widthin)
-	       j1 = widthin - 1;
-/*	    j1 = (j+1) * sx - EPSILON; */
-
-	    dst = tempout + (i * widthout + j) * components;
-
-	    /* compute average of pixels in the rectangle (i0,j0)-(i1,j1) */
-	    for (k = 0; k < components; k++) {
-	       sum = 0.0;
-	       for (ii = i0; ii <= i1; ii++) {
-		  for (jj = j0; jj <= j1; jj++) {
-		     sum += *(tempin + (ii * widthin + jj) * components + k);
-		  }
-	       }
-	       sum /= (j1 - j0 + 1) * (i1 - i0 + 1);
-	       *dst++ = sum;
-	    }
-	 }
-      }
-   }
-#endif
-
-
-   /*
-    * Return output image
-    */
-
-   if (packrowlength > 0) {
-      rowlen = packrowlength;
-   }
-   else {
-      rowlen = widthout;
-   }
-   if (sizeout >= packalignment) {
-      rowstride = components * rowlen;
-   }
-   else {
-      rowstride = packalignment / sizeout
-	 * CEILING(components * rowlen * sizeout, packalignment);
-   }
-
-   switch (typeout) {
-   case GL_UNSIGNED_BYTE:
-      k = 0;
-      for (i = 0; i < heightout; i++) {
-	 GLubyte *ubptr = (GLubyte *) dataout
-	    + i * rowstride
-	    + packskiprows * rowstride + packskippixels * components;
-	 for (j = 0; j < widthout * components; j++) {
-	    dummy(j, k + i);
-	    *ubptr++ = (GLubyte) tempout[k++];
-	 }
-      }
-      break;
-   case GL_BYTE:
-      k = 0;
-      for (i = 0; i < heightout; i++) {
-	 GLbyte *bptr = (GLbyte *) dataout
-	    + i * rowstride
-	    + packskiprows * rowstride + packskippixels * components;
-	 for (j = 0; j < widthout * components; j++) {
-	    dummy(j, k + i);
-	    *bptr++ = (GLbyte) tempout[k++];
-	 }
-      }
-      break;
-   case GL_UNSIGNED_SHORT:
-      k = 0;
-      for (i = 0; i < heightout; i++) {
-	 GLushort *usptr = (GLushort *) dataout
-	    + i * rowstride
-	    + packskiprows * rowstride + packskippixels * components;
-	 for (j = 0; j < widthout * components; j++) {
-	    dummy(j, k + i);
-	    *usptr++ = (GLushort) tempout[k++];
-	 }
-      }
-      break;
-   case GL_SHORT:
-      k = 0;
-      for (i = 0; i < heightout; i++) {
-	 GLshort *sptr = (GLshort *) dataout
-	    + i * rowstride
-	    + packskiprows * rowstride + packskippixels * components;
-	 for (j = 0; j < widthout * components; j++) {
-	    dummy(j, k + i);
-	    *sptr++ = (GLshort) tempout[k++];
-	 }
-      }
-      break;
-   case GL_UNSIGNED_INT:
-      k = 0;
-      for (i = 0; i < heightout; i++) {
-	 GLuint *uiptr = (GLuint *) dataout
-	    + i * rowstride
-	    + packskiprows * rowstride + packskippixels * components;
-	 for (j = 0; j < widthout * components; j++) {
-	    dummy(j, k + i);
-	    *uiptr++ = (GLuint) tempout[k++];
-	 }
-      }
-      break;
-   case GL_INT:
-      k = 0;
-      for (i = 0; i < heightout; i++) {
-	 GLint *iptr = (GLint *) dataout
-	    + i * rowstride
-	    + packskiprows * rowstride + packskippixels * components;
-	 for (j = 0; j < widthout * components; j++) {
-	    dummy(j, k + i);
-	    *iptr++ = (GLint) tempout[k++];
-	 }
-      }
-      break;
-   case GL_FLOAT:
-      k = 0;
-      for (i = 0; i < heightout; i++) {
-	 GLfloat *fptr = (GLfloat *) dataout
-	    + i * rowstride
-	    + packskiprows * rowstride + packskippixels * components;
-	 for (j = 0; j < widthout * components; j++) {
-	    dummy(j, k + i);
-	    *fptr++ = tempout[k++];
-	 }
-      }
-      break;
-   default:
-      return GLU_INVALID_ENUM;
-   }
-
-
-   /* free temporary image storage */
-   free(tempin);
-   free(tempout);
-
-   return 0;
-}
-
-GLint Mesa_gluBuild2DMipmaps(GLenum target, GLint components,
-		  GLsizei width, GLsizei height, GLenum format,
-		  GLenum type, const void *data) // jit3dfx
-{
-   GLint w, h, maxsize;
-   void *image, *newimage;
-   GLint neww, newh, level, bpp;
-   int error;
-   GLboolean done;
-   GLint retval = 0;
-   GLint unpackrowlength, unpackalignment, unpackskiprows, unpackskippixels;
-   GLint packrowlength, packalignment, packskiprows, packskippixels;
-
-   if (width < 1 || height < 1)
-      return GLU_INVALID_VALUE;
-
-   qglGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxsize);
-
-   w = round2(width);
-   if (w > maxsize) {
-      w = maxsize;
-   }
-   h = round2(height);
-   if (h > maxsize) {
-      h = maxsize;
-   }
-
-   bpp = bytes_per_pixel(format, type);
-   if (bpp == 0) {
-      /* probably a bad format or type enum */
-      return GLU_INVALID_ENUM;
-   }
-
-   /* Get current glPixelStore values */
-   qglGetIntegerv(GL_UNPACK_ROW_LENGTH, &unpackrowlength);
-   qglGetIntegerv(GL_UNPACK_ALIGNMENT, &unpackalignment);
-   qglGetIntegerv(GL_UNPACK_SKIP_ROWS, &unpackskiprows);
-   qglGetIntegerv(GL_UNPACK_SKIP_PIXELS, &unpackskippixels);
-   qglGetIntegerv(GL_PACK_ROW_LENGTH, &packrowlength);
-   qglGetIntegerv(GL_PACK_ALIGNMENT, &packalignment);
-   qglGetIntegerv(GL_PACK_SKIP_ROWS, &packskiprows);
-   qglGetIntegerv(GL_PACK_SKIP_PIXELS, &packskippixels);
-
-   /* set pixel packing */
-   qglPixelStorei(GL_PACK_ROW_LENGTH, 0);
-   qglPixelStorei(GL_PACK_ALIGNMENT, 1);
-   qglPixelStorei(GL_PACK_SKIP_ROWS, 0);
-   qglPixelStorei(GL_PACK_SKIP_PIXELS, 0);
-
-   done = GL_FALSE;
-
-   if (w != width || h != height) {
-      /* must rescale image to get "top" mipmap texture image */
-      image = malloc((w + 4) * h * bpp);
-      if (!image) {
-	 return GLU_OUT_OF_MEMORY;
-      }
-      error = Mesa_gluScaleImage(format, width, height, type, data,
-			    w, h, type, image);
-      if (error) {
-	 retval = error;
-	 done = GL_TRUE;
-      }
-   }
-   else {
-      image = (void *) data;
-   }
-
-   level = 0;
-   while (!done) {
-      if (image != data) {
-	 /* set pixel unpacking */
-	 qglPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	 qglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	 qglPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-	 qglPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-      }
-
-      qglTexImage2D(target, level, components, w, h, 0, format, type, image);
-
-      if (w == 1 && h == 1)
-	 break;
-
-      neww = (w < 2) ? 1 : w / 2;
-      newh = (h < 2) ? 1 : h / 2;
-      newimage = malloc((neww + 4) * newh * bpp);
-      if (!newimage) {
-	 return GLU_OUT_OF_MEMORY;
-      }
-
-      error = Mesa_gluScaleImage(format, w, h, type, image,
-			    neww, newh, type, newimage);
-      if (error) {
-	 retval = error;
-	 done = GL_TRUE;
-      }
-
-      if (image != data) {
-	 free(image);
-      }
-      image = newimage;
-
-      w = neww;
-      h = newh;
-      level++;
-   }
-
-   if (image != data) {
-      free(image);
-   }
-
-   /* Restore original glPixelStore state */
-   qglPixelStorei(GL_UNPACK_ROW_LENGTH, unpackrowlength);
-   qglPixelStorei(GL_UNPACK_ALIGNMENT, unpackalignment);
-   qglPixelStorei(GL_UNPACK_SKIP_ROWS, unpackskiprows);
-   qglPixelStorei(GL_UNPACK_SKIP_PIXELS, unpackskippixels);
-   qglPixelStorei(GL_PACK_ROW_LENGTH, packrowlength);
-   qglPixelStorei(GL_PACK_ALIGNMENT, packalignment);
-   qglPixelStorei(GL_PACK_SKIP_ROWS, packskiprows);
-   qglPixelStorei(GL_PACK_SKIP_PIXELS, packskippixels);
-
-   return retval;
-}
-// ]===
-
-qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, qboolean sharp)
+qboolean GL_Upload32 (unsigned *data, int width, int height, qboolean mipmap, qboolean sharp)
 {
 	int			samples;
-	unsigned 	*scaled;
+	unsigned	*scaled;
 	int			scaled_width, scaled_height;
 	int			i, c;
 	byte		*scan;
 	int			comp;
-	int			max_size;
+	GLint		max_size;
 
 	uploaded_paletted = false;
 
+	for (scaled_width = 1; scaled_width < width; scaled_width <<= 1);
+	for (scaled_height = 1; scaled_height < height; scaled_height <<= 1);
+
+	if (gl_round_down->value && scaled_width > width && mipmap)
+		scaled_width >>= 1;
+
+	if (gl_round_down->value && scaled_height > height && mipmap)
+		scaled_height >>= 1;
+
+	// let people sample down the world textures for speed
+	if (gl_picmip->value > 4.0f)
+		gl_picmip->value = 4.0f; // jit
+
+	if (mipmap)
+	{
+		scaled_width >>= (int)gl_picmip->value;
+		scaled_height >>= (int)gl_picmip->value;
+	}
+
+	// find max size card can handle
+	qglGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
+
+	if (scaled_width > max_size)
+		scaled_width = max_size;
+	if (scaled_height > max_size)
+		scaled_height = max_size;
+
+	if (scaled_width <= 0)
+		scaled_width = 1;
+	if (scaled_height <= 0)
+		scaled_height = 1;
+
+	upload_width = scaled_width;
+	upload_height = scaled_height;
+
 	// scan the texture for any non-255 alpha
 	c = width*height;
-	scan = ((byte *)data) + 3;
+	scan = ((byte*)data) + 3;
 	samples = gl_solid_format;
 
 	for (i=0; i<c; i++, scan += 4)
@@ -1919,102 +1281,76 @@ qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, q
 		}
 	}
 
-	if(gl_texture_saturation->value < 1)
-		desaturate_texture(data, width, height); // jitsaturation
-
 	//Heffo - ARB Texture Compression
 	if (samples == gl_solid_format)
 		comp = (gl_state.texture_compression && mipmap) ? GL_COMPRESSED_RGB_ARB : gl_tex_solid_format;
 	else if (samples == gl_alpha_format)
 		comp = (gl_state.texture_compression && mipmap) ? GL_COMPRESSED_RGBA_ARB : gl_tex_alpha_format;
 
-	// find sizes to scale to
-	qglGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
-	scaled_width = nearest_power_of_2(width);
-	scaled_height = nearest_power_of_2(height);
 
-	if (mipmap) // jittexture
+	if (scaled_width == width && scaled_height == height)
 	{
-		scaled_width >>= (int)gl_picmip->value;
-		scaled_height >>= (int)gl_picmip->value;
-	}
-
-	if (scaled_width > max_size)
-		scaled_width = max_size;
-	if (scaled_height > max_size)
-		scaled_height = max_size;
-	if (scaled_width <= 0) // jitex
-		scaled_width = 1;
-	if (scaled_height <= 0) // jitex
-		scaled_height = 1; 
-
-	if (scaled_width != width || scaled_height != height)
-	{
-		scaled = malloc((scaled_width * scaled_height) * 4);
-		GL_ResampleTexture(data,width,height,scaled,scaled_width,scaled_height);
-	}
-	else
-	{
-		scaled_width = width;
-		scaled_height = height;
 		scaled = data;
 	}
-
-	// ===
-	// jithudscale -- clean up hud images
-	if(mipmap)
-	{
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-
-		if(gl_anisotropy->value) // jitanisotropy
-		{
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
-			                 gl_anisotropy->value);
-		}
-		else
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-	}
 	else
 	{
-		if(sharp)
-		{
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		}
-		else
-		{
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-		}
+		scaled = malloc(scaled_width*scaled_height*4);
+		GL_ResampleTexture(data, width, height, scaled, scaled_width, scaled_height);
 	}
-	// ===
+
+	if (gl_texture_saturation->value < 1) // jitsaturation
+		desaturate_texture(scaled, scaled_width, scaled_height);
 
 	if (mipmap)
 	{
 		if (gl_state.sgis_mipmap) 
 		{
-			qglTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, true);
-			qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, 
-				scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+			qglTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+			qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 		} 
 		else
 		{
-			Mesa_gluBuild2DMipmaps(GL_TEXTURE_2D, comp, scaled_width,
-				scaled_height, GL_RGBA, GL_UNSIGNED_BYTE, scaled); // jit3dfx
+			int miplevel = 0;
+
+			qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+
+			while (scaled_width > 1 || scaled_height > 1)
+			{
+				GL_MipMap ((byte *)scaled, scaled_width, scaled_height);
+				scaled_width >>= 1;
+				scaled_height >>= 1;
+				if (scaled_width < 1)
+					scaled_width = 1;
+				if (scaled_height < 1)
+					scaled_height = 1;
+				miplevel++;
+
+				qglTexImage2D(GL_TEXTURE_2D, miplevel, comp, scaled_width, scaled_height,
+					0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+			}
 		}
-	} 
-	else 
+
+		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+
+		if (gl_anisotropy->value) // jitanisotropy
+			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropy->value);
+		else
+			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+	}
+	else
 	{
-		qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, 
-			scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+		if (gl_state.sgis_mipmap)
+			qglTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
+
+		qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sharp ? GL_NEAREST : gl_filter_max);
+		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sharp ? GL_NEAREST : gl_filter_max);
 	}
 
-	if (scaled_width != width || scaled_height != height)
+	if (upload_width != width || upload_height != height)
 		free(scaled);
 
-	upload_width=scaled_width; upload_height = scaled_height;
-
-	return (samples == gl_alpha_format || samples == GL_COMPRESSED_RGBA_ARB);
+	return (samples == gl_alpha_format);
 }
 
 
@@ -2037,7 +1373,7 @@ qboolean GL_Upload8 (byte *data, int width, int height,  qboolean mipmap, qboole
 	if (s > sizeof(trans)/4)
 		ri.Sys_Error (ERR_DROP, "GL_Upload8: too large");
 
-		for (i=0 ; i<s ; i++)
+		for (i=0; i<s; i++)
 		{
 			p = data[i];
 			trans[i] = d_8to24table[p];
@@ -2063,7 +1399,7 @@ qboolean GL_Upload8 (byte *data, int width, int height,  qboolean mipmap, qboole
 			}
 		}
 
-		return GL_Upload32 (trans, width, height, mipmap, sharp);
+		return GL_Upload32(trans, width, height, mipmap, sharp);
 }
 
 
@@ -2115,7 +1451,7 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 	qboolean	sharp = false; // jit, for images we don't want filtered.
 
 	// find a free image_t
-	for (i=0, image=gltextures ; i<numgltextures ; i++,image++)
+	for (i=0, image=gltextures; i<numgltextures; i++,image++)
 	{
 		if (!image->texnum)
 			break;
@@ -2144,7 +1480,7 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 	// ===
 	// jit -- paintball2 texture fix
 	// jitodo -- move these to rscripts, this is an ugly hack.
-	if( !Q_strcasecmp(name, "textures/pball/b_flag1") ||
+	if ( !Q_strcasecmp(name, "textures/pball/b_flag1") ||
 		!Q_strcasecmp(name, "textures/pball/y_flag1") || 
 		!Q_strcasecmp(name, "textures/pball/p_flag1") || 
 		!Q_strcasecmp(name, "textures/pball/r_flag1"))
@@ -2152,12 +1488,12 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 		image->width = 96;
 		image->height = 96;
 	}
-	else if(!Q_strcasecmp(name,"textures/pball/ksplat2"))
+	else if (!Q_strcasecmp(name,"textures/pball/ksplat2"))
 	{
 		image->width = 288;
 		image->height = 128;
 	}
-	else if(strstr(name, "pics/gamma") || strstr(name, "pics/menu_char_colors") ||
+	else if (strstr(name, "pics/gamma") || strstr(name, "pics/menu_char_colors") ||
 		(image->type == it_pic && bits == 8))
 	{
 		sharp = true; // no bilinear filtering
@@ -2186,8 +1522,8 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 		// copy the texels into the scrap block
 		k = 0;
 
-		for (i=0 ; i<image->height ; i++)
-			for (j=0 ; j<image->width ; j++, k++)
+		for (i=0; i<image->height; i++)
+			for (j=0; j<image->width; j++, k++)
 				scrap_texels[texnum][(y+i)*BLOCK_WIDTH + x + j] = pic[k];
 
 		image->texnum = TEXNUM_SCRAPS + texnum;
@@ -2206,9 +1542,12 @@ nonscrap:
 		GL_Bind(image->texnum);
 
 		if (bits == 8)
-			image->has_alpha = GL_Upload8 (pic, width, height, (image->type != it_pic && image->type != it_sky), image->type == it_sky, sharp);
+			image->has_alpha = GL_Upload8(pic, width, height,
+				(image->type != it_pic && image->type != it_sky), image->type == it_sky, sharp);
 		else
-			image->has_alpha = GL_Upload32 ((unsigned *)pic, width, height, (image->type != it_pic && image->type != it_sky), sharp);
+			image->has_alpha = GL_Upload32((unsigned *)pic, width, height,
+				(image->type != it_pic && image->type != it_sky), sharp);
+
 		image->upload_width = upload_width;		// after power of 2 and scales
 		image->upload_height = upload_height;
 		image->paletted = uploaded_paletted;
@@ -2263,7 +1602,7 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 	sprintf(tempname, "%s.tga", name);
 	LoadTGA(tempname, &pic, &width, &height);
 
-	if(pic)
+	if (pic)
 	{
 		image = GL_LoadPic(name, pic, width, height, type, 32);
 	}
@@ -2273,7 +1612,7 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 		sprintf(tempname, "%s.jpg", name);
 		LoadJPG(tempname, &pic, &width, &height);
 
-		if(pic)
+		if (pic)
 		{
 			image = GL_LoadPic(name, pic, width, height, type, 32);
 		}
@@ -2286,7 +1625,7 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 
 			newcin = CIN_OpenCin(name);
 
-			if(newcin)
+			if (newcin)
 			{
 				pic = malloc(256*256*4);
 				memset(pic, 192, (256*256*4));
@@ -2302,7 +1641,7 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 				sprintf(tempname, "%s.pcx", name);
 				LoadPCX(tempname, &pic, &palette, &width, &height);
 
-				if(pic)
+				if (pic)
 				{
 					image = GL_LoadPic(name, pic, width, height, type, 8);
 				}
@@ -2382,7 +1721,6 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 //	int		width, height;
 	extern cvar_t *gl_highres_textures;
 	extern cvar_t *gl_hash_textures; // jithash
-	static unsigned char tempname[MAX_QPATH];
 	static unsigned char name_noext[MAX_QPATH];
 
 	if (!name)
@@ -2400,11 +1738,11 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 		*out++ = tolower(*in++);
 	*out = 0;
 
-	if(gl_hash_textures->value) // jithash
+	if (gl_hash_textures->value) // jithash
 	{
 		image = hash_get(&gltextures_hash, name_noext);
 
-		if(image)
+		if (image)
 		{
 			image->registration_sequence = registration_sequence;
 			return image;
@@ -2412,7 +1750,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 	}
 	else
 	{
-		for (i=0, image=gltextures ; i<numgltextures ; i++,image++)
+		for (i=0, image=gltextures; i<numgltextures; i++,image++)
 		{
 			if (Q_streq(name_noext, image->name))
 			{
@@ -2426,7 +1764,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 	// load the pic from disk
 	//
 
-	if(gl_highres_textures->value) // jithighres
+	if (gl_highres_textures->value) // jithighres
 	{
 		static unsigned char name_hr4_noext[MAX_QPATH];
 		int len;
@@ -2443,7 +1781,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 
 		image = GL_LoadImage(name_hr4_noext, type);
 
-		if(image)
+		if (image)
 		{
 			image->width /= 4;
 			image->height /= 4;
@@ -2455,15 +1793,15 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 		}
 	}
 
-	if(!image) // highres textures disabled or no highres texture found
+	if (!image) // highres textures disabled or no highres texture found
 	{
 		image = GL_LoadImage(name_noext, type);
 
-		if(!image)
+		if (!image)
 		{
 			image = GL_LoadRScriptImage(name_noext); // jitrscript
 
-			if(!image)
+			if (!image)
 			{
 				ri.Con_Printf(PRINT_ALL, "GL_FindImage: can't load %s\n", name_noext);
 				image = r_notexture;
@@ -2473,7 +1811,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 
 	image->rscript = RS_FindScript(name_noext); // jitrscript
 
-	if(image->rscript)
+	if (image->rscript)
 	{
 		if (image->rscript->width)
 			image->width = image->rscript->width;
@@ -2517,22 +1855,24 @@ void GL_FreeUnusedImages (void)
 	r_notexture->registration_sequence = registration_sequence;
 	r_particletexture->registration_sequence = registration_sequence;
 
-	for (i=0, image=gltextures ; i<numgltextures ; i++, image++)
+	for (i=0, image=gltextures; i<numgltextures; i++, image++)
 	{
 		if (image->registration_sequence == registration_sequence)
 			continue;		// used this sequence
+
 		if (!image->registration_sequence)
 			continue;		// free image_t slot
+
 		if (image->type == it_pic)
 			continue;		// don't free pics
 
 		//Heffo - Free Cinematic
-		if(image->is_cin)
+		if (image->is_cin)
 			CIN_FreeCin(image->texnum);
 
 		// free it
 		hash_delete(&gltextures_hash, image->name);
-		if(image->rscript) // jitrscript
+		if (image->rscript) // jitrscript
 			image->rscript->img_ptr = NULL;
 
 		qglDeleteTextures (1, &image->texnum);
@@ -2557,13 +1897,14 @@ int Draw_GetPalette (void)
 	int		width, height;
 
 	// get the palette
+	LoadPCX("pics/colormap.pcx", &pic, &pal, &width, &height);
 
-	LoadPCX ("pics/colormap.pcx", &pic, &pal, &width, &height);
 	if (!pal)
-		ri.Sys_Error (ERR_FATAL, "Couldn't load pics/colormap.pcx\nPlease make sure the game is installed properly."); // jit
+		ri.Sys_Error(ERR_FATAL, "Couldn't load pics/colormap.pcx\nPlease make sure the game"
+			"is installed properly.\nView the documentation on digitalpaint.org for more details."); // jit
 
 
-	for (i=0 ; i<256 ; i++)
+	for (i=0; i<256; i++)
 	{
 		r = pal[i*3+0];
 		g = pal[i*3+1];
@@ -2611,9 +1952,10 @@ void	GL_InitImages (void)
 
 	if ( qglColorTableEXT )
 	{
-		ri.FS_LoadFile( "pics/16to8.dat", &gl_state.d_16to8table );
-		if ( !gl_state.d_16to8table )
-			ri.Sys_Error( ERR_FATAL, "Couldn't load pics/16to8.dat"); // jit, just bugged me
+		ri.FS_LoadFile("pics/16to8.dat", (void**)&gl_state.d_16to8table);
+
+		if (!gl_state.d_16to8table)
+			ri.Sys_Error(ERR_FATAL, "Couldn't load pics/16to8.dat"); // jit, just bugged me
 	}
 /*
 	if ( gl_config.renderer & ( GL_RENDERER_VOODOO | GL_RENDERER_VOODOO2 ) )
@@ -2640,7 +1982,7 @@ void	GL_InitImages (void)
 		}
 	}
 
-	for (i=0 ; i<256 ; i++)
+	for (i=0; i<256; i++)
 	{
 		j = i*intensity->value;
 		if (j > 255)
@@ -2656,7 +1998,7 @@ void	GL_InitImages (void)
 GL_ShutdownImages
 ===============
 */
-void GL_ShutdownImage(void *data) // jithash -- called from hash free function
+void	GL_ShutdownImage (void *data) // jithash -- called from hash free function
 {
 	// guess we don't need this since the image is deleted using the below function:
 }
@@ -2666,22 +2008,22 @@ void	GL_ShutdownImages (void)
 	int		i;
 	image_t	*image;
 
-	for (i=0, image=gltextures ; i<numgltextures ; i++, image++)
+	for (i=0, image=gltextures; i<numgltextures; i++, image++)
 	{
 		if (!image->registration_sequence)
 			continue;		// free image_t slot
 
 		//Heffo - Free Cinematic
-		if(image->is_cin)
+		if (image->is_cin)
 			CIN_FreeCin(image->texnum);
 
-		if(image->rscript) // jitrscript
+		if (image->rscript) // jitrscript
 			image->rscript->img_ptr = NULL;
 
 		// free it
-		qglDeleteTextures (1, &image->texnum);
+		qglDeleteTextures(1, &image->texnum);
 
-		memset (image, 0, sizeof(*image));
+		memset(image, 0, sizeof(*image));
 	}
 
 	hash_table_clear(&gltextures_hash); // jithash

@@ -1,6 +1,9 @@
 #include "../client/client.h"
 //#include "../client/sound.h"
 #include "../client/snd_loc.h"
+#ifndef WIN32
+#include <dlfcn.h>
+#endif
 cvar_t	*s_a3d;
 s_a3d_t a3d;
 int a3dsound_started=0;
@@ -33,29 +36,29 @@ void S_Q2A3DCloseLibrary(void)
 }
 void S_Q2A3DInit (void)
 {
+#ifdef WIN32
 	const char *enginename = "q2a3d.dll";
 	char name[MAX_OSPATH];
 	char *path;
 	int loadLibError;
+#endif
 
 	if(a3dsound_started)
 		return;//already enabled?
 	if (!a3d.reflib) {
-	#ifdef __linux__
-		char	fn[MAX_OSPATH];
-		struct stat st;
-		snprintf (fn, MAX_OSPATH, "%s","q2a3d.so");
-		if (stat(fn, &st) == -1) {
-			Com_Printf( "LoadLibrary(\"q2a3d.so\") failed: %s\n", strerror(errno));
-		}
-		a3d.reflib = dlopen(fn, RTLD_LAZY);
+	#ifndef WIN32
+		a3d.reflib = dlopen("q2a3d.so", RTLD_LAZY);
+		
+		if (a3d.reflib)
+			Com_Printf("Loaded q2a3d.so...\n");
+		else
+			Com_Printf("dlopen(\"q2a3d.so\") failed: %s\n", dlerror());
 	#else
 		path = NULL;
 		Com_sprintf(name, sizeof(name), "%s", enginename);
 		a3d.reflib = LoadLibrary(name);
-		if (a3d.reflib) {
+		if (a3d.reflib)
 			Com_Printf("LoadLibrary (%s)\n", name);
-		}
 		else
 			Com_Printf("LoadLibrary (%s) Failed\n", name);
 

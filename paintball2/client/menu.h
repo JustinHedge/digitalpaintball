@@ -256,6 +256,7 @@ typedef struct MENU_WIDGET_S {
 
 typedef struct MENU_SCREEN_S {
 	char			*name;
+	char			*command;
 	image_t			*background;
 	MENU_TYPE		type;
 	menu_widget_t	*widget;
@@ -296,7 +297,7 @@ extern cvar_t *cl_hudscale;
 void *free_string_array(char *array[], int size);
 char *text_copy(const char *in);
 
-extern sem_t m_sem_widgets;
+extern pthread_mutex_t m_mut_widgets;
 
 #endif
 

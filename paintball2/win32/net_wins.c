@@ -305,12 +305,12 @@ qboolean	NET_GetLoopPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_me
 	i = loop->get & (MAX_LOOPBACK-1);
 	loop->get++;
 
-	memcpy (net_message->data, loop->msgs[i].data, loop->msgs[i].datalen);
+	memcpy(net_message->data, loop->msgs[i].data, loop->msgs[i].datalen);
 	net_message->cursize = loop->msgs[i].datalen;
-	memset (net_from, 0, sizeof(*net_from));
+	memset(net_from, 0, sizeof(*net_from));
 	net_from->type = NA_LOOPBACK;
-	return true;
 
+	return true;
 }
 
 
@@ -324,7 +324,7 @@ void NET_SendLoopPacket (netsrc_t sock, int length, void *data, netadr_t to)
 	i = loop->send & (MAX_LOOPBACK-1);
 	loop->send++;
 
-	memcpy (loop->msgs[i].data, data, length);
+	memcpy(loop->msgs[i].data, data, length);
 	loop->msgs[i].datalen = length;
 }
 
@@ -342,7 +342,7 @@ qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 	if (NET_GetLoopPacket(sock, net_from, net_message))
 		return true;
 
-	for (protocol = 0 ; protocol < 2 ; protocol++)
+	for (protocol = 0; protocol < 2; protocol++)
 	{
 		if (protocol == 0)
 			net_socket = ip_sockets[sock];
@@ -400,9 +400,9 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 	struct sockaddr	addr;
 	int		net_socket;
 
-	if ( to.type == NA_LOOPBACK )
+	if (to.type == NA_LOOPBACK)
 	{
-		NET_SendLoopPacket (sock, length, data, to);
+		NET_SendLoopPacket(sock, length, data, to);
 		return;
 	}
 
@@ -431,11 +431,11 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 			return;
 	}
 	else
-		Com_Error (ERR_FATAL, "NET_SendPacket: bad address type");
+		Com_Error(ERR_FATAL, "NET_SendPacket: bad address type");
 
-	NetadrToSockadr (&to, &addr);
+	NetadrToSockadr(&to, &addr);
 
-	ret = sendto (net_socket, data, length, 0, &addr, sizeof(addr) );
+	ret = sendto(net_socket, data, length, 0, &addr, sizeof(addr));
 	if (ret == -1)
 	{
 		int err = WSAGetLastError();
@@ -462,12 +462,12 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 			if (err == WSAEADDRNOTAVAIL)
 			{
 				Com_DPrintf ("NET_SendPacket Warning: %s : %s\n", 
-						NET_ErrorString(), NET_AdrToString (to));
+						NET_ErrorString(), NET_AdrToString(to));
 			}
 			else
 			{
 				Com_Error (ERR_DROP, "NET_SendPacket ERROR: %s to %s\n", 
-						NET_ErrorString(), NET_AdrToString (to));
+						NET_ErrorString(), NET_AdrToString(to));
 			}
 		}
 	}
@@ -485,50 +485,55 @@ NET_TCPSocket
 */
 int NET_TCPSocket (int port)
 {
-	int					newsocket;
-	qboolean			_true = true;
-	int					i = 1;
-	int					err;
+	int newsocket;
+	int err;
 
-	if ((newsocket = socket (PF_INET, SOCK_STREAM , IPPROTO_TCP)) == -1)
+	if ((newsocket = socket(PF_INET, SOCK_STREAM , IPPROTO_TCP)) == -1)
 	{
 		err = WSAGetLastError();
+
 		if (err != WSAEAFNOSUPPORT)
-			Com_Printf ("WARNING: TCP_OpenSocket: socket: %s", NET_ErrorString());
+			Com_Printf("WARNING: TCP_OpenSocket: socket: %s", NET_ErrorString());
+
 		return 0;
 	}
 
 	return newsocket;
 }
 
-int NET_TCPConnect(SOCKET sockfd, char *net_remote_address, int port)
+int NET_TCPConnect (SOCKET sockfd, char *net_remote_address, int port)
 {
 	struct sockaddr_in	address;	// Internet socket address
+
 	if (port < 1 || port > 32767)
 	{
-		Com_Printf ("WARNING: TCP_Connect: Invalid Port: %i\n", port);
-		closesocket (sockfd);
+		Com_Printf("WARNING: TCP_Connect: Invalid Port: %i\n", port);
+		closesocket(sockfd);
 		return 0;
 	}
+
 	if (!net_remote_address || !net_remote_address[0])
 	{
-		Com_Printf ("WARNING: TCP_Connect: No host specified\n");
-		closesocket (sockfd);
+		Com_Printf("WARNING: TCP_Connect: No host specified\n");
+		closesocket(sockfd);
 		return 0;
 	}
 	else
-		NET_StringToSockaddr (net_remote_address, (struct sockaddr *)&address);
+	{
+		NET_StringToSockaddr(net_remote_address, (struct sockaddr *)&address);
+	}
 
-        address.sin_family = AF_INET;			// host byte order
-        address.sin_port = htons((short)port);	// short, network byte order
-        memset(&(address.sin_zero), '\0', 8);	// zero the rest of the struct
+    address.sin_family = AF_INET;			// host byte order
+    address.sin_port = htons((short)port);	// short, network byte order
+    memset(&(address.sin_zero), '\0', 8);	// zero the rest of the struct
 
 	if (-1 == connect(sockfd, (struct sockaddr *)&address, sizeof(struct sockaddr)))
 	{
-		Com_Printf ("WARNING: TCP_Connect failed: connect(%s:%i): %s\n", net_remote_address,port,NET_ErrorString());
-		closesocket (sockfd);
+		Com_Printf("WARNING: TCP_Connect failed: connect(%s:%i): %s\n", net_remote_address,port,NET_ErrorString());
+		closesocket(sockfd);
 		return 0;
 	}
+
 	return 1;
 }
 // ACT */

@@ -721,8 +721,7 @@ void Con_DrawConsole (float frac)
 	if (lines > viddef.height)
 		lines = viddef.height;
 
-// draw the background
-	//re.DrawStretchPic2 (0, lines-viddef.height, viddef.width, viddef.height, i_conback); // jit, kill warning
+	// draw the background
 	re.DrawStretchPic(0, lines-viddef.height, viddef.width, viddef.height, "conback"); // jitodo, cl_conback->string
 	SCR_AddDirtyPoint(0,0);
 	SCR_AddDirtyPoint(viddef.width-1, lines-1);
@@ -750,6 +749,7 @@ void Con_DrawConsole (float frac)
 	}
 	
 	row = con.display;
+
 	for (i=0 ; i<rows ; i++, y-=8*hudscale, row--)
 	{
 		if (row < 0)
@@ -759,15 +759,14 @@ void Con_DrawConsole (float frac)
 			
 		text = con.text + (row % con.totallines)*con.linewidth;
 
-		//for (x=0 ; x<con.linewidth ; x++)
-		//	re.DrawChar ( (x*hudscale+1)<<3, y, text[x]);
 		Draw_StringLen(8*hudscale, y, text, con.linewidth); // jit, draw whole line at once
 	}
 
-//ZOID
+	//ZOID
 	// draw the download bar
 	// figure out width
-	if (cls.download) { 
+	if (cls.download)
+	{ 
 		if ((text = strrchr(cls.downloadname, '/')) != NULL)
 			text++;
 		else
@@ -776,21 +775,27 @@ void Con_DrawConsole (float frac)
 		x = con.linewidth - ((con.linewidth * 7)*0.025);
 		y = x - strlen(text) - 8;
 		i = con.linewidth*0.3333333333;
-		if (strlen(text) > i) {
+		
+		if (strlen(text) > i)
+		{
 			y = x - i - 11;
 			strncpy(dlbar, text, i);
 			dlbar[i] = 0;
 			strcat(dlbar, "...");
-		} else
+		}
+		else
+		{
 			strcpy(dlbar, text);
+		}
+
 		strcat(dlbar, ": ");
 		i = strlen(dlbar);
 		dlbar[i++] = '\x80';
+
 		// where's the dot go?
 		if (cls.downloadpercent == 0)
 			n = 0;
 		else
-			//n = y * cls.downloadpercent / 100;
 			n = ((float)(y+2) * (float)(cls.downloadpercent) / 100.0f + 0.5f); // jit (round properly)
 			
 		// ===[
@@ -810,16 +815,10 @@ void Con_DrawConsole (float frac)
 				dlbar_fill[j+i+1] = '\x1d'; // start bar
 		}
 		dlbar_fill[j+i+1] = '\0';
-		// ]===
-
 
 		for (j = 0; j < y; j++)
-		{
-			/*jittext if (j == n)
-				dlbar[i++] = '\x83';
-			else*/
-				dlbar[i++] = '\x81';
-		}
+			dlbar[i++] = '\x81';
+
 		dlbar[i++] = '\x82';
 		dlbar[i] = 0;
 
@@ -827,11 +826,9 @@ void Con_DrawConsole (float frac)
 
 		// draw it
 		y = con.vislines-12*hudscale;
-		//for (i = 0; i < strlen(dlbar); i++)
-		//	re.DrawChar ( (i+1)<<3, y, dlbar[i]);
-		// jitodo - test hudscale download bar
-		re.DrawString(8*hudscale, y, dlbar_fill);  // jittext
+		re.DrawString(8*hudscale, y, dlbar_fill);  // jit
 		re.DrawString(8*hudscale, y, dlbar); // jit, draw whole line at once
+		// ]===
 	}
 //ZOID
 

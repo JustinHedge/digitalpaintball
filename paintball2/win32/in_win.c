@@ -142,25 +142,6 @@ qboolean	mouseparmsvalid;
 int			window_center_x, window_center_y;
 RECT		window_rect;
 
-// ++ ARTHUR [9/06/03]
-/*qboolean q_get_cursor_pos(int* x, int* y)
-{
-	POINT		mousePos;
-//	RECT		window;
-	POINT       clientSize;
-	if (!GetCursorPos (&mousePos))
-		return false;
-	clientSize.x = 0;
-	clientSize.y = 0;
-
-	if (!ClientToScreen(cl_hwnd, &clientSize))
-		return false;
-
-    *x = mousePos.x - clientSize.x;
-	*y = mousePos.y - clientSize.y;
-	return true;
-}*/
-// -- ARTHUR
 
 /*
 ===========
@@ -176,7 +157,7 @@ void IN_ActivateMouse (void)
 	OSVERSIONINFO osver;
 
 	// NiceAss: reset mouse settings if m_xp changes
-	if( m_xp->modified )
+	if (m_xp->modified)
 	{
 		mouseactive = false;
 		m_xp->modified = false;
@@ -220,10 +201,10 @@ void IN_ActivateMouse (void)
 	}
 	// xp accel fix --
 
-	width = GetSystemMetrics (SM_CXSCREEN);
-	height = GetSystemMetrics (SM_CYSCREEN);
+	width = GetSystemMetrics(SM_CXSCREEN);
+	height = GetSystemMetrics(SM_CYSCREEN);
 
-	GetWindowRect ( cl_hwnd, &window_rect);
+	GetWindowRect(cl_hwnd, &window_rect);
 	/* jitmouse -- keep from screwing up on dual monitors
 	if (window_rect.left < 0)
 		window_rect.left = 0;
@@ -234,16 +215,16 @@ void IN_ActivateMouse (void)
 	if (window_rect.bottom >= height-1)
 		window_rect.bottom = height-1;*/
 
-	window_center_x = (window_rect.right + window_rect.left)*0.5;
-	window_center_y = (window_rect.top + window_rect.bottom)*0.5;
+	window_center_x = (window_rect.right + window_rect.left)/2;
+	window_center_y = (window_rect.top + window_rect.bottom)/2;
 
-	SetCursorPos (window_center_x, window_center_y);
+	SetCursorPos(window_center_x, window_center_y);
 
 	old_x = window_center_x;
 	old_y = window_center_y;
 
-	SetCapture ( cl_hwnd );
-	ClipCursor (&window_rect);
+	SetCapture(cl_hwnd);
+	ClipCursor(&window_rect);
 
 	while (ShowCursor (FALSE) >= 0)
 		;
@@ -341,20 +322,20 @@ void IN_MouseMove (usercmd_t *cmd)
 		return;
 
 	// find mouse movement
-	if (!GetCursorPos (&current_pos))
+	if (!GetCursorPos(&current_pos))
 		return;
 
-	mx = current_pos.x - window_center_x; // jitodo -- fix this for dual monitors.
+	mx = current_pos.x - window_center_x;
 	my = current_pos.y - window_center_y;
 
 	// force the mouse to the center, so there's room to move
 	if (mx || my)
-		SetCursorPos (window_center_x, window_center_y);
+		SetCursorPos(window_center_x, window_center_y);
 
 	if (m_filter->value)
 	{
-		mouse_x = (mx + old_mouse_x) * 0.5;
-		mouse_y = (my + old_mouse_y) * 0.5;
+		mouse_x = (mx + old_mouse_x) / 2;
+		mouse_y = (my + old_mouse_y) / 2;
 	}
 	else
 	{
@@ -376,20 +357,15 @@ void IN_MouseMove (usercmd_t *cmd)
 	mouse_y *= sensitivity->value;
 
 // add mouse X/Y movement to cmd
-	if ( (in_strafe.state & 1) || (lookstrafe->value && mlooking ))
+	if ((in_strafe.state & 1) || (lookstrafe->value && mlooking))
 		cmd->sidemove += m_side->value * mouse_x;
 	else
 		cl.viewangles[YAW] -= m_yaw->value * mouse_x;
 
-	if ( (mlooking || freelook->value) && !(in_strafe.state & 1))
-	{
+	if ((mlooking || freelook->value) && !(in_strafe.state & 1))
 		cl.viewangles[PITCH] += m_pitch->value * mouse_y;
-	}
 	else
-	{
 		cmd->forwardmove -= m_forward->value * mouse_y;
-	}
-
 }
 
 
@@ -504,12 +480,12 @@ void IN_Frame (void)
 		return;
 	}
 
-	if ( !cl.refresh_prepped
+	if (!cl.refresh_prepped
 		|| cls.key_dest == key_console
 		/*|| cls.key_dest == key_menu*/) // jitmenu
 	{
 		// temporarily deactivate if in fullscreen
-		if (Cvar_VariableValue ("vid_fullscreen") == 0 && !M_MenuActive()) // jitmenu / jitmouse
+		if (Cvar_VariableValue("vid_fullscreen") == 0 && !M_MenuActive()) // jitmenu / jitmouse
 		{
 			IN_DeactivateMouse ();
 			return;

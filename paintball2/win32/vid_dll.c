@@ -119,17 +119,18 @@ void VID_Printf (int print_level, char *fmt, ...)
 	char		msg[MAXPRINTMSG];
 	static qboolean	inupdate;
 	
-	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
-	va_end (argptr);
+	va_start(argptr, fmt);
+	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
 
 	if (print_level == PRINT_ALL)
 	{
-		Com_Printf ("%s", msg);
+		Com_Printf("%s", msg);
 	}
 	else if (print_level == PRINT_DEVELOPER)
 	{
-		Com_DPrintf ("%s", msg);
+		Com_DPrintf("%s", msg);
 	}
 	else if (print_level == PRINT_ALERT)
 	{
@@ -144,11 +145,12 @@ void VID_Error (int err_level, char *fmt, ...)
 	char		msg[MAXPRINTMSG];
 	static qboolean	inupdate;
 	
-	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
-	va_end (argptr);
+	va_start(argptr,fmt);
+	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
 
-	Com_Error (err_level,"%s", msg);
+	Com_Error(err_level,"%s", msg);
 }
 
 //==========================================================================
@@ -581,23 +583,23 @@ VID_LoadRefresh
 ==============
 */
 
-qboolean VID_LoadRefresh( char *name )
+qboolean VID_LoadRefresh (char *name)
 {
 	refimport_t	ri;
 	GetRefAPI_t	GetRefAPI;
 	
-	if ( reflib_active )
+	if (reflib_active)
 	{
 		re.Shutdown();
-		VID_FreeReflib ();
+		VID_FreeReflib();
 	}
 
-	Com_Printf( "------- Loading %s -------\n", name );
+	Com_Printf("------- Loading %s -------\n", name);
 
-	if ( ( reflib_library = LoadLibrary( name ) ) == 0 )
+	if ((reflib_library = LoadLibrary(name)) == 0)
 	{
-		//Com_Printf( "LoadLibrary(\"%s\") failed\n", name );
-		Com_Error (ERR_FATAL, "LoadLibrary(\"%s\") failed\n", name ); // jit
+		//Com_Printf("LoadLibrary(\"%s\") failed\n", name);
+		Com_Error(ERR_FATAL, "LoadLibrary(\"%s\") failed\n", name); // jit
 		return false;
 	}
 
@@ -610,6 +612,9 @@ qboolean VID_LoadRefresh( char *name )
 	ri.Sys_Error = VID_Error;
 	ri.FS_LoadFile = FS_LoadFile;
 	ri.FS_FreeFile = FS_FreeFile;
+	ri.FS_ListFiles = FS_ListFiles; // jit
+	ri.FS_FreeFileList = FS_FreeFileList; // jit
+	ri.FS_NextPath = FS_NextPath; // jitrscripts
 	ri.FS_Gamedir = FS_Gamedir;
 	ri.Cvar_Get = Cvar_Get;
 	ri.Cvar_Set = Cvar_Set;
@@ -619,26 +624,27 @@ qboolean VID_LoadRefresh( char *name )
 	ri.Vid_NewWindow = VID_NewWindow;
 	ri.Z_Free = Z_Free; // jitmalloc
 	ri.Z_Malloc = Z_Malloc; // jitmalloc
+	
 
-	if ( ( GetRefAPI = (void *) GetProcAddress( reflib_library, "GetRefAPI" ) ) == 0 )
-		Com_Error( ERR_FATAL, "GetProcAddress failed on %s", name );
+	if ((GetRefAPI = (void*)GetProcAddress( reflib_library, "GetRefAPI")) == 0)
+		Com_Error(ERR_FATAL, "GetProcAddress failed on %s", name);
 
-	re = GetRefAPI( ri );
+	re = GetRefAPI(ri);
 
 	if (re.api_version != API_VERSION)
 	{
-		VID_FreeReflib ();
-		Com_Error (ERR_FATAL, "%s has incompatible api_version", name);
+		VID_FreeReflib();
+		Com_Error(ERR_FATAL, "%s has incompatible api_version", name);
 	}
 
-	if ( re.Init( global_hInstance, MainWndProc ) == -1 )
+	if (re.Init(global_hInstance, MainWndProc) == -1)
 	{
 		re.Shutdown();
-		VID_FreeReflib ();
+		VID_FreeReflib();
 		return false;
 	}
 
-	Com_Printf( "------------------------------------\n");
+	Com_Printf("------------------------------------\n");
 	reflib_active = true;
 
 	vidref_val = VIDREF_GL;
@@ -752,32 +758,18 @@ void VID_CheckChanges (void)
 
 WORD desktop_gammaramp[3][256]; // jitgamma
 qboolean gammaramp_supported;
-/*
-void printgammaramp  ()
-{
-	FILE *blah;
-	int i;
 
-	blah = fopen("C:/gammaramp.txt","w");
-	for(i=0;i<256;i++)
-		fprintf(blah,"%d %d %d\n", desktop_gammaramp[0][i], desktop_gammaramp[1][i], desktop_gammaramp[2][i]);
-}
-*/
 void VID_BackupGamma() // jitgamma
 {
-#ifdef WIN32
 	HDC	hdc;
 
 	hdc = GetDC (GetDesktopWindow());
 	gammaramp_supported = GetDeviceGammaRamp (hdc, &desktop_gammaramp[0][0]);
-//printgammaramp();
 	ReleaseDC (GetDesktopWindow(), hdc);
-#endif
 }
 
 void VID_RestoreGamma() // jitgamma
 {
-#ifdef WIN32
 	if(gammaramp_supported)
 	{
 		HDC	hdc;
@@ -786,7 +778,6 @@ void VID_RestoreGamma() // jitgamma
 		SetDeviceGammaRamp (hdc, &desktop_gammaramp[0][0]);
 		ReleaseDC (GetDesktopWindow(), hdc);
 	}
-#endif
 }
 
 // jitgamma

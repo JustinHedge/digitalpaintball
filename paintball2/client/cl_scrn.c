@@ -556,23 +556,29 @@ SCR_BeginLoadingPlaque
 */
 void SCR_BeginLoadingPlaque (void)
 {
-	S_StopAllSounds ();
+	S_StopAllSounds();
 	cl.sound_prepped = false;		// don't play ambients
-	CDAudio_Stop ();
+	CDAudio_Stop();
+
 	if (cls.disable_screen)
 		return;
+
 	if (developer->value)
 		return;
+
 	if (cls.state == ca_disconnected)
 		return;	// if at console, don't bring up the plaque
+
 	if (cls.key_dest == key_console)
 		return;
+
 	if (cl.cinematictime > 0)
 		scr_draw_loading = 2;	// clear to balack first
 	else
 		scr_draw_loading = 1;
-	SCR_UpdateScreen ();
-	cls.disable_screen = Sys_Milliseconds ();
+
+	SCR_UpdateScreen();
+	cls.disable_screen = Sys_Milliseconds();
 	cls.disable_servercount = cl.servercount;
 }
 
@@ -844,9 +850,10 @@ void DrawHUDString (int x, int y, int centerwidth, int xor, unsigned char *strin
 	unsigned char	msg[2048], *strp = msg;
 	int		formatwidth;
 
-	va_start (argptr,string);
-	vsprintf (msg,string,argptr);
-	va_end (argptr);
+	va_start(argptr, string);
+	_vsnprintf(msg, sizeof(msg), string, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
 
 	margin = x;
 

@@ -18,6 +18,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 #include "q_shared.h"
+#ifdef WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 #define DEG2RAD( a ) ( a * M_PI ) / 180.0F
 
@@ -1085,10 +1090,7 @@ void Swap_Init (void)
 		_BigFloat = FloatNoSwap;
 		_LittleFloat = FloatSwap;
 	}
-
 }
-
-
 
 /*
 ============
@@ -1104,9 +1106,10 @@ char	*va(char *format, ...)
 	va_list		argptr;
 	static char		string[1024];
 	
-	va_start (argptr, format);
-	vsprintf (string, format,argptr);
-	va_end (argptr);
+	va_start(argptr, format);
+	_vsnprintf(string, sizeof(string), format, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(string); // jitsecurity -- make sure string is null terminated.
 
 	return string;	
 }
@@ -1163,15 +1166,18 @@ skipwhite:
 	if (c == '\"')
 	{
 		data++;
+
 		while (1)
 		{
 			c = *data++;
+
 			if (c=='\"' || !c)
 			{
 				com_token[len] = 0;
 				*data_p = data;
 				return com_token;
 			}
+
 			if (len < MAX_TOKEN_CHARS - 1) // jitsecurity, [SkulleR] - buffer overrun fix
 			{
 				com_token[len] = c;
@@ -1188,17 +1194,18 @@ skipwhite:
 			com_token[len] = c;
 			len++;
 		}
+
 		data++;
 		c = *data;
 	} while (c>32);
 
 	if (len == MAX_TOKEN_CHARS)
 	{
-		Com_Printf ("Token exceeded %i chars, discarded.\n", MAX_TOKEN_CHARS);
+		Com_Printf("Token exceeded %i chars, discarded.\n", MAX_TOKEN_CHARS);
 		len = 0;
 	}
-	com_token[len] = 0;
 
+	com_token[len] = 0;
 	*data_p = data;
 	return com_token;
 }
@@ -1387,7 +1394,7 @@ int Q_strcasecmp (const char *s1, const char *s2)
 	return 0;		// strings are equal
 }
 
-int Q_streq (const char *s1, const char *s2) // jitopt -- this is much faster than Q_streq
+int Q_streq (const char *s1, const char *s2) // jitopt -- this is much faster than !strcmp
 {
 	register int	c1, c2;
 	
@@ -1397,9 +1404,7 @@ int Q_streq (const char *s1, const char *s2) // jitopt -- this is much faster th
 		c2 = *s2++;
 		
 		if (c1 != c2)
-		{
 			return 0;		// strings not equal
-		}
 	} while (c1);
 	
 	return 1;		// strings are equal
@@ -1409,16 +1414,20 @@ int Q_streq (const char *s1, const char *s2) // jitopt -- this is much faster th
 
 void Com_sprintf (char *dest, int size, char *fmt, ...)
 {
-	int		len;
-	va_list		argptr;
-	char	bigbuffer[0x10000];
+	int len;
+	va_list argptr;
+	char bigbuffer[0x10000];
 
-	va_start (argptr,fmt);
-	len = vsprintf (bigbuffer,fmt,argptr);
-	va_end (argptr);
+	va_start(argptr, fmt);
+	len = _vsnprintf(bigbuffer, sizeof(bigbuffer), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(bigbuffer); // jitsecurity -- make sure string is null terminated.
+
 	if (len >= size)
-		Com_Printf ("Com_sprintf: overflow of %i in %i\n", len, size);
-	strncpy (dest, bigbuffer, size-1);
+		Com_Printf("Com_sprintf: overflow of %i in %i\n", len, size);
+
+	strncpy(dest, bigbuffer, size-1);
+	dest[size-1] = 0; // jitsecurity - make sure string is terminated.
 }
 
 /*
@@ -1495,15 +1504,19 @@ void Info_RemoveKey (char *s, char *key)
 	while (1)
 	{
 		start = s;
+
 		if (*s == '\\')
 			s++;
+
 		o = pkey;
+
 		while (*s != '\\')
 		{
 			if (!*s)
 				return;
 			*o++ = *s++;
 		}
+
 		*o = 0;
 		s++;
 
@@ -1812,3 +1825,11 @@ void hash_delete(hash_table_t *table, const unsigned char *key)
 // jithash
 //====================================================================
 
+qboolean FileExists (const char *filename) // jit
+{
+#ifdef WIN32
+	return (_access(filename, 00) == 0);
+#else
+	return (access(filename, R_OK) == 0);
+#endif
+}

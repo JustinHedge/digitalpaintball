@@ -105,30 +105,32 @@ void Com_Printf (char *fmt, ...)
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
 
-	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
-	va_end (argptr);
+	va_start(argptr, fmt);
+	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
 
 	if (rd_target)
 	{
-		if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1))
+		if ((strlen(msg) + strlen(rd_buffer)) > (rd_buffersize - 1))
 		{
 			rd_flush(rd_target, rd_buffer);
 			*rd_buffer = 0;
 		}
+
 		strcat (rd_buffer, msg);
 		return;
 	}
 
-	Con_Print (msg);
+	Con_Print(msg);
 		
 	// also echo to debugging console
-	Sys_ConsoleOutput (msg);
+	Sys_ConsoleOutput(msg);
 
 	// logfile
 	if (logfile_active && logfile_active->value)
 	{
-		char	name[MAX_QPATH];
+		char name[MAX_QPATH];
 		
 		if (!logfile)
 		{
@@ -136,17 +138,19 @@ void Com_Printf (char *fmt, ...)
 			// jit -- allow multiple console logs for servers on multiple ports. 
 			int port;
 			port = Cvar_Get("port", va("%i", PORT_SERVER), CVAR_NOSET)->value;
-			Com_sprintf (name, sizeof(name), "%s/qconsole%d.log", FS_Gamedir (), port);
+			Com_sprintf(name, sizeof(name), "%s/qconsole%d.log", FS_Gamedir(), port);
 			// ===
 			if (logfile_active->value > 2)
-				logfile = fopen (name, "a");
+				logfile = fopen(name, "a");
 			else
-				logfile = fopen (name, "w");
+				logfile = fopen(name, "w");
 		}
+
 		if (logfile)
-			fprintf (logfile, "%s", msg);
+			fprintf(logfile, "%s", msg);
+
 		if (logfile_active->value > 1)
-			fflush (logfile);		// force it to save every time
+			fflush(logfile);		// force it to save every time
 	}
 }
 
@@ -162,15 +166,15 @@ void Com_DPrintf (char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
-		
+
 	if (!developer || !developer->value)
 		return;			// don't confuse non-developers with techie stuff...
 
-	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
-	va_end (argptr);
-	
-	Com_Printf ("%s", msg);
+	va_start(argptr,fmt);
+	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
+	Com_Printf("%s", msg);
 }
 
 
@@ -184,45 +188,47 @@ do the apropriate things.
 */
 void Com_Error (int code, char *fmt, ...)
 {
-	va_list		argptr;
-	static char		msg[MAXPRINTMSG];
-	static	qboolean	recursive;
+	va_list argptr;
+	static char msg[MAXPRINTMSG];
+	static qboolean recursive;
 
 	if (recursive)
-		Sys_Error ("recursive error after: %s", msg);
+		Sys_Error("recursive error after: %s", msg);
+
 	recursive = true;
 
-	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
-	va_end (argptr);
+	va_start(argptr,fmt);
+	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
 	
 	if (code == ERR_DISCONNECT)
 	{
-		CL_Drop ();
+		CL_Drop();
 		recursive = false;
-		longjmp (abortframe, -1);
+		longjmp(abortframe, -1);
 	}
 	else if (code == ERR_DROP)
 	{
-		Com_Printf ("********************\nERROR: %s\n********************\n", msg);
-		SV_Shutdown (va("Server crashed: %s\n", msg), false);
-		CL_Drop ();
+		Com_Printf("********************\nERROR: %s\n********************\n", msg);
+		SV_Shutdown(va("Server crashed: %s\n", msg), false);
+		CL_Drop();
 		recursive = false;
-		longjmp (abortframe, -1);
+		longjmp(abortframe, -1);
 	}
 	else
 	{
-		SV_Shutdown (va("Server fatal crashed: %s\n", msg), false);
-		CL_Shutdown ();
+		SV_Shutdown(va("Server fatal crashed: %s\n", msg), false);
+		CL_Shutdown();
 	}
 
 	if (logfile)
 	{
-		fclose (logfile);
+		fclose(logfile);
 		logfile = NULL;
 	}
 
-	Sys_Error ("%s", msg);
+	Sys_Error("%s", msg);
 }
 
 
@@ -795,21 +801,20 @@ char *MSG_ReadString (sizebuf_t *msg_read)
 char *MSG_ReadStringLine (sizebuf_t *msg_read)
 {
 	static char	string[2048];
-	int		l,c;
-	
-	l = 0;
+	int c, l = 0;
+
 	do
 	{
-		//c = MSG_ReadChar (msg_read);
-		c = MSG_ReadByte (msg_read); // jitsecurity, fix by [SkulleR]
+		c = MSG_ReadByte(msg_read); // jitsecurity, fix by [SkulleR]
+
 		if (c == -1 || c == 0 || c == '\n')
 			break;
+
 		string[l] = c;
 		l++;
 	} while (l < sizeof(string)-1);
 	
 	string[l] = 0;
-	
 	return string;
 }
 
@@ -1046,8 +1051,8 @@ char *CopyString (char *in)
 {
 	char	*out;
 	
-	out = Z_Malloc (strlen(in)+1);
-	strcpy (out, in);
+	out = Z_Malloc(strlen(in)+1);
+	strcpy(out, in);
 	return out;
 }
 

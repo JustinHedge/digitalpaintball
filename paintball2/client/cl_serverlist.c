@@ -1,9 +1,14 @@
 #include "menu.h"
+#ifndef WIN32
+#include <unistd.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#endif
 
 #define INITIAL_SERVERLIST_SIZE 32
 
 // Local globals
-static sem_t m_sem_serverlist;
+static pthread_mutex_t m_mut_serverlist;
 static pthread_t updatethread;
 static pthread_t pingthread;
 static qboolean refreshing = false;
@@ -86,7 +91,7 @@ void M_ServerlistPrint_f (void)
 		Com_Printf("%2d) %s\n    %s\n", i+1, m_serverlist.ips[i],
 			m_serverlist.info[i]);
 }
-
+#if 0
 static void free_menu_serverlist (void) // jitodo -- eh, something should call this?
 {
 	if (m_serverlist.info)
@@ -98,13 +103,13 @@ static void free_menu_serverlist (void) // jitodo -- eh, something should call t
 
 	memset(&m_serverlist, 0, sizeof(m_serverlist_t));
 }
-
+#endif
 void Serverlist_Clear_f (void)
 {
 	register int i, j;
 
-	sem_wait(&m_sem_serverlist); // jitmultithreading
-	sem_wait(&m_sem_widgets);
+	pthread_mutex_lock(&m_mut_serverlist); // jitmultithreading
+	pthread_mutex_lock(&m_mut_widgets);
 
 	for (i=0; i<m_serverlist.numservers; i++)
 	{
@@ -123,9 +128,9 @@ void Serverlist_Clear_f (void)
 		}
 	}
 
-	sem_post(&m_sem_widgets);
-	M_RefreshWidget("serverlist");
-	sem_post(&m_sem_serverlist);
+	//pthread_mutex_unlock(&m_mut_widgets);
+	M_RefreshWidget("serverlist", false);
+	//pthread_mutex_unlock(&m_mut_serverlist);
 	m_serverlist.nummapped = m_serverlist.numservers = 0;
 }
 
@@ -135,12 +140,6 @@ void Serverlist_Clear_f (void)
 static void update_serverlist_server (m_serverlist_server_t *server, char *info, int ping)
 {
 	char *s;
-
-	// Free up the old stuff.
-	if (server->mapname)
-		Z_Free(server->mapname);
-	if (server->servername)
-		Z_Free(server->servername);
 
 	// start at end of string:
 	s = strlen(info) + info; 
@@ -163,11 +162,42 @@ static void update_serverlist_server (m_serverlist_server_t *server, char *info,
 	*(s+1) = 0;
 	while(s > info && *s > 32)
 		s--;
-	server->mapname = text_copy(s+1);
+
+	if (!server->mapname)
+	{
+		server->mapname = text_copy(s+1);
+	}
+	else if (!Q_streq(server->mapname, s+1))
+	{
+		char buf[MAX_QPATH];
+
+		Z_Free(server->mapname);
+		sprintf(buf, "%s/maps/%s.bsp", FS_Gamedir(), s+1);
+
+		if (!FileExists(buf))
+		{
+			// put maps clients don't have in italics
+			sprintf(buf, "%c%s%c", CHAR_ITALICS, s+1, CHAR_ITALICS);
+			server->mapname = text_copy(buf);
+		}
+		else
+		{
+			server->mapname = text_copy(s+1);
+		}
+	}
 
 	// servername is what's left over:
 	*s = 0;
-	server->servername = text_copy(info);
+
+	if (!server->servername)
+	{
+		server->servername = text_copy(info);
+	}
+	else if (!Q_streq(server->servername, info))
+	{
+		Z_Free(server->servername);
+		server->servername = text_copy(info);
+	}
 
 	// and the ping
 	server->ping = ping;
@@ -182,42 +212,86 @@ static void set_serverlist_server_pingtime (m_serverlist_server_t *server, int p
 #define MAP_NAME_MAXLENGTH 8
 static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 {
-	static char info[64];
-	char stemp=0, mtemp=0;
+	static char info[128];
+	//char stemp=0, mtemp=0;
 	int ping = 999;
+	int i, len;
 
-	if(server->ping < 999)
+	if (server->ping < 999)
 		ping = server->ping;
 
-	// jitodo -- should compensate for colored text in server name.
-
 	// truncate name if too long:
-	if(strlen_noformat(server->servername) > SERVER_NAME_MAXLENGTH)
-	{
-		stemp = server->servername[SERVER_NAME_MAXLENGTH];
-		server->servername[SERVER_NAME_MAXLENGTH] = 0;
-	}
-	if(strlen(server->mapname) > MAP_NAME_MAXLENGTH)
-	{
-		mtemp = server->servername[MAP_NAME_MAXLENGTH];
-		server->mapname[MAP_NAME_MAXLENGTH] = 0;
-	}
+	//if (strlen_noformat(server->servername) > SERVER_NAME_MAXLENGTH)
+	//{
+	//	stemp = server->servername[SERVER_NAME_MAXLENGTH];
+	//	server->servername[SERVER_NAME_MAXLENGTH] = 0;
+	//}
+
+	//if (strlen(server->mapname) > MAP_NAME_MAXLENGTH)
+	//{
+	//	mtemp = server->servername[MAP_NAME_MAXLENGTH];
+	//	server->mapname[MAP_NAME_MAXLENGTH] = 0;
+	//}
 
 	// assumes SERVER_NAME_MAXLENGTH is 19 vv
-	if(ping < 999)
-		Com_sprintf(info, sizeof(info), "%-19s %-3d %-8s %d/%d", 
-			server->servername, ping, server->mapname,
-			server->players, server->maxplayers);
+	//if(ping < 999)
+	//	Com_sprintf(info, sizeof(info), "%-19s %-3d %-8s %d/%d", 
+	//		server->servername, ping, server->mapname,
+	//		server->players, server->maxplayers);
+	//else
+	//	Com_sprintf(info, sizeof(info), "%c4%-19s %-3d %-8s %d/%d", 
+	//		CHAR_COLOR, server->servername, ping, server->mapname,
+	//		server->players, server->maxplayers);
+
+	if (ping < 999)
+		info[0] = 0;
 	else
-		Com_sprintf(info, sizeof(info), "%c4%-19s %-3d %-8s %d/%d", 
-			CHAR_COLOR, server->servername, ping, server->mapname,
-			server->players, server->maxplayers);
+		sprintf(info, "%c4", CHAR_COLOR);
 
-	if(stemp)
-		server->servername[SERVER_NAME_MAXLENGTH] = stemp;
+	if ((len = strlen_noformat(server->servername)) <= SERVER_NAME_MAXLENGTH)
+	{
+		strcat(info, server->servername);
 
-	if(mtemp)
-		server->mapname[MAP_NAME_MAXLENGTH] = mtemp;
+		for (i = 0; i < (SERVER_NAME_MAXLENGTH - len); i++)
+			strcat(info, " ");
+	}
+	else // (len > SERVER_NAME_MAXLENGTH)
+	{
+		// just in case they put funky color characters in the server name.
+		int pos = strpos_noformat(server->servername, SERVER_NAME_MAXLENGTH+1);
+		strncat(info, server->servername, pos);
+	}
+
+	Com_sprintf(info, sizeof(info), "%s %-3d ", info, ping);
+
+	if ((len = strlen_noformat(server->mapname)) <= MAP_NAME_MAXLENGTH)
+	{
+		strcat(info, server->mapname);
+
+		for (i = 0; i < (MAP_NAME_MAXLENGTH - len); i++)
+			strcat(info, " ");
+	}
+	else
+	{
+		int pos = strpos_noformat(server->mapname, MAP_NAME_MAXLENGTH+1);
+		strncat(info, server->mapname, pos);
+		
+		// handle italics (map player doesn't have)
+		if ((unsigned char)server->mapname[0] == CHAR_ITALICS)
+		{
+			char buf[2];
+			sprintf(buf, "%c", CHAR_ITALICS);
+			strcat(info, buf);
+		}
+	}
+
+	Com_sprintf(info, sizeof(info), "%s %d/%d", info, server->players, server->maxplayers);
+
+	//if (stemp)
+	//	server->servername[SERVER_NAME_MAXLENGTH] = stemp;
+
+	//if (mtemp)
+	//	server->mapname[MAP_NAME_MAXLENGTH] = mtemp;
 
 	return info;
 }
@@ -271,8 +345,8 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 		return;
 	}
 
-	sem_wait(&m_sem_serverlist); // jitmultithreading
-	sem_wait(&m_sem_widgets);
+	pthread_mutex_lock(&m_mut_serverlist); // jitmultithreading
+	pthread_mutex_lock(&m_mut_widgets);
 
 	// check if server exists in current serverlist:
 	for (i=0; i<m_serverlist.numservers; i++)
@@ -374,10 +448,10 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	}
 
 	// Tell the widget the serverlist has updated:
-	sem_post(&m_sem_widgets);
+	//pthread_mutex_unlock(&m_mut_widgets);
 	//M_RefreshActiveMenu(); // jitodo - target serverlist window specifically.
-	M_RefreshWidget("serverlist");
-	sem_post(&m_sem_serverlist); // jitmultithreading
+	M_RefreshWidget("serverlist", false);
+	//pthread_mutex_unlock(&m_mut_serverlist); // jitmultithreading
 }
 
 // Color all the items grey:
@@ -388,7 +462,7 @@ static void grey_serverlist (void)
 
 	for(i=0; i<m_serverlist.nummapped; i++)
 	{
-		if (m_serverlist.info[i][0] != CHAR_COLOR)
+		if ((unsigned char)m_serverlist.info[i][0] != CHAR_COLOR)
 		{
 			str = text_copy(va("%c4%s", CHAR_COLOR, m_serverlist.info[i]));
 			Z_Free(m_serverlist.info[i]);
@@ -409,7 +483,7 @@ void M_ServerlistRefresh_f (void)
 // add them to the local serverlist
 static void M_ServerlistUpdate (char *sServerSource)
 {
-	SOCKET serverListSocket;
+	int serverListSocket;
 	char svlist_domain[256];
 	char *s;
 	int i;
@@ -427,7 +501,7 @@ static void M_ServerlistUpdate (char *sServerSource)
 
 	s = sServerSource;
 
-	if (memicmp(sServerSource, "http://", 7) == 0)
+	if (memcmp(sServerSource, "http://", 7) == 0)
 	{
 		s += 7; // skip past the "http://"
 		i = 0;
@@ -472,7 +546,6 @@ static void M_ServerlistUpdate (char *sServerSource)
 		char *buffer	= malloc(32767);	
 		char *current	= buffer;
 		char *found		= NULL;
-		int WhichOn		= 0;
 		int numread		= 0;
 		int bytes_read	= 0;
 		netadr_t adr;
@@ -503,13 +576,14 @@ static void M_ServerlistUpdate (char *sServerSource)
 		{
 			char *newaddress, *s, *s1;
 
-			if (newaddress = strstr(buffer, "\nLocation: "))
+			if ((newaddress = strstr(buffer, "\nLocation: ")))
 			{
 				newaddress += sizeof("\nLocation: ") - 1;
 
 				// terminate string at LF or CRLF
-				s = strstr(newaddress, "\r");
-				s1 = strstr(newaddress, "\n");
+				s = strchr(newaddress, '\r');
+				s1 = strchr(newaddress, '\n');
+
 				if (s && s < s1)
 					*s = '\0';
 				else
@@ -590,12 +664,12 @@ static void M_ServerlistUpdate (char *sServerSource)
 			if (!adr.port)
 				adr.port = BigShort(PORT_SERVER);
 
+			Sleep(16); // jitodo -- make a cvar for the time between pings
 			sprintf(buff, "info %i", PROTOCOL_VERSION);
 			Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
 			sprintf(buff, "%s --- 0/0", found);
 			// Add to listas being pinged
 			M_AddToServerList(adr, buff, true);
-			Sleep(16); // jitodo -- make a cvar for the time between pings
 			current += 2;								// Start at the next line
 		};
 
@@ -611,7 +685,7 @@ void *M_ServerlistUpdate_multithreaded (void *ptr)
 	ping_broadcast();
 
 	// hack to fix bug in build 7/8 that truncated serverlist_source
-	if (memicmp(serverlist_source->string, "http://", 7) != 0)
+	if (memcmp(serverlist_source->string, "http://", 7) != 0)
 		Cvar_Set("serverlist_source", "http://www.planetquake.com/digitalpaint/servers.txt");
 
 	M_ServerlistUpdate(serverlist_source->string);
@@ -663,7 +737,7 @@ static qboolean serverlist_load (void)
 	char *data;
 	char *ptr;
 
-	size = FS_LoadFile("serverlist.dat", &data);
+	size = FS_LoadFile("serverlist.dat", (void**)&data);
 
 	if (size > -1)
 	{
@@ -677,8 +751,10 @@ static qboolean serverlist_load (void)
 			FS_FreeFile(data);
 			return false;
 		}
+
 		ptr = data + sizeof("PB2Serverlist1.00")-1;
 		memcpy(&endiantest, ptr, sizeof(int));
+
 		if (endiantest != 123123123)
 		{
 			FS_FreeFile(data);
@@ -688,6 +764,13 @@ static qboolean serverlist_load (void)
 		// Read our data:
 		ptr += sizeof(int);
 		memcpy(&actualsize, ptr, sizeof(int));
+
+		if (actualsize < INITIAL_SERVERLIST_SIZE)
+		{
+			FS_FreeFile(data);
+			return false;
+		}
+
 		ptr += sizeof(int);
 		create_serverlist(actualsize);
 		memcpy(&m_serverlist.numservers, ptr, sizeof(int));
@@ -731,8 +814,8 @@ static qboolean serverlist_load (void)
 
 void Serverlist_Init (void)
 {
-	// Init semaphores:
-	sem_init(&m_sem_serverlist, 0, 1);
+	// Init mutex:
+	pthread_mutex_init(&m_mut_serverlist, NULL);
 
 	// Init server list:
 	if (!serverlist_load())
@@ -753,9 +836,12 @@ static void serverlist_save (void)
 	FILE *fp;
 	char szFilename[MAX_QPATH];
 
+	if (!m_serverlist.actualsize)
+		return; // don't write if there's no data.
+
 	sprintf(szFilename, "%s/serverlist.dat", FS_Gamedir());
 
-	if (fp = fopen(szFilename, "wb"))
+	if ((fp = fopen(szFilename, "wb")))
 	{
 		int endiantest = 123123123;
 		register int i;
@@ -768,6 +854,7 @@ static void serverlist_save (void)
 		fwrite(&endiantest, sizeof(int), 1, fp);
 		
 		// Write our data:
+		pthread_mutex_lock(&m_mut_serverlist); // make sure no other threads are using it
 		fwrite(&m_serverlist.actualsize, sizeof(int), 1, fp);
 		fwrite(&m_serverlist.numservers, sizeof(int), 1, fp);
 		fwrite(&m_serverlist.nummapped, sizeof(int), 1, fp);
@@ -796,7 +883,8 @@ static void serverlist_save (void)
 			s = m_serverlist.info[i];
 			fwrite(s, strlen(s)+1, 1, fp);
 		}
-
+		
+		pthread_mutex_unlock(&m_mut_serverlist); // tell other threads the serverlist is safe
 		fclose(fp);
 	}
 }

@@ -142,7 +142,7 @@ void Draw_Char (int x, int y, int num) // jitodo -- try to remove all calls to t
 //float whitetext[] = { 1.0f, 1.0f, 1.0f };
 void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 {
-	int				px,py,row, col,num,va=0;
+	int				px,py,row, col,num;
 	float			frow, fcol, size;
 	const char		*s = str; // jit, shush little warning
 	int				textscale; // jithudscale

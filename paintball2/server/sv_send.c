@@ -70,9 +70,10 @@ void SV_ClientPrintf (client_t *cl, int level, char *fmt, ...)
 	if (level < cl->messagelevel)
 		return;
 	
-	va_start(argptr,fmt);
-	vsprintf(string, fmt,argptr);
+	va_start(argptr, fmt);
+	_vsnprintf(string, sizeof(string), fmt, argptr); // jitsecurity -- prevent buffer overruns
 	va_end(argptr);
+	NULLTERMINATE(string); // jitsecurity -- make sure string is null terminated.
 	
 	MSG_WriteByte(&cl->netchan.message, svc_print);
 	MSG_WriteByte(&cl->netchan.message, level);
@@ -93,9 +94,10 @@ void SV_BroadcastPrintf (int level, char *fmt, ...)
 	client_t	*cl;
 	int			i;
 
-	va_start (argptr,fmt);
-	vsprintf (string, fmt,argptr);
-	va_end (argptr);
+	va_start(argptr,fmt);
+	_vsnprintf(string, sizeof(string), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(string); // jitsecurity -- make sure string is null terminated.
 	
 	// echo to console
 	if (dedicated->value)
@@ -136,13 +138,15 @@ void SV_BroadcastCommand (char *fmt, ...)
 	
 	if (!sv.state)
 		return;
-	va_start (argptr,fmt);
-	vsprintf (string, fmt,argptr);
-	va_end (argptr);
 
-	MSG_WriteByte (&sv.multicast, svc_stufftext);
-	MSG_WriteString (&sv.multicast, string);
-	SV_Multicast (NULL, MULTICAST_ALL_R);
+	va_start(argptr,fmt);
+	_vsnprintf(string, sizeof(string), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(string); // jitsecurity -- make sure string is null terminated.
+
+	MSG_WriteByte(&sv.multicast, svc_stufftext);
+	MSG_WriteString(&sv.multicast, string);
+	SV_Multicast(NULL, MULTICAST_ALL_R);
 }
 
 

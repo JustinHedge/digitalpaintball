@@ -276,20 +276,25 @@ typedef struct
 	// NULL can be passed for buf to just determine existance
 	int		(*FS_LoadFile) (const char *name, void **buf);
 	void	(*FS_FreeFile) (void *buf);
+	char	**(*FS_ListFiles) (char*, int*, unsigned, unsigned); // jitrscript
+	void	(*FS_FreeFileList) (char **list, int n); // jit
+	char	*(*FS_NextPath) (char*); // jitrscript
 
 	// gamedir will be the current directory that generated
 	// files should be stored to, ie: "f:\quake\id1"
 	char	*(*FS_Gamedir) (void);
 
 	cvar_t	*(*Cvar_Get) (char *name, char *value, int flags);
-	cvar_t	*(*Cvar_Set)( char *name, char *value );
-	void	 (*Cvar_SetValue)( char *name, float value );
+	cvar_t	*(*Cvar_Set) (char *name, char *value);
+	void	 (*Cvar_SetValue) (char *name, float value);
 
-	qboolean	(*Vid_GetModeInfo)( int *width, int *height, int mode );
+	qboolean	(*Vid_GetModeInfo) (int *width, int *height, int mode);
 //jitmenu	void		(*Vid_MenuInit)( void );
-	void		(*Vid_NewWindow)( int width, int height );
-	void	*(*Z_Malloc)(int size); // jitmalloc
-	void	(*Z_Free)(void *ptr); // jitmalloc
+	void		(*Vid_NewWindow) (int width, int height);
+	void		*(*Z_Malloc) (int size); // jitmalloc
+	void		(*Z_Free) (void *ptr); // jitmalloc
+	qboolean	(*M_MenuActive) (void); // jitmenu, jitlinux
+	void		(*M_MouseMove) (int, int); // jitmenu, jitlinux
 } refimport_t;
 
 

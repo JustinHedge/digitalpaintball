@@ -20,12 +20,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // qcommon.h -- definitions common between client and server, but not game.dll
 
+#ifdef WIN32
+#include "winsock.h"
+
+#else
+#define SOCKET int
+#define closesocket(a) close(a)
+#endif
+
 #include "../game/q_shared.h"
 
 
 #define	VERSION		2.0 // jitversion (was 3.21)
-#define BUILD		13 // jitversion / jitbuild -- Paintball2 build number
-#define BUILD_S		"13" // jitversion, for strings.
+#define BUILD		14 // jitversion / jitbuild -- Paintball2 build number
+#define BUILD_S		"14" // jitversion, for strings.
 
 #define	BASEDIRNAME	"pball" // jit, was "baseq2"
 
@@ -480,7 +488,7 @@ cvar_t 	*Cvar_Set (char *var_name, char *value);
 cvar_t *Cvar_ForceSet (char *var_name, char *value);
 // will set the variable even if NOSET or LATCH
 
-cvar_t 	*Cvar_FullSet (char *var_name, char *value, int flags);
+cvar_t 	*Cvar_FullSet (char *var_name, char *value, int flags, qboolean force);
 
 void	Cvar_SetValue (char *var_name, float value);
 // expands value to a string and calls Cvar_Set
@@ -562,6 +570,9 @@ qboolean	NET_IsLocalAddress (netadr_t adr);
 char		*NET_AdrToString (netadr_t a);
 qboolean	NET_StringToAdr (char *s, netadr_t *a);
 void		NET_Sleep(int msec);
+int NET_TCPSocket (int port);
+int NET_TCPConnect (SOCKET sockfd, char *net_remote_address, int port);
+char *NET_ErrorString (void);
 
 //============================================================================
 
@@ -714,6 +725,8 @@ int		FS_LoadFile (const char *path, void **buffer);
 // a null buffer will just return the file length without loading
 // a -1 length is not present
 
+char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned canthave);
+void	FS_FreeFileList (char **list, int n); // jit
 void	FS_Read (void *buffer, int len, FILE *f);
 // properly handles partial reads
 
@@ -810,7 +823,6 @@ void	Sys_SendKeyEvents (void);
 void	Sys_Error (char *error, ...);
 void	Sys_Quit (void);
 char	*Sys_GetClipboardData( void );
-void	Sys_CopyProtect (void);
 
 /*
 ==============================================================

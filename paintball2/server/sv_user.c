@@ -369,6 +369,48 @@ void SV_Download2Complete_f (void) // jitdownload
 }
 #endif
 
+
+static qboolean CheckDownloadFilename (const char *name) // jitsecurity
+{
+	extern	cvar_t *allow_download;
+	extern	cvar_t *allow_download_players;
+	extern	cvar_t *allow_download_models;
+	extern	cvar_t *allow_download_sounds;
+	extern	cvar_t *allow_download_maps;
+
+	if (strstr(name, "..") || !allow_download->value
+		// leading dot is no good
+		|| *name == '.' 
+		// leading slash bad as well, must be in subdir
+		|| *name == '/'
+		// next up, skin check
+		|| (strncmp(name, "players/", 8) == 0 && !allow_download_players->value)
+		// now models
+		|| (strncmp(name, "models/", 7) == 0 && !allow_download_models->value)
+		// now sounds
+		|| (strncmp(name, "sound/", 6) == 0 && !allow_download_sounds->value)
+		// now maps (note special case for maps, must not be in pak)
+		|| (strncmp(name, "maps/", 5) == 0 && !allow_download_maps->value)
+		// MUST be in a subdirectory	
+		|| !strstr(name, "/") 
+		// **** NiceAss: Ends in a backslash. Linux server crash protection--Start ****
+		|| name[strlen(name) - 1] == '/'
+		// **** NiceAss: Ends in a backslash. Linux server crash protection--End ****
+#ifdef WIN32
+		|| (strnicmp(name, "config", 6) == 0) // jitsecurity - don't allow downloads from configs dir.
+#else
+		|| (strncmp(name, "config", 6) == 0) // jitsecurity - don't allow downloads from configs dir.
+#endif
+		)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
 /*
 ==================
 SV_BeginDownload_f
@@ -377,11 +419,6 @@ SV_BeginDownload_f
 void SV_BeginDownload_f(void)
 {
 	char	*name;
-	extern	cvar_t *allow_download;
-	extern	cvar_t *allow_download_players;
-	extern	cvar_t *allow_download_models;
-	extern	cvar_t *allow_download_sounds;
-	extern	cvar_t *allow_download_maps;
 	extern	int		file_from_pak; // ZOID did file come from pak?
 	int offset = 0;
 
@@ -390,33 +427,14 @@ void SV_BeginDownload_f(void)
 	if (Cmd_Argc() > 2)
 		offset = atoi(Cmd_Argv(2)); // downloaded offset
 
-	// hacked by zoid to allow more conrol over download
-	// first off, no .. or global allow check
-	if (strstr (name, "..") || !allow_download->value
-		// leading dot is no good
-		|| *name == '.' 
-		// leading slash bad as well, must be in subdir
-		|| *name == '/'
-		// next up, skin check
-		|| (strncmp(name, "players/", 8) == 0 && !allow_download_players->value)
-		// now models
-		|| (strncmp(name, "models/", 7) == 0 && !allow_download_models->value)
-		// now sounds
-		|| (strncmp(name, "sound/", 6) == 0 && !allow_download_sounds->value)
-		// now maps (note special case for maps, must not be in pak)
-		|| (strncmp(name, "maps/", 5) == 0 && !allow_download_maps->value)
-		// MUST be in a subdirectory	
-		|| !strstr (name, "/") 
-		// **** NiceAss: Ends in a backslash. Linux server crash protection--Start **** jit
-		|| name[strlen(name) - 1] == '/')
-		// **** NiceAss: Ends in a backslash. Linux server crash protection--End ****
-	{	// don't allow anything with .. path
-		MSG_WriteByte (&sv_client->netchan.message, svc_download);
-		MSG_WriteShort (&sv_client->netchan.message, -1);
-		MSG_WriteByte (&sv_client->netchan.message, 0);
+	// don't allow anything with .. path
+	if (!CheckDownloadFilename(name))
+	{
+		MSG_WriteByte(&sv_client->netchan.message, svc_download);
+		MSG_WriteShort(&sv_client->netchan.message, -1);
+		MSG_WriteByte(&sv_client->netchan.message, 0);
 		return;
 	}
-
 
 	if (sv_client->download)
 		FS_FreeFile (sv_client->download);
@@ -427,36 +445,23 @@ void SV_BeginDownload_f(void)
 	if (offset > sv_client->downloadsize)
 		sv_client->downloadcount = sv_client->downloadsize;
 
-	if (!sv_client->download
-		// special check for maps, if it came from a pak file, don't allow
-		// download  ZOID
-		|| (strncmp(name, "maps/", 5) == 0 && file_from_pak))
+	if (!sv_client->download)
 	{
-		Com_DPrintf ("Couldn't download %s to %s\n", name, sv_client->name);
-		if (sv_client->download) {
-			FS_FreeFile (sv_client->download);
-			sv_client->download = NULL;
-		}
-
-		MSG_WriteByte (&sv_client->netchan.message, svc_download);
-		MSG_WriteShort (&sv_client->netchan.message, -1);
-		MSG_WriteByte (&sv_client->netchan.message, 0);
+		Com_DPrintf("Couldn't download %s to %s\n", name, sv_client->name);
+		MSG_WriteByte(&sv_client->netchan.message, svc_download);
+		MSG_WriteShort(&sv_client->netchan.message, -1);
+		MSG_WriteByte(&sv_client->netchan.message, 0);
 		return;
 	}
 
-	SV_NextDownload_f ();
-	Com_DPrintf ("Downloading %s to %s\n", name, sv_client->name);
+	SV_NextDownload_f();
+	Com_DPrintf("Downloading %s to %s\n", name, sv_client->name);
 }
 
 #ifdef USE_DOWNLOAD2
 void SV_BeginDownload2_f(void) // jitdownload
 {
 	char	*name;
-	extern	cvar_t *allow_download;
-	extern	cvar_t *allow_download_players;
-	extern	cvar_t *allow_download_models;
-	extern	cvar_t *allow_download_sounds;
-	extern	cvar_t *allow_download_maps;
 	extern	int		file_from_pak; // ZOID did file come from pak?
 	int offset = 0;
 
@@ -465,77 +470,49 @@ void SV_BeginDownload2_f(void) // jitdownload
 	if (Cmd_Argc() > 2)
 		offset = atoi(Cmd_Argv(2)); // downloaded offset
 
-	// hacked by zoid to allow more conrol over download
-	// first off, no .. or global allow check
-	if (strstr (name, "..") || !allow_download->value
-		// leading dot is no good
-		|| *name == '.' 
-		// leading slash bad as well, must be in subdir
-		|| *name == '/'
-		// next up, skin check
-		|| (strncmp(name, "players/", 8) == 0 && !allow_download_players->value)
-		// now models
-		|| (strncmp(name, "models/", 7) == 0 && !allow_download_models->value)
-		// now sounds
-		|| (strncmp(name, "sound/", 6) == 0 && !allow_download_sounds->value)
-		// now maps (note special case for maps, must not be in pak)
-		|| (strncmp(name, "maps/", 5) == 0 && !allow_download_maps->value)
-		// MUST be in a subdirectory	
-		|| !strstr (name, "/") 
-		// **** NiceAss: Ends in a backslash. Linux server crash protection--Start ****
-		|| name[strlen(name) - 1] == '/')
-		// **** NiceAss: Ends in a backslash. Linux server crash protection--End ****
-	{	// don't allow anything with .. path
-		MSG_WriteByte (&sv_client->netchan.message, svc_download);
-		MSG_WriteShort (&sv_client->netchan.message, -1);
-		MSG_WriteByte (&sv_client->netchan.message, 0);
+	// don't allow anything with .. path
+	if (!CheckDownloadFilename(name))
+	{
+		MSG_WriteByte(&sv_client->netchan.message, svc_download);
+		MSG_WriteShort(&sv_client->netchan.message, -1);
+		MSG_WriteByte(&sv_client->netchan.message, 0);
 		return;
 	}
 
 	if (sv_client->download)
 		FS_FreeFile (sv_client->download);
 
-	// jitodo -- if the file came from a pak, tell client to download the pak!
+	// jitodo -- if the file came from a pak, tell client to download the pak! (file_from_pak)
 	// jitodo -- check for different extensions (prefer jpg over wal, etc)
-	sv_client->downloadsize = FS_LoadFile (name, (void **)&sv_client->download);
+	sv_client->downloadsize = FS_LoadFile(name, (void **)&sv_client->download);
 	sv_client->downloadcount = offset;
 
 	if (offset > sv_client->downloadsize)
 		sv_client->downloadcount = sv_client->downloadsize;
 
-	/*if (!sv_client->download
-		// special check for maps, if it came from a pak file, don't allow
-		// download  ZOID
-		|| (strncmp(name, "maps/", 5) == 0 && file_from_pak))
+	if (!sv_client->download)
 	{
-		Com_DPrintf ("Couldn't download %s to %s\n", name, sv_client->name);
-		if (sv_client->download) {
-			FS_FreeFile (sv_client->download);
-			sv_client->download = NULL;
-		}
-
-		MSG_WriteByte (&sv_client->netchan.message, svc_download);
-		MSG_WriteShort (&sv_client->netchan.message, -1);
-		MSG_WriteByte (&sv_client->netchan.message, 0);
-		return;
-	}*/
-
-	if(sv_client->downloadsize == -1) // file failed to open
-	{
+		Com_DPrintf("Couldn't download %s to %s\n", name, sv_client->name);
 		MSG_WriteByte (&sv_client->netchan.message, svc_download);
 		MSG_WriteShort (&sv_client->netchan.message, -1);
 		MSG_WriteByte (&sv_client->netchan.message, 0);
 		return;
 	}
 
-	//SV_NextDownload_f();
-	Com_DPrintf ("Downloading %s to %s\n", name, sv_client->name);
+	if (sv_client->downloadsize == -1) // file failed to open
+	{
+		MSG_WriteByte(&sv_client->netchan.message, svc_download);
+		MSG_WriteShort(&sv_client->netchan.message, -1);
+		MSG_WriteByte(&sv_client->netchan.message, 0);
+		return;
+	}
 
+	//SV_NextDownload_f();
+	Com_DPrintf("Downloading %s to %s\n", name, sv_client->name);
 	MSG_WriteByte(&sv_client->netchan.message, svc_download2ack); // acknowledge download request
 	MSG_WriteLong(&sv_client->netchan.message, sv_client->downloadsize); // tell client filesize
 	MSG_WriteByte(&sv_client->netchan.message, 0); // tell client which compression algorithm to use (0 = none)
 	MSG_WriteString(&sv_client->netchan.message, name); // tell client what filename should be.
-
 	Com_Printf("SV Acknw: %d\n", offset/DOWNLOAD2_CHUNKSIZE);
 }
 #endif

@@ -147,19 +147,53 @@ cvar_t *Cvar_Get (char *var_name, char *var_value, int flags)
 Cvar_Set2
 ============
 */
-cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
+cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force) // jitcvar
+{
+	cvar_t *var;
+	var = Cvar_FindVar(var_name);
+
+	return Cvar_FullSet(var_name, value, var ? var->flags : 0, force);
+}
+
+/*
+============
+Cvar_ForceSet
+============
+*/
+cvar_t *Cvar_ForceSet (char *var_name, char *value)
+{
+	return Cvar_Set2(var_name, value, true);
+}
+
+/*
+============
+Cvar_Set
+============
+*/
+cvar_t *Cvar_Set (char *var_name, char *value)
+{
+	return Cvar_Set2(var_name, value, false);
+}
+
+/*
+============
+Cvar_FullSet
+============
+*/
+cvar_t *Cvar_FullSet (char *var_name, char *value, int flags, qboolean force) // jitcvar
 {
 	cvar_t	*var;
 
-	var = Cvar_FindVar (var_name);
+	var = Cvar_FindVar(var_name);
+
 	if (!var)
 	{	// create it
-		return Cvar_Get (var_name, value, 0);
+		return Cvar_Get(var_name, value, flags);
 	}
 
 	if (var->flags & (CVAR_USERINFO | CVAR_SERVERINFO))
 	{
-		if (!Cvar_InfoValidate (value))
+		if (!Cvar_InfoValidate(value))
 		{
 			Com_Printf("invalid info cvar value\n");
 			return var;
@@ -170,7 +204,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 	{
 		if (var->flags & CVAR_NOSET)
 		{
-			Com_Printf ("%s is write protected.\n", var_name);
+			Com_Printf("%s is write protected.\n", var_name);
 			return var;
 		}
 
@@ -180,11 +214,12 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 			{
 				if (Q_streq(value, var->latched_string))
 					return var;
+
 				Z_Free (var->latched_string);
 			}
 			else
 			{
-				if (Q_streq(value, var->string))
+				if (Q_streq(value, var->string) && var->flags == flags)
 					return var;
 			}
 
@@ -196,14 +231,17 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 			else
 			{
 				var->string = CopyString(value);
-				var->value = atof (var->string);
+				var->value = atof(var->string);
+				var->flags = flags;
+
 				if (Q_streq(var->name, "game"))
 				{
-					FS_SetGamedir (var->string);
-					FS_ExecAutoexec ();
-					// jitodo -- this should load the config from this directory.
+					FS_SetGamedir(var->string);
+					FS_ExecAutoexec();
+					FS_ExecConfig(); // jitconfig -- exec this game dir's config.
 				}
 			}
+
 			return var;
 		}
 	}
@@ -211,12 +249,12 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 	{
 		if (var->latched_string)
 		{
-			Z_Free (var->latched_string);
+			Z_Free(var->latched_string);
 			var->latched_string = NULL;
 		}
 	}
 
-	if (Q_streq(value, var->string))
+	if (Q_streq(value, var->string) && var->flags == flags)
 		return var;		// not changed
 
 	var->modified = true;
@@ -224,58 +262,10 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 	if (var->flags & CVAR_USERINFO)
 		userinfo_modified = true;	// transmit at next oportunity
 	
-	Z_Free (var->string);	// free the old value string
+	Z_Free(var->string);	// free the old value string
 	
 	var->string = CopyString(value);
-	var->value = atof (var->string);
-
-	return var;
-}
-
-/*
-============
-Cvar_ForceSet
-============
-*/
-cvar_t *Cvar_ForceSet (char *var_name, char *value)
-{
-	return Cvar_Set2 (var_name, value, true);
-}
-
-/*
-============
-Cvar_Set
-============
-*/
-cvar_t *Cvar_Set (char *var_name, char *value)
-{
-	return Cvar_Set2 (var_name, value, false);
-}
-
-/*
-============
-Cvar_FullSet
-============
-*/
-cvar_t *Cvar_FullSet (char *var_name, char *value, int flags)
-{
-	cvar_t	*var;
-	
-	var = Cvar_FindVar (var_name);
-	if (!var)
-	{	// create it
-		return Cvar_Get (var_name, value, flags);
-	}
-
-	var->modified = true;
-
-	if (var->flags & CVAR_USERINFO)
-		userinfo_modified = true;	// transmit at next oportunity
-	
-	Z_Free (var->string);	// free the old value string
-	
-	var->string = CopyString(value);
-	var->value = atof (var->string);
+	var->value = atof(var->string);
 	var->flags = flags;
 
 	return var;
@@ -367,14 +357,10 @@ void Cvar_Set_f (void)
 	int		flags;
 
 	c = Cmd_Argc();
+
 	if (c != 3 && c != 4)
 	{
-		Com_Printf ("usage: set <variable> <value> [u / s]\n");
-		return;
-	}
-	if (Cvar_Get(Cmd_Argv(1), "", 0)->flags & CVAR_NOSET) // jitcvar
-	{
-		Com_Printf ("%s is write protected.\n", Cmd_Argv(1));
+		Com_Printf("usage: set <variable> <value> [u / s]\n");
 		return;
 	}
 
@@ -386,33 +372,37 @@ void Cvar_Set_f (void)
 			flags = CVAR_SERVERINFO;
 		else
 		{
-			Com_Printf ("flags can only be 'u' or 's'\n");
+			Com_Printf("flags can only be 'u' or 's'\n");
 			return;
 		}
-		Cvar_FullSet (Cmd_Argv(1), Cmd_Argv(2), flags);
+
+		Cvar_FullSet(Cmd_Argv(1), Cmd_Argv(2), flags, false);
 	}
 	else
-		Cvar_Set (Cmd_Argv(1), Cmd_Argv(2));
+	{
+		Cvar_Set(Cmd_Argv(1), Cmd_Argv(2));
+	}
 }
 
 void Cvar_Seta_f (void) // jitconfig
 {
 	int		c;
-	int		flags;
-
-	flags = CVAR_ARCHIVE;
+	int		flags = CVAR_ARCHIVE;
+	cvar_t	*var;
 
 	c = Cmd_Argc();
+
 	if (c != 3 && c != 4)
 	{
-		Com_Printf ("usage: seta <variable> <value> [u / s]\n");
+		Com_Printf("usage: seta <variable> <value> [u / s]\n");
 		return;
 	}
-	if (Cvar_Get(Cmd_Argv(1), "", 0)->flags & CVAR_NOSET) // jitcvar
-	{
-		Com_Printf ("%s is write protected.\n", Cmd_Argv(1));
-		return;
-	}
+
+	var = Cvar_FindVar(Cmd_Argv(1));
+
+	if (var)
+		flags |= var->flags;
+
 	if (c == 4)
 	{
 		if (Q_streq(Cmd_Argv(3), "u"))
@@ -421,25 +411,23 @@ void Cvar_Seta_f (void) // jitconfig
 			flags |= CVAR_SERVERINFO;
 		else
 		{
-			Com_Printf ("flags can only be 'u' or 's'\n");
+			Com_Printf("flags can only be 'u' or 's'\n");
 			return;
 		}
-		Cvar_FullSet (Cmd_Argv(1), Cmd_Argv(2), flags);
+
+		Cvar_FullSet(Cmd_Argv(1), Cmd_Argv(2), flags, false);
 	}
 	else
-		Cvar_FullSet (Cmd_Argv(1), Cmd_Argv(2), flags);
+	{
+		Cvar_FullSet(Cmd_Argv(1), Cmd_Argv(2), flags, false);
+	}
 }
 
 void Cvar_Unset_f (void)
 {
-	if (Cvar_Get(Cmd_Argv(1), "", 0)->flags & CVAR_NOSET) // jitcvar
-	{
-		Com_Printf ("%s is write protected.\n", Cmd_Argv(1));
-		return;
-	}
-
-	Cvar_Set (Cmd_Argv(1), "");
+	Cvar_FullSet(Cmd_Argv(1), "", 0, false);
 }
+
 
 /*
 ============
@@ -515,24 +503,25 @@ char	*Cvar_BitInfo (int bit)
 
 	info[0] = 0;
 
-	for (var = cvar_vars ; var ; var = var->next)
+	for (var = cvar_vars; var; var = var->next)
 	{
 		if (var->flags & bit)
-			Info_SetValueForKey (info, var->name, var->string);
+			Info_SetValueForKey(info, var->name, var->string);
 	}
+
 	return info;
 }
 
 // returns an info string containing all the CVAR_USERINFO cvars
 char	*Cvar_Userinfo (void)
 {
-	return Cvar_BitInfo (CVAR_USERINFO);
+	return Cvar_BitInfo(CVAR_USERINFO);
 }
 
 // returns an info string containing all the CVAR_SERVERINFO cvars
 char	*Cvar_Serverinfo (void)
 {
-	return Cvar_BitInfo (CVAR_SERVERINFO);
+	return Cvar_BitInfo(CVAR_SERVERINFO);
 }
 
 /*
@@ -544,9 +533,8 @@ Reads in all archived cvars
 */
 void Cvar_Init (void)
 {
-	Cmd_AddCommand ("set", Cvar_Set_f);
-	Cmd_AddCommand ("seta", Cvar_Seta_f); // jitconfig
-	Cmd_AddCommand ("unset", Cvar_Unset_f);
-	Cmd_AddCommand ("cvarlist", Cvar_List_f);
-
+	Cmd_AddCommand("set", Cvar_Set_f);
+	Cmd_AddCommand("seta", Cvar_Seta_f); // jitconfig
+	Cmd_AddCommand("unset", Cvar_Unset_f);
+	Cmd_AddCommand("cvarlist", Cvar_List_f);
 }

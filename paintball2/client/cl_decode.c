@@ -193,6 +193,7 @@ static void translate_string (char *out_str, const char *in_str)
 	// %t = index to name string, inlclude team splat.
 	// %% = %
 	// %c = single charcter (like in printf)
+	// %d = decimal number
 	while(*in_str)
 	{
 		while(*in_str && *in_str != '%')
@@ -231,6 +232,10 @@ static void translate_string (char *out_str, const char *in_str)
 				case 'c': // character
 					*out_str = index_array[current_element++];
 					out_str++;
+					break;
+				case 'd': // decimal
+					sprintf(out_str, "%d", index_array[current_element++]);
+					out_str += strlen(out_str);
 					break;
 				default: // unknown? (shouldn't happen)
 					*out_str = '?';
@@ -333,10 +338,12 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		{
 			cl_scores_clear(index_array[2]);
 			cl_scores_setinuse(index_array[2], true);
-			if (num_elements > 3)
-				cl_scores_setteam(index_array[2], (char)index_array[3]);
-			if (num_elements > 4)
-				cl_scores_setstarttime(index_array[2], index_array[4]);
+
+			if (num_elements > current_element)
+				cl_scores_setteam(index_array[2], (char)index_array[current_element++]);
+
+			if (num_elements > current_element)
+				cl_scores_setstarttime(index_array[2], index_array[current_element++]);
 		}
 		break;
 	case EVENT_DISCONNECT:

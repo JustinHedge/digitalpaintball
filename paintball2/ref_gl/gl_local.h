@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qgl.h"
 
-#define	REF_VERSION	"PB2GL 0.13" // jitversion / jitbuild
+#define	REF_VERSION	"PB2GL 0.14" // jitversion / jitbuild
 
 // up / down
 #define	PITCH	0
@@ -487,9 +487,7 @@ void		GLimp_LogNewFrame( void );
 
 // #define BEEFQUAKERENDER // this must be off for 3dfx compatibilty (jit3dfx)
 
-#if 1
-//#define Z_Malloc(a) ri.Z_Malloc(a)
-//#define Z_Free(a) ri.Z_Free(a)
+#if 0
 #define malloc(a) ri.Z_Malloc(a) // jitmalloc
 #define free(a) ri.Z_Free(a)
 #else

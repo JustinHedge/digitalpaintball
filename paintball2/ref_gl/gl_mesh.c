@@ -35,8 +35,6 @@ float	r_avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "anorms.h"
 };
 
-typedef float vec4_t[4];
-
 vec4_t	s_lerped[MAX_VERTS];
 //static	vec3_t	lerped[MAX_VERTS];
 

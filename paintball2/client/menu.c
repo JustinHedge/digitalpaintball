@@ -40,9 +40,10 @@ static menu_widget_t	*m_active_bind_widget = NULL;
 static char				*m_active_bind_command = NULL;
 static menu_screen_t	*m_current_menu;
 static hash_table_t		named_widgets_hash;
+static qboolean			m_initialized = false;
 
 // Globals
-sem_t			m_sem_widgets;
+pthread_mutex_t			m_mut_widgets;
 
 extern m_serverlist_t	m_serverlist;
 
@@ -76,13 +77,28 @@ static void list_source(menu_widget_t *widget)
 		widget->select_map = m_serverlist.ips;
 		widget->select_totalitems = m_serverlist.nummapped;
 	}
-
-	if (Q_streq(widget->listsource, "scores"))
+	else if (Q_streq(widget->listsource, "scores"))
 	{
 		cl_scores_prep_select_widget();
 		widget->select_list = cl_scores_info;
 		widget->select_map = cl_scores_nums;
 		widget->select_totalitems = cl_scores_count;
+	}
+	else if (Q_streq(widget->listsource, "maplist"))
+	{
+		widget->select_list = cl_maplist_info;
+		widget->select_map = cl_maplist_names;
+		widget->select_totalitems = cl_maplist_count;
+		//pthread_mutex_unlock(&m_mut_widgets); // hack to keep mutexes from locking up
+		M_RefreshWidget("vote_map_mode", false);// -- todo, might be necessary to force widget refresh?
+		//pthread_mutex_lock(&m_mut_widgets); // hack to keep semaphores from locking up
+	}
+	else if (Q_streq(widget->listsource, "maplist_modes"))
+	{
+		CL_UpdateMaplistModes(); // todo - does this happen every frame?
+		widget->select_list = cl_maplist_modes;
+		widget->select_map = cl_maplist_modes;
+		widget->select_totalitems = cl_maplist_modes_count;
 	}
 }
 
@@ -203,20 +219,6 @@ void *free_string_array(char *array[], int size)
 	return NULL;
 }
 
-static void FreeFileList (char **list, int n)
-{
-	int i;
-
-	for (i = 0; i < n; i++)
-	{
-		if (list[i])
-		{
-			free(list[i]);
-			list[i] = 0;
-		}
-	}
-	free(list);
-}
 
 // free the widget passed as well as all of its child widgets
 // and widgets following it in the list, return NULL.
@@ -263,7 +265,7 @@ static menu_widget_t *free_widgets(menu_widget_t *widget)
 		if(widget->select_list)
 		{
 			if(widget->flags & WIDGET_FLAG_FILELIST)
-				FreeFileList(widget->select_list, widget->select_totalitems+1);
+				FS_FreeFileList(widget->select_list, widget->select_totalitems+1);
 			else
 				free_string_array(widget->select_list, widget->select_totalitems);
 		}
@@ -534,7 +536,7 @@ static char *string_for_bind(char *bind)
 	return str;
 }
 
-static void update_select_subwidgets(menu_widget_t *widget)
+static void update_select_subwidgets (menu_widget_t *widget)
 {
 	int i;
 	char *nullpos;
@@ -544,7 +546,7 @@ static void update_select_subwidgets(menu_widget_t *widget)
 	int width, x, y;
 	char *widget_text;
 
-	//sem_wait(&m_sem_widgets); // jitmultithreading
+	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 	if(widget->flags & WIDGET_FLAG_LISTSOURCE)
 	{
 		list_source(widget);
@@ -706,7 +708,7 @@ static void update_select_subwidgets(menu_widget_t *widget)
 			widget->select_rows * (TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + 
 			SELECT_VSPACING_UNSCALED, widget->subwidget);
 	}
-	//sem_post(&m_sem_widgets);
+	//pthread_mutex_unlock(&m_mut_widgets);
 }
 
 // ++ ARTHUR [9/04/03]
@@ -1838,10 +1840,8 @@ static void select_strip_from_list(menu_widget_t *widget, const char *striptext)
 	}
 }
 
-static void select_begin_file_list(menu_widget_t *widget, char *findname)
+static void select_begin_file_list (menu_widget_t *widget, char *findname)
 {
-	extern char **FS_ListFiles( char *, int *, unsigned, unsigned );
-
 	widget->select_list = FS_ListFiles(findname, &widget->select_totalitems, 0, 0);
 	widget->select_totalitems--;
 	widget->flags |= WIDGET_FLAG_FILELIST;
@@ -1925,7 +1925,7 @@ static int M_WidgetGetAlign(const char *s)
 // to initialize it.
 static void widget_complete(menu_widget_t *widget)
 {
-//	sem_wait(&m_sem_widgets); // jitmultithreading
+//	pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 	if(widget->cvar && !widget->cvar_default)
 		widget->cvar_default = text_copy("");
 
@@ -1942,11 +1942,11 @@ static void widget_complete(menu_widget_t *widget)
 		break;
 	case WIDGET_TYPE_SELECT:
 		widget->select_pos = -1;
-		//sem_post(&m_sem_widgets);
+		//pthread_mutex_unlock(&m_mut_widgets);
 		update_select_subwidgets(widget);
-		//sem_wait(&m_sem_widgets); // jitmultithreading
+		//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 		select_widget_center_pos(widget);
-		//sem_post(&m_sem_widgets);
+		//pthread_mutex_unlock(&m_mut_widgets);
 		break;
 	case WIDGET_TYPE_FIELD:
 		if(widget->field_width < 3)
@@ -1963,10 +1963,10 @@ static void widget_complete(menu_widget_t *widget)
 		}
 		break;
 	}
-	//sem_post(&m_sem_widgets);
+	//pthread_mutex_unlock(&m_mut_widgets);
 }
 
-static void menu_from_file(menu_screen_t *menu)
+static void menu_from_file (menu_screen_t *menu)
 {
 	char menu_filename[MAX_QPATH];
 	char *buf;
@@ -2023,9 +2023,9 @@ static void menu_from_file(menu_screen_t *menu)
 						}
 						else
 						{
-							//sem_post(&m_sem_widgets);
+							//pthread_mutex_unlock(&m_mut_widgets);
 							widget_complete(widget); // semaphore handled internally here
-							//sem_wait(&m_sem_widgets); // jitmultithreading
+							//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 							widget = widget->next = M_GetNewBlankMenuWidget();
 						}
 						widget->y = y;
@@ -2051,7 +2051,12 @@ static void menu_from_file(menu_screen_t *menu)
 					else if(Q_streq(token, "cvar_default"))
 						widget->cvar_default = text_copy(COM_Parse(&buf));
 					else if(Q_streq(token, "command") || Q_streq(token, "cmd"))
-						widget->command = text_copy(COM_Parse(&buf));
+					{
+						if (widget)
+							widget->command = text_copy(COM_Parse(&buf));
+						else
+							menu->command = text_copy(COM_Parse(&buf));
+					}
 					else if(Q_streq(token, "doubleclick"))
 						widget->doubleclick = text_copy(COM_Parse(&buf));
 					else if(Q_streq(token, "pic"))
@@ -2121,7 +2126,7 @@ static void menu_from_file(menu_screen_t *menu)
 						widget->select_rows = atoi(COM_Parse(&buf));
 					else if(strstr(token, "begin"))
 						select_begin_list(widget, buf);
-					else if(strstr(token, "file"))
+					else if(strstr(token, "file")) // "filedir"
 						select_begin_file_list(widget, COM_Parse(&buf));
 					else if(Q_streq(token, "serverlist")) // for backwards compatibility
 					{
@@ -2148,9 +2153,9 @@ static void menu_from_file(menu_screen_t *menu)
 
 				if(widget)
 				{
-					//sem_post(&m_sem_widgets);
+					//pthread_mutex_unlock(&m_mut_widgets);
 					widget_complete(widget); // semaphore handled internally here.
-					//sem_wait(&m_sem_widgets); // jitmultithreading
+					//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 				}
 			}
 			else
@@ -2170,7 +2175,7 @@ static void menu_from_file(menu_screen_t *menu)
 	}
 }
 
-static menu_screen_t* M_LoadMenuScreen(const char *menu_name)
+static menu_screen_t* M_LoadMenuScreen (const char *menu_name)
 {
 	menu_screen_t *menu;
 
@@ -2180,7 +2185,7 @@ static menu_screen_t* M_LoadMenuScreen(const char *menu_name)
 	return menu;
 }
 
-static menu_screen_t* M_FindMenuScreen(const char *menu_name)
+static menu_screen_t* M_FindMenuScreen (const char *menu_name)
 {
 	menu_screen_t *menu;
 
@@ -2205,10 +2210,10 @@ static void reload_menu_screen(menu_screen_t *menu)
 	if(!menu)
 		return;
 
-	//sem_wait(&m_sem_widgets); // jitmultithreading
+	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 	menu->widget = free_widgets(menu->widget);
 	menu_from_file(menu); // reload data from file
-	//sem_post(&m_sem_widgets);
+	//pthread_mutex_unlock(&m_mut_widgets);
 }
 
 // flag widget and all of its children as modified
@@ -2232,7 +2237,7 @@ static void refresh_menu_screen(menu_screen_t *menu)
 	if(!menu)
 		return;
 
-	//sem_wait(&m_sem_widgets); // jitmultithreading
+	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 	widget = menu->widget;
 
 	while(widget)
@@ -2240,7 +2245,7 @@ static void refresh_menu_screen(menu_screen_t *menu)
 		refresh_menu_widget(widget);
 		widget = widget->next;
 	}
-	//sem_post(&m_sem_widgets);
+	//pthread_mutex_unlock(&m_mut_widgets);
 }
 
 // Flag all widgets as modified so they update
@@ -2248,7 +2253,7 @@ void M_RefreshMenu (void)
 {
 	menu_screen_t *menu;
 
-	sem_wait(&m_sem_widgets); // jitmultithreading
+	pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 
 	menu = root_menu;
 
@@ -2258,43 +2263,49 @@ void M_RefreshMenu (void)
 		menu = menu->next;
 	}
 
-	sem_post(&m_sem_widgets);
+	pthread_mutex_unlock(&m_mut_widgets);
 }
 
-void M_RefreshWidget (const char *name)
+void M_RefreshWidget (const char *name, qboolean lock)
 {
 	menu_widget_t *widget;
 
-	sem_wait(&m_sem_widgets); // jitmultithreading
+	if (lock)
+		pthread_mutex_lock(&m_mut_widgets); // jitmultithreading -- jitodo - locks up here if refreshwidget called while another widget refreshing.
 	if (widget = hash_get(&named_widgets_hash, name))
 		widget->modified = true;
-	sem_post(&m_sem_widgets);
+
+	if (lock)
+		pthread_mutex_unlock(&m_mut_widgets);
 }
 
 void M_RefreshActiveMenu (void)
 {
-	sem_wait(&m_sem_widgets); // jitmultithreading
+	pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 	if(m_menudepth)
 		refresh_menu_screen(m_menu_screens[m_menudepth-1]);
-	sem_post(&m_sem_widgets);
+	pthread_mutex_unlock(&m_mut_widgets);
 }
 
 // Load menu scripts back from disk
 void M_ReloadMenu (void)
 {
-	menu_screen_t *menu;
-	
-	sem_wait(&m_sem_widgets); // jitmultithreading
-	m_mouse.cursorpic = i_cursor;
-	menu = root_menu;
-
-	while(menu)
+	if (m_initialized)
 	{
-		reload_menu_screen(menu);
-		menu = menu->next;
-	}
+		menu_screen_t *menu;
+		
+		pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
+		m_mouse.cursorpic = i_cursor;
+		menu = root_menu;
 
-	sem_post(&m_sem_widgets);
+		while(menu)
+		{
+			reload_menu_screen(menu);
+			menu = menu->next;
+		}
+
+		pthread_mutex_unlock(&m_mut_widgets);
+	}
 }
 
 
@@ -2311,7 +2322,7 @@ void M_Menu_f (void)
 		samelevel = true;
 	}
 
-	sem_wait(&m_sem_widgets); // jitmultithreading
+	pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 
 	if(Q_streq(menuname, "pop") || Q_streq(menuname, "back"))
 		M_PopMenu();
@@ -2321,6 +2332,12 @@ void M_Menu_f (void)
 	{
 		menu_screen_t *menu;
 		menu = M_FindMenuScreen(menuname);
+
+		if (menu->command)
+		{
+			Cbuf_AddText(menu->command);
+			Cbuf_AddText("\n");
+		}
 
 		// hardcoded hack so gamma image is correct:
 		if(Q_streq(menuname, "setup_gamma"))
@@ -2334,7 +2351,7 @@ void M_Menu_f (void)
 		M_PushMenuScreen(menu, samelevel);
 	}
 
-	sem_post(&m_sem_widgets);
+	pthread_mutex_unlock(&m_mut_widgets);
 }
 
 
@@ -2342,14 +2359,15 @@ void M_Init (void)
 {
 	memset(&m_mouse, 0, sizeof(m_mouse));
 	m_mouse.cursorpic = i_cursor;
-	// jitodo - semaphore for widget updating
-	sem_init(&m_sem_widgets, 0, 1);
+	// jitodo - mutex for widget updating
+	pthread_mutex_init(&m_mut_widgets, NULL);
 
 	// Init hash table:
 	hash_table_init(&named_widgets_hash, 0xFF, NULL);
 
     // Add commands
 	Cmd_AddCommand("menu", M_Menu_f);
+	m_initialized = true;
 }
 
 

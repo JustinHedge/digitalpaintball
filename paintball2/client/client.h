@@ -47,7 +47,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../win32/sched.h"
 #else
 #include <pthread.h>
-#include <semaphore.h>
 #include <sched.h>
 #endif
 // ===
@@ -662,14 +661,15 @@ void M_MouseMove(int mx, int my); // jitmenu
 void M_RefreshMenu (void); // jitmenu
 void M_ReloadMenu (void); // jitmenu
 void M_RefreshActiveMenu (void); // jitmenu
-void M_RefreshWidget (const char *name); // jitmenu
-qboolean M_MenuActive(void); // jitmenu
+void M_RefreshWidget (const char *name, qboolean lock); // jitmenu
+qboolean M_MenuActive (void); // jitmenu
 
 // cl_serverlist.c
 void Serverlist_Init (void);
 void Serverlist_Shutdown (void);
 
-int strlen_noformat(const unsigned char *s);
+int strlen_noformat (const unsigned char *s); // jitmenu
+int strpos_noformat (const unsigned char *in_str, int pos); // jitmenu
 
 //
 // cl_inv.c
@@ -679,6 +679,18 @@ void CL_KeyInventory (int key);
 void CL_DrawInventory (void);
 void CL_ParsePrintItem (char *s); // jit
 void CL_DrawItemPickups (void); // jit
+
+//
+// cl_vote.c -- jitvote
+//
+void CL_ParseMaplistData (const unsigned char *data);
+void CL_UpdateMaplistModes (void);
+void init_cl_vote (void);
+extern char **cl_maplist_info;
+extern char **cl_maplist_names;
+extern char **cl_maplist_modes;
+extern int cl_maplist_count;
+extern int cl_maplist_modes_count;
 
 //
 // cl_pred.c

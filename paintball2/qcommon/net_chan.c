@@ -95,9 +95,9 @@ void Netchan_Init (void)
 	// pick a port value that should be nice and random
 	port = Sys_Milliseconds() & 0xffff;
 
-	showpackets = Cvar_Get ("showpackets", "0", 0);
-	showdrop = Cvar_Get ("showdrop", "0", 0);
-	qport = Cvar_Get ("qport", va("%i", port), CVAR_NOSET);
+	showpackets = Cvar_Get("showpackets", "0", 0);
+	showdrop = Cvar_Get("showdrop", "0", 0);
+	qport = Cvar_Get("qport", va("%i", port), CVAR_NOSET);
 }
 
 /*
@@ -113,13 +113,13 @@ void Netchan_OutOfBand (int net_socket, netadr_t adr, int length, byte *data)
 	byte		send_buf[MAX_MSGLEN];
 
 // write the packet header
-	SZ_Init (&send, send_buf, sizeof(send_buf));
+	SZ_Init(&send, send_buf, sizeof(send_buf));
 	
-	MSG_WriteLong (&send, -1);	// -1 sequence means out of band
-	SZ_Write (&send, data, length);
+	MSG_WriteLong(&send, -1);	// -1 sequence means out of band
+	SZ_Write(&send, data, length);
 
 // send the datagram
-	NET_SendPacket (net_socket, send.cursize, send.data, adr);
+	NET_SendPacket(net_socket, send.cursize, send.data, adr);
 }
 
 /*
@@ -131,14 +131,15 @@ Sends a text message in an out-of-band datagram
 */
 void Netchan_OutOfBandPrint (int net_socket, netadr_t adr, char *format, ...)
 {
-	va_list		argptr;
-	static char		string[MAX_MSGLEN - 4];
+	va_list argptr;
+	static char string[MAX_MSGLEN - 4];
 	
-	va_start (argptr, format);
-	vsprintf (string, format,argptr);
-	va_end (argptr);
+	va_start(argptr, format);
+	_vsnprintf(string, sizeof(string), format, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(string); // jitsecurity -- make sure string is null terminated.
 
-	Netchan_OutOfBand (net_socket, adr, strlen(string), (byte *)string);
+	Netchan_OutOfBand(net_socket, adr, strlen(string), (byte *)string);
 }
 
 

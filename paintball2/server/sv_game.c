@@ -66,11 +66,12 @@ void PF_dprintf (char *fmt, ...)
 	char		msg[1024];
 	va_list		argptr;
 	
-	va_start (argptr,fmt);
-	vsprintf (msg, fmt, argptr);
-	va_end (argptr);
+	va_start(argptr,fmt);
+	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
 
-	Com_Printf ("%s", msg);
+	Com_Printf("%s", msg);
 }
 
 
@@ -94,9 +95,10 @@ void PF_cprintf (edict_t *ent, int level, char *fmt, ...)
 			Com_Error(ERR_DROP, "cprintf to a non-client");
 	}
 
-	va_start(argptr,fmt);
-	vsprintf(msg, fmt, argptr);
+	va_start(argptr, fmt);
+	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
 	va_end(argptr);
+	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
 
 	if (ent)
 		SV_ClientPrintf(svs.clients+(n-1), level, "%s", msg);
@@ -122,13 +124,14 @@ void PF_centerprintf (edict_t *ent, char *fmt, ...)
 	if (n < 1 || n > maxclients->value)
 		return;	// Com_Error (ERR_DROP, "centerprintf to a non-client");
 
-	va_start (argptr,fmt);
-	vsprintf (msg, fmt, argptr);
-	va_end (argptr);
+	va_start(argptr,fmt);
+	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
 
-	MSG_WriteByte (&sv.multicast,svc_centerprint);
-	MSG_WriteString (&sv.multicast,msg);
-	PF_Unicast (ent, true);
+	MSG_WriteByte(&sv.multicast,svc_centerprint);
+	MSG_WriteString(&sv.multicast,msg);
+	PF_Unicast(ent, true);
 }
 
 
@@ -144,11 +147,12 @@ void PF_error (char *fmt, ...)
 	char		msg[1024];
 	va_list		argptr;
 	
-	va_start (argptr,fmt);
-	vsprintf (msg, fmt, argptr);
-	va_end (argptr);
+	va_start(argptr, fmt);
+	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
 
-	Com_Error (ERR_DROP, "Game Error: %s", msg);
+	Com_Error(ERR_DROP, "Game Error: %s", msg);
 }
 
 
@@ -161,26 +165,21 @@ Also sets mins and maxs for inline bmodels
 */
 void PF_setmodel (edict_t *ent, char *name)
 {
-	int		i;
-	cmodel_t	*mod;
+	cmodel_t *mod;
 
 	if (!name)
-		Com_Error (ERR_DROP, "PF_setmodel: NULL");
+		Com_Error(ERR_DROP, "PF_setmodel: NULL");
 
-	i = SV_ModelIndex (name);
-		
-//	ent->model = name;
-	ent->s.modelindex = i;
+	ent->s.modelindex = SV_ModelIndex(name);
 
-// if it is an inline model, get the size information for it
+	// if it is an inline model, get the size information for it
 	if (name[0] == '*')
 	{
-		mod = CM_InlineModel (name);
-		VectorCopy (mod->mins, ent->mins);
-		VectorCopy (mod->maxs, ent->maxs);
-		SV_LinkEdict (ent);
+		mod = CM_InlineModel(name);
+		VectorCopy(mod->mins, ent->mins);
+		VectorCopy(mod->maxs, ent->maxs);
+		SV_LinkEdict(ent);
 	}
-
 }
 
 /*

@@ -67,7 +67,7 @@ typedef enum {false, true}	qboolean;
 
 #define	MAX_STRING_CHARS	1024	// max length of a string passed to Cmd_TokenizeString
 #define	MAX_STRING_TOKENS	80		// max tokens resulting from Cmd_TokenizeString
-#define	MAX_TOKEN_CHARS		128		// max length of an individual token
+#define	MAX_TOKEN_CHARS		1024	// max length of an individual token - jit, increased from 128
 
 #define	MAX_QPATH			64		// max length of a quake game pathname
 #define	MAX_OSPATH			128		// max length of a filesystem pathname
@@ -96,6 +96,7 @@ typedef enum {false, true}	qboolean;
 #define PRINT_EVENT			13		// for events (such as flag captures)
 #define PRINT_SCOREDATA		14		// for server sending ping, kills, deaths, etc of a client.
 #define PRINT_PINGDATA		15		// for client-side scoreboard
+#define PRINT_MAPLISTDATA	16		// for client-side vote menu
 
 #define PRINT_CHATN			20		// chat with name index encoded into first character(s)
 #define PRINT_CHATN_TEAM	21
@@ -1350,3 +1351,11 @@ typedef enum {
 	EVENT_DISCONNECT = 15,
 	EVENT_OVERTIME = 16
 } game_event_t;
+
+qboolean FileExists (const char *filename); // jit
+
+#define NULLTERMINATE(a) a[sizeof(a)-1] = '\0' // jitsecurity
+#ifndef WIN32
+#define _vsnprintf(a, b, c, d) vsnprintf(a, b, c, d)
+#endif
+

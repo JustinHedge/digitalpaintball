@@ -92,14 +92,15 @@ void Cbuf_AddText (char *text)
 {
 	int		l;
 	
-	l = strlen (text);
+	l = strlen(text);
 
 	if (cmd_text.cursize + l >= cmd_text.maxsize)
 	{
-		Com_Printf ("Cbuf_AddText: overflow\n");
+		Com_Printf("Cbuf_AddText: overflow\n");
 		return;
 	}
-	SZ_Write (&cmd_text, text, strlen (text));
+
+	SZ_Write(&cmd_text, text, strlen(text));
 }
 
 
@@ -117,25 +118,28 @@ void Cbuf_InsertText (char *text)
 	char	*temp;
 	int		templen;
 
-// copy off any commands still remaining in the exec buffer
+	// copy off any commands still remaining in the exec buffer
 	templen = cmd_text.cursize;
+
 	if (templen)
 	{
-		temp = Z_Malloc (templen);
-		memcpy (temp, cmd_text.data, templen);
-		SZ_Clear (&cmd_text);
+		temp = Z_Malloc(templen);
+		memcpy(temp, cmd_text.data, templen);
+		SZ_Clear(&cmd_text);
 	}
 	else
+	{
 		temp = NULL;	// shut up compiler
+	}
 		
-// add the entire text of the file
-	Cbuf_AddText (text);
+	// add the entire text of the file
+	Cbuf_AddText(text);
 	
-// add the copied off data
+	// add the copied off data
 	if (templen)
 	{
-		SZ_Write (&cmd_text, temp, templen);
-		Z_Free (temp);
+		SZ_Write(&cmd_text, temp, templen);
+		Z_Free(temp);
 	}
 }
 
@@ -438,48 +442,69 @@ void Cmd_Alias_f (void)
 
 	if (Cmd_Argc() == 1)
 	{
-		Com_Printf ("Current alias commands:\n");
-		for (a = cmd_alias ; a ; a=a->next)
+		Com_Printf("Current alias commands:\n");
+
+		for (a = cmd_alias; a; a = a->next)
 			Com_Printf ("%s : %s\n", a->name, a->value);
+
 		return;
 	}
 
 	s = Cmd_Argv(1);
+
 	if (strlen(s) >= MAX_ALIAS_NAME)
 	{
-		Com_Printf ("Alias name is too long\n");
+		Com_Printf("Alias name is too long\n");
+		return;
+	}
+
+	if (Cmd_Argc() == 2) // jitalias
+	{
+		for (a = cmd_alias; a; a = a->next)
+		{
+			if (Q_streq(a->name, s))
+			{
+				Com_Printf("%s : %s\n", a->name, a->value);
+				return;
+			}
+		}
+
+		Com_Printf("Alias \"%s\" not set.\n", s);
 		return;
 	}
 
 	// if the alias already exists, reuse it
-	for (a = cmd_alias ; a ; a=a->next)
+	for (a = cmd_alias; a; a = a->next)
 	{
 		if (Q_streq(s, a->name))
 		{
-			Z_Free (a->value);
+			Z_Free(a->value);
 			break;
 		}
 	}
 
 	if (!a)
 	{
-		a = Z_Malloc (sizeof(cmdalias_t));
+		a = Z_Malloc(sizeof(cmdalias_t));
 		a->next = cmd_alias;
 		cmd_alias = a;
 	}
-	strcpy (a->name, s);	
 
-// copy the rest of the command line
+	strcpy(a->name, s);	
+
+	// copy the rest of the command line
 	cmd[0] = 0;		// start out with a null string
 	c = Cmd_Argc();
-	for (i=2 ; i< c ; i++)
+
+	for (i = 2; i < c; i++)
 	{
-		strcat (cmd, Cmd_Argv(i));
+		strcat(cmd, Cmd_Argv(i));
+
 		if (i != (c - 1))
 			strcat (cmd, " ");
 	}
+
 	strcat (cmd, "\n");
-	
 	a->value = CopyString (cmd);
 }
 
@@ -604,7 +629,7 @@ static	cmd_function_t	*cmd_functions;		// possible commands to execute
 Cmd_Argc
 ============
 */
-int		Cmd_Argc (void)
+int Cmd_Argc (void)
 {
 	return cmd_argc;
 }
@@ -614,10 +639,11 @@ int		Cmd_Argc (void)
 Cmd_Argv
 ============
 */
-char	*Cmd_Argv (int arg)
+char *Cmd_Argv (int arg)
 {
-	if ( (unsigned)arg >= cmd_argc )
+	if ((unsigned)arg >= cmd_argc)
 		return cmd_null_string;
+
 	return cmd_argv[arg];	
 }
 
@@ -628,7 +654,7 @@ Cmd_Args
 Returns a single string containing argv(1) to argv(argc()-1)
 ============
 */
-char		*Cmd_Args (void)
+char *Cmd_Args (void)
 {
 	return cmd_args;
 }
@@ -863,10 +889,8 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 	{
 		// skip whitespace up to a /n
 		while (*text && *text <= ' ' && *text != '\n')
-		{
 			text++;
-		}
-		
+
 		if (*text == '\n')
 		{
 			// a newline seperates commands in the buffer
@@ -1132,41 +1156,41 @@ void	Cmd_ExecuteString (char *text)
 		return;		// no tokens
 
 	// check functions
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
+	for (cmd=cmd_functions; cmd; cmd=cmd->next)
 	{
-		if (!Q_strcasecmp (cmd_argv[0],cmd->name))
+		if (!Q_strcasecmp(cmd_argv[0], cmd->name))
 		{
 			if (!cmd->function)
-			{	// forward to server command
-				Cmd_ExecuteString (va("cmd %s", text));
-			}
+				Cmd_ExecuteString (va("cmd %s", text)); // forward to server command
 			else
-				cmd->function ();
+				cmd->function();
+
 			return;
 		}
 	}
 
 	// check alias
-	for (a=cmd_alias ; a ; a=a->next)
+	for (a=cmd_alias; a; a=a->next)
 	{
-		if (!Q_strcasecmp (cmd_argv[0], a->name))
+		if (!Q_strcasecmp(cmd_argv[0], a->name))
 		{
 			if (++alias_count == ALIAS_LOOP_COUNT)
 			{
-				Com_Printf ("ALIAS_LOOP_COUNT\n");
+				Com_Printf("ALIAS_LOOP_COUNT\n");
 				return;
 			}
-			Cbuf_InsertText (a->value);
+
+			Cbuf_InsertText(a->value);
 			return;
 		}
 	}
 	
 	// check cvars
-	if (Cvar_Command ())
+	if (Cvar_Command())
 		return;
 
 	// send it as a server command if we are connected
-	Cmd_ForwardToServer ();
+	Cmd_ForwardToServer();
 }
 
 /*
@@ -1192,13 +1216,10 @@ Cmd_Init
 */
 void Cmd_Init (void)
 {
-//
-// register our commands
-//
-	Cmd_AddCommand ("cmdlist", Cmd_List_f);
-	Cmd_AddCommand ("exec", Cmd_Exec_f);
-	Cmd_AddCommand ("echo", Cmd_Echo_f);
-	Cmd_AddCommand ("alias", Cmd_Alias_f);
-	Cmd_AddCommand ("wait", Cmd_Wait_f);
+	Cmd_AddCommand("cmdlist", Cmd_List_f);
+	Cmd_AddCommand("exec", Cmd_Exec_f);
+	Cmd_AddCommand("echo", Cmd_Echo_f);
+	Cmd_AddCommand("alias", Cmd_Alias_f);
+	Cmd_AddCommand("wait", Cmd_Wait_f);
 }
 

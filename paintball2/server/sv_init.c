@@ -280,7 +280,7 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 	SV_CheckForSavegame ();
 
 	// set serverinfo variable
-	Cvar_FullSet ("mapname", sv.name, CVAR_SERVERINFO | CVAR_NOSET);
+	Cvar_FullSet("mapname", sv.name, CVAR_SERVERINFO | CVAR_NOSET, true);
 
 	Com_Printf ("-------------------------------------\n");
 }
@@ -318,7 +318,7 @@ void SV_InitGame (void)
 	if (Cvar_VariableValue ("coop") && Cvar_VariableValue ("deathmatch"))
 	{
 		Com_Printf("Deathmatch and Coop both set, disabling Coop\n");
-		Cvar_FullSet ("coop", "0",  CVAR_SERVERINFO | CVAR_LATCH);
+		Cvar_FullSet("coop", "0",  CVAR_SERVERINFO | CVAR_LATCH, true);
 	}
 
 	// dedicated servers are can't be single player and are usually DM
@@ -326,33 +326,25 @@ void SV_InitGame (void)
 	if (dedicated->value)
 	{
 		if (!Cvar_VariableValue ("coop"))
-			Cvar_FullSet ("deathmatch", "1",  CVAR_SERVERINFO | CVAR_LATCH);
+			Cvar_FullSet("deathmatch", "1",  CVAR_SERVERINFO | CVAR_LATCH, true);
 	}
 
 	// init clients
 	if (Cvar_VariableValue ("deathmatch"))
 	{
 		if (maxclients->value <= 1)
-			Cvar_FullSet ("maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH);
+			Cvar_FullSet("maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, true);
 		else if (maxclients->value > MAX_CLIENTS)
-			Cvar_FullSet ("maxclients", va("%i", MAX_CLIENTS), CVAR_SERVERINFO | CVAR_LATCH);
+			Cvar_FullSet("maxclients", va("%i", MAX_CLIENTS), CVAR_SERVERINFO | CVAR_LATCH, true);
 	}
 	else if (Cvar_VariableValue ("coop"))
 	{
 		if (maxclients->value <= 1 || maxclients->value > 8)
-			Cvar_FullSet ("maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH);
-#ifdef COPYPROTECT
-		if (!sv.attractloop && !dedicated->value)
-			Sys_CopyProtect ();
-#endif
+			Cvar_FullSet("maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, true);
 	}
 	else	// non-deathmatch, non-coop is one player
 	{
-		Cvar_FullSet ("maxclients", "1", CVAR_SERVERINFO | CVAR_LATCH);
-#ifdef COPYPROTECT
-		if (!sv.attractloop)
-			Sys_CopyProtect ();
-#endif
+		Cvar_FullSet("maxclients", "1", CVAR_SERVERINFO | CVAR_LATCH, true);
 	}
 
 	svs.spawncount = rand();

@@ -48,7 +48,7 @@ void SV_SetMaster_f (void)
 	}
 
 	// make sure the server is listed public
-	Cvar_Set ("public", "1");
+	Cvar_Set("public", "1");
 
 	for (i=1 ; i<MAX_MASTERS ; i++)
 		memset (&master_adr[i], 0, sizeof(master_adr[i]));
@@ -189,13 +189,13 @@ void SV_WipeSavegame (char *savename)
 CopyFile
 ================
 */
-void CopyFile (char *src, char *dst)
+void Q_CopyFile (char *src, char *dst)
 {
 	FILE	*f1, *f2;
 	int		l;
 	byte	buffer[65536];
 
-	Com_DPrintf ("CopyFile (%s, %s)\n", src, dst);
+	Com_DPrintf ("Q_CopyFile (%s, %s)\n", src, dst);
 
 	f1 = fopen (src, "rb");
 	if (!f1)
@@ -227,45 +227,46 @@ SV_CopySaveGame
 */
 void SV_CopySaveGame (char *src, char *dst)
 {
-	char	name[MAX_OSPATH], name2[MAX_OSPATH];
-	int		l, len;
-	char	*found;
+	// jitsave -- we don't need to save games as there's no single player.
+	//char	name[MAX_OSPATH], name2[MAX_OSPATH];
+	//int		l, len;
+	//char	*found;
 
-	Com_DPrintf("SV_CopySaveGame(%s, %s)\n", src, dst);
+	//Com_DPrintf("SV_CopySaveGame(%s, %s)\n", src, dst);
 
-	SV_WipeSavegame (dst);
+	//SV_WipeSavegame (dst);
 
-	// copy the savegame over
-	Com_sprintf (name, sizeof(name), "%s/save/%s/server.ssv", FS_Gamedir(), src);
-	Com_sprintf (name2, sizeof(name2), "%s/save/%s/server.ssv", FS_Gamedir(), dst);
-	FS_CreatePath (name2);
-	CopyFile (name, name2);
+	//// copy the savegame over
+	//Com_sprintf (name, sizeof(name), "%s/save/%s/server.ssv", FS_Gamedir(), src);
+	//Com_sprintf (name2, sizeof(name2), "%s/save/%s/server.ssv", FS_Gamedir(), dst);
+	//FS_CreatePath (name2);
+	//Q_CopyFile (name, name2);
 
-	Com_sprintf (name, sizeof(name), "%s/save/%s/game.ssv", FS_Gamedir(), src);
-	Com_sprintf (name2, sizeof(name2), "%s/save/%s/game.ssv", FS_Gamedir(), dst);
-	CopyFile (name, name2);
+	//Com_sprintf (name, sizeof(name), "%s/save/%s/game.ssv", FS_Gamedir(), src);
+	//Com_sprintf (name2, sizeof(name2), "%s/save/%s/game.ssv", FS_Gamedir(), dst);
+	//Q_CopyFile (name, name2);
 
-	Com_sprintf (name, sizeof(name), "%s/save/%s/", FS_Gamedir(), src);
-	len = strlen(name);
-	Com_sprintf (name, sizeof(name), "%s/save/%s/*.sav", FS_Gamedir(), src);
-	found = Sys_FindFirst(name, 0, 0 );
-	while (found)
-	{
-		strcpy (name+len, found+len);
+	//Com_sprintf (name, sizeof(name), "%s/save/%s/", FS_Gamedir(), src);
+	//len = strlen(name);
+	//Com_sprintf (name, sizeof(name), "%s/save/%s/*.sav", FS_Gamedir(), src);
+	//found = Sys_FindFirst(name, 0, 0 );
+	//while (found)
+	//{
+	//	strcpy (name+len, found+len);
 
-		Com_sprintf (name2, sizeof(name2), "%s/save/%s/%s", FS_Gamedir(), dst, found+len);
-		CopyFile (name, name2);
+	//	Com_sprintf (name2, sizeof(name2), "%s/save/%s/%s", FS_Gamedir(), dst, found+len);
+	//	Q_CopyFile (name, name2);
 
-		// change sav to sv2
-		l = strlen(name);
-		strcpy (name+l-3, "sv2");
-		l = strlen(name2);
-		strcpy (name2+l-3, "sv2");
-		CopyFile (name, name2);
+	//	// change sav to sv2
+	//	l = strlen(name);
+	//	strcpy (name+l-3, "sv2");
+	//	l = strlen(name2);
+	//	strcpy (name2+l-3, "sv2");
+	//	Q_CopyFile (name, name2);
 
-		found = Sys_FindNext( 0, 0 );
-	}
-	Sys_FindClose ();
+	//	found = Sys_FindNext( 0, 0 );
+	//}
+	//Sys_FindClose ();
 }
 
 

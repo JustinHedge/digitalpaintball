@@ -725,7 +725,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 			
 	// == 
 	// jitfog -- parse fog code from sky name
-	if(s=strstr(skyname, "fog ")) // jitodo
+	if ((s = strstr(skyname, "fog "))) // jitodo
 	{	
 		sscanf(s+4, "%f %f %f %f", 
 			&fogcolor[0], &fogcolor[1], &fogcolor[2], 
@@ -736,7 +736,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 		// jitodo -- set clip plane.
 		//sky_images[i] = r_whitetexture;
 	}
-	else if(s=strstr(skyname, "fogd ")) // jitfog
+	else if ((s = strstr(skyname, "fogd "))) // jitfog
 	{
 		sscanf(s+5, "%f %f %f %f",
 			&fogcolor[0], &fogcolor[1], &fogcolor[2], 
@@ -747,13 +747,13 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 
 	
 	// jitfog -- strip fog code from sky name:
-	if(s=strchr(skyname, ' '))
+	if ((s = strchr(skyname, ' ')))
 		*s = 0;
 
 	for (i=0 ; i<6 ; i++)
 	{
 		// chop down rotating skies for less memory
-		if (gl_skymip->value || skyrotate)
+		if (gl_skymip->value)// || skyrotate)
 			gl_picmip->value++;
 
 		Com_sprintf (pathname, sizeof(pathname), "env/%s%s.tga", skyname, suf[i]);
@@ -768,7 +768,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 				sky_images[i] = r_notexture;
 		}
 
-		if (gl_skymip->value || skyrotate)
+		if (gl_skymip->value)// || skyrotate)
 		{	// take less memory
 			gl_picmip->value--;
 			sky_min = 0.00390625f;

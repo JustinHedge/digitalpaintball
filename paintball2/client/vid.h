@@ -44,3 +44,4 @@ void	VID_MenuDraw( void );
 const char *VID_MenuKey( int );
 
 #endif
+

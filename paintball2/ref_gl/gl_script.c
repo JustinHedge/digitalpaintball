@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_script.c - scripted texture rendering - MrG
 
 #include "gl_local.h"
-#include <io.h>
 
 void CIN_FreeCin (int texnum);
 
@@ -134,10 +133,13 @@ rscript_t *RS_NewScript (char *name)
 {
 	rscript_t	*rs;
 
-	if (!rs_rootscript) {
+	if (!rs_rootscript)
+	{
 		rs_rootscript = (rscript_t *)malloc(sizeof(rscript_t));
 		rs = rs_rootscript;
-	} else {
+	}
+	else
+	{
 		rs = rs_rootscript;
 
 		while (rs->next != NULL)
@@ -157,6 +159,7 @@ rscript_t *RS_NewScript (char *name)
 	rs->warpsmooth = 0.0f;
 	rs->ready = false;
 	rs->mirror = false;
+	rs->img_ptr = NULL; // jitrscript
 
 	return rs;
 }
@@ -757,7 +760,7 @@ void RS_LoadScript(char *script)
 	unsigned char	tcmod = 0;
 	unsigned int	len, i;
 
-	len = ri.FS_LoadFile (script, (void **)&fbuf);
+	len = ri.FS_LoadFile(script, (void **)&fbuf);
 
 	if (!fbuf || len < 16) 
 	{
@@ -766,13 +769,13 @@ void RS_LoadScript(char *script)
 		return;
 	}
 
-	buf = (char *)malloc(len+1);
-	memcpy (buf, fbuf, len);
+	buf = (char*)malloc(len+1);
+	memcpy(buf, fbuf, len);
 	buf[len] = 0;
 
-	ri.FS_FreeFile (fbuf);
+	ri.FS_FreeFile(fbuf);
 
-	token = strtok (buf, TOK_DELIMINATORS);
+	token = strtok(buf, TOK_DELIMINATORS);
 
 	while (token != NULL) 
 	{
@@ -880,26 +883,25 @@ void RS_LoadScript(char *script)
 
 void RS_ScanPathForScripts (char *dir)
 {
-	char			script[MAX_OSPATH];
-	char			dirstring[1024], *c;
-	int				handle;
-	struct			_finddata_t fileinfo;
+	char	script[MAX_OSPATH];
+	char	dirstring[1024], *c;
+	char	**script_list;
+	int	script_count, i;
 
-	Com_sprintf (dirstring, sizeof(dirstring), "%s/scripts/*.txt", dir);
-	handle = _findfirst (dirstring, &fileinfo);
+	Com_sprintf(dirstring, sizeof(dirstring), "%s/scripts/*.txt", dir);
+	script_list = ri.FS_ListFiles(dirstring, &script_count, 0, 0);
 
-	if (handle != -1) {
-		do {
-			if (fileinfo.name[0] == '.')
-				continue;
+	if (!script_list)
+		return;
 
-			c = COM_SkipPath(fileinfo.name);
-			Com_sprintf(script, MAX_OSPATH, "scripts/%s", c);
-			RS_LoadScript (script);
-		} while (_findnext( handle, &fileinfo ) != -1);
-
-		_findclose (handle);
+	for (i = 0; i < script_count-1; i++)
+	{
+		c = COM_SkipPath(script_list[i]);
+		Com_sprintf(script, MAX_OSPATH, "scripts/%s", c);
+		RS_LoadScript(script);
 	}
+
+	ri.FS_FreeFileList(script_list, script_count);
 }
 
 _inline void RS_RotateST (float *os, float *ot, float degrees, msurface_t *fa)
@@ -995,8 +997,6 @@ _inline static void RS_SetEnvmap (vec3_t v, float *os, float *ot, vec_t *normals
 
 _inline static void RS_SetTexcoords (rs_stage_t *stage, float *os, float *ot, msurface_t *fa)
 {
-	float	txm = 0, tym = 0;
-
 	// scale
 	if (stage->scale.scaleX)
 	{
@@ -1217,8 +1217,6 @@ _inline void RS_RotateST2 (float *os, float *ot, float degrees)
 
 void RS_SetTexcoords2D (rs_stage_t *stage, float *os, float *ot)
 {
-	float	txm = 0, tym = 0;
-
 	*os += stage->offset.offsetX; // jitrscript
 	*ot += stage->offset.offsetY; // jitrscript
 
@@ -1335,7 +1333,7 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 	//rscript_t	*rs = (rscript_t *)surf->texinfo->script;
 	rs_stage_t	*stage;// = rs->stage;
 	float		os, ot, alpha;
-	float		scale, time, txm, tym;
+	float		scale, time, txm=0, tym=0;
 	qboolean	firststage = true; // jitrscript
 
 	if(!rs)
@@ -1347,9 +1345,9 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 	do
 	{
 		if (stage->anim_count)
-			GL_MBind (GL_TEXTURE0, RS_Animate(stage));
+			GL_MBind (QGL_TEXTURE0, RS_Animate(stage));
 		else
-			GL_MBind (GL_TEXTURE0, stage->texture->texnum);
+			GL_MBind (QGL_TEXTURE0, stage->texture->texnum);
 
 		// sane defaults
 		alpha = 1.0f;
@@ -1479,14 +1477,16 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 						os = DotProduct(stage->tcGenVec[0], v);// always 0: + stage->tcGenVec[0][3];
 						ot = DotProduct(stage->tcGenVec[1], v);// always 0: + stage->tcGenVec[1][3];
 						break;
+					case TC_GEN_LIGHTMAP:
+						break;
 					}
 
 					RS_SetTexcoords(stage, &os, &ot, surf);
 
 					if (lightmap)
 					{
-						qglMTexCoord2fSGIS(GL_TEXTURE0, os+txm, ot+tym);
-						qglMTexCoord2fSGIS(GL_TEXTURE1, v[5], v[6]);
+						qglMTexCoord2fSGIS(QGL_TEXTURE0, os+txm, ot+tym);
+						qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
 					}
 					else
 					{
@@ -1537,6 +1537,8 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 						ot = DotProduct(stage->tcGenVec[1], v) + stage->tcGenVec[1][3];
 
 						break;
+					case TC_GEN_LIGHTMAP:
+						break;
 					}
 
 					RS_SetTexcoords(stage, &os, &ot, surf);
@@ -1555,8 +1557,8 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 
 					if (lightmap)
 					{
-						qglMTexCoord2fSGIS(GL_TEXTURE0, os+txm, ot+tym);
-						qglMTexCoord2fSGIS(GL_TEXTURE1, v[5], v[6]);
+						qglMTexCoord2fSGIS(QGL_TEXTURE0, os+txm, ot+tym);
+						qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
 					}
 					else
 					{
@@ -1589,7 +1591,7 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 		GLSTATE_DISABLE_ALPHATEST
 		GLSTATE_DISABLE_TEXGEN
 		firststage = false; // jitrscript
-	} while (stage = stage->next);
+	} while ((stage = stage->next));
 }
 
 

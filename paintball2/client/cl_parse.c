@@ -21,6 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
+#ifndef WIN32
+#define _strtime(a) sprintf(a, "TODO")
+#endif
+
 char *svc_strings[256] =
 {
 	"svc_bad",
@@ -1158,7 +1162,6 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 			s, (s[strlen(s)-1] == '\n') ? "" : "\n");
 }
 
-
 /*
 =====================
 CL_ParseServerMessage
@@ -1217,21 +1220,23 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_nop:
-//			Com_Printf ("svc_nop\n");
+//			Com_Printf("svc_nop\n");
 			break;
 			
 		case svc_disconnect:
-			Com_Error(ERR_DISCONNECT,"Server disconnected\n");
+			Com_Error(ERR_DISCONNECT, "Server disconnected\n");
 			break;
 
 		case svc_reconnect:
 			Com_Printf("Server disconnected, reconnecting\n");
+
 			if (cls.download)
 			{
 				//ZOID, close download
 				fclose(cls.download);
 				cls.download = NULL;
 			}
+
 			cls.state = ca_connecting;
 			cls.connect_time = -99999;	// CL_CheckForResend() will fire immediately
 			break;
@@ -1262,11 +1267,15 @@ void CL_ParseServerMessage (void)
 			case PRINT_PINGDATA:
 				CL_ParsePingData(MSG_ReadString(&net_message));
 				break;
+			case PRINT_MAPLISTDATA:
+				CL_ParseMaplistData(MSG_ReadString(&net_message));
+				break;
 			case PRINT_CHATN:
 			case PRINT_CHATN_TEAM:
 			case PRINT_CHATN_PRIVATE:
 			case PRINT_CHATN_RESERVED:
 			case PRINT_CHATN_RESERVED2:
+			case PRINT_CHATN_ACTION:
 				CL_ParseChat(i, MSG_ReadString(&net_message));
 				break;
 			default:
@@ -1347,7 +1356,7 @@ void CL_ParseServerMessage (void)
 		case svc_playerinfo:
 		case svc_packetentities:
 		case svc_deltapacketentities:
-			Com_Error (ERR_DROP, "Out of place frame data");
+			Com_Error(ERR_DROP, "Out of place frame data");
 			break;
 		}
 	}

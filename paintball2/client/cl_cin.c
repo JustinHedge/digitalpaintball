@@ -585,6 +585,7 @@ void SCR_PlayCinematic (char *arg)
 
 	cl.cinematicframe = 0;
 	dot = strstr (arg, ".");
+
 	if (dot && Q_streq (dot, ".pcx"))
 	{	// static pcx image
 		Com_sprintf (name, sizeof(name), "pics/%s", arg);
@@ -594,6 +595,7 @@ void SCR_PlayCinematic (char *arg)
 		SCR_EndLoadingPlaque ();
 		cls.state = ca_active;
 		cl_scores_setinuse_all(false); // jitscores - clear scoreboard
+
 		if (!cin.pic)
 		{
 			Com_Printf ("%s not found.\n", name);
@@ -604,16 +606,18 @@ void SCR_PlayCinematic (char *arg)
 			memcpy (cl.cinematicpalette, palette, sizeof(cl.cinematicpalette));
 			Z_Free (palette);
 		}
+
 		return;
 	}
 
 	Com_sprintf (name, sizeof(name), "video/%s", arg);
 	FS_FOpenFile (name, &cl.cinematic_file);
+
 	if (!cl.cinematic_file)
 	{
-//		Com_Error (ERR_DROP, "Cinematic %s not found.\n", name);
-		SCR_FinishCinematic ();
+		SCR_FinishCinematic();
 		cl.cinematictime = 0;	// done
+
 		return;
 	}
 

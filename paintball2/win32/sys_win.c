@@ -69,15 +69,15 @@ void Sys_Error (char *error, ...)
 	va_list		argptr;
 	char		text[1024];
 
-	CL_Shutdown ();
-	Qcommon_Shutdown ();
+	CL_Shutdown();
+	Qcommon_Shutdown();
 
-	va_start (argptr, error);
-	vsprintf (text, error, argptr);
-	va_end (argptr);
+	va_start(argptr, error);
+	_vsnprintf(text, sizeof(text), error, argptr); // jitsecurity -- prevent buffer overruns
+	va_end(argptr);
+	NULLTERMINATE(text); // jitsecurity -- make sure string is null terminated.
 
 	// <!-- jit: don't kill servers with the msg box
-	// jitodo, fix this for unix as well.
 	if(dedicated->value)
 		printf("Error: %s\n",text);
 	else
@@ -85,12 +85,12 @@ void Sys_Error (char *error, ...)
 	// jit -->
 
 	if (qwclsemaphore)
-		CloseHandle (qwclsemaphore);
+		CloseHandle(qwclsemaphore);
 
 // shut down QHOST hooks if necessary
-	DeinitConProc ();
+	DeinitConProc();
 
-	exit (1);
+	exit(1);
 }
 
 void Sys_Quit (void)
@@ -183,23 +183,6 @@ char *Sys_ScanForCD (void)
 	return NULL;
 }
 */
-
-/*
-================
-Sys_CopyProtect
-
-================
-*/
-void	Sys_CopyProtect (void)
-{
-#if 0
-	char	*cddir;
-
-	cddir = Sys_ScanForCD();
-	if (!cddir[0])
-		Com_Error (ERR_FATAL, "You must have the Quake2 CD in the drive to play.");
-#endif
-}
 
 
 //================================================================
@@ -585,9 +568,35 @@ HINSTANCE	global_hInstance;
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    MSG				msg;
-	int				time, oldtime, newtime;
-	//char			*cddir;
+    MSG			msg;
+	int			time, oldtime, newtime;
+	// === jiturl
+	char		*cmdline, *s;
+	char		working_dir[_MAX_PATH+_MAX_FNAME];
+	qboolean	quote = false;
+	int			i = 0;
+
+	cmdline = GetCommandLine();
+	
+	if (cmdline[0] == '\"')
+	{
+		quote = true;
+		cmdline++;
+	}
+
+	while (*cmdline != (quote ? '\"' : ' '))
+	{
+		working_dir[i++] = *cmdline;
+		cmdline++;
+	}
+	
+	working_dir[i] = '\0';
+
+	for (s = working_dir + strlen(working_dir); s > working_dir && *s != '\\' && *s != '/'; s--);
+	
+	*s = '\0';
+	_chdir(working_dir);
+	// jiturl ===
 
     /* previous instances do not exist in Win32 */
     if (hPrevInstance)
@@ -595,29 +604,10 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	global_hInstance = hInstance;
 
-	ParseCommandLine (lpCmdLine);
+	ParseCommandLine(lpCmdLine);
 
-	// jit -- don't scan for the cd anymore -- nobody's going to be running the game data off of a cd!
-	// if we find the CD, add a +set cddir xxx command line
-	//cddir = Sys_ScanForCD();
-	//if (cddir && argc < MAX_NUM_ARGVS - 3)
-	//{
-	//	int		i;
-
-	//	// don't override a cddir on the command line
-	//	for (i=0 ; i<argc ; i++)
-	//		if (Q_streq(argv[i], "cddir"))
-	//			break;
-	//	if (i == argc)
-	//	{
-	//		argv[argc++] = "+set";
-	//		argv[argc++] = "cddir";
-	//		argv[argc++] = cddir;
-	//	}
-	//}
-
-	Qcommon_Init (argc, argv);
-	oldtime = Sys_Milliseconds ();
+	Qcommon_Init(argc, argv);
+	oldtime = Sys_Milliseconds();
 
     /* main window message loop */
 	while (1)
@@ -625,29 +615,27 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		// if at a full screen console, don't update unless needed
 		if (Minimized || (dedicated && dedicated->value) )
 		{
-			Sleep (1);
+			Sleep(1);
 		}
 
-		while (PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE))
+		while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
 		{
-			if (!GetMessage (&msg, NULL, 0, 0))
-				Com_Quit ();
+			if (!GetMessage(&msg, NULL, 0, 0))
+				Com_Quit();
+
 			sys_msg_time = msg.time;
-			TranslateMessage (&msg);
-   			DispatchMessage (&msg);
+			TranslateMessage(&msg);
+   			DispatchMessage(&msg);
 		}
 
 		do
 		{
-			newtime = Sys_Milliseconds ();
+			newtime = Sys_Milliseconds();
 			time = newtime - oldtime;
 		} while (time < 1);
-//			Con_Printf ("time:%5.2f - %5.2f = %5.2f\n", newtime, oldtime, time);
 
-		//	_controlfp( ~( _EM_ZERODIVIDE /*| _EM_INVALID*/ ), _MCW_EM );
-		_controlfp( _PC_24, _MCW_PC );
-		Qcommon_Frame (time);
-
+		_controlfp(_PC_24, _MCW_PC);
+		Qcommon_Frame(time);
 		oldtime = newtime;
 	}
 

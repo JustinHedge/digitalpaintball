@@ -372,7 +372,8 @@ void R_LightPoint (vec3_t p, vec3_t color) // jitodo -- light points on average 
 
 //===================================================================
 
-void R_StainNode (stain_t *st, mnode_t *node) { 
+void R_StainNode (stain_t *st, mnode_t *node)
+{ 
 	msurface_t *surf;
 	float		dist;
 	int			c;
@@ -380,17 +381,22 @@ void R_StainNode (stain_t *st, mnode_t *node) {
 	if (node->contents != -1)
 		return;
 
-	dist = DotProduct (st->origin, node->plane->normal) - node->plane->dist;
-	if (dist > st->size) {
-		R_StainNode (st, node->children[0]);
-		return;
-	}
-	if (dist < -st->size) {
-		R_StainNode (st, node->children[1]);
+	dist = DotProduct(st->origin, node->plane->normal) - node->plane->dist;
+
+	if (dist > st->size)
+	{
+		R_StainNode(st, node->children[0]);
 		return;
 	}
 
-	for (c = node->numsurfaces, surf = r_worldmodel->surfaces + node->firstsurface; c ; c--, surf++) {
+	if (dist < -st->size)
+	{
+		R_StainNode(st, node->children[1]);
+		return;
+	}
+
+	for (c = node->numsurfaces, surf = r_worldmodel->surfaces + node->firstsurface; c ; c--, surf++)
+	{
 		int			i;
 		mtexinfo_t	*tex;
 		int			sd, td;
@@ -434,14 +440,14 @@ void R_StainNode (stain_t *st, mnode_t *node) {
 		for (t = 0, ftacc = 0 ; t<tmax ; t++, ftacc += 16)
 		{
 			td = local[1] - ftacc;
-			if ( td < 0 )
+			if (td < 0)
 				td = -td;
-			for ( s=0, fsacc = 0 ; s<smax ; s++, fsacc += 16, pfBL += 3)
+
+			for (s=0, fsacc = 0; s<smax; s++, fsacc += 16, pfBL += 3)
 			{
-				sd = Q_ftol( local[0] - fsacc );
+				sd = Q_ftol(local[0] - fsacc);
 
-
-				if ( sd < 0 )
+				if (sd < 0)
 					sd = -sd;
 
 				if (sd > td)
@@ -449,14 +455,24 @@ void R_StainNode (stain_t *st, mnode_t *node) {
 				else
 					fdist = td + (sd>>1);
 
-				if ( fdist < fminlight ) {
+				if (fdist < fminlight)
+				{
 					int test;
-					for(i=0;i<3;i++) {
-						test = pfBL[i] + (( frad - fdist ) * st->color[i]);
-						if(test < 255 && test > 0) {
+
+					for(i=0; i<3; i++)
+					{
+						test = pfBL[i] + ((frad - fdist) * st->color[i]);
+
+						if(test < 255 && test > 0)
+						{
 							col=pfBL[i]*st->color[i];
-							if (col > 255) col=255;
-							if (col < 0) col=0;
+
+							if (col > 255)
+								col=255;
+
+							if (col < 0)
+								col=0;
+
 							pfBL[i] = (byte)col;
 						}
 					}
@@ -465,11 +481,12 @@ void R_StainNode (stain_t *st, mnode_t *node) {
 		}
 	}
 
-	R_StainNode (st, node->children[0]);
-	R_StainNode (st, node->children[1]);
+	R_StainNode(st, node->children[0]);
+	R_StainNode(st, node->children[1]);
 }
 
-void R_ApplyStains (void) {
+void R_ApplyStains (void)
+{
 	int i;
 	stain_t *st;
 

@@ -589,22 +589,21 @@ void CL_ParseFrame (void)
 		// getting a valid frame message ends the connection process
 		if (cls.state != ca_active)
 		{
-			extern cvar_t *name; // jitname
-//			char temp[64]; // jitname
-
 			cls.state = ca_active;
-			cl_scores_setinuse_all(false); // jitscores - clear scoreboard
+			//cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 			cl.force_refdef = true;
 			cl.predicted_origin[0] = cl.frame.playerstate.pmove.origin[0]*0.125;
 			cl.predicted_origin[1] = cl.frame.playerstate.pmove.origin[1]*0.125;
 			cl.predicted_origin[2] = cl.frame.playerstate.pmove.origin[2]*0.125;
 			VectorCopy (cl.frame.playerstate.viewangles, cl.predicted_angles);
+
 			if (cls.disable_servercount != cl.servercount
 				&& cl.refresh_prepped)
 				SCR_EndLoadingPlaque ();	// get rid of loading plaque
 		}
+
 		cl.sound_prepped = true;	// can start mixing ambient sounds
-	
+
 		// fire entity events
 		CL_FireEntityEvents(&cl.frame);
 		CL_CheckPredictionError();
@@ -994,7 +993,7 @@ void CL_AddPacketEntities (frame_t *frame)
 			}
 			// pmm
 
-			V_AddEntity (&ent);
+			V_AddEntity(&ent);
 
 			//PGM - make sure these get reset.
 			ent.flags = 0;
@@ -1004,31 +1003,30 @@ void CL_AddPacketEntities (frame_t *frame)
 		if (s1->modelindex3)
 		{
 			ent.model = cl.model_draw[s1->modelindex3];
-			V_AddEntity (&ent);
+			V_AddEntity(&ent);
 		}
 		if (s1->modelindex4)
 		{
 			ent.model = cl.model_draw[s1->modelindex4];
-			V_AddEntity (&ent);
+			V_AddEntity(&ent);
 		}
 
 		if ( effects & EF_POWERSCREEN )
 		{
-//			ent.model = cl_mod_powerscreen;
 			ent.oldframe = 0;
 			ent.frame = 0;
 			ent.flags |= (RF_TRANSLUCENT | RF_SHELL_GREEN);
 			ent.alpha = 0.30;
-			V_AddEntity (&ent);
+			V_AddEntity(&ent);
 		}
 
 		// add automatic particle trails
-		if ( (effects&~EF_ROTATE) )
+		if ((effects&~EF_ROTATE))
 		{
 			if (effects & EF_ROCKET)
 			{
-				CL_RocketTrail (cent->lerp_origin, ent.origin, cent);
-				V_AddLight (ent.origin, 200, 1, 1, 0);
+				CL_RocketTrail(cent->lerp_origin, ent.origin, cent);
+				V_AddLight(ent.origin, 200, 1, 1, 0);
 			}
 			// PGM - Do not reorder EF_BLASTER and EF_HYPERBLASTER. 
 			// EF_BLASTER | EF_TRACKER is a special case for EF_BLASTER2... Cheese!
@@ -1202,8 +1200,8 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 	{
 		gun.origin[i] = cl.refdef.vieworg[i] + ops->gunoffset[i]
 			+ cl.lerpfrac * (ps->gunoffset[i] - ops->gunoffset[i]);
-		gun.angles[i] = cl.refdef.viewangles[i] + LerpAngle (ops->gunangles[i],
-			ps->gunangles[i], cl.lerpfrac);
+		gun.angles[i] = cl.refdef.viewangles[i]; /* jitweapon - fix weird angles + LerpAngle (ops->gunangles[i],
+			ps->gunangles[i], cl.lerpfrac);*/
 	}
 
 	if (gun_frame)

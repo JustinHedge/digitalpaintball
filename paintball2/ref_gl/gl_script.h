@@ -128,3 +128,4 @@ void RS_SetTexcoords(rs_stage_t *stage, float *os, float *ot, msurface_t *fa);
 extern float rs_realtime;
 
 #endif // __GL_SCRIPT__
+
