@@ -51,7 +51,7 @@ void M_Menu_Main_f (void)
 
 /*
    strlen_noformat
-   Returns the length of strings ignoring formatting (underline, ect)
+   Returns the length of strings ignoring formatting (underline, etc)
 */
 int strlen_noformat(const char *s)
 {
@@ -65,7 +65,7 @@ int strlen_noformat(const char *s)
 		}
 		else if(*(s+1) && *s == CHAR_COLOR)
 		{
-			s++;
+			s++; // skip two characters.
 		}
 		else
 			count++;
@@ -242,7 +242,8 @@ menu_widget_t* M_FindNextEntryUnderCursor(menu_screen_t* menu, MENU_ACTION actio
 
 
 
-qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action) {
+qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
+{
 	menu_widget_t* newSelection=NULL;
 
 	if (!menu)
@@ -255,7 +256,7 @@ qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action) {
 		{
 		case M_ACTION_SELECT:
 			newSelection->selected = true;
-		break;
+			break;
 		case M_ACTION_HILIGHT:
 			newSelection->hover = true;
 			break;
@@ -401,14 +402,18 @@ menu_screen_t* M_ErrorMenu(const char *text)
 	return menu;
 }
 
-int M_WidgetGetType(const char *s) 	/// jitodo
+int M_WidgetGetType(const char *s)
 {
 	if(!strcmp(s, "text"))
 		return WIDGET_TYPE_TEXT;
 	if(!strcmp(s, "button"))
 		return WIDGET_TYPE_BUTTON;
-
-	// ... etc
+	if(!strcmp(s, "slider"))
+		return WIDGET_TYPE_SLIDER;
+	if(!strcmp(s, "checkbox"))
+		return WIDGET_TYPE_CHECKBOX;
+	if(!strcmp(s, "dropdown"))
+		return WIDGET_TYPE_DROPDOWN;
 
 	return WIDGET_TYPE_UNKNOWN;
 }
@@ -475,7 +480,6 @@ menu_screen_t* M_LoadMenuScreen(const char *menu_name)
 // jitodo, probably should have different types of menus, like dialog boxes, etc.
 				menu_widget_t *widget=NULL;
 				int x = 0, y = 0;
-				int type = WIDGET_TYPE_UNKNOWN;
 				//qboolean enabled = true;
 
 
@@ -501,7 +505,14 @@ menu_screen_t* M_LoadMenuScreen(const char *menu_name)
 					}
 					// widget properties:
 					else if(strcmp(token, "type") == 0)
-						type = M_WidgetGetType(COM_Parse(&buf));
+					{
+						widget->type = M_WidgetGetType(COM_Parse(&buf));
+						if(widget->type == WIDGET_TYPE_SLIDER)
+						{
+							widget->picwidth = 96;
+							widget->picheight = 16;
+						}
+					}
 					else if(strcmp(token, "text") == 0)
 						widget->text = text_copy(COM_Parse(&buf));
 					else if(strcmp(token, "hovertext") == 0)
@@ -534,6 +545,10 @@ menu_screen_t* M_LoadMenuScreen(const char *menu_name)
 						widget->halign = M_WidgetGetAlign(COM_Parse(&buf));
 					else if(strcmp(token, "valign") == 0)
 						widget->valign = M_WidgetGetAlign(COM_Parse(&buf));
+					else if(strstr(token, "min"))
+						widget->slider_min = atof(COM_Parse(&buf));
+					else if(strstr(token, "max"))
+						widget->slider_max = atof(COM_Parse(&buf));
 					
 					token = COM_Parse(&buf);
 				}
@@ -604,6 +619,68 @@ void M_Init (void)
 // jitodo: reload menus on vid_restart
 // M_Shutdown()
 
+void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, SLIDER_SELECTED slider_selected)
+{
+	int scale;
+	int xorig;
+
+	xorig = x;
+
+	scale = cl_hudscale->value;
+
+	// left arrow:
+	if(slider_hover == SLIDER_SELECTED_LEFTARROW)
+		re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_slider1lh);
+	else if(slider_selected == SLIDER_SELECTED_LEFTARROW)
+		re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_slider1ls);
+	else
+		re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_slider1l);
+	x += SLIDER_BUTTON_WIDTH;
+
+	// tray:
+	if(slider_hover == SLIDER_SELECTED_TRAY)
+		re.DrawStretchPic2(x, y, SLIDER_TRAY_WIDTH, SLIDER_TRAY_HEIGHT, i_slider1th);
+	else
+		re.DrawStretchPic2(x, y, SLIDER_TRAY_WIDTH, SLIDER_TRAY_HEIGHT, i_slider1t);
+	x += SLIDER_TRAY_WIDTH;
+
+	// right arrow
+	if(slider_hover == SLIDER_SELECTED_RIGHTARROW)
+		re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_slider1rh);
+	else if(slider_selected == SLIDER_SELECTED_RIGHTARROW)
+		re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_slider1rs);
+	else
+		re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_slider1r);
+
+	// knob:
+	x = xorig + SLIDER_BUTTON_WIDTH + pos*(SLIDER_TRAY_WIDTH-SLIDER_KNOB_WIDTH);
+	if(slider_hover == SLIDER_SELECTED_KNOB)
+		re.DrawStretchPic2(x, y, SLIDER_KNOB_WIDTH, SLIDER_KNOB_HEIGHT, i_slider1bh);
+	else if(slider_selected == SLIDER_SELECTED_KNOB)
+		re.DrawStretchPic2(x, y, SLIDER_KNOB_WIDTH, SLIDER_KNOB_HEIGHT, i_slider1bs);
+	else
+		re.DrawStretchPic2(x, y, SLIDER_KNOB_WIDTH, SLIDER_KNOB_HEIGHT, i_slider1b);
+}
+
+float M_SliderGetPos(menu_widget_t *widget)
+{
+	float sliderdiff;
+	float retval = 0.0f;
+
+	sliderdiff = widget->slider_max - widget->slider_min;
+
+	retval = Cvar_Get(widget->cvar, "0", CVAR_ARCHIVE)->value;
+
+	if(sliderdiff)
+		retval = (retval - widget->slider_min) / sliderdiff;
+
+	if (retval > 1.0f)
+		retval = 1.0f;
+	if (retval < 0.0f)
+		retval = 0.0f;
+
+	return retval;
+}
 
 void M_DrawWidget (menu_widget_t *widget)
 {
@@ -639,6 +716,16 @@ void M_DrawWidget (menu_widget_t *widget)
 				pic = widget->hoverpic;
 			else if(widget->pic)
 				pic = widget->pic;
+		}
+
+		switch(widget->type) 
+		{
+		case WIDGET_TYPE_SLIDER:
+			M_DrawSlider(widget->picCorner.x, widget->picCorner.y, M_SliderGetPos(widget),
+				widget->slider_hover, widget->slider_selected);
+			break;
+		default:
+			break;
 		}
 
 		if(pic)

@@ -27,6 +27,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "qmenu.h"
 
+#define SLIDER_BUTTON_WIDTH 8*scale
+#define SLIDER_BUTTON_HEIGHT 8*scale
+#define SLIDER_TRAY_WIDTH 32*scale
+#define SLIDER_TRAY_HEIGHT 8*scale
+#define SLIDER_KNOB_WIDTH 8*scale
+#define SLIDER_KNOB_HEIGHT 8*scale
+
 typedef enum {
 	WIDGET_TYPE_UNKNOWN		= 0,
 	WIDGET_TYPE_BUTTON		= 1,
@@ -39,14 +46,22 @@ typedef enum {
 typedef enum {
 	WIDGET_HALIGN_LEFT		= 0,
 	WIDGET_HALIGN_CENTER	= 1,
-	WIDGET_HALIGN_RIGHT		= 2,
+	WIDGET_HALIGN_RIGHT		= 2
 } WIDGET_HALIGN;
 
 typedef enum {
 	WIDGET_VALIGN_TOP		= 0,
 	WIDGET_VALIGN_MIDDLE	= 1,
-	WIDGET_VALIGN_BOTTOM	= 2,
+	WIDGET_VALIGN_BOTTOM	= 2
 } WIDGET_VALIGN;
+
+typedef enum {
+	SLIDER_SELECTED_NONE = 0,
+	SLIDER_SELECTED_TRAY,
+	SLIDER_SELECTED_LEFTARROW,
+	SLIDER_SELECTED_RIGHTARROW,
+	SLIDER_SELECTED_KNOB
+} SLIDER_SELECTED;
 
 #ifndef _WINDEF_
 typedef struct _POINT {
@@ -88,6 +103,10 @@ typedef struct MENU_WIDGET_S {
 	qboolean enabled;	// for greying out widgets
 	qboolean hover;		// mouse is over widget
 	qboolean selected;	// widget has 'focus'
+	SLIDER_SELECTED slider_hover; // which part of the slider is the mouse over
+	SLIDER_SELECTED slider_selected; // which part of the slider is the mouse clicked on?
+	float slider_min;
+	float slider_max;
 // Drawing Information
 	POINT picCorner;
 	POINT picSize;
