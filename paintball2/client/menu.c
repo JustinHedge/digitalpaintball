@@ -55,6 +55,30 @@ void M_ForceMenuOff (void)
 void M_Menu_Main_f (void)
 {
 	Cbuf_AddText("menu main\n");
+
+	
+	/*
+	// because I'm too lazy to start a new project to do this:
+	{
+		int i;
+		FILE *file;
+		file = fopen("out.txt", "w");
+		for(i=' '; i<255; i++)
+		{
+			fprintf(file, "widget xrel %d ", (i%16)?TEXT_WIDTH_UNSCALED:-15*TEXT_WIDTH_UNSCALED);
+			if(!(i%16))
+				fprintf(file, "yrel %d ", TEXT_HEIGHT_UNSCALED); 
+			fprintf(file, "text \"%c\" command \"cvar_cat name %c\"\n", i, i);
+		}
+
+		for(i=' '; i<255; i++)
+		{
+			fprintf(file, "widget xrel %d ", (i%16)?TEXT_WIDTH_UNSCALED:-15*TEXT_WIDTH_UNSCALED);
+			if(!(i%16))
+				fprintf(file, "yrel %d ", TEXT_HEIGHT_UNSCALED); 
+			fprintf(file, "pic blank picwidth 8 picheight 8 command \"cvar_cat name %c%c\"\n", CHAR_COLOR, i);
+		}
+	}*/
 }
 
 /*
@@ -348,8 +372,9 @@ void update_select_subwidgets(menu_widget_t *widget)
 	{
 		s = Cvar_Get(widget->cvar, "", CVAR_ARCHIVE)->string;
 
-		for(i = widget->select_vstart; i < widget->select_totalitems &&
-			i < widget->select_rows + widget->select_vstart; i++)
+		widget->select_pos = -1; // nothing selected;
+
+		for(i = 0; i < widget->select_totalitems; i++)
 		{
 			if(widget->flags & WIDGET_FLAG_USEMAP)
 			{
@@ -558,6 +583,7 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 
 			widget->widgetSize.x = FIELD_LWIDTH + TEXT_WIDTH*width + FIELD_RWIDTH;
 			widget->widgetSize.y = FIELD_HEIGHT;
+			widget->textCorner.y += (FIELD_HEIGHT-TEXT_HEIGHT)/2;
 			}
 			break;
 		case WIDGET_TYPE_SELECT:
@@ -580,10 +606,9 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 			switch(widget->type)
 			{
 			case WIDGET_TYPE_SLIDER:
-				widget->textCorner.x -= (8*scale + SLIDER_TOTAL_WIDTH);
-				break;
 			case WIDGET_TYPE_CHECKBOX:
-				widget->textCorner.x -= (8*scale + CHECKBOX_WIDTH);
+			case WIDGET_TYPE_FIELD:
+				widget->textCorner.x -= (8*scale + widget->widgetSize.x);
 				break;
 			default:
 				break;
@@ -594,10 +619,9 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 			switch(widget->type)
 			{
 			case WIDGET_TYPE_SLIDER:
-				widget->textCorner.x += (8*scale + SLIDER_TOTAL_WIDTH);
-				break;
 			case WIDGET_TYPE_CHECKBOX:
-				widget->textCorner.x += (8*scale + CHECKBOX_WIDTH);
+			case WIDGET_TYPE_FIELD:
+				widget->textCorner.x += (8*scale + widget->widgetSize.x);
 				break;
 			default:
 				break;
@@ -1196,7 +1220,11 @@ void M_InsertField (int key)
 			strcpy (s + cursorpos - 1, s + cursorpos);
 			cursorpos--;
 			if(cursorpos <= widget->field_start)
-				widget->field_start -= (widget->field_width / 2);
+				widget->field_start -= ((widget->field_width+1) / 2);
+			if(cursorpos < 0)
+				cursorpos = 0;
+			if(widget->field_start < 0)
+				widget->field_start = 0;
 		}
 	}
 	else if (key == K_DEL)
@@ -1448,8 +1476,8 @@ void select_strip_from_list(menu_widget_t *widget, const char *striptext)
 
 void select_begin_file_list(menu_widget_t *widget, char *findname)
 {
-	int i, numfiles;
-	char **files;
+//	int i, numfiles;
+//	char **files;
 	extern char **FS_ListFiles( char *, int *, unsigned, unsigned );
 //	static void FreeFileList( char **list, int n );
 
@@ -1673,7 +1701,7 @@ void menu_from_file(menu_screen_t *menu)
 					else if(strstr(token, "inc"))
 						widget->slider_inc = atof(COM_Parse(&buf));
 					// editbox/field options
-					else if(strstr(token, "width"))
+					else if(strstr(token, "width") || strstr(token, "cols"))
 						widget->field_width = atoi(COM_Parse(&buf));
 					else if(strcmp(token, "int") == 0)
 						widget->flags |= WIDGET_FLAG_INT; // jitodo
@@ -1744,14 +1772,13 @@ void M_Menu_f (void)
 	char *menuname;
 	menuname = Cmd_Argv(1);
 
-	if(strcmp(menuname, "pop") == 0)
-	{
+	if(strcmp(menuname, "pop") == 0 || strcmp(menuname, "back") == 0)
 		M_PopMenu();
-	}
+	else if(strcmp(menuname, "off") == 0 || strcmp(menuname, "close") == 0)
+		M_ForceMenuOff();
 	else
 	{
 		menu_screen_t *menu;
-		//Com_Printf("Menu: %s (%d)\n", Cmd_Argv(1), m_menudepth);
 		menu = M_FindMenuScreen(Cmd_Argv(1));
 
 		M_PushMenuScreen(menu);
@@ -1761,9 +1788,7 @@ void M_Menu_f (void)
 void M_Init (void)
 {
 	memset(&m_mouse, 0, sizeof(m_mouse));
-	//strcpy(m_mouse.cursorpic, "cursor");
 	m_mouse.cursorpic = i_cursor;
-
 	Cmd_AddCommand("menu", M_Menu_f);
 }
 
@@ -1771,14 +1796,14 @@ void M_Init (void)
 void refresh_menu_screen(menu_screen_t *menu)
 {
 //	menu_widget_t *widgetnext;
-	menu_widget_t *widget;
+//	menu_widget_t *widget;
 
 	if(!menu)
 		return;
 
-	widget = menu->widget;
+	/*widget = menu->widget;
 	
-	/*while(widget)
+	while(widget)
 	{
 		widgetnext = widget->next;
 		free_widget(widget);
