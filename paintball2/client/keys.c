@@ -27,22 +27,22 @@ key up events are sent even if in console mode
 
 
 #define		MAXCMDLINE	256
-char	key_lines[32][MAXCMDLINE];
-int		key_linepos;
-int		shift_down=false;
-int	anykeydown;
+unsigned char	key_lines[32][MAXCMDLINE]; // jittext
+int			key_linepos;
+int			shift_down=false;
+int			anykeydown;
 
-int		edit_line=0;
-int		history_line=0;
+int			edit_line=0;
+int			history_line=0;
 
-int		key_waiting;
-char	*keybindings[256];
+int			key_waiting;
+unsigned char	*keybindings[256]; // jittext
 qboolean	consolekeys[256];	// if true, can't be rebound while in console
 qboolean	menubound[256];	// if true, can't be rebound while in menu
-int		keyshift[256];		// key to map to if shift held down in console
-int		key_repeats[256];	// if > 1, it is autorepeating
+int			keyshift[256];		// key to map to if shift held down in console
+int			key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
-qboolean	key_insert = true; // pooy
+qboolean	key_insert = true; // pooy / jitmenu
 
 typedef struct
 {
@@ -202,289 +202,63 @@ Key_Console
 Interactive line editing and console scrollback
 ====================
 */
-int CharOffset (char *s, int charcount); // pooy
-#if 0
-void Key_Console (int key)
-{
 
-	switch ( key )
+int KeyPadKey(int key) // jitmenu
+{
+	// jitodo -- check numlock
+	switch (key)
 	{
 	case K_KP_SLASH:
-		key = '/';
+		return '/';
 		break;
 	case K_KP_MINUS:
-		key = '-';
+		return '-';
 		break;
 	case K_KP_PLUS:
-		key = '+';
+		return '+';
 		break;
 	case K_KP_HOME:
-		key = '7';
+		return '7';
 		break;
 	case K_KP_UPARROW:
-		key = '8';
+		return '8';
 		break;
 	case K_KP_PGUP:
-		key = '9';
+		return '9';
 		break;
 	case K_KP_LEFTARROW:
-		key = '4';
+		return '4';
 		break;
 	case K_KP_5:
-		key = '5';
+		return '5';
 		break;
 	case K_KP_RIGHTARROW:
-		key = '6';
+		return '6';
 		break;
 	case K_KP_END:
-		key = '1';
+		return '1';
 		break;
 	case K_KP_DOWNARROW:
-		key = '2';
+		return '2';
 		break;
 	case K_KP_PGDN:
-		key = '3';
+		return '3';
 		break;
 	case K_KP_INS:
-		key = '0';
+		return '0';
 		break;
 	case K_KP_DEL:
-		key = '.';
+		return '.';
 		break;
 	}
 
-	if ( ( toupper( key ) == 'V' && keydown[K_CTRL] ) ||
-		 ( ( ( key == K_INS ) || ( key == K_KP_INS ) ) && keydown[K_SHIFT] ) )
-	{
-		char *cbd;
-		
-		if ( ( cbd = Sys_GetClipboardData() ) != 0 )
-		{
-			int i;
-
-			strtok( cbd, "\n\r\b" );
-
-			i = strlen( cbd );
-			if ( i + key_linepos >= MAXCMDLINE)
-				i= MAXCMDLINE - key_linepos;
-
-			if ( i > 0 )
-			{
-				cbd[i]=0;
-				strcat( key_lines[edit_line], cbd );
-				key_linepos += i;
-			}
-			free( cbd );
-		}
-
-		return;
-	}
-
-	if ( key == 'l' ) 
-	{
-		if ( keydown[K_CTRL] )
-		{
-			Cbuf_AddText ("clear\n");
-			return;
-		}
-	}
-
-	if ( key == K_ENTER || key == K_KP_ENTER )
-	{	// backslash text are commands, else chat
-		if (key_lines[edit_line][1] == '\\' || key_lines[edit_line][1] == '/')
-			Cbuf_AddText (key_lines[edit_line]+2);	// skip the >
-		else
-			Cbuf_AddText (key_lines[edit_line]+1);	// valid command
-
-		Cbuf_AddText ("\n");
-		Com_Printf ("%s\n",key_lines[edit_line]);
-		edit_line = (edit_line + 1) & 31;
-		history_line = edit_line;
-		key_lines[edit_line][0] = ']';
-		key_linepos = 1;
-		if (cls.state == ca_disconnected)
-			SCR_UpdateScreen ();	// force an update, because the command
-									// may take some time
-		return;
-	}
-
-	if (key == K_TAB)
-	{	// command completion
-		CompleteCommand ();
-		return;
-	}
-#if 0
-	if ( ( key == K_BACKSPACE ) || ( key == K_LEFTARROW ) || ( key == K_KP_LEFTARROW ) || ( ( key == 'h' ) && ( keydown[K_CTRL] ) ) )
-	{
-		if (key_linepos > 1)
-			key_linepos--;
-		return;
-	}
-#else // pooy
-	if ( ( key == K_LEFTARROW ) || ( key == K_KP_LEFTARROW ) || ( ( key == 'h' ) && ( keydown[K_CTRL] ) ) )
-	{
-		int charcount;
-		// jump over invisible color sequences
-		charcount = key_linepos;
-		if (charcount > 1)
-			key_linepos = CharOffset (key_lines[edit_line], charcount - 1);
-		return;
-	}
-
-	if ( ( key == K_BACKSPACE ) )
-	{
-		if (key_linepos > 1)
-		{
-			// skip to the end of color sequence
-
-			strcpy (key_lines[edit_line] + key_linepos - 1, key_lines[edit_line] + key_linepos);
-			key_linepos--;
-		}
-
-		return;
-	}
-
-	if ( key == K_DEL )
-	{
-		if (key_linepos < strlen(key_lines[edit_line]))
-			strcpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + 1);
-		return;
-	}
-	
-	if ( key == K_INS )
-	{ // toggle insert mode
-		key_insert = !key_insert;
-		return;
-	}
-
-	if ( key == K_RIGHTARROW )
-	{
-		if (strlen(key_lines[edit_line]) == key_linepos)
-		{
-			if (strlen(key_lines[(edit_line + 31) & 31]) <= key_linepos)
-				return;
-
-			key_lines[edit_line][key_linepos] = key_lines[(edit_line + 31) & 31][key_linepos];
-			key_linepos++;
-			key_lines[edit_line][key_linepos] = 0;
-		}
-		else
-		{
-			int charcount;
-			// jump over invisible color sequences
-			charcount = key_linepos;
-			key_linepos = CharOffset (key_lines[edit_line], charcount + 1);
-		}
-		return;
-	}
-#endif
-
-	if ( ( key == K_UPARROW ) || ( key == K_KP_UPARROW ) ||
-		 ( ( key == 'p' ) && keydown[K_CTRL] ) )
-	{
-		do
-		{
-			history_line = (history_line - 1) & 31;
-		} while (history_line != edit_line
-				&& !key_lines[history_line][1]);
-		if (history_line == edit_line)
-			history_line = (edit_line+1)&31;
-		strcpy(key_lines[edit_line], key_lines[history_line]);
-		key_linepos = strlen(key_lines[edit_line]);
-		return;
-	}
-
-	if ( ( key == K_DOWNARROW ) || ( key == K_KP_DOWNARROW ) ||
-		 ( ( key == 'n' ) && keydown[K_CTRL] ) )
-	{
-		if (history_line == edit_line) return;
-		do
-		{
-			history_line = (history_line + 1) & 31;
-		}
-		while (history_line != edit_line
-			&& !key_lines[history_line][1]);
-		if (history_line == edit_line)
-		{
-			key_lines[edit_line][0] = ']';
-			key_linepos = 1;
-		}
-		else
-		{
-			strcpy(key_lines[edit_line], key_lines[history_line]);
-			key_linepos = strlen(key_lines[edit_line]);
-		}
-		return;
-	}
-
-	if (key == K_PGUP || key == K_KP_PGUP || key == K_MWHEELUP) // jitscroll
-	{
-		con.display -= 2;
-		return;
-	}
-
-	if (key == K_PGDN || key == K_KP_PGDN || key == K_MWHEELDOWN) // jitscroll
-	{
-		con.display += 2;
-		if (con.display > con.current)
-			con.display = con.current;
-		return;
-	}
-
-	if (key == K_HOME || key == K_KP_HOME )
-	{
-		con.display = con.current - con.totallines + 10;
-		return;
-	}
-
-	if (key == K_END || key == K_KP_END )
-	{
-		con.display = con.current;
-		return;
-	}
-	
-	if (key < 32 || key > 127)
-		return;	// non printable
-		
-	if (key_linepos < MAXCMDLINE-1)
-	{
-		key_lines[edit_line][key_linepos] = key;
-		key_linepos++;
-		key_lines[edit_line][key_linepos] = 0;
-	}
-
-	// ===
-	// pooy:
-		if (key_linepos < MAXCMDLINE-1)
-	{
-		int i;
-
-		// check insert mode
-		if (key_insert)
-		{
-			// can't do strcpy to move string to right
-			i = strlen(key_lines[edit_line]) - 1;
-
-			if (i == 254) 
-				i--;
-
-			for (; i >= key_linepos; i--)
-				key_lines[edit_line][i + 1] = key_lines[edit_line][i];
-		}
-
-		// only null terminate if at the end
-		i = key_lines[edit_line][key_linepos];
-		key_lines[edit_line][key_linepos] = key;
-		key_linepos++;
-		if (!i)
-			key_lines[edit_line][key_linepos] = 0;	
-	}
-	// ===
+	return key;
 }
-#else
+
 void Key_Console (int key) // pooy -- rewritten for text insert mode.
 {
-	switch ( key )
+	key = KeyPadKey(key); // jit
+/*	switch ( key )
 	{
 	case K_KP_SLASH:
 		key = '/';
@@ -528,7 +302,7 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 	case K_KP_DEL:
 		key = '.';
 		break;
-	}
+	}*/
 
 	if ( ( toupper( key ) == 'V' && keydown[K_CTRL] ) ||
 		 ( ( ( key == K_INS ) || ( key == K_KP_INS ) ) && keydown[K_SHIFT] ) )
@@ -741,7 +515,8 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 		if (key_insert)
 		{
 			// can't do strcpy to move string to right
-			i = strlen(key_lines[edit_line]) - 1;
+			//i = strlen(key_lines[edit_line]) - 1;
+			i = strlen(key_lines[edit_line]);
 
 			if (i == 254) 
 				i--;
@@ -758,7 +533,6 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 			key_lines[edit_line][key_linepos] = 0;	
 	}
 }
-#endif
 
 //============================================================================
 

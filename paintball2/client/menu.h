@@ -27,6 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "qmenu.h"
 
+#define TEXT_WIDTH (8*scale)
+#define TEXT_HEIGHT (8*scale)
 
 #define SLIDER_BUTTON_WIDTH_UNSCALED	8
 #define SLIDER_BUTTON_HEIGHT_UNSCALED	8
@@ -37,17 +39,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SLIDER_TOTAL_WIDTH_UNSCALED		((SLIDER_BUTTON_WIDTH_UNSCALED*2)+SLIDER_TRAY_WIDTH_UNSCALED)
 #define SLIDER_TOTAL_HEIGHT_UNSCALED	8
 
-#define SLIDER_BUTTON_WIDTH		SLIDER_BUTTON_WIDTH_UNSCALED*scale
-#define SLIDER_BUTTON_HEIGHT	SLIDER_BUTTON_HEIGHT_UNSCALED*scale
-#define SLIDER_TRAY_WIDTH		SLIDER_TRAY_WIDTH_UNSCALED	*scale
-#define SLIDER_TRAY_HEIGHT		SLIDER_TRAY_HEIGHT_UNSCALED	*scale
-#define SLIDER_KNOB_WIDTH		SLIDER_KNOB_WIDTH_UNSCALED	*scale
-#define SLIDER_KNOB_HEIGHT		SLIDER_KNOB_HEIGHT_UNSCALED	*scale
-#define SLIDER_TOTAL_WIDTH		SLIDER_TOTAL_WIDTH_UNSCALED	*scale
-#define SLIDER_TOTAL_HEIGHT		SLIDER_TOTAL_HEIGHT_UNSCALED*scale
+#define SLIDER_BUTTON_WIDTH		(SLIDER_BUTTON_WIDTH_UNSCALED	*scale)
+#define SLIDER_BUTTON_HEIGHT	(SLIDER_BUTTON_HEIGHT_UNSCALED	*scale)
+#define SLIDER_TRAY_WIDTH		(SLIDER_TRAY_WIDTH_UNSCALED		*scale)
+#define SLIDER_TRAY_HEIGHT		(SLIDER_TRAY_HEIGHT_UNSCALED	*scale)
+#define SLIDER_KNOB_WIDTH		(SLIDER_KNOB_WIDTH_UNSCALED		*scale)
+#define SLIDER_KNOB_HEIGHT		(SLIDER_KNOB_HEIGHT_UNSCALED	*scale)
+#define SLIDER_TOTAL_WIDTH		(SLIDER_TOTAL_WIDTH_UNSCALED	*scale)
+#define SLIDER_TOTAL_HEIGHT		(SLIDER_TOTAL_HEIGHT_UNSCALED	*scale)
 
-#define CURSOR_HEIGHT 16*scale
-#define CURSOR_WIDTH 16*scale
+#define CHECKBOX_WIDTH_UNSCALED			8
+#define CHECKBOX_HEIGHT_UNSCALED		8
+
+#define CHECKBOX_WIDTH			(CHECKBOX_WIDTH_UNSCALED	*scale)
+#define CHECKBOX_HEIGHT			(CHECKBOX_HEIGHT_UNSCALED	*scale)
+
+#define CURSOR_HEIGHT	(16*scale)
+#define CURSOR_WIDTH	(16*scale)
+
+#define FIELD_HEIGHT	(12*scale)
+#define FIELD_LWIDTH	(10*scale)
+#define FIELD_RWIDTH	(10*scale)
 
 typedef enum {
 	WIDGET_TYPE_UNKNOWN		= 0,
@@ -55,7 +67,8 @@ typedef enum {
 	WIDGET_TYPE_SLIDER		= 2,
 	WIDGET_TYPE_CHECKBOX	= 3,
 	WIDGET_TYPE_DROPDOWN	= 4,
-	WIDGET_TYPE_TEXT		= 5
+	WIDGET_TYPE_TEXT		= 5,
+	WIDGET_TYPE_FIELD		= 6
 } WIDGET_TYPE;
 
 typedef enum {
@@ -95,7 +108,7 @@ typedef struct _RECT {
 typedef struct MENU_MOUSE_S {
 	int x;
 	int y;
-	char cursorpic[32];
+	image_t *cursorpic;
 } menu_mouse_t;
 
 typedef enum {
@@ -107,6 +120,7 @@ typedef enum {
 
 typedef struct MENU_WIDGET_S {
 	WIDGET_TYPE type;
+	int flags;			// for things like numbersonly
 	char *command;		// command executed when widget activated
 	char *cvar;			// cvar widget reads and/or modifies
 	int x;				// position from 0 (left) to 320 (right)
@@ -115,6 +129,7 @@ typedef struct MENU_WIDGET_S {
 	WIDGET_VALIGN valign;	// vertical alignment relative to x, y coords
 	char *text;			// text displayed by widget
 	char *hovertext;	// text when mouse over widget
+	char *selectedtext;	// text when mouse clicked on widget
 // todo: should probably revert back to text names because vid_restart breaks pics...
 	image_t *pic;		// image displayed by widget
  	int picwidth;		// width to scale image to
@@ -122,14 +137,21 @@ typedef struct MENU_WIDGET_S {
 	image_t *hoverpic;	// image displayed when mouse over widget
 	int hoverpicwidth;
 	int hoverpicheight;
+	image_t *selectedpic;// image displayed when mouse clicked on widget
 	qboolean enabled;	// for greying out widgets
 	qboolean hover;		// mouse is over widget
 	qboolean selected;	// widget has 'focus'
 	SLIDER_SELECTED slider_hover; // which part of the slider is the mouse over
 	SLIDER_SELECTED slider_selected; // which part of the slider is the mouse clicked on?
-	float slider_min;
-	float slider_max;
-	float slider_inc;
+
+	float	slider_min;
+	float	slider_max;
+	float	slider_inc;
+
+	int		field_width;
+	int		field_start;
+	int		field_cursorpos;
+
 // Drawing Information
 	POINT picCorner;
 	POINT picSize;
@@ -142,11 +164,17 @@ typedef struct MENU_WIDGET_S {
 typedef struct MENU_SCREEN_S {
 	char *name;
 	menu_widget_t *widget;
+	menu_widget_t *selected_widget;
+	menu_widget_t *hover_widget;
 	struct MENU_SCREEN_S *next;
 } menu_screen_t;
 
 extern cvar_t *cl_hudscale;
 
+#define MENU_SOUND_OPEN S_StartLocalSound("misc/menu1.wav");
+#define MENU_SOUND_SELECT S_StartLocalSound("misc/menu2.wav");
+#define MENU_SOUND_CLOSE S_StartLocalSound("misc/menu3.wav");
+#define MENU_SOUND_SLIDER S_StartLocalSound("misc/menu4.wav");
 
 #endif
 

@@ -568,6 +568,8 @@ void M_MouseMove(int mx, int my); // jitmenu
 void M_RefreshMenu(); // jitmenu
 qboolean M_MenuActive(void); // jitmenu
 
+int strlen_noformat(const unsigned char *s);
+
 //
 // cl_inv.c
 //
@@ -605,6 +607,24 @@ extern image_t		*i_slider1th;
 extern image_t		*i_slider1b;
 extern image_t		*i_slider1bh;
 extern image_t		*i_slider1bs;
+extern image_t		*i_checkbox1u;
+extern image_t		*i_checkbox1uh;
+extern image_t		*i_checkbox1us;
+extern image_t		*i_checkbox1c;
+extern image_t		*i_checkbox1ch;
+extern image_t		*i_checkbox1cs;
+extern image_t		*i_field1l;
+extern image_t		*i_field1lh;
+extern image_t		*i_field1ls;
+extern image_t		*i_field1m;
+extern image_t		*i_field1mh;
+extern image_t		*i_field1ms;
+extern image_t		*i_field1r;
+extern image_t		*i_field1rh;
+extern image_t		*i_field1rs;
+
+extern image_t		*i_cursor;
+extern image_t		*i_cursor_text;
 
 extern int hudscale; // jithudscale
 

@@ -45,7 +45,7 @@ void Draw_StringLen (int x, int y, char *str, int len) // pooy
 	str[len] = saved_byte;
 }
 
-int CharOffset (char *s, int charcount) // pooy
+int CharOffset (unsigned char *s, int charcount) // pooy
 {
 	char *start = s;
 
@@ -54,7 +54,56 @@ int CharOffset (char *s, int charcount) // pooy
 		charcount--;
 	}
 
-	return s - start;	
+	return s - start;
+
+
+/* jit (this doesn't work!!!)
+	char *start = s;
+
+	while(*s && charcount)
+	{
+		if(*(s+1) && (*s == CHAR_UNDERLINE || *s == CHAR_ITALICS))
+		{
+			// don't count character
+		}
+		else if(*(s+1) && *s == CHAR_COLOR)
+		{
+			s++; // skip two characters.
+		}
+		else
+			charcount--;
+
+		s++;
+	}
+
+	return s - start;
+/*
+	// jittext / jitconsole:
+	char temp;
+	int offset;
+
+	temp = s[charcount];
+	s[charcount] = 0;
+	offset = strlen_noformat(s);
+	s[charcount] = temp;
+
+	return offset;*/
+}
+
+int Con_GetLinePosNoFormat() // jittext / jitconsole
+{
+	char temp;
+	int colorlinepos;
+
+	temp = key_lines[edit_line][key_linepos];
+
+	key_lines[edit_line][key_linepos] = 0;
+
+	colorlinepos = strlen_noformat(key_lines[edit_line]);
+
+	key_lines[edit_line][key_linepos] = temp;
+
+	return colorlinepos;
 }
 
 void DrawAltString (int x, int y, char *s)
@@ -517,6 +566,8 @@ DRAWING
 */
 
 
+
+
 /*
 ================
 Con_DrawInput
@@ -524,45 +575,17 @@ Con_DrawInput
 The input line scrolls horizontally if typing goes beyond the right edge
 ================
 */
-#if 0
-void Con_DrawInput (void)
+void Con_DrawCursor(int x, int y) // jittext / jitmenu
 {
-//	int		y;
-	int		i;
-	char	*text;
 
-	if (cls.key_dest == key_menu)
-		return;
-	if (cls.key_dest != key_console && cls.state == ca_active)
-		return;		// don't draw anything (always draw if not active)
-
-	text = key_lines[edit_line];
-	
-// add the cursor frame
-	text[key_linepos] = 10+((int)(cls.realtime>>8)&1);
-	
-// fill out remainder with spaces
-	for (i=key_linepos+1 ; i< con.linewidth ; i++)
-		text[i] = ' ';
-		
-//	prestep if horizontally scrolling
-	if (key_linepos >= con.linewidth)
-		text += 1 + key_linepos - con.linewidth;
-		
-// draw it
-	//y = con.vislines-16;
-
-	for (i=0 ; i<con.linewidth ; i++)
-		re.DrawChar ( (i*hudscale+1)<<3, con.vislines - 22*hudscale, text[i]); // jithudscale
-
-// remove cursor
-	key_lines[edit_line][key_linepos] = 0;
+	if ((int)(cls.realtime>>8)&1)
+		//re.DrawChar ( 8+colorlinepos*8, con.vislines-18, key_insert ? '_' : 11);
+		re.DrawChar(x, y + hudscale, key_insert ? '_' : 11);
 }
-#else
-void Con_DrawInput (void) // rewritten by pooy, jitodo, hudscale
+
+void Con_DrawInput (void) // pooy, jittext
 {
 	char	*text;
-	extern qboolean	key_insert;
 	int		colorlinepos;
 	int		byteofs;
 	int		bytelen;
@@ -576,28 +599,25 @@ void Con_DrawInput (void) // rewritten by pooy, jitodo, hudscale
 	text = key_lines[edit_line];
 
 	// convert byte offset to visible character count
-	colorlinepos = key_linepos;
+	colorlinepos = Con_GetLinePosNoFormat();
+	//colorlinepos = key_linepos;
 
 	// prestep if horizontally scrolling
 	if (colorlinepos >= con.linewidth + 1)
 	{
-		byteofs = CharOffset (text, colorlinepos - con.linewidth);
+		byteofs = CharOffset(text, colorlinepos - con.linewidth);
 		text += byteofs;
 		colorlinepos = con.linewidth;
 	}
 
 	// draw it
-	bytelen = CharOffset (text, con.linewidth);	
+	bytelen = CharOffset(text, con.linewidth);	
 		
 	Draw_StringLen(8*hudscale, con.vislines-22*hudscale, text, bytelen);
 
 	// add the cursor frame
-	if ((int)(cls.realtime>>8)&1)
-		//re.DrawChar ( 8+colorlinepos*8, con.vislines-18, key_insert ? '_' : 11);
-		re.DrawChar(8*hudscale+colorlinepos*8*hudscale, 
-			con.vislines-21*hudscale, key_insert ? '_' : 11);
+	Con_DrawCursor(8*hudscale+colorlinepos*8*hudscale, con.vislines-22*hudscale);
 }
-#endif
 
 
 /*

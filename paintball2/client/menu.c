@@ -35,6 +35,12 @@ menu_screen_t	*m_menu_screens[MAX_MENU_SCREENS];
 menu_mouse_t	m_mouse; // jitmouse
 int				scale;
 
+
+qboolean widget_is_selectable(menu_widget_t *widget)
+{
+	return widget->cvar || widget->command;
+}
+
 void M_ForceMenuOff (void)
 {
 //	m_drawfunc = 0;
@@ -53,11 +59,13 @@ void M_Menu_Main_f (void)
 
 /*
    strlen_noformat
-   Returns the length of strings ignoring formatting (underline, etc)
+   Returns the length of strings ignoring formatting (underlines, colors, etc)
 */
-int strlen_noformat(const char *s)
+int strlen_noformat(const unsigned char *s)
 {
 	int count = 0;
+	if(!s)
+		return 0;
 
 	while(*s)
 	{
@@ -139,6 +147,23 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 			widget->picSize.x = SLIDER_TOTAL_WIDTH;
 			widget->picSize.y = SLIDER_TOTAL_HEIGHT;
 		}
+		else if(widget->type == WIDGET_TYPE_CHECKBOX)
+		{
+			widget->picSize.x = CHECKBOX_WIDTH;
+			widget->picSize.y = CHECKBOX_HEIGHT;
+		}
+		else if(widget->type == WIDGET_TYPE_FIELD)
+		{
+			int width;
+
+			width = widget->field_width - 2;
+			
+			if(width < 1)
+				width = 1;
+
+			widget->picSize.x = FIELD_LWIDTH + TEXT_WIDTH*width + FIELD_RWIDTH;
+			widget->picSize.y = FIELD_HEIGHT;
+		}
 
 		switch(widget->halign)
 		{
@@ -149,8 +174,31 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 		case WIDGET_HALIGN_RIGHT:
 			widget->picCorner.x -= widget->picSize.x;
 			widget->textCorner.x -= (strlen_noformat(text)*8*scale);
+			switch(widget->type)
+			{
+			case WIDGET_TYPE_SLIDER:
+				widget->textCorner.x -= (8*scale + SLIDER_TOTAL_WIDTH);
+				break;
+			case WIDGET_TYPE_CHECKBOX:
+				widget->textCorner.x -= (8*scale + CHECKBOX_WIDTH);
+				break;
+			default:
+				break;
+			}
 			break;
+		case WIDGET_HALIGN_LEFT:
 		default:
+			switch(widget->type)
+			{
+			case WIDGET_TYPE_SLIDER:
+				widget->textCorner.x += (8*scale + SLIDER_TOTAL_WIDTH);
+				break;
+			case WIDGET_TYPE_CHECKBOX:
+				widget->textCorner.x += (8*scale + CHECKBOX_WIDTH);
+				break;
+			default:
+				break;
+			}
 			break;
 		}
 
@@ -173,7 +221,7 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 		widget->mouseBoundaries.right = -0x0FFFFFFF;
 		widget->mouseBoundaries.top = 0x0FFFFFFF;
 
-		if (pic)
+		if (pic || widget->type == WIDGET_TYPE_CHECKBOX)
 		{
 			widget->mouseBoundaries.left = widget->picCorner.x;
 			widget->mouseBoundaries.right = widget->picCorner.x + widget->picSize.x;
@@ -196,7 +244,7 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 				widget->mouseBoundaries.bottom = widget->textCorner.y + widget->textSize.y;
 		}
 
-		if(widget->type == WIDGET_TYPE_SLIDER)
+		if(widget->type == WIDGET_TYPE_SLIDER || widget->type == WIDGET_TYPE_FIELD)
 		{
 			widget->mouseBoundaries.left = widget->picCorner.x;
 			widget->mouseBoundaries.right = widget->picCorner.x + widget->picSize.x;
@@ -216,7 +264,7 @@ menu_widget_t* M_FindNextEntryUnderCursor(menu_screen_t* menu, MENU_ACTION actio
 	{
 		M_UpdateDrawingInformation(current);
 
-		if ((current->cvar || current->command) &&
+		if (widget_is_selectable(current) &&
 			m_mouse.x > current->mouseBoundaries.left &&
 			m_mouse.x < current->mouseBoundaries.right &&
 			m_mouse.y < current->mouseBoundaries.bottom &&
@@ -262,8 +310,6 @@ void M_HilightSlider(menu_widget_t *widget, qboolean selected)
 			widget->slider_selected = SLIDER_SELECTED_TRAY;
 		else
 			widget->slider_hover = SLIDER_SELECTED_TRAY;
-
-		// todo: slider knob
 	}
 	// right button:
 	else
@@ -290,9 +336,11 @@ void M_UpdateSlider(menu_widget_t *widget)
 	switch(widget->slider_selected)
 	{
 	case SLIDER_SELECTED_LEFTARROW:
+		MENU_SOUND_SLIDER;
 		value -= widget->slider_inc;
 		break;
 	case SLIDER_SELECTED_RIGHTARROW:
+		MENU_SOUND_SLIDER;
 		value += widget->slider_inc;
 		break;
 	case SLIDER_SELECTED_TRAY:
@@ -300,7 +348,7 @@ void M_UpdateSlider(menu_widget_t *widget)
 		value = value * (widget->slider_max - widget->slider_min) + widget->slider_min;
 		break;
 	case SLIDER_SELECTED_KNOB:
-		// todo
+
 		break;
 	default:
 		break;
@@ -327,9 +375,240 @@ void M_UpdateSlider(menu_widget_t *widget)
 	// todo: may not want to set value immediately (video mode change) -- need temp variables.
 }
 
+void toggle_checkbox(menu_widget_t *widget)
+{
+	if(widget->cvar)
+	{
+		if(Cvar_Get(widget->cvar, "0", CVAR_ARCHIVE)->value)
+			Cvar_SetValue(widget->cvar, 0.0f);
+		else
+			Cvar_SetValue(widget->cvar, 1.0f);	
+	}
+}
+
+void M_HilightNextWidget(menu_screen_t *menu)
+{
+	menu_widget_t *widget;
+
+	widget = menu->widget;
+
+	// find the hilighted widget
+	while(widget && !widget->selected && !widget->hover)
+		widget = widget->next;
+
+	// nothing hilighted, start with the first one on the list
+	// that's selectable
+	if(!widget)
+	{
+		widget = menu->widget;
+		while(widget && !widget_is_selectable(widget))
+			widget = widget->next;
+
+		if(widget)
+		{
+			widget->hover = true;
+			MENU_SOUND_SELECT;
+		}
+	}
+	else
+	{
+		widget->hover = false;
+		widget->selected = false;
+
+		widget = widget->next;
+		if(!widget)
+			widget = menu->widget;
+		while(!widget_is_selectable(widget))
+		{
+			widget = widget->next;
+			if(!widget)
+				widget = menu->widget;
+		}
+
+		widget->hover = true;
+		MENU_SOUND_SELECT;
+	}
+}
+
+void M_HilightPreviousWidget(menu_screen_t *menu)
+{
+	menu_widget_t *widget, *oldwidget, *prevwidget;
+
+	widget = menu->widget;
+
+	// find the hilighted widget
+	while(widget && !widget->selected && !widget->hover)
+		widget = widget->next;
+
+	// nothing hilighted, start with the first one on the list
+	// that's selectable
+	if(!widget)
+	{
+		widget = menu->widget;
+		while(widget && !widget_is_selectable(widget))
+			widget = widget->next;
+
+		if(widget)
+		{
+			MENU_SOUND_SELECT;
+			widget->hover = true;
+		}
+	}
+	// otherwise find the previous selectable widget
+	else
+	{
+		widget->hover = false;
+		widget->selected = false;
+		oldwidget = widget;
+
+		widget = widget->next;
+		if(!widget)
+			widget = menu->widget;
+		while(widget != oldwidget)
+		{
+			if(widget_is_selectable(widget))
+				prevwidget = widget;
+
+			widget = widget->next;
+			if(!widget)
+				widget = menu->widget;
+		}
+
+		prevwidget->hover = true;
+		MENU_SOUND_SELECT;
+	}
+}
+
+void field_adjustCursor(menu_widget_t *widget)
+{
+	int pos, string_len=0;
+	
+	pos = widget->field_cursorpos;
+
+	// jitodo -- compensate for color formatting
+	if(widget->cvar)
+		string_len = strlen(Cvar_Get(widget->cvar, "", CVAR_ARCHIVE)->string);
+
+	if(pos < 0)
+		pos = 0;
+
+	if(pos < widget->field_start)
+		widget->field_start = pos;
+
+	if(pos > string_len)
+		pos = string_len;
+
+	if(pos >= widget->field_width + widget->field_start)
+		widget->field_start = pos - widget->field_width + 1;
+
+	widget->field_cursorpos = pos;
+}
+
+
+void M_AdjustWidget(menu_screen_t *menu, int direction, qboolean keydown)
+{
+	menu_widget_t *widget;
+
+	// find an active widget, if there is one:
+	for(widget=menu->widget; widget && !widget->hover && !widget->selected; widget = widget->next);
+
+	if(widget)
+	{
+		switch(widget->type)
+		{
+		case WIDGET_TYPE_SLIDER:
+			if(keydown)
+			{
+				if(direction < 0)
+					widget->slider_selected = SLIDER_SELECTED_LEFTARROW;
+				else
+					widget->slider_selected = SLIDER_SELECTED_RIGHTARROW;
+			}
+			else
+				widget->slider_selected = SLIDER_SELECTED_NONE;
+			M_UpdateSlider(widget);
+			break;
+		case WIDGET_TYPE_FIELD:
+			if(keydown)
+			{
+				widget->field_cursorpos += direction;
+				field_adjustCursor(widget);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+void field_activate(menu_widget_t *widget)
+{
+	widget->field_cursorpos = (m_mouse.x - widget->picCorner.x)/(TEXT_WIDTH) + widget->field_start;
+	field_adjustCursor(widget);
+}
+
+void widget_execute(menu_widget_t *widget)
+{
+	if(widget->selected)
+	{
+		//MENU_SOUND_OPEN;
+		if(widget->command)
+		{
+			Cbuf_AddText(widget->command);
+			Cbuf_AddText("\n");
+		}
+		switch(widget->type)
+		{
+		case WIDGET_TYPE_SLIDER:
+			M_UpdateSlider(widget);
+			widget->selected = false;
+			break;
+		case WIDGET_TYPE_CHECKBOX:
+			toggle_checkbox(widget);
+			widget->selected = false;
+			break;
+		case WIDGET_TYPE_FIELD:
+			widget->selected = true;
+			field_activate(widget);
+			break;
+		default:
+			break;
+		}
+
+		widget->hover = true;
+	}
+}
+
+
+void M_KBAction(menu_screen_t *menu, MENU_ACTION action)
+{
+	menu_widget_t *widget;
+
+	widget = menu->widget;
+
+	while(widget && !widget->hover && !widget->selected)
+		widget = widget->next;
+
+	if(widget)
+	{
+		switch(action)
+		{
+		case M_ACTION_SELECT:
+			widget->selected = true;
+			break;
+		case M_ACTION_EXECUTE:
+			widget_execute(widget);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 {
 	menu_widget_t* newSelection=NULL;
+	m_mouse.cursorpic = i_cursor;
 
 	if (!menu)
 		return false;
@@ -340,38 +619,40 @@ qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 		switch (action)
 		{
 		case M_ACTION_HILIGHT:
-			if(newSelection->type == WIDGET_TYPE_SLIDER)
+			switch (newSelection->type)
 			{
+			case WIDGET_TYPE_SLIDER:
 				M_HilightSlider(newSelection, newSelection->selected);
 				if(newSelection->slider_selected == SLIDER_SELECTED_TRAY)
 					M_UpdateSlider(newSelection);
+				break;
+			case WIDGET_TYPE_FIELD:
+				m_mouse.cursorpic = i_cursor_text;
+				break;
+			default:
+				break;
 			}
+			
 			newSelection->hover = true;
 			break;
 		case M_ACTION_SELECT:
-			if(newSelection->type == WIDGET_TYPE_SLIDER)
+			switch(newSelection->type)
 			{
+			case WIDGET_TYPE_SLIDER:
 				M_HilightSlider(newSelection, true);
 				if(newSelection->slider_selected == SLIDER_SELECTED_TRAY)
 					M_UpdateSlider(newSelection);
+				break;
+			case WIDGET_TYPE_FIELD:
+				m_mouse.cursorpic = i_cursor_text;
+				break;
+			default:
+				break;
 			}
 			newSelection->selected = true;
 			break;
 		case M_ACTION_EXECUTE:
-			S_StartLocalSound("misc/menu2.wav");
-
-			if(newSelection->command)
-			{
-				Cbuf_AddText(newSelection->command);
-				Cbuf_AddText("\n");
-			}
-			if(newSelection->type == WIDGET_TYPE_SLIDER)
-			{
-				M_UpdateSlider(newSelection);
-			}
-
-			newSelection->selected = false;
-			newSelection->hover = true;
+			widget_execute(newSelection);
 			break;
 		case M_ACTION_NONE:
 		default:
@@ -384,9 +665,9 @@ qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 }
 
 
-void M_PushMenuScreen(menu_screen_t *menu) // jitodo
+void M_PushMenuScreen(menu_screen_t *menu)
 {
-	S_StartLocalSound("misc/menu1.wav");
+	MENU_SOUND_OPEN;
 	if(m_menudepth < MAX_MENU_SCREENS)
 	{
 		m_menu_screens[m_menudepth] = menu;
@@ -397,7 +678,7 @@ void M_PushMenuScreen(menu_screen_t *menu) // jitodo
 
 void M_PopMenu (void)
 {
-	S_StartLocalSound("misc/menu3.wav");
+	MENU_SOUND_CLOSE;
 	if (m_menudepth < 1)
 		//Com_Error (ERR_FATAL, "M_PopMenu: depth < 1");
 		m_menudepth = 1;
@@ -410,18 +691,157 @@ void M_PopMenu (void)
 		M_ForceMenuOff ();
 }
 
+// find the first widget that is selected or hilighted and return it
+// otherwise return null.
+menu_widget_t *M_GetActiveWidget(menu_screen_t *menu)
+{
+	menu_widget_t *widget;
+
+	if(!menu)
+		menu = m_menu_screens[m_menudepth-1];
+
+	for(widget=menu->widget; widget && !widget->hover && !widget->selected; widget = widget->next);
+
+	return widget;
+}
+
+
+void M_InsertField (int key)
+{
+	char s[256];
+	menu_widget_t *widget;
+	int cursorpos, maxlength;//, start;
+
+	widget = M_GetActiveWidget(NULL);
+
+	if (!widget || widget->type != WIDGET_TYPE_FIELD || !widget->cvar)
+		return;
+
+	strcpy(s, Cvar_Get(widget->cvar, "", CVAR_ARCHIVE)->string);
+	cursorpos = widget->field_cursorpos;
+	maxlength = widget->field_width;
+	//start = widget->field_start;
+
+	key = KeyPadKey(key);
+
+
+	if ((toupper(key) == 'V' && keydown[K_CTRL]) ||
+		 (((key == K_INS) || (key == K_KP_INS)) && keydown[K_SHIFT]))
+	{
+		char *cbd;
+		
+		if ((cbd = Sys_GetClipboardData()) != 0)
+		{
+			int i;
+
+			strtok(cbd, "\n\r\b");
+
+			i = strlen(cbd);
+			if (i + strlen(s) >= sizeof(s)-1)
+				i= sizeof(s) - 1 - strlen(s);
+
+			if (i > 0)
+			{
+				cbd[i] = 0;
+				strcat(s, cbd);
+				cursorpos += i;
+			}
+			free(cbd);
+		}
+	}
+	else if ((key == K_BACKSPACE))
+	{
+		if (cursorpos > 0)
+		{
+			// skip to the end of color sequence
+
+			strcpy (s + cursorpos - 1, s + cursorpos);
+			cursorpos--;
+		}
+	}
+	else if (key == K_DEL)
+	{
+		if (cursorpos < strlen(s))
+			strcpy(s + cursorpos, s + cursorpos + 1);
+	}
+	else if (key == K_INS)
+	{
+		key_insert = !key_insert;
+	}
+	else if (key == K_HOME)
+	{
+		cursorpos = 0;
+	}
+	else if (key == K_END)
+	{
+		cursorpos = strlen(s);
+	}
+	else if(key > 32 && key < 127)
+	{
+		// color codes
+		if(keydown[K_CTRL]) // jitconsole / jittext
+		{
+			if(toupper(key) == 'K')
+				key = CHAR_COLOR;
+			else if(toupper(key) == 'U')
+				key = CHAR_UNDERLINE;
+			else if(toupper(key) == 'I')
+				key = CHAR_ITALICS;
+		}
+
+		// normal text
+		if (cursorpos < sizeof(s)-1)
+		{
+			int i;
+
+			// check insert mode
+			if (key_insert)
+			{
+				// can't do strcpy to move string to right
+				i = strlen(s);
+
+				if (i == 254) 
+					i--;
+
+				for (; i >= cursorpos; i--)
+					s[i + 1] = s[i];
+			}
+
+			// only null terminate if at the end
+			i = s[cursorpos];
+			s[cursorpos] = key;
+			cursorpos++;
+			if (!i)
+				s[cursorpos] = 0;	
+		}
+	}
+
+	// put updated values in widget's cvar
+	widget->field_cursorpos = cursorpos;
+	Cvar_Set(widget->cvar, s);
+	field_adjustCursor(widget);
+}
 
 void M_Keyup (int key)
 {
 	switch (key) 
 	{
 	case K_ENTER:
+	case K_KP_ENTER:
+		M_KBAction(m_menu_screens[m_menudepth-1], M_ACTION_EXECUTE);
+		break;
 	case K_MOUSE1:
 		M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_EXECUTE);
-		key = K_ENTER;
+		//key = K_ENTER;
 		break;
-	case K_MOUSEMOVE:
-		M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_HILIGHT);
+//	case K_MOUSEMOVE:
+//		M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_HILIGHT);
+//		break;
+	case K_RIGHTARROW:
+		M_AdjustWidget(m_menu_screens[m_menudepth-1], 1, false);
+		break;
+	case K_LEFTARROW:
+		M_AdjustWidget(m_menu_screens[m_menudepth-1], -1, false);
 		break;
 	default:
 		break;
@@ -442,6 +862,9 @@ void M_Keydown (int key)
 		M_PopMenu();
 		break;
 	case K_ENTER:
+	case K_KP_ENTER:
+		M_KBAction(m_menu_screens[m_menudepth-1], M_ACTION_SELECT);
+		break;
 	case K_MOUSE1:
 		M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_SELECT);
 		key = K_ENTER;
@@ -449,11 +872,23 @@ void M_Keydown (int key)
 	case K_MOUSEMOVE:
 		M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_HILIGHT);
 		break;
+	case K_DOWNARROW:
+		M_HilightNextWidget(m_menu_screens[m_menudepth-1]);
+		break;
+	case K_UPARROW:
+		M_HilightPreviousWidget(m_menu_screens[m_menudepth-1]);
+		break;
+	case K_RIGHTARROW:
+		M_AdjustWidget(m_menu_screens[m_menudepth-1], 1, true);
+		break;
+	case K_LEFTARROW:
+		M_AdjustWidget(m_menu_screens[m_menudepth-1], -1, true);
+		break;
 	default:
+		// insert letter into field, if one is active
+		M_InsertField(key);
 		break;
 	};
-			
-//*/
 }
 // -- ARTHUR
 
@@ -543,15 +978,16 @@ menu_screen_t* M_GetNewMenuScreen(const char *menu_name)
 	return menu;
 }
 
-menu_screen_t* M_ErrorMenu(const char *text)
+void M_ErrorMenu(menu_screen_t* menu, const char *text)
 {
-	menu_screen_t *menu;
-	
-	menu = M_GetNewMenuScreen(text);
-	menu->widget = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, text,
-			NULL, NULL, 60, 120, true);
-
-	return menu;
+	char err[16];
+	sprintf(err, "%c%c%cERROR:", CHAR_UNDERLINE, CHAR_COLOR, 'A');
+	menu->widget = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, err,
+			NULL, NULL, 60, 116, true);
+	menu->widget->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, text,
+			NULL, NULL, 60, 124, true);
+	menu->widget->next->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, "Back",
+			NULL, "menu pop", 8, 224, true);
 }
 
 int M_WidgetGetType(const char *s)
@@ -566,6 +1002,8 @@ int M_WidgetGetType(const char *s)
 		return WIDGET_TYPE_CHECKBOX;
 	if(!strcmp(s, "dropdown"))
 		return WIDGET_TYPE_DROPDOWN;
+	if(!strcmp(s, "editbox") || !strcmp(s, "field"))
+		return WIDGET_TYPE_FIELD;
 
 	return WIDGET_TYPE_UNKNOWN;
 }
@@ -600,7 +1038,7 @@ char *text_copy(const char *in)
 	return out;
 }
 
-menu_screen_t* menu_from_file(menu_screen_t *menu)
+void menu_from_file(menu_screen_t *menu)
 {
 	char menu_filename[MAX_QPATH];
 	char *buf;
@@ -661,33 +1099,55 @@ menu_screen_t* menu_from_file(menu_screen_t *menu)
 						widget->text = text_copy(COM_Parse(&buf));
 					else if(strcmp(token, "hovertext") == 0)
 						widget->hovertext = text_copy(COM_Parse(&buf));
+					else if(strcmp(token, "selectedtext") == 0)
+						widget->selectedtext = text_copy(COM_Parse(&buf));
 					else if(strcmp(token, "cvar") == 0)
 						widget->cvar = text_copy(COM_Parse(&buf));
 					else if(strcmp(token, "command") == 0 || strcmp(token, "cmd") == 0)
 						widget->command = text_copy(COM_Parse(&buf));
 					else if(strcmp(token, "pic") == 0)
+					{
 						widget->pic = re.DrawFindPic(COM_Parse(&buf));
+						// default to double resolution, since it's too blocky otherwise.
+						if(!widget->picwidth)
+							widget->picwidth = widget->pic->width / 2.0f;
+						if(!widget->picheight)
+							widget->picheight = widget->pic->height / 2.0f;
+					}
 					else if(strcmp(token, "picwidth") == 0)
 						widget->picwidth = atoi(COM_Parse(&buf));
 					else if(strcmp(token, "picheight") == 0)
 						widget->picheight = atoi(COM_Parse(&buf));
 					else if(strcmp(token, "hoverpic") == 0)
+					{
 						widget->hoverpic = re.DrawFindPic(COM_Parse(&buf));
+						// default to double resolution, since it's too blocky otherwise.
+						if(!widget->hoverpicwidth)
+							widget->hoverpicwidth = widget->hoverpic->width / 2.0f;
+						if(!widget->hoverpicheight)
+							widget->hoverpicheight = widget->hoverpic->height / 2.0f;
+					}
 					else if(strcmp(token, "hoverpicwidth") == 0)
 						widget->hoverpicwidth = atoi(COM_Parse(&buf));
 					else if(strcmp(token, "hoverpicheight") == 0)
 						widget->hoverpicheight = atoi(COM_Parse(&buf));
-					else if(strcmp(token, "xabs") == 0)
+					else if(strcmp(token, "selectedpic") == 0)
+						widget->selectedpic = re.DrawFindPic(COM_Parse(&buf));
+					else if(strcmp(token, "xabs") == 0 || strcmp(token, "xleft") == 0)
 						x = widget->x = atoi(COM_Parse(&buf));
-					else if(strcmp(token, "yabs") == 0)
+					else if(strcmp(token, "yabs") == 0 || strcmp(token, "ytop") == 0)
 						y = widget->y = atoi(COM_Parse(&buf));
 					else if(strstr(token, "xcent"))
 						x = widget->x = 160 + atoi(COM_Parse(&buf));
 					else if(strstr(token, "ycent"))
 						y = widget->y = 120 + atoi(COM_Parse(&buf));
-					else if(strcmp(token, "xrel") == 0)
+					else if(strcmp(token, "xright") == 0)
+						x = widget->x = 320 + atoi(COM_Parse(&buf));
+					else if(strstr(token, "ybot"))
+						y = widget->y = 240 + atoi(COM_Parse(&buf));
+					else if(strstr(token, "xrel"))
 						x = widget->x += atoi(COM_Parse(&buf));
-					else if(strcmp(token, "yrel") == 0)
+					else if(strstr(token, "yrel"))
 						y = widget->y += atoi(COM_Parse(&buf));
 					else if(strcmp(token, "halign") == 0)
 						widget->halign = M_WidgetGetAlign(COM_Parse(&buf));
@@ -700,15 +1160,18 @@ menu_screen_t* menu_from_file(menu_screen_t *menu)
 						widget->slider_max = atof(COM_Parse(&buf));
 					else if(strstr(token, "inc"))
 						widget->slider_inc = atof(COM_Parse(&buf));
+					// editbox/field options
+					else if(strstr(token, "width"))
+						widget->field_width = atoi(COM_Parse(&buf));
 					
 					token = COM_Parse(&buf);
 				}
 			}
 			else
-				menu = M_ErrorMenu("Invalid menu version.");
+				M_ErrorMenu(menu, "Invalid menu version.");
 		}
 		else
-			menu = M_ErrorMenu("Invalid menu file.");
+			M_ErrorMenu(menu, "Invalid menu file.");
 
 		Z_Free(buf2);
 	}
@@ -717,10 +1180,8 @@ menu_screen_t* menu_from_file(menu_screen_t *menu)
 		char notfoundtext[MAX_QPATH+10];
 
 		sprintf(notfoundtext, "%s not found.", menu_filename);
-		return M_ErrorMenu(notfoundtext);
+		M_ErrorMenu(menu, notfoundtext);
 	}
-
-	return menu;
 }
 
 menu_screen_t* M_LoadMenuScreen(const char *menu_name)
@@ -775,7 +1236,8 @@ void M_Menu_f (void)
 void M_Init (void)
 {
 	memset(&m_mouse, 0, sizeof(m_mouse));
-	strcpy(m_mouse.cursorpic, "cursor");
+	//strcpy(m_mouse.cursorpic, "cursor");
+	m_mouse.cursorpic = i_cursor;
 
 	Cmd_AddCommand("menu", M_Menu_f);
 }
@@ -896,10 +1358,95 @@ float M_SliderGetPos(menu_widget_t *widget)
 	return retval;
 }
 
+void M_DrawCheckbox(int x, int y, qboolean checked, qboolean hover, qboolean selected)
+{
+	if(checked)
+	{
+		if(selected)
+			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1us);
+		else if(hover)
+			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1ch);
+		else
+			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1c);
+	}
+	else
+	{
+		if(selected)
+			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1cs);
+		else if(hover)
+			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1uh);
+		else
+			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1u);
+	}
+}
+
+
+
+
+//void M_DrawField(int x, int y, int width, char *cvar_string, qboolean hover, qboolean selected)
+void M_DrawField(menu_widget_t *widget)
+{
+	//M_DrawField(widget->picCorner.x, widget->picCorner.y,
+			//	widget->field_width, cvar_val, widget->hover, widget->selected);
+	int width, x, y;
+	char *cvar_string;
+	char temp;
+	int nullpos;
+
+	if(widget->cvar)
+		cvar_string = Cvar_Get(widget->cvar, "", CVAR_ARCHIVE)->string;
+	else
+		cvar_string = "";
+
+	width = widget->field_width;
+	x = widget->picCorner.x;
+	y = widget->picCorner.y;
+
+	if(width > 2)
+		width -= 2;
+	else
+		width = 1;
+
+	if(widget->selected)
+	{
+		re.DrawStretchPic2(x, y, FIELD_LWIDTH, FIELD_HEIGHT, i_field1ls);
+		re.DrawStretchPic2(x+FIELD_LWIDTH, y, TEXT_WIDTH*width, FIELD_HEIGHT, i_field1ms);
+		re.DrawStretchPic2(x+FIELD_LWIDTH+TEXT_WIDTH*width, y, FIELD_LWIDTH, FIELD_HEIGHT, i_field1rs);
+	}
+	else if(widget->hover)
+	{
+		re.DrawStretchPic2(x, y, FIELD_LWIDTH, FIELD_HEIGHT, i_field1lh);
+		re.DrawStretchPic2(x+FIELD_LWIDTH, y, TEXT_WIDTH*width, FIELD_HEIGHT, i_field1mh);
+		re.DrawStretchPic2(x+FIELD_LWIDTH+TEXT_WIDTH*width, y, FIELD_LWIDTH, FIELD_HEIGHT, i_field1rh);
+	}
+	else
+	{
+		re.DrawStretchPic2(x, y, FIELD_LWIDTH, FIELD_HEIGHT, i_field1l);
+		re.DrawStretchPic2(x+FIELD_LWIDTH, y, TEXT_WIDTH*width, FIELD_HEIGHT, i_field1m);
+		re.DrawStretchPic2(x+FIELD_LWIDTH+TEXT_WIDTH*width, y, FIELD_LWIDTH, FIELD_HEIGHT, i_field1r);
+	}
+
+
+	// draw only the portion of the string that fits within the field:
+	nullpos = widget->field_start + widget->field_width;
+	temp = cvar_string[nullpos];
+	cvar_string[nullpos] = 0;
+	re.DrawString(x+(FIELD_LWIDTH-TEXT_WIDTH), y+(FIELD_HEIGHT-TEXT_HEIGHT)/2, cvar_string+widget->field_start);
+	cvar_string[nullpos] = temp;
+
+	if(widget->selected || widget->hover)
+	{
+		Con_DrawCursor(x + (FIELD_LWIDTH-TEXT_WIDTH) +
+			(widget->field_cursorpos - widget->field_start)*TEXT_WIDTH, y+(FIELD_HEIGHT-TEXT_HEIGHT)/2);
+	}
+}
+
 void M_DrawWidget (menu_widget_t *widget)
 {
 	char *text = NULL;
+	char *cvar_val = "";
 	image_t *pic = NULL;
+	qboolean checkbox_checked;
 
 	M_UpdateDrawingInformation(widget);
 
@@ -914,18 +1461,27 @@ void M_DrawWidget (menu_widget_t *widget)
 		//
 		// Update text/pic for hovering/selection
 		//
-		if(widget->hover || widget->selected)
+		if(widget->selected)
+		{
+			if(widget->selectedtext)
+				text = widget->selectedtext;
+			else if(widget->text)
+				text = va("%c%c%s", CHAR_COLOR, 'E', widget->text);
+
+			if(widget->selectedpic)
+				pic = widget->selectedpic;
+			else if(widget->hoverpic)
+				pic = widget->hoverpic;
+			else if(widget->pic)
+				pic = widget->pic;
+		}
+		else if(widget->hover)
 		{
 			if(widget->hovertext)
 				text = widget->hovertext;
 			else if(widget->text)
-			{
-				if (widget->selected)
-					text = va("%c%c%c%s", CHAR_UNDERLINE, CHAR_COLOR, 'A', widget->text);
-				else 
-					text = va("%c%c%c%s", CHAR_UNDERLINE, CHAR_COLOR, 'D', widget->text);
-			}
-
+				text = va("%c%c%c%s", CHAR_UNDERLINE, CHAR_COLOR, '?', widget->text);
+			
 			if(widget->hoverpic)
 				pic = widget->hoverpic;
 			else if(widget->pic)
@@ -937,6 +1493,21 @@ void M_DrawWidget (menu_widget_t *widget)
 		case WIDGET_TYPE_SLIDER:
 			M_DrawSlider(widget->picCorner.x, widget->picCorner.y, M_SliderGetPos(widget),
 				widget->slider_hover, widget->slider_selected);
+			break;
+		case WIDGET_TYPE_CHECKBOX:
+			if(widget->cvar && Cvar_Get(widget->cvar, "0", CVAR_ARCHIVE)->value)
+				checkbox_checked = true;
+			else
+				checkbox_checked = false;
+			M_DrawCheckbox(widget->picCorner.x, widget->picCorner.y, 
+				checkbox_checked, widget->hover, widget->selected);
+			break;
+		case WIDGET_TYPE_FIELD:
+			//if(widget->cvar)
+			//	cvar_val = Cvar_Get(widget->cvar, "0", CVAR_ARCHIVE)->string;
+			M_DrawField(widget);
+			//M_DrawField(widget->picCorner.x, widget->picCorner.y,
+			//	widget->field_width, cvar_val, widget->hover, widget->selected);
 			break;
 		default:
 			break;
@@ -955,7 +1526,7 @@ void M_DrawWidget (menu_widget_t *widget)
 
 void M_DrawCursor(void)
 {
-	re.DrawStretchPic(m_mouse.x-CURSOR_WIDTH/2, m_mouse.y-CURSOR_HEIGHT/2,
+	re.DrawStretchPic2(m_mouse.x-CURSOR_WIDTH/2, m_mouse.y-CURSOR_HEIGHT/2,
 		CURSOR_WIDTH, CURSOR_HEIGHT, m_mouse.cursorpic);
 }
 

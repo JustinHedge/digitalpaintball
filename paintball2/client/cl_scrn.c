@@ -823,14 +823,14 @@ void SizeHUDString (char *string, int *w, int *h)
 	*h = lines * 8;
 }
 
-void DrawHUDString (int x, int y, int centerwidth, int xor, char *string, ...)
+void DrawHUDString (int x, int y, int centerwidth, int xor, unsigned char *string, ...)
 {
 	int		margin;
-	char	line[1024];
+	unsigned char	line[1024];
 	int		width;
 //	int		i;
 	va_list	argptr;
-	char	msg[2048], *strp = msg;
+	unsigned char	msg[2048], *strp = msg;
 	int		formatwidth;
 
 	va_start (argptr,string);
@@ -856,7 +856,7 @@ void DrawHUDString (int x, int y, int centerwidth, int xor, char *string, ...)
 		line[width] = 0;
 
 		if (centerwidth)
-			x = margin + (centerwidth*hudscale - width*8*hudscale)*0.5;
+			x = margin + (centerwidth*hudscale - strlen_noformat(line)*8*hudscale)*0.5;
 		else
 			x = margin;
 		/*for (i=0 ; i<width ; i++)

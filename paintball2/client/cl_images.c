@@ -38,6 +38,23 @@ image_t		*i_slider1th;
 image_t		*i_slider1b;
 image_t		*i_slider1bh;
 image_t		*i_slider1bs;
+image_t		*i_checkbox1u;
+image_t		*i_checkbox1uh;
+image_t		*i_checkbox1us;
+image_t		*i_checkbox1c;
+image_t		*i_checkbox1ch;
+image_t		*i_checkbox1cs;
+image_t		*i_field1l;
+image_t		*i_field1lh;
+image_t		*i_field1ls;
+image_t		*i_field1m;
+image_t		*i_field1mh;
+image_t		*i_field1ms;
+image_t		*i_field1r;
+image_t		*i_field1rh;
+image_t		*i_field1rs;
+image_t		*i_cursor;
+image_t		*i_cursor_text;
 
 void CL_InitImages()
 {
@@ -60,4 +77,22 @@ void CL_InitImages()
 	i_slider1b = re.DrawFindPic("slider1b");
 	i_slider1bh = re.DrawFindPic("slider1bh");
 	i_slider1bs = re.DrawFindPic("slider1bs");
+	i_checkbox1u = re.DrawFindPic("checkbox1u");
+	i_checkbox1uh = re.DrawFindPic("checkbox1uh");
+	i_checkbox1us = re.DrawFindPic("checkbox1us");
+	i_checkbox1c = re.DrawFindPic("checkbox1c");
+	i_checkbox1ch = re.DrawFindPic("checkbox1ch");
+	i_checkbox1cs = re.DrawFindPic("checkbox1cs");
+	i_field1l  = re.DrawFindPic("field1l");
+	i_field1lh = re.DrawFindPic("field1lh");
+	i_field1ls = re.DrawFindPic("field1ls");
+	i_field1m  = re.DrawFindPic("field1m");
+	i_field1mh = re.DrawFindPic("field1mh");
+	i_field1ms = re.DrawFindPic("field1ms");
+	i_field1r  = re.DrawFindPic("field1r");
+	i_field1rh = re.DrawFindPic("field1rh");
+	i_field1rs = re.DrawFindPic("field1rs");
+
+	i_cursor = re.DrawFindPic("cursor");
+	i_cursor_text = re.DrawFindPic("cursor_text");
 }
