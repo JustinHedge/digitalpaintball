@@ -375,7 +375,7 @@ IN_Init
 void IN_Init (void)
 {
 	// mouse variables
-	m_filter				= Cvar_Get ("m_filter",					"0",		0);
+	m_filter				= Cvar_Get ("m_filter",					"0",		CVAR_ARCHIVE);
     in_mouse				= Cvar_Get ("in_mouse",					"1",		CVAR_ARCHIVE);
 
 	// joystick variables
@@ -895,7 +895,7 @@ void IN_JoyMove (usercmd_t *cmd)
 			break;
 
 		case AxisLook:
-			if (mlooking)
+//			if (mlooking) // jitjoystick - disabled -- dunno why this was there, but it breaks it
 			{
 				if (fabs(fAxisValue) > joy_pitchthreshold->value)
 				{
