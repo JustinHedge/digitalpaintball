@@ -201,6 +201,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 				{
 					FS_SetGamedir (var->string);
 					FS_ExecAutoexec ();
+					// jitodo -- this should load the config from this directory.
 				}
 			}
 			return var;
@@ -320,6 +321,7 @@ void Cvar_GetLatchedVars (void)
 		{
 			FS_SetGamedir (var->string);
 			FS_ExecAutoexec ();
+			// jitodo -- load config from this gamedir
 		}
 	}
 }

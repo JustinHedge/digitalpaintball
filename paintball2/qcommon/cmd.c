@@ -635,7 +635,7 @@ Cmd_MacroExpandString
 ======================
 */
 #if 1
-char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR]
+char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR] - jitcvar
 {
    int      i, j, count, len;
    qboolean   inquote;
@@ -689,6 +689,9 @@ char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR]
          i++;
          continue;
       }
+
+	  while(*start == 32) // jitcvar - remove whitespace between $ and cvar name
+		  start++;
 
       // allow $var$ scripting
       token = temporary;
