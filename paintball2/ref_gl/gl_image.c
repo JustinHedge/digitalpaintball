@@ -1851,7 +1851,7 @@ GLint Mesa_gluBuild2DMipmaps(GLenum target, GLint components,
 }
 // ]===
 
-#if 1 // jit3dfx jitest jitodo
+#if 1 // jit3dfx
 qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, qboolean sharp)
 {
 	int			samples;

@@ -108,10 +108,15 @@ cvar_t	*m_filter;
 
 qboolean	mlooking;
 
-void IN_MLookDown (void) { mlooking = true; }
-void IN_MLookUp (void) {
-mlooking = false;
-if (!freelook->value && lookspring->value)
+void IN_MLookDown (void)
+{
+	mlooking = true;
+}
+
+void IN_MLookUp (void)
+{
+	mlooking = false;
+	if (!freelook->value && lookspring->value)
 		IN_CenterView ();
 }
 

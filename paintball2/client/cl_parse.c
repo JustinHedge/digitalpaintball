@@ -906,7 +906,7 @@ void CL_ParseServerMessage (void)
 				S_StartLocalSound ("misc/talk.wav");
 				// jittext con.ormask = 128;
 				if(cl_timestamp->value) // jittext / jitcolor
-					Com_Printf("%c%c[%s] %s", timestamp, CHAR_COLOR, COLOR_CHAT, MSG_ReadString(&net_message));
+					Com_Printf("%c%c[%s] %s", CHAR_COLOR, COLOR_CHAT, timestamp, MSG_ReadString(&net_message));
 				else
 					Com_Printf ("%c%c%s", CHAR_COLOR, COLOR_CHAT, MSG_ReadString (&net_message));
 			}

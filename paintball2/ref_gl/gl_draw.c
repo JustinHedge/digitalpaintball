@@ -880,7 +880,7 @@ Draw_FadeScreen
 
 ================
 */
-void Draw_FadeScreen (void) // jitodo -- make a cool menu background here (use console bg?)
+void Draw_FadeScreen (void)
 {
 	GLSTATE_DISABLE_ALPHATEST
 	GLSTATE_ENABLE_BLEND

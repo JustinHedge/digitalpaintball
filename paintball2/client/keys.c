@@ -38,7 +38,7 @@ int			history_line=0;
 int			key_waiting;
 unsigned char	*keybindings[256]; // jittext
 qboolean	consolekeys[256];	// if true, can't be rebound while in console
-qboolean	menubound[256];	// if true, can't be rebound while in menu
+//qboolean	menubound[256];	// if true, can't be rebound while in menu
 int			keyshift[256];		// key to map to if shift held down in console
 int			key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
@@ -871,9 +871,9 @@ void Key_Init (void)
 	keyshift['`'] = '~';
 	keyshift['\\'] = '|';
 
-	menubound[K_ESCAPE] = true;
-	for (i=0 ; i<12 ; i++)
-		menubound[K_F1+i] = true;
+//	menubound[K_ESCAPE] = true;
+//	for (i=0 ; i<12 ; i++)
+//		menubound[K_F1+i] = true;
 
 //
 // register our functions
@@ -1035,8 +1035,8 @@ void Key_Event (int key, qboolean down, unsigned time)
 //
 // if not a consolekey, send to the interpreter no matter what mode is
 //
-	if ( (cls.key_dest == key_menu && menubound[key])
-	|| (cls.key_dest == key_console && !consolekeys[key])
+	if ( /*jitmenu (cls.key_dest == key_menu && menubound[key])
+	|| */(cls.key_dest == key_console && !consolekeys[key])
 	|| (cls.key_dest == key_game && ( cls.state == ca_active || !consolekeys[key] ) ) )
 	{
 		kb = keybindings[key];

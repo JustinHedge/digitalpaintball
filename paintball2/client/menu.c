@@ -198,6 +198,8 @@ static menu_widget_t *free_widgets(menu_widget_t *widget)
 		Z_Free(widget->hovertext);
 	if(widget->text)
 		Z_Free(widget->text);
+	if(widget->selectedtext)
+		Z_Free(widget->selectedtext);
 	if(!(widget->flags & WIDGET_FLAG_SERVERLIST)) // don't free the serverlist!
 	{
 		if(widget->select_map)
@@ -453,10 +455,16 @@ static char *string_for_bind(char *bind)
 
 	if(keys[0] == -1)
 		sprintf(str, "%cNot Bound", CHAR_ITALICS);
-	else if(keys[1] == -1)
-		strcpy(str, Key_KeynumToString(keys[0]));
 	else
-		sprintf(str, "%s or %s", Key_KeynumToString(keys[0]), Key_KeynumToString(keys[1]));
+	{
+		strcpy(str, Key_KeynumToString(keys[0]));
+
+		if(keys[1] != -1)
+		{
+			strcat(str, " or ");
+			strcat(str, Key_KeynumToString(keys[1]));
+		}
+	}
 
 	return str;
 }
@@ -470,7 +478,7 @@ static void update_select_subwidgets(menu_widget_t *widget)
 	char temp;
 	int width, x, y;
 	char *widget_text;
-	int keys[2];
+//	int keys[2];
 
 	if(widget->flags & WIDGET_FLAG_SERVERLIST)
 	{
@@ -720,10 +728,15 @@ static void M_UpdateDrawingInformation (menu_widget_t *widget)
 
 			widget->widgetSize.x = FIELD_LWIDTH + TEXT_WIDTH*width + FIELD_RWIDTH;
 			widget->widgetSize.y = FIELD_HEIGHT;
-			widget->textCorner.y += (FIELD_HEIGHT-TEXT_HEIGHT)/2;
+			if(widget->valign != WIDGET_VALIGN_MIDDLE) // center text by field vertically
+				widget->textCorner.y += (FIELD_HEIGHT-TEXT_HEIGHT)/2;
 			}
 			break;
 		case WIDGET_TYPE_SELECT:
+			if(widget->select_rows < 2) // jitodo -- allow for dropdowns later
+				widget->select_rows = 2;
+			if(widget->select_width < 2)
+				widget->select_width = 2;
 			widget->widgetSize.x = widget->select_width * TEXT_WIDTH + SELECT_HSPACING*2;
 			widget->widgetSize.y = widget->select_rows * 
 				(TEXT_HEIGHT+SELECT_VSPACING) + SELECT_VSPACING;
@@ -1776,7 +1789,20 @@ static void widget_complete(menu_widget_t *widget)
 		widget->select_pos = -1;
 		update_select_subwidgets(widget);
 		select_widget_center_pos(widget);
-
+		break;
+	case WIDGET_TYPE_FIELD:
+		if(widget->field_width < 3)
+			widget->field_width = 3; // can't have fields shorter than this!
+		break;
+	case WIDGET_TYPE_UNKNOWN:
+	case WIDGET_TYPE_TEXT:
+		if(widget->text && widget_is_selectable(widget) && !widget->pic && !widget->hoverpic && !widget->selectedpic)
+		{
+			widget->selectedpic = re.DrawFindPic("text1bg");
+			widget->hoverpic = re.DrawFindPic("text1bgh");
+			widget->picwidth = strlen_noformat(widget->text) * TEXT_WIDTH_UNSCALED;
+			widget->picheight = TEXT_HEIGHT_UNSCALED;
+		}
 		break;
 	}
 
