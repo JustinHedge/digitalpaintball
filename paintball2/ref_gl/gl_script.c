@@ -105,57 +105,6 @@ void RS_ResetScript (rscript_t *rs)
 	memset(rs, 0, sizeof(rscript_t)); // jitrscript -- make sure we clear everything out.
 }
 
-#if 0
-void RS_ClearStage (rs_stage_t *stage)
-{
-#if 1 // jitrscript -- rewritten
-	anim_stage_t	*anim, *tmp_anim;
-	anim = stage->anim_stage;
-
-	while (anim != NULL) {
-		tmp_anim = anim;
-		anim = anim->next;
-		free (tmp_anim);
-	}
-
-	memset(stage, 0, sizeof(rs_stage_t)); // clear EVERYTHING
-
-	stage->lightmap = true;
-
-#else // MrG's old code:
-	anim_stage_t	*anim = stage->anim_stage, *tmp_anim;
-
-	stage->alphashift.max = stage->alphashift.min 
-		= stage->alphashift.speed = 0;
-	stage->anim_delay = 0;
-
-	while (anim != NULL) {
-		tmp_anim = anim;
-		anim = anim->next;
-		free (tmp_anim);
-	}
-
-	stage->anim_stage = NULL;
-		
-	stage->blendfunc.blend = false;
-	stage->blendfunc.dest = stage->blendfunc.source = 0;
-
-	stage->last_anim = 0;
-	stage->last_anim_time = 0;
-	stage->anim_count = 0;
-
-	stage->rot_speed = 0;
-	stage->scroll.speedX = 0;
-	stage->scroll.speedY = 0;
-	stage->scroll.typeX = 0;
-	stage->scroll.typeY = 0;
-	stage->texture = NULL;
-	stage->envmap = false;
-	stage->lightmap = true;
-	stage->alphamask = false;
-#endif
-}
-#endif
 
 rscript_t *RS_NewScript (char *name)
 {
@@ -361,7 +310,7 @@ void RS_UpdateRegistration (void)
 	}
 }
 
-int RS_BlendID (char *blend)
+static int RS_BlendID (char *blend)
 {
 	if (!blend[0])
 		return 0;
@@ -391,7 +340,7 @@ int RS_BlendID (char *blend)
 	return 0;
 }
 
-int RS_FuncName (char *text)
+static int RS_FuncName (char *text)
 {
 	if (!Q_strcasecmp(text, "static"))			// static
 		return RSCRIPT_STATIC; // jitrscript (defines)
@@ -405,6 +354,87 @@ int RS_FuncName (char *text)
 		return RSCRIPT_COSABS;
 
 	return 0;
+}
+
+static char *RS_ParseString (char **ptr) // jitrscript - from qfusion
+{
+	char *token;
+
+	if (!ptr || !(*ptr))
+		return "";
+
+	if (!**ptr || **ptr == '}')
+		return "";
+
+	//token = COM_ParseExt(ptr, false);
+	token = strtok(NULL, TOK_DELIMINATORS);
+	strlwr(token);
+
+	return token;
+}
+
+static float RS_ParseFloat (char **ptr) // jitrscript -- from qfusion
+{
+	if (!ptr || !(*ptr))
+	{
+		return 0.0f;
+	}
+
+	if (!**ptr || **ptr == '}')
+	{
+		return 0.0f;
+	}
+
+	//return atof(COM_ParseExt(ptr, false));
+	return atof(strtok(NULL, TOK_DELIMINATORS));
+}
+
+static void RS_ParseVector4 (char **ptr, vec4_t v) // jitrscript - from qfusion
+{
+	char *token;
+	qboolean bracket;
+
+	token = RS_ParseString(ptr);
+	if (!Q_strcasecmp(token, "("))
+	{
+		bracket = true;
+		token = RS_ParseString(ptr);
+	}
+	else if (token[0] == '(')
+	{
+		bracket = true;
+		token = &token[1];
+	}
+	else
+	{
+		bracket = false;
+	}
+
+	v[0] = atof(token);
+	v[1] = RS_ParseFloat(ptr);
+	v[2] = RS_ParseFloat(ptr);
+	v[3] = 0;
+
+	/*token = RS_ParseString(ptr);
+
+	if (!token[0])
+	{
+		v[3] = 0;
+	}
+	else if (token[strlen(token)-1] == ')')
+	{
+		token[strlen(token)-1] = 0;
+		v[3] = atof(token);
+	}
+	else
+	{
+		v[3] = atof(token);
+
+		if (bracket) 
+		{
+			RS_ParseString(ptr);
+		}
+	}*/
 }
 
 /*
@@ -426,14 +456,14 @@ scriptname
 }
 */
 
-void rs_stage_map (rs_stage_t *stage, char **token)
+static void rs_stage_map (rs_stage_t *stage, char **token)
 {
 	*token = strtok (NULL, TOK_DELIMINATORS);
 
 	strncpy (stage->name, *token, sizeof(stage->name));
 }
 
-void rs_stage_scroll (rs_stage_t *stage, char **token)
+static void rs_stage_scroll (rs_stage_t *stage, char **token)
 {
 	*token = strtok (NULL, TOK_DELIMINATORS);
 	stage->scroll.typeX = RS_FuncName(*token);
@@ -446,7 +476,7 @@ void rs_stage_scroll (rs_stage_t *stage, char **token)
 	stage->scroll.speedY = atof(*token);
 }
 
-void rs_stage_blendfunc (rs_stage_t *stage, char **token)
+static void rs_stage_blendfunc (rs_stage_t *stage, char **token)
 {
 	stage->blendfunc.blend = true;
 
@@ -476,7 +506,7 @@ void rs_stage_blendfunc (rs_stage_t *stage, char **token)
 	}
 }
 
-void rs_stage_alphashift (rs_stage_t *stage, char **token)
+static void rs_stage_alphashift (rs_stage_t *stage, char **token)
 {
 	*token = strtok (NULL, TOK_DELIMINATORS);
 	stage->alphashift.speed = (float)atof(*token);
@@ -488,7 +518,7 @@ void rs_stage_alphashift (rs_stage_t *stage, char **token)
 	stage->alphashift.max = (float)atof(*token);
 }
 
-void rs_stage_anim (rs_stage_t *stage, char **token)
+static void rs_stage_anim (rs_stage_t *stage, char **token)
 {
 	anim_stage_t	*anim = (anim_stage_t *)malloc(sizeof(anim_stage_t));
 
@@ -521,29 +551,30 @@ void rs_stage_anim (rs_stage_t *stage, char **token)
 	}
 }
 
-void rs_stage_envmap (rs_stage_t *stage, char **token)
+static void rs_stage_envmap (rs_stage_t *stage, char **token)
 {
-	stage->envmap = true;
+	//stage->envmap = true;
+	stage->tcGen = TC_GEN_ENVIRONMENT;
 }
 
-void rs_stage_nolightmap (rs_stage_t *stage, char **token)
+static void rs_stage_nolightmap (rs_stage_t *stage, char **token)
 {
 	stage->lightmap = false;
 }
 
-void rs_stage_alphamask (rs_stage_t *stage, char **token)
+static void rs_stage_alphamask (rs_stage_t *stage, char **token)
 {
 	stage->alphamask = true;
 }
 
-void rs_stage_rotate (rs_stage_t *stage, char **token)
+static void rs_stage_rotate (rs_stage_t *stage, char **token)
 {
 	*token = strtok (NULL, TOK_DELIMINATORS);
 	stage->rot_speed = (float)atof(*token);
 }
 
 // scaleadd adds to the normal scale offering more dynamic options to scaling.
-void rs_stage_scaleadd (rs_stage_t *stage, char **token) // jitrscript
+static void rs_stage_scaleadd (rs_stage_t *stage, char **token) // jitrscript
 {
 	*token = strtok (NULL, TOK_DELIMINATORS);
 	stage->scaleadd.typeX = RS_FuncName(*token);
@@ -556,7 +587,7 @@ void rs_stage_scaleadd (rs_stage_t *stage, char **token) // jitrscript
 	stage->scaleadd.scaleY = atof(*token);
 }
 
-void rs_stage_scale (rs_stage_t *stage, char **token)
+static void rs_stage_scale (rs_stage_t *stage, char **token)
 {
 	*token = strtok (NULL, TOK_DELIMINATORS);
 	stage->scale.typeX = RS_FuncName(*token);
@@ -569,7 +600,24 @@ void rs_stage_scale (rs_stage_t *stage, char **token)
 	stage->scale.scaleY = atof(*token);
 }
 
-void rs_stage_offset (rs_stage_t *stage, char **token) // jitrscript
+static void rs_stage_tcGen (rs_stage_t *stage, char **token) // jitrscript
+{
+	*token = strtok(NULL, TOK_DELIMINATORS);
+	
+	// jitrscript -- make compatible with q3 shaders - jitodo, tcMod
+	if (!Q_strcasecmp(*token, "environment"))
+		rs_stage_envmap(stage, token);
+
+	if (!Q_strcasecmp(*token, "vector"))
+	{
+		//*token = strtok(NULL, TOK_DELIMINATORS);
+		stage->tcGen = TC_GEN_VECTOR;
+		RS_ParseVector4(token, stage->tcGenVec[0]);
+		RS_ParseVector4(token, stage->tcGenVec[1]);
+	}
+}
+
+static void rs_stage_offset (rs_stage_t *stage, char **token) // jitrscript
 {
 	*token = strtok(NULL, TOK_DELIMINATORS);
 	stage->offset.offsetX = atof(*token);
@@ -592,6 +640,7 @@ static rs_stagekey_t rs_stagekeys[] =
 	{	"scale",		&rs_stage_scale			},
 	{	"scaleadd",		&rs_stage_scaleadd		}, // jitrscript
 	{	"offset",		&rs_stage_offset		}, // jitrscript
+	{	"tcgen",		&rs_stage_tcGen			}, // jitrscript
 
 	{	NULL,			NULL					}
 };
@@ -825,21 +874,89 @@ _inline void RS_RotateST (float *os, float *ot, float degrees, msurface_t *fa)
 	*ot = cost * (it - fa->c_t) + sint * (is - fa->c_s) + fa->c_t;
 }
 
-_inline void RS_SetEnvmap (vec3_t v, float *os, float *ot)
-{
-	vec3_t vert;
-	
-	vert[0] = v[0]*r_world_matrix[0]+v[1]*r_world_matrix[4]+v[2]*r_world_matrix[8] +r_world_matrix[12];
-	vert[1] = v[0]*r_world_matrix[1]+v[1]*r_world_matrix[5]+v[2]*r_world_matrix[9] +r_world_matrix[13];
-	vert[2] = v[0]*r_world_matrix[2]+v[1]*r_world_matrix[6]+v[2]*r_world_matrix[10]+r_world_matrix[14];
 
-	VectorNormalize (vert);
+_inline static void RS_SetEnvmap (vec3_t v, float *os, float *ot, vec_t *normals) // jit - enhanced to work properly
+{
+	//vec3_t vec, dir;
+	//float t;
+
+
+	///*if (!AxisCompare(currententity->axis, axisDefault)) // jitodo -- what is this -- is it needed? Maybe for viewweapons?
+	//{
+	//	VectorSubtract(r_refDef.viewOrigin, currententity->origin, dir);
+	//	VectorRotate(dir, currententity->axis, vec);
+	//}
+	//else*/
+	//{
+	//	VectorSubtract(r_newrefdef.vieworg, currententity->origin, vec);
+	//}
+
+	//VectorSubtract(vec, v, dir);
+
+	////VectorSubtract(r_newrefdef.vieworg, v, dir);
+	//VectorNormalize(dir); // todo - needed?
+
+	//t = Q_rsqrt(DotProduct(dir, dir));
+
+	//if(!surf)
+	//{
+	//	*os = dir[0]*t - 1.0f; // jitodo -- not sure if this is right?
+	//	*ot = dir[1]*t; // -0;
+	//}
+	//else
+	//{
+	//	*os = dir[0]*t - surf->plane->normal[0]; //normalArray[i][0];
+	//	*ot = dir[1]*t - surf->plane->normal[1]; //normalArray[i][1];
+	//}
+
+
+	// code from qfusion
+	vec3_t transform, t, n;
+	mat3_t inverse_axis;
+
+	if (!currentmodel)
+	{
+		VectorSubtract(vec3_origin, currententity->origin, transform);
+		Matrix3_Transpose(currententity->axis, inverse_axis);
+	}
+	else if (currentmodel == r_worldmodel)
+	{
+		VectorSubtract(vec3_origin, r_origin, transform);
+	}
+	else if (currentmodel->type == mod_brush)
+	{
+		VectorNegate(currententity->origin, t);
+		VectorSubtract(t, r_origin, transform);
+		Matrix3_Transpose(currententity->axis, inverse_axis);
+	}
+	else
+	{
+		VectorSubtract(vec3_origin, currententity->origin, transform);
+		Matrix3_Transpose(currententity->axis, inverse_axis);
+	}
+
 	
-	*os = vert[0];
-	*ot = vert[1];
+	VectorAdd(v, transform, t);
+
+	// project vector
+	if (currentmodel && (currentmodel == r_worldmodel))
+	{
+		n[0] = normals[0];
+		n[1] = normals[1];
+		n[2] = Q_rsqrt(DotProduct(t,t));
+	}
+	else
+	{
+		n[0] = DotProduct(normals, inverse_axis[0]);
+		n[1] = DotProduct(normals, inverse_axis[1]);
+		n[2] = Q_rsqrt(DotProduct(t,t));
+	}
+
+	*os = t[0]*n[2] - n[0];
+	*ot = t[1]*n[2] - n[1];
 }
 
-void RS_SetTexcoords (rs_stage_t *stage, float *os, float *ot, msurface_t *fa)
+_inline static void RS_SetTexcoords (rs_stage_t *stage, float *os, float *ot, msurface_t *fa)
 {
 	float	txm = 0, tym = 0;
 
@@ -876,10 +993,181 @@ void RS_SetTexcoords (rs_stage_t *stage, float *os, float *ot, msurface_t *fa)
 		}
 	}
 
+
+
+
 	// rotate
 	if (stage->rot_speed)
 		RS_RotateST (os, ot, -stage->rot_speed * rs_realtime * 0.0087266388888888888888888888888889, fa);
 }
+//
+//
+///*
+// =================
+// RB_CalcTextureCoords
+// Taken from Quake2Evolved (probably taken from qfusion)
+// Modified by jitspoe
+// =================
+//*/
+//static void RS_SetTexcoords (rs_stage_t *stage, float *os, float *ot, msurface_t *fa)
+//{
+//	tcGen_t		*tcGen;
+//	tcMod_t		*tcMod;
+//	int			i, j;
+//	vec3_t		vec, dir;
+//	waveTable_t	*table;
+//	float		now, f, t;
+//	float		rad, s, c;
+//	vec2_t		st;
+//
+//	tcGen = &stage->tcGen;
+//	tcMod = stage->tcMod;
+//
+//	switch (tcGen->type)
+//	{
+//	case TCGEN_BASE:
+//		// os and ot stay the same?
+//
+//		break;
+//	case TCGEN_LIGHTMAP:
+//		for (i = 0; i < numVertex; i++)
+//		{
+//			texCoordArray[unit][i][0] = inLmCoordArray[i][0];
+//			texCoordArray[unit][i][1] = inLmCoordArray[i][1];
+//		}
+//		
+//		break;
+//	case TCGEN_ENVIRONMENT:
+//		if (!AxisCompare(rb_entity->axis, axisDefault))
+//		{
+//			VectorSubtract(r_refDef.viewOrigin, rb_entity->origin, dir);
+//			VectorRotate(dir, rb_entity->axis, vec);
+//		}
+//		else
+//			VectorSubtract(r_refDef.viewOrigin, rb_entity->origin, vec);
+//
+//		for (i = 0; i < numVertex; i++)
+//		{
+//			VectorSubtract(vec, vertexArray[i], dir);
+//			t = Q_rsqrt(DotProduct(dir, dir));
+//
+//			texCoordArray[unit][i][0] = dir[0]*t - normalArray[i][0];
+//			texCoordArray[unit][i][1] = dir[1]*t - normalArray[i][1];
+//		}
+//	
+//		break;
+//	case TCGEN_VECTOR:
+//		for (i = 0; i < numVertex; i++)
+//		{
+//			texCoordArray[unit][i][0] = DotProduct(vertexArray[i], tcGen->params+0);
+//			texCoordArray[unit][i][1] = DotProduct(vertexArray[i], tcGen->params+3);
+//		}
+//		
+//		break;
+//	default:
+//		Com_Error(ERR_FATAL, "RB_CalcTextureCoords: unknown tcGen type %d in shader '%s'", tcGen->type, rb_shader->name);
+//	}
+//	
+//	for (i = 0; i < tcModNum; i++, tcMod++){
+//		switch (tcMod->type){
+//		case TCMOD_TRANSLATE:
+//			for (j = 0; j < numVertex; j++)
+//			{
+//				texCoordArray[unit][j][0] += tcMod->params[0];
+//				texCoordArray[unit][j][1] += tcMod->params[1];
+//			}
+//
+//			break;
+//		case TCMOD_SCALE:
+//			for (j = 0; j < numVertex; j++)
+//			{
+//				texCoordArray[unit][j][0] *= tcMod->params[0];
+//				texCoordArray[unit][j][1] *= tcMod->params[1];
+//			}
+//
+//			break;
+//		case TCMOD_SCROLL:
+//			st[0] = tcMod->params[0] * rb_shaderTime;
+//			st[0] -= floor(st[0]);
+//
+//			st[1] = tcMod->params[1] * rb_shaderTime;
+//			st[1] -= floor(st[1]);
+//
+//			for (j = 0; j < numVertex; j++)
+//			{
+//				texCoordArray[unit][j][0] += st[0];
+//				texCoordArray[unit][j][1] += st[1];
+//			}
+//			
+//			break;
+//		case TCMOD_ROTATE:
+//			rad = -DEG2RAD(tcMod->params[0] * rb_shaderTime);
+//			s = sin(rad);
+//			c = cos(rad);
+//
+//			for (j = 0; j < numVertex; j++)
+//			{
+//				st[0] = texCoordArray[unit][j][0];
+//				st[1] = texCoordArray[unit][j][1];
+//				texCoordArray[unit][j][0] = c * (st[0] - 0.5) + s * (0.5 - st[1]) + 0.5;
+//				texCoordArray[unit][j][1] = c * (st[1] - 0.5) + s * (st[0] - 0.5) + 0.5;
+//			}
+//			
+//			break;
+//		case TCMOD_TURB:
+//			table = RB_TableForFunc(&tcMod->func);
+//			now = tcMod->func.params[2] + tcMod->func.params[3] * rb_shaderTime;
+//
+//			for (j = 0; j < numVertex; j++)
+//			{
+//				texCoordArray[unit][j][0] += (table->table[((int)(((vertexArray[j][0] + vertexArray[j][2]) * 1.0/128 * 0.125 + now) * table->size)) % table->size] * tcMod->func.params[1] + tcMod->func.params[0]);
+//				texCoordArray[unit][j][1] += (table->table[((int)(((vertexArray[j][1]) * 1.0/128 * 0.125 + now) * table->size)) % table->size] * tcMod->func.params[1] + tcMod->func.params[0]);
+//			}
+//			
+//			break;
+//		case TCMOD_WARP:
+//			now = tcMod->func.params[2] + tcMod->func.params[3] * rb_shaderTime;
+//
+//			for (j = 0; j < numVertex; j++)
+//			{
+//				st[0] = texCoordArray[unit][j][0] * 64.0;
+//				st[1] = texCoordArray[unit][j][1] * 64.0;
+//				texCoordArray[unit][j][0] += ((rb_warpSinTable[((int)((st[1] * 0.125 + now) * (256.0/M_PI2))) & 255] * (1.0/64)) * tcMod->func.params[1] + tcMod->func.params[0]);
+//				texCoordArray[unit][j][1] += ((rb_warpSinTable[((int)((st[0] * 0.125 + now) * (256.0/M_PI2))) & 255] * (1.0/64)) * tcMod->func.params[1] + tcMod->func.params[0]);
+//			}
+//
+//			break;
+//		case TCMOD_STRETCH:
+//			table = RB_TableForFunc(&tcMod->func);
+//			now = tcMod->func.params[2] + tcMod->func.params[3] * rb_shaderTime;
+//			f = table->table[((int)(now * table->size)) % table->size] * tcMod->func.params[1] + tcMod->func.params[0];
+//			
+//			f = (f) ? 1.0 / f : 1.0;
+//			t = 0.5 - 0.5 * f;
+//
+//			for (j = 0; j < numVertex; j++)
+//			{
+//				texCoordArray[unit][j][0] = texCoordArray[unit][j][0] * f + t;
+//				texCoordArray[unit][j][1] = texCoordArray[unit][j][1] * f + t;
+//			}
+//			
+//			break;
+//		case TCMOD_TRANSFORM:
+//			for (j = 0; j < numVertex; j++)
+//			{
+//				st[0] = texCoordArray[unit][j][0];
+//				st[1] = texCoordArray[unit][j][1];
+//				texCoordArray[unit][j][0] = st[0] * tcMod->params[0] + st[1] * tcMod->params[2] + tcMod->params[4];
+//				texCoordArray[unit][j][1] = st[1] * tcMod->params[1] + st[0] * tcMod->params[3] + tcMod->params[5];
+//			}
+//			
+//			break;
+//		default:
+//			Com_Error(ERR_FATAL, "RB_CalcTextureCoords: unknown tcMod type %d in shader '%s'", tcMod->type, rb_shader->name);
+//		}
+//	}
+//}
+
 
 _inline void RS_RotateST2 (float *os, float *ot, float degrees)
 {
@@ -1008,13 +1296,16 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 	int			i, nv = surf->polys->numverts;
 	vec3_t		wv;
 	//rscript_t	*rs = (rscript_t *)surf->texinfo->script;
-	rs_stage_t	*stage = rs->stage;
+	rs_stage_t	*stage;// = rs->stage;
 	float		os, ot, alpha;
-	float		scale, time = rs_realtime * rs->warpspeed, txm, tym;
+	float		scale, time, txm, tym;
 	qboolean	firststage = true; // jitrscript
-	
+
 	if(!rs)
 		rs = (rscript_t *)surf->texinfo->script; // jitrscript
+
+	stage = rs->stage; // jitrscript
+	time = rs_realtime * rs->warpspeed; // jitrscrpt
 
 	do
 	{
@@ -1095,8 +1386,8 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 
 		qglColor4f (1, 1, 1, alpha);
 
-		if (stage->envmap)
-			GL_TexEnv( GL_MODULATE );
+//		if (stage->envmap)
+//			GL_TexEnv(GL_MODULATE);
 
 		if (stage->alphamask && (alphasurf || !firststage))
 		{
@@ -1116,37 +1407,60 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 			{
 				p = bp;
 
-				if (stage->envmap)
-				{
-//					qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-//					qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-//					GLSTATE_ENABLE_TEXGEN
-				}
+				//if (stage->envmap)
+				//{
+				//	qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
+				//	qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
+				//	GLSTATE_ENABLE_TEXGEN
+				//}
 				qglBegin(GL_TRIANGLE_FAN);
 				for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
 				{
-					if (stage->envmap)
+					//if (stage->envmap)
+					//{
+					//	RS_SetEnvmap(v, &os, &ot, surf->plane->normal);
+					//}
+					//else
+					//{
+					//	os = v[3];
+					//	ot = v[4];
+
+					//	RS_SetTexcoords(stage, &os, &ot, surf);
+					//}
+					switch (stage->tcGen) // jitrscript
 					{
-						RS_SetEnvmap (v, &os, &ot);
-					}
-					else
-					{
+					case TC_GEN_BASE:
 						os = v[3];
 						ot = v[4];
 
-						RS_SetTexcoords (stage, &os, &ot, surf);
+						break;
+					case TC_GEN_ENVIRONMENT:
+						RS_SetEnvmap(v, &os, &ot, surf->plane->normal);
+
+						break;
+					case TC_GEN_VECTOR:
+						os = DotProduct(stage->tcGenVec[0], v) + stage->tcGenVec[0][3];
+						ot = DotProduct(stage->tcGenVec[1], v) + stage->tcGenVec[1][3];
+
+						break;
 					}
 
-					if (lightmap) {
+					RS_SetTexcoords(stage, &os, &ot, surf);
+
+					if (lightmap)
+					{
 						qglMTexCoord2fSGIS(GL_TEXTURE0, os+txm, ot+tym);
 						qglMTexCoord2fSGIS(GL_TEXTURE1, v[5], v[6]);
-					} else {
+					}
+					else
+					{
 						qglTexCoord2f (os+txm, ot+tym); // jitrscript (added txm/tym)
 					}
 
 					if (!rs->warpsmooth)
 						qglVertex3fv (v);
-					else {
+					else
+					{
 						scale = rs->warpdist * sin(v[0]*rs->warpsmooth+time)*sin(v[1]*rs->warpsmooth+time)*sin(v[2]*rs->warpsmooth+time);
 						VectorMA (v, scale, surf->plane->normal, wv);
 						qglVertex3fv (wv);
@@ -1155,7 +1469,9 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 
 				qglEnd();
 			}
-		} else {
+		}
+		else
+		{
 			for (p = surf->polys; p; p = p->chain)
 			{
 //				if (stage->envmap)
@@ -1169,40 +1485,66 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 
 				for (i = 0, v = p->verts[0]; i < nv; i++, v += VERTEXSIZE)
 				{
-					if (stage->envmap)
+					switch (stage->tcGen) // jitrscript
 					{
-						RS_SetEnvmap (v, &os, &ot);
-					}
-					else
-					{
+					case TC_GEN_BASE:
 						os = v[3];
 						ot = v[4];
 
-						RS_SetTexcoords (stage, &os, &ot, surf);
+						break;
+					case TC_GEN_ENVIRONMENT:
+						RS_SetEnvmap(v, &os, &ot, surf->plane->normal);
+
+						break;
+					case TC_GEN_VECTOR:
+						os = DotProduct(stage->tcGenVec[0], v) + stage->tcGenVec[0][3];
+						ot = DotProduct(stage->tcGenVec[1], v) + stage->tcGenVec[1][3];
+
+						break;
 					}
 
-					if (lightmap) {
+					RS_SetTexcoords(stage, &os, &ot, surf);
+
+					//if (stage->envmap)
+					//{
+					//	RS_SetEnvmap(v, &os, &ot, surf->plane->normal);
+					//}
+					//else
+					//{
+					//	os = v[3];
+					//	ot = v[4];
+
+					//	RS_SetTexcoords(stage, &os, &ot, surf);
+					//}
+
+					if (lightmap)
+					{
 						qglMTexCoord2fSGIS(GL_TEXTURE0, os+txm, ot+tym);
 						qglMTexCoord2fSGIS(GL_TEXTURE1, v[5], v[6]);
-					} else {
-						qglTexCoord2f (os+txm, ot+tym); // jitrscript (added txm/tym)
+					}
+					else
+					{
+						qglTexCoord2f(os+txm, ot+tym); // jitrscript (added txm/tym)
 					}
 
 					if (!rs->warpsmooth)
-						qglVertex3fv (v);
-					else {
+					{
+						qglVertex3fv(v);
+					}
+					else
+					{
 						scale = rs->warpdist*sin(v[0]*rs->warpsmooth+time)*sin(v[1]*rs->warpsmooth+time)*sin(v[2]*rs->warpsmooth+time);
-						VectorMA (v, scale, surf->plane->normal, wv);
-						qglVertex3fv (wv);
+						VectorMA(v, scale, surf->plane->normal, wv);
+						qglVertex3fv(wv);
 					}
 				}
 
-				qglEnd ();
+				qglEnd();
 			}
 		}
 
-		if (stage->envmap)
-			GL_TexEnv(GL_REPLACE);
+		//if (stage->envmap)
+		//	GL_TexEnv(GL_REPLACE);
 
 		qglColor4f(1, 1, 1, 1);
 		qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1213,4 +1555,8 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 		firststage = false; // jitrscript
 	} while (stage = stage->next);
 }
+
+
+
+
 

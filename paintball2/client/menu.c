@@ -190,6 +190,8 @@ static menu_widget_t *free_widgets(menu_widget_t *widget)
 
 	if(widget->command)
 		Z_Free(widget->command);
+	if(widget->doubleclick)
+		Z_Free(widget->doubleclick);
 	if(widget->cvar)
 		Z_Free(widget->cvar);
 	if(widget->cvar_default)
@@ -200,6 +202,7 @@ static menu_widget_t *free_widgets(menu_widget_t *widget)
 		Z_Free(widget->text);
 	if(widget->selectedtext)
 		Z_Free(widget->selectedtext);
+
 	if(!(widget->flags & WIDGET_FLAG_SERVERLIST)) // don't free the serverlist!
 	{
 		if(widget->select_map)
@@ -212,6 +215,7 @@ static menu_widget_t *free_widgets(menu_widget_t *widget)
 				free_string_array(widget->select_list, widget->select_totalitems);
 		}
 	}
+
 	Z_Free(widget);
 
 	return NULL;
@@ -1922,6 +1926,8 @@ static void menu_from_file(menu_screen_t *menu)
 						widget->cvar_default = text_copy(COM_Parse(&buf));
 					else if(Q_streq(token, "command") || Q_streq(token, "cmd"))
 						widget->command = text_copy(COM_Parse(&buf));
+					else if(Q_streq(token, "doubleclick"))
+						widget->doubleclick = text_copy(COM_Parse(&buf));
 					else if(Q_streq(token, "pic"))
 					{
 						widget->pic = re.DrawFindPic(COM_Parse(&buf));

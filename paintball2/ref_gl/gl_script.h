@@ -41,6 +41,14 @@ typedef struct
 	float	speedX, speedY;	// speed of scroll
 } rs_scroll_t;
 
+typedef enum
+{
+	TC_GEN_BASE			= 0,
+	TC_GEN_LIGHTMAP		= 1,
+	TC_GEN_ENVIRONMENT	= 2,
+	TC_GEN_VECTOR		= 3
+} rs_tcGen_t;
+
 // Script stage
 typedef struct rs_stage_s {
 	image_t					*texture;		// texture
@@ -58,10 +66,12 @@ typedef struct rs_stage_s {
 	rs_scale_t				scale;			// tcmod
 	rs_scale_t				scaleadd;		// jitrscript
 	rs_offset_t				offset;			// jitrscript
+	rs_tcGen_t				tcGen;			// jitrscript
+	vec4_t					tcGenVec[2];	// jitrscript
 
 	float					rot_speed;		// rotate speed (0 for no rotate);
 
-	qboolean				envmap;			// fake envmapping
+	//qboolean				envmap;			// fake envmapping
 	qboolean				lightmap;		// lightmap this stage?
 	qboolean				alphamask;		// alpha masking?
 

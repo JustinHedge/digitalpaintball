@@ -127,14 +127,14 @@ void VID_Printf (int print_level, char *fmt, ...)
 	{
 		Com_Printf ("%s", msg);
 	}
-	else if ( print_level == PRINT_DEVELOPER )
+	else if (print_level == PRINT_DEVELOPER)
 	{
 		Com_DPrintf ("%s", msg);
 	}
-	else if ( print_level == PRINT_ALERT )
+	else if (print_level == PRINT_ALERT)
 	{
-		MessageBox( 0, msg, "PRINT_ALERT", MB_ICONWARNING );
-		OutputDebugString( msg );
+		MessageBox(0, msg, "PRINT_ALERT", MB_ICONWARNING);
+		OutputDebugString(msg);
 	}
 }
 

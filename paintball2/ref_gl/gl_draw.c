@@ -229,10 +229,13 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 				// look up color in char_colors.tga:
 				if (!shadowpass)
 				{
-					qglColor4f(*(char_colors+num*4)/255.0f, 
-						*(char_colors+num*4+1)/255.0f,
-						*(char_colors+num*4+2)/255.0f, alpha);
+					register int num4 = num*4;
+
+					qglColor4f(*(char_colors+num4)/255.0f, 
+						*(char_colors+num4+1)/255.0f,
+						*(char_colors+num4+2)/255.0f, alpha);
 				}
+
 				nextiscolor = false;
 				s++;
 				continue;
@@ -523,7 +526,8 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 			qglColor4f(1,1,1,alpha);
 			GL_TexEnv(GL_MODULATE); // jitrscript
 
-			if (stage->envmap)
+//			if (stage->envmap)
+			if (stage->tcGen == TC_GEN_ENVIRONMENT)
 			{
 				qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
 				qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);

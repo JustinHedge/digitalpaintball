@@ -90,6 +90,9 @@ typedef enum {false, true}	qboolean;
 #define	PRINT_MEDIUM		1		// death messages
 #define	PRINT_HIGH			2		// critical messages
 #define	PRINT_CHAT			3		// chat messages
+// paintball2 stuff:
+#define PRINT_DIALOG		11		// pops up a dailog on the client
+#define PRINT_ITEM			12		// for item pickup notifications.
 
 
 
@@ -123,12 +126,21 @@ MATHLIB
 */
 
 typedef float vec_t;
+typedef vec_t vec2_t[2];
 typedef vec_t vec3_t[3];
+typedef vec_t vec4_t[4];
 typedef vec_t vec5_t[5];
+
+typedef vec3_t mat3_t[3];
 
 typedef	int	fixed4_t;
 typedef	int	fixed8_t;
 typedef	int	fixed16_t;
+
+typedef union {
+	float			f;
+	unsigned int	i;
+} float_int_t;
 
 #ifndef M_PI
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
@@ -152,15 +164,35 @@ extern long Q_ftol( float f );
 #define Q_ftol( f ) ( long ) (f)
 #endif
 
-#define DotProduct(x,y)			(x[0]*y[0]+x[1]*y[1]+x[2]*y[2])
-#define VectorSubtract(a,b,c)	(c[0]=a[0]-b[0],c[1]=a[1]-b[1],c[2]=a[2]-b[2])
-#define VectorAdd(a,b,c)		(c[0]=a[0]+b[0],c[1]=a[1]+b[1],c[2]=a[2]+b[2])
-#define VectorCopy(a,b)			(b[0]=a[0],b[1]=a[1],b[2]=a[2])
-#define VectorClear(a)			(a[0]=a[1]=a[2]=0)
-#define VectorNegate(a,b)		(b[0]=-a[0],b[1]=-a[1],b[2]=-a[2])
-#define VectorSet(v, x, y, z)	(v[0]=(x), v[1]=(y), v[2]=(z))
+//#define DotProduct(x,y)			(x[0]*y[0]+x[1]*y[1]+x[2]*y[2])
+//#define VectorSubtract(a,b,c)	(c[0]=a[0]-b[0],c[1]=a[1]-b[1],c[2]=a[2]-b[2])
+//#define VectorAdd(a,b,c)		(c[0]=a[0]+b[0],c[1]=a[1]+b[1],c[2]=a[2]+b[2])
+//#define VectorCopy(a,b)			(b[0]=a[0],b[1]=a[1],b[2]=a[2])
+//#define VectorClear(a)			(a[0]=a[1]=a[2]=0)
+//#define VectorNegate(a,b)		(b[0]=-a[0],b[1]=-a[1],b[2]=-a[2])
+//#define VectorSet(v, x, y, z)	(v[0]=(x), v[1]=(y), v[2]=(z))
+// Taken from Quake2 Evolved (qfusion?)
+#define DotProduct(x,y)			((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2])
+#define CrossProduct(x,y,o)		((o)[0]=(x)[1]*(y)[2]-(x)[2]*(y)[1],(o)[1]=(x)[2]*(y)[0]-(x)[0]*(y)[2],(o)[2]=(x)[0]*(y)[1]-(x)[1]*(y)[0])
+#define Distance(x,y)			(sqrt((((x)[0]-(y)[0])*((x)[0]-(y)[0])+((x)[1]-(y)[1])*((x)[1]-(y)[1])+((x)[2]-(y)[2])*((x)[2]-(y)[2]))))
+#define DistanceSquared(x,y)	(((x)[0]-(y)[0])*((x)[0]-(y)[0])+((x)[1]-(y)[1])*((x)[1]-(y)[1])+((x)[2]-(y)[2])*((x)[2]-(y)[2]))
+#define	SnapVector(v)			((v)[0]=((int)((v)[0])),(v)[1]=((int)((v)[1])),(v)[2]=((int)((v)[2])))
+#define VectorCopy(i,o)			((o)[0]=(i)[0],(o)[1]=(i)[1],(o)[2]=(i)[2])
+#define VectorSet(v,x,y,z)		((v)[0]=(x),(v)[1]=(y),(v)[2]=(z))
+#define VectorClear(v)			((v)[0]=(v)[1]=(v)[2]=0)
+#define VectorCompare(a,b)		((a)[0]==(b)[0]&&(a)[1]==(b)[1]&&(a)[2]==(b)[2])
+#define VectorAdd(a,b,o)		((o)[0]=(a)[0]+(b)[0],(o)[1]=(a)[1]+(b)[1],(o)[2]=(a)[2]+(b)[2])
+#define VectorSubtract(a,b,o)	((o)[0]=(a)[0]-(b)[0],(o)[1]=(a)[1]-(b)[1],(o)[2]=(a)[2]-(b)[2])
+#define	VectorScale(i,s,o)		((o)[0]=(i)[0]*(s),(o)[1]=(i)[1]*(s),(o)[2]=(i)[2]*(s))
+#define VectorMultiply(a,b,o)	((o)[0]=(a)[0]*(b)[0],(o)[1]=(a)[1]*(b)[1],(o)[2]=(a)[2]*(b)[2])
+#define	VectorMA(a,s,b,o)		((o)[0]=(a)[0]+(b)[0]*(s),(o)[1]=(a)[1]+(b)[1]*(s),(o)[2]=(a)[2]+(b)[2]*(s))
+#define VectorAverage(a,b,o)	((o)[0]=((a)[0]+(b)[0])*0.5,(o)[1]=((a)[1]+(b)[1])*0.5,(o)[2]=((a)[2]+(b)[2])*0.5)
+#define VectorNegate(i,o)		((o)[0]=-(i)[0],(o)[1]=-(i)[1],(o)[2]=-(i)[2])
+#define VectorInverse(v)		((v)[0]=-(v)[0],(v)[1]=-(v)[1],(v)[2]=-(v)[2])
+#define VectorLength(v)			(sqrt((v)[0]*(v)[0]+(v)[1]*(v)[1]+(v)[2]*(v)[2]))
+#define VectorLengthSquared(v)	((v)[0]*(v)[0]+(v)[1]*(v)[1]+(v)[2]*(v)[2])
 
-void VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc);
+void _VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc);
 
 // just in case you do't want to use the macros
 vec_t _DotProduct (vec3_t v1, vec3_t v2);
@@ -170,14 +202,17 @@ void _VectorCopy (vec3_t in, vec3_t out);
 
 void ClearBounds (vec3_t mins, vec3_t maxs);
 void AddPointToBounds (vec3_t v, vec3_t mins, vec3_t maxs);
-int VectorCompare (vec3_t v1, vec3_t v2);
-vec_t VectorLength (vec3_t v);
-void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross);
+int _VectorCompare (vec3_t v1, vec3_t v2);
+vec_t _VectorLength (vec3_t v);
+void _CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross);
 vec_t VectorNormalize (vec3_t v);		// returns vector length
 vec_t VectorNormalize2 (vec3_t v, vec3_t out);
-void VectorInverse (vec3_t v);
-void VectorScale (vec3_t in, vec_t scale, vec3_t out);
+void _VectorInverse (vec3_t v);
+void _VectorScale (vec3_t in, vec_t scale, vec3_t out);
+float Q_rsqrt (float number); // jit - from qfusion
 int Q_log2(int val);
+
+void Matrix3_Transpose (mat3_t in, mat3_t out); // jit - from qfusion
 
 void R_ConcatRotations (float in1[3][3], float in2[3][3], float out[3][3]);
 void R_ConcatTransforms (float in1[3][4], float in2[3][4], float out[3][4]);
@@ -206,7 +241,7 @@ float LerpAngle (float a1, float a2, float frac);
 void ProjectPointOnPlane( vec3_t dst, const vec3_t p, const vec3_t normal );
 void PerpendicularVector( vec3_t dst, const vec3_t src );
 void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees );
-
+qboolean	AxisCompare (const vec3_t axis1[3], const vec3_t axis2[3]); // jit - taken from Quake2Evolved
 
 //=============================================
 
@@ -217,6 +252,7 @@ void COM_FilePath (char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);
 
 char *COM_Parse (char **data_p);
+char *COM_ParseExt (char **data_p, qboolean nl); // jitrscript - from qfusion
 // data is an in/out parm, returns a parsed out token
 
 void Com_sprintf (char *dest, int size, char *fmt, ...);
@@ -1120,6 +1156,9 @@ ROGUE - VERSIONS
 #define	CS_PLAYERSKINS		(CS_ITEMS+MAX_ITEMS)
 #define CS_GENERAL			(CS_PLAYERSKINS+MAX_CLIENTS)
 #define	MAX_CONFIGSTRINGS	(CS_GENERAL+MAX_GENERAL)
+
+#define CS_REQUIREDFILES	(CS_GENERAL+2) // jit
+#define CS_WHATEVERSNEXT	(CS_REQUIREDFILES+4) // use this for additional stuff
 
 
 //==============================================

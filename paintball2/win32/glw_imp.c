@@ -753,19 +753,19 @@ void GLimp_EndFrame (void)
 	if (cl_animdump->value)
 		CL_AnimDump();
 
-	if ( stricmp( gl_drawbuffer->string, "GL_BACK" ) == 0 )
+	if (stricmp(gl_drawbuffer->string, "GL_BACK") == 0)
 	{
-		if ( !qwglSwapBuffers( glw_state.hDC ) )
-			ri.Sys_Error( ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n" );
+		if (!qwglSwapBuffers(glw_state.hDC))
+			ri.Sys_Error(ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n");
 	}
 
 	// rscript - MrG
-	rs_realtime=Sys_Milliseconds() * 0.001f;
+	rs_realtime = Sys_Milliseconds() * 0.001f;
 	
 	Sleep(0);	// fixes a few problems ive been having
 }
 
-void UpdateGammaRamp()
+void UpdateGammaRamp (void)
 {
 	int i,o;
 	//int test;

@@ -79,6 +79,9 @@ cvar_t	*joy_yawsensitivity;
 cvar_t	*joy_upthreshold;
 cvar_t	*joy_upsensitivity;
 
+// NiceAss:
+cvar_t *m_xp;
+
 qboolean	joy_avail, joy_advancedinit, joy_haspov;
 DWORD		joy_oldbuttonstate, joy_oldpovstate;
 
@@ -131,7 +134,9 @@ qboolean	mouseactive;	// false when not focus app
 
 qboolean	restore_spi;
 qboolean	mouseinitialized;
-int		originalmouseparms[3], newmouseparms[3] = {0, 0, 1};
+int			originalmouseparms[3];
+int			newmouseparms[3]	= { 0, 0, 1 };
+int			newmouseparmsXP[3]	= { 0, 0, 0 }; // m_xp -- xp mouse acceleration fix
 qboolean	mouseparmsvalid;
 
 int			window_center_x, window_center_y;
@@ -167,21 +172,53 @@ Called when the window gains focus or changes in some way
 void IN_ActivateMouse (void)
 {
 	int		width, height;
+	BOOL success;
+	OSVERSIONINFO osver;
+
+	// NiceAss: reset mouse settings if m_xp changes
+	if( m_xp->modified )
+	{
+		mouseactive = false;
+		m_xp->modified = false;
+	}
 
 	if (!mouseinitialized)
 		return;
+
 	if (!in_mouse->value)
 	{
 		mouseactive = false;
 		return;
 	}
+
 	if (mouseactive)
 		return;
 
 	mouseactive = true;
 
+	//if (mouseparmsvalid)
+	//	restore_spi = SystemParametersInfo (SPI_SETMOUSE, 0, newmouseparms, 0);
+
+	// -- xp accel fix
+	memset(&osver, 0, sizeof(OSVERSIONINFO));
+	osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	success = GetVersionEx(&osver);
+
 	if (mouseparmsvalid)
-		restore_spi = SystemParametersInfo (SPI_SETMOUSE, 0, newmouseparms, 0);
+	{
+		// WinXP is NT and version 5.1
+		if ((success && osver.dwPlatformId == VER_PLATFORM_WIN32_NT &&
+		    osver.dwMajorVersion == 5 && osver.dwMinorVersion == 1 && m_xp->value == 1) || 
+			m_xp->value == 2)
+		{
+			restore_spi = SystemParametersInfo(SPI_SETMOUSE, 0, newmouseparmsXP, 0);
+		}
+		else
+		{
+			restore_spi = SystemParametersInfo(SPI_SETMOUSE, 0, newmouseparms, 0);
+		}
+	}
+	// xp accel fix --
 
 	width = GetSystemMetrics (SM_CXSCREEN);
 	height = GetSystemMetrics (SM_CYSCREEN);
@@ -207,6 +244,7 @@ void IN_ActivateMouse (void)
 
 	SetCapture ( cl_hwnd );
 	ClipCursor (&window_rect);
+
 	while (ShowCursor (FALSE) >= 0)
 		;
 }
@@ -377,6 +415,8 @@ void IN_Init (void)
 	// mouse variables
 	m_filter				= Cvar_Get ("m_filter",					"0",		CVAR_ARCHIVE);
     in_mouse				= Cvar_Get ("in_mouse",					"1",		CVAR_ARCHIVE);
+	// NiceAss:
+	m_xp					= Cvar_Get ("m_xp",						"1",		CVAR_ARCHIVE);
 
 	// joystick variables
 	in_joystick				= Cvar_Get ("in_joystick",				"0",		CVAR_ARCHIVE);

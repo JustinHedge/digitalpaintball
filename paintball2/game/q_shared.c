@@ -292,6 +292,23 @@ float LerpAngle (float a2, float a1, float frac)
 }
 
 
+/*
+ =================
+ AxisCompare -- taken from Quake2Evolved
+ =================
+*/
+qboolean AxisCompare (const vec3_t axis1[3], const vec3_t axis2[3])
+{
+	if (axis1[0][0] != axis2[0][0] || axis1[0][1] != axis2[0][1] || axis1[0][2] != axis2[0][2])
+		return false;
+	if (axis1[1][0] != axis2[1][0] || axis1[1][1] != axis2[1][1] || axis1[1][2] != axis2[1][2])
+		return false;
+	if (axis1[2][0] != axis2[2][0] || axis1[2][1] != axis2[2][1] || axis1[2][2] != axis2[2][2])
+		return false;
+
+	return true;
+}
+
 float	anglemod(float a)
 {
 #if 0
@@ -671,7 +688,7 @@ void AddPointToBounds (vec3_t v, vec3_t mins, vec3_t maxs)
 }
 
 
-int VectorCompare (vec3_t v1, vec3_t v2)
+int _VectorCompare (vec3_t v1, vec3_t v2)
 {
 	if (v1[0] != v2[0] || v1[1] != v2[1] || v1[2] != v2[2])
 			return 0;
@@ -718,7 +735,7 @@ vec_t VectorNormalize2 (vec3_t v, vec3_t out)
 
 }
 
-void VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc)
+void _VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc)
 {
 	vecc[0] = veca[0] + scale*vecb[0];
 	vecc[1] = veca[1] + scale*vecb[1];
@@ -752,7 +769,7 @@ void _VectorCopy (vec3_t in, vec3_t out)
 	out[2] = in[2];
 }
 
-void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
+void _CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
 {
 	cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
 	cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
@@ -761,7 +778,7 @@ void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
 
 double sqrt(double x);
 
-vec_t VectorLength(vec3_t v)
+vec_t _VectorLength(vec3_t v)
 {
 	int		i;
 	float	length;
@@ -774,20 +791,38 @@ vec_t VectorLength(vec3_t v)
 	return length;
 }
 
-void VectorInverse (vec3_t v)
+void _VectorInverse (vec3_t v)
 {
 	v[0] = -v[0];
 	v[1] = -v[1];
 	v[2] = -v[2];
 }
 
-void VectorScale (vec3_t in, vec_t scale, vec3_t out)
+void _VectorScale (vec3_t in, vec_t scale, vec3_t out)
 {
 	out[0] = in[0]*scale;
 	out[1] = in[1]*scale;
 	out[2] = in[2]*scale;
 }
 
+// jitodo -- benchmark compare to rsqrt w/optimizations -- use Enigma's faster func? - http://www.gamedev.net/community/forums/topic.asp?topic_id=139956
+float Q_rsqrt (float number) // jit - Fast approximation reciprocal square root
+{
+	int i;
+	float x2, y;
+
+	if (number == 0.0)
+		return 0.0;
+
+	x2 = number * 0.5f;
+	y = number;
+	i = * (int *) &y;			// evil floating point bit level hacking
+	i = 0x5f3759df - (i >> 1);	// Newton's? approximation (googling this value yeilds interesting results)
+	y = * (float *) &i;
+	y = y * (1.5f - (x2 * y * y));	// this can be done a second time
+
+	return y;
+}
 
 int Q_log2(int val)
 {
@@ -797,6 +832,21 @@ int Q_log2(int val)
 	return answer;
 }
 
+
+// taken from qfusion
+void Matrix3_Transpose (mat3_t in, mat3_t out)
+{
+	out[0][0] = in[0][0];
+	out[1][1] = in[1][1];
+	out[2][2] = in[2][2];
+
+	out[0][1] = in[1][0];
+	out[0][2] = in[2][0];
+	out[1][0] = in[0][1];
+	out[1][2] = in[2][1];
+	out[2][0] = in[0][2];
+	out[2][1] = in[1][2];
+}
 
 
 //====================================================================================
@@ -1153,6 +1203,101 @@ skipwhite:
 	return com_token;
 }
 
+
+/*
+==============
+COM_ParseExt
+
+Parse a token out of a string
+==============
+*/
+char *COM_ParseExt (char **data_p, qboolean nl) // jitrscript - from qfusion
+{
+	int		c;
+	int		len;
+	char	*data;
+	qboolean newlines = false;
+
+	data = *data_p;
+	len = 0;
+	com_token[0] = 0;
+
+	if (!data)
+	{
+		*data_p = NULL;
+		return "";
+	}
+
+// skip whitespace
+skipwhite:
+	while ( (c = *data) <= ' ')
+	{
+		if (c == 0)
+		{
+			*data_p = NULL;
+			return "";
+		}
+		if (c == '\n')
+			newlines = true;
+		data++;
+	}
+
+	if ( newlines && !nl ) {
+		*data_p = data;
+		return com_token;
+	}
+
+// skip // comments
+	if (c == '/' && data[1] == '/')
+	{
+		while (*data && *data != '\n')
+			data++;
+		goto skipwhite;
+	}
+
+// handle quoted strings specially
+	if (c == '\"')
+	{
+		data++;
+		while (1)
+		{
+			c = *data++;
+			if (c=='\"' || !c)
+			{
+				com_token[len] = 0;
+				*data_p = data;
+				return com_token;
+			}
+			if (len < MAX_TOKEN_CHARS)
+			{
+				com_token[len] = c;
+				len++;
+			}
+		}
+	}
+
+// parse a regular word
+	do
+	{
+		if (len < MAX_TOKEN_CHARS)
+		{
+			com_token[len] = c;
+			len++;
+		}
+		data++;
+		c = *data;
+	} while (c>32);
+
+	if (len == MAX_TOKEN_CHARS)
+	{
+//		Com_Printf ("Token exceeded %i chars, discarded.\n", MAX_TOKEN_CHARS);
+		len = 0;
+	}
+	com_token[len] = 0;
+
+	*data_p = data;
+	return com_token;
+}
 
 /*
 ===============

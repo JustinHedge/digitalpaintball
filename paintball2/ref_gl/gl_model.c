@@ -791,15 +791,17 @@ void Mod_LoadLeafs (lump_t *l)
 	glpoly_t	*poly;
 
 	in = (void *)(mod_base + l->fileofs);
+
 	if (l->filelen % sizeof(*in))
 		ri.Sys_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
+
 	count = l->filelen / sizeof(*in);
-	out = Hunk_Alloc ( count*sizeof(*out));	
+	out = Hunk_Alloc(count*sizeof(*out));	
 
 	loadmodel->leafs = out;
 	loadmodel->numleafs = count;
 
-	for ( i=0 ; i<count ; i++, in++, out++)
+	for (i=0 ; i<count ; i++, in++, out++)
 	{
 		for (j=0 ; j<3 ; j++)
 		{
@@ -818,12 +820,16 @@ void Mod_LoadLeafs (lump_t *l)
 		out->nummarksurfaces = LittleShort(in->numleaffaces);
 		
 //#if 0
-		if (out->contents & (CONTENTS_WATER|CONTENTS_SLIME|CONTENTS_LAVA) )
+		if (out->contents & (CONTENTS_WATER|CONTENTS_SLIME|CONTENTS_LAVA) && r_caustics->value) // jitcaustics
 		{
-			for (j=0 ; j<out->nummarksurfaces ; j++)
+			for (j=0; j<out->nummarksurfaces; j++)
 			{
+				if ((out->firstmarksurface[j]->texinfo->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP)))
+					continue; // jitcaustics -- don't mark water surface as underwater
+
 				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
-				for (poly = out->firstmarksurface[j]->polys ; poly ; poly=poly->next)
+
+				for (poly = out->firstmarksurface[j]->polys; poly; poly=poly->next)
 					poly->flags |= SURF_UNDERWATER;
 			}
 		}

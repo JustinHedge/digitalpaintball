@@ -57,6 +57,7 @@ typedef struct entity_s
 	*/
 	float				origin[3];		// also used as RF_BEAM's "from"
 	int					frame;			// also used as RF_BEAM's diameter
+	vec3_t				axis[3];		// jit - from qfusion
 
 	/*
 	** previous data for lerping

@@ -179,6 +179,7 @@ typedef struct MENU_WIDGET_S {
 	int flags;			// for things like numbersonly
 	qboolean modified;	// drawing information changed
 	char *command;		// command executed when widget activated
+	char *doubleclick;	// command exceuted on double click.
 	char *cvar;			// cvar widget reads and/or modifies
 	char *cvar_default;	// set cvar to this value if unset
 	int x;				// position from 0 (left) to 320 (right)

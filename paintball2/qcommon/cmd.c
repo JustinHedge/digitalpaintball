@@ -1065,7 +1065,7 @@ char *Cmd_CompleteCommand (char *partial)
 				if (retval[p] != pmatch[o][p]) {
 					retval[p] = 0;
 					//diff=false;
-					diff=true; // jitest
+					diff=true; // jit - crash fix
 				}
 			}
 			p++;

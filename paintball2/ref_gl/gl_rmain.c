@@ -1542,7 +1542,7 @@ void R_Register( void )
 	vid_lighten = ri.Cvar_Get("vid_lighten", "0", CVAR_ARCHIVE); // jitgamma
 	vid_ref = ri.Cvar_Get( "vid_ref", "pbgl", CVAR_ARCHIVE );
 
-	r_caustics = ri.Cvar_Get("r_caustics", "1", CVAR_ARCHIVE); // jitcaustics
+	r_caustics = ri.Cvar_Get("r_caustics", "2", CVAR_ARCHIVE); // jitcaustics
 
 	ri.Cmd_AddCommand("imagelist", GL_ImageList_f);
 	ri.Cmd_AddCommand("screenshot", GL_ScreenShot_f);

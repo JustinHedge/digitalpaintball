@@ -486,7 +486,8 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 				else
 					alpha=1.0f;
 
-				if (stage->envmap)
+				//if (stage->envmap)
+				if (stage->tcGen == TC_GEN_ENVIRONMENT)
 				{
 					qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
 					qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);

@@ -1522,11 +1522,6 @@ void SCR_UpdateScreen (void)
 
 					re.DrawString(viddef.width-56*hudscale,64*hudscale,s);
 				}
-				if(Cvar_VariableValue("snazbot"))
-				{
-					re.DrawString(viddef.width/2-76*hudscale, viddef.height-40*hudscale,
-						"SnaZ-BoT v3 Enabled");
-				}
 
 				SCR_DrawStats();
 				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 1)
@@ -1536,6 +1531,12 @@ void SCR_UpdateScreen (void)
 
 				CL_DrawItemPickups(); // jit
 				// jitodo -- call client scoreboard display here
+
+				if(Cvar_VariableValue("snazbot"))
+				{
+					re.DrawString(viddef.width/2-76*hudscale, viddef.height-8*hudscale,
+						"SnaZ-BoT v3 Enabled");
+				}
 
 				SCR_DrawNet ();
 				SCR_CheckDrawCenterString ();
@@ -1555,5 +1556,6 @@ void SCR_UpdateScreen (void)
 			SCR_DrawLoading();
 		}
 	}
+
 	re.EndFrame();
 }

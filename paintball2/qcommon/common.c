@@ -357,9 +357,9 @@ void MSG_WriteFloat (sizebuf_t *sb, float f)
 void MSG_WriteString (sizebuf_t *sb, char *s)
 {
 	if (!s)
-		SZ_Write (sb, "", 1);
+		SZ_Write(sb, "", 1);
 	else
-		SZ_Write (sb, s, strlen(s)+1);
+		SZ_Write(sb, s, strlen(s)+1);
 }
 
 void MSG_WriteCoord (sizebuf_t *sb, float f)
@@ -1423,9 +1423,6 @@ void Qcommon_Init (int argc, char **argv)
 
 	z_chain.next = z_chain.prev = &z_chain;
 
-	//if (!Cvar_Get("dedicated", "0", CVAR_NOSET)->value)
-	//	Con_Init(); // jitest - majik, console init fix.
-
 	// prepare enough of the subsystems to handle
 	// cvar and command buffer management
 	COM_InitArgv (argc, argv);
@@ -1478,7 +1475,10 @@ void Qcommon_Init (int argc, char **argv)
 	Cvar_Get ("version", s, CVAR_SERVERINFO|CVAR_NOSET);
 
 	if (dedicated->value)
-		Cmd_AddCommand ("quit", Com_Quit);
+	{
+		Cmd_AddCommand("quit", Com_Quit);
+		Cmd_AddCommand("exit", Com_Quit); // jit
+	}
 
 	Sys_Init ();
 
