@@ -1885,6 +1885,8 @@ qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, q
 	else if (samples == gl_alpha_format)
 		comp = (gl_state.texture_compression) ? GL_COMPRESSED_RGBA_ARB : gl_tex_alpha_format;
 
+
+
 	// find sizes to scale to
 	{
 		int max_size;
@@ -1893,11 +1895,19 @@ qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, q
 		scaled_width = nearest_power_of_2(width);
 		scaled_height = nearest_power_of_2(height);
 
+		/*if (mipmap) // jittexture
+		{
+			scaled_width >>= (int)gl_picmip->value;
+			scaled_height >>= (int)gl_picmip->value;
+		}*/
+
 		if (scaled_width > max_size)
 			scaled_width = max_size;
 		if (scaled_height > max_size)
 			scaled_height = max_size;
 	}
+
+
 
 	if (scaled_width != width || scaled_height != height) {
 		scaled=malloc((scaled_width * scaled_height) * 4);

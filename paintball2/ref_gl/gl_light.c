@@ -590,12 +590,13 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	int			r, g, b, a, max;
 	int			i, j, size;
 	byte		*lightmap;
-//	float		scale[4];
+	float		scale[4];
 	int			nummaps;
 	float		*bl;
 	lightstyle_t	*style;
 	int monolightmap;
 	float		sat; // jitlight
+	int			gammaindex[3]; // jitlightmap
 
 	if ( surf->texinfo->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP) )
 		ri.Sys_Error (ERR_DROP, "R_BuildLightMap called for non-lit surface");
@@ -642,29 +643,32 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	// add all the lightmaps
 	if ( nummaps == 1 )
 	{
-		int maps;
+		int maps = 0;
 
-		for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
-			 maps++)
+	//	for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++)
 		{
 			bl = s_blocklights;
-/*
+#if 1
 			for (i=0 ; i<3 ; i++)
-				scale[i] = gl_modulate->value * 
+				scale[i] = /* gl_modulate->value * */
 					r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
-*/
+#endif
 			// jit -- removed the scale == 1.0F check,
 			// because that's just retarded.
 			for (i=0 ; i<size ; i++, bl+=3)
 			{
-/*
+#if 0
 				bl[0] = (lightmap[i*3+0]) * scale[0];
 				bl[1] = (lightmap[i*3+1]) * scale[1];
 				bl[2] = (lightmap[i*3+2]) * scale[2];
-*/
-				bl[0] = lightmap_gammatable[lightmap[i*3+0]]; // jitgamma:
-				bl[1] = lightmap_gammatable[lightmap[i*3+1]];
-				bl[2] = lightmap_gammatable[lightmap[i*3+2]];
+#else
+				r = lightmap[i*3+0]*scale[0];
+				g = lightmap[i*3+1]*scale[1];
+				b = lightmap[i*3+2]*scale[2];
+				bl[0] = lightmap_gammatable[r > 255 ? 255 : r]; // jitgamma:
+				bl[1] = lightmap_gammatable[g > 255 ? 255 : g]; // jitgamma:
+				bl[2] = lightmap_gammatable[b > 255 ? 255 : b]; // jitgamma:
+#endif
 			}
 
 			lightmap += size*3;		// skip to next lightmap
@@ -676,27 +680,59 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 
 		memset( s_blocklights, 0, sizeof( s_blocklights[0] ) * size * 3 );
 
-		for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
-			 maps++)
+		for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++)
 		{
 			bl = s_blocklights;
 
-/*			for (i=0 ; i<3 ; i++)
-				scale[i] = gl_modulate->value*r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
-*/
+#if 1
+			for (i=0 ; i<3 ; i++)
+				scale[i] = /*gl_modulate->value*/ r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
+#endif
 			for (i=0 ; i<size ; i++, bl+=3)
 			{
-				/*
+#if 1
 				bl[0] += (lightmap[i*3+0]) * scale[0];
 				bl[1] += (lightmap[i*3+1]) * scale[1];
 				bl[2] += (lightmap[i*3+2]) * scale[2];
+#else
+				/*
+				bl[0] += lightmap_gammatable[(int)(lightmap[i*3+0]*scale[0])]; // jitgamma:
+				bl[1] += lightmap_gammatable[(int)(lightmap[i*3+1]*scale[1])];
+				bl[2] += lightmap_gammatable[(int)(lightmap[i*3+2]*scale[2])];
 				*/
-				bl[0] += lightmap_gammatable[lightmap[i*3+0]]; // jitgamma:
-				bl[1] += lightmap_gammatable[lightmap[i*3+1]];
-				bl[2] += lightmap_gammatable[lightmap[i*3+2]];
+				bl[0] += lightmap_gammatable[lightmap[i*3+0]]*scale[0]; // jitgamma:
+				bl[1] += lightmap_gammatable[lightmap[i*3+1]]*scale[1];
+				bl[2] += lightmap_gammatable[lightmap[i*3+2]]*scale[2];
+#endif
 			}
+#if 0
+			bl[0] = lightmap_gammatable[(int)bl[0]];
+			bl[1] = lightmap_gammatable[(int)bl[1]];
+			bl[2] = lightmap_gammatable[(int)bl[2]];
+#endif
+			
 			lightmap += size*3;		// skip to next lightmap
 		}
+#if 1
+		//for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) // jitlightmap / jitgammma
+		{
+			bl = s_blocklights;
+			for (i=0 ; i<size ; i++, bl+=3)
+			{
+				VectorCopy(bl, gammaindex);
+				if(gammaindex[0]>255)
+					gammaindex[0] = 255;
+				if(gammaindex[1]>255)
+					gammaindex[1] = 255;
+				if(gammaindex[2]>255)
+					gammaindex[2] = 255;
+				
+				bl[0] = lightmap_gammatable[gammaindex[0]];
+				bl[1] = lightmap_gammatable[gammaindex[1]];
+				bl[2] = lightmap_gammatable[gammaindex[2]];
+			}
+		}
+#endif
 	}
 
 // add all the dynamic lights
