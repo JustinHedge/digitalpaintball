@@ -1,6 +1,6 @@
 #include "menu.h"
 
-#define INITIAL_SERVERLIST_SIZE 4//32
+#define INITIAL_SERVERLIST_SIZE 32
 
 // Local globals
 static sem_t m_sem_serverlist;
@@ -83,7 +83,7 @@ void M_ServerlistPrint_f (void)
 	int i;
 
 	for(i=0; i<m_serverlist.nummapped; i++)
-		Com_Printf("%d) %s %s\n", i+1, m_serverlist.ips[i],
+		Com_Printf("%2d) %s\n    %s\n", i+1, m_serverlist.ips[i],
 			m_serverlist.info[i]);
 }
 

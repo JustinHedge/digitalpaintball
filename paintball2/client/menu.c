@@ -1976,6 +1976,8 @@ static void menu_from_file(menu_screen_t *menu)
 
 	sprintf(menu_filename, "menus/%s.txt", menu->name);
 	file_len = FS_LoadFile(menu_filename, (void **)&buf);
+
+	menu->background = re.DrawFindPic("conback"); // jitodo - customizebale backgrounds
 	
 	if(file_len != -1)
 	{
@@ -2283,6 +2285,7 @@ void M_ReloadMenu (void)
 	menu_screen_t *menu;
 	
 	sem_wait(&m_sem_widgets); // jitmultithreading
+	m_mouse.cursorpic = i_cursor;
 	menu = root_menu;
 
 	while(menu)
