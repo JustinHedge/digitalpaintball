@@ -1560,7 +1560,7 @@ qboolean R_Init(void *hinstance, void *hWnd)
 	int j;
 	extern float r_turbsin[256];
 
-	gl_debug = ri.Cvar_Get("gl_debug", "1", CVAR_ARCHIVE); // jit
+	gl_debug = ri.Cvar_Get("gl_debug", "0", CVAR_ARCHIVE); // jit
 	gl_sgis_generate_mipmap = ri.Cvar_Get("gl_sgis_generate_mipmap", "0", CVAR_ARCHIVE); // jit
 
 	for (j = 0; j < 256; j++)
@@ -1695,17 +1695,17 @@ qboolean R_Init(void *hinstance, void *hWnd)
 
 	// power vr can't have anything stay in the framebuffer, so
 	// the screen needs to redraw the tiled background every frame
-	if ( gl_config.renderer & GL_RENDERER_POWERVR ) 
+	if (gl_config.renderer & GL_RENDERER_POWERVR) 
 	{
-		ri.Cvar_Set( "scr_drawall", "1" );
+		ri.Cvar_Set("scr_drawall", "1");
 	}
 	else
 	{
-		ri.Cvar_Set( "scr_drawall", "0" );
+		ri.Cvar_Set("scr_drawall", "0");
 	}
 
 #ifdef __linux__
-	ri.Cvar_SetValue( "gl_finish", 1 );
+	ri.Cvar_SetValue("gl_finish", 1);
 #endif
 
 	// MCD has buffering issues
@@ -1767,7 +1767,8 @@ qboolean R_Init(void *hinstance, void *hWnd)
 
 	if (strstr(gl_config.extensions_string, "GL_EXT_point_parameters"))
 	{
-		if (gl_ext_pointparameters->value)
+		//if (gl_ext_pointparameters->value)
+		if (0) // Workaround for ATI driver bug.
 		{
 			qglPointParameterfEXT = (void (APIENTRY*)(GLenum, GLfloat))qwglGetProcAddress("glPointParameterfEXT");
 			qglPointParameterfvEXT = (void (APIENTRY*)(GLenum, const GLfloat*))qwglGetProcAddress("glPointParameterfvEXT");
@@ -1862,48 +1863,57 @@ qboolean R_Init(void *hinstance, void *hWnd)
 			gl_state.sgis_mipmap = true;
 		}
 		else
+		{
+			if (gl_debug->value)
+				ri.Con_Printf(PRINT_ALL, "...GL_SGIS_generate_mipmap found but disabled\n");
 			gl_state.sgis_mipmap = false;
+		}
 	}
 	else
 	{
-		if(gl_debug->value)
+		if (gl_debug->value)
 			ri.Con_Printf(PRINT_ALL, "...GL_SGIS_generate_mipmap not found\n");
 
 		gl_state.sgis_mipmap = false;
 	}
 
-	if ( strstr( gl_config.extensions_string, "GL_NV_texture_rectangle" ) )
+	if (strstr(gl_config.extensions_string, "GL_NV_texture_rectangle"))
 	{
-		if(gl_debug->value)
+		if (gl_debug->value)
 			ri.Con_Printf(PRINT_ALL, "...using GL_NV_texture_rectangle\n");
+
 		gl_state.tex_rectangle = GL_TEXTURE_RECTANGLE_NV; // jitblur
 	} 
 	else if (strstr(gl_config.extensions_string, "GL_EXT_texture_rectangle"))
 	{
-		if(gl_debug->value)
+		if (gl_debug->value)
 			ri.Con_Printf(PRINT_ALL, "...using GL_EXT_texture_rectangle\n");
+
 		gl_state.tex_rectangle = GL_TEXTURE_RECTANGLE_NV; // jitodo (jitblur)
 	} 
 	else
 	{
-		if(gl_debug->value)
+		if (gl_debug->value)
 			ri.Con_Printf(PRINT_ALL, "...GL_EXT_texture_rectangle not found\n");
+
 		gl_state.tex_rectangle = 0; // jitblur
 	}
 
 	// Heffo - ARB Texture Compression
-	if ( strstr( gl_config.extensions_string, "GL_ARB_texture_compression" ) )
+	if (strstr(gl_config.extensions_string, "GL_ARB_texture_compression"))
 	{
 		if(!gl_ext_texture_compression->value)
 		{
-			if(gl_debug->value) // jit
+			if (gl_debug->value) // jit
 				ri.Con_Printf(PRINT_ALL, "...ignoring GL_ARB_texture_compression\n");
+
 			gl_state.texture_compression = false;
 		}
 		else
 		{
 			if(gl_debug->value)
 				ri.Con_Printf(PRINT_ALL, "...using GL_ARB_texture_compression\n");
+
 			gl_state.texture_compression = true;
 		}
 	}
@@ -1911,6 +1921,7 @@ qboolean R_Init(void *hinstance, void *hWnd)
 	{
 		if(gl_debug->value)
 			ri.Con_Printf(PRINT_ALL, "...GL_ARB_texture_compression not found\n");
+
 		gl_state.texture_compression = false;
 		ri.Cvar_Set("gl_ext_texture_compression", "0");
 	}
@@ -1918,10 +1929,12 @@ qboolean R_Init(void *hinstance, void *hWnd)
 	// ===
 	// jitanisotropy
 	gl_state.max_anisotropy = 0;
+
 	if (strstr(gl_config.extensions_string,"texture_filter_anisotropic"))
 	{
 		qglGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_state.max_anisotropy);
 	}
+
 	if(gl_debug->value)
 		ri.Con_Printf(PRINT_ALL, "Max anisotropy level: %g\n", gl_state.max_anisotropy);
 	// ===
