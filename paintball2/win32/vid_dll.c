@@ -729,7 +729,7 @@ void VID_CheckChanges (void)
 		{
 			cls.disable_screen = false;
 			CL_InitImages();
-			M_RefreshMenu(); // jitmenu
+			M_ReloadMenu(); // jitmenu
 		}
 	}
 
