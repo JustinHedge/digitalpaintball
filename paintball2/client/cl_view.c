@@ -83,6 +83,7 @@ void V_AddEntity (entity_t *ent)
 {
 	if (r_numentities >= MAX_ENTITIES)
 		return;
+
 	r_entities[r_numentities++] = *ent;
 }
 

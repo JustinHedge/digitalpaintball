@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define	MAX_DLIGHTS		32
 #define	MAX_STAINS		32
-#define	MAX_ENTITIES	128
+#define	MAX_ENTITIES	512 // jit (was 128)
 #define	MAX_PARTICLES	4096
 #define	MAX_LIGHTSTYLES	256
 
@@ -74,14 +74,17 @@ typedef struct entity_s
 	int		lightstyle;				// for flashing entities
 	float	alpha;					// ignore if RF_TRANSLUCENT isn't set
 
-	struct image_s	*skin;			// NULL for inline skin
+	struct	image_s	*skin;			// NULL for inline skin
 	int		flags;
 
 	// jit: for smoke:
+	float	startscale;
 	float	scale;
 	float	scalevel;
 	float	alphavel;
 	vec3_t	vel;
+	vec3_t	accel;
+	vec3_t	startorigin;
 } entity_t;
 
 #define ENTITY_FLAGS  68

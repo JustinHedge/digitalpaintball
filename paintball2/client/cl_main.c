@@ -1921,7 +1921,7 @@ void CL_Frame (int msec)
 	}
 
 	// let the mouse activate or deactivate
-	IN_Frame ();
+	IN_Frame();
 
 	// decide the simulation time
 	//cls.frametime = extratime/1000.0;
@@ -1990,7 +1990,7 @@ void CL_Frame (int msec)
 		time_after_ref = Sys_Milliseconds ();
 
 	// update audio
-	S_Update (cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);
+	S_Update(cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);
 	
 	CDAudio_Update();
 
