@@ -339,7 +339,7 @@ qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 	int		protocol;
 	int		err;
 
-	if (NET_GetLoopPacket (sock, net_from, net_message))
+	if (NET_GetLoopPacket(sock, net_from, net_message))
 		return true;
 
 	for (protocol = 0 ; protocol < 2 ; protocol++)
@@ -356,7 +356,7 @@ qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 		ret = recvfrom (net_socket, net_message->data, net_message->maxsize
 			, 0, (struct sockaddr *)&from, &fromlen);
 
-		SockadrToNetadr (&from, net_from);
+		SockadrToNetadr(&from, net_from);
 
 		if (ret == -1)
 		{
