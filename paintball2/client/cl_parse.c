@@ -1106,12 +1106,57 @@ void CL_ParseStartSoundPacket(void)
 }       
 
 
-void SHOWNET(char *s)
+void SHOWNET (char *s)
 {
 	if (cl_shownet->value>=2)
 		Com_Printf ("%3i:%s\n", net_message.readcount-1, s);
 }
 
+extern cvar_t *cl_timestamp; // jit
+static char timestamp[24];
+
+static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
+{
+	int idx;
+	qboolean isteam, isprivate;
+
+	isteam = (level == PRINT_CHATN_TEAM);
+	isprivate = (level == PRINT_CHATN_PRIVATE);
+
+	// first character(s) used for decoding client index,
+	// need to decode then offset properly to get our actual chat text
+	decode_unsigned(s, &idx, 1);
+
+	if (idx == 255)
+		s += 5;
+	else if (idx == 254)
+		s += 2;
+	else
+		s ++;
+
+	// todo - create a separate chat console.
+	S_StartLocalSound("misc/talk.wav");
+
+	if (cl_timestamp->value)
+		Com_Printf("%c%c[%s] %c%s%s%s%c%c%s%s %s%s",
+			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
+			timestamp, cl_scores_get_team_splat(idx), 
+			cl_scores_get_isalive(idx) ? "" : "[ELIM]",
+			(isteam || isprivate) ? "(" : "", name_from_index(idx),
+			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
+			(isteam || isprivate) ? ")" : "", 
+			level == PRINT_CHATN_ACTION ? "" : ":",
+			s, (s[strlen(s)-1] == '\n') ? "" : "\n");
+	else
+		Com_Printf("%c%c%c%s%s%s%c%c%s%s %s%s", cl_scores_get_team_splat(idx),
+			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
+			cl_scores_get_isalive(idx) ? "" : "[ELIM]",
+			(isteam || isprivate) ? "(" : "", name_from_index(idx),
+			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
+			(isteam || isprivate) ? ")" : "", 
+			level == PRINT_CHATN_ACTION ? "" : ":",
+			s, (s[strlen(s)-1] == '\n') ? "" : "\n");
+}
 
 
 /*
@@ -1119,15 +1164,14 @@ void SHOWNET(char *s)
 CL_ParseServerMessage
 =====================
 */
-extern cvar_t *cl_timestamp; // jit
 void CL_ParseServerMessage (void)
 {
 	int			cmd;
 	char		*s;
 	int			i;
+
 	// ECHON / jit:
-	char        timestamp[24];
-	_strtime( timestamp );
+	_strtime(timestamp);
 
 //
 // if recording demos, copy the message out
@@ -1213,7 +1257,17 @@ void CL_ParseServerMessage (void)
 				CL_ParsePrintEvent(MSG_ReadString(&net_message));
 				break;
 			case PRINT_SCOREDATA: // jitscores
-				CL_ParesScoreData(MSG_ReadString(&net_message));
+				CL_ParseScoreData(MSG_ReadString(&net_message));
+				break;
+			case PRINT_PINGDATA:
+				CL_ParsePingData(MSG_ReadString(&net_message));
+				break;
+			case PRINT_CHATN:
+			case PRINT_CHATN_TEAM:
+			case PRINT_CHATN_PRIVATE:
+			case PRINT_CHATN_RESERVED:
+			case PRINT_CHATN_RESERVED2:
+				CL_ParseChat(i, MSG_ReadString(&net_message));
 				break;
 			default:
 				if(cl_timestamp->value) // jit:

@@ -95,6 +95,14 @@ typedef enum {false, true}	qboolean;
 #define PRINT_ITEM			12		// for item pickup notifications.
 #define PRINT_EVENT			13		// for events (such as flag captures)
 #define PRINT_SCOREDATA		14		// for server sending ping, kills, deaths, etc of a client.
+#define PRINT_PINGDATA		15		// for client-side scoreboard
+
+#define PRINT_CHATN			20		// chat with name index encoded into first character(s)
+#define PRINT_CHATN_TEAM	21
+#define PRINT_CHATN_PRIVATE	22
+#define	PRINT_CHATN_ACTION	23
+#define PRINT_CHATN_RESERVED	24
+#define PRINT_CHATN_RESERVED2	25
 
 
 #define	ERR_FATAL			0		// exit the entire game with a popup window

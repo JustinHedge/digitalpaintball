@@ -259,7 +259,6 @@ extern	cvar_t	*cl_stereo_separation;
 extern	cvar_t	*cl_stereo;
 
 extern	cvar_t	*cl_gun;
-//extern	cvar_t	*cl_add_blend;
 extern	cvar_t	*cl_add_lights;
 extern	cvar_t	*cl_add_particles;
 extern	cvar_t	*cl_add_entities;
@@ -539,7 +538,8 @@ void CL_Score_f (void);
 void CL_Scoreboard_f (void);
 void CL_ScoreboardShow_f (void);
 void CL_ScoreboardHide_f (void);
-void CL_ParesScoreData (const unsigned char *data); 
+void CL_ParseScoreData (const unsigned char *data); 
+void CL_ParsePingData (const unsigned char *data);
 void cl_scores_setping (int client, int ping);
 void cl_scores_setstarttime (int client, int time);
 void cl_scores_setkills (int client, int kills);
@@ -553,7 +553,10 @@ void cl_scores_sethasflag (int client, qboolean hasflag);
 void cl_scores_setinuse (int client, qboolean inuse);
 void cl_scores_setinuse_all (qboolean inuse);
 void cl_scores_clear (int client);
+int  cl_scores_get_team (int client);
 int  cl_scores_get_team_splat (int client);
+unsigned char cl_scores_get_team_textcolor (int client);
+int  cl_scores_get_isalive (int client);
 void init_cl_scores (void);
 void shutdown_cl_scores (void);
 // jitscores

@@ -64,7 +64,7 @@ static void list_source(menu_widget_t *widget)
 	extern char **cl_scores_nums; // jitodo - put these in a header or something
 	extern char **cl_scores_info;
 	extern int cl_scores_count;
-	void cl_scores_prep_select_widget (void);
+	qboolean cl_scores_prep_select_widget (void);
 
 	if (!widget || !widget->listsource)
 		return;

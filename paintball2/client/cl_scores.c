@@ -48,18 +48,17 @@ int cl_scores_count;
 int splat(int teamnum) 
 {
 	if (teamnum < 1 || teamnum > 4)
-		return 154;
+		return 154; // white
 
-	//switch (teamindex[teamnum-1] + 1) 
 	switch (cl.configstrings[CS_TEAMINDEXES][teamnum-1]) 
 	{
-	case 1:
+	case 1: // red
 		return 15;
-	case 2:
+	case 2: // blue
 		return 14;
-	case 3:
+	case 3: // purple
 		return 5;
-	case 4:
+	case 4: // yellow
 		return 28;
 	default:
 		return ' ';
@@ -69,6 +68,39 @@ int splat(int teamnum)
 int cl_scores_get_team_splat (int client)
 {
 	return splat(cl_scores[client].team);
+}
+
+unsigned char cl_scores_get_team_textcolor (int client)
+{
+	int teamnum;
+	teamnum = cl_scores[client].team;
+
+	if (teamnum < 1 || teamnum > 4)
+		return COLOR_CHAT;
+
+	switch (cl.configstrings[CS_TEAMINDEXES][teamnum-1]) 
+	{
+	case 1: // red
+		return 158;
+	case 2: // blue
+		return 159;
+	case 3: // purple
+		return 141;
+	case 4: // yellow
+		return 140;
+	default:
+		return COLOR_CHAT;
+	}
+}
+
+int cl_scores_get_team (int client)
+{
+	return cl_scores[client].team;
+}
+
+int cl_scores_get_isalive (int client)
+{
+	return cl_scores[client].isalive;
 }
 
 void init_cl_scores (void)
@@ -195,6 +227,19 @@ void cl_scores_clear (int client)
 }
 
 
+static void RequestPings()
+{
+	static int lastrequest = 0;
+
+	if (cls.realtime - lastrequest > 2000) // update at a max of 2 seconds
+	{
+		if (cls.server_gamebuild >= 126) // 1.80+ server version
+			Cbuf_AddText("cmd getpings 0\ntesting\n");
+
+		lastrequest = cls.realtime;
+	}
+}
+
 #define GAMETYPE_NONE	-1
 #define GAMETYPE_DM		0
 #define GAMETYPE_1FLAG	1	
@@ -284,12 +329,14 @@ int strpos_noformat(const unsigned char *in_str, int pos)
 // put the scores into readable strings for the widget to draw
 #define MAX_NAME_WIDTH 19
 #define MAX_NAME_WIDTH_S "19"
-void cl_scores_prep_select_widget (void)
+qboolean cl_scores_prep_select_widget (void)
 {
 	int i, j, len_noformat, len, format_diff;
 
+	RequestPings();
+
 	if (!cl_scores_modified)
-		return;
+		return false;
 
 	SortScores();
 
@@ -333,6 +380,7 @@ void cl_scores_prep_select_widget (void)
 	}
 
 	cl_scores_modified = false;
+	return true;
 }
 
 
@@ -398,7 +446,7 @@ void CL_ScoreboardHide_f (void)
 #define SCORESIZE 10
 static unsigned int temp_array[MAX_DECODE_ARRAY];
 // client index, alive, flag, team, ping, kills, deaths, grabs, caps, start time
-void CL_ParesScoreData (const unsigned char *data)
+void CL_ParseScoreData (const unsigned char *data)
 {
 	unsigned int i, j=0, idx, count;
 
@@ -421,6 +469,24 @@ void CL_ParesScoreData (const unsigned char *data)
 		cl_scores_setgrabs(idx, temp_array[j++]);
 		cl_scores_setcaps(idx, temp_array[j++]);
 		cl_scores_setstarttime(idx, temp_array[j++]);
+	}
+}
+
+#define PINGSIZE 2
+void CL_ParsePingData (const unsigned char *data)
+{
+	unsigned int i, j=0, idx, count;
+
+	count = decode_unsigned(data, temp_array, MAX_DECODE_ARRAY) / PINGSIZE;
+
+	for (i = 0; i < count; i++)
+	{
+		idx = temp_array[j++];
+
+		if (idx > 255)
+			return;
+
+		cl_scores_setping(idx, temp_array[j++]);
 	}
 }
 // jitscores
