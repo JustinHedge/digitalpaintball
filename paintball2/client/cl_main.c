@@ -99,6 +99,7 @@ cvar_t	*m_yaw;
 cvar_t	*m_forward;
 cvar_t	*m_side;
 cvar_t	*m_invert; // jitmouse
+cvar_t	*m_doubleclickspeed; // jitmenu
 
 cvar_t	*cl_lightlevel;
 
@@ -1671,6 +1672,7 @@ void CL_InitLocal (void)
 	m_forward =			Cvar_Get("m_forward", "1", 0);
 	m_side =			Cvar_Get("m_side", "1", 0);
 	m_invert =			Cvar_Get("m_invert", "0", CVAR_ARCHIVE); // jitmouse
+	m_doubleclickspeed =Cvar_Get("m_doubleclickspeed", "200", CVAR_ARCHIVE); // jitmenu
 
 	cl_shownet =		Cvar_Get("cl_shownet", "0", 0);
 	cl_showmiss =		Cvar_Get("cl_showmiss", "0", 0);

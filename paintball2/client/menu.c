@@ -299,6 +299,15 @@ static void callback_select_item(menu_widget_t *widget)
 	}
 }
 
+static void callback_doubleclick_item(menu_widget_t *widget)
+{
+	if(widget->parent->doubleclick)
+	{
+		Cbuf_AddText(widget->parent->doubleclick);
+		Cbuf_AddText("\n");
+	}
+}
+
 static void callback_select_scrollup(menu_widget_t *widget)
 {
 	if(widget->parent->select_vstart > 0)
@@ -631,6 +640,7 @@ static void update_select_subwidgets(menu_widget_t *widget)
 
 		new_widget->parent = widget;
 		new_widget->callback = callback_select_item;
+		new_widget->callback_doubleclick = callback_doubleclick_item;
 
 		new_widget->flags = widget->flags; // inherit flags from parent
 
@@ -1175,18 +1185,26 @@ static void field_activate(menu_widget_t *widget)
 	field_adjustCursor(widget);
 }
 
-static void widget_execute(menu_widget_t *widget)
+static void widget_execute_doubleclick(menu_widget_t *widget, qboolean doubleclick)
 {
 	if(widget->selected)
 	{
-		//MENU_SOUND_OPEN;
-		if(widget->command)
+		if(doubleclick && widget->doubleclick)
+		{
+			Cbuf_AddText(widget->doubleclick);
+			Cbuf_AddText("\n");
+		}
+		else if(widget->command)
 		{
 			Cbuf_AddText(widget->command);
 			Cbuf_AddText("\n");
 		}
 
-		if(widget->callback)
+		if(doubleclick && widget->callback_doubleclick)
+		{
+			widget->callback_doubleclick(widget);
+		}
+		else if(widget->callback)
 		{
 			widget->callback(widget);
 		}
@@ -1211,6 +1229,11 @@ static void widget_execute(menu_widget_t *widget)
 
 		widget->hover = true;
 	}
+}
+
+static void widget_execute(menu_widget_t *widget)
+{
+	widget_execute_doubleclick(widget, false);
 }
 
 
@@ -1290,6 +1313,9 @@ static qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 			break;
 		case M_ACTION_EXECUTE:
 			widget_execute(newSelection);
+			break;
+		case M_ACTION_DOUBLECLICK:
+			widget_execute_doubleclick(newSelection, true);
 			break;
 		case M_ACTION_SCROLLUP:
 			if((widget = newSelection)->type == WIDGET_TYPE_SELECT ||
@@ -1509,6 +1535,8 @@ static void M_InsertField (int key)
 
 void M_Keyup (int key)
 {
+	static int old_mouse_x, old_mouse_y, old_clicktime;
+
 	if(m_active_bind_command)
 	{
 		m_active_bind_widget = NULL;
@@ -1524,11 +1552,15 @@ void M_Keyup (int key)
 		break;
 	case K_MOUSE1:
 		M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_EXECUTE);
-		//key = K_ENTER;
+		if (old_mouse_x == m_mouse.x && old_mouse_y == m_mouse.x
+			&& curtime - old_clicktime < m_doubleclickspeed->value)
+		{
+			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_DOUBLECLICK);
+		}
+		old_mouse_x = m_mouse.x;
+		old_mouse_y = m_mouse.x;
+		old_clicktime = curtime;
 		break;
-//	case K_MOUSEMOVE:
-//		M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_HILIGHT);
-//		break;
 	case K_RIGHTARROW:
 		M_AdjustWidget(m_menu_screens[m_menudepth-1], 1, false);
 		break;

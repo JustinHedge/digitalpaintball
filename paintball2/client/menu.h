@@ -163,6 +163,7 @@ typedef enum {
 	M_ACTION_HILIGHT,
 	M_ACTION_SELECT,
 	M_ACTION_EXECUTE,
+	M_ACTION_DOUBLECLICK,
 	M_ACTION_SCROLLUP,
 	M_ACTION_SCROLLDOWN
 } MENU_ACTION;
@@ -237,6 +238,7 @@ typedef struct MENU_WIDGET_S {
 
 	// callback function
 	void (*callback)(struct MENU_WIDGET_S *widget);
+	void (*callback_doubleclick)(struct MENU_WIDGET_S *widget);
 
 	struct MENU_WIDGET_S *parent;
 	struct MENU_WIDGET_S *subwidget; // child

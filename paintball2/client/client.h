@@ -291,6 +291,7 @@ extern	cvar_t	*m_yaw;
 extern	cvar_t	*m_forward;
 extern	cvar_t	*m_side;
 extern	cvar_t	*m_invert; // jitmouse
+extern	cvar_t	*m_doubleclickspeed; // jitmenu
 
 extern	cvar_t	*freelook;
 
