@@ -431,7 +431,7 @@ void IN_Activate (qboolean active)
 {
 	in_appactive = active;
 	//mouseactive = !active;		// force a new window check or turn off
-	mouseactive = active; // jitmouse -- stop mouse from recentering when quake2 not active!
+	mouseactive = false; // jitmouse -- stop mouse from recentering when quake2 not active!
 }
 
 
