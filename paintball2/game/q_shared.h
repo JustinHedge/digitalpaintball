@@ -97,7 +97,6 @@ typedef enum {false, true}	qboolean;
 #define PRINT_SCOREDATA		14		// for server sending ping, kills, deaths, etc of a client.
 
 
-
 #define	ERR_FATAL			0		// exit the entire game with a popup window
 #define	ERR_DROP			1		// print to console and disconnect from game
 #define	ERR_DISCONNECT		2		// don't kill server
@@ -1198,7 +1197,7 @@ ROGUE - VERSIONS
 #define CS_SERVERGVERSION	(CS_GENERAL+7) // jitversion
 #define CS_SERVEREVERSION	(CS_GENERAL+8) // jitversion
 #define CS_TEAMINDEXES		(CS_GENERAL+9) // jitscores
-#define CS_GAMEMODE			(CS_GENERAL+10) // jitscores
+#define CS_GAMETYPE			(CS_GENERAL+10) // jitscores
 #define CS_WHATEVERSNEXT	(CS_GENERAL+11) // use this for additional stuff
 
 #define CS_EVENTS			(CS_GENERAL+256) // jitevents

@@ -1520,7 +1520,6 @@ void CL_RequestNextDownload (void)
 		&& cl.configstrings[CS_REQUIREDFILES]
 		&& *cl.configstrings[CS_REQUIREDFILES])
 	{
-		///todo;
 		char *token;
 		static char *s = NULL;
 
@@ -2102,39 +2101,39 @@ void CL_Init (void)
 
 	// all archived variables will now be loaded
 
-	Con_Init ();	
+	Con_Init();	
 #if defined __linux__ || defined __sgi
-	S_Init ();	
-	VID_Init ();
+	S_Init();	
+	VID_Init();
 #else
-	VID_Init ();
-	S_Init ();	// sound must be initialized after window is created
+	VID_Init();
+	S_Init();	// sound must be initialized after window is created
 #endif
 	
-	V_Init ();
+	V_Init();
 	
 	net_message.data = net_message_buffer;
 	net_message.maxsize = sizeof(net_message_buffer);
 
 	init_cl_scores(); // jitscores
-	M_Init ();	
+	M_Init();	
 	
-	SCR_Init ();
+	SCR_Init();
 	cls.disable_screen = true;	// don't draw yet
 
-	CDAudio_Init ();
-	CL_InitLocal ();
-	IN_Init ();
-	// jit <!-- init keyboard
+	CDAudio_Init();
+	CL_InitLocal();
+	IN_Init();
+	
 #ifdef _WIN32
-	KB_Init(); 
+	KB_Init(); // jitkeyboard -- init keyboard layout
 #endif
-	// -->
-	FS_ExecAutoexec ();
+
+	FS_ExecAutoexec();
 	Con_ToggleConsole_f(); // jitspoe -- start with console down
 	Con_ToggleConsole_f(); // jitspoe -- lift it up again if in play
-	M_Menu_Main_f (); // jitmenu
-	Cbuf_Execute ();
+	M_Menu_Main_f(); // jitmenu
+	Cbuf_Execute();
 }
 
 
@@ -2163,7 +2162,7 @@ void CL_Shutdown(void)
 	S_Shutdown();
 	IN_Shutdown ();
 	VID_Shutdown();
-	init_cl_scores(); // jitscores
+	shutdown_cl_scores(); // jitscores
 }
 
 

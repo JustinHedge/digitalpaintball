@@ -385,17 +385,11 @@ usercmd_t CL_CreateCmd (void)
 		frame_msec = 200;
 	
 	// get basic movement from keyboard
-	CL_BaseMove (&cmd);
-
+	CL_BaseMove(&cmd);
 	// allow mice or other external controllers to add to the move
-	IN_Move (&cmd);
-
-	CL_FinishMove (&cmd);
-
+	IN_Move(&cmd);
+	CL_FinishMove(&cmd);
 	old_sys_frame_time = sys_frame_time;
-
-//cmd.impulse = cls.framecount;
-
 	return cmd;
 }
 

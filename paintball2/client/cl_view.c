@@ -274,21 +274,25 @@ void CL_PrepRefresh (void)
 	if (!cl.configstrings[CS_MODELS+1][0])
 		return;		// no map loaded
 
-	// jitversion
-	s = cl.configstrings[CS_SERVEREVERSION]; // jitest
+	// jitversion:
 	s = strstr(cl.configstrings[CS_SERVEREVERSION], "Enginebuild:");
-
 	if (s)
 		cls.server_enginebuild = atoi(s+12);
 	else
 		cls.server_enginebuild = 0;
 
 	s = strstr(cl.configstrings[CS_SERVERGVERSION], "Gamebuild:");
-
 	if (s)
 		cls.server_gamebuild = atoi(s+10);
 	else
 		cls.server_gamebuild = 0;
+
+	// jitscores:
+	s = strstr(cl.configstrings[CS_GAMETYPE], "Gametype:");
+	if (s)
+		cls.gametype = atoi(s+9);
+	else
+		cls.gametype = -1;
 
 	SCR_AddDirtyPoint(0, 0);
 	SCR_AddDirtyPoint(viddef.width-1, viddef.height-1);

@@ -245,6 +245,7 @@ typedef struct
 	unsigned	last_transmit_time; // jitnetfps
 	unsigned	server_gamebuild; // jitversion
 	unsigned	server_enginebuild; // jitversion
+	int			gametype; // jitscores
 } client_static_t;
 
 extern client_static_t	cls;
@@ -539,8 +540,8 @@ void CL_Scoreboard_f (void);
 void CL_ScoreboardShow_f (void);
 void CL_ScoreboardHide_f (void);
 void CL_ParesScoreData (const unsigned char *data); 
-void init_cl_scores (void);
 void cl_scores_setping (int client, int ping);
+void cl_scores_setstarttime (int client, int time);
 void cl_scores_setkills (int client, int kills);
 void cl_scores_setdeaths (int client, int deaths);
 void cl_scores_setgrabs (int client, int grabs);
@@ -552,6 +553,9 @@ void cl_scores_sethasflag (int client, qboolean hasflag);
 void cl_scores_setinuse (int client, qboolean inuse);
 void cl_scores_setinuse_all (qboolean inuse);
 void cl_scores_clear (int client);
+int  cl_scores_get_team_splat (int client);
+void init_cl_scores (void);
+void shutdown_cl_scores (void);
 // jitscores
 // ===
 

@@ -190,6 +190,7 @@ static void translate_string (char *out_str, const char *in_str)
 	// %s = index to event string
 	// %i = index to item string
 	// %n = index to name string
+	// %t = index to name string, inlclude team splat.
 	// %% = %
 	// %c = single charcter (like in printf)
 	while(*in_str)
@@ -216,6 +217,9 @@ static void translate_string (char *out_str, const char *in_str)
 					strcpy(out_str, item_from_index(index_array[current_element++]));
 					out_str += strlen(out_str);
 					break;
+				case 't': // team splat + name
+					*out_str++ = cl_scores_get_team_splat(index_array[current_element]);
+					// 'n' MUST follow this:
 				case 'n': // name
 					strcpy(out_str, name_from_index(index_array[current_element++]));
 					out_str += strlen(out_str);
@@ -323,7 +327,9 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 			cl_scores_clear(index_array[2]);
 			cl_scores_setinuse(index_array[2], true);
 			if (num_elements > 3)
-				cl_scores_setteam(index_array[2], (num_elements > 3) ? index_array[3] : 0);
+				cl_scores_setteam(index_array[2], index_array[3]);
+			if (num_elements > 4)
+				cl_scores_setstarttime(index_array[2], index_array[4]);
 		}
 		break;
 	case EVENT_DISCONNECT:
@@ -391,9 +397,11 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		}
 
 		break;
-	case EVENT_FFIRE: // jitodo - fix all these offsets
+	case EVENT_FFIRE:
 		if (num_elements < 4)
 			break;
+
+		cl_scores_setisalive(index_array[3], false);
 
 		if (index_array[2] == cl.playernum)
 			sprintf(event_text, "%cYou eliminated your teammate!!", CHAR_ITALICS);

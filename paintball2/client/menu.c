@@ -1437,10 +1437,14 @@ static menu_widget_t *M_GetActiveWidget(menu_screen_t *menu)
 {
 	menu_widget_t *widget;
 
-	if(!menu)
+	if (!menu)
 		menu = m_current_menu;
 
-	for(widget=menu->widget; widget && !widget->hover && !widget->selected; widget = widget->next);
+	if (!menu)
+		return NULL;
+
+	for (widget=menu->widget; widget && !widget->hover && !widget->selected; widget = widget->next)
+		; // logic all in for loop
 
 	return widget;
 }
@@ -2892,49 +2896,6 @@ static void M_DrawField(menu_widget_t *widget)
 	}
 }
 
-/*
-void M_DrawSelect(menu_widget_t *widget)
-{
-//	todo;
-	int i, width, start, rows;
-	char temp;
-	
-	width = widget->select_width;
-	rows = widget->select_rows;
-	start = widget->select_vstart;
-	
-//	if(widget->flags & WIDGET_FLAG_VSCROLLBAR)
-//		width--;
-//	if(widget->flags & WIDGET_FLAG_HSCROLLBAR)
-//		rows --;
-
-	for(i = start; i < (widget->select_totalitems) && (i - start < rows); i++)
-	{
-		// text too big to fit, enable scrollbar
-		// and cut string off before drawing
-		if(strlen(widget->select_list[i]) > width)
-		{
-			widget->flags &= WIDGET_FLAG_HSCROLLBAR;
-			temp = widget->select_list[i][width];
-			widget->select_list[i][width] = 0;
-			
-			re.DrawString(widget->x, widget->y + TEXT_HEIGHT*i, widget->select_list[i]);
-			
-			widget->select_list[i][width] = temp;
-		}
-		else
-			re.DrawString(widget->x, widget->y + TEXT_HEIGHT*i, widget->select_list[i]);
-	}
-
-	if(widget->flags & WIDGET_FLAG_VSCROLLBAR)
-	{
-		// jitodo - draw scrollbar
-	}
-	if(widget->flags & WIDGET_FLAG_HSCROLLBAR)
-	{
-	}
-}
-*/
 
 static void M_DrawWidget (menu_widget_t *widget)
 {
@@ -2998,14 +2959,9 @@ static void M_DrawWidget (menu_widget_t *widget)
 				checkbox_checked, widget->hover, widget->selected);
 			break;
 		case WIDGET_TYPE_FIELD:
-			//if(widget->cvar)
-			//	cvar_val = Cvar_Get(widget->cvar, "0", CVAR_ARCHIVE)->string;
 			M_DrawField(widget);
-			//M_DrawField(widget->widgetCorner.x, widget->widgetCorner.y,
-			//	widget->field_width, cvar_val, widget->hover, widget->selected);
 			break;
 		case WIDGET_TYPE_SELECT:
-			//M_DrawSelect(widget);
 			break;
 		default:
 			break;
@@ -3085,7 +3041,7 @@ static void draw_menu_at_depth (int depth)
 
 void M_Draw (void)
 {
-	if(cls.key_dest == key_menu && m_menudepth)
+	if (cls.key_dest == key_menu && m_menudepth)
 	{
 		SCR_DirtyScreen();
 		draw_menu_at_depth(m_menudepth);

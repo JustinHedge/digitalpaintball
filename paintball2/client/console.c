@@ -593,6 +593,7 @@ void Con_DrawInput (void) // pooy, jittext
 
 	if (cls.key_dest == key_menu)
 		return;
+
 	if (cls.key_dest != key_console && cls.state == ca_active)
 		return;		// don't draw anything (always draw if not active)
 

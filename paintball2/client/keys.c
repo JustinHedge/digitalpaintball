@@ -1068,28 +1068,14 @@ void Key_Event (int key, qboolean down, unsigned time)
 	}
 	else
 	{
-	//
-	// if not a consolekey, send to the interpreter no matter what mode is
-	//
+		//
+		// if not a consolekey, send to the interpreter no matter what mode is
+		//
 		if ( /*jitmenu (cls.key_dest == key_menu && menubound[key])
 			|| */(cls.key_dest == key_console && !consolekeys[key])
 			|| (cls.key_dest == key_game && (cls.state == ca_active || !consolekeys[key])))
 		{
-			//kb = keybindings[key];
-			//if (kb)
-			//{
-			//	if (kb[0] == '+')
-			//	{	// button commands add keynum and time as a parm
-			//		Com_sprintf (cmd, sizeof(cmd), "%s %i %i\n", kb, key, time);
-			//		Cbuf_AddText (cmd);
-			//	}
-			//	else
-			//	{
-			//		Cbuf_AddText (kb);
-			//		Cbuf_AddText ("\n");
-			//	}
-			//}
-			GameKeyDown(key);
+			GameKeyDown(key); // jitmenu
 			return;
 		}
 

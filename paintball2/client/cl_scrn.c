@@ -520,20 +520,20 @@ void SCR_DrawConsole (void)
 {
 	Con_CheckResize();
 	
-	if (cls.key_dest == key_menu) // jitmenu
-		return;
+	if (cls.key_dest != key_menu) // jitmenu
+	{
+		if (cls.state == ca_disconnected || cls.state == ca_connecting)
+		{	// forced full screen console
+			Con_DrawConsole(1.0);
+			return;
+		}
 
-	if (cls.state == ca_disconnected || cls.state == ca_connecting)
-	{	// forced full screen console
-		Con_DrawConsole(1.0);
-		return;
-	}
-
-	if (cls.state != ca_active || !cl.refresh_prepped)
-	{	// connected, but can't render
-		Con_DrawConsole(0.5);
-		re.DrawFill(0, viddef.height*0.5f, viddef.width, viddef.height*0.5f, 0);
-		return;
+		if (cls.state != ca_active || !cl.refresh_prepped)
+		{	// connected, but can't render
+			Con_DrawConsole(0.5);
+			re.DrawFill(0, viddef.height*0.5f, viddef.width, viddef.height*0.5f, 0);
+			return;
+		}
 	}
 
 	if (scr_con_current)
@@ -542,7 +542,7 @@ void SCR_DrawConsole (void)
 	}
 	else
 	{
-		if (cls.key_dest == key_game || cls.key_dest == key_message)
+		if (cls.key_dest == key_game || cls.key_dest == key_message || cls.key_dest == key_menu) // jitmenu
 			Con_DrawNotify();	// only draw notify in game
 	}
 }
@@ -840,7 +840,6 @@ void DrawHUDString (int x, int y, int centerwidth, int xor, unsigned char *strin
 	int		margin;
 	unsigned char	line[1024];
 	int		width;
-//	int		i;
 	va_list	argptr;
 	unsigned char	msg[2048], *strp = msg;
 	int		formatwidth;
@@ -871,12 +870,9 @@ void DrawHUDString (int x, int y, int centerwidth, int xor, unsigned char *strin
 			x = margin + (centerwidth*hudscale - strlen_noformat(line)*8*hudscale)*0.5;
 		else
 			x = margin;
-		/*for (i=0 ; i<width ; i++)
-		{
-			re.DrawChar (x, y, line[i]^xor);
-			x += 8*hudscale;
-		}*/
-		re.DrawString(x, y, line);
+
+		re.DrawString(x, y, line); // jittext
+
 		if (*strp)
 		{
 			strp++;	// skip the \n

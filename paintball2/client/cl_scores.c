@@ -30,6 +30,7 @@ typedef struct cl_score_s {
 	int deaths;
 	int grabs;
 	int caps;
+	int starttime;
 	char team;
 	qboolean isalive;
 	qboolean hasflag;
@@ -65,6 +66,11 @@ int splat(int teamnum)
 	}
 }
 
+int cl_scores_get_team_splat (int client)
+{
+	return splat(cl_scores[client].team);
+}
+
 void init_cl_scores (void)
 {
 	int i;
@@ -84,7 +90,7 @@ void init_cl_scores (void)
 	cl_scores_modified = true;
 }
 
-void shutdown_cl_scores (void)
+void shutdown_cl_scores (void) // jitodo
 {
 	Z_Free(cl_scores_nums);
 	Z_Free(cl_scores_info);
@@ -93,42 +99,56 @@ void shutdown_cl_scores (void)
 void cl_scores_setping (int client, int ping)
 {
 	cl_scores[client].ping = ping;
+	cl_scores[client].inuse = true;
+	cl_scores_modified = true;
+}
+
+void cl_scores_setstarttime (int client, int time)
+{
+	cl_scores[client].starttime = time; // jitodo***************
+	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
 }
 
 void cl_scores_setkills (int client, int kills)
 {
 	cl_scores[client].kills = kills;
+	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
 }
 
 void cl_scores_setdeaths (int client, int deaths)
 {
 	cl_scores[client].deaths = deaths;
+	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
 }
 
 void cl_scores_setgrabs (int client, int grabs)
 {
 	cl_scores[client].grabs = grabs;
+	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
 }
 
 void cl_scores_setcaps (int client, int caps)
 {
 	cl_scores[client].caps = caps;
+	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
 }
 
 void cl_scores_setteam (int client, char team)
 {
 	cl_scores[client].team = team;
+	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
 }
 
-void cl_scores_setisalive (int client, qboolean alive) // jitodo - set on roundstarts / deaths
+void cl_scores_setisalive (int client, qboolean alive)
 {
 	cl_scores[client].isalive = alive;
+	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
 
 	if (!alive)
@@ -174,29 +194,142 @@ void cl_scores_clear (int client)
 	cl_scores_modified = true;
 }
 
-// put the scores into readable strings for the widget to draw
-void cl_scores_prep_select_widget (void)
-{
-	int i;
 
-	if (!cl_scores_modified)
-		return;
+#define GAMETYPE_NONE	-1
+#define GAMETYPE_DM		0
+#define GAMETYPE_1FLAG	1	
+#define GAMETYPE_2FLAG	2
+#define GAMETYPE_SIEGE	3	
+#define GAMETYPE_KOTH	4
+#define GAMETYPE_ELIM	5 // 1.80 -- not actually used
+
+// sort the scoreboard.
+static int cl_sorted_scorelist[MAX_CLIENTS];
+static void SortScores (void)
+{
+	int i, j, k, score;
+	int sortedscores[MAX_CLIENTS];
 
 	cl_scores_count = 0;
 
 	for (i=0; i<MAX_CLIENTS; i++)
 	{
-		if (cl_scores[i].inuse)
+		if (!cl_scores[i].inuse)
+			continue;
+
+		if (cls.gametype != GAMETYPE_DM)
 		{
-			Com_sprintf(cl_scores_nums[cl_scores_count], 4, "%d", i);
-			Com_sprintf(cl_scores_info[cl_scores_count], 63, "%c%c%s %d %d %d %d %d", 
-				cl_scores[i].hasflag ? '#' : cl_scores[i].isalive ? '>' : ' ',
-				splat(cl_scores[i].team), name_from_index(i),
-				cl_scores[i].ping, cl_scores[i].kills,
-				cl_scores[i].deaths, cl_scores[i].grabs,
-				cl_scores[i].caps);
-			cl_scores_count++;
+			// put player's own team at top of list:
+			if (cl_scores[cl.playernum].team && cl_scores[i].team == cl_scores[cl.playernum].team)
+				score = 5;
+			else
+				score = cl_scores[i].team;
 		}
+		else
+			score = 0;
+
+		score = ((score)*1000) + cl_scores[i].kills;
+	
+		for (j=0; j<cl_scores_count; j++)
+		{
+			if (score > sortedscores[j] ||
+				(score == sortedscores[j] &&
+				cl_scores[i].deaths < cl_scores[cl_sorted_scorelist[j]].deaths))
+			{
+				break;
+			}
+		}
+
+		for (k=cl_scores_count; k>j; k--) // Move it down the list
+		{
+			cl_sorted_scorelist[k] = cl_sorted_scorelist[k-1];
+			sortedscores[k] = sortedscores[k-1];
+		}
+
+		cl_sorted_scorelist[j] = i;
+		sortedscores[j] = score;
+		cl_scores_count++;
+	}
+}
+
+int strpos_noformat(const unsigned char *in_str, int pos)
+{
+	int count = 0;
+	const unsigned char *s;
+
+	s = in_str;
+
+	while(*s)
+	{
+		if(*(s+1) && (*s == CHAR_UNDERLINE || *s == CHAR_ENDFORMAT || *s == CHAR_ITALICS))
+		{
+			// don't count character
+		}
+		else if(*(s+1) && *s == CHAR_COLOR)
+		{
+			s++; // skip two characters.
+		}
+		else
+			count++;
+
+		if(count >= pos)
+			return (s-in_str);
+
+		s++;
+	}
+
+	return -1;
+}
+
+// put the scores into readable strings for the widget to draw
+#define MAX_NAME_WIDTH 19
+#define MAX_NAME_WIDTH_S "19"
+void cl_scores_prep_select_widget (void)
+{
+	int i, j, len_noformat, len, format_diff;
+
+	if (!cl_scores_modified)
+		return;
+
+	SortScores();
+
+	for (i=0; i<cl_scores_count; i++)
+	{
+		j = cl_sorted_scorelist[i];
+		Com_sprintf(cl_scores_nums[i], 4, "%d", i);
+		Com_sprintf(cl_scores_info[i], 64, "%c%c%s",
+			cl_scores[j].hasflag ? 25 : cl_scores[j].isalive ? 26 : ' ',
+			splat(cl_scores[j].team), name_from_index(j));
+		len_noformat = strlen_noformat(cl_scores_info[i]);
+		len = strlen(cl_scores_info[i]);
+		format_diff = len - len_noformat;
+		
+		if (len_noformat > MAX_NAME_WIDTH) // name too long
+		{
+			if (format_diff) // colored name
+			{
+				int pos;
+
+				pos = strpos_noformat(cl_scores_info[i], MAX_NAME_WIDTH+1);
+				cl_scores_info[i][pos] = CHAR_ENDFORMAT;
+				cl_scores_info[i][pos+1] = '\0';
+			}
+			else
+			{
+				cl_scores_info[i][MAX_NAME_WIDTH] = '\0';
+			}
+		}
+		else if (format_diff)
+		{
+			// add spaces to compensate for format codes
+			memset(cl_scores_info[i]+len, ' ', MAX_NAME_WIDTH - len_noformat);
+			cl_scores_info[i][MAX_NAME_WIDTH+format_diff+1] = '\0';
+		}
+
+		Com_sprintf(cl_scores_info[i], 64, "%-" MAX_NAME_WIDTH_S "s%4d%3d%3d%3d%2d%3d",
+			cl_scores_info[i], cl_scores[j].ping, cl_scores[j].kills,
+			cl_scores[j].deaths, cl_scores[j].grabs, cl_scores[j].caps,
+			(cl.frame.servertime/1000 - cl_scores[j].starttime)/60);
 	}
 
 	cl_scores_modified = false;
@@ -219,7 +352,10 @@ void CL_Scoreboard_f (void)
 {
 	static qboolean show = true;
 
-	if (cls.server_gamebuild < 100) // test
+	if (cls.state != ca_active)
+		return;
+
+	if (cls.server_gamebuild < 126)
 	{
 		Cbuf_AddText("cmd score\n");
 		return;
@@ -233,21 +369,36 @@ void CL_Scoreboard_f (void)
 	show = !show;
 }
 
+
 void CL_ScoreboardShow_f (void)
 {
-	Cbuf_AddText("menu scores\n");
+	if (cls.state != ca_active)
+		return;
+
+	if (cls.server_gamebuild < 126)
+		Cbuf_AddText("cmd scoreson\n");
+	else
+		Cbuf_AddText("menu scores\n");
 }
+
 
 void CL_ScoreboardHide_f (void)
 {
-	Cbuf_AddText("menu pop\n");
+	if (cls.state != ca_active)
+		return;
+
+	if (cls.server_gamebuild < 126)
+		Cbuf_AddText("cmd scoresoff\n");
+	else
+		Cbuf_AddText("menu pop\n");
 }
+
 
 #define MAX_DECODE_ARRAY 256
 #define SCORESIZE 10
 static unsigned int temp_array[MAX_DECODE_ARRAY];
-// client index, alive, flag, team, ping, kills, deaths, grabs, caps, reserved
-void CL_ParesScoreData (const unsigned char *data) // jitscores
+// client index, alive, flag, team, ping, kills, deaths, grabs, caps, start time
+void CL_ParesScoreData (const unsigned char *data)
 {
 	unsigned int i, j=0, idx, count;
 
@@ -269,7 +420,7 @@ void CL_ParesScoreData (const unsigned char *data) // jitscores
 		cl_scores_setdeaths(idx, temp_array[j++]);
 		cl_scores_setgrabs(idx, temp_array[j++]);
 		cl_scores_setcaps(idx, temp_array[j++]);
-		j++; // reserved for later use if needed.
+		cl_scores_setstarttime(idx, temp_array[j++]);
 	}
 }
 // jitscores
