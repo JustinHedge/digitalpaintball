@@ -600,16 +600,15 @@ char *text_copy(const char *in)
 	return out;
 }
 
-menu_screen_t* M_LoadMenuScreen(const char *menu_name)
+menu_screen_t* menu_from_file(menu_screen_t *menu)
 {
-	menu_screen_t *menu;
 	char menu_filename[MAX_QPATH];
 	char *buf;
 	int file_len;
 
 	scale = cl_hudscale->value;
 
-	sprintf(menu_filename, "menus/%s.txt", menu_name);
+	sprintf(menu_filename, "menus/%s.txt", menu->name);
 	file_len = FS_LoadFile (menu_filename, (void **)&buf);
 	
 	if(file_len != -1)
@@ -636,8 +635,6 @@ menu_screen_t* M_LoadMenuScreen(const char *menu_name)
 				int x = 0, y = 0;
 				//qboolean enabled = true;
 
-
-				menu = M_GetNewMenuScreen(menu_name);
 				token = COM_Parse(&buf); 
 
 				while(*token)
@@ -726,6 +723,16 @@ menu_screen_t* M_LoadMenuScreen(const char *menu_name)
 	return menu;
 }
 
+menu_screen_t* M_LoadMenuScreen(const char *menu_name)
+{
+	menu_screen_t *menu;
+
+	menu = M_GetNewMenuScreen(menu_name);
+	menu_from_file(menu);
+
+	return menu;
+}
+
 menu_screen_t* M_FindMenuScreen(const char *menu_name)
 {
 	menu_screen_t *menu;
@@ -773,8 +780,53 @@ void M_Init (void)
 	Cmd_AddCommand("menu", M_Menu_f);
 }
 
-// jitodo: reload menus on vid_restart
-// M_Shutdown()
+void free_widget(menu_widget_t *widget)
+{
+	if(!widget)
+		return;
+
+	if(widget->command)
+		Z_Free(widget->command);
+	if(widget->cvar)
+		Z_Free(widget->cvar);
+	if(widget->hovertext)
+		Z_Free(widget->hovertext);
+	if(widget->text)
+		Z_Free(widget->text);
+	Z_Free(widget);
+}
+
+void refresh_menu_screen(menu_screen_t *menu)
+{
+	menu_widget_t *widgetnext;
+	menu_widget_t *widget;
+
+	if(!menu)
+		return;
+
+	widget = menu->widget;
+	
+	while(widget)
+	{
+		widgetnext = widget->next;
+		free_widget(widget);
+		widget = widgetnext;
+	}
+
+	menu_from_file(menu); // reload data from file
+}
+
+void M_RefreshMenu(void)
+{
+	menu_screen_t *menu;
+
+	menu = root_menu;
+	while(menu)
+	{
+		refresh_menu_screen(menu);
+		menu = menu->next;
+	}
+}
 
 void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, SLIDER_SELECTED slider_selected)
 {
