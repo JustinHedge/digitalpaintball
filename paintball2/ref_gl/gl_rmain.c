@@ -1604,7 +1604,7 @@ qboolean R_Init( void *hinstance, void *hWnd )
 	int		j;
 	extern float r_turbsin[256];
 
-	gl_debug = ri.Cvar_Get ("gl_debug", "0", CVAR_ARCHIVE ); // jit -- don't need to display all that crap every time
+	gl_debug = ri.Cvar_Get ("gl_debug", "1", CVAR_ARCHIVE ); // jit
 
 	for ( j = 0; j < 256; j++ )
 	{
