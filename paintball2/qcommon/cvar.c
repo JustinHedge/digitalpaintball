@@ -430,6 +430,17 @@ void Cvar_Seta_f (void) // jitconfig
 		Cvar_FullSet (Cmd_Argv(1), Cmd_Argv(2), flags);
 }
 
+void Cvar_Unset_f (void)
+{
+	if (Cvar_Get(Cmd_Argv(1), "", 0)->flags & CVAR_NOSET) // jitcvar
+	{
+		Com_Printf ("%s is write protected.\n", Cmd_Argv(1));
+		return;
+	}
+
+	Cvar_Set (Cmd_Argv(1), "");
+}
+
 /*
 ============
 Cvar_WriteVariables
@@ -535,6 +546,7 @@ void Cvar_Init (void)
 {
 	Cmd_AddCommand ("set", Cvar_Set_f);
 	Cmd_AddCommand ("seta", Cvar_Seta_f); // jitconfig
+	Cmd_AddCommand ("unset", Cvar_Unset_f);
 	Cmd_AddCommand ("cvarlist", Cvar_List_f);
 
 }

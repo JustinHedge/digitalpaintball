@@ -36,7 +36,8 @@ int CL_FreeLoc(void)
 {
 	int i;
 
-	for (i = 0; i < MAX_LOCATIONS; i++) {
+	for (i = 0; i < MAX_LOCATIONS; i++)
+	{
 		if (locations[i].used == false)
 			return i;
 	}
@@ -56,11 +57,11 @@ void CL_LoadLoc(void)
 	strcpy(mapname, cl.configstrings[CS_MODELS + 1] + 5);
 	mapname[strlen(mapname) - 4] = 0;
 
-	f = fopen(va("locs/%s.loc", mapname), "r");
-	if (!f)
+	if (!(f = fopen(va("locs/%s.loc", mapname), "r")))
 		return;
 
-	while (!feof(f)) {
+	while (!feof(f))
+	{
 		char *token1, *token2, *token3, *token4;
 		char line[128], *nl;
 		int index;
@@ -119,17 +120,21 @@ int CL_LocIndex(short origin[3])
 	int locIndex = -1;
 	int i;
 
-	for (i = 0; i < MAX_LOCATIONS; i++) {
+	for (i = 0; i < MAX_LOCATIONS; i++)
+	{
 		float dist;
 
-		if (locations[i].used == false)
+		if (!locations[i].used)
 			continue;
 
-		VectorSubtract( origin, locations[i].origin, diff );
+		VectorSubtract(origin, locations[i].origin, diff);
 		
-        dist = sqrt( diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2] ); // FourthX fix, wtf was this other guy thinking?!?
+        //dist = sqrt(diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]); // FourthX fix, wtf was this other guy thinking?!?
+		dist = diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]; // jit - small optimization
+		// (sqrt unnecessary w/relative distances: if dist1 < dist2 then dist1^2 < dist2^2)
 
-		if (dist < minDist || minDist == -1) {
+		if (dist < minDist || minDist == -1)
+		{
 			minDist = dist;
 			locIndex = i;
 		}
@@ -142,12 +147,15 @@ void CL_LocDelete(void)
 {
 	int index = CL_LocIndex(cl.frame.playerstate.pmove.origin);
 
-	if (index != -1) {
+	if (index != -1)
+	{
 		locations[index].used = false;
         Com_Printf("Location deleted==\n");                // Xile reworked.
 	}  
 	else
+	{
 		Com_Printf("Warning; No location to delete\n");
+	}
 }
 
 void CL_LocAdd(char *name)
@@ -169,22 +177,23 @@ void CL_LocAdd(char *name)
 
 void CL_LocWrite(char *filename)
 {
-	char mapname[32]; //bah
+	char mapname[32];
     int i;
 	FILE *f;
 
 	strcpy(mapname, cl.configstrings[CS_MODELS + 1] + 5);   // Xile; lets just keep saving em to one file mmmkay?
 	mapname[strlen(mapname) - 4] = 0;
 
-	Sys_Mkdir( "locs" );
+	Sys_Mkdir("locs");
 
-	f = fopen(va("locs/%s.loc", mapname), "w");
-	if (!f) {
+	if (!(f = fopen(va("locs/%s.loc", mapname), "w")))
+	{
 		Com_Printf("Warning: Unable to open locs/%s.loc for writing.\n", mapname);
 		return;
 	}
 
-	for (i = 0; i < MAX_LOCATIONS; i++) {
+	for (i = 0; i < MAX_LOCATIONS; i++)
+	{
 		if (!locations[i].used)
 			continue;
 
@@ -224,7 +233,7 @@ void CL_LocPlace(void)
 		Cvar_ForceSet("loc_there", "");
 }
 
-void CL_AddViewLocs(void)
+void CL_AddViewLocs (void)
 {
 	int index = CL_LocIndex(cl.frame.playerstate.pmove.origin);
 	int i;
@@ -233,7 +242,8 @@ void CL_AddViewLocs(void)
 	if (!cl_drawlocs->value)
 		return;
 
-	for (i = 0; i < MAX_LOCATIONS; i++) {
+	for (i = 0; i < MAX_LOCATIONS; i++)
+	{
 		int dist;
 		entity_t ent;
 

@@ -678,7 +678,6 @@ void CL_LocPlace (void);
 void CL_LocHelp_f (void);
 
 extern image_t		*i_conback;
-//extern image_t		*i_inventory;
 extern image_t		*i_net;
 extern image_t		*i_pause;
 extern image_t		*i_loading;

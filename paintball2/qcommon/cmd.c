@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qcommon.h"
 
+void CL_LocPlace (void); // Xile/NiceAss LOC
 void Cmd_ForwardToServer (void);
 
 #define	MAX_ALIAS_NAME	32
@@ -838,32 +839,37 @@ $Cvars will be expanded unless they are in a quoted token
 */
 void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 {
-	int		i;
+	int i;
 	unsigned char *com_token;
 
-// clear the args from the last string
-	for (i=0 ; i<cmd_argc ; i++)
-		Z_Free (cmd_argv[i]);
+	// clear the args from the last string
+	for (i=0; i<cmd_argc; i++)
+		Z_Free(cmd_argv[i]);
 		
 	cmd_argc = 0;
 	cmd_args[0] = 0;
 	
 	// macro expand the text
 	if (macroExpand)
-		text = Cmd_MacroExpandString (text);
+	{
+		CL_LocPlace(); // Xile/NiceAss LOC
+		text = Cmd_MacroExpandString(text);
+	}
+
 	if (!text)
 		return;
 
 	while (1)
 	{
-// skip whitespace up to a /n
+		// skip whitespace up to a /n
 		while (*text && *text <= ' ' && *text != '\n')
 		{
 			text++;
 		}
 		
 		if (*text == '\n')
-		{	// a newline seperates commands in the buffer
+		{
+			// a newline seperates commands in the buffer
 			text++;
 			break;
 		}
@@ -874,29 +880,33 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 		// set cmd_args to everything after the first arg
 		if (cmd_argc == 1)
 		{
-			int		l;
+			int l;
 
-			strcpy (cmd_args, text);
+			strcpy(cmd_args, text);
 			//strncpy(cmd_args, text, sizeof(cmd_args)-1); // jitsecurity.  buffer overflow protection by [SkulleR] (removed, see Echon's fix).
 			cmd_args[sizeof(cmd_args)-1] = 0; 
 
 			// strip off any trailing whitespace
 			l = strlen(cmd_args) - 1;
-			for ( ; l >= 0 ; l--)
+			
+			for ( ; l >= 0; l--)
+			{
 				if (cmd_args[l] <= ' ')
 					cmd_args[l] = 0;
 				else
 					break;
+			}
 		}
 			
-		com_token = COM_Parse (&text);
+		com_token = COM_Parse(&text);
+
 		if (!text)
 			return;
 
 		if (cmd_argc < MAX_STRING_TOKENS)
 		{
-			cmd_argv[cmd_argc] = Z_Malloc (strlen(com_token)+1);
-			strcpy (cmd_argv[cmd_argc], com_token);
+			cmd_argv[cmd_argc] = Z_Malloc(strlen(com_token)+1);
+			strcpy(cmd_argv[cmd_argc], com_token);
 			cmd_argc++;
 		}
 	}
