@@ -39,6 +39,8 @@ static qboolean cl_scores_modified;
 
 char **cl_scores_nums;
 char **cl_scores_info;
+//char *cl_scores_nums[MAX_CLIENTS];
+//char *cl_scores_info[MAX_CLIENTS];
 int cl_scores_count;
 
 int splat(int teamnum) 
@@ -72,8 +74,8 @@ void init_cl_scores (void)
 
 	for (i=0; i<MAX_CLIENTS; i++)
 	{
-		cl_scores_nums[i] = Z_Malloc(sizeof(char)*64);
-		cl_scores_info[i] = Z_Malloc(sizeof(char)*5);
+		cl_scores_nums[i] = Z_Malloc(sizeof(char)*4);
+		cl_scores_info[i] = Z_Malloc(sizeof(char)*64);
 	}
 
 	memset(cl_scores, 0, sizeof(cl_scores));

@@ -330,12 +330,12 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		Com_Printf("%s\n", event_text);
 		event_print(event_text);
 		break;
-	case EVENT_ADMINKILL:
+	case EVENT_ADMINKILL: // jitodo - fix all these offsets
 		Com_Printf("%s\n", event_text);
-		if (current_element < num_elements && index_array[3] == cl.playernum)
+		if (num_elements > 2 && index_array[2] == cl.playernum)
 		{
-			if (num_elements > 4)
-				sprintf(event_text, "Admin (%s) killed you.", name_from_index(index_array[4]));
+			if (num_elements > 3)
+				sprintf(event_text, "Admin (%s) killed you.", name_from_index(index_array[3]));
 			else
 				sprintf(event_text, "Admin killed you.");
 			event_print(event_text);
@@ -346,19 +346,19 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 
 		// Update scoreboard:
 		if (current_element < num_elements)
-			cl_scores_setkills(index_array[3], index_array[current_element++]);
+			cl_scores_setkills(index_array[2], index_array[current_element++]);
 		if (current_element < num_elements)
-			cl_scores_setdeaths(index_array[6], index_array[current_element++]);
+			cl_scores_setdeaths(index_array[4], index_array[current_element++]);
 
 		if (num_elements < 8)
 			break;
 		
-		if (index_array[3] == cl.playernum)
+		if (index_array[2] == cl.playernum)
 			sprintf(event_text, "You eliminated %s (%s).",
-				name_from_index(index_array[6]), item_from_index(index_array[7]));
-		else if (index_array[6] == cl.playernum)
+				name_from_index(index_array[4]), item_from_index(index_array[5]));
+		else if (index_array[4] == cl.playernum)
 			sprintf(event_text, "%s (%s) eliminated you.",
-				name_from_index(index_array[3]), item_from_index(index_array[4]));
+				name_from_index(index_array[2]), item_from_index(index_array[3]));
 		else
 			break;
 
@@ -367,14 +367,14 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 	case EVENT_SUICIDE: // jitodo - fix all these offsets
 		Com_Printf("%s\n", event_text);
 
-		if (num_elements < 4)
+		if (num_elements < 3)
 			break;
 
 		// Scoreboard:
 		if (current_element < num_elements)
-			cl_scores_setdeaths(index_array[3], index_array[current_element++]);
+			cl_scores_setdeaths(index_array[2], index_array[current_element++]);
 
-		if (index_array[3] == cl.playernum)
+		if (index_array[2] == cl.playernum)
 		{
 			sprintf(event_text, "You eliminated yourself!");
 			event_print(event_text);
@@ -387,10 +387,10 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		if (num_elements < 4)
 			break;
 
-		if (index_array[3] == cl.playernum)
+		if (index_array[2] == cl.playernum)
 			sprintf(event_text, "%cYou eliminated your teammate!!", CHAR_ITALICS);
-		else if (index_array[5] == cl.playernum)
-			sprintf(event_text, "Your teammate (%s) eliminated you.", name_from_index(index_array[3]));
+		else if (index_array[3] == cl.playernum)
+			sprintf(event_text, "Your teammate (%s) eliminated you.", name_from_index(index_array[2]));
 		else
 			break;
 
