@@ -100,10 +100,12 @@ extern cvar_t *serverlist_source; // jitserverlist
 #define WIDGET_FLAG_FLOAT		64
 #define WIDGET_FLAG_INT			128
 #define WIDGET_FLAG_FILELIST	256
-#define WIDGET_FLAG_SERVERLIST	512
+//#define WIDGET_FLAG_SERVERLIST	512
+#define WIDGET_FLAG_LISTSOURCE	512
 #define WIDGET_FLAG_NOBG		1024 // no background for select widget
 #define WIDGET_FLAG_BIND		2048 // key binding
 //#define WIDGET_FLAG_ACTIVEBIND	4096 // next button pressed goes to the bind of this widget
+
 
 typedef enum {
 	WIDGET_TYPE_UNKNOWN	= 0,
@@ -228,6 +230,7 @@ typedef struct MENU_WIDGET_S {
 	int		select_hstart; // start point for horizontal scroll.
 	char	**select_list;
 	char	**select_map;
+	char	*listsource;
 
 	// Drawing Information
 	point_t widgetCorner;

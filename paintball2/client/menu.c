@@ -41,6 +41,34 @@ int				m_serverPingSartTime;
 menu_widget_t	*m_active_bind_widget = NULL;
 char			*m_active_bind_command = NULL;
 
+
+// these two functions are for the "listsource"
+// key for the select widget.
+static void list_source(menu_widget_t *widget)
+{
+	extern char **cl_scores_info;
+	extern char **cl_scores_nums;
+	extern int cl_scores_count;
+
+	if (!widget || !widget->listsource)
+		return;
+
+	if (Q_streq(widget->listsource, "serverlist"))
+	{
+		widget->select_list = m_serverlist.info;
+		widget->select_map = m_serverlist.ips;
+		widget->select_totalitems = m_serverlist.numservers;
+	}
+
+	if (Q_streq(widget->listsource, "scores"))
+	{
+		widget->select_list = cl_scores_info;
+		widget->select_map = cl_scores_nums;
+		widget->select_totalitems = cl_scores_count;
+	}
+}
+
+
 static qboolean widget_is_selectable(menu_widget_t *widget)
 {
 	return (widget->enabled && (widget->cvar || widget->command || widget->callback));
@@ -160,19 +188,19 @@ static void *free_string_array(char *array[], int size)
 	return NULL;
 }
 
-static void FreeFileList( char **list, int n )
+static void FreeFileList (char **list, int n)
 {
 	int i;
 
-	for ( i = 0; i < n; i++ )
+	for (i = 0; i < n; i++)
 	{
-		if ( list[i] )
+		if (list[i])
 		{
-			free( list[i] );
+			free(list[i]);
 			list[i] = 0;
 		}
 	}
-	free( list );
+	free(list);
 }
 
 // free the widget passed as well as all of its child widgets
@@ -188,6 +216,7 @@ static menu_widget_t *free_widgets(menu_widget_t *widget)
 	if(widget->subwidget)
 		widget->subwidget = free_widgets(widget->subwidget);
 
+	// free text/string stuff:
 	if(widget->command)
 		Z_Free(widget->command);
 	if(widget->doubleclick)
@@ -202,8 +231,11 @@ static menu_widget_t *free_widgets(menu_widget_t *widget)
 		Z_Free(widget->text);
 	if(widget->selectedtext)
 		Z_Free(widget->selectedtext);
+	if(widget->listsource)
+		Z_Free(widget->listsource);
 
-	if(!(widget->flags & WIDGET_FLAG_SERVERLIST)) // don't free the serverlist!
+	// free lists
+	if(!(widget->flags & WIDGET_FLAG_LISTSOURCE)) // don't free hardcoded lists!
 	{
 		if(widget->select_map)
 			free_string_array(widget->select_map, widget->select_totalitems);
@@ -493,11 +525,13 @@ static void update_select_subwidgets(menu_widget_t *widget)
 	char *widget_text;
 //	int keys[2];
 
-	if(widget->flags & WIDGET_FLAG_SERVERLIST)
+	//if(widget->flags & WIDGET_FLAG_SERVERLIST)
+	if(widget->flags & WIDGET_FLAG_LISTSOURCE)
 	{
-		widget->select_map = m_serverlist.ips;
-		widget->select_list = m_serverlist.info;
-		widget->select_totalitems = m_serverlist.numservers;
+		//widget->select_map = m_serverlist.ips;
+		//widget->select_list = m_serverlist.info;
+		//widget->select_totalitems = m_serverlist.numservers;
+		list_source(widget);
 		widget->flags |= WIDGET_FLAG_USEMAP;
 	}
 
@@ -1574,12 +1608,6 @@ void M_Keyup (int key)
 
 void M_Keydown (int key)
 {
-/*	const char *s;
-
-	if (m_keyfunc)
-		if ((s = m_keyfunc(key)) != 0 )
-			S_StartLocalSound(s);
-*/
 	if(m_active_bind_command)
 	{
 		if(key == K_ESCAPE || key == '`') // jitodo -- is console toggled before this?
@@ -2029,8 +2057,16 @@ static void menu_from_file(menu_screen_t *menu)
 						select_begin_list(widget, buf);
 					else if(strstr(token, "file"))
 						select_begin_file_list(widget, COM_Parse(&buf));
-					else if(strstr(token, "serverlist"))
-						widget->flags |= WIDGET_FLAG_SERVERLIST;
+					else if(Q_streq(token, "serverlist")) // for backwards compatibility
+					{
+						widget->flags |= WIDGET_FLAG_LISTSOURCE;
+						widget->listsource = text_copy("serverlist");
+					}
+					else if(Q_streq(token, "listsource") || Q_streq(token, "listsrc"))
+					{
+						widget->flags |= WIDGET_FLAG_LISTSOURCE;
+						widget->listsource = text_copy(COM_Parse(&buf));
+					}
 					else if(strstr(token, "strip"))
 						select_strip_from_list(widget, COM_Parse(&buf));
 					else if(Q_streq(token, "nobg") || Q_streq(token, "nobackground"))
