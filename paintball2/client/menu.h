@@ -263,31 +263,26 @@ typedef struct MENU_SCREEN_S {
 	struct MENU_SCREEN_S *next;
 } menu_screen_t;
 
-/*typedef struct SERVERLIST_NODE_S {
-	netadr_t adr;
-	char *info;
-	// jitodo
-	// ...
-	struct SERVERLIST_NODE_S *next;
-} serverlist_node_t;*/
-
 typedef struct M_SERVERLIST_SERVER_S {
-	netadr_t adr;
 	char *servername;
 	char *mapname;
 	int players;
 	int maxplayers;
 	int ping;
 	int ping_request_time; // time (ms) at which ping was requested.
+	int remap;
+	netadr_t adr;
 } m_serverlist_server_t;
 
 typedef struct M_SERVERLIST_S {
 	int numservers;
+	int nummapped;
 	int actualsize;
+	m_serverlist_server_t *server;
+	//netadr_t *adr;
+	//int *remap;
 	char **ips;
 	char **info;
-	m_serverlist_server_t *server;
-	//serverlist_node_t *list;
 } m_serverlist_t;
 
 extern cvar_t *cl_hudscale;
@@ -296,6 +291,9 @@ extern cvar_t *cl_hudscale;
 #define MENU_SOUND_SELECT S_StartLocalSound("misc/menu2.wav");
 #define MENU_SOUND_CLOSE S_StartLocalSound("misc/menu3.wav");
 #define MENU_SOUND_SLIDER S_StartLocalSound("misc/menu4.wav");
+
+void *free_string_array(char *array[], int size);
+char *text_copy(const char *in);
 
 #endif
 

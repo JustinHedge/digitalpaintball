@@ -893,101 +893,8 @@ void CL_ParseStatusMessage (void)
 	char	*s;
 
 	s = MSG_ReadString(&net_message);
-
-	Com_Printf ("%s\n", s);
-	M_AddToServerList (net_from, s, false);
-}
-
-
-/*
-=================
-CL_PingServers_f
-=================
-*/
-// jitodo -- make this multithreaded and add some time between each server request.
-static qboolean refreshing = false;
-static pthread_t pingthread;
-
-void *CL_PingServers_multithreaded (void *ptr) // jitmultithreading
-{
-	netadr_t	adr;
-	char		name[64]; // jitserverlist - increased
-	cvar_t		*noudp;
-	cvar_t		*noipx;
-	FILE		*serverlist; // jitserverlist / jitmenu
-	extern int	m_serverPingSartTime;
-
-	NET_Config(true);		// allow remote
-
-	// send a broadcast packet
-	Com_Printf ("pinging broadcast...\n");
-
-	noudp = Cvar_Get ("noudp", "0", CVAR_NOSET);
-	if (!noudp->value)
-	{
-		adr.type = NA_BROADCAST;
-		adr.port = BigShort(PORT_SERVER);
-		Netchan_OutOfBandPrint(NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
-	}
-
-	noipx = Cvar_Get ("noipx", "0", CVAR_NOSET);
-	if (!noipx->value)
-	{
-		adr.type = NA_BROADCAST_IPX;
-		adr.port = BigShort(PORT_SERVER);
-		Netchan_OutOfBandPrint (NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
-	}
-
-	// jitserverlist / jitmenu -- ping all the servers in the list:
-	serverlist = fopen(va("%s/servers.txt", FS_Gamedir()), "r");
-
-	m_serverPingSartTime = Sys_Milliseconds(); // jitserverlist
-
-	if(serverlist)
-	{
-		char buff[256];
-
-		while(!feof(serverlist))
-		{
-			fscanf(serverlist, "%s", &name);
-
-			if(name && *name)
-			{
-				Com_Printf ("pinging %s...\n", name);
-
-				if (!NET_StringToAdr (name, &adr))
-				{
-					Com_Printf ("Bad address: %s\n", name);
-					continue;
-				}
-
-				if (!adr.port)
-					adr.port = BigShort(PORT_SERVER);
-
-				Netchan_OutOfBandPrint(NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
-
-				// jitserverlist -- add to list and get ping request time:
-				sprintf(buff, "%s --- 0/0", name);
-				M_AddToServerList(adr, buff, true);
-			}
-
-			Sleep(16);
-		}
-
-		fclose(serverlist);
-	}
-
-	refreshing = false;
-	return NULL;
-}
-
-void CL_PingServers_f (void) // jitmultithreading
-{
-	if (!refreshing)
-	{
-		refreshing = true;
-		pthread_create(&pingthread, NULL, CL_PingServers_multithreaded, NULL);
-	}
+	Com_Printf("%s\n", s);
+	M_AddToServerList(net_from, s, false);
 }
 
 
@@ -1134,7 +1041,7 @@ CL_ReadPackets
 */
 void CL_ReadPackets (void)
 {
-	while (NET_GetPacket (NS_CLIENT, &net_from, &net_message))
+	while (NET_GetPacket(NS_CLIENT, &net_from, &net_message))
 	{
 //	Com_Printf ("packet\n");
 		//
@@ -2163,7 +2070,8 @@ void CL_Init (void)
 	net_message.maxsize = sizeof(net_message_buffer);
 
 	init_cl_scores(); // jitscores
-	M_Init();	
+	M_Init();
+	Serverlist_Init();
 	
 	SCR_Init();
 	cls.disable_screen = true;	// don't draw yet
@@ -2201,11 +2109,13 @@ void CL_Shutdown(void)
 		printf ("recursive shutdown\n");
 		return;
 	}
+
 	isdown = true;
 
 	CL_WriteConfiguration("config.cfg"); 
+	Serverlist_Shutdown();
 
-	CDAudio_Shutdown ();
+	CDAudio_Shutdown();
 	S_Shutdown();
 	IN_Shutdown ();
 	VID_Shutdown();

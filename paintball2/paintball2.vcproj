@@ -390,6 +390,9 @@
 					RelativePath=".\client\cl_scrn.c">
 				</File>
 				<File
+					RelativePath="client\cl_serverlist.c">
+				</File>
+				<File
 					RelativePath=".\client\cl_tent.c">
 				</File>
 				<File
