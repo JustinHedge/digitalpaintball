@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qgl.h"
 
-#define	REF_VERSION	"PB2GL 0.07" // jitversion / jitbuild
+#define	REF_VERSION	"PB2GL 0.08" // jitversion / jitbuild
 
 // up / down
 #define	PITCH	0
@@ -192,7 +192,8 @@ extern	cvar_t	*gl_texsort;
 extern	cvar_t	*gl_polyblend;
 extern	cvar_t	*gl_flashblend;
 extern	cvar_t	*gl_lightmaptype;
-extern	cvar_t	*gl_modulate;
+//extern	cvar_t	*gl_modulate;
+extern	cvar_t	*gl_lightmapgamma;
 extern	cvar_t	*gl_playermip;
 extern	cvar_t	*gl_drawbuffer;
 extern	cvar_t	*gl_3dlabs_broken;
@@ -493,3 +494,6 @@ void		GLimp_LogNewFrame( void );
 #define RSCRIPT_SINABS 3
 #define RSCRIPT_COSABS 4
 #define RSCRIPT_CONST  5 // jitrscript (for nonanimated rotations)
+
+extern unsigned char lightmap_gammatable[256]; // jitgamma
+

@@ -40,6 +40,8 @@ model_t	mod_inline[MAX_MOD_KNOWN];
 
 int		registration_sequence;
 
+unsigned char lightmap_gammatable[256]; // jitgamma
+
 /*
 ===============
 Mod_PointInLeaf
@@ -1196,6 +1198,25 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 
 //=============================================================================
 
+
+void R_UpdateLightmapGammaTable() // jitgamma
+{
+	int i;
+	float g;
+
+	if(gl_lightmapgamma->value < 0.45f)
+		ri.Cvar_Set("gl_lightmapgamma", ".45");
+	if(gl_lightmapgamma->value > 2.0f)
+		ri.Cvar_Set("gl_lightmapgamma", "2");
+
+	g = gl_lightmapgamma->value;
+
+	for (i = 0; i < 256; i++)
+	{
+		lightmap_gammatable[i] = 255 * pow(i/255.0, g);
+	}
+}
+
 /*
 @@@@@@@@@@@@@@@@@@@@@
 R_BeginRegistration
@@ -1222,6 +1243,7 @@ void R_BeginRegistration (char *model)
 
 	if(gl_texture_saturation->value > 1 || gl_texture_saturation->value < 0)
 		ri.Cvar_Set("gl_texture_saturation", "1"); // jitsaturation
+	R_UpdateLightmapGammaTable(); // jitgamma
 
 	registration_sequence++;
 	r_oldviewcluster = -1;		// force markleafs

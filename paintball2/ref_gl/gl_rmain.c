@@ -155,7 +155,8 @@ cvar_t	*gl_textshadow; // jittext
 cvar_t	*gl_brightness; // jit
 cvar_t	*gl_autobrightness; // jit
 cvar_t	*gl_showbbox; // jit / Guy
-cvar_t	*gl_modulate;
+//cvar_t	*gl_modulate;
+cvar_t	*gl_lightmapgamma; // jitgamma
 cvar_t	*cl_hudscale; // jithudscale
 cvar_t	*gl_nobind;
 cvar_t	*gl_round_down;
@@ -809,14 +810,14 @@ void R_PolyBlend (void)
 			ri.Cvar_SetValue("gl_autobrightness", 1);
 
 		R_LightPoint (r_newrefdef.vieworg, shadelight);
-		VectorScale(shadelight, 1/gl_modulate->value, shadelight);
+		//VectorScale(shadelight, 1/gl_modulate->value, shadelight);
 		shadeavg=(shadelight[0]+shadelight[1]+shadelight[2]);
 
 
-		if (shadeavg*gl_modulate->value == 3.0 || shadeavg > 4.5) // hack for fullbright maps
-			shadeavg = 4.5;
+		//if (shadeavg*gl_modulate->value == 3.0 || shadeavg > 4.5) // hack for fullbright maps
+		//	shadeavg = 4.5;
 
-		shadeavg/=4.5;
+		shadeavg /= 4.5;
 
 		autobright=0.985*autobright + 0.015*(0.5-sqrt(shadeavg)/2.0);
 		
@@ -1151,8 +1152,8 @@ void R_RenderView (refdef_t *fd)
 	if (r_norefresh->value)
 		return;
 
-	if(gl_modulate->value > 2.0) // jit - limit
-		ri.Cvar_SetValue( "gl_modulate", 2 );  // jit
+//	if(gl_modulate->value > 2.0) // jit - limit
+//		ri.Cvar_SetValue( "gl_modulate", 2 );  // jit
 
 	r_newrefdef = *fd;
 
@@ -1426,7 +1427,8 @@ void R_Register( void )
 	gl_brightness = ri.Cvar_Get("gl_brightness", "0", CVAR_ARCHIVE); // jit
 	gl_autobrightness = ri.Cvar_Get("gl_autobrightness", ".8", CVAR_ARCHIVE); // jit
 	gl_showbbox = ri.Cvar_Get("gl_showbbox", "0", 0);  // jit / Guy
-	gl_modulate = ri.Cvar_Get("gl_modulate", "1.6", CVAR_ARCHIVE); // jit, default to 1.6
+//	gl_modulate = ri.Cvar_Get("gl_modulate", "1.6", CVAR_ARCHIVE); // jit, default to 1.6
+	gl_lightmapgamma = ri.Cvar_Get("gl_lightmapgamma", ".6", CVAR_ARCHIVE); // jitgamma
 	gl_textshadow = ri.Cvar_Get("gl_textshadow", "1", CVAR_ARCHIVE); // jittext
 	
 	cl_hudscale = ri.Cvar_Get("cl_hudscale", "2", CVAR_ARCHIVE); // jithudscale
@@ -2122,6 +2124,8 @@ void R_BeginFrame( float camera_separation )
 			UpdateGammaRamp();
 		} 
 	}
+
+
 
 	GLimp_BeginFrame( camera_separation );
 

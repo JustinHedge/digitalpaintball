@@ -267,19 +267,24 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 		VectorCopy (vec3_origin, pointcolor);
 		if (lightmap)
 		{
-			vec3_t scale;
+			//vec3_t scale;
 
 			lightmap += 3*(dt * ((surf->extents[0]>>4)+1) + ds);
 
 			for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
 					maps++)
 			{
-				for (i=0 ; i<3 ; i++)
+/*				for (i=0 ; i<3 ; i++)
 					scale[i] = gl_modulate->value*r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
 
 				pointcolor[0] += lightmap[0] * scale[0] * 0.003921568627450980392156862745098;
 				pointcolor[1] += lightmap[1] * scale[1] * 0.003921568627450980392156862745098;
 				pointcolor[2] += lightmap[2] * scale[2] * 0.003921568627450980392156862745098;
+				*/
+				pointcolor[0] += lightmap_gammatable[lightmap[0]]/255.0f; // jitgamma:
+				pointcolor[1] += lightmap_gammatable[lightmap[1]]/255.0f;
+				pointcolor[2] += lightmap_gammatable[lightmap[2]]/255.0f;
+
 				lightmap += 3*((surf->extents[0]>>4)+1) *
 						((surf->extents[1]>>4)+1);
 			}
@@ -585,7 +590,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	int			r, g, b, a, max;
 	int			i, j, size;
 	byte		*lightmap;
-	float		scale[4];
+//	float		scale[4];
 	int			nummaps;
 	float		*bl;
 	lightstyle_t	*style;
@@ -595,8 +600,8 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	if ( surf->texinfo->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP) )
 		ri.Sys_Error (ERR_DROP, "R_BuildLightMap called for non-lit surface");
 
-	if(gl_modulate->value > 2.0) // jit - limit
-		ri.Cvar_SetValue("gl_modulate", 2.0f);  // jitmodulate
+	//if(gl_modulate->value > 2.0) // jit - limit
+	//	ri.Cvar_SetValue("gl_modulate", 2.0f);  // jitmodulate
 
 	smax = (surf->extents[0]>>4)+1;
 	tmax = (surf->extents[1]>>4)+1;
@@ -643,24 +648,23 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 			 maps++)
 		{
 			bl = s_blocklights;
-
+/*
 			for (i=0 ; i<3 ; i++)
 				scale[i] = gl_modulate->value * 
 					r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
-
+*/
 			// jit -- removed the scale == 1.0F check,
 			// because that's just retarded.
 			for (i=0 ; i<size ; i++, bl+=3)
 			{
-#if 1 // jitodo, gamma eqn for  lightmaps
+/*
 				bl[0] = (lightmap[i*3+0]) * scale[0];
 				bl[1] = (lightmap[i*3+1]) * scale[1];
 				bl[2] = (lightmap[i*3+2]) * scale[2];
-#else
-				bl[0] = pow((lightmap[i*3+0]/255.0), 1.0/scale[0])*255;
-				bl[1] = pow((lightmap[i*3+1]/255.0), 1.0/scale[1])*255;
-				bl[2] = pow((lightmap[i*3+2]/255.0), 1.0/scale[2])*255;
-#endif
+*/
+				bl[0] = lightmap_gammatable[lightmap[i*3+0]]; // jitgamma:
+				bl[1] = lightmap_gammatable[lightmap[i*3+1]];
+				bl[2] = lightmap_gammatable[lightmap[i*3+2]];
 			}
 
 			lightmap += size*3;		// skip to next lightmap
@@ -677,14 +681,19 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 		{
 			bl = s_blocklights;
 
-			for (i=0 ; i<3 ; i++)
+/*			for (i=0 ; i<3 ; i++)
 				scale[i] = gl_modulate->value*r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
-
+*/
 			for (i=0 ; i<size ; i++, bl+=3)
 			{
+				/*
 				bl[0] += (lightmap[i*3+0]) * scale[0];
 				bl[1] += (lightmap[i*3+1]) * scale[1];
 				bl[2] += (lightmap[i*3+2]) * scale[2];
+				*/
+				bl[0] += lightmap_gammatable[lightmap[i*3+0]]; // jitgamma:
+				bl[1] += lightmap_gammatable[lightmap[i*3+1]];
+				bl[2] += lightmap_gammatable[lightmap[i*3+2]];
 			}
 			lightmap += size*3;		// skip to next lightmap
 		}
