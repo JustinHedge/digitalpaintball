@@ -733,45 +733,45 @@ void FS_Link_f (void)
 /*
 ** FS_ListFiles
 */
-char **FS_ListFiles( char *findname, int *numfiles, unsigned musthave, unsigned canthave )
+char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned canthave)
 {
 	char *s;
 	int nfiles = 0;
 	char **list = 0;
 
-	s = Sys_FindFirst( findname, musthave, canthave );
-	while ( s )
+	s = Sys_FindFirst(findname, musthave, canthave);
+	while (s)
 	{
-		if ( s[strlen(s)-1] != '.' )
+		if (s[strlen(s)-1] != '.')
 			nfiles++;
 		s = Sys_FindNext( musthave, canthave );
 	}
-	Sys_FindClose ();
+	Sys_FindClose();
 
-	if ( !nfiles )
+	if (!nfiles)
 		return NULL;
 
 	nfiles++; // add space for a guard
 	*numfiles = nfiles;
 
-	list = malloc( sizeof( char * ) * nfiles );
-	memset( list, 0, sizeof( char * ) * nfiles );
+	list = malloc(sizeof(char*) * nfiles);
+	memset(list, 0, sizeof(char*) * nfiles);
 
-	s = Sys_FindFirst( findname, musthave, canthave );
+	s = Sys_FindFirst(findname, musthave, canthave);
 	nfiles = 0;
-	while ( s )
+	while (s)
 	{
-		if ( s[strlen(s)-1] != '.' )
+		if (s[strlen(s)-1] != '.')
 		{
-			list[nfiles] = strdup( s );
+			list[nfiles] = strdup(s);
 #ifdef _WIN32
-			strlwr( list[nfiles] );
+			strlwr(list[nfiles]);
 #endif
 			nfiles++;
 		}
-		s = Sys_FindNext( musthave, canthave );
+		s = Sys_FindNext(musthave, canthave);
 	}
-	Sys_FindClose ();
+	Sys_FindClose();
 
 	return list;
 }

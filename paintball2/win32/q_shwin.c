@@ -201,7 +201,7 @@ char *Sys_FindFirst (char *path, unsigned musthave, unsigned canthave )
 	return NULL; 
 }
 
-char *Sys_FindNext ( unsigned musthave, unsigned canthave )
+char *Sys_FindNext (unsigned musthave, unsigned canthave)
 {
 	struct _finddata_t findinfo;
 
@@ -213,7 +213,7 @@ char *Sys_FindNext ( unsigned musthave, unsigned canthave )
 	{
 		if (CompareAttributes(findinfo.attrib, musthave, canthave))
 		{
-			Com_sprintf (findpath, sizeof(findpath), "%s/%s", findbase, findinfo.name);
+			Com_sprintf(findpath, sizeof(findpath), "%s/%s", findbase, findinfo.name);
 			return findpath;
 		}
 	}

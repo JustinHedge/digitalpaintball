@@ -503,7 +503,7 @@ void WriteAliases (FILE *f)
 	}
 }
 
-#if 0 // XXXXXXXXXXXXXXXXXXX not currently implemented
+#if 0 // jitodo -  not currently implemented
 /*
 =============================================================================
 
@@ -572,7 +572,7 @@ void Cmd_AddMacro( const char *name, qboolean (*function)( char *, int ) ) {
 	macro->hashNext = cmd_macroHash[hash];
 	cmd_macroHash[hash] = macro;
 }
-#endif // XXXXXXXXXXXXXXXXXXXXXX
+#endif // /jitodo
 
 
 /*

@@ -906,16 +906,16 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 	{
 		if (!buf->allowoverflow)
 		//	Com_Error (ERR_FATAL, "SZ_GetSpace: overflow without allowoverflow set"); jit - don't crash the server with this
-			Com_Printf ("SZ_GetSpace: overflow without allowoverflow set\n");
+			Com_Printf("SZ_GetSpace: overflow without allowoverflow set\n");
 		
 		else if (length > buf->maxsize)
 		//	Com_Error (ERR_FATAL, "SZ_GetSpace: %i is > full buffer size", length); jit -- don't crash the server with this
-			Com_Printf ("SZ_GetSpace: %i is > full buffer size\n", length);
+			Com_Printf("SZ_GetSpace: %i is > full buffer size\n", length);
 			
 		else
-			Com_Printf ("SZ_GetSpace: overflow\n");
+			Com_Printf("SZ_GetSpace: overflow\n");
 
-		SZ_Clear (buf); 
+		SZ_Clear(buf); 
 		buf->overflowed = true;
 	}
 
@@ -927,7 +927,7 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 
 void SZ_Write (sizebuf_t *buf, void *data, int length)
 {
-	memcpy (SZ_GetSpace(buf,length),data,length);		
+	memcpy(SZ_GetSpace(buf,length),data,length);		
 }
 
 void SZ_Print (sizebuf_t *buf, char *data)
@@ -939,12 +939,12 @@ void SZ_Print (sizebuf_t *buf, char *data)
 	if (buf->cursize)
 	{
 		if (buf->data[buf->cursize-1])
-			memcpy ((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
+			memcpy((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
 		else
-			memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0
+			memcpy((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0
 	}
 	else
-		memcpy ((byte *)SZ_GetSpace(buf, len),data,len);
+		memcpy((byte *)SZ_GetSpace(buf, len),data,len);
 }
 
 

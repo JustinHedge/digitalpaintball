@@ -948,7 +948,7 @@ void SV_ServerRecord_f (void)
 	MSG_WriteLong(&buf, svs.spawncount);
 	// 2 means server demo
 	MSG_WriteByte(&buf, 2);	// demos are always attract loops
-	MSG_WriteString(&buf, Cvar_VariableString ("gamedir"));
+	MSG_WriteString(&buf, Cvar_VariableString("gamedir"));
 	MSG_WriteShort(&buf, -1);
 	// send full levelname
 	MSG_WriteString(&buf, sv.configstrings[CS_NAME]);
