@@ -139,7 +139,7 @@ void WinError (void)
 Sys_ScanForCD
 
 ================
-*/
+*
 char *Sys_ScanForCD (void)
 {
 	static char	cddir[MAX_OSPATH];
@@ -182,6 +182,7 @@ char *Sys_ScanForCD (void)
 	
 	return NULL;
 }
+*/
 
 /*
 ================
@@ -604,7 +605,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 {
     MSG				msg;
 	int				time, oldtime, newtime;
-	char			*cddir;
+	//char			*cddir;
 
     /* previous instances do not exist in Win32 */
     if (hPrevInstance)
@@ -614,23 +615,24 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	ParseCommandLine (lpCmdLine);
 
+	// jit -- don't scan for the cd anymore -- nobody's going to be running the game data off of a cd!
 	// if we find the CD, add a +set cddir xxx command line
-	cddir = Sys_ScanForCD ();
-	if (cddir && argc < MAX_NUM_ARGVS - 3)
-	{
-		int		i;
+	//cddir = Sys_ScanForCD();
+	//if (cddir && argc < MAX_NUM_ARGVS - 3)
+	//{
+	//	int		i;
 
-		// don't override a cddir on the command line
-		for (i=0 ; i<argc ; i++)
-			if (Q_streq(argv[i], "cddir"))
-				break;
-		if (i == argc)
-		{
-			argv[argc++] = "+set";
-			argv[argc++] = "cddir";
-			argv[argc++] = cddir;
-		}
-	}
+	//	// don't override a cddir on the command line
+	//	for (i=0 ; i<argc ; i++)
+	//		if (Q_streq(argv[i], "cddir"))
+	//			break;
+	//	if (i == argc)
+	//	{
+	//		argv[argc++] = "+set";
+	//		argv[argc++] = "cddir";
+	//		argv[argc++] = cddir;
+	//	}
+	//}
 
 	Qcommon_Init (argc, argv);
 	oldtime = Sys_Milliseconds ();
