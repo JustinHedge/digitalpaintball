@@ -143,6 +143,9 @@ void SV_Configstrings_f (void)
 	
 	start = atoi(Cmd_Argv(2));
 
+	if (start < 0) // jitsecurity, fix by [SkulleR]
+		start = 0;
+
 	// write a packet full of data
 
 	while ( sv_client->netchan.message.cursize < MAX_MSGLEN*0.5 
@@ -199,6 +202,9 @@ void SV_Baselines_f (void)
 	}
 	
 	start = atoi(Cmd_Argv(2));
+
+	if (start < 0) // jitsecurity, fix by [SkulleR]
+		start = 0;
 
 	memset (&nullstate, 0, sizeof(nullstate));
 
