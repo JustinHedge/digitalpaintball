@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2003 Nathan Wulf
+Copyright (C) 2003-2004 Nathan Wulf (jitspoe)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -38,7 +38,7 @@ int				scale;
 
 qboolean widget_is_selectable(menu_widget_t *widget)
 {
-	return widget->cvar || widget->command;
+	return (widget->enabled && (widget->cvar || widget->command || widget->callback));
 }
 
 void M_ForceMenuOff (void)
@@ -85,12 +85,407 @@ int strlen_noformat(const unsigned char *s)
 
 	return count;
 }
+
+void free_string_array(char *array[], int size)
+{
+	int i;
+
+	if(array)
+	{
+		for(i=0; i<size; i++)
+			Z_Free(array[i]);
+
+		Z_Free(array);
+	}
+}
+
+static void FreeFileList( char **list, int n )
+{
+	int i;
+
+	for ( i = 0; i < n; i++ )
+	{
+		if ( list[i] )
+		{
+			free( list[i] );
+			list[i] = 0;
+		}
+	}
+	free( list );
+}
+
+// free the widget passed as well as all of its child widgets
+// and widgets following it in the list, return NULL.
+menu_widget_t *free_widgets(menu_widget_t *widget)
+{
+	if(!widget)
+		return NULL;
+
+	// recursively free widgets in list
+	if(widget->next)
+		widget->next = free_widgets(widget->next);
+	if(widget->subwidget)
+		widget->subwidget = free_widgets(widget->subwidget);
+
+	if(widget->command)
+		Z_Free(widget->command);
+	if(widget->cvar)
+		Z_Free(widget->cvar);
+	if(widget->hovertext)
+		Z_Free(widget->hovertext);
+	if(widget->text)
+		Z_Free(widget->text);
+	if(widget->select_map)
+		free_string_array(widget->select_map, widget->select_totalitems);
+	if(widget->select_list)
+	{
+		if(widget->flags & WIDGET_FLAG_FILELIST)
+			FreeFileList(widget->select_list, widget->select_totalitems+1);
+		else
+			free_string_array(widget->select_list, widget->select_totalitems);
+	}
+	Z_Free(widget);
+
+	return NULL;
+}
+
+menu_widget_t* M_GetNewBlankMenuWidget()
+{
+	menu_widget_t *widget;
+
+	widget = Z_Malloc(sizeof(menu_widget_t)); // todo: should prolly free this at some point...
+	memset(widget, 0, sizeof(menu_widget_t));
+
+	widget->enabled = true;
+	widget->modified = true;
+
+	return widget;
+}
+
+menu_widget_t* M_GetNewMenuWidget(int type, const char *text, const char *cvar, 
+								  const char *cmd, int x, int y, qboolean enabled)
+{
+	menu_widget_t *widget;
+	int len;
+
+	widget = M_GetNewBlankMenuWidget();
+
+	widget->type = type;
+	if(text)
+	{
+		len = sizeof(char) * (strlen(text) + 1);
+		widget->text = Z_Malloc(len);
+		memcpy(widget->text, text, len);
+	}
+	if(cvar)
+	{
+		len = sizeof(char) * (strlen(cvar) + 1);
+		widget->cvar = Z_Malloc(len);
+		memcpy(widget->cvar, cvar, len);
+	}
+	if(cmd)
+	{
+		len = sizeof(char) * (strlen(cmd) + 1);
+		widget->command = Z_Malloc(len);
+		memcpy(widget->command, cmd, len);
+	}
+	widget->x = x;
+	widget->y = y;
+	widget->enabled = enabled;
+
+	widget->modified = true;
+
+	return widget;
+}
+
+void callback_select_item(menu_widget_t *widget)
+{
+	// update the position of the selected item in the list
+	if(widget->parent->select_pos != widget->select_pos)
+	{
+		widget->parent->modified = true;
+
+		widget->parent->select_pos = widget->select_pos;
+
+		// update the widget's cvar
+		if (!(widget->parent->flags & WIDGET_FLAG_NOAPPLY) && widget->parent->cvar)
+		{
+			if(widget->parent->flags & WIDGET_FLAG_USEMAP)
+				Cvar_Set(widget->parent->cvar, widget->parent->select_map[widget->select_pos]);
+			else
+				Cvar_Set(widget->parent->cvar, widget->parent->select_list[widget->select_pos]);
+		}
+	}
+}
+
+void callback_select_scrollup(menu_widget_t *widget)
+{
+	if(widget->parent->select_vstart > 0)
+	{
+		widget->parent->select_vstart --;
+		widget->parent->modified = true;
+	}
+}
+
+void callback_select_scrolldown(menu_widget_t *widget)
+{
+	if(widget->parent->select_totalitems - widget->parent->select_vstart - widget->parent->select_rows > 0)
+	{
+		widget->parent->select_vstart ++;
+		widget->parent->modified = true;
+	}
+}
+
+menu_widget_t *create_background(int x, int y, int w, int h, menu_widget_t *next)
+{
+	menu_widget_t *start = next;
+	menu_widget_t *new_widget;
+
+	// top left corner:
+	new_widget = M_GetNewBlankMenuWidget();
+	new_widget->picwidth = SELECT_BACKGROUND_SIZE;
+	new_widget->picheight = SELECT_BACKGROUND_SIZE;
+	new_widget->pic = re.DrawFindPic("select1btl");
+	new_widget->x = x;
+	new_widget->y = y;
+	new_widget->next = start;
+	start = new_widget;
+
+	// top edge
+	new_widget = M_GetNewBlankMenuWidget();
+	new_widget->picwidth = w - SELECT_BACKGROUND_SIZE*2;
+	new_widget->picheight = SELECT_BACKGROUND_SIZE;
+	new_widget->pic = re.DrawFindPic("select1bt");
+	new_widget->x = x + SELECT_BACKGROUND_SIZE;
+	new_widget->y = y;
+	new_widget->next = start;
+	start = new_widget;
+
+	// top right corner:
+	new_widget = M_GetNewBlankMenuWidget();
+	new_widget->picwidth = SELECT_BACKGROUND_SIZE;
+	new_widget->picheight = SELECT_BACKGROUND_SIZE;
+	new_widget->pic = re.DrawFindPic("select1btr");
+	new_widget->x = x + w - SELECT_BACKGROUND_SIZE;
+	new_widget->y = y;
+	new_widget->next = start;
+	start = new_widget;
+
+	// left edge:
+	new_widget = M_GetNewBlankMenuWidget();
+	new_widget->picwidth = SELECT_BACKGROUND_SIZE;
+	new_widget->picheight = h - SELECT_BACKGROUND_SIZE*2;
+	new_widget->pic = re.DrawFindPic("select1bl");
+	new_widget->x = x;
+	new_widget->y = y + SELECT_BACKGROUND_SIZE;
+	new_widget->next = start;
+	start = new_widget;
+
+	// right edge:
+	new_widget = M_GetNewBlankMenuWidget();
+	new_widget->picwidth = SELECT_BACKGROUND_SIZE;
+	new_widget->picheight = h - SELECT_BACKGROUND_SIZE*2;
+	new_widget->pic = re.DrawFindPic("select1br");
+	new_widget->x = x + w - SELECT_BACKGROUND_SIZE;
+	new_widget->y = y + SELECT_BACKGROUND_SIZE;
+	new_widget->next = start;
+	start = new_widget;
+
+	// middle:
+	new_widget = M_GetNewBlankMenuWidget();
+	new_widget->picwidth = w - SELECT_BACKGROUND_SIZE*2;
+	new_widget->picheight = h - SELECT_BACKGROUND_SIZE*2;
+	new_widget->pic = re.DrawFindPic("select1bm");
+	new_widget->x = x + SELECT_BACKGROUND_SIZE;
+	new_widget->y = y + SELECT_BACKGROUND_SIZE;
+	new_widget->next = start;
+	start = new_widget;
+
+	// bottom edge:
+	new_widget = M_GetNewBlankMenuWidget();
+	new_widget->picwidth = w - SELECT_BACKGROUND_SIZE*2;
+	new_widget->picheight = SELECT_BACKGROUND_SIZE;
+	new_widget->pic = re.DrawFindPic("select1bb");
+	new_widget->x = x + SELECT_BACKGROUND_SIZE;
+	new_widget->y = y + h - SELECT_BACKGROUND_SIZE;
+	new_widget->next = start;
+	start = new_widget;
+
+	// bottom left corner:
+	new_widget = M_GetNewBlankMenuWidget();
+	new_widget->picwidth = SELECT_BACKGROUND_SIZE;
+	new_widget->picheight = SELECT_BACKGROUND_SIZE;
+	new_widget->pic = re.DrawFindPic("select1bbl");
+	new_widget->x = x;
+	new_widget->y = y + h - SELECT_BACKGROUND_SIZE;
+	new_widget->next = start;
+	start = new_widget;
+
+	// bottom right corner:
+	new_widget = M_GetNewBlankMenuWidget();
+	new_widget->picwidth = SELECT_BACKGROUND_SIZE;
+	new_widget->picheight = SELECT_BACKGROUND_SIZE;
+	new_widget->pic = re.DrawFindPic("select1bbr");
+	new_widget->x = x + w - SELECT_BACKGROUND_SIZE;
+	new_widget->y = y + h - SELECT_BACKGROUND_SIZE;
+	new_widget->next = start;
+	start = new_widget;
+
+	return start;
+}
+
+void update_select_subwidgets(menu_widget_t *widget)
+{
+	int i;
+	char *nullpos;
+	char *s;
+	menu_widget_t *new_widget;
+	char temp;
+	int width, x, y;
+
+	// find which position should be selected:
+	if(widget->cvar)
+	{
+		s = Cvar_Get(widget->cvar, "", CVAR_ARCHIVE)->string;
+
+		for(i = widget->select_vstart; i < widget->select_totalitems &&
+			i < widget->select_rows + widget->select_vstart; i++)
+		{
+			if(widget->flags & WIDGET_FLAG_USEMAP)
+			{
+				if(!strcmp(s, widget->select_map[i]))
+				{
+					widget->select_pos = i;
+					break;
+				}
+			}
+			else
+			{
+				if(!strcmp(s, widget->select_list[i]))
+				{
+					widget->select_pos = i;
+					break;
+				}
+			}
+		}
+	}
+
+	if(widget->subwidget)
+		widget->subwidget = free_widgets(widget->subwidget);
+
+	x = widget->x;
+	y = widget->y;	
+
+	width = widget->select_width;
+	if(width < 4)
+		width = 4;
+
+	// create the vertical scrollbar.
+	if(widget->select_totalitems > widget->select_rows)
+	{
+		// jitodo
+		// Up arrow
+		new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL,
+			x + width*TEXT_WIDTH_UNSCALED - 
+			SCROLL_ARROW_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED*2,
+			y, true);
+
+		new_widget->callback = callback_select_scrollup;
+		new_widget->picwidth = SCROLL_ARROW_WIDTH_UNSCALED;
+		new_widget->picheight = SCROLL_ARROW_HEIGHT_UNSCALED;
+		new_widget->pic = re.DrawFindPic("select1u");
+		new_widget->hoverpic = re.DrawFindPic("select1uh");
+		new_widget->selectedpic = re.DrawFindPic("select1us");
+		new_widget->parent = widget;
+		new_widget->next = widget->subwidget;
+		widget->subwidget = new_widget;
+
+		// Down arrow
+		new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL,
+			x + width*TEXT_WIDTH_UNSCALED - 
+			SCROLL_ARROW_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED*2,
+			y + widget->select_rows*
+			(TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + SELECT_VSPACING_UNSCALED - 
+			SCROLL_ARROW_HEIGHT_UNSCALED, true);
+
+		new_widget->callback = callback_select_scrolldown;
+		new_widget->picwidth = SCROLL_ARROW_WIDTH_UNSCALED;
+		new_widget->picheight = SCROLL_ARROW_HEIGHT_UNSCALED;
+		new_widget->pic = re.DrawFindPic("select1d");
+		new_widget->hoverpic = re.DrawFindPic("select1dh");
+		new_widget->selectedpic = re.DrawFindPic("select1ds");
+		new_widget->parent = widget;
+		new_widget->next = widget->subwidget;
+		widget->subwidget = new_widget;
+
+		width --;
+	}
+
+	// create a widget for each item visible in the select widget
+	for(i = widget->select_vstart; i < widget->select_totalitems
+		&& i < widget->select_rows + widget->select_vstart;	i++)
+	{
+		if(strlen(widget->select_list[i] + widget->select_hstart) > width)
+		{
+			nullpos = widget->select_list[i] + widget->select_hstart + width;
+			temp = *nullpos;
+			*nullpos = '\0';
+			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, 
+				widget->select_list[i] + widget->select_hstart, NULL, NULL, 
+				x+SELECT_HSPACING_UNSCALED, 
+				y + (i - widget->select_vstart) * 
+				(TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED) +
+				SELECT_VSPACING_UNSCALED, true);
+			*nullpos = temp;
+		}
+		else
+		{
+			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, 
+				widget->select_list[i] + widget->select_hstart, NULL, NULL, 
+				x+SELECT_HSPACING_UNSCALED, 
+				y + (i - widget->select_vstart) * 
+				(TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED) +
+				SELECT_VSPACING_UNSCALED, true);
+		}
+
+		// set images for background
+		if(i == widget->select_pos)
+			new_widget->pic = re.DrawFindPic("select1bs");
+		else
+			new_widget->pic = re.DrawFindPic("blank");
+		new_widget->hoverpic = re.DrawFindPic("select1bh");
+		new_widget->picheight = TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED;
+		new_widget->valign = WIDGET_VALIGN_MIDDLE;
+		new_widget->y += SELECT_VSPACING_UNSCALED*2;
+		new_widget->picwidth = width * TEXT_WIDTH_UNSCALED;
+
+		new_widget->select_pos = i;
+
+		new_widget->parent = widget;
+		new_widget->callback = callback_select_item;
+		new_widget->next = widget->subwidget;
+		widget->subwidget = new_widget;
+	}
+
+	// create the background:
+	widget->subwidget = create_background(x, y, 
+		widget->select_width * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED*2, 
+		widget->select_rows * (TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + 
+		SELECT_VSPACING_UNSCALED, widget->subwidget);
+}
+
 // ++ ARTHUR [9/04/03]
 void M_UpdateDrawingInformation (menu_widget_t *widget)
 {
 	int xcenteradj, ycenteradj;
 	char *text = NULL;
 	image_t *pic = NULL;
+
+	// only update if the widget or the hudscale has changed
+	if(!(widget->modified || cl_hudscale->modified))
+		return;
+
+	widget->modified = false;
 
 	scale = cl_hudscale->value;
 
@@ -99,8 +494,8 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 	xcenteradj = (viddef.width - 320*scale)/2;
 	ycenteradj = (viddef.height - 240*scale)/2;
 	
-	widget->picCorner.x = widget->textCorner.x = widget->x * scale + xcenteradj;
-	widget->picCorner.y = widget->textCorner.y = widget->y * scale + ycenteradj;
+	widget->widgetCorner.x = widget->textCorner.x = widget->x * scale + xcenteradj;
+	widget->widgetCorner.y = widget->textCorner.y = widget->y * scale + ycenteradj;
 
 	if(widget->enabled)
 	{
@@ -128,32 +523,32 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 		// 
 		if (pic)
 		{
-			widget->picSize.x = (widget->picwidth) ? widget->picwidth : pic->width;
-			widget->picSize.y = (widget->picheight) ? widget->picheight : pic->height;
+			widget->widgetSize.x = (widget->picwidth) ? widget->picwidth : pic->width;
+			widget->widgetSize.y = (widget->picheight) ? widget->picheight : pic->height;
 			if (pic == widget->hoverpic)
 			{
 				if (widget->hoverpicwidth)
-					widget->picSize.x = widget->hoverpicwidth;
+					widget->widgetSize.x = widget->hoverpicwidth;
 
 				if (widget->hoverpicheight)
-					widget->picSize.y = widget->hoverpicheight;			
+					widget->widgetSize.y = widget->hoverpicheight;			
 			}
-			widget->picSize.x *= scale;
-			widget->picSize.y *= scale;
+			widget->widgetSize.x *= scale;
+			widget->widgetSize.y *= scale;
 		}
 
-		if(widget->type == WIDGET_TYPE_SLIDER)
+		switch(widget->type)
 		{
-			widget->picSize.x = SLIDER_TOTAL_WIDTH;
-			widget->picSize.y = SLIDER_TOTAL_HEIGHT;
-		}
-		else if(widget->type == WIDGET_TYPE_CHECKBOX)
-		{
-			widget->picSize.x = CHECKBOX_WIDTH;
-			widget->picSize.y = CHECKBOX_HEIGHT;
-		}
-		else if(widget->type == WIDGET_TYPE_FIELD)
-		{
+		case WIDGET_TYPE_SLIDER:
+			widget->widgetSize.x = SLIDER_TOTAL_WIDTH;
+			widget->widgetSize.y = SLIDER_TOTAL_HEIGHT;
+			break;
+		case WIDGET_TYPE_CHECKBOX:
+			widget->widgetSize.x = CHECKBOX_WIDTH;
+			widget->widgetSize.y = CHECKBOX_HEIGHT;
+			break;
+		case WIDGET_TYPE_FIELD:
+			{
 			int width;
 
 			width = widget->field_width - 2;
@@ -161,18 +556,26 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 			if(width < 1)
 				width = 1;
 
-			widget->picSize.x = FIELD_LWIDTH + TEXT_WIDTH*width + FIELD_RWIDTH;
-			widget->picSize.y = FIELD_HEIGHT;
+			widget->widgetSize.x = FIELD_LWIDTH + TEXT_WIDTH*width + FIELD_RWIDTH;
+			widget->widgetSize.y = FIELD_HEIGHT;
+			}
+			break;
+		case WIDGET_TYPE_SELECT:
+			widget->widgetSize.x = widget->select_width * TEXT_WIDTH + SELECT_HSPACING_UNSCALED*2;
+			widget->widgetSize.y = widget->select_rows * TEXT_HEIGHT + SELECT_VSPACING_UNSCALED*2;
+			break;
 		}
+
+		
 
 		switch(widget->halign)
 		{
 		case WIDGET_HALIGN_CENTER:
-			widget->picCorner.x -= widget->picSize.x/2;
+			widget->widgetCorner.x -= widget->widgetSize.x/2;
 			widget->textCorner.x -= (strlen_noformat(text)*8*scale)/2;
 			break;
 		case WIDGET_HALIGN_RIGHT:
-			widget->picCorner.x -= widget->picSize.x;
+			widget->widgetCorner.x -= widget->widgetSize.x;
 			widget->textCorner.x -= (strlen_noformat(text)*8*scale);
 			switch(widget->type)
 			{
@@ -205,12 +608,12 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 		switch(widget->valign)
 		{
 		case WIDGET_VALIGN_MIDDLE:
-			widget->picCorner.y -= (widget->picSize.y/2);
-			widget->textCorner.y -= (4*scale);
+			widget->widgetCorner.y -= (widget->widgetSize.y/2);
+			widget->textCorner.y -= TEXT_HEIGHT/2.0f;
 			break;
 		case WIDGET_VALIGN_BOTTOM:
-			widget->picCorner.y -= widget->picSize.y;
-			widget->textCorner.y -= (8*scale);
+			widget->widgetCorner.y -= widget->widgetSize.y;
+			widget->textCorner.y -= TEXT_HEIGHT;
 			break;
 		default:
 			break;
@@ -223,16 +626,27 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 
 		if (pic || widget->type == WIDGET_TYPE_CHECKBOX)
 		{
-			widget->mouseBoundaries.left = widget->picCorner.x;
-			widget->mouseBoundaries.right = widget->picCorner.x + widget->picSize.x;
-			widget->mouseBoundaries.top = widget->picCorner.y;
-			widget->mouseBoundaries.bottom = widget->picCorner.y + widget->picSize.y;
+			widget->mouseBoundaries.left = widget->widgetCorner.x;
+			widget->mouseBoundaries.right = widget->widgetCorner.x + widget->widgetSize.x;
+			widget->mouseBoundaries.top = widget->widgetCorner.y;
+			widget->mouseBoundaries.bottom = widget->widgetCorner.y + widget->widgetSize.y;
 		}
 
 		if (text)
 		{
-			widget->textSize.x = (strlen_noformat(text)*8*scale);
-			widget->textSize.y = (8*scale);
+			widget->textSize.x = (strlen_noformat(text)*TEXT_HEIGHT);
+			widget->textSize.y = TEXT_HEIGHT;
+
+			switch(widget->type)
+			{
+			case WIDGET_TYPE_CHECKBOX:
+				widget->textCorner.y = widget->widgetCorner.y + (CHECKBOX_HEIGHT - TEXT_HEIGHT)/2;
+				break;
+			case WIDGET_TYPE_SLIDER:
+				widget->textCorner.y = widget->widgetCorner.y + (SLIDER_TOTAL_HEIGHT - TEXT_HEIGHT)/2;
+				break;
+			}
+				 
 
 			if (widget->mouseBoundaries.left > widget->textCorner.x)
 				widget->mouseBoundaries.left = widget->textCorner.x;
@@ -246,44 +660,60 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 
 		if(widget->type == WIDGET_TYPE_SLIDER || widget->type == WIDGET_TYPE_FIELD)
 		{
-			widget->mouseBoundaries.left = widget->picCorner.x;
-			widget->mouseBoundaries.right = widget->picCorner.x + widget->picSize.x;
-			widget->mouseBoundaries.top = widget->picCorner.y;
-			widget->mouseBoundaries.bottom = widget->picCorner.y + widget->picSize.y;
+			widget->mouseBoundaries.left = widget->widgetCorner.x;
+			widget->mouseBoundaries.right = widget->widgetCorner.x + widget->widgetSize.x;
+			widget->mouseBoundaries.top = widget->widgetCorner.y;
+			widget->mouseBoundaries.bottom = widget->widgetCorner.y + widget->widgetSize.y;
 		}
+
+		if(widget->select_list)
+			update_select_subwidgets(widget);
 	}
 }
 
-
-menu_widget_t* M_FindNextEntryUnderCursor(menu_screen_t* menu, MENU_ACTION action) 
+void M_DeselectWidget(menu_widget_t *current)
 {
-	menu_widget_t* current = menu->widget;
-	menu_widget_t* selected = NULL;
+	// jitodo - apply changes to field, call this func during keyboard arrow selection
+	current->slider_hover = SLIDER_SELECTED_NONE;
+	current->slider_selected = SLIDER_SELECTED_NONE;
+	current->selected = false;
+	current->hover = false;
+}
 
-	while (current) 
+menu_widget_t *find_widget_under_cursor(menu_widget_t *widget)
+{
+	menu_widget_t *selected = NULL;
+	menu_widget_t *sub_selected;
+
+	while(widget)
 	{
-		M_UpdateDrawingInformation(current);
-
-		if (widget_is_selectable(current) &&
-			m_mouse.x > current->mouseBoundaries.left &&
-			m_mouse.x < current->mouseBoundaries.right &&
-			m_mouse.y < current->mouseBoundaries.bottom &&
-			m_mouse.y > current->mouseBoundaries.top)
+		if (widget_is_selectable(widget) &&
+			m_mouse.x > widget->mouseBoundaries.left &&
+			m_mouse.x < widget->mouseBoundaries.right &&
+			m_mouse.y < widget->mouseBoundaries.bottom &&
+			m_mouse.y > widget->mouseBoundaries.top)
 		{
-			selected = current;
+			selected = widget;
 		}
-		else // deselect everything else.
+		else
 		{
 			// clear selections
-			current->slider_hover = SLIDER_SELECTED_NONE;
-			current->slider_selected = SLIDER_SELECTED_NONE;
-			current->selected = false;
-			current->hover = false;
+			M_DeselectWidget(widget);
 		}
-		current = current->next;
+
+		if(widget->subwidget)
+		{
+			sub_selected = find_widget_under_cursor(widget->subwidget);
+			if(sub_selected)
+				selected = sub_selected;
+		}
+
+		widget = widget->next;
 	}
+
 	return selected;
 }
+
 
 // figure out what portion of the slider to highlight
 // (buttons, knob, or bar)
@@ -543,7 +973,7 @@ void M_AdjustWidget(menu_screen_t *menu, int direction, qboolean keydown)
 
 void field_activate(menu_widget_t *widget)
 {
-	widget->field_cursorpos = (m_mouse.x - widget->picCorner.x)/(TEXT_WIDTH) + widget->field_start;
+	widget->field_cursorpos = (m_mouse.x - widget->widgetCorner.x)/(TEXT_WIDTH) + widget->field_start;
 	field_adjustCursor(widget);
 }
 
@@ -557,6 +987,12 @@ void widget_execute(menu_widget_t *widget)
 			Cbuf_AddText(widget->command);
 			Cbuf_AddText("\n");
 		}
+
+		if(widget->callback)
+		{
+			widget->callback(widget);
+		}
+
 		switch(widget->type)
 		{
 		case WIDGET_TYPE_SLIDER:
@@ -614,8 +1050,10 @@ qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 		return false;
 
 	// If we're actually over something
-	if (NULL != (newSelection = M_FindNextEntryUnderCursor(menu, action))) 
+	if (NULL != (newSelection = find_widget_under_cursor(menu->widget))) 
 	{
+		newSelection->modified = true;
+
 		switch (action)
 		{
 		case M_ACTION_HILIGHT:
@@ -757,6 +1195,8 @@ void M_InsertField (int key)
 
 			strcpy (s + cursorpos - 1, s + cursorpos);
 			cursorpos--;
+			if(cursorpos <= widget->field_start)
+				widget->field_start -= (widget->field_width / 2);
 		}
 	}
 	else if (key == K_DEL)
@@ -914,51 +1354,123 @@ void M_AddToServerList (netadr_t adr, char *info)
 	m_num_servers++;*/
 }
 
-menu_widget_t* M_GetNewBlankMenuWidget()
+select_map_list_t *get_new_select_map_list(char *cvar_string, char *string)
 {
-	menu_widget_t *widget;
+	select_map_list_t *new_map;
 
-	widget = Z_Malloc(sizeof(menu_widget_t)); // todo: should prolly free this at some point...
-	memset(widget, 0, sizeof(menu_widget_t));
+	new_map = Z_Malloc(sizeof(select_map_list_t));
+	memset(new_map, 0, sizeof(select_map_list_t));
+	
+	if(cvar_string)
+	{
+		new_map->cvar_string = Z_Malloc(strlen(cvar_string)+1);
+		strcpy(new_map->cvar_string, cvar_string);
+	}
 
-	widget->enabled = true;
+	if(string)
+	{
+		new_map->string = Z_Malloc(strlen(string)+1);
+		strcpy(new_map->string, string);
+	}
 
-	return widget;
+	return new_map;
 }
 
-menu_widget_t* M_GetNewMenuWidget(int type, const char *text, const char *cvar, 
-								  const char *cmd, int x, int y, qboolean enabled)
+// get the list from the file, then store it in an array on the widget
+void select_begin_list(menu_widget_t *widget, char *buf)
 {
-	menu_widget_t *widget;
-	int len;
+	char *token;
+	char cvar_string[MAX_TOKEN_CHARS];
+	int count=0, i;
 
-	widget = M_GetNewBlankMenuWidget();
+	select_map_list_t *new_map;
+	select_map_list_t *list_start = NULL;
+	select_map_list_t *finger;
 
-	widget->type = type;
-	if(text)
-	{
-		len = sizeof(char) * (strlen(text) + 1);
-		widget->text = Z_Malloc(len);
-		memcpy(widget->text, text, len);
-	}
-	if(cvar)
-	{
-		len = sizeof(char) * (strlen(cvar) + 1);
-		widget->cvar = Z_Malloc(len);
-		memcpy(widget->cvar, cvar, len);
-	}
-	if(cmd)
-	{
-		len = sizeof(char) * (strlen(cmd) + 1);
-		widget->command = Z_Malloc(len);
-		memcpy(widget->command, cmd, len);
-	}
-	widget->x = x;
-	widget->y = y;
-	widget->enabled = enabled;
+	token = COM_Parse(&buf);
 
-	return widget;
+	if(strstr(token, "pair") || strstr(token, "map"))
+	{
+		widget->flags |= WIDGET_FLAG_USEMAP;
+		token = COM_Parse(&buf);
+	
+		// read map pair from file.
+		while(strcmp(token, "end") != 0)
+		{
+			strcpy(cvar_string, token);
+			token = COM_Parse(&buf);
+			new_map = get_new_select_map_list(cvar_string, token);
+			new_map->next = list_start;
+			list_start = new_map;
+			count ++;
+			token = COM_Parse(&buf);
+		}
+		widget->select_totalitems = count;
+		widget->select_map = Z_Malloc(sizeof(char*)*count);
+		widget->select_list = Z_Malloc(sizeof(char*)*count);
+
+		if(count > widget->select_rows)
+			widget->flags |= WIDGET_FLAG_VSCROLLBAR;
+
+		// put the list into the widget's array, and free the list.
+		for(i=count-1; i>=0; i--, finger=finger->next)
+		{
+			finger = list_start;
+			widget->select_map[i] = finger->cvar_string;
+			widget->select_list[i] = finger->string;
+			list_start = finger->next;
+			Z_Free(finger);
+		}
+	}
+	else if(strstr(token, "single") || strstr(token, "list"))
+	{
+		// jitodo
+	}
+	else if(strstr(token, "file"))
+	{
+		// jitodo
+	}
 }
+
+void select_strip_from_list(menu_widget_t *widget, const char *striptext)
+{
+	int i, len;
+	char *textpos;
+
+	len = strlen(striptext);
+
+	for(i=0; i<widget->select_totalitems; i++)
+	{
+		if(textpos = strstr(widget->select_list[i], striptext))
+			strcpy(textpos, textpos+len);
+	}
+}
+
+void select_begin_file_list(menu_widget_t *widget, char *findname)
+{
+	int i, numfiles;
+	char **files;
+	extern char **FS_ListFiles( char *, int *, unsigned, unsigned );
+//	static void FreeFileList( char **list, int n );
+
+
+	widget->select_list = FS_ListFiles(findname, &widget->select_totalitems, 0, 0);
+	widget->select_totalitems--;
+	widget->flags |= WIDGET_FLAG_FILELIST;
+
+/*	files = FS_ListFiles(findname, &numfiles, 0, 0);
+	
+	widget->select_list = Z_Malloc(sizeof(char*) * numfiles);
+
+	for(i = 0; i < numfiles; i++)
+	{
+		widget->select_list[i] = Z_Malloc(sizeof(char)*(strlen(files[i])+1));
+		strcpy(widget->select_list[i], files[i]);
+	}
+	
+	FreeFileList(files, numfiles);*/
+}
+
 
 menu_screen_t* M_GetNewMenuScreen(const char *menu_name)
 {
@@ -1000,8 +1512,8 @@ int M_WidgetGetType(const char *s)
 		return WIDGET_TYPE_SLIDER;
 	if(!strcmp(s, "checkbox"))
 		return WIDGET_TYPE_CHECKBOX;
-	if(!strcmp(s, "dropdown"))
-		return WIDGET_TYPE_DROPDOWN;
+	if(!strcmp(s, "dropdown") || strstr(s, "select"))
+		return WIDGET_TYPE_SELECT;
 	if(!strcmp(s, "editbox") || !strcmp(s, "field"))
 		return WIDGET_TYPE_FIELD;
 
@@ -1133,9 +1645,9 @@ void menu_from_file(menu_screen_t *menu)
 						widget->hoverpicheight = atoi(COM_Parse(&buf));
 					else if(strcmp(token, "selectedpic") == 0)
 						widget->selectedpic = re.DrawFindPic(COM_Parse(&buf));
-					else if(strcmp(token, "xabs") == 0 || strcmp(token, "xleft") == 0)
+					else if(strcmp(token, "xabs") == 0 || strcmp(token, "xleft") == 0 || strcmp(token, "x") == 0)
 						x = widget->x = atoi(COM_Parse(&buf));
-					else if(strcmp(token, "yabs") == 0 || strcmp(token, "ytop") == 0)
+					else if(strcmp(token, "yabs") == 0 || strcmp(token, "ytop") == 0 || strcmp(token, "y") == 0)
 						y = widget->y = atoi(COM_Parse(&buf));
 					else if(strstr(token, "xcent"))
 						x = widget->x = 160 + atoi(COM_Parse(&buf));
@@ -1163,7 +1675,20 @@ void menu_from_file(menu_screen_t *menu)
 					// editbox/field options
 					else if(strstr(token, "width"))
 						widget->field_width = atoi(COM_Parse(&buf));
-					
+					else if(strcmp(token, "int") == 0)
+						widget->flags |= WIDGET_FLAG_INT; // jitodo
+					else if(strcmp(token, "float") == 0)
+						widget->flags |= WIDGET_FLAG_FLOAT; // jitodo
+					// select/dropdown options
+					else if(strstr(token, "size") || strstr(token, "rows") || strstr(token, "height"))
+						widget->select_rows = atoi(COM_Parse(&buf));
+					else if(strstr(token, "begin"))
+						select_begin_list(widget, buf);
+					else if(strstr(token, "file"))
+						select_begin_file_list(widget, COM_Parse(&buf));
+					else if(strstr(token, "strip"))
+						select_strip_from_list(widget, COM_Parse(&buf));
+
 					token = COM_Parse(&buf);
 				}
 			}
@@ -1242,25 +1767,10 @@ void M_Init (void)
 	Cmd_AddCommand("menu", M_Menu_f);
 }
 
-void free_widget(menu_widget_t *widget)
-{
-	if(!widget)
-		return;
-
-	if(widget->command)
-		Z_Free(widget->command);
-	if(widget->cvar)
-		Z_Free(widget->cvar);
-	if(widget->hovertext)
-		Z_Free(widget->hovertext);
-	if(widget->text)
-		Z_Free(widget->text);
-	Z_Free(widget);
-}
 
 void refresh_menu_screen(menu_screen_t *menu)
 {
-	menu_widget_t *widgetnext;
+//	menu_widget_t *widgetnext;
 	menu_widget_t *widget;
 
 	if(!menu)
@@ -1268,12 +1778,13 @@ void refresh_menu_screen(menu_screen_t *menu)
 
 	widget = menu->widget;
 	
-	while(widget)
+	/*while(widget)
 	{
 		widgetnext = widget->next;
 		free_widget(widget);
 		widget = widgetnext;
-	}
+	}*/
+	menu->widget = free_widgets(menu->widget);
 
 	menu_from_file(menu); // reload data from file
 }
@@ -1363,20 +1874,20 @@ void M_DrawCheckbox(int x, int y, qboolean checked, qboolean hover, qboolean sel
 	if(checked)
 	{
 		if(selected)
-			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1us);
+			re.DrawStretchPic2(x, y, CHECKBOX_WIDTH, CHECKBOX_HEIGHT, i_checkbox1us);
 		else if(hover)
-			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1ch);
+			re.DrawStretchPic2(x, y, CHECKBOX_WIDTH, CHECKBOX_HEIGHT, i_checkbox1ch);
 		else
-			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1c);
+			re.DrawStretchPic2(x, y, CHECKBOX_WIDTH, CHECKBOX_HEIGHT, i_checkbox1c);
 	}
 	else
 	{
 		if(selected)
-			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1cs);
+			re.DrawStretchPic2(x, y, CHECKBOX_WIDTH, CHECKBOX_HEIGHT, i_checkbox1cs);
 		else if(hover)
-			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1uh);
+			re.DrawStretchPic2(x, y, CHECKBOX_WIDTH, CHECKBOX_HEIGHT, i_checkbox1uh);
 		else
-			re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_checkbox1u);
+			re.DrawStretchPic2(x, y, CHECKBOX_WIDTH, CHECKBOX_HEIGHT, i_checkbox1u);
 	}
 }
 
@@ -1386,7 +1897,7 @@ void M_DrawCheckbox(int x, int y, qboolean checked, qboolean hover, qboolean sel
 //void M_DrawField(int x, int y, int width, char *cvar_string, qboolean hover, qboolean selected)
 void M_DrawField(menu_widget_t *widget)
 {
-	//M_DrawField(widget->picCorner.x, widget->picCorner.y,
+	//M_DrawField(widget->widgetCorner.x, widget->widgetCorner.y,
 			//	widget->field_width, cvar_val, widget->hover, widget->selected);
 	int width, x, y;
 	char *cvar_string;
@@ -1399,8 +1910,8 @@ void M_DrawField(menu_widget_t *widget)
 		cvar_string = "";
 
 	width = widget->field_width;
-	x = widget->picCorner.x;
-	y = widget->picCorner.y;
+	x = widget->widgetCorner.x;
+	y = widget->widgetCorner.y;
 
 	if(width > 2)
 		width -= 2;
@@ -1428,16 +1939,67 @@ void M_DrawField(menu_widget_t *widget)
 
 
 	// draw only the portion of the string that fits within the field:
-	nullpos = widget->field_start + widget->field_width;
-	temp = cvar_string[nullpos];
-	cvar_string[nullpos] = 0;
-	re.DrawString(x+(FIELD_LWIDTH-TEXT_WIDTH), y+(FIELD_HEIGHT-TEXT_HEIGHT)/2, cvar_string+widget->field_start);
-	cvar_string[nullpos] = temp;
+	if(strlen(cvar_string) > widget->field_start + widget->field_width)
+	{
+		nullpos = widget->field_start + widget->field_width;
+		temp = cvar_string[nullpos];
+		cvar_string[nullpos] = 0;
+		re.DrawString(x+(FIELD_LWIDTH-TEXT_WIDTH), y+(FIELD_HEIGHT-TEXT_HEIGHT)/2,
+			cvar_string+widget->field_start);
+		cvar_string[nullpos] = temp;
+	}
+	else
+	{
+		re.DrawString(x+(FIELD_LWIDTH-TEXT_WIDTH), y+(FIELD_HEIGHT-TEXT_HEIGHT)/2,
+			cvar_string+widget->field_start);
+	}
 
 	if(widget->selected || widget->hover)
 	{
 		Con_DrawCursor(x + (FIELD_LWIDTH-TEXT_WIDTH) +
 			(widget->field_cursorpos - widget->field_start)*TEXT_WIDTH, y+(FIELD_HEIGHT-TEXT_HEIGHT)/2);
+	}
+}
+
+void M_DrawSelect(menu_widget_t *widget)
+{
+//	todo;
+	int i, width, start, rows;
+	char temp;
+	
+	width = widget->select_width;
+	rows = widget->select_rows;
+	start = widget->select_vstart;
+	/*
+	if(widget->flags & WIDGET_FLAG_VSCROLLBAR)
+		width--;
+	if(widget->flags & WIDGET_FLAG_HSCROLLBAR)
+		rows --;
+*/
+	for(i = start; i < (widget->select_totalitems) && (i - start < rows); i++)
+	{
+		// text too big to fit, enable scrollbar
+		// and cut string off before drawing
+		if(strlen(widget->select_list[i]) > width)
+		{
+			widget->flags &= WIDGET_FLAG_HSCROLLBAR;
+			temp = widget->select_list[i][width];
+			widget->select_list[i][width] = 0;
+			
+			re.DrawString(widget->x, widget->y + TEXT_HEIGHT*i, widget->select_list[i]);
+			
+			widget->select_list[i][width] = temp;
+		}
+		else
+			re.DrawString(widget->x, widget->y + TEXT_HEIGHT*i, widget->select_list[i]);
+	}
+
+	if(widget->flags & WIDGET_FLAG_VSCROLLBAR)
+	{
+		// jitodo - draw scrollbar
+	}
+	if(widget->flags & WIDGET_FLAG_HSCROLLBAR)
+	{
 	}
 }
 
@@ -1491,7 +2053,7 @@ void M_DrawWidget (menu_widget_t *widget)
 		switch(widget->type) 
 		{
 		case WIDGET_TYPE_SLIDER:
-			M_DrawSlider(widget->picCorner.x, widget->picCorner.y, M_SliderGetPos(widget),
+			M_DrawSlider(widget->widgetCorner.x, widget->widgetCorner.y, M_SliderGetPos(widget),
 				widget->slider_hover, widget->slider_selected);
 			break;
 		case WIDGET_TYPE_CHECKBOX:
@@ -1499,28 +2061,44 @@ void M_DrawWidget (menu_widget_t *widget)
 				checkbox_checked = true;
 			else
 				checkbox_checked = false;
-			M_DrawCheckbox(widget->picCorner.x, widget->picCorner.y, 
+			M_DrawCheckbox(widget->widgetCorner.x, widget->widgetCorner.y, 
 				checkbox_checked, widget->hover, widget->selected);
 			break;
 		case WIDGET_TYPE_FIELD:
 			//if(widget->cvar)
 			//	cvar_val = Cvar_Get(widget->cvar, "0", CVAR_ARCHIVE)->string;
 			M_DrawField(widget);
-			//M_DrawField(widget->picCorner.x, widget->picCorner.y,
+			//M_DrawField(widget->widgetCorner.x, widget->widgetCorner.y,
 			//	widget->field_width, cvar_val, widget->hover, widget->selected);
+			break;
+		case WIDGET_TYPE_SELECT:
+			//M_DrawSelect(widget);
 			break;
 		default:
 			break;
 		}
 
 		if(pic)
-			re.DrawStretchPic2(widget->picCorner.x,
-								widget->picCorner.y,
-								widget->picSize.x,
-								widget->picSize.y,
+			re.DrawStretchPic2(widget->widgetCorner.x,
+								widget->widgetCorner.y,
+								widget->widgetSize.x,
+								widget->widgetSize.y,
 								pic);
 		if(text)
 			re.DrawString(widget->textCorner.x, widget->textCorner.y, text);
+	}
+
+	// Draw subwidgets
+	if(widget->subwidget)
+	{
+		menu_widget_t *subwidget;
+
+		subwidget = widget->subwidget;
+		while(subwidget)
+		{
+			M_DrawWidget(subwidget);
+			subwidget = subwidget->next;
+		}
 	}
 }
 

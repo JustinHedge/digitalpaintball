@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2003 Nathan Wulf
+Copyright (C) 2003-2004 Nathan Wulf (jitspoe)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -27,17 +27,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "qmenu.h"
 
-#define TEXT_WIDTH (8*scale)
-#define TEXT_HEIGHT (8*scale)
+#define TEXT_WIDTH_UNSCALED		8
+#define TEXT_HEIGHT_UNSCALED	8
 
-#define SLIDER_BUTTON_WIDTH_UNSCALED	8
-#define SLIDER_BUTTON_HEIGHT_UNSCALED	8
-#define SLIDER_TRAY_WIDTH_UNSCALED		32
-#define SLIDER_TRAY_HEIGHT_UNSCALED		8
-#define SLIDER_KNOB_WIDTH_UNSCALED		8
-#define SLIDER_KNOB_HEIGHT_UNSCALED		8
+#define TEXT_WIDTH		(TEXT_WIDTH_UNSCALED*scale)
+#define TEXT_HEIGHT		(TEXT_HEIGHT_UNSCALED*scale)
+
+#define SLIDER_BUTTON_WIDTH_UNSCALED	6
+#define SLIDER_BUTTON_HEIGHT_UNSCALED	12
+#define SLIDER_TRAY_WIDTH_UNSCALED		30
+#define SLIDER_TRAY_HEIGHT_UNSCALED		12
+#define SLIDER_KNOB_WIDTH_UNSCALED		6
+#define SLIDER_KNOB_HEIGHT_UNSCALED		12
 #define SLIDER_TOTAL_WIDTH_UNSCALED		((SLIDER_BUTTON_WIDTH_UNSCALED*2)+SLIDER_TRAY_WIDTH_UNSCALED)
-#define SLIDER_TOTAL_HEIGHT_UNSCALED	8
+#define SLIDER_TOTAL_HEIGHT_UNSCALED	12
 
 #define SLIDER_BUTTON_WIDTH		(SLIDER_BUTTON_WIDTH_UNSCALED	*scale)
 #define SLIDER_BUTTON_HEIGHT	(SLIDER_BUTTON_HEIGHT_UNSCALED	*scale)
@@ -61,22 +64,46 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define FIELD_LWIDTH	(10*scale)
 #define FIELD_RWIDTH	(10*scale)
 
+#define SELECT_HSPACING_UNSCALED	2
+#define SELECT_VSPACING_UNSCALED	2
+
+#define SELECT_BACKGROUND_SIZE		4
+
+#define SCROLL_ARROW_WIDTH_UNSCALED	8
+#define SCROLL_ARROW_HEIGHT_UNSCALED 8
+
+
+
+// widget flags
+#define WIDGET_FLAG_NONE		0
+#define WIDGET_FLAG_USEMAP		2
+#define WIDGET_FLAG_VSCROLLBAR	4
+#define WIDGET_FLAG_HSCROLLBAR	8
+#define WIDGET_FLAG_DROPPEDDOWN	16
+#define WIDGET_FLAG_NOAPPLY		32 // don't apply changes immediately
+#define WIDGET_FLAG_FLOAT		64
+#define WIDGET_FLAG_INT			128
+#define WIDGET_FLAG_FILELIST	256
+
 typedef enum {
-	WIDGET_TYPE_UNKNOWN		= 0,
-	WIDGET_TYPE_BUTTON		= 1,
-	WIDGET_TYPE_SLIDER		= 2,
-	WIDGET_TYPE_CHECKBOX	= 3,
-	WIDGET_TYPE_DROPDOWN	= 4,
-	WIDGET_TYPE_TEXT		= 5,
-	WIDGET_TYPE_FIELD		= 6
+	WIDGET_TYPE_UNKNOWN	= 0,
+	WIDGET_TYPE_BUTTON,
+	WIDGET_TYPE_SLIDER,
+	WIDGET_TYPE_CHECKBOX,
+	WIDGET_TYPE_SELECT,
+	WIDGET_TYPE_TEXT,
+	WIDGET_TYPE_PIC,
+	WIDGET_TYPE_FIELD
 } WIDGET_TYPE;
 
+// Horizontal alignment of widget
 typedef enum {
 	WIDGET_HALIGN_LEFT		= 0,
 	WIDGET_HALIGN_CENTER	= 1,
 	WIDGET_HALIGN_RIGHT		= 2
 } WIDGET_HALIGN;
 
+// Vertical alignment of widget
 typedef enum {
 	WIDGET_VALIGN_TOP		= 0,
 	WIDGET_VALIGN_MIDDLE	= 1,
@@ -118,9 +145,17 @@ typedef enum {
 	M_ACTION_EXECUTE
 } MENU_ACTION;
 
+typedef struct SELECT_MAP_LIST_S {
+	char *cvar_string;
+	char *string;
+	struct SELECT_MAP_LIST_S *next;
+} select_map_list_t;
+
+
 typedef struct MENU_WIDGET_S {
 	WIDGET_TYPE type;
 	int flags;			// for things like numbersonly
+	qboolean modified;	// drawing information changed
 	char *command;		// command executed when widget activated
 	char *cvar;			// cvar widget reads and/or modifies
 	int x;				// position from 0 (left) to 320 (right)
@@ -130,10 +165,8 @@ typedef struct MENU_WIDGET_S {
 	char *text;			// text displayed by widget
 	char *hovertext;	// text when mouse over widget
 	char *selectedtext;	// text when mouse clicked on widget
-// todo: should probably revert back to text names because vid_restart breaks pics...
 	image_t *pic;		// image displayed by widget
- 	int picwidth;		// width to scale image to
-	int picheight;		// height to scale image to
+	
 	image_t *hoverpic;	// image displayed when mouse over widget
 	int hoverpicwidth;
 	int hoverpicheight;
@@ -148,16 +181,41 @@ typedef struct MENU_WIDGET_S {
 	float	slider_max;
 	float	slider_inc;
 
-	int		field_width;
-	int		field_start;
-	int		field_cursorpos;
+	union {
+		int	field_cursorpos;
+		int select_pos;
+		float slider_pos;
+	};
+	union {
+		int	field_width;
+		int	select_width;
+		int picwidth;		// width to scale image to
+	};
+	union {
+		int	field_start;
+		int select_vstart; // start point for vertical scroll
+	};
+	union {
+		int		select_rows;
+		int picheight;		// height to scale image to
+	};
+	int		select_totalitems;
+	int		select_hstart; // start point for horizontal scroll.
+	char	**select_list;
+	char	**select_map;
 
-// Drawing Information
-	POINT picCorner;
-	POINT picSize;
+	// Drawing Information
+	POINT widgetCorner;
+	POINT widgetSize;
 	POINT textCorner;
 	POINT textSize;
 	RECT mouseBoundaries;
+
+	// callback function
+	void (*callback)(struct MENU_WIDGET_S *widget);
+
+	struct MENU_WIDGET_S *parent;
+	struct MENU_WIDGET_S *subwidget; // child
 	struct MENU_WIDGET_S *next;
 } menu_widget_t;
 
