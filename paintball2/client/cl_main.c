@@ -338,7 +338,6 @@ void CL_Record_f (void)
 			MSG_WriteShort (&buf, i);
 			MSG_WriteString (&buf, cl.configstrings[i]);
 		}
-
 	}
 
 	// baselines
@@ -1260,23 +1259,33 @@ void CL_RequestNextDownload (void)
 		precache_check = ENV_CNT;
 
 //ZOID
-	if (precache_check == CS_MODELS) { // confirm map
+	if (precache_check == CS_MODELS)
+	{ // confirm map
 		precache_check = CS_MODELS+2; // 0 isn't used
+
 		if (allow_download_maps->value)
 			if (!CL_CheckOrDownloadFile(cl.configstrings[CS_MODELS+1]))
 				return; // started a download
 	}
-	if (precache_check >= CS_MODELS && precache_check < CS_MODELS+MAX_MODELS) {
-		if (allow_download_models->value) {
+
+	if (precache_check >= CS_MODELS && precache_check < CS_MODELS+MAX_MODELS)
+	{
+		if (allow_download_models->value)
+		{
 			while (precache_check < CS_MODELS+MAX_MODELS &&
-				cl.configstrings[precache_check][0]) {
+				cl.configstrings[precache_check][0])
+			{
 				if (cl.configstrings[precache_check][0] == '*' ||
-					cl.configstrings[precache_check][0] == '#') {
+					cl.configstrings[precache_check][0] == '#')
+				{
 					precache_check++;
 					continue;
 				}
-				if (precache_model_skin == 0) {
-					if (!CL_CheckOrDownloadFile(cl.configstrings[precache_check])) {
+
+				if (precache_model_skin == 0)
+				{
+					if (!CL_CheckOrDownloadFile(cl.configstrings[precache_check])) 
+					{
 						precache_model_skin = 1;
 						return; // started a download
 					}
@@ -1491,13 +1500,16 @@ void CL_RequestNextDownload (void)
 	}
 
 	// confirm existance of textures, download any that don't exist
-	if (precache_check == TEXTURE_CNT+1) {
+	if (precache_check == TEXTURE_CNT+1)
+	{
 		// from qcommon/cmodel.c
 		extern int			numtexinfo;
 		extern mapsurface_t	map_surfaces[];
 
-		if (allow_download->value && allow_download_maps->value) {
-			while (precache_tex < numtexinfo) {
+		if (allow_download->value && allow_download_maps->value)
+		{
+			while (precache_tex < numtexinfo)
+			{
 				char fn[MAX_OSPATH];
 //				signed int	sz;
 				unsigned int pt;
@@ -1517,19 +1529,44 @@ void CL_RequestNextDownload (void)
 						return; // started a download
 				}*/
 				sprintf(fn, "textures/%s.jpg", map_surfaces[pt].rname);
+
 				if (!CL_CheckOrDownloadFile(fn))
 					return; // started a download
 			}
 		}
 		precache_check = TEXTURE_CNT+999;
-	}	
+	}
+
+	// -- jit -- check for "requiredfiles" --
+	if (precache_check == TEXTURE_CNT+999
+		&& cl.configstrings[CS_REQUIREDFILES]
+		&& *cl.configstrings[CS_REQUIREDFILES])
+	{
+		///todo;
+		char *token;
+		static char *s = NULL;
+
+		if(!s)
+			s = cl.configstrings[CS_REQUIREDFILES];
+
+		token = COM_Parse(&s);
+
+		if(token && *token)
+		{
+			if(!CL_CheckOrDownloadFile(token))
+				return; // started download
+		}
+		else
+			precache_check++; // nothing to see here, move along.
+	}
+	// -- jit end --
 
 //ZOID
-	CL_RegisterSounds ();
-	CL_PrepRefresh ();
+	CL_RegisterSounds();
+	CL_PrepRefresh();
 
-	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	MSG_WriteString (&cls.netchan.message, va("begin %i\n", precache_spawncount) );
+	MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+	MSG_WriteString(&cls.netchan.message, va("begin %i\n", precache_spawncount));
 }
 
 /*
@@ -1705,7 +1742,6 @@ void CL_InitLocal (void)
 #ifdef USE_DOWNLOAD2
 	Cmd_AddCommand("download2", CL_Download2_f); // jitdownload
 #endif
-	//Cmd_AddCommand ("scores", CL_Scores_f); // jitscores jitodo
 	Cmd_AddCommand("writeconfig", CL_WriteConfig_f); // jitconfig
 
 
@@ -1745,6 +1781,7 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("botcommand", NULL);
 	Cmd_AddCommand("addbot", NULL);
 	Cmd_AddCommand("removebot", NULL);
+	Cmd_AddCommand("score_cl", CL_Score_f); // jitscores, jitodo -- make "score"
 }
 
 

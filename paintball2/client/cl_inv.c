@@ -21,6 +21,68 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
+// ===
+// jit
+#define MAX_ITEM_STRINGS 8
+char item_strings[MAX_ITEM_STRINGS][MAX_QPATH]; // displayed briefly just above hud
+int item_string_time[MAX_ITEM_STRINGS];
+int startpos = 0;
+
+static void item_print (char *s)
+{
+	startpos--;
+	if(startpos<0)
+		startpos = MAX_ITEM_STRINGS - 1;
+
+	strcpy(item_strings[startpos], s);
+	item_string_time[startpos] = curtime;
+}
+
+void CL_ParsePrintItem (char *s) // jit
+{
+	char buff[MAX_QPATH];
+
+	if(*s == '+') // item pickup
+		sprintf(buff, "%s", cl.configstrings[CS_ITEMS+s[1]]);
+	else if(*s == '-') // item drop
+		sprintf(buff, "%c%ca%s", CHAR_ITALICS, CHAR_COLOR, cl.configstrings[CS_ITEMS+s[1]]);
+	else // unknown? (shouldn't happen)
+		sprintf("UNKNOWN %s", cl.configstrings[CS_ITEMS+s[1]]);
+
+	item_print(buff);
+}
+
+void CL_DrawItemPickups (void)
+{
+	int i, j;
+	float alpha;
+
+	for (i=0, j=startpos; i<MAX_ITEM_STRINGS; i++, j++, j%=MAX_ITEM_STRINGS)
+	{
+		if(*item_strings[j])
+		{
+			alpha = (4000 - (curtime-item_string_time[j])) / 3000.0f;
+
+			if(alpha > 1.0f)
+				alpha = 1.0f;
+
+			if(alpha < 0.05f)
+			{
+				item_strings[j][0] = '\0';
+				break;
+			}
+
+			re.DrawStringAlpha((160-4*strlen_noformat(item_strings[j]))*hudscale,
+				(200-i*8)*hudscale, item_strings[j], alpha);
+		}
+		else
+			break;
+	}
+}
+
+// jit
+// ===
+
 /*
 ================
 CL_ParseInventory
@@ -44,7 +106,7 @@ void Inv_DrawString (int x, int y, char *string)
 {
 	while (*string)
 	{
-		re.DrawChar (x, y, *string);
+		re.DrawChar(x, y, *string);
 		x+=8*hudscale; // jithudscale
 		string++;
 	}
@@ -101,30 +163,34 @@ void CL_DrawInventory (void)
 	y = (viddef.height-240)*0.5;
 
 	// repaint everything next frame
-	SCR_DirtyScreen ();
+	SCR_DirtyScreen();
 
 	//re.DrawPic2 (x, y+8, i_inventory);
 
 	y += 24;
 	x += 24;
-	Inv_DrawString (x, y, "hotkey ### item");
-	Inv_DrawString (x, y+8, "------ --- ----");
+	Inv_DrawString(x, y, "hotkey ### item");
+	Inv_DrawString(x, y+8, "------ --- ----");
 	y += 16;
-	for (i=top ; i<num && i < top+DISPLAY_ITEMS ; i++)
+	for (i=top; i<num && i < top+DISPLAY_ITEMS; i++)
 	{
 		item = index[i];
 		// search for a binding
 		Com_sprintf (binding, sizeof(binding), "use %s", cl.configstrings[CS_ITEMS+item]);
 		bind = "";
+
 		for (j=0 ; j<256 ; j++)
+		{
 			if (keybindings[j] && !Q_strcasecmp(keybindings[j], binding))
 			{
 				bind = Key_KeynumToString(j);
 				break;
 			}
+		}
 
 		Com_sprintf (string, sizeof(string), "%6s %3i %s", bind, cl.inventory[item],
-			cl.configstrings[CS_ITEMS+item] );
+			cl.configstrings[CS_ITEMS+item]);
+
 		if (item != selected)
 			SetStringHighBit (string);
 		else	// draw a blinky cursor by the selected item
@@ -132,11 +198,10 @@ void CL_DrawInventory (void)
 			if ( (int)(cls.realtime*10) & 1)
 				re.DrawChar (x-8*hudscale, y, 15);
 		}
+
 		Inv_DrawString (x, y, string);
 		y += 8*hudscale;
 	}
-
-
 }
 
 

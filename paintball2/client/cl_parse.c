@@ -91,7 +91,7 @@ qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jp
 
 	if (strstr (filename, "..")) // jitdownload, moved so this error doesn't come up with existing files.
 	{
-		Com_Printf ("Refusing to download a path with ..\n");
+		Com_Printf("Refusing to download a path with ..\n");
 		return true;
 	}
 
@@ -105,8 +105,8 @@ qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jp
 
 	// ===
 	// jitdownload, check for jpgs and tga's if pcx's aren't there
-	if(strstr(filename,".pcx") || strstr(filename,".jpg") || 
-		strstr(filename,".tga") || strstr(filename,".wal"))
+	if(strstr(filename, ".pcx") || strstr(filename, ".jpg") || 
+		strstr(filename, ".tga") || strstr(filename, ".wal"))
 	{
 		// look for jpg first:
 		COM_StripExtension(filename, name);
@@ -172,45 +172,55 @@ qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jp
 	return false;
 }
 
-/*
-void CL_Scores_f (void) // jitodo jitscores -- client-side scoreboard
+
+void CL_Score_f (void) // jitodo jitscores -- client-side scoreboard
 {
-	// draw a deathmatch client block
-	int		score, ping, time;
+	int i;//, kills, deaths, grabs, caps, ping, time;
+	clientinfo_t *ci;
 
-	token = COM_Parse (&s);
-	x = viddef.width*0.5 - 160 + atoi(token);
-	token = COM_Parse (&s);
-	y = viddef.height*0.5 - 120 + atoi(token);
-	SCR_AddDirtyPoint (x, y);
-	SCR_AddDirtyPoint (x+159, y+31);
+	for(i=0; i<MAX_CLIENTS; i++)
+	{
+		ci = &cl.clientinfo[i];
+		if(*ci->name)
+			Com_Printf("%d: %s %s\n", i, ci->name, ci->cinfo);
+	}
 
-	token = COM_Parse (&s);
-	value = atoi(token);
-	if (value >= MAX_CLIENTS || value < 0)
-		Com_Error (ERR_DROP, "client >= MAX_CLIENTS");
-	ci = &cl.clientinfo[value];
+	//// draw a deathmatch client block
+	//int		score, ping, time;
 
-	token = COM_Parse (&s);
-	score = atoi(token);
+	//token = COM_Parse (&s);
+	//x = viddef.width*0.5 - 160 + atoi(token);
+	//token = COM_Parse (&s);
+	//y = viddef.height*0.5 - 120 + atoi(token);
+	//SCR_AddDirtyPoint (x, y);
+	//SCR_AddDirtyPoint (x+159, y+31);
 
-	token = COM_Parse (&s);
-	ping = atoi(token);
+	//token = COM_Parse (&s);
+	//value = atoi(token);
+	//if (value >= MAX_CLIENTS || value < 0)
+	//	Com_Error (ERR_DROP, "client >= MAX_CLIENTS");
+	//ci = &cl.clientinfo[value];
 
-	token = COM_Parse (&s);
-	time = atoi(token);
+	//token = COM_Parse (&s);
+	//score = atoi(token);
 
-	DrawAltString (x+32, y, ci->name);
-	re.DrawString (x+32, y+8,  "Score: ");
-	DrawAltString (x+32+7*8, y+8,  va("%i", score));
-	re.DrawString (x+32, y+16, va("Ping:  %i", ping));
-	re.DrawString (x+32, y+24, va("Time:  %i", time));
+	//token = COM_Parse (&s);
+	//ping = atoi(token);
 
-	if (!ci->icon)
-		ci = &cl.baseclientinfo;
-	re.DrawPic (x, y, ci->iconname);
-	continue;
-}*/
+	//token = COM_Parse (&s);
+	//time = atoi(token);
+
+	//DrawAltString (x+32, y, ci->name);
+	//re.DrawString (x+32, y+8,  "Score: ");
+	//DrawAltString (x+32+7*8, y+8,  va("%i", score));
+	//re.DrawString (x+32, y+16, va("Ping:  %i", ping));
+	//re.DrawString (x+32, y+24, va("Time:  %i", time));
+
+	//if (!ci->icon)
+	//	ci = &cl.baseclientinfo;
+	//re.DrawPic (x, y, ci->iconname);
+	//continue;
+}
 
 /*
 ===============
@@ -236,14 +246,14 @@ void	CL_Download_f (void)
 		return;
 	}
 
-	if (FS_LoadFile (filename, NULL) != -1)
+	if (FS_LoadFile(filename, NULL) != -1)
 	{	// it exists, no need to download
 		Com_Printf("File already exists.\n");
 		return;
 	}
 
-	strcpy (cls.downloadname, filename);
-	Com_Printf ("Downloading %s\n", cls.downloadname);
+	strcpy(cls.downloadname, filename);
+	Com_Printf("Downloading %s\n", cls.downloadname);
 
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
@@ -1201,14 +1211,15 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_disconnect:
-			Com_Error (ERR_DISCONNECT,"Server disconnected\n");
+			Com_Error(ERR_DISCONNECT,"Server disconnected\n");
 			break;
 
 		case svc_reconnect:
-			Com_Printf ("Server disconnected, reconnecting\n");
-			if (cls.download) {
+			Com_Printf("Server disconnected, reconnecting\n");
+			if (cls.download)
+			{
 				//ZOID, close download
-				fclose (cls.download);
+				fclose(cls.download);
 				cls.download = NULL;
 			}
 			cls.state = ca_connecting;
@@ -1216,22 +1227,28 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_print:
-			i = MSG_ReadByte (&net_message);
-			if (i == PRINT_CHAT)
+			i = MSG_ReadByte(&net_message);
+
+			switch(i) // jit
 			{
-				S_StartLocalSound ("misc/talk.wav");
+			case PRINT_CHAT:
+				S_StartLocalSound("misc/talk.wav");
 				// jittext con.ormask = 128;
 				if(cl_timestamp->value) // jittext / jitcolor
 					Com_Printf("%c%c[%s] %s", CHAR_COLOR, COLOR_CHAT, timestamp, MSG_ReadString(&net_message));
 				else
-					Com_Printf ("%c%c%s", CHAR_COLOR, COLOR_CHAT, MSG_ReadString (&net_message));
-			}
-			else
-			{
+					Com_Printf("%c%c%s", CHAR_COLOR, COLOR_CHAT, MSG_ReadString(&net_message));
+
+				break;
+			case PRINT_ITEM: // jit
+				CL_ParsePrintItem(MSG_ReadString(&net_message));
+				break;
+			default:
 				if(cl_timestamp->value) // jit:
 					Com_Printf("[%s] %s", timestamp, MSG_ReadString(&net_message));
 				else
-					Com_Printf ("%s", MSG_ReadString (&net_message));
+					Com_Printf("%s", MSG_ReadString(&net_message));
+				break;
 			}
 
 			con.ormask = 0;
