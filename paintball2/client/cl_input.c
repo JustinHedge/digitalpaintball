@@ -489,16 +489,16 @@ void CL_SendCmd (void)
 
 		if (cl.time > ppscount ||
 			cmd->buttons != oldcmd.buttons ||
-			cmd->forwardmove != oldcmd.forwardmove ||
-			cmd->impulse != oldcmd.impulse ||
-			cmd->sidemove != oldcmd.sidemove ||
-			cmd->upmove != oldcmd.upmove) // user input has changed (jitodo -- check for text cmds)
+			// Check within a threshold of 200, so joystick movement doesn't spam packets
+			((abs(cmd->forwardmove - oldcmd.forwardmove) > 200) && ((abs(oldcmd.forwardmove) < 200) || (abs(cmd->forwardmove) < 200))) ||
+			((abs(cmd->sidemove - oldcmd.sidemove) > 200) && ((abs(oldcmd.sidemove) < 200) || (abs(cmd->sidemove) < 200))) ||
+			((abs(cmd->upmove - oldcmd.upmove) > 200) && ((abs(oldcmd.upmove) < 200) || (abs(cmd->upmove) < 200))) ||
+			cmd->impulse != oldcmd.impulse) // user input has changed (jitodo -- check for text cmds)
 		{
 			if (cl.time > ppscount + 1000.0f/ppsstate+0.5f || cl.time < ppscount)
 				ppscount = cl.time + 1000.0f/ppsstate+0.5f;
 			else // (cl.time > ppscount)
 				ppscount = cl.time - (cl.time-ppscount) + 1000.0f/ppsstate+0.5f;
-			
 
 			memcpy(&oldcmd, cmd, sizeof(usercmd_t));
 			old_frame_time = sys_frame_time;
