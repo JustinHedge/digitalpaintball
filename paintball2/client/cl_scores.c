@@ -357,7 +357,7 @@ qboolean cl_scores_prep_select_widget (void)
 	for (i=0; i<cl_scores_count; i++)
 	{
 		j = cl_sorted_scorelist[i];
-		Com_sprintf(cl_scores_nums[i], 4, "%d", i);
+		Com_sprintf(cl_scores_nums[i], 4, "%d", j);
 		Com_sprintf(cl_scores_info[i], 64, "%c%c%s",
 			cl_scores[j].hasflag ? 25 : cl_scores[j].isalive ? 26 : ' ',
 			splat(cl_scores[j].team), name_from_index(j));

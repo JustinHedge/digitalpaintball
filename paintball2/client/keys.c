@@ -255,107 +255,75 @@ int KeyPadKey(int key) // jitmenu
 	return key;
 }
 
+keydest_t Key_GetDest (void) // jitmenu
+{
+	if (M_MenuActive())
+		return key_menu;
+
+	if (cls.state == ca_active)
+		return key_game;
+
+	return key_console;
+}
+
 void Key_Console (int key) // pooy -- rewritten for text insert mode.
 {
 	key = KeyPadKey(key); // jit
-/*	switch ( key )
-	{
-	case K_KP_SLASH:
-		key = '/';
-		break;
-	case K_KP_MINUS:
-		key = '-';
-		break;
-	case K_KP_PLUS:
-		key = '+';
-		break;
-	case K_KP_HOME:
-		key = '7';
-		break;
-	case K_KP_UPARROW:
-		key = '8';
-		break;
-	case K_KP_PGUP:
-		key = '9';
-		break;
-	case K_KP_LEFTARROW:
-		key = '4';
-		break;
-	case K_KP_5:
-		key = '5';
-		break;
-	case K_KP_RIGHTARROW:
-		key = '6';
-		break;
-	case K_KP_END:
-		key = '1';
-		break;
-	case K_KP_DOWNARROW:
-		key = '2';
-		break;
-	case K_KP_PGDN:
-		key = '3';
-		break;
-	case K_KP_INS:
-		key = '0';
-		break;
-	case K_KP_DEL:
-		key = '.';
-		break;
-	}*/
 
-	if ( ( toupper( key ) == 'V' && keydown[K_CTRL] ) ||
-		 ( ( ( key == K_INS ) || ( key == K_KP_INS ) ) && keydown[K_SHIFT] ) )
+	if ((toupper(key) == 'V' && keydown[K_CTRL]) ||
+		 (((key == K_INS) || (key == K_KP_INS)) && keydown[K_SHIFT]))
 	{
 		char *cbd;
 		
-		if ( ( cbd = Sys_GetClipboardData() ) != 0 )
+		if ((cbd = Sys_GetClipboardData()) != 0)
 		{
 			int i;
 
-			strtok( cbd, "\n\r\b" );
+			strtok(cbd, "\n\r\b");
+			i = strlen(cbd);
 
-			i = strlen( cbd );
-			if ( i + key_linepos >= MAXCMDLINE)
+			if (i + key_linepos >= MAXCMDLINE)
 				i= MAXCMDLINE - key_linepos;
 
-			if ( i > 0 )
+			if (i > 0)
 			{
 				cbd[i] = 0;
-				strcat( key_lines[edit_line], cbd );
+				strcat(key_lines[edit_line], cbd);
 				key_linepos += i;
 			}
-			free( cbd );
+
+			free(cbd);
 		}
 
 		return;
 	}
 
-	if ( key == 'l' ) 
+	if (key == 'l') 
 	{
-		if ( keydown[K_CTRL] )
+		if (keydown[K_CTRL])
 		{
-			Cbuf_AddText ("clear\n");
+			Cbuf_AddText("clear\n");
 			return;
 		}
 	}
 
-	if ( key == K_ENTER || key == K_KP_ENTER )
+	if (key == K_ENTER || key == K_KP_ENTER)
 	{	// backslash text are commands, else chat
 		if (key_lines[edit_line][1] == '\\' || key_lines[edit_line][1] == '/')
-			Cbuf_AddText (key_lines[edit_line]+2);	// skip the >
+			Cbuf_AddText(key_lines[edit_line]+2);	// skip the >
 		else
-			Cbuf_AddText (key_lines[edit_line]+1);	// valid command
+			Cbuf_AddText(key_lines[edit_line]+1);	// valid command
 
-		Cbuf_AddText ("\n");
-		Com_Printf ("%s\n",key_lines[edit_line]);
+		Cbuf_AddText("\n");
+		Com_Printf("%s\n",key_lines[edit_line]);
 		edit_line = (edit_line + 1) & 31;
 		history_line = edit_line;
 		key_lines[edit_line][0] = ']';
 		key_lines[edit_line][1] = 0;
 		key_linepos = 1;
+
 		if (cls.state == ca_disconnected)
-			SCR_UpdateScreen ();	// force an update, because the command
+			SCR_UpdateScreen();		// force an update, because the command
 									// may take some time
 		return;
 	}
@@ -367,7 +335,7 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 		return;
 	}
 	
-	if ( ( key == K_LEFTARROW ) || ( key == K_KP_LEFTARROW ) || ( ( key == 'h' ) && ( keydown[K_CTRL] ) ) )
+	if ((key == K_LEFTARROW) || (key == K_KP_LEFTARROW) || ((key == 'h') && (keydown[K_CTRL])))
 	{
 		int charcount;
 		// jump over invisible color sequences
@@ -545,18 +513,18 @@ int			chat_bufferlen = 0;
 void Key_Message (int key)
 {
 
-	if ( key == K_ENTER || key == K_KP_ENTER )
+	if (key == K_ENTER || key == K_KP_ENTER)
 	{
-		if(2 == chat_team) // jitlogin
+		if (2 == chat_team) // jitlogin
 			Cbuf_AddText("login \"");
-		else if(1 == chat_team) // jitlogin
-			Cbuf_AddText ("say_team \"");
+		else if (1 == chat_team) // jitlogin
+			Cbuf_AddText("say_team \"");
 		else
-			Cbuf_AddText ("say \"");
+			Cbuf_AddText("say \"");
 		Cbuf_AddText(chat_buffer);
 		Cbuf_AddText("\"\n");
 
-		cls.key_dest = key_game;
+		cls.key_dest = Key_GetDest(); // jitmenu
 		chat_bufferlen = 0;
 		chat_buffer[0] = 0;
 		return;
@@ -564,7 +532,7 @@ void Key_Message (int key)
 
 	if (key == K_ESCAPE)
 	{
-		cls.key_dest = key_game;
+		cls.key_dest = Key_GetDest(); // jitmenu
 		chat_bufferlen = 0;
 		chat_buffer[0] = 0;
 		return;

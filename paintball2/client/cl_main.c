@@ -2179,7 +2179,9 @@ void CL_Shutdown(void)
 	S_Shutdown();
 	IN_Shutdown ();
 	VID_Shutdown();
-	shutdown_cl_scores(); // jitscores
+
+	if (!dedicated->value)
+		shutdown_cl_scores(); // jitscores
 }
 
 

@@ -3045,7 +3045,8 @@ static void draw_menu_at_depth (int depth)
 
 void M_Draw (void)
 {
-	if (cls.key_dest == key_menu && m_menudepth)
+	//if (cls.key_dest == key_menu && m_menudepth)
+	if (m_menudepth)
 	{
 		SCR_DirtyScreen();
 		draw_menu_at_depth(m_menudepth);

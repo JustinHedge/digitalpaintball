@@ -244,6 +244,11 @@ void SCR_DrawPaintballHUD1 (void) // todo version check
 	}
 
 	// Player ID
+  	if (lastidtime > cl.time) // map has changed
+  	{
+  		lastidtime = cl.time - 500;
+  	}
+
 	if ((value = cl.frame.playerstate.stats[STAT_ID]))
 	{
 		if (value >= 0 && value < MAX_CONFIGSTRINGS)
