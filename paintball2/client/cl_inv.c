@@ -72,8 +72,9 @@ void CL_DrawItemPickups (void)
 				break;
 			}
 
-			re.DrawStringAlpha((160-4*strlen_noformat(item_strings[j]))*hudscale,
-				(200-i*8)*hudscale, item_strings[j], alpha);
+			//re.DrawStringAlpha((160-4*strlen_noformat(item_strings[j]))*hudscale,
+			//	(200-i*8)*hudscale, item_strings[j], alpha);
+			re.DrawStringAlpha(0+8*hudscale, viddef.height-(40+i*8)*hudscale, item_strings[j], alpha); // jitodo -- cvars for positioning.
 		}
 		else
 			break;
