@@ -27,12 +27,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "qmenu.h"
 
-#define SLIDER_BUTTON_WIDTH 8*scale
-#define SLIDER_BUTTON_HEIGHT 8*scale
-#define SLIDER_TRAY_WIDTH 32*scale
-#define SLIDER_TRAY_HEIGHT 8*scale
-#define SLIDER_KNOB_WIDTH 8*scale
-#define SLIDER_KNOB_HEIGHT 8*scale
+
+#define SLIDER_BUTTON_WIDTH_UNSCALED	8
+#define SLIDER_BUTTON_HEIGHT_UNSCALED	8
+#define SLIDER_TRAY_WIDTH_UNSCALED		32
+#define SLIDER_TRAY_HEIGHT_UNSCALED		8
+#define SLIDER_KNOB_WIDTH_UNSCALED		8
+#define SLIDER_KNOB_HEIGHT_UNSCALED		8
+#define SLIDER_TOTAL_WIDTH_UNSCALED		((SLIDER_BUTTON_WIDTH_UNSCALED*2)+SLIDER_TRAY_WIDTH_UNSCALED)
+#define SLIDER_TOTAL_HEIGHT_UNSCALED	8
+
+#define SLIDER_BUTTON_WIDTH		SLIDER_BUTTON_WIDTH_UNSCALED*scale
+#define SLIDER_BUTTON_HEIGHT	SLIDER_BUTTON_HEIGHT_UNSCALED*scale
+#define SLIDER_TRAY_WIDTH		SLIDER_TRAY_WIDTH_UNSCALED	*scale
+#define SLIDER_TRAY_HEIGHT		SLIDER_TRAY_HEIGHT_UNSCALED	*scale
+#define SLIDER_KNOB_WIDTH		SLIDER_KNOB_WIDTH_UNSCALED	*scale
+#define SLIDER_KNOB_HEIGHT		SLIDER_KNOB_HEIGHT_UNSCALED	*scale
+#define SLIDER_TOTAL_WIDTH		SLIDER_TOTAL_WIDTH_UNSCALED	*scale
+#define SLIDER_TOTAL_HEIGHT		SLIDER_TOTAL_HEIGHT_UNSCALED*scale
+
+#define CURSOR_HEIGHT 16*scale
+#define CURSOR_WIDTH 16*scale
 
 typedef enum {
 	WIDGET_TYPE_UNKNOWN		= 0,
@@ -77,10 +92,17 @@ typedef struct _RECT {
 } RECT;
 #endif
 
+typedef struct MENU_MOUSE_S {
+	int x;
+	int y;
+	char cursorpic[32];
+} menu_mouse_t;
+
 typedef enum {
 	M_ACTION_NONE = 0,
-	M_ACTION_SELECT = 1,
-	M_ACTION_HILIGHT = 2
+	M_ACTION_HILIGHT,
+	M_ACTION_SELECT,
+	M_ACTION_EXECUTE
 } MENU_ACTION;
 
 typedef struct MENU_WIDGET_S {
@@ -107,6 +129,7 @@ typedef struct MENU_WIDGET_S {
 	SLIDER_SELECTED slider_selected; // which part of the slider is the mouse clicked on?
 	float slider_min;
 	float slider_max;
+	float slider_inc;
 // Drawing Information
 	POINT picCorner;
 	POINT picSize;
@@ -123,6 +146,7 @@ typedef struct MENU_SCREEN_S {
 } menu_screen_t;
 
 extern cvar_t *cl_hudscale;
+
 
 #endif
 
