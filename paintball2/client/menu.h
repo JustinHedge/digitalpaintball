@@ -107,7 +107,6 @@ extern cvar_t *serverlist_source2; // jitserverlist
 #define WIDGET_FLAG_BIND		2048 // key binding
 //#define WIDGET_FLAG_ACTIVEBIND	4096 // next button pressed goes to the bind of this widget
 
-
 typedef enum {
 	WIDGET_TYPE_UNKNOWN	= 0,
 	WIDGET_TYPE_BUTTON,
@@ -116,7 +115,9 @@ typedef enum {
 	WIDGET_TYPE_SELECT,
 	WIDGET_TYPE_TEXT,
 	WIDGET_TYPE_PIC,
-	WIDGET_TYPE_FIELD
+	WIDGET_TYPE_FIELD,
+	WIDGET_TYPE_VSCROLL,
+	WIDGET_TYPE_HSCROLL
 } WIDGET_TYPE;
 
 typedef enum {
@@ -146,7 +147,6 @@ typedef enum {
 	SLIDER_SELECTED_KNOB
 } SLIDER_SELECTED;
 
-//#ifndef _WINDEF_
 typedef struct POINT_S {
 	int x;
 	int y;
@@ -158,12 +158,12 @@ typedef struct RECT_S {
 	int left;
 	int top;
 } rect_t;
-//#endif
 
 typedef struct MENU_MOUSE_S {
 	int x;
 	int y;
 	image_t *cursorpic;
+	qboolean button_down[8];
 } menu_mouse_t;
 
 typedef enum {
@@ -173,7 +173,8 @@ typedef enum {
 	M_ACTION_EXECUTE,
 	M_ACTION_DOUBLECLICK,
 	M_ACTION_SCROLLUP,
-	M_ACTION_SCROLLDOWN
+	M_ACTION_SCROLLDOWN,
+	M_ACTION_DRAG
 } MENU_ACTION;
 
 typedef struct SELECT_MAP_LIST_S {
@@ -217,22 +218,30 @@ typedef struct MENU_WIDGET_S {
 	union {
 		int	field_cursorpos;
 		int select_pos;
+		int scrollbar_pos;
 		float slider_pos;
 	};
 	union {
 		int	field_width;
 		int	select_width;
 		int picwidth;		// width to scale image to
+		int scrollbar_width;
 	};
 	union {
 		int	field_start;
 		int select_vstart; // start point for vertical scroll
+		int scrollbar_visible;
 	};
 	union {
-		int		select_rows;
+		int select_rows;
 		int picheight;		// height to scale image to
+		int scrollbar_height;
 	};
-	int		select_totalitems;
+	union {
+		int select_totalitems;
+		int scrollbar_total;
+	};
+
 	int		select_hstart; // start point for horizontal scroll.
 	char	**select_list;
 	char	**select_map;
@@ -248,6 +257,7 @@ typedef struct MENU_WIDGET_S {
 	// callback function
 	void (*callback)(struct MENU_WIDGET_S *widget);
 	void (*callback_doubleclick)(struct MENU_WIDGET_S *widget);
+	void (*callback_drag)(struct MENU_WIDGET_S *widget);
 
 	struct MENU_WIDGET_S *parent;
 	struct MENU_WIDGET_S *subwidget; // child
