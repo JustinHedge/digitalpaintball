@@ -1008,7 +1008,8 @@ void Key_Event (int key, qboolean down, unsigned time)
 			M_Keyup(key);
 			break;
 		case key_console:
-			break; // jitbind -- fix calls of keyup binds while typing in console!
+			if(consolekeys[key]) // only send key release to game if it's not a valid console key
+				break; // jitbind -- fix calls of keyup binds while typing in console!
 		case key_game:
 		default:
 			kb = keybindings[key];

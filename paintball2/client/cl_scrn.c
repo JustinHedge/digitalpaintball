@@ -1467,16 +1467,6 @@ void SCR_UpdateScreen (void)
 
 			if(cl_drawhud->value)
 			{
-				SCR_DrawStats ();
-				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 1)
-					SCR_DrawLayout ();
-				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 2)
-					CL_DrawInventory ();
-				// jitodo -- call client scoreboard display here
-
-				SCR_DrawNet ();
-				SCR_CheckDrawCenterString ();
-
 				// Draw FPS display - MrG - jit, modified
 				if (cl_drawfps->value) 
 				{
@@ -1503,6 +1493,21 @@ void SCR_UpdateScreen (void)
 
 					re.DrawString(viddef.width-56*hudscale,64*hudscale,s);
 				}
+				if(Cvar_VariableValue("snazbot"))
+				{
+					re.DrawString(viddef.width/2-76*hudscale, viddef.height-40*hudscale,
+						"SnaZ-BoT v3 Enabled");
+				}
+
+				SCR_DrawStats ();
+				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 1)
+					SCR_DrawLayout ();
+				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 2)
+					CL_DrawInventory ();
+				// jitodo -- call client scoreboard display here
+
+				SCR_DrawNet ();
+				SCR_CheckDrawCenterString ();
 
 				if (scr_timegraph->value)
 					//SCR_DebugGraph (cls.frametime*300, 0);

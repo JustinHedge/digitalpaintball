@@ -38,8 +38,10 @@ int				scale;
 static float	oldscale = 0;
 m_serverlist_t	m_serverlist;
 int				m_serverPingSartTime;
+menu_widget_t	*m_active_bind_widget = NULL;
+char			*m_active_bind_command = NULL;
 
-qboolean widget_is_selectable(menu_widget_t *widget)
+static qboolean widget_is_selectable(menu_widget_t *widget)
 {
 	return (widget->enabled && (widget->cvar || widget->command || widget->callback));
 }
@@ -66,6 +68,7 @@ void M_Menu_Main_f (void)
 	
 	/*
 	// because I'm too lazy to start a new project to do this:
+	// funname editor
 	{
 		int i;
 		FILE *file;
@@ -117,7 +120,33 @@ int strlen_noformat(const unsigned char *s)
 	return count;
 }
 
-void *free_string_array(char *array[], int size)
+static void M_FindKeysForCommand (char *command, int *twokeys)
+{
+	int		count;
+	int		j;
+	int		l;
+	char	*b;
+
+	twokeys[0] = twokeys[1] = -1;
+	l = strlen(command);
+	count = 0;
+
+	for (j=0; j<256; j++)
+	{
+		b = keybindings[j];
+		if (!b)
+			continue;
+		if(strcmp (b, command) == 0)
+		{
+			twokeys[count] = j;
+			count++;
+			if (count == 2)
+				break;
+		}
+	}
+}
+
+static void *free_string_array(char *array[], int size)
 {
 	int i;
 
@@ -148,7 +177,7 @@ static void FreeFileList( char **list, int n )
 
 // free the widget passed as well as all of its child widgets
 // and widgets following it in the list, return NULL.
-menu_widget_t *free_widgets(menu_widget_t *widget)
+static menu_widget_t *free_widgets(menu_widget_t *widget)
 {
 	if(!widget)
 		return NULL;
@@ -186,7 +215,7 @@ menu_widget_t *free_widgets(menu_widget_t *widget)
 	return NULL;
 }
 
-menu_widget_t* M_GetNewBlankMenuWidget()
+static menu_widget_t* M_GetNewBlankMenuWidget()
 {
 	menu_widget_t *widget;
 
@@ -199,7 +228,7 @@ menu_widget_t* M_GetNewBlankMenuWidget()
 	return widget;
 }
 
-menu_widget_t* M_GetNewMenuWidget(int type, const char *text, const char *cvar, 
+static menu_widget_t* M_GetNewMenuWidget(int type, const char *text, const char *cvar, 
 								  const char *cmd, int x, int y, qboolean enabled)
 {
 	menu_widget_t *widget;
@@ -235,27 +264,36 @@ menu_widget_t* M_GetNewMenuWidget(int type, const char *text, const char *cvar,
 	return widget;
 }
 
-void callback_select_item(menu_widget_t *widget)
+static void callback_select_item(menu_widget_t *widget)
 {
-	// update the position of the selected item in the list
-	if(widget->parent->select_pos != widget->select_pos)
+	if(widget->flags & WIDGET_FLAG_BIND)
 	{
-		widget->parent->modified = true;
-
-		widget->parent->select_pos = widget->select_pos;
-
-		// update the widget's cvar
-		if (!(widget->parent->flags & WIDGET_FLAG_NOAPPLY) && widget->parent->cvar)
+		m_active_bind_widget = widget;
+		m_active_bind_command = widget->parent->select_map[widget->select_pos];
+//		widget->parent->modified = true;
+	}
+	else
+	{
+		// update the position of the selected item in the list
+		if(widget->parent->select_pos != widget->select_pos)
 		{
-			if(widget->parent->flags & WIDGET_FLAG_USEMAP)
-				Cvar_Set(widget->parent->cvar, widget->parent->select_map[widget->select_pos]);
-			else
-				Cvar_Set(widget->parent->cvar, widget->parent->select_list[widget->select_pos]);
+			widget->parent->modified = true;
+
+			widget->parent->select_pos = widget->select_pos;
+
+			// update the widget's cvar
+			if (!(widget->parent->flags & WIDGET_FLAG_NOAPPLY) && widget->parent->cvar)
+			{
+				if(widget->parent->flags & WIDGET_FLAG_USEMAP)
+					Cvar_Set(widget->parent->cvar, widget->parent->select_map[widget->select_pos]);
+				else
+					Cvar_Set(widget->parent->cvar, widget->parent->select_list[widget->select_pos]);
+			}
 		}
 	}
 }
 
-void callback_select_scrollup(menu_widget_t *widget)
+static void callback_select_scrollup(menu_widget_t *widget)
 {
 	if(widget->parent->select_vstart > 0)
 	{
@@ -264,7 +302,7 @@ void callback_select_scrollup(menu_widget_t *widget)
 	}
 }
 
-void callback_select_scrolldown(menu_widget_t *widget)
+static void callback_select_scrolldown(menu_widget_t *widget)
 {
 	if(widget->parent->select_totalitems - widget->parent->select_vstart - widget->parent->select_rows > 0)
 	{
@@ -273,7 +311,7 @@ void callback_select_scrolldown(menu_widget_t *widget)
 	}
 }
 
-menu_widget_t *create_background(int x, int y, int w, int h, menu_widget_t *next)
+static menu_widget_t *create_background(int x, int y, int w, int h, menu_widget_t *next)
 {
 	menu_widget_t *start = next;
 	menu_widget_t *new_widget;
@@ -371,7 +409,59 @@ menu_widget_t *create_background(int x, int y, int w, int h, menu_widget_t *next
 	return start;
 }
 
-void update_select_subwidgets(menu_widget_t *widget)
+static void select_widget_center_pos(menu_widget_t *widget)
+{
+	if(widget->select_pos > 0)
+	{
+		// put the selection in the middle of the widget (for long lists)
+		widget->select_vstart = widget->select_pos - (widget->select_rows / 2);
+
+		// don't go past end
+		if(widget->select_totalitems - widget->select_vstart < widget->select_rows)
+			widget->select_vstart = widget->select_totalitems - widget->select_rows;
+
+		// don't go past start
+		if(widget->select_vstart < 0)
+			widget->select_vstart = 0;
+	}
+}
+
+static void M_UnbindCommand (char *command)
+{
+	int		j;
+	int		l;
+	char	*b;
+
+	l = strlen(command);
+
+	for (j=0 ; j<256 ; j++)
+	{
+		b = keybindings[j];
+		if (!b)
+			continue;
+		if (!strncmp (b, command, l) )
+			Key_SetBinding (j, "");
+	}
+}
+
+static char *string_for_bind(char *bind)
+{
+	int keys[2];
+	static char str[64];
+
+	M_FindKeysForCommand(bind, keys);
+
+	if(keys[0] == -1)
+		sprintf(str, "%cNot Bound", CHAR_ITALICS);
+	else if(keys[1] == -1)
+		strcpy(str, Key_KeynumToString(keys[0]));
+	else
+		sprintf(str, "%s or %s", Key_KeynumToString(keys[0]), Key_KeynumToString(keys[1]));
+
+	return str;
+}
+
+static void update_select_subwidgets(menu_widget_t *widget)
 {
 	int i;
 	char *nullpos;
@@ -379,6 +469,8 @@ void update_select_subwidgets(menu_widget_t *widget)
 	menu_widget_t *new_widget;
 	char temp;
 	int width, x, y;
+	char *widget_text;
+	int keys[2];
 
 	if(widget->flags & WIDGET_FLAG_SERVERLIST)
 	{
@@ -426,10 +518,9 @@ void update_select_subwidgets(menu_widget_t *widget)
 	if(width < 3)
 		width = 3;
 
-	// create the vertical scrollbar.
+	// create the vertical scroll buttons:
 	if(widget->select_totalitems > widget->select_rows)
 	{
-		// jitodo
 		// Up arrow
 		new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL,
 			x + width*TEXT_WIDTH_UNSCALED - 
@@ -465,30 +556,48 @@ void update_select_subwidgets(menu_widget_t *widget)
 		widget->subwidget = new_widget;
 
 		width --;
+
+		// jitodo -- scrollbar
 	}
 
 	// create a widget for each item visible in the select widget
 	for(i = widget->select_vstart; i < widget->select_totalitems
 		&& i < widget->select_rows + widget->select_vstart;	i++)
 	{
-		// jitodo -- should make sure strlen(select_list[i]) > select_hstart, otherwise bad mem!
-		if(strlen(widget->select_list[i] + widget->select_hstart) > width)
+		if(widget->flags & WIDGET_FLAG_BIND)
+		{
+			// add bind info to end:
+			widget_text = va("%s%s", widget->select_list[i],
+					string_for_bind(widget->select_map[i]));
+		}
+		else
+		{
+			widget_text = widget->select_list[i];
+		}
+
+		// jitodo -- should make sure strlen(widget_text) > select_hstart, otherwise bad mem!
+		// (once horizontal scrolling added)
+		
+		// truncate the text if too wide to fit:
+		if(strlen_noformat(widget->select_list[i] + widget->select_hstart) > width)
 		{
 			nullpos = widget->select_list[i] + widget->select_hstart + width;
 			temp = *nullpos;
 			*nullpos = '\0';
+
 			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, 
-				widget->select_list[i] + widget->select_hstart, NULL, NULL, 
+				widget_text + widget->select_hstart, NULL, NULL, 
 				x+SELECT_HSPACING_UNSCALED, 
 				y + (i - widget->select_vstart) * 
 				(TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED) +
 				SELECT_VSPACING_UNSCALED, true);
+
 			*nullpos = temp;
 		}
 		else
 		{
 			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, 
-				widget->select_list[i] + widget->select_hstart, NULL, NULL, 
+				widget_text + widget->select_hstart, NULL, NULL, 
 				x+SELECT_HSPACING_UNSCALED, 
 				y + (i - widget->select_vstart) * 
 				(TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED) +
@@ -499,7 +608,7 @@ void update_select_subwidgets(menu_widget_t *widget)
 		if(i == widget->select_pos)
 			new_widget->pic = re.DrawFindPic("select1bs");
 		else
-			new_widget->pic = re.DrawFindPic("blank");
+			new_widget->pic = NULL; //re.DrawFindPic("blank");
 		new_widget->hoverpic = re.DrawFindPic("select1bh");
 		new_widget->picheight = TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED;
 		new_widget->valign = WIDGET_VALIGN_MIDDLE;
@@ -510,19 +619,25 @@ void update_select_subwidgets(menu_widget_t *widget)
 
 		new_widget->parent = widget;
 		new_widget->callback = callback_select_item;
+
+		new_widget->flags = widget->flags; // inherit flags from parent
+
 		new_widget->next = widget->subwidget;
 		widget->subwidget = new_widget;
 	}
 
 	// create the background:
-	widget->subwidget = create_background(x, y, 
-		widget->select_width * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED*2, 
-		widget->select_rows * (TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + 
-		SELECT_VSPACING_UNSCALED, widget->subwidget);
+	if(!(widget->flags & WIDGET_FLAG_NOBG))
+	{
+		widget->subwidget = create_background(x, y, 
+			widget->select_width * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED*2, 
+			widget->select_rows * (TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + 
+			SELECT_VSPACING_UNSCALED, widget->subwidget);
+	}
 }
 
 // ++ ARTHUR [9/04/03]
-void M_UpdateDrawingInformation (menu_widget_t *widget)
+static void M_UpdateDrawingInformation (menu_widget_t *widget)
 {
 	int xcenteradj, ycenteradj;
 	char *text = NULL;
@@ -568,7 +683,7 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 		//
 		// Calculate picture size
 		// 
-		if (pic)
+		if (pic || (widget->picwidth && widget->picheight))
 		{
 			widget->widgetSize.x = (widget->picwidth) ? widget->picwidth : pic->width;
 			widget->widgetSize.y = (widget->picheight) ? widget->picheight : pic->height;
@@ -673,7 +788,7 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 		widget->mouseBoundaries.right = -0x0FFFFFFF;
 		widget->mouseBoundaries.top = 0x0FFFFFFF;
 
-		if (pic || widget->type == WIDGET_TYPE_CHECKBOX)
+		if (pic || widget->type == WIDGET_TYPE_CHECKBOX || (widget->picwidth && widget->picheight))
 		{
 			widget->mouseBoundaries.left = widget->widgetCorner.x;
 			widget->mouseBoundaries.right = widget->widgetCorner.x + widget->widgetSize.x;
@@ -720,7 +835,7 @@ void M_UpdateDrawingInformation (menu_widget_t *widget)
 	}
 }
 
-void M_DeselectWidget(menu_widget_t *current)
+static void M_DeselectWidget(menu_widget_t *current)
 {
 	// jitodo - apply changes to field, call this func during keyboard arrow selection
 	current->slider_hover = SLIDER_SELECTED_NONE;
@@ -729,7 +844,7 @@ void M_DeselectWidget(menu_widget_t *current)
 	current->hover = false;
 }
 
-menu_widget_t *find_widget_under_cursor(menu_widget_t *widget)
+static menu_widget_t *find_widget_under_cursor(menu_widget_t *widget)
 {
 	menu_widget_t *selected = NULL;
 	menu_widget_t *sub_selected;
@@ -766,7 +881,7 @@ menu_widget_t *find_widget_under_cursor(menu_widget_t *widget)
 
 // figure out what portion of the slider to highlight
 // (buttons, knob, or bar)
-void M_HilightSlider(menu_widget_t *widget, qboolean selected)
+static void M_HilightSlider(menu_widget_t *widget, qboolean selected)
 {
 	widget->slider_hover = SLIDER_SELECTED_NONE;
 	widget->slider_selected = SLIDER_SELECTED_NONE;
@@ -801,16 +916,13 @@ void M_HilightSlider(menu_widget_t *widget, qboolean selected)
 }
 
 // update slider depending on where the user clicked
-void M_UpdateSlider(menu_widget_t *widget)
+static void M_UpdateSlider(menu_widget_t *widget)
 {
 	float value;
 	if(widget->cvar)
 		value = Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->value;
 	else
 		return;
-
-	if(!widget->slider_inc)
-		widget->slider_inc = (widget->slider_max - widget->slider_min)/10.0;
 
 	switch(widget->slider_selected)
 	{
@@ -854,7 +966,7 @@ void M_UpdateSlider(menu_widget_t *widget)
 	// todo: may not want to set value immediately (video mode change) -- need temp variables.
 }
 
-void toggle_checkbox(menu_widget_t *widget)
+static void toggle_checkbox(menu_widget_t *widget)
 {
 	if(widget->cvar)
 	{
@@ -865,7 +977,7 @@ void toggle_checkbox(menu_widget_t *widget)
 	}
 }
 
-void M_HilightNextWidget(menu_screen_t *menu)
+static void M_HilightNextWidget(menu_screen_t *menu)
 {
 	menu_widget_t *widget;
 
@@ -909,7 +1021,7 @@ void M_HilightNextWidget(menu_screen_t *menu)
 	}
 }
 
-void M_HilightPreviousWidget(menu_screen_t *menu)
+static void M_HilightPreviousWidget(menu_screen_t *menu)
 {
 	menu_widget_t *widget, *oldwidget, *prevwidget;
 
@@ -958,7 +1070,7 @@ void M_HilightPreviousWidget(menu_screen_t *menu)
 	}
 }
 
-void field_adjustCursor(menu_widget_t *widget)
+static void field_adjustCursor(menu_widget_t *widget)
 {
 	int pos, string_len=0;
 	
@@ -984,7 +1096,7 @@ void field_adjustCursor(menu_widget_t *widget)
 }
 
 
-void M_AdjustWidget(menu_screen_t *menu, int direction, qboolean keydown)
+static void M_AdjustWidget(menu_screen_t *menu, int direction, qboolean keydown)
 {
 	menu_widget_t *widget;
 
@@ -1014,19 +1126,39 @@ void M_AdjustWidget(menu_screen_t *menu, int direction, qboolean keydown)
 				field_adjustCursor(widget);
 			}
 			break;
+		case WIDGET_TYPE_SELECT:
+			if(keydown)
+			{
+				widget->select_pos += direction;
+				if(widget->select_pos < 0)
+					widget->select_pos = 0;
+				if(widget->select_pos >= widget->select_totalitems)
+					widget->select_pos = widget->select_totalitems - 1;
+				widget->modified = true;
+				if(widget->cvar)
+				{
+					if(widget->flags & WIDGET_FLAG_USEMAP)
+						Cvar_Set(widget->cvar, widget->select_map[widget->select_pos]);
+					else
+						Cvar_Set(widget->cvar, widget->select_list[widget->select_pos]);
+				}
+				select_widget_center_pos(widget);
+			}
+
+			break;
 		default:
 			break;
 		}
 	}
 }
 
-void field_activate(menu_widget_t *widget)
+static void field_activate(menu_widget_t *widget)
 {
 	widget->field_cursorpos = (m_mouse.x - widget->widgetCorner.x)/(TEXT_WIDTH) + widget->field_start;
 	field_adjustCursor(widget);
 }
 
-void widget_execute(menu_widget_t *widget)
+static void widget_execute(menu_widget_t *widget)
 {
 	if(widget->selected)
 	{
@@ -1065,7 +1197,7 @@ void widget_execute(menu_widget_t *widget)
 }
 
 
-void M_KBAction(menu_screen_t *menu, MENU_ACTION action)
+static void M_KBAction(menu_screen_t *menu, MENU_ACTION action)
 {
 	menu_widget_t *widget;
 
@@ -1090,7 +1222,7 @@ void M_KBAction(menu_screen_t *menu, MENU_ACTION action)
 	}
 }
 
-qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
+static qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 {
 	menu_widget_t* newSelection=NULL;
 	m_mouse.cursorpic = i_cursor;
@@ -1152,18 +1284,25 @@ qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 }
 
 
-void M_PushMenuScreen(menu_screen_t *menu)
+static void M_PushMenuScreen(menu_screen_t *menu, qboolean samelevel)
 {
 	MENU_SOUND_OPEN;
 	if(m_menudepth < MAX_MENU_SCREENS)
 	{
-		m_menu_screens[m_menudepth] = menu;
-		m_menudepth++;
+		if(samelevel)
+		{
+			m_menu_screens[m_menudepth-1] = menu;
+		}
+		else
+		{
+			m_menu_screens[m_menudepth] = menu;
+			m_menudepth++;
+		}
 		cls.key_dest = key_menu;
 	}
 }
 
-void M_PopMenu (void)
+static void M_PopMenu (void)
 {
 	MENU_SOUND_CLOSE;
 	if (m_menudepth < 1)
@@ -1183,7 +1322,7 @@ void M_PopMenu (void)
 
 // find the first widget that is selected or hilighted and return it
 // otherwise return null.
-menu_widget_t *M_GetActiveWidget(menu_screen_t *menu)
+static menu_widget_t *M_GetActiveWidget(menu_screen_t *menu)
 {
 	menu_widget_t *widget;
 
@@ -1196,7 +1335,7 @@ menu_widget_t *M_GetActiveWidget(menu_screen_t *menu)
 }
 
 
-void M_InsertField (int key)
+static void M_InsertField (int key)
 {
 	char s[256];
 	menu_widget_t *widget;
@@ -1320,6 +1459,13 @@ void M_InsertField (int key)
 
 void M_Keyup (int key)
 {
+	if(m_active_bind_command)
+	{
+		m_active_bind_widget = NULL;
+		m_active_bind_command = NULL;
+		return;
+	}
+
 	switch (key) 
 	{
 	case K_ENTER:
@@ -1352,47 +1498,72 @@ void M_Keydown (int key)
 		if ((s = m_keyfunc(key)) != 0 )
 			S_StartLocalSound(s);
 */
-	switch (key) 
+	if(m_active_bind_command)
 	{
-	case K_ESCAPE:
-		M_PopMenu();
-		break;
-	case K_ENTER:
-	case K_KP_ENTER:
-		M_KBAction(m_menu_screens[m_menudepth-1], M_ACTION_SELECT);
-		break;
-	case K_MOUSE1:
-		M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_SELECT);
-		key = K_ENTER;
-		break;
-	case K_MOUSEMOVE:
-		M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_HILIGHT);
-		break;
-	case K_DOWNARROW:
-		M_HilightNextWidget(m_menu_screens[m_menudepth-1]);
-		break;
-	case K_UPARROW:
-		M_HilightPreviousWidget(m_menu_screens[m_menudepth-1]);
-		break;
-	case K_RIGHTARROW:
-		M_AdjustWidget(m_menu_screens[m_menudepth-1], 1, true);
-		break;
-	case K_LEFTARROW:
-		M_AdjustWidget(m_menu_screens[m_menudepth-1], -1, true);
-		break;
-	default:
-		// insert letter into field, if one is active
-		M_InsertField(key);
-		break;
-	};
+		if(key == K_ESCAPE || key == '`') // jitodo -- is console toggled before this?
+		{
+			m_active_bind_widget = NULL;
+			m_active_bind_command = NULL;
+		}
+		else
+		{
+			if(key != K_MOUSEMOVE) // don't try to bind mouse movements!
+			{
+				int keys[2];
+
+				M_FindKeysForCommand(m_active_bind_command, keys);
+
+				if(keys[1] != -1) // 2 or more binds, so clear them out.
+					M_UnbindCommand(m_active_bind_command);
+
+				Key_SetBinding(key, m_active_bind_command);
+				m_active_bind_widget->parent->modified = true;
+				m_active_bind_widget = NULL;
+				m_active_bind_command = NULL;
+			}
+		}
+	}
+	else
+	{
+		switch (key) 
+		{
+		case K_ESCAPE:
+			M_PopMenu();
+			break;
+		case K_ENTER:
+		case K_KP_ENTER:
+			M_KBAction(m_menu_screens[m_menudepth-1], M_ACTION_SELECT);
+			break;
+		case K_MOUSE1:
+			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_SELECT);
+			key = K_ENTER;
+			break;
+		case K_MOUSEMOVE:
+			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_HILIGHT);
+			break;
+		case K_DOWNARROW:
+			M_HilightNextWidget(m_menu_screens[m_menudepth-1]);
+			break;
+		case K_UPARROW:
+			M_HilightPreviousWidget(m_menu_screens[m_menudepth-1]);
+			break;
+		case K_RIGHTARROW:
+			M_AdjustWidget(m_menu_screens[m_menudepth-1], 1, true);
+			break;
+		case K_LEFTARROW:
+			M_AdjustWidget(m_menu_screens[m_menudepth-1], -1, true);
+			break;
+		default:
+			// insert letter into field, if one is active
+			M_InsertField(key);
+			break;
+		};
+	}
 }
-// -- ARTHUR
 
 
 
-
-
-select_map_list_t *get_new_select_map_list(char *cvar_string, char *string)
+static select_map_list_t *get_new_select_map_list(char *cvar_string, char *string)
 {
 	select_map_list_t *new_map;
 
@@ -1415,7 +1586,7 @@ select_map_list_t *get_new_select_map_list(char *cvar_string, char *string)
 }
 
 // get the list from the file, then store it in an array on the widget
-void select_begin_list(menu_widget_t *widget, char *buf)
+static void select_begin_list(menu_widget_t *widget, char *buf)
 {
 	char *token;
 	char cvar_string[MAX_TOKEN_CHARS];
@@ -1427,12 +1598,15 @@ void select_begin_list(menu_widget_t *widget, char *buf)
 
 	token = COM_Parse(&buf);
 
-	if(strstr(token, "pair") || strstr(token, "map"))
+	if(strstr(token, "pair") || strstr(token, "map") || strstr(token, "bind"))
 	{
 		widget->flags |= WIDGET_FLAG_USEMAP;
+		if(strstr(token,"bind"))
+			widget->flags |= WIDGET_FLAG_BIND;
+
 		token = COM_Parse(&buf);
 	
-		// read map pair from file.
+		// read in map pair
 		while(token && strlen(token) && strcmp(token, "end") != 0)
 		{
 			strcpy(cvar_string, token);
@@ -1466,7 +1640,7 @@ void select_begin_list(menu_widget_t *widget, char *buf)
 	}
 }
 
-void select_strip_from_list(menu_widget_t *widget, const char *striptext)
+static void select_strip_from_list(menu_widget_t *widget, const char *striptext)
 {
 	int i, len;
 	char *textpos;
@@ -1480,7 +1654,7 @@ void select_strip_from_list(menu_widget_t *widget, const char *striptext)
 	}
 }
 
-void select_begin_file_list(menu_widget_t *widget, char *findname)
+static void select_begin_file_list(menu_widget_t *widget, char *findname)
 {
 //	int i, numfiles;
 //	char **files;
@@ -1506,7 +1680,7 @@ void select_begin_file_list(menu_widget_t *widget, char *findname)
 }
 
 
-menu_screen_t* M_GetNewMenuScreen(const char *menu_name)
+static menu_screen_t* M_GetNewMenuScreen(const char *menu_name)
 {
 	menu_screen_t* menu;
 	int len;
@@ -1524,7 +1698,7 @@ menu_screen_t* M_GetNewMenuScreen(const char *menu_name)
 	return menu;
 }
 
-void M_ErrorMenu(menu_screen_t* menu, const char *text)
+static void M_ErrorMenu(menu_screen_t* menu, const char *text)
 {
 	char err[16];
 	sprintf(err, "%c%c%cERROR:", CHAR_UNDERLINE, CHAR_COLOR, 'A');
@@ -1536,7 +1710,7 @@ void M_ErrorMenu(menu_screen_t* menu, const char *text)
 			NULL, "menu pop", 8, 224, true);
 }
 
-int M_WidgetGetType(const char *s)
+static int M_WidgetGetType(const char *s)
 {
 	if(!strcmp(s, "text"))
 		return WIDGET_TYPE_TEXT;
@@ -1554,7 +1728,7 @@ int M_WidgetGetType(const char *s)
 	return WIDGET_TYPE_UNKNOWN;
 }
 
-int M_WidgetGetAlign(const char *s)
+static int M_WidgetGetAlign(const char *s)
 {
 	if(!strcmp(s, "left"))
 		return WIDGET_HALIGN_LEFT;
@@ -1584,33 +1758,31 @@ char *text_copy(const char *in)
 	return out;
 }
 
-void widget_complete(menu_widget_t *widget)
+
+// Finished reading in a widget.  Do whatever we need to do
+// to initialize it.
+static void widget_complete(menu_widget_t *widget)
 {
 	if(widget->cvar && !widget->cvar_default)
 		widget->cvar_default = text_copy("");
 
 	switch(widget->type)
 	{
+	case WIDGET_TYPE_SLIDER:
+		if(!widget->slider_inc)
+			widget->slider_inc = (widget->slider_max - widget->slider_min)/24.0;
+		break;
 	case WIDGET_TYPE_SELECT:
-
-		// put the selection in the middle of the widget (for long lists)
-		if(widget->select_pos > 0)
-		{
-			widget->select_vstart = widget->select_pos - (widget->select_rows / 2);
-			if(widget->select_vstart < 0)
-				widget->select_vstart = 0;
-			if(widget->select_totalitems - widget->select_vstart < widget->select_rows)
-				widget->select_vstart = widget->select_totalitems - widget->select_rows;
-		}
-
+		widget->select_pos = -1;
 		update_select_subwidgets(widget);
+		select_widget_center_pos(widget);
 
 		break;
 	}
 
 }
 
-void menu_from_file(menu_screen_t *menu)
+static void menu_from_file(menu_screen_t *menu)
 {
 	char menu_filename[MAX_QPATH];
 	char *buf;
@@ -1753,6 +1925,8 @@ void menu_from_file(menu_screen_t *menu)
 						widget->flags |= WIDGET_FLAG_SERVERLIST;
 					else if(strstr(token, "strip"))
 						select_strip_from_list(widget, COM_Parse(&buf));
+					else if(strcmp(token, "nobg") == 0 || strcmp(token, "nobackground") == 0)
+						widget->flags |= WIDGET_FLAG_NOBG;
 
 					token = COM_Parse(&buf);
 				}
@@ -1777,7 +1951,7 @@ void menu_from_file(menu_screen_t *menu)
 	}
 }
 
-menu_screen_t* M_LoadMenuScreen(const char *menu_name)
+static menu_screen_t* M_LoadMenuScreen(const char *menu_name)
 {
 	menu_screen_t *menu;
 
@@ -1787,7 +1961,7 @@ menu_screen_t* M_LoadMenuScreen(const char *menu_name)
 	return menu;
 }
 
-menu_screen_t* M_FindMenuScreen(const char *menu_name)
+static menu_screen_t* M_FindMenuScreen(const char *menu_name)
 {
 	menu_screen_t *menu;
 
@@ -2116,7 +2290,7 @@ void M_ServerlistRefresh_f(void)
 
 	for(i=0; i<m_serverlist.numservers; i++)
 	{
-		str = text_copy(va("%c5%s", CHAR_COLOR, m_serverlist.info[i])); // color grey
+		str = text_copy(va("%c4%s", CHAR_COLOR, m_serverlist.info[i])); // color grey
 		Z_Free(m_serverlist.info[i]);
 		m_serverlist.info[i] = str;
 	}
@@ -2235,9 +2409,15 @@ void M_ServerlistUpdate_f(void)
 void M_Menu_f (void)
 {
 	char *menuname;
-	menuname = Cmd_Argv(1);
+	qboolean samelevel = false;
 
+	menuname = Cmd_Argv(1);
 	
+	if(strcmp(menuname, "samelevel") == 0)
+	{
+		menuname = Cmd_Argv(2);
+		samelevel = true;
+	}
 
 	if(strcmp(menuname, "pop") == 0 || strcmp(menuname, "back") == 0)
 		M_PopMenu();
@@ -2246,7 +2426,7 @@ void M_Menu_f (void)
 	else
 	{
 		menu_screen_t *menu;
-		menu = M_FindMenuScreen(Cmd_Argv(1));
+		menu = M_FindMenuScreen(menuname);
 
 		// hardcoded hack so gamma image is correct:
 		if(strcmp(menuname, "setup_gamma") == 0)
@@ -2257,7 +2437,7 @@ void M_Menu_f (void)
 		else
 			oldscale = 0;
 
-		M_PushMenuScreen(menu);
+		M_PushMenuScreen(menu, samelevel);
 	}
 }
 
@@ -2281,7 +2461,7 @@ void M_Init (void)
 
 
 
-void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, SLIDER_SELECTED slider_selected)
+static void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, SLIDER_SELECTED slider_selected)
 {
 	int xorig;
 
@@ -2322,7 +2502,7 @@ void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, SLIDER_
 		re.DrawStretchPic2(x, y, SLIDER_KNOB_WIDTH, SLIDER_KNOB_HEIGHT, i_slider1b);
 }
 
-float M_SliderGetPos(menu_widget_t *widget)
+static float M_SliderGetPos(menu_widget_t *widget)
 {
 	float sliderdiff;
 	float retval = 0.0f;
@@ -2349,7 +2529,7 @@ float M_SliderGetPos(menu_widget_t *widget)
 	return retval;
 }
 
-void M_DrawCheckbox(int x, int y, qboolean checked, qboolean hover, qboolean selected)
+static void M_DrawCheckbox(int x, int y, qboolean checked, qboolean hover, qboolean selected)
 {
 	if(checked)
 	{
@@ -2375,7 +2555,7 @@ void M_DrawCheckbox(int x, int y, qboolean checked, qboolean hover, qboolean sel
 
 
 //void M_DrawField(int x, int y, int width, char *cvar_string, qboolean hover, qboolean selected)
-void M_DrawField(menu_widget_t *widget)
+static void M_DrawField(menu_widget_t *widget)
 {
 	//M_DrawField(widget->widgetCorner.x, widget->widgetCorner.y,
 			//	widget->field_width, cvar_val, widget->hover, widget->selected);
@@ -2441,6 +2621,7 @@ void M_DrawField(menu_widget_t *widget)
 	}
 }
 
+/*
 void M_DrawSelect(menu_widget_t *widget)
 {
 //	todo;
@@ -2450,12 +2631,12 @@ void M_DrawSelect(menu_widget_t *widget)
 	width = widget->select_width;
 	rows = widget->select_rows;
 	start = widget->select_vstart;
-	/*
-	if(widget->flags & WIDGET_FLAG_VSCROLLBAR)
-		width--;
-	if(widget->flags & WIDGET_FLAG_HSCROLLBAR)
-		rows --;
-*/
+	
+//	if(widget->flags & WIDGET_FLAG_VSCROLLBAR)
+//		width--;
+//	if(widget->flags & WIDGET_FLAG_HSCROLLBAR)
+//		rows --;
+
 	for(i = start; i < (widget->select_totalitems) && (i - start < rows); i++)
 	{
 		// text too big to fit, enable scrollbar
@@ -2482,8 +2663,9 @@ void M_DrawSelect(menu_widget_t *widget)
 	{
 	}
 }
+*/
 
-void M_DrawWidget (menu_widget_t *widget)
+static void M_DrawWidget (menu_widget_t *widget)
 {
 	char *text = NULL;
 	char *cvar_val = "";
@@ -2508,7 +2690,7 @@ void M_DrawWidget (menu_widget_t *widget)
 			if(widget->selectedtext)
 				text = widget->selectedtext;
 			else if(widget->text)
-				text = va("%c%c%s", CHAR_COLOR, 'E', widget->text);
+				text = va("%c%c%s", CHAR_COLOR, 214, widget->text);
 
 			if(widget->selectedpic)
 				pic = widget->selectedpic;
@@ -2522,7 +2704,7 @@ void M_DrawWidget (menu_widget_t *widget)
 			if(widget->hovertext)
 				text = widget->hovertext;
 			else if(widget->text)
-				text = va("%c%c%c%s", CHAR_UNDERLINE, CHAR_COLOR, '?', widget->text);
+				text = va("%c%c%s", CHAR_COLOR, 218, widget->text);
 			
 			if(widget->hoverpic)
 				pic = widget->hoverpic;
@@ -2582,7 +2764,7 @@ void M_DrawWidget (menu_widget_t *widget)
 	}
 }
 
-void M_DrawCursor(void)
+static void M_DrawCursor(void)
 {
 	re.DrawStretchPic2(m_mouse.x-CURSOR_WIDTH/2, m_mouse.y-CURSOR_HEIGHT/2,
 		CURSOR_WIDTH, CURSOR_HEIGHT, m_mouse.cursorpic);
@@ -2594,6 +2776,8 @@ void M_Draw (void)
 	{
 		menu_screen_t *menu;
 		menu_widget_t *widget;
+
+		SCR_DirtyScreen ();
 		
 		menu = m_menu_screens[m_menudepth-1];
 		widget = menu->widget;
@@ -2602,6 +2786,12 @@ void M_Draw (void)
 		{
 			M_DrawWidget(widget);
 			widget = widget->next;
+		}
+		// waiting for user to press bind:
+		if(m_active_bind_command)
+		{
+			re.DrawFadeScreen ();
+			M_DrawWidget(m_active_bind_widget);
 		}
 		M_DrawCursor();
 	}
