@@ -364,6 +364,9 @@
 				<File
 					RelativePath=".\client\cl_view.c">
 				</File>
+				<File
+					RelativePath="client\encode_bin_str.c">
+				</File>
 			</Filter>
 			<Filter
 				Name="Server"

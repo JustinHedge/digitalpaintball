@@ -1070,7 +1070,7 @@ typedef enum
 #define STAT_PB_GRENADE			10
 // 11 ***unused***
 //#define STAT_PB_PAINTGREN		10
-//#define STAT_PB_SMOKEGREN		11
+#define STAT_OLD_PB_SMOKEGREN	11
 #define STAT_GUNTEMP			12
 #define	STAT_LAYOUTS			13
 #define	STAT_FRAGS				14

@@ -1659,7 +1659,7 @@ void CL_AddExplosions (void) // jitsmoke
 				ent->scale += time*ent->scalevel;
 
 				VectorCopy(ent->origin, ent->oldorigin);
-				scale = 1.0f / (1.0f + time/200.0f);
+				scale = 1.0f / (1.0f + time/150.0f);
 				ent->vel[0] *= scale;
 				ent->vel[1] *= scale;
 				VectorScale(ent->vel, time, vel);
@@ -1714,11 +1714,11 @@ CL_AddTEnts
 */
 void CL_AddTEnts (void)
 {
-	CL_AddBeams ();
+	CL_AddBeams();
 	// PMM - draw plasma beams
-	CL_AddPlayerBeams ();
-	CL_AddExplosions (); // jit, actually they're "smoke explosions" now :)
-	CL_AddLasers ();
+	CL_AddPlayerBeams();
+	CL_AddExplosions(); // jit, actually they're "smoke explosions" now :)
+	CL_AddLasers();
 	// PMM - set up sustain
 	CL_ProcessSustain();
 }
