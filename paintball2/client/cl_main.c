@@ -907,7 +907,7 @@ void CL_ParseStatusMessage (void)
 	s = MSG_ReadString(&net_message);
 
 	Com_Printf ("%s\n", s);
-	M_AddToServerList (net_from, s);
+	M_AddToServerList (net_from, s, false);
 }
 
 
@@ -924,6 +924,7 @@ void CL_PingServers_f (void)
 	cvar_t		*noipx;
 	FILE		*serverlist; // jitserverlist / jitmenu
 	extern int	m_serverPingSartTime;
+//	char		buff[256];
 
 	NET_Config (true);		// allow remote
 
@@ -967,6 +968,10 @@ void CL_PingServers_f (void)
 				if (!adr.port)
 					adr.port = BigShort(PORT_SERVER);
 				Netchan_OutOfBandPrint (NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
+
+				// jitserverlist -- add to list and get ping request time:
+				//sprintf(buff, "%s unknown 0/0", name);
+				//M_AddToServerList(adr, buff, true);
 			}
 		}
 
@@ -1613,7 +1618,7 @@ void CL_InitLocal (void)
 		Cvar_Set("cl_hudscale","1");
 	hudscale = cl_hudscale->value;
 	serverlist_source = Cvar_Get("serverlist_source", 
-		"www.planetquake.com/digitalpaint/servers.txt", CVAR_ARCHIVE); // jitserverlist / jitmenu
+		"http://www.planetquake.com/digitalpaint/servers.txt", CVAR_ARCHIVE); // jitserverlist / jitmenu
 	// ===
 
 	cl_run = Cvar_Get ("cl_run", "1", CVAR_ARCHIVE); // jit, default to 1
@@ -1965,11 +1970,11 @@ void CL_Frame (int msec)
 	if(cl_cmdrate->value < 5)
 		Cvar_Set("cl_cmdrate", "5");
 
-	if(cl_locknetfps->value)
-	{
+	/*if(cl_locknetfps->value)
+	{*/
 		CL_SendCommand ();
 		sendtime = 0;
-	}
+	/*}
 	else
 	{
 		// send a new command message to the server
@@ -1978,7 +1983,7 @@ void CL_Frame (int msec)
 			CL_SendCommand ();
 			sendtime = 0;
 		}
-	}
+	}*/
 	// ===
 
 	// predict all unacknowledged movements

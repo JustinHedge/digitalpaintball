@@ -542,7 +542,33 @@ void CL_SendCmd (void)
 	// deliver the message
 	//
 
-	Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);	
+	if(cl_locknetfps->value) // jitodo download2 check here
+	{
+		Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);	
+	}
+	else // jitnetfps (taken from fuzz)
+	{
+		int ppsstate;
+		static int ppscount=0;
+
+		ppsstate = cl_cmdrate->value;
+
+		if(ppsstate < 5)
+			ppsstate = 5;
+
+		if ((cl.time+1000) < ppscount)
+			ppscount=cl.time+1000/ppsstate;
+
+		if (cl.time>ppscount)
+		{
+			Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);
+			ppscount=cl.time+1000/ppsstate;
+		}
+		else
+		{
+			cls.netchan.outgoing_sequence++;
+		}
+	}
 }
 
 

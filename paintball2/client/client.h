@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // client.h -- primary header for client
 
 //define	PARANOID			// speed sapping error checking
+#ifndef CLIENT_H
+#define CLIENT_H
 
 #include <math.h>
 #include <string.h>
@@ -258,6 +260,8 @@ extern	cvar_t	*cl_add_particles;
 extern	cvar_t	*cl_add_entities;
 extern	cvar_t	*cl_predict;
 extern	cvar_t	*cl_footsteps;
+extern	cvar_t	*cl_locknetfps; // jitnetfps
+extern	cvar_t	*cl_cmdrate; // jitnetfps
 extern	cvar_t	*cl_noskins;
 extern	cvar_t	*cl_autoskins;
 
@@ -570,7 +574,7 @@ void M_Keyup (int key); // jitmenu
 void M_Draw (void);
 void M_Menu_Main_f (void);
 void M_ForceMenuOff (void);
-void M_AddToServerList (netadr_t adr, char *info);
+void M_AddToServerList (netadr_t adr, char *info, qboolean pinging);
 void M_MouseMove(int mx, int my); // jitmenu
 void M_RefreshMenu(); // jitmenu
 void M_ReloadMenu(); // jitmenu
@@ -636,5 +640,5 @@ extern image_t		*i_cursor_text;
 
 extern int hudscale; // jithudscale
 
-
+#endif // CLIENT_H
 

@@ -263,6 +263,7 @@ typedef struct M_SERVERLIST_SERVER_S {
 	int players;
 	int maxplayers;
 	int ping;
+	int ping_request_time; // time (ms) at which ping was requested.
 } m_serverlist_server_t;
 
 typedef struct M_SERVERLIST_S {

@@ -2190,6 +2190,10 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 {
 	static char info[64];
 	char stemp=0, mtemp=0;
+	int ping = 999;
+
+	if(server->ping < 999)
+		ping = server->ping;
 
 	// jitodo -- should compensate for colored text in server name.
 
@@ -2206,9 +2210,14 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 	}
 
 	// assumes SERVER_NAME_MAXLENGTH is 19 vv
-	Com_sprintf(info, sizeof(info), "%-19s %-3d %-8s %d/%d", 
-		server->servername, server->ping, server->mapname,
-		server->players, server->maxplayers);
+	if(ping < 999)
+		Com_sprintf(info, sizeof(info), "%-19s %-3d %-8s %d/%d", 
+			server->servername, ping, server->mapname,
+			server->players, server->maxplayers);
+	else
+		Com_sprintf(info, sizeof(info), "%c4%-19s %-3d %-8s %d/%d", 
+			CHAR_COLOR, server->servername, ping, server->mapname,
+			server->players, server->maxplayers);
 
 	if(stemp)
 		server->servername[SERVER_NAME_MAXLENGTH] = stemp;
@@ -2218,17 +2227,22 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 	return info;
 }
 
-void M_AddToServerList (netadr_t adr, char *info)
+void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 {
 	int i;
 	char addrip[32];
 	int ping;
+	qboolean added = false;
 
-	ping = Sys_Milliseconds() - m_serverPingSartTime;
-	if(ping>999)
+	/*if(pinging)
 		ping = 999;
+	else*/
+		ping = Sys_Milliseconds() - m_serverPingSartTime;
 
-	if(adr.type == NA_IP) // jitodo -- what do I do with the other types!?
+	/*if(ping>999)
+		ping = 999;*/
+
+	if(adr.type == NA_IP)
 	{
 		Com_sprintf(addrip, sizeof(addrip), 
 			"%d.%d.%d.%d:%d", adr.ip[0], adr.ip[1], adr.ip[2], adr.ip[3], ntohs(adr.port));
@@ -2247,70 +2261,91 @@ void M_AddToServerList (netadr_t adr, char *info)
 	else
 		return;
 
-	// Tell the widget the serverlist has updated:
-	if(m_menudepth)
-		refresh_menu_screen(m_menu_screens[m_menudepth-1]);
-
 	// jitodo
-
+	
 	// check if server exists in current serverlist:
 	for(i=0; i<m_serverlist.numservers; i++)
 	{
-		if(strcmp(addrip, m_serverlist.ips[i]) == 0)
+		if(strcmp(addrip, m_serverlist.ips[i]) == 0) // address exists in list
 		{
 			// update info from server:
 			Z_Free(m_serverlist.info[i]);
+
+			/*if(pinging)
+				m_serverlist.server[i].ping_request_time = Sys_Milliseconds();
+			else
+			{
+				ping = curtime - m_serverlist.server[i].ping_request_time;
+				Com_Printf("%d - %d\n", curtime, m_serverlist.server[i].ping_request_time);
+			}*/
+
 			update_serverlist_server(&m_serverlist.server[i], info, ping);
 			m_serverlist.info[i] = text_copy(format_info_from_serverlist_server(&m_serverlist.server[i]));
-			//m_serverlist.info[i] = text_copy(va("%3d %s", ping, info));
-			//todo - updateinfo
-			//added = true;
-			return;
+			
+			added = true;
+			break;
+			//return;
 		}
 	}
 
-	// doesn't exist.  Add it.
-	i++;
-
-	// List too big?  Alloc more memory:
-	// STL would be useful about now
-	if(i > m_serverlist.actualsize) 
+	if(!added) // doesn't exist.  Add it.
 	{
-		char **tempinfo;
-		char **tempips;
-		m_serverlist_server_t *tempserver;
+		i++;
 
-		tempinfo = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2); // double size
-		tempips = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2); // double size
-		tempserver = Z_Malloc(sizeof(m_serverlist_server_t)*m_serverlist.actualsize*2);
-
-		for(i=0; i<m_serverlist.actualsize; i++)
+		// List too big?  Alloc more memory:
+		// STL would be useful about now
+		if(i > m_serverlist.actualsize) 
 		{
-			tempinfo[i] = m_serverlist.info[i];
-			tempips[i] = m_serverlist.ips[i];
-			tempserver[i] = m_serverlist.server[i];
+			char **tempinfo;
+			char **tempips;
+			m_serverlist_server_t *tempserver;
+
+			tempinfo = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2); // double size
+			tempips = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2); // double size
+			tempserver = Z_Malloc(sizeof(m_serverlist_server_t)*m_serverlist.actualsize*2);
+
+			for(i=0; i<m_serverlist.actualsize; i++)
+			{
+				tempinfo[i] = m_serverlist.info[i];
+				tempips[i] = m_serverlist.ips[i];
+				tempserver[i] = m_serverlist.server[i];
+			}
+
+			Z_Free(m_serverlist.info);
+			Z_Free(m_serverlist.ips);
+			Z_Free(m_serverlist.server);
+
+			m_serverlist.info = tempinfo; // jitodo - test -- will this work?? (update widget??)
+			m_serverlist.ips = tempips;
+			m_serverlist.server = tempserver;
+
+			m_serverlist.actualsize *= 2;
 		}
 
-		Z_Free(m_serverlist.info);
-		Z_Free(m_serverlist.ips);
-		Z_Free(m_serverlist.server);
+		// add data to serverlist:
+		m_serverlist.ips[m_serverlist.numservers] = text_copy(addrip);
+		//m_serverlist.server[m_serverlist.numservers] = new_serverlist_server(adr, info, ping);
 
-		m_serverlist.info = tempinfo; // jitodo - test -- will this work?? (update widget??)
-		m_serverlist.ips = tempips;
-		m_serverlist.server = tempserver;
+		/*if(pinging)
+			m_serverlist.server[m_serverlist.numservers].ping_request_time = Sys_Milliseconds();
+		else // this part shouldn't ever get executed, but just in case:
+			ping = curtime - m_serverlist.server[m_serverlist.numservers].ping_request_time;*/
 
-		m_serverlist.actualsize *= 2;
+		update_serverlist_server(&m_serverlist.server[m_serverlist.numservers], info, ping);
+		//m_serverlist.info[m_serverlist.numservers] = text_copy(va("%3d %s", ping, info));
+		m_serverlist.info[m_serverlist.numservers] =
+			text_copy(format_info_from_serverlist_server(&m_serverlist.server[m_serverlist.numservers]));
+		
+		m_serverlist.numservers++;
 	}
 
-	// add data to serverlist:
-	m_serverlist.ips[m_serverlist.numservers] = text_copy(addrip);
-	//m_serverlist.server[m_serverlist.numservers] = new_serverlist_server(adr, info, ping);
-	update_serverlist_server(&m_serverlist.server[m_serverlist.numservers], info, ping);
-	//m_serverlist.info[m_serverlist.numservers] = text_copy(va("%3d %s", ping, info));
-	m_serverlist.info[m_serverlist.numservers] =
-		text_copy(format_info_from_serverlist_server(&m_serverlist.server[m_serverlist.numservers]));
-	
-	m_serverlist.numservers++;
+
+
+	// Tell the widget the serverlist has updated: (shouldn't this be done after below code?)
+	if(m_menudepth)
+		refresh_menu_screen(m_menu_screens[m_menudepth-1]);
+
+	//return m_serverlist.numservers - 1;
 }
 
 // color servers grey and re-ping them
@@ -2335,25 +2370,56 @@ void M_ServerlistRefresh_f(void)
 void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate thread so it doesn't "lock up"
 {
 	SOCKET serverListSocket;
+	char svlist_domain[256];
+	//char svlist_dir[256];
 	char *s;
+	int i;
 
 	serverListSocket = NET_TCPSocket(0);	// Create the socket descriptor
 	if (serverListSocket == 0)
+	{
+		Com_Printf("Unable to create socket.\n");
 		return; // No socket created
+	}
 
-	s = strstr(serverlist_source->string, "/");
-	if(s)
-		*s = 0;
-	if(!NET_TCPConnect(serverListSocket, serverlist_source->string, 80))
+	s = strstr(serverlist_source->string, "http://");
+	if(!s)
+	{
+		// probably an old version -- going to require the http:// now.
+		// jitodo -- allow for sources like "c:\servers.txt" and master server lists.
+		Cvar_Set("serverlist_source", "http://www.planetquake.com/digitalpaint/servers.txt");
+		M_ServerlistUpdate_f();
+		return;
+	}
+	else
+	{
+		s += 7; // skip past the "http://"
+		i = 0;
+		while(*s && *s != '/')
+		{
+			svlist_domain[i] = *s;
+			s++;
+			i++;
+		}
+		svlist_domain[i] = 0; // terminate string
+	}
+	//s = strstr(serverlist_source->string, "/");
+	//if(s)
+	//	*s = 0;
+	//if(!NET_TCPConnect(serverListSocket, serverlist_source->string, 80))
+	if(!NET_TCPConnect(serverListSocket, svlist_domain, 80))
+	{
+		Com_Printf("Unable to connect to %s\n", svlist_domain);
 		return;	// Couldn't connect
+	}
 	
 	// We're connected! Lets ask for the list
 	{
 		char msg[256];
 		int len, bytes_sent;
 
-		if(s)
-			*s = '/';
+		//if(s)
+		//	*s = '/';
 		sprintf(msg, "GET %s HTTP/1.0\n\n", s);
 
 		len = strlen(msg);

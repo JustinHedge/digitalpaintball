@@ -180,6 +180,7 @@ void S_Shutdown(void)
 	int		i;
 	sfx_t	*sfx;
 	//A3D CHANGE
+	void S_Q2A3DCloseLibrary(void);
 	if (!sound_started && !a3dsound_started)
 		return;
 
