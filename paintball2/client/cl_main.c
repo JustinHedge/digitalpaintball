@@ -121,6 +121,7 @@ cvar_t	*gender_auto;
 cvar_t	*cl_vwep;
 
 cvar_t	*cl_drawfps; // drawfps - MrG
+cvar_t	*cl_drawpps; // jitnetfps
 cvar_t	*cl_timestamp; // jit
 cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_drawhud; // jithud
@@ -1647,6 +1648,7 @@ void CL_InitLocal (void)
 	cl_anglespeedkey =	Cvar_Get("cl_anglespeedkey", "1.5", 0);
 
 	cl_drawfps =		Cvar_Get("cl_drawfps", "0", CVAR_ARCHIVE); // drawfps - MrG
+	cl_drawpps =		Cvar_Get("cl_drawpps", "0", CVAR_ARCHIVE); // jitnetfps
 	cl_drawhud =		Cvar_Get("cl_drawhud", "1", 0); // jithud
 	// ===
 	// jit

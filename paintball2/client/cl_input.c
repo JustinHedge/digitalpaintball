@@ -455,6 +455,7 @@ void CL_InitInput (void)
 CL_SendCmd
 =================
 */
+char pps_string[16]; // jitnetfps
 void CL_SendCmd (void)
 {
 	sizebuf_t	buf;
@@ -463,7 +464,6 @@ void CL_SendCmd (void)
 	usercmd_t	*cmd, *oldcmd;
 	usercmd_t	nullcmd;
 	int			checksumIndex;
-	extern cvar_t *cl_drawfps; // jitest
 
 	// build a command even if not connected
 
@@ -498,10 +498,11 @@ void CL_SendCmd (void)
 			cmd->sidemove != oldcmd.sidemove ||
 			cmd->upmove != oldcmd.upmove) // user input has changed (jitodo -- check for text cmds)
 		{
-			if (cl.time > ppscount)
-				ppscount = cl.time - (cl.time-ppscount) + 1000.0f/ppsstate+0.5f;
-			else
+			if (cl.time > ppscount + 1000.0f/ppsstate+0.5f || cl.time < ppscount)
 				ppscount = cl.time + 1000.0f/ppsstate+0.5f;
+			else // (cl.time > ppscount)
+				ppscount = cl.time - (cl.time-ppscount) + 1000.0f/ppsstate+0.5f;
+			
 
 			memcpy(&oldcmd, cmd, sizeof(usercmd_t));
 			old_frame_time = sys_frame_time;
@@ -582,62 +583,22 @@ void CL_SendCmd (void)
 	//
 	Netchan_Transmit(&cls.netchan, buf.cursize, buf.data);
 
-	if (cl_drawfps->value) // jitest
+	if (cl_drawpps->value) // jitnetfps
 	{
-		static char s[16];
 		static int framecount = 0;
 		static int lasttime = 0;
 
 		if(!(framecount & 0xF)) // once every 16 frames
 		{
-			register float t;
-			t = curtime-lasttime;
-//			t = cls.realtime - cls.last_transmit_time;
-
-			t /= 1000.0f;
-			Com_sprintf(s, sizeof(s), "%3.0fpps", framecount/t);
-			//fpscounter = cl.time + 100; 
+			Com_sprintf(pps_string, sizeof(pps_string), "%3.0fpps\n", 1000.0f*framecount/(curtime-lasttime));
 			lasttime = curtime;
 			framecount = 0;
 		}
 
 		framecount ++;
-
-		//re.DrawString(viddef.width-42*hudscale, 72*hudscale, s);
-		Com_Printf("%s\n", s);
 	}
 
 	cls.last_transmit_time = cls.realtime;
-
-
-
-	//if(cl_locknetfps->value) // jitodo download2 check here
-	//{
-	//	Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);	
-	//}
-	//else // jitnetfps (taken from fuzz) -- jitodo, kill this, it sucks
-	//{
-	//	int ppsstate;
-	//	static int ppscount=0;
-
-	//	ppsstate = cl_cmdrate->value;
-
-	//	if(ppsstate < 5)
-	//		ppsstate = 5;
-
-	//	if ((cl.time+1000) < ppscount)
-	//		ppscount=cl.time+1000/ppsstate;
-
-	//	if (cl.time>ppscount)
-	//	{
-	//		Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);
-	//		ppscount = cl.time + 1000/ppsstate;
-	//	}
-	//	else
-	//	{
-	//		cls.netchan.outgoing_sequence++;
-	//	}
-	//}
 }
 
 

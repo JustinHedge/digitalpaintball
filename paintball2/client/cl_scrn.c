@@ -1342,7 +1342,6 @@ text to the screen.
 ==================
 */
 
-extern cvar_t *cl_drawfps; // FPS display - MrG
 extern cvar_t *cl_drawhud; // jithud
 
 void SCR_UpdateScreen (void)
@@ -1481,7 +1480,7 @@ void SCR_UpdateScreen (void)
 				// Draw FPS display - MrG - jit, modified
 				if (cl_drawfps->value) 
 				{
-					static char s[16];
+					static char s[15];
 					//static int fpscounter=0;
 					//static float framerate=60.0f; // arbitrary starting value
 
@@ -1521,6 +1520,12 @@ void SCR_UpdateScreen (void)
 					framecount ++;
 
 					re.DrawString(viddef.width-56*hudscale,64*hudscale,s);
+				}
+
+				if (cl_drawpps->value) // jitnetfps
+				{
+					extern char pps_string[15];
+					re.DrawString(viddef.width-56*hudscale, 72*hudscale, pps_string);
 				}
 
 				SCR_DrawStats();
