@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 7.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "paintball", "..\pball\src\paintball.vcproj", "{06E6BD72-27DA-4B90-B2B2-68ECC9077252}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gamex86", "..\pball\src\paintball.vcproj", "{06E6BD72-27DA-4B90-B2B2-68ECC9077252}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "paintball2", "paintball2.vcproj", "{12D16965-BA3F-4E82-AE70-F354AF80B941}"
 EndProject

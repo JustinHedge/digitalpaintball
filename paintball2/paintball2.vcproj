@@ -105,7 +105,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="winmm.lib wsock32.lib"
-				OutputFile="..\paintball2\paintball2.exe"
+				OutputFile="..\paintball2.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
@@ -306,9 +306,6 @@
 				RelativePath=".\win32\q_shwin.c">
 			</File>
 			<File
-				RelativePath=".\client\qmenu.c">
-			</File>
-			<File
 				RelativePath=".\win32\sys_win.c">
 			</File>
 			<File
@@ -448,9 +445,6 @@
 				RelativePath=".\qcommon\qfiles.h">
 			</File>
 			<File
-				RelativePath=".\client\qmenu.h">
-			</File>
-			<File
 				RelativePath=".\client\ref.h">
 			</File>
 			<File
@@ -512,6 +506,9 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\pball\menus\main.txt">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
