@@ -480,6 +480,9 @@ void SV_ConnectionlessPacket (void)
 	char	*s;
 	char	*c;
 
+	if(net_message.cursize > 800) // 1024 is the absolute largest, but nothing should be over 600 unless it's malicious.
+		return; // jitsecurity -- fix from Echon.
+
 	MSG_BeginReading (&net_message);
 	MSG_ReadLong (&net_message);		// skip the -1 marker
 
