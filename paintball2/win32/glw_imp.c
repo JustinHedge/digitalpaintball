@@ -766,36 +766,38 @@ void GLimp_EndFrame (void)
 void UpdateGammaRamp()
 {
 	int i,o;
-	int test;
+	//int test;
+
 	// jitgamma -- don't let them go to extreme values:
-	if(vid_gamma->value < 0.7f)
-		ri.Cvar_SetValue("vid_gamma", 0.7f);
+	if(vid_gamma->value < 0.5f)
+		ri.Cvar_SetValue("vid_gamma", 0.5f);
 	if(vid_gamma->value > 2.0f)
 		ri.Cvar_SetValue("vid_gamma", 2.0f);
-	if (gl_state.gammaramp) {
-		memcpy(gamma_ramp,original_ramp,sizeof(original_ramp));
-		// <!-- jitrip -- trip out!
-	/*	for (o=0;o<3;o++)
-			for (i=0;i<256;i++) {
-				signed int v;
-				//v = 255 * pow ( (i+0.5)*0.0039138943248532289628180039138943 ,vid_gamma->value ) + 0.5;
-				v = (sin(((double)i)/255.0+(double)o)+1.0)*127;
-				if (v > 255) v=255;
-				if (v < 0) v=0;
-				gamma_ramp[o][i]=((WORD)v) << 8;
+	if(vid_lighten->value > 0.5f)
+		ri.Cvar_SetValue("vid_lighten", 0.5f);
+	if(vid_lighten->value < 0.0f)
+		ri.Cvar_SetValue("vid_lighten", 0.0f);
+
+	if (gl_state.gammaramp)
+	{
+		float v, i_f;
+
+		for (o=0; o<3; o++) // jitgamma
+		{
+			for(i=0; i<256; i++)
+			{
+				i_f = (float)i/255.0f;
+				v = pow(i_f, vid_gamma->value);
+				v += vid_lighten->value * (1.0f - v);
+				if(v < 0.0f)
+					v = 0.0f;
+				else if(v > 1.0f)
+					v = 1.0f;
+				gamma_ramp[o][i] = (WORD)(v * 65535.0f + 0.5f);
 			}
+		}
+
 		SetDeviceGammaRamp(glw_state.hDC, gamma_ramp);
-		// jit --> */
-		for (o=0;o<3;o++)
-//		o=0;
-			for (i=0;i<256;i++) {
-				signed int v;
-				v = (255 * pow ( ((i)+0.5)*0.0039138943248532289628180039138943 ,vid_gamma->value ) + 0.5);
-				if (v > 255) v=255;
-				if (v < 0) v=0;
-				gamma_ramp[o][i]=((WORD)v) << 8; // jitodo - would there be less color loss if we did this scaled up rather than doing from 0 to 255 then scaling it?
-			}
-		test=SetDeviceGammaRamp(glw_state.hDC, gamma_ramp); // */
 	}
 }
 
