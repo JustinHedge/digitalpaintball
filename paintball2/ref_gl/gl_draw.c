@@ -189,42 +189,55 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 
 			// ===[
 			// jittext
-			//if(num == '^')
-			if(num == CHAR_COLOR)
+			if (!nextiscolor)
 			{
-				if(!(*(s+1))) // end of string
+				switch (num)
 				{
-					nextiscolor = false;
-				}
-				else
-				{
-					nextiscolor = true;
-					coloredtext = 1;
+				case CHAR_COLOR:
+					if(!(*(s+1))) // end of string
+					{
+						nextiscolor = false;
+					}
+					else
+					{
+						nextiscolor = true;
+						coloredtext = 1;
+						s++;
+						continue;
+					}
+					break;
+				case CHAR_UNDERLINE:
 					s++;
-					continue;
+					underlined = !underlined;
+					if(*s != '\0') // only draw if at end of string
+						continue;
+					else // so the string null-terminates!
+						s--;
+					break;
+				case CHAR_ITALICS:
+					s++;
+					italicized = !italicized;
+					if(*s != '\0') // only draw if at end of string
+						continue;
+					else
+						s--;
+					break;
+				case CHAR_ENDFORMAT:
+					s++;
+					italicized = false;
+					underlined = false;
+					if (!shadowpass)
+						qglColor4f(1.0f, 1.0f, 1.0f, alpha);
+					if(*s != '\0') // draw character if at end of string.
+						continue;
+					else
+						s--;
+					break;
+				default:
+					break;
 				}
 			}
-			else if(num == CHAR_UNDERLINE)
-			{
-				s++;
-				underlined = !underlined;
-				if(*s != '\0') // only draw if at end of string
-					continue;
-				else // so the string null-terminates!
-					s--;
-			}
-			else if(num == CHAR_ITALICS)
-			{
-				s++;
-				italicized = !italicized;
-				if(*s != '\0') // only draw if at end of string
-					continue;
-				else
-					s--;
-			}
-
-
-			if(nextiscolor)
+			else // (nextiscolor)
 			{
 				// look up color in char_colors.tga:
 				if (!shadowpass)

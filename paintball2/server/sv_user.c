@@ -65,7 +65,7 @@ void SV_New_f (void)
 
 	if (sv_client->state != cs_connected)
 	{
-		Com_Printf ("New not valid -- already spawned\n");
+		Com_Printf("New not valid -- already spawned\n");
 		return;
 	}
 
@@ -80,14 +80,14 @@ void SV_New_f (void)
 	// serverdata needs to go over for all types of servers
 	// to make sure the protocol is right, and to set the gamedir
 	//
-	gamedir = Cvar_VariableString ("gamedir");
+	gamedir = Cvar_VariableString("gamedir");
 
 	// send the serverdata
-	MSG_WriteByte (&sv_client->netchan.message, svc_serverdata);
-	MSG_WriteLong (&sv_client->netchan.message, PROTOCOL_VERSION);
-	MSG_WriteLong (&sv_client->netchan.message, svs.spawncount);
-	MSG_WriteByte (&sv_client->netchan.message, sv.attractloop);
-	MSG_WriteString (&sv_client->netchan.message, gamedir);
+	MSG_WriteByte(&sv_client->netchan.message, svc_serverdata);
+	MSG_WriteLong(&sv_client->netchan.message, PROTOCOL_VERSION);
+	MSG_WriteLong(&sv_client->netchan.message, svs.spawncount);
+	MSG_WriteByte(&sv_client->netchan.message, sv.attractloop);
+	MSG_WriteString(&sv_client->netchan.message, gamedir);
 
 	if (sv.state == ss_cinematic || sv.state == ss_pic)
 		playernum = -1;
@@ -96,7 +96,7 @@ void SV_New_f (void)
 	MSG_WriteShort (&sv_client->netchan.message, playernum);
 
 	// send full levelname
-	MSG_WriteString (&sv_client->netchan.message, sv.configstrings[CS_NAME]);
+	MSG_WriteString(&sv_client->netchan.message, sv.configstrings[CS_NAME]);
 
 	//
 	// game server
@@ -107,13 +107,12 @@ void SV_New_f (void)
 		ent = EDICT_NUM(playernum+1);
 		ent->s.number = playernum+1;
 		sv_client->edict = ent;
-		memset (&sv_client->lastcmd, 0, sizeof(sv_client->lastcmd));
+		memset(&sv_client->lastcmd, 0, sizeof(sv_client->lastcmd));
 
 		// begin fetching configstrings
-		MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
-		MSG_WriteString (&sv_client->netchan.message, va("cmd configstrings %i 0\n",svs.spawncount) );
+		MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
+		MSG_WriteString(&sv_client->netchan.message, va("cmd configstrings %i 0\n", svs.spawncount));
 	}
-
 }
 
 /*
@@ -123,54 +122,53 @@ SV_Configstrings_f
 */
 void SV_Configstrings_f (void)
 {
-	int			start;
+	int start;
 
-	Com_DPrintf ("Configstrings() from %s\n", sv_client->name);
+	Com_DPrintf("Configstrings() from %s\n", sv_client->name);
 
 	if (sv_client->state != cs_connected)
 	{
-		Com_Printf ("configstrings not valid -- already spawned\n");
+		Com_Printf("configstrings not valid -- already spawned\n");
 		return;
 	}
 
 	// handle the case of a level changing while a client was connecting
-	if ( atoi(Cmd_Argv(1)) != svs.spawncount )
+	if (atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
-		Com_Printf ("SV_Configstrings_f from different level\n");
-		SV_New_f ();
+		Com_Printf("SV_Configstrings_f from different level\n");
+		SV_New_f();
 		return;
 	}
-	
+
 	start = atoi(Cmd_Argv(2));
 
 	if (start < 0) // jitsecurity, fix by [SkulleR]
 		start = 0;
 
 	// write a packet full of data
-
-	while ( sv_client->netchan.message.cursize < MAX_MSGLEN*0.5 
+	while (sv_client->netchan.message.cursize < MAX_MSGLEN*0.5 
 		&& start < MAX_CONFIGSTRINGS)
 	{
 		if (sv.configstrings[start][0])
 		{
-			MSG_WriteByte (&sv_client->netchan.message, svc_configstring);
-			MSG_WriteShort (&sv_client->netchan.message, start);
-			MSG_WriteString (&sv_client->netchan.message, sv.configstrings[start]);
+			MSG_WriteByte(&sv_client->netchan.message, svc_configstring);
+			MSG_WriteShort(&sv_client->netchan.message, start);
+			MSG_WriteString(&sv_client->netchan.message, sv.configstrings[start]);
 		}
+
 		start++;
 	}
 
 	// send next command
-
 	if (start == MAX_CONFIGSTRINGS)
 	{
-		MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
-		MSG_WriteString (&sv_client->netchan.message, va("cmd baselines %i 0\n",svs.spawncount) );
+		MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
+		MSG_WriteString(&sv_client->netchan.message, va("cmd baselines %i 0\n", svs.spawncount));
 	}
 	else
 	{
-		MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
-		MSG_WriteString (&sv_client->netchan.message, va("cmd configstrings %i %i\n",svs.spawncount, start) );
+		MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
+		MSG_WriteString(&sv_client->netchan.message, va("cmd configstrings %i %i\n", svs.spawncount, start));
 	}
 }
 
@@ -555,8 +553,7 @@ The client is going to disconnect, so remove the connection immediately
 */
 void SV_Disconnect_f (void)
 {
-//	SV_EndRedirect ();
-	SV_DropClient (sv_client);	
+	SV_DropClient(sv_client);	
 }
 
 
@@ -569,7 +566,7 @@ Dumps the serverinfo info string
 */
 void SV_ShowServerinfo_f (void)
 {
-	Info_Print (Cvar_Serverinfo());
+	Info_Print(Cvar_Serverinfo());
 }
 
 
@@ -582,15 +579,15 @@ void SV_Nextserver (void)
 		return;		// can't nextserver while playing a normal game
 
 	svs.spawncount++;	// make sure another doesn't sneak in
-	v = Cvar_VariableString ("nextserver");
+	v = Cvar_VariableString("nextserver");
 	if (!v[0])
-		Cbuf_AddText ("killserver\n");
+		Cbuf_AddText("killserver\n");
 	else
 	{
-		Cbuf_AddText (v);
-		Cbuf_AddText ("\n");
+		Cbuf_AddText(v);
+		Cbuf_AddText("\n");
 	}
-	Cvar_Set ("nextserver","");
+	Cvar_Set("nextserver","");
 }
 
 /*
@@ -654,22 +651,18 @@ void SV_ExecuteUserCommand (char *s)
 {
 	ucmd_t	*u;
 	
-	Cmd_TokenizeString (s, false); // jitspoe -- bug fix from Redix
+	Cmd_TokenizeString(s, false); // jitspoe -- bug fix from Redix
 	sv_player = sv_client->edict;
 
-//	SV_BeginRedirect (RD_CLIENT);
-
-	for (u=ucmds ; u->name ; u++)
-		if (Q_streq (Cmd_Argv(0), u->name) )
+	for (u=ucmds; u->name; u++)
+		if (Q_streq(Cmd_Argv(0), u->name))
 		{
-			u->func ();
+			u->func();
 			break;
 		}
 
 	if (!u->name && sv.state == ss_game)
-		ge->ClientCommand (sv_player);
-
-//	SV_EndRedirect ();
+		ge->ClientCommand(sv_player);
 }
 
 /*
@@ -683,17 +676,16 @@ USER CMD EXECUTION
 
 
 void SV_ClientThink (client_t *cl, usercmd_t *cmd)
-
 {
 	cl->commandMsec -= cmd->msec;
 
-	if (cl->commandMsec < 0 && sv_enforcetime->value )
+	if (cl->commandMsec < 0 && sv_enforcetime->value)
 	{
-		Com_DPrintf ("commandMsec underflow from %s\n", cl->name);
+		Com_DPrintf("commandMsec underflow from %s\n", cl->name);
 		return;
 	}
 
-	ge->ClientThink (cl->edict, cmd);
+	ge->ClientThink(cl->edict, cmd);
 }
 
 

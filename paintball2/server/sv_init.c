@@ -193,7 +193,7 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 	sv.attractloop = attractloop;
 
 	// save name for levels that don't set message
-	strcpy (sv.configstrings[CS_NAME], server);
+	strcpy(sv.configstrings[CS_NAME], server);
 	if (Cvar_VariableValue ("deathmatch"))
 	{
 		sprintf(sv.configstrings[CS_AIRACCEL], "%g", sv_airaccelerate->value);
@@ -205,9 +205,11 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 		pm_airaccelerate = 0;
 	}
 
-	SZ_Init (&sv.multicast, sv.multicast_buf, sizeof(sv.multicast_buf));
+	sprintf(sv.configstrings[CS_SERVEREVERSION], "Enginever: %g Enginebuild: %d", VERSION, BUILD);
 
-	strcpy (sv.name, server);
+	SZ_Init(&sv.multicast, sv.multicast_buf, sizeof(sv.multicast_buf));
+
+	strcpy(sv.name, server);
 
 	// leave slots at start for clients only
 	for (i=0 ; i<maxclients->value ; i++)
