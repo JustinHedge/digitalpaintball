@@ -440,6 +440,9 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 	}
 	else
 	{
+		image_t *stage_pic; // jitrscript
+		image_t *RS_Animate_image (rs_stage_t *stage); // jitrscript
+
 		if(!rs->ready) // jit
 			RS_ReadyScript(rs);
 
@@ -448,9 +451,14 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 		while (stage)
 		{
 			if (stage->anim_count)
-				GL_Bind(RS_Animate(stage));
+			//	GL_Bind(RS_Animate(stage));
+				stage_pic = RS_Animate_image(stage); // jitrscript
 			else
-				GL_Bind (stage->texture->texnum);
+			//	GL_Bind(stage->texture->texnum);
+				stage_pic = stage->texture; // jitrscript
+
+			GL_Bind(stage_pic->texnum);
+
 			if (stage->scroll.speedX)
 			{
 				switch(stage->scroll.typeX)
@@ -545,23 +553,23 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 
 			qglBegin(GL_QUADS);
 
-			s = 0.0f;//gl->sl;
-			t = 0.0f;//gl->tl;
+			s = stage_pic->sl;//0.0f;//gl->sl; //
+			t = stage_pic->tl;//0.0f;//gl->tl; //
 			RS_SetTexcoords2D(stage, &s, &t);
 			qglTexCoord2f(s+txm, t+tym);
 			qglVertex2f(x, y);
-			s = 1.0f;//gl->sh;
-			t = 0.0f;//gl->tl;
+			s = stage_pic->sh;//1.0f;//gl->sh; //
+			t = stage_pic->tl;//0.0f;//gl->tl;//
 			RS_SetTexcoords2D(stage, &s, &t);
 			qglTexCoord2f(s+txm, t+tym);
 			qglVertex2f(x+w, y);
-			s = 1.0f;//gl->sh;
-			t = 1.0f;//gl->th;
+			s = stage_pic->sh;//1.0f;//gl->sh;//
+			t = stage_pic->th;//1.0f;//gl->th;//
 			RS_SetTexcoords2D(stage, &s, &t);
 			qglTexCoord2f(s+txm, t+tym);
 			qglVertex2f(x+w, y+h);
-			s = 0.0f;//gl->sl;
-			t = 1.0f;//gl->th;
+			s = stage_pic->sl;//0.0f;//gl->sl;//
+			t = stage_pic->th;//1.0f;//gl->th;//
 			RS_SetTexcoords2D(stage, &s, &t);
 			qglTexCoord2f(s+txm, t+tym);
 			qglVertex2f(x, y+h);
