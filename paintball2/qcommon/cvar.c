@@ -388,6 +388,36 @@ void Cvar_Set_f (void)
 		Cvar_Set (Cmd_Argv(1), Cmd_Argv(2));
 }
 
+void Cvar_Seta_f (void) // jitconfig
+{
+	int		c;
+	int		flags;
+
+	flags = CVAR_ARCHIVE;
+
+	c = Cmd_Argc();
+	if (c != 3 && c != 4)
+	{
+		Com_Printf ("usage: seta <variable> <value> [u / s]\n");
+		return;
+	}
+
+	if (c == 4)
+	{
+		if (!strcmp(Cmd_Argv(3), "u"))
+			flags |= CVAR_USERINFO;
+		else if (!strcmp(Cmd_Argv(3), "s"))
+			flags |= CVAR_SERVERINFO;
+		else
+		{
+			Com_Printf ("flags can only be 'u' or 's'\n");
+			return;
+		}
+		Cvar_FullSet (Cmd_Argv(1), Cmd_Argv(2), flags);
+	}
+	else
+		Cvar_FullSet (Cmd_Argv(1), Cmd_Argv(2), flags);
+}
 
 /*
 ============
@@ -408,7 +438,7 @@ void Cvar_WriteVariables (char *path)
 	{
 		if (var->flags & CVAR_ARCHIVE)
 		{
-			Com_sprintf (buffer, sizeof(buffer), "set %s \"%s\"\n", var->name, var->string);
+			Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->string); // jitconfig
 			fprintf (f, "%s", buffer);
 		}
 	}
@@ -493,6 +523,7 @@ Reads in all archived cvars
 void Cvar_Init (void)
 {
 	Cmd_AddCommand ("set", Cvar_Set_f);
+	Cmd_AddCommand ("seta", Cvar_Seta_f); // jitconfig
 	Cmd_AddCommand ("cvarlist", Cvar_List_f);
 
 }
