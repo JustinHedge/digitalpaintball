@@ -183,7 +183,7 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 			num &= 255;
 
 			// ===[
-			// jitcoloredtext
+			// jittext
 			//if(num == '^')
 			if(num == CHAR_COLOR)
 			{
@@ -205,6 +205,8 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 				underlined = !underlined;
 				if(*s != '\0') // only draw if at end of string
 					continue;
+				else // so the string null-terminates!
+					s--;
 			}
 			else if(num == CHAR_ITALICS)
 			{
@@ -212,6 +214,8 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 				italicized = !italicized;
 				if(*s != '\0') // only draw if at end of string
 					continue;
+				else
+					s--;
 			}
 
 
@@ -237,7 +241,6 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 
 			if(underlined) // jitconsole
 			{
-				CHAR_UNDERLINE_NUM;
 				row = CHAR_UNDERLINE_NUM>>4;
 				col = CHAR_UNDERLINE_NUM&15;
 
