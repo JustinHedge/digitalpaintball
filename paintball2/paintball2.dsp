@@ -828,6 +828,21 @@ DEP_CPP_CL_VI=\
 !ENDIF 
 
 # End Source File
+# Begin Source File
+
+SOURCE=.\client\cl_vote.c
+
+!IF  "$(CFG)" == "paintball2 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
+
+!ENDIF 
+
+# End Source File
 # End Group
 # Begin Group "Server"
 
@@ -2119,6 +2134,10 @@ SOURCE=.\win32\winquake.h
 # Begin Source File
 
 SOURCE=.\win32\icon2.ico
+# End Source File
+# Begin Source File
+
+SOURCE=".\win32\paintball2-vc6.ico"
 # End Source File
 # Begin Source File
 

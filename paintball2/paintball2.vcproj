@@ -398,6 +398,9 @@
 				<File
 					RelativePath=".\client\cl_view.c">
 				</File>
+				<File
+					RelativePath="client\cl_vote.c">
+				</File>
 			</Filter>
 			<Filter
 				Name="Server"
