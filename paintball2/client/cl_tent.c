@@ -40,7 +40,7 @@ typedef struct
 
 
 
-#define	MAX_EXPLOSIONS	64
+#define	MAX_EXPLOSIONS	256 // was 64
 explosion_t	cl_explosions[MAX_EXPLOSIONS];
 
 
@@ -164,38 +164,38 @@ void CL_RegisterTEntModels (void) // jit: changed to only load paintball stuff:
 	cl_mod_smoke = re.RegisterModel("sprites/smoke.sp2");
 	cl_mod_splat = re.RegisterModel("models/paint/splat2.md2");
 	cl_mod_paintball = re.RegisterModel("models/paint/ball.md2");
-	//cl_mod_bfg_explo = re.RegisterModel ("sprites/s_bfg2.sp2"); // jitodo -- remove, testing only
-/*	cl_mod_explode = re.RegisterModel ("models/objects/explode/tris.md2");
-	cl_mod_smoke = re.RegisterModel ("models/objects/smoke/tris.md2");
-	cl_mod_flash = re.RegisterModel ("models/objects/flash/tris.md2");
-	cl_mod_parasite_segment = re.RegisterModel ("models/monsters/parasite/segment/tris.md2");
-	cl_mod_grapple_cable = re.RegisterModel ("models/ctf/segment/tris.md2");
-	cl_mod_parasite_tip = re.RegisterModel ("models/monsters/parasite/tip/tris.md2");
-	cl_mod_explo4 = re.RegisterModel ("models/objects/r_explode/tris.md2");
-
-	cl_mod_powerscreen = re.RegisterModel ("models/items/armor/effect/tris.md2");
-
-	re.RegisterModel ("models/objects/laser/tris.md2");
-	re.RegisterModel ("models/objects/grenade2/tris.md2");
-	re.RegisterModel ("models/weapons/v_machn/tris.md2");
-	re.RegisterModel ("models/weapons/v_handgr/tris.md2");
-	re.RegisterModel ("models/weapons/v_shotg2/tris.md2");
-	re.RegisterModel ("models/objects/gibs/bone/tris.md2");
-	re.RegisterModel ("models/objects/gibs/sm_meat/tris.md2");
-	re.RegisterModel ("models/objects/gibs/bone2/tris.md2");*/
-	// RAFAEL
-	// re.RegisterModel ("models/objects/blaser/tris.md2");
-
-/*	re.RegisterPic ("w_machinegun");
-	re.RegisterPic ("a_bullets");
-	re.RegisterPic ("i_health");
-	re.RegisterPic ("a_grenades");*/
-
-//ROGUE
-/*	cl_mod_explo4_big = re.RegisterModel ("models/objects/r_explode2/tris.md2");
-	cl_mod_lightning = re.RegisterModel ("models/proj/lightning/tris.md2");
-	cl_mod_heatbeam = re.RegisterModel ("models/proj/beam/tris.md2");
-	cl_mod_monster_heatbeam = re.RegisterModel ("models/proj/widowbeam/tris.md2");*/
+//	//cl_mod_bfg_explo = re.RegisterModel ("sprites/s_bfg2.sp2"); // jitodo -- remove, testing only
+//	cl_mod_explode = re.RegisterModel ("models/objects/explode/tris.md2");
+//	cl_mod_smoke = re.RegisterModel ("models/objects/smoke/tris.md2");
+//	cl_mod_flash = re.RegisterModel ("models/objects/flash/tris.md2");
+//	cl_mod_parasite_segment = re.RegisterModel ("models/monsters/parasite/segment/tris.md2");
+//	cl_mod_grapple_cable = re.RegisterModel ("models/ctf/segment/tris.md2");
+//	cl_mod_parasite_tip = re.RegisterModel ("models/monsters/parasite/tip/tris.md2");
+//	cl_mod_explo4 = re.RegisterModel ("models/objects/r_explode/tris.md2");
+//
+//	cl_mod_powerscreen = re.RegisterModel ("models/items/armor/effect/tris.md2");
+//
+//	re.RegisterModel ("models/objects/laser/tris.md2");
+//	re.RegisterModel ("models/objects/grenade2/tris.md2");
+//	re.RegisterModel ("models/weapons/v_machn/tris.md2");
+//	re.RegisterModel ("models/weapons/v_handgr/tris.md2");
+//	re.RegisterModel ("models/weapons/v_shotg2/tris.md2");
+//	re.RegisterModel ("models/objects/gibs/bone/tris.md2");
+//	re.RegisterModel ("models/objects/gibs/sm_meat/tris.md2");
+//	re.RegisterModel ("models/objects/gibs/bone2/tris.md2");
+//	// RAFAEL
+//	// re.RegisterModel ("models/objects/blaser/tris.md2");
+//
+//	re.RegisterPic ("w_machinegun");
+//	re.RegisterPic ("a_bullets");
+//	re.RegisterPic ("i_health");
+//	re.RegisterPic ("a_grenades");
+//
+////ROGUE
+//	cl_mod_explo4_big = re.RegisterModel ("models/objects/r_explode2/tris.md2");
+//	cl_mod_lightning = re.RegisterModel ("models/proj/lightning/tris.md2");
+//	cl_mod_heatbeam = re.RegisterModel ("models/proj/beam/tris.md2");
+//	cl_mod_monster_heatbeam = re.RegisterModel ("models/proj/widowbeam/tris.md2");
 //ROGUE
 }	
 
@@ -798,29 +798,30 @@ void CL_ParseTEnt (void)
 		// jitodo, only make a smoke puff every other puff? too many polys.
 		MSG_ReadPos(&net_message, pos);
 
-		ex = CL_AllocExplosion ();
-		VectorCopy (pos, ex->ent.origin);
-		ex->type = ex_poly;
-		ex->ent.flags = RF_TRANSLUCENT;
-		ex->start = cl.frame.servertime - 100;
-		ex->light = 0;
-		ex->lightcolor[0] = 0.0;
-		ex->lightcolor[1] = 0.0;
-		ex->lightcolor[2] = 0.0;
-		ex->ent.model = cl_mod_smoke;
-		ex->ent.alpha = 1.0;
-		ex->ent.alphavel = -0.002 / (0.8 + frand()*0.19);
-		ex->ent.scale = 0.6;
-		ex->ent.scalevel = 0.004 / (0.5 + frand()*0.3);
-		ex->ent.vel[0] = frand()*0.4f - 0.2f; // jitodo
-		ex->ent.vel[1] = frand()*0.4f - 0.2f;
-		ex->ent.vel[2] = frand()*0.2f;
-		ex->frames = 1;
+		for(r = 0; r < 3; r++)
+		{
+			ex = CL_AllocExplosion();
+			VectorCopy(pos, ex->ent.origin);
+			ex->ent.origin[2] += 10;
+			ex->type = ex_poly;
+			ex->ent.flags = RF_TRANSLUCENT;
+			ex->start = cl.frame.servertime - 100;
+			ex->light = 0;
+			ex->lightcolor[0] = 0.0;
+			ex->lightcolor[1] = 0.0;
+			ex->lightcolor[2] = 0.0;
+			ex->ent.model = cl_mod_smoke;
+			ex->ent.alpha = 2.0;
+			ex->ent.alphavel = -0.005 / (0.8 + frand()*0.19);
+			ex->ent.scale = 0.5;
+			ex->ent.scalevel = 0.002 / (0.5 + frand()*0.3);
+			ex->ent.vel[0] = frand()*2.0f - 1.0f; // jitodo
+			ex->ent.vel[1] = frand()*2.0f - 1.0f;
+			ex->ent.vel[2] = frand()*0.2f;
+			ex->frames = 1;
+		}
 
 		break;
-
-
-
 
 	// old crap we can probably get rid of:
 
@@ -1632,150 +1633,41 @@ void CL_AddPlayerBeams (void)
 CL_AddExplosions
 =================
 */
-void CL_AddExplosions (void)
+void CL_AddExplosions (void) // jitsmoke
 {
-	// jit, redone for pball -- smoke explosions:
 	explosion_t	*ex;
 	entity_t	*ent;
-	float		/*frac,*/time;
-	int			/*f,*/i;
+	float		time, scale;
+	int			i;
 	vec3_t		vel;
 
-	for (i=0, ex=cl_explosions ; i< MAX_EXPLOSIONS ; i++, ex++)
+	for (i=0, ex=cl_explosions; i < MAX_EXPLOSIONS; i++, ex++)
 	{
 		time = (cl.time - ex->start)*0.001f;
-		/*frac = (cl.time - ex->start)/100.0;		
-		f = floor(frac);*/
 		ent = &ex->ent;
 
-		if(ex->type != ex_free)
-		{// jitodo, make separate things for paint and smoke so they don't conflict?
-			/*if(ex->type == ex_misc) // paint splat
-			{ // jitodo - paint splat
-				
-			}
-			else // smoke grenade puff
-			{*/
-				if (ent->alpha <= 0)
-				{
-					ex->type = ex_free;
-					continue;
-				}
-				else
-				{
-					ent->alpha += time*ent->alphavel;
-					ent->scale += time*ent->scalevel;
-					
-					VectorCopy (ent->origin, ent->oldorigin);
-					VectorScale(ent->vel,time,vel);
-					VectorAdd(ent->origin, vel, ent->origin);
-
-				//	if (f < 0)
-				//		f = 0;
-				//	ent->frame = (ex->baseframe + f + 1) % ex->frames;
-				//	ent->oldframe = (ex->baseframe + f) % ex->frames;
-				//	ent->backlerp = 1.0 - cl.lerpfrac; -- goes before vaddent if needed...
-				}
-			//}
-			V_AddEntity (ent);
-		}
-	}
-
-/*	entity_t	*ent;
-	int			i;
-	explosion_t	*ex;
-	float		frac;
-	int			f;
-
-	memset (&ent, 0, sizeof(ent));
-
-	for (i=0, ex=cl_explosions ; i< MAX_EXPLOSIONS ; i++, ex++)
-	{
-		if (ex->type == ex_free)
-			continue;
-		frac = (cl.time - ex->start)/100.0;
-		f = floor(frac);
-
-		ent = &ex->ent;
-
-		switch (ex->type)
+		if (ex->type != ex_free)
 		{
-		case ex_mflash:
-			if (f >= ex->frames-1)
-				ex->type = ex_free;
-			break;
-		case ex_misc:
-			if (f >= ex->frames-1)
+			if (ent->alpha <= 0)
 			{
 				ex->type = ex_free;
-				break;
-			}
-			ent->alpha = 1.0 - frac/(ex->frames-1);
-			break;
-		case ex_flash:
-			if (f >= 1)
-			{
-				ex->type = ex_free;
-				break;
-			}
-			ent->alpha = 1.0;
-			break;
-		case ex_poly:
-			if (f >= ex->frames-1)
-			{
-				ex->type = ex_free;
-				break;
-			}
-
-			ent->alpha = (16.0 - (float)f)/16.0;
-
-			if (f < 10)
-			{
-				ent->skinnum = (f>>1);
-				if (ent->skinnum < 0)
-					ent->skinnum = 0;
+				continue;
 			}
 			else
 			{
-				ent->flags |= RF_TRANSLUCENT;
-				if (f < 13)
-					ent->skinnum = 5;
-				else
-					ent->skinnum = 6;
+				ent->alpha += time*ent->alphavel;
+				ent->scale += time*ent->scalevel;
+
+				VectorCopy(ent->origin, ent->oldorigin);
+				scale = 1.0f / (1.0f + time/200.0f);
+				ent->vel[0] *= scale;
+				ent->vel[1] *= scale;
+				VectorScale(ent->vel, time, vel);
+				VectorAdd(ent->origin, vel, ent->origin);
 			}
-			break;
-		case ex_poly2:
-			if (f >= ex->frames-1)
-			{
-				ex->type = ex_free;
-				break;
-			}
-
-			ent->alpha = (5.0 - (float)f)/5.0;
-			ent->skinnum = 0;
-			ent->flags |= RF_TRANSLUCENT;
-			break;
+			V_AddEntity (ent);
 		}
-
-		if (ex->type == ex_free)
-			continue;
-		if (ex->light)
-		{
-			V_AddLight (ent->origin, ex->light*ent->alpha,
-				ex->lightcolor[0], ex->lightcolor[1], ex->lightcolor[2]);
-		}
-
-		VectorCopy (ent->origin, ent->oldorigin);
-
-
-		if (f < 0)
-			f = 0;
-		ent->frame = ex->baseframe + f + 1;
-		ent->oldframe = ex->baseframe + f;
-		ent->backlerp = 1.0 - cl.lerpfrac;
-
-		V_AddEntity (ent);
-	}*/
+	}
 }
 
 

@@ -331,7 +331,6 @@ void new_R_DrawSpriteModel (entity_t *ent)
 
 void R_DrawSpriteModel (entity_t *e)
 {
-	float		alpha = 1.0F;
 	vec3_t		point;
 	dsprframe_t	*frame;
 	float		*up, *right;
@@ -342,14 +341,12 @@ void R_DrawSpriteModel (entity_t *e)
 	frame = &psprite->frames[e->frame];
 	up = vup;
 	right = vright;
-	alpha = e->alpha;
-	GLSTATE_ENABLE_BLEND
-	qglColor4f( 1, 1, 1, alpha );
+	GLSTATE_ENABLE_BLEND;
+	qglColor4f( 1, 1, 1, e->alpha );
 
     GL_Bind(currentmodel->skins[e->frame]->texnum);
 
 	GL_TexEnv( GL_MODULATE );
-	//GLSTATE_DISABLE_ALPHATEST
 
 	qglBegin (GL_QUADS);
 
@@ -374,16 +371,6 @@ void R_DrawSpriteModel (entity_t *e)
 		qglVertex3fv (point);
 	
 	qglEnd ();
-
-/*
-	//GLSTATE_DISABLE_ALPHATEST
-	GL_TexEnv( GL_REPLACE );
-
-	if ( alpha != 1.0F ) {
-		GLSTATE_DISABLE_BLEND
-	}
-
-	qglColor4f( 1, 1, 1, 1 );*/
 }
 
 void old_R_DrawSpriteModel (entity_t *e)
@@ -611,18 +598,17 @@ void R_DrawEntitiesOnList (void)
 
 void R_DrawSpritesOnList (void) // jit, draw sprites after water
 {
-	int		i;
+	int i;
 
-	qglDepthMask (0);		// no z writes
+	qglDepthMask(0);		// no z writes
 
 	for (i=0 ; i<r_newrefdef.num_entities ; i++)
 	{
 		currententity = &r_newrefdef.entities[i];
 		currentmodel = currententity->model;
 
-		//if (mod_sprite == currentmodel->type)
 		if (currentmodel && mod_sprite == currentmodel->type) // jitodo -- why is currentmodel sometimes null???
-			R_DrawSpriteModel (currententity);
+			R_DrawSpriteModel(currententity);
 	}
 
 	qglDepthMask (1);		// back to writing
