@@ -416,10 +416,10 @@ gotnewcl:
 
 int Rcon_Validate (void)
 {
-	if (!strlen (rcon_password->string))
+	if (!strlen(rcon_password->string))
 		return 0;
 
-	if (strcmp (Cmd_Argv(1), rcon_password->string) )
+	if (!Q_streq(Cmd_Argv(1), rcon_password->string))
 		return 0;
 
 	return 1;
@@ -496,19 +496,19 @@ void SV_ConnectionlessPacket (void)
 	c = Cmd_Argv(0);
 	Com_DPrintf ("Packet %s : %s\n", NET_AdrToString(net_from), c);
 
-	if (!strcmp(c, "ping"))
+	if (Q_streq(c, "ping"))
 		SVC_Ping ();
-	else if (!strcmp(c, "ack"))
+	else if (Q_streq(c, "ack"))
 		SVC_Ack ();
-	else if (!strcmp(c,"status"))
+	else if (Q_streq(c,"status"))
 		SVC_Status ();
-	else if (!strcmp(c,"info"))
+	else if (Q_streq(c,"info"))
 		SVC_Info ();
-	else if (!strcmp(c,"getchallenge"))
+	else if (Q_streq(c,"getchallenge"))
 		SVC_GetChallenge ();
-	else if (!strcmp(c,"connect"))
+	else if (Q_streq(c,"connect"))
 		SVC_DirectConnect ();
-	else if (!strcmp(c, "rcon"))
+	else if (Q_streq(c, "rcon"))
 		SVC_RemoteCommand ();
 	else
 		Com_Printf ("bad connectionless packet from %s:\n%s\n"
@@ -975,7 +975,7 @@ void SV_Init (void)
 	sv_showclamp = Cvar_Get ("showclamp", "0", 0);
 	sv_paused = Cvar_Get ("paused", "0", 0);
 	sv_timedemo = Cvar_Get ("timedemo", "0", 0);
-	sv_enforcetime = Cvar_Get ("sv_enforcetime", "0", 0);
+	sv_enforcetime = Cvar_Get ("sv_enforcetime", "1", 0); // jit -- default to 1 to prevent speed hacks.
 //	allow_fastdownloads = Cvar_Get("allow_fast_downloads", "1", CVAR_ARCHIVE); // jitdownload (incomplete)
 	allow_download = Cvar_Get ("allow_download", "1", CVAR_ARCHIVE);
 	allow_download_players  = Cvar_Get ("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1

@@ -280,7 +280,7 @@ rscript_t *RS_FindScript(char *name)
 	rscript_t	*rs = rs_rootscript;
 
 	while (rs != NULL) {
-		if (!_stricmp(rs->name, name)) {
+		if (!Q_strcasecmp(rs->name, name)) {
 			return rs;
 		}
 
@@ -365,27 +365,27 @@ int RS_BlendID (char *blend)
 {
 	if (!blend[0])
 		return 0;
-	if (!_stricmp (blend, "GL_ZERO"))
+	if (!Q_strcasecmp(blend, "GL_ZERO"))
 		return GL_ZERO;
-	if (!_stricmp (blend, "GL_ONE"))
+	if (!Q_strcasecmp(blend, "GL_ONE"))
 		return GL_ONE;
-	if (!_stricmp (blend, "GL_DST_COLOR"))
+	if (!Q_strcasecmp(blend, "GL_DST_COLOR"))
 		return GL_DST_COLOR;
-	if (!_stricmp (blend, "GL_ONE_MINUS_DST_COLOR"))
+	if (!Q_strcasecmp(blend, "GL_ONE_MINUS_DST_COLOR"))
 		return GL_ONE_MINUS_DST_COLOR;
-	if (!_stricmp (blend, "GL_SRC_ALPHA"))
+	if (!Q_strcasecmp(blend, "GL_SRC_ALPHA"))
 		return GL_SRC_ALPHA;
-	if (!_stricmp (blend, "GL_ONE_MINUS_SRC_ALPHA"))
+	if (!Q_strcasecmp(blend, "GL_ONE_MINUS_SRC_ALPHA"))
 		return GL_ONE_MINUS_SRC_ALPHA;
-	if (!_stricmp (blend, "GL_DST_ALPHA"))
+	if (!Q_strcasecmp(blend, "GL_DST_ALPHA"))
 		return GL_DST_ALPHA;
-	if (!_stricmp (blend, "GL_ONE_MINUS_DST_ALPHA"))
+	if (!Q_strcasecmp(blend, "GL_ONE_MINUS_DST_ALPHA"))
 		return GL_ONE_MINUS_DST_ALPHA;
-	if (!_stricmp (blend, "GL_SRC_ALPHA_SATURATE"))
+	if (!Q_strcasecmp(blend, "GL_SRC_ALPHA_SATURATE"))
 		return GL_SRC_ALPHA_SATURATE;
-	if (!_stricmp (blend, "GL_SRC_COLOR"))
+	if (!Q_strcasecmp(blend, "GL_SRC_COLOR"))
 		return GL_SRC_COLOR;
-	if (!_stricmp (blend, "GL_ONE_MINUS_SRC_COLOR"))
+	if (!Q_strcasecmp(blend, "GL_ONE_MINUS_SRC_COLOR"))
 		return GL_ONE_MINUS_SRC_COLOR;
 
 	return 0;
@@ -393,15 +393,15 @@ int RS_BlendID (char *blend)
 
 int RS_FuncName (char *text)
 {
-	if (!_stricmp (text, "static"))			// static
+	if (!Q_strcasecmp(text, "static"))			// static
 		return RSCRIPT_STATIC; // jitrscript (defines)
-	else if (!_stricmp (text, "sine"))		// sine wave
+	else if (!Q_strcasecmp(text, "sine"))		// sine wave
 		return RSCRIPT_SINE;
-	else if (!_stricmp (text, "cosine"))	// cosine wave
+	else if (!Q_strcasecmp(text, "cosine"))	// cosine wave
 		return RSCRIPT_COSINE;
-	else if (!_stricmp(text, "sinabs"))		// sine wave, only positive - jitrscript
+	else if (!Q_strcasecmp(text, "sinabs"))		// sine wave, only positive - jitrscript
 		return RSCRIPT_SINABS;
-	else if (!_stricmp(text, "cosabs"))		// cosine wave, only positive - jitrscript
+	else if (!Q_strcasecmp(text, "cosabs"))		// cosine wave, only positive - jitrscript
 		return RSCRIPT_COSABS;
 
 	return 0;
@@ -452,16 +452,23 @@ void rs_stage_blendfunc (rs_stage_t *stage, char **token)
 
 	*token = strtok (NULL, TOK_DELIMINATORS);
 
-	if (!_stricmp (*token, "add")) {
+	if (!Q_strcasecmp(*token, "add"))
+	{
 		stage->blendfunc.source = GL_ONE;
 		stage->blendfunc.dest = GL_ONE;
-	} else if (!_stricmp (*token, "blend")) {
+	}
+	else if (!Q_strcasecmp(*token, "blend"))
+	{
 		stage->blendfunc.source = GL_SRC_ALPHA;
 		stage->blendfunc.dest = GL_ONE_MINUS_SRC_ALPHA;
-	} else if (!_stricmp (*token, "filter")) {
+	}
+	else if (!Q_strcasecmp(*token, "filter"))
+	{
 		stage->blendfunc.source = GL_ZERO;
 		stage->blendfunc.dest = GL_SRC_COLOR;
-	} else {
+	}
+	else
+	{
 		stage->blendfunc.source = RS_BlendID (*token);
 
 		*token = strtok (NULL, TOK_DELIMINATORS);
@@ -493,7 +500,8 @@ void rs_stage_anim (rs_stage_t *stage, char **token)
 
 	*token = strtok(NULL, TOK_DELIMINATORS);
 	
-	while (_stricmp (*token, "end")) {
+	while (Q_strcasecmp(*token, "end"))
+	{
 		stage->anim_count++;
 
 		strncpy (anim->name, *token, sizeof(anim->name));
@@ -502,7 +510,8 @@ void rs_stage_anim (rs_stage_t *stage, char **token)
 
 		*token = strtok(NULL, TOK_DELIMINATORS);
 
-		if (!_stricmp (*token, "end")) {
+		if (!Q_strcasecmp(*token, "end"))
+		{
 			anim->next = NULL;
 			break;
 		}
@@ -681,11 +690,11 @@ void RS_LoadScript(char *script)
 
 	while (token != NULL) 
 	{
-		if (!_stricmp (token, "/*") || !_stricmp (token, "["))
+		if (!Q_strcasecmp(token, "/*") || !Q_strcasecmp(token, "["))
 		{
 			ignored++;
 		}
-		else if (!_stricmp (token, "*/") || !_stricmp (token, "]"))
+		else if (!Q_strcasecmp(token, "*/") || !Q_strcasecmp(token, "]"))
 		{
 			ignored--;
 			token = strtok (NULL, TOK_DELIMINATORS); // jitrscript (don't make rscripts named "*/")
@@ -693,7 +702,7 @@ void RS_LoadScript(char *script)
 
 		if (!inscript && !ignored) 
 		{
-			if (!_stricmp (token, "{"))
+			if (!Q_strcasecmp(token, "{"))
 			{
 				inscript = true;
 			}
@@ -725,7 +734,7 @@ void RS_LoadScript(char *script)
 		}
 		else if (inscript && !ignored)
 		{
-			if (!_stricmp(token, "}"))
+			if (!Q_strcasecmp(token, "}"))
 			{
 				if (instage)
 				{
@@ -736,7 +745,7 @@ void RS_LoadScript(char *script)
 					inscript = false;
 				}
 			}
-			else if (!_stricmp(token, "{"))
+			else if (!Q_strcasecmp(token, "{"))
 			{
 				if (!instage)
 				{
@@ -750,7 +759,7 @@ void RS_LoadScript(char *script)
 				{
 					for (i = 0; i < num_stagekeys; i++)
 					{
-						if (!_stricmp (rs_stagekeys[i].stage, token))
+						if (!Q_strcasecmp(rs_stagekeys[i].stage, token))
 						{
 							rs_stagekeys[i].func (stage, &token);
 							break;
@@ -761,7 +770,7 @@ void RS_LoadScript(char *script)
 				{
 					for (i = 0; i < num_scriptkeys; i++)
 					{
-						if (!_stricmp (rs_scriptkeys[i].script, token))
+						if (!Q_strcasecmp(rs_scriptkeys[i].script, token))
 						{
 							rs_scriptkeys[i].func (rs, &token);
 							break;

@@ -168,19 +168,20 @@ void GL_ScreenShot_JPG (void)
 	Sys_Mkdir (checkname);
 
 	// Find a file name to save it to 
-	strcpy(picname,"sshot00.jpg"); // jit
+	strcpy(picname,"sshot000.jpg"); // jit
 
-	for (i=0 ; i<=99 ; i++) 
+	for (i=0 ; i<=999 ; i++) 
 	{ 
-		picname[5] = i/10 + '0'; 
-		picname[6] = i%10 + '0'; 
+		picname[5] = i/100 + '0'; 
+		picname[6] = (i%100)/10 + '0'; 
+		picname[7] = i%10 + '0';
 		Com_sprintf (checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
 		file = fopen (checkname, "rb");
 		if (!file)
 			break;	// file doesn't exist
 		fclose (file);
 	} 
-	if (i==100) 
+	if (i==1000) 
 	{
 		ri.Con_Printf (PRINT_ALL, "SCR_JPGScreenShot_f: Couldn't create a file\n"); 
 		return;
@@ -275,12 +276,15 @@ void GL_ScreenShot_f (void)
 // 
 // find a file name to save it to 
 // 
-	strcpy(picname,"sshot00.tga"); // jit
+	strcpy(picname,"sshot000.tga"); // jitsshot
 
 	for (i=0 ; i<=99 ; i++) 
 	{ 
-		picname[5] = i/10 + '0'; 
-		picname[6] = i%10 + '0'; 
+//		picname[5] = i/10 + '0'; 
+//		picname[6] = i%10 + '0'; 
+		picname[5] = i/100 + '0'; // jitsshot
+		picname[6] = (i%100)/10 + '0';  // jitsshot
+		picname[7] = i%10 + '0'; // jitsshot
 		Com_sprintf (checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
 		f = fopen (checkname, "rb");
 		if (!f)

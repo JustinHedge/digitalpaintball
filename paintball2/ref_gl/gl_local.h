@@ -262,7 +262,8 @@ void R_InitNoTexture (void); // jit - renamed
 void Draw_InitLocal (void);
 void GL_SubdivideSurface (msurface_t *fa);
 void GL_SubdivideLightmappedSurface (msurface_t *fa, float subdivide_size); //Heffo surface subdivision
-qboolean R_CullBox (vec3_t mins, vec3_t maxs);
+//qboolean R_CullBox (vec3_t mins, vec3_t maxs);
+qboolean R_CullBox (const vec3_t mins, const vec3_t maxs);
 void R_RotateForEntity (entity_t *e);
 void R_MarkLeaves (void);
 

@@ -196,7 +196,8 @@ R_CullBox
 Returns true if the box is completely outside the frustom
 =================
 */
-qboolean R_CullBox (vec3_t mins, vec3_t maxs)
+#if 0
+qboolean R_CullBox (const vec3_t mins, const vec3_t maxs)
 {
 	int		i;
 
@@ -208,6 +209,55 @@ qboolean R_CullBox (vec3_t mins, vec3_t maxs)
 			return true;
 	return false;
 }
+#else // jitopt: taken from darkplaces
+int R_CullBox(const vec3_t mins, const vec3_t maxs)
+{
+	int i;
+//	mplane_t *p;
+	cplane_t *p;
+	for (i = 0;i < 4;i++)
+	{
+		p = frustum + i;
+		switch(p->signbits)
+		{
+		default:
+		case 0:
+			if (p->normal[0]*maxs[0] + p->normal[1]*maxs[1] + p->normal[2]*maxs[2] < p->dist)
+				return true;
+			break;
+		case 1:
+			if (p->normal[0]*mins[0] + p->normal[1]*maxs[1] + p->normal[2]*maxs[2] < p->dist)
+				return true;
+			break;
+		case 2:
+			if (p->normal[0]*maxs[0] + p->normal[1]*mins[1] + p->normal[2]*maxs[2] < p->dist)
+				return true;
+			break;
+		case 3:
+			if (p->normal[0]*mins[0] + p->normal[1]*mins[1] + p->normal[2]*maxs[2] < p->dist)
+				return true;
+			break;
+		case 4:
+			if (p->normal[0]*maxs[0] + p->normal[1]*maxs[1] + p->normal[2]*mins[2] < p->dist)
+				return true;
+			break;
+		case 5:
+			if (p->normal[0]*mins[0] + p->normal[1]*maxs[1] + p->normal[2]*mins[2] < p->dist)
+				return true;
+			break;
+		case 6:
+			if (p->normal[0]*maxs[0] + p->normal[1]*mins[1] + p->normal[2]*mins[2] < p->dist)
+				return true;
+			break;
+		case 7:
+			if (p->normal[0]*mins[0] + p->normal[1]*mins[1] + p->normal[2]*mins[2] < p->dist)
+				return true;
+			break;
+		}
+	}
+	return false;
+}
+#endif
 
 float scalebleh;
 void R_RotateForEntity (entity_t *e)
@@ -1632,7 +1682,7 @@ qboolean R_Init( void *hinstance, void *hWnd )
 
 		// if glide2x detects a voodoo present, switch modes to
 		// 3dfxgl, fullscreen, 640x480.
-		if(UsingGlideDriver() && strcmp(gl_driver->string, "3dfxgl")) // jit3dfx
+		if(UsingGlideDriver() && !Q_streq(gl_driver->string, "3dfxgl")) // jit3dfx
 		{
 			ri.Cvar_Set("gl_driver", "3dfxgl");
 			ri.Cvar_Set("vid_fullscreen", "1");
@@ -1643,7 +1693,7 @@ qboolean R_Init( void *hinstance, void *hWnd )
 		// otherwise, if the driver was set improperly, change it back to
 		// opengl32 (bastard might have finally upgraded), and put it in
 		// windowed 640x480, shutting off hardware gamma to be safe.
-		else if(strcmp(gl_driver->string, "opengl32"))
+		else if(!Q_streq(gl_driver->string, "opengl32"))
 		{
 			ri.Cvar_Set("gl_driver", "opengl32");
 			ri.Cvar_Set("vid_fullscreen", "0");
@@ -2155,9 +2205,9 @@ void R_BeginFrame( float camera_separation )
 	{
 		gl_drawbuffer->modified = false;
 
-		if ( gl_state.camera_separation == 0 || !gl_state.stereo_enabled )
+		if (gl_state.camera_separation == 0 || !gl_state.stereo_enabled)
 		{
-			if ( Q_stricmp( gl_drawbuffer->string, "GL_FRONT" ) == 0 )
+			if (Q_strcasecmp(gl_drawbuffer->string, "GL_FRONT") == 0)
 				qglDrawBuffer( GL_FRONT );
 			else
 				qglDrawBuffer( GL_BACK );

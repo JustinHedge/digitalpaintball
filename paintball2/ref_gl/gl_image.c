@@ -218,7 +218,7 @@ void GL_TextureMode(const char *string )
 
 	for (i=0 ; i< NUM_GL_MODES ; i++)
 	{
-		if ( !Q_stricmp( modes[i].name, string ) )
+		if (!Q_strcasecmp(modes[i].name, string))
 			break;
 	}
 
@@ -254,7 +254,7 @@ void GL_TextureAlphaMode( char *string )
 
 	for (i=0 ; i< NUM_GL_ALPHA_MODES ; i++)
 	{
-		if ( !Q_stricmp( gl_alpha_modes[i].name, string ) )
+		if (!Q_strcasecmp( gl_alpha_modes[i].name, string))
 			break;
 	}
 
@@ -278,7 +278,7 @@ void GL_TextureSolidMode( char *string )
 
 	for (i=0 ; i< NUM_GL_SOLID_MODES ; i++)
 	{
-		if ( !Q_stricmp( gl_solid_modes[i].name, string ) )
+		if (!Q_strcasecmp(gl_solid_modes[i].name, string))
 			break;
 	}
 
@@ -2497,7 +2497,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 	{
 		for (i=0, image=gltextures ; i<numgltextures ; i++,image++)
 		{
-			if (!strcmp(name_noext, image->name))
+			if (Q_streq(name_noext, image->name))
 			{
 				image->registration_sequence = registration_sequence;
 				return image;
@@ -2625,7 +2625,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 	//}
 	//
 	//override=0;
-	//if (!strcmp(name+len-4, ".pcx"))
+	//if (Q_streq(name+len-4, ".pcx"))
 	//{
 	//	LoadPCX (name, &pic, &palette, &width, &height);
 	//	if (!pic)
@@ -2633,12 +2633,12 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 	//	image = GL_LoadPic (name, pic, width, height, type, 8);
 	//	image->alreadyloaded = false; // jithighres
 	//}
-	//else if (!strcmp(name+len-4, ".wal"))
+	//else if (Q_streq(name+len-4, ".wal"))
 	//{
 	//	image = GL_LoadWal (name);
 	//	image->alreadyloaded = false; // jithighres
 	//}
-	//else if (!strcmp(name+len-4, ".tga"))
+	//else if (Q_streq(name+len-4, ".tga"))
 	//{
 	//	LoadTGA (name, &pic, &width, &height);
 	//	if (!pic)
@@ -2646,7 +2646,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 	//	image = GL_LoadPic (name, pic, width, height, type, 32);
 	//	image->alreadyloaded = false; // jithighres
 	//}
-	//else if (!strcmp(name+len-4, ".cin")) // Heffo
+	//else if (Q_streq(name+len-4, ".cin")) // Heffo
 	//{										// WHY .cin files? because we can!
 	//	cinematics_t *newcin;
 
@@ -2663,7 +2663,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 	//	image->is_cin = true;
 	//	image->alreadyloaded = false; // jithighres
 	//}
-	//else if (!strcmp(name+len-4, ".jpg")) // Heffo - JPEG support
+	//else if (Q_streq(name+len-4, ".jpg")) // Heffo - JPEG support
 	//{
 	//	LoadJPG(name, &pic, &width, &height);
 	//	if(!pic)

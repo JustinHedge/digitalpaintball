@@ -203,7 +203,7 @@ model_t *Mod_ForName (char *name, qboolean crash)
 	{
 		if (!mod->name[0])
 			continue;
-		if (!strcmp (mod->name, name) ) {
+		if (Q_streq (mod->name, name) ) {
 			if (mod->type == mod_alias) {
 				// Make sure models scripts are definately reloaded between maps - MrG
 				char rs[48];
@@ -1253,7 +1253,7 @@ void R_BeginRegistration (char *model)
 	// explicitly free the old map if different
 	// this guarantees that mod_known[0] is the world map
 	flushmap = ri.Cvar_Get ("flushmap", "0", 0);
-	if ( strcmp(mod_known[0].name, fullname) || flushmap->value)
+	if (!Q_streq(mod_known[0].name, fullname) || flushmap->value)
 		Mod_Free (&mod_known[0]);
 	r_worldmodel = Mod_ForName(fullname, true);
 

@@ -125,7 +125,7 @@ qboolean SV_SetPlayer (void)
 	{
 		if (!cl->state)
 			continue;
-		if (!strcmp(cl->name, s))
+		if (Q_streq(cl->name, s))
 		{
 			sv_client = cl;
 			sv_player = sv_client->edict;
@@ -670,7 +670,7 @@ void SV_Savegame_f (void)
 		return;
 	}
 
-	if (!strcmp (Cmd_Argv(1), "current"))
+	if (Q_streq (Cmd_Argv(1), "current"))
 	{
 		Com_Printf ("Can't save to 'current'\n");
 		return;
