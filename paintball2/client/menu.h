@@ -296,6 +296,8 @@ extern cvar_t *cl_hudscale;
 void *free_string_array(char *array[], int size);
 char *text_copy(const char *in);
 
+extern sem_t m_sem_widgets;
+
 #endif
 
 // ]===

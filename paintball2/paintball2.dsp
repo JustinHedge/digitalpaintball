@@ -68,8 +68,8 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir ".\debug"
-# PROP Intermediate_Dir ".\debug"
+# PROP Output_Dir "..\debug\exe"
+# PROP Intermediate_Dir "..\debug\exe"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 CPP=cl.exe
@@ -86,7 +86,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386
-# ADD LINK32 winmm.lib wsock32.lib kernel32.lib user32.lib gdi32.lib /nologo /subsystem:windows /profile /map /debug /machine:I386 /out:"c:\quake2\paintball2.exe"
+# ADD LINK32 winmm.lib wsock32.lib kernel32.lib user32.lib gdi32.lib /nologo /subsystem:windows /profile /map /debug /machine:I386 /out:"../paintball2.exe"
 # SUBTRACT LINK32 /nodefaultlib
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
@@ -178,6 +178,8 @@ SOURCE=.\client\cl_cin.c
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
 
+# PROP Intermediate_Dir "..\debug\exe"
+
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
 DEP_CPP_CL_CI=\
@@ -217,11 +219,28 @@ DEP_CPP_CL_CI=\
 # End Source File
 # Begin Source File
 
+SOURCE=.\client\cl_decode.c
+
+!IF  "$(CFG)" == "paintball2 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\client\cl_ents.c
 
 !IF  "$(CFG)" == "paintball2 - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+# PROP Intermediate_Dir "..\debug\exe"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
@@ -268,6 +287,8 @@ SOURCE=.\client\cl_fx.c
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
 
+# PROP Intermediate_Dir "..\debug\exe"
+
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
 DEP_CPP_CL_FX=\
@@ -307,11 +328,28 @@ DEP_CPP_CL_FX=\
 # End Source File
 # Begin Source File
 
+SOURCE=.\client\cl_hud.c
+
+!IF  "$(CFG)" == "paintball2 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\client\cl_images.c
 
 !IF  "$(CFG)" == "paintball2 - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+# PROP Intermediate_Dir "..\debug\exe"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
@@ -327,6 +365,8 @@ SOURCE=.\client\cl_input.c
 !IF  "$(CFG)" == "paintball2 - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+# PROP Intermediate_Dir "..\debug\exe"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
@@ -373,6 +413,8 @@ SOURCE=.\client\cl_inv.c
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
 
+# PROP Intermediate_Dir "..\debug\exe"
+
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
 DEP_CPP_CL_INV=\
@@ -412,11 +454,28 @@ DEP_CPP_CL_INV=\
 # End Source File
 # Begin Source File
 
+SOURCE=.\client\cl_loc.c
+
+!IF  "$(CFG)" == "paintball2 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\client\cl_main.c
 
 !IF  "$(CFG)" == "paintball2 - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+# PROP Intermediate_Dir "..\debug\exe"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
@@ -463,6 +522,8 @@ SOURCE=.\client\cl_newfx.c
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
 
+# PROP Intermediate_Dir "..\debug\exe"
+
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
 DEP_CPP_CL_NE=\
@@ -507,6 +568,8 @@ SOURCE=.\client\cl_parse.c
 !IF  "$(CFG)" == "paintball2 - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+# PROP Intermediate_Dir "..\debug\exe"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
@@ -553,6 +616,8 @@ SOURCE=.\client\cl_pred.c
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
 
+# PROP Intermediate_Dir "..\debug\exe"
+
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
 DEP_CPP_CL_PR=\
@@ -586,6 +651,21 @@ DEP_CPP_CL_PR=\
 	".\qcommon\qcommon.h"\
 	".\qcommon\qfiles.h"\
 	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\client\cl_scores.c
+
+!IF  "$(CFG)" == "paintball2 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
 
 !ENDIF 
 
@@ -598,6 +678,8 @@ SOURCE=.\client\cl_scrn.c
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
 
+# PROP Intermediate_Dir "..\debug\exe"
+
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
 DEP_CPP_CL_SC=\
@@ -637,11 +719,30 @@ DEP_CPP_CL_SC=\
 # End Source File
 # Begin Source File
 
+SOURCE=.\client\cl_serverlist.c
+
+!IF  "$(CFG)" == "paintball2 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+# PROP Intermediate_Dir "..\debug\exe"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\client\cl_tent.c
 
 !IF  "$(CFG)" == "paintball2 - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+# PROP Intermediate_Dir "..\debug\exe"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
@@ -687,6 +788,8 @@ SOURCE=.\client\cl_view.c
 !IF  "$(CFG)" == "paintball2 - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+# PROP Intermediate_Dir "..\debug\exe"
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
 
@@ -1172,6 +1275,33 @@ DEP_CPP_SND_W=\
 
 # End Source File
 # End Group
+# Begin Group "a3d"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\a3d\a3d.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\a3d\q2a3d.c
+
+!IF  "$(CFG)" == "paintball2 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\a3d\q2a3d.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\win32\cd_win.c
@@ -1595,7 +1725,6 @@ DEP_CPP_MENU_=\
 	".\client\console.h"\
 	".\client\input.h"\
 	".\client\keys.h"\
-	".\client\qmenu.h"\
 	".\client\ref.h"\
 	".\client\screen.h"\
 	".\client\sound.h"\
@@ -1603,6 +1732,9 @@ DEP_CPP_MENU_=\
 	".\game\q_shared.h"\
 	".\qcommon\qcommon.h"\
 	".\qcommon\qfiles.h"\
+	
+NODEP_CPP_MENU_=\
+	".\client\qmenu.h"\
 	
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
@@ -1613,7 +1745,6 @@ DEP_CPP_MENU_=\
 	".\client\console.h"\
 	".\client\input.h"\
 	".\client\keys.h"\
-	".\client\qmenu.h"\
 	".\client\ref.h"\
 	".\client\screen.h"\
 	".\client\sound.h"\
@@ -1621,6 +1752,9 @@ DEP_CPP_MENU_=\
 	".\game\q_shared.h"\
 	".\qcommon\qcommon.h"\
 	".\qcommon\qfiles.h"\
+	
+NODEP_CPP_MENU_=\
+	".\client\qmenu.h"\
 	
 
 !ENDIF 
@@ -1761,53 +1895,6 @@ DEP_CPP_Q_SHW=\
 # End Source File
 # Begin Source File
 
-SOURCE=.\client\qmenu.c
-
-!IF  "$(CFG)" == "paintball2 - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
-
-DEP_CPP_QMENU=\
-	".\client\cdaudio.h"\
-	".\client\client.h"\
-	".\client\console.h"\
-	".\client\input.h"\
-	".\client\keys.h"\
-	".\client\qmenu.h"\
-	".\client\ref.h"\
-	".\client\screen.h"\
-	".\client\sound.h"\
-	".\client\vid.h"\
-	".\game\q_shared.h"\
-	".\qcommon\qcommon.h"\
-	".\qcommon\qfiles.h"\
-	
-
-!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
-
-DEP_CPP_QMENU=\
-	".\client\cdaudio.h"\
-	".\client\client.h"\
-	".\client\console.h"\
-	".\client\input.h"\
-	".\client\keys.h"\
-	".\client\qmenu.h"\
-	".\client\ref.h"\
-	".\client\screen.h"\
-	".\client\sound.h"\
-	".\client\vid.h"\
-	".\game\q_shared.h"\
-	".\qcommon\qcommon.h"\
-	".\qcommon\qfiles.h"\
-	
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
 SOURCE=.\win32\sys_win.c
 
 !IF  "$(CFG)" == "paintball2 - Win32 Release"
@@ -1879,53 +1966,6 @@ DEP_CPP_VID_D=\
 	".\qcommon\qcommon.h"\
 	".\qcommon\qfiles.h"\
 	".\win32\winquake.h"\
-	
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=.\win32\vid_menu.c
-
-!IF  "$(CFG)" == "paintball2 - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
-
-DEP_CPP_VID_M=\
-	".\client\cdaudio.h"\
-	".\client\client.h"\
-	".\client\console.h"\
-	".\client\input.h"\
-	".\client\keys.h"\
-	".\client\qmenu.h"\
-	".\client\ref.h"\
-	".\client\screen.h"\
-	".\client\sound.h"\
-	".\client\vid.h"\
-	".\game\q_shared.h"\
-	".\qcommon\qcommon.h"\
-	".\qcommon\qfiles.h"\
-	
-
-!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
-
-DEP_CPP_VID_M=\
-	".\client\cdaudio.h"\
-	".\client\client.h"\
-	".\client\console.h"\
-	".\client\input.h"\
-	".\client\keys.h"\
-	".\client\qmenu.h"\
-	".\client\ref.h"\
-	".\client\screen.h"\
-	".\client\sound.h"\
-	".\client\vid.h"\
-	".\game\q_shared.h"\
-	".\qcommon\qcommon.h"\
-	".\qcommon\qfiles.h"\
 	
 
 !ENDIF 
@@ -2018,6 +2058,14 @@ SOURCE=.\client\keys.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\client\menu.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\pthread.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\game\q_shared.h
 # End Source File
 # Begin Source File
@@ -2030,15 +2078,19 @@ SOURCE=.\qcommon\qfiles.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\client\qmenu.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\client\ref.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\win32\sched.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\client\screen.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\semaphore.h
 # End Source File
 # Begin Source File
 
@@ -2081,5 +2133,9 @@ SOURCE=.\win32\q2.ico
 SOURCE=.\win32\q2.rc
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=.\win32\pthreadVC.lib
+# End Source File
 # End Target
 # End Project

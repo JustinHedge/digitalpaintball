@@ -678,6 +678,7 @@ void VID_CheckChanges (void)
 		cl.force_refdef = true;		// can't use a paused refdef
 		S_StopAllSounds();
 	}
+
 	while (vid_ref->modified)
 	{
 		char driverstring[32]; // jit

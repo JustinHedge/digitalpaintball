@@ -480,7 +480,7 @@ void CL_ParseScoreData (const unsigned char *data)
 		cl_scores_setinuse(idx, true);
 		cl_scores_setisalive(idx, temp_array[j++]);
 		cl_scores_sethasflag(idx, temp_array[j++]);
-		cl_scores_setteam(idx, temp_array[j++]);
+		cl_scores_setteam(idx, (char)temp_array[j++]);
 		cl_scores_setping(idx, temp_array[j++]);
 		cl_scores_setkills(idx, temp_array[j++]);
 		cl_scores_setdeaths(idx, temp_array[j++]);

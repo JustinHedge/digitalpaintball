@@ -1,6 +1,6 @@
 #include "menu.h"
 
-#define INITIAL_SERVERLIST_SIZE 32
+#define INITIAL_SERVERLIST_SIZE 4//32
 
 // Local globals
 static sem_t m_sem_serverlist;
@@ -64,6 +64,7 @@ void *CL_PingServers_multithreaded (void *ptr) // jitmultithreading
 	}
 
 	refreshing = false;
+	pthread_exit(0);
 	return NULL;
 }
 
@@ -102,6 +103,9 @@ void Serverlist_Clear_f (void)
 {
 	register int i, j;
 
+	sem_wait(&m_sem_serverlist); // jitmultithreading
+	sem_wait(&m_sem_widgets);
+
 	for (i=0; i<m_serverlist.numservers; i++)
 	{
 		Z_Free(m_serverlist.server[i].mapname);
@@ -119,6 +123,9 @@ void Serverlist_Clear_f (void)
 		}
 	}
 
+	sem_post(&m_sem_widgets);
+	M_RefreshWidget("serverlist");
+	sem_post(&m_sem_serverlist);
 	m_serverlist.nummapped = m_serverlist.numservers = 0;
 }
 
@@ -265,6 +272,7 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	}
 
 	sem_wait(&m_sem_serverlist); // jitmultithreading
+	sem_wait(&m_sem_widgets);
 
 	// check if server exists in current serverlist:
 	for (i=0; i<m_serverlist.numservers; i++)
@@ -366,7 +374,9 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	}
 
 	// Tell the widget the serverlist has updated:
-	M_RefreshActiveMenu(); // jitodo - target serverlist window specifically.
+	sem_post(&m_sem_widgets);
+	//M_RefreshActiveMenu(); // jitodo - target serverlist window specifically.
+	M_RefreshWidget("serverlist");
 	sem_post(&m_sem_serverlist); // jitmultithreading
 }
 
@@ -395,8 +405,8 @@ void M_ServerlistRefresh_f (void)
 }
 
 
-// download servers.txt from a remote location and store
-// on the client's drive.
+// Download list of ip's from a remote location and
+// add them to the local serverlist
 static void M_ServerlistUpdate (char *sServerSource)
 {
 	SOCKET serverListSocket;
@@ -608,6 +618,7 @@ void *M_ServerlistUpdate_multithreaded (void *ptr)
 	M_ServerlistUpdate(serverlist_source2->string);
 	refreshing = false;
 
+	pthread_exit(0);
 	return NULL;
 }
 

@@ -40,7 +40,9 @@ static menu_widget_t	*m_active_bind_widget = NULL;
 static char				*m_active_bind_command = NULL;
 static menu_screen_t	*m_current_menu;
 static hash_table_t		named_widgets_hash;
-static sem_t			m_sem_widgets;
+
+// Globals
+sem_t			m_sem_widgets;
 
 extern m_serverlist_t	m_serverlist;
 
@@ -542,7 +544,7 @@ static void update_select_subwidgets(menu_widget_t *widget)
 	int width, x, y;
 	char *widget_text;
 
-	sem_wait(&m_sem_widgets); // jitmultithreading
+	//sem_wait(&m_sem_widgets); // jitmultithreading
 	if(widget->flags & WIDGET_FLAG_LISTSOURCE)
 	{
 		list_source(widget);
@@ -704,7 +706,7 @@ static void update_select_subwidgets(menu_widget_t *widget)
 			widget->select_rows * (TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + 
 			SELECT_VSPACING_UNSCALED, widget->subwidget);
 	}
-	sem_post(&m_sem_widgets);
+	//sem_post(&m_sem_widgets);
 }
 
 // ++ ARTHUR [9/04/03]
@@ -1298,6 +1300,9 @@ static void widget_execute(menu_widget_t *widget)
 static void M_KBAction(menu_screen_t *menu, MENU_ACTION action)
 {
 	menu_widget_t *widget;
+
+	if (!menu)
+		return;
 
 	widget = menu->widget;
 
@@ -1920,6 +1925,7 @@ static int M_WidgetGetAlign(const char *s)
 // to initialize it.
 static void widget_complete(menu_widget_t *widget)
 {
+//	sem_wait(&m_sem_widgets); // jitmultithreading
 	if(widget->cvar && !widget->cvar_default)
 		widget->cvar_default = text_copy("");
 
@@ -1936,8 +1942,11 @@ static void widget_complete(menu_widget_t *widget)
 		break;
 	case WIDGET_TYPE_SELECT:
 		widget->select_pos = -1;
+		//sem_post(&m_sem_widgets);
 		update_select_subwidgets(widget);
+		//sem_wait(&m_sem_widgets); // jitmultithreading
 		select_widget_center_pos(widget);
+		//sem_post(&m_sem_widgets);
 		break;
 	case WIDGET_TYPE_FIELD:
 		if(widget->field_width < 3)
@@ -1954,7 +1963,7 @@ static void widget_complete(menu_widget_t *widget)
 		}
 		break;
 	}
-
+	//sem_post(&m_sem_widgets);
 }
 
 static void menu_from_file(menu_screen_t *menu)
@@ -2012,7 +2021,9 @@ static void menu_from_file(menu_screen_t *menu)
 						}
 						else
 						{
-							widget_complete(widget);
+							//sem_post(&m_sem_widgets);
+							widget_complete(widget); // semaphore handled internally here
+							//sem_wait(&m_sem_widgets); // jitmultithreading
 							widget = widget->next = M_GetNewBlankMenuWidget();
 						}
 						widget->y = y;
@@ -2134,7 +2145,11 @@ static void menu_from_file(menu_screen_t *menu)
 				}
 
 				if(widget)
-					widget_complete(widget);
+				{
+					//sem_post(&m_sem_widgets);
+					widget_complete(widget); // semaphore handled internally here.
+					//sem_wait(&m_sem_widgets); // jitmultithreading
+				}
 			}
 			else
 				M_ErrorMenu(menu, "Invalid menu version.");
@@ -2188,10 +2203,10 @@ static void reload_menu_screen(menu_screen_t *menu)
 	if(!menu)
 		return;
 
-	sem_wait(&m_sem_widgets); // jitmultithreading
+	//sem_wait(&m_sem_widgets); // jitmultithreading
 	menu->widget = free_widgets(menu->widget);
 	menu_from_file(menu); // reload data from file
-	sem_post(&m_sem_widgets);
+	//sem_post(&m_sem_widgets);
 }
 
 // flag widget and all of its children as modified
@@ -2215,7 +2230,7 @@ static void refresh_menu_screen(menu_screen_t *menu)
 	if(!menu)
 		return;
 
-	sem_wait(&m_sem_widgets); // jitmultithreading
+	//sem_wait(&m_sem_widgets); // jitmultithreading
 	widget = menu->widget;
 
 	while(widget)
@@ -2223,13 +2238,15 @@ static void refresh_menu_screen(menu_screen_t *menu)
 		refresh_menu_widget(widget);
 		widget = widget->next;
 	}
-	sem_post(&m_sem_widgets);
+	//sem_post(&m_sem_widgets);
 }
 
 // Flag all widgets as modified so they update
 void M_RefreshMenu (void)
 {
 	menu_screen_t *menu;
+
+	sem_wait(&m_sem_widgets); // jitmultithreading
 
 	menu = root_menu;
 
@@ -2238,6 +2255,8 @@ void M_RefreshMenu (void)
 		refresh_menu_screen(menu);
 		menu = menu->next;
 	}
+
+	sem_post(&m_sem_widgets);
 }
 
 void M_RefreshWidget (const char *name)
@@ -2252,20 +2271,27 @@ void M_RefreshWidget (const char *name)
 
 void M_RefreshActiveMenu (void)
 {
+	sem_wait(&m_sem_widgets); // jitmultithreading
 	if(m_menudepth)
 		refresh_menu_screen(m_menu_screens[m_menudepth-1]);
+	sem_post(&m_sem_widgets);
 }
 
 // Load menu scripts back from disk
 void M_ReloadMenu (void)
 {
-	menu_screen_t *menu = root_menu;
+	menu_screen_t *menu;
+	
+	sem_wait(&m_sem_widgets); // jitmultithreading
+	menu = root_menu;
 
 	while(menu)
 	{
 		reload_menu_screen(menu);
 		menu = menu->next;
 	}
+
+	sem_post(&m_sem_widgets);
 }
 
 
@@ -2281,6 +2307,8 @@ void M_Menu_f (void)
 		menuname = Cmd_Argv(2);
 		samelevel = true;
 	}
+
+	sem_wait(&m_sem_widgets); // jitmultithreading
 
 	if(Q_streq(menuname, "pop") || Q_streq(menuname, "back"))
 		M_PopMenu();
@@ -2302,6 +2330,8 @@ void M_Menu_f (void)
 
 		M_PushMenuScreen(menu, samelevel);
 	}
+
+	sem_post(&m_sem_widgets);
 }
 
 

@@ -68,8 +68,8 @@ LINK32=link.exe
 # PROP BASE Target_Dir "."
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "..\debug"
-# PROP Intermediate_Dir ".\debug"
+# PROP Output_Dir "..\..\debug\ref_gl"
+# PROP Intermediate_Dir "..\..\debug\ref_gl"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir "."
 CPP=cl.exe
@@ -86,7 +86,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winmm.lib libjpeg.lib glu32.lib /nologo /subsystem:windows /dll /profile /map /debug /machine:I386 /nodefaultlib:"LIBCMT" /out:"c:\quake2\ref_pbgl.dll"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winmm.lib libjpeg.lib glu32.lib /nologo /subsystem:windows /dll /profile /map /debug /machine:I386 /nodefaultlib:"LIBCMT" /out:"../../ref_pbgl.dll"
 
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
@@ -188,13 +188,13 @@ SOURCE=.\gl_draw.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_GL_DR=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_DR=\
 	".\L\gl.h"\
@@ -204,13 +204,13 @@ NODEP_CPP_GL_DR=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_GL_DR=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_DR=\
 	".\L\gl.h"\
@@ -231,13 +231,13 @@ SOURCE=.\gl_image.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_GL_IM=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_IM=\
 	".\L\gl.h"\
@@ -247,13 +247,13 @@ NODEP_CPP_GL_IM=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_GL_IM=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_IM=\
 	".\L\gl.h"\
@@ -274,13 +274,13 @@ SOURCE=.\gl_light.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_GL_LI=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_LI=\
 	".\L\gl.h"\
@@ -290,13 +290,13 @@ NODEP_CPP_GL_LI=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_GL_LI=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_LI=\
 	".\L\gl.h"\
@@ -317,15 +317,15 @@ SOURCE=.\gl_mesh.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_GL_ME=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\anorms.h"\
 	".\anormtab.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_ME=\
 	".\L\gl.h"\
@@ -335,15 +335,15 @@ NODEP_CPP_GL_ME=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_GL_ME=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\anorms.h"\
 	".\anormtab.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_ME=\
 	".\L\gl.h"\
@@ -364,13 +364,13 @@ SOURCE=.\gl_model.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_GL_MO=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_MO=\
 	".\L\gl.h"\
@@ -380,13 +380,13 @@ NODEP_CPP_GL_MO=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_GL_MO=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_MO=\
 	".\L\gl.h"\
@@ -407,13 +407,13 @@ SOURCE=.\gl_rmain.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_GL_RM=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_RM=\
 	".\L\gl.h"\
@@ -423,13 +423,13 @@ NODEP_CPP_GL_RM=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_GL_RM=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_RM=\
 	".\L\gl.h"\
@@ -450,13 +450,13 @@ SOURCE=.\gl_rmisc.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_GL_RMI=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_RMI=\
 	".\L\gl.h"\
@@ -466,13 +466,13 @@ NODEP_CPP_GL_RMI=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_GL_RMI=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_RMI=\
 	".\L\gl.h"\
@@ -493,13 +493,13 @@ SOURCE=.\gl_rsurf.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_GL_RS=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_RS=\
 	".\L\gl.h"\
@@ -509,13 +509,13 @@ NODEP_CPP_GL_RS=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_GL_RS=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_RS=\
 	".\L\gl.h"\
@@ -551,14 +551,14 @@ SOURCE=.\gl_warp.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_GL_WA=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
 	".\warpsin.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_WA=\
 	".\L\gl.h"\
@@ -568,14 +568,14 @@ NODEP_CPP_GL_WA=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_GL_WA=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
 	".\warpsin.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
 	
 NODEP_CPP_GL_WA=\
 	".\L\gl.h"\
@@ -596,15 +596,15 @@ SOURCE=..\win32\glw_imp.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_GLW_I=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
-	"..\win32\glw_win.h"\
-	"..\win32\winquake.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
+	"\projects\paintball2\paintball2\win32\glw_win.h"\
+	"\projects\paintball2\paintball2\win32\winquake.h"\
 	
 NODEP_CPP_GLW_I=\
 	".\L\gl.h"\
@@ -614,15 +614,15 @@ NODEP_CPP_GLW_I=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_GLW_I=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
-	"..\win32\glw_win.h"\
-	"..\win32\winquake.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
+	"\projects\paintball2\paintball2\win32\glw_win.h"\
+	"\projects\paintball2\paintball2\win32\winquake.h"\
 	
 NODEP_CPP_GLW_I=\
 	".\L\gl.h"\
@@ -643,13 +643,13 @@ SOURCE=..\game\q_shared.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_Q_SHA=\
-	"..\game\q_shared.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
 	
 
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_Q_SHA=\
-	"..\game\q_shared.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
 	
 
 !ENDIF 
@@ -666,19 +666,19 @@ SOURCE=..\win32\q_shwin.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_Q_SHW=\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
-	"..\win32\winquake.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
+	"\projects\paintball2\paintball2\win32\winquake.h"\
 	
 
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_Q_SHW=\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
-	"..\win32\winquake.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
+	"\projects\paintball2\paintball2\win32\winquake.h"\
 	
 
 !ENDIF 
@@ -695,14 +695,14 @@ SOURCE=..\win32\qgl_win.c
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Debug Alpha"
 
 DEP_CPP_QGL_W=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
-	"..\win32\glw_win.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
+	"\projects\paintball2\paintball2\win32\glw_win.h"\
 	
 NODEP_CPP_QGL_W=\
 	".\L\gl.h"\
@@ -712,14 +712,14 @@ NODEP_CPP_QGL_W=\
 !ELSEIF  "$(CFG)" == "ref_gl - Win32 Release Alpha"
 
 DEP_CPP_QGL_W=\
-	"..\client\ref.h"\
-	"..\game\q_shared.h"\
-	"..\qcommon\qcommon.h"\
-	"..\qcommon\qfiles.h"\
-	"..\win32\glw_win.h"\
 	".\gl_local.h"\
 	".\gl_model.h"\
 	".\qgl.h"\
+	"\projects\paintball2\paintball2\client\ref.h"\
+	"\projects\paintball2\paintball2\game\q_shared.h"\
+	"\projects\paintball2\paintball2\qcommon\qcommon.h"\
+	"\projects\paintball2\paintball2\qcommon\qfiles.h"\
+	"\projects\paintball2\paintball2\win32\glw_win.h"\
 	
 NODEP_CPP_QGL_W=\
 	".\L\gl.h"\
@@ -733,6 +733,30 @@ NODEP_CPP_QGL_W=\
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl;fi;fd"
+# Begin Group "3dfx"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\3dfx.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\glide.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\glidesys.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\glideutl.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sst1vid.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\anorms.h
@@ -740,6 +764,10 @@ SOURCE=.\anorms.h
 # Begin Source File
 
 SOURCE=.\anormtab.h
+# End Source File
+# Begin Source File
+
+SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Include\BASETSD.H"
 # End Source File
 # Begin Source File
 
@@ -764,6 +792,14 @@ SOURCE=.\glext.h
 # Begin Source File
 
 SOURCE=..\win32\glw_win.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\jconfig.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\jmorecfg.h
 # End Source File
 # Begin Source File
 

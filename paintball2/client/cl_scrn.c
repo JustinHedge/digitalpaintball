@@ -1368,6 +1368,7 @@ void SCR_UpdateScreen (void)
 			cls.disable_screen = 0;
 			Com_Printf ("Loading plaque timed out.\n");
 		}
+
 		return;
 	}
 
@@ -1387,6 +1388,7 @@ void SCR_UpdateScreen (void)
 			Cvar_SetValue("m_pitch", -fabs(m_pitch->value));
 		else
 			Cvar_SetValue("m_pitch", fabs(m_pitch->value));
+
 		m_invert->modified = false;
 		m_pitch->modified = false;
 	}

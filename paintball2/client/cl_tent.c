@@ -751,7 +751,6 @@ void CL_ParseTEnt (void)
 			ex->ent.scale = ex->ent.startscale = (0.7 + frand()*0.6);
 			ex->frames = 1; // doesn't matter
 			ex->ent.model = cl_mod_splat;
-			//todo;
 		}
 		// jit
 		// ===
@@ -784,7 +783,6 @@ void CL_ParseTEnt (void)
 			ex->ent.accel[1] = 0.0f - ex->ent.vel[1]*0.16f;
 			ex->frames = 1;
 			ex->ent.model = cl_mod_smoke;
-			//todo;
 		}
 
 		break;
@@ -1409,6 +1407,7 @@ void CL_AddExplosions (void) // jitsmoke
 	entity_t	*ent;
 	float		time;
 	int			i;
+	int			j;
 
 	for (i=0, ex=cl_explosions; i < MAX_EXPLOSIONS; i++, ex++)
 	{
@@ -1426,9 +1425,10 @@ void CL_AddExplosions (void) // jitsmoke
 			{
 				ent->alpha = 1.0f + time*ent->alphavel;
 				ent->scale = ent->startscale + time*ent->scalevel;
-				//todo;
-				for (i=0; i<3; i++)
-					ent->origin[i] = ent->startorigin[i] + time*ent->vel[i] + time*time*ent->accel[i];
+
+				for (j=0; j<3; j++)
+					ent->origin[j] = ent->startorigin[j] + time*ent->vel[j] + time*time*ent->accel[j];
+
 				VectorCopy(ent->origin, ent->oldorigin);
 			}
 

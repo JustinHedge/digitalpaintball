@@ -334,7 +334,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 			cl_scores_clear(index_array[2]);
 			cl_scores_setinuse(index_array[2], true);
 			if (num_elements > 3)
-				cl_scores_setteam(index_array[2], index_array[3]);
+				cl_scores_setteam(index_array[2], (char)index_array[3]);
 			if (num_elements > 4)
 				cl_scores_setstarttime(index_array[2], index_array[4]);
 		}
@@ -345,7 +345,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		break;
 	case EVENT_JOIN:
 		if (num_elements > 3)
-			cl_scores_setteam(index_array[2], index_array[3]);
+			cl_scores_setteam(index_array[2], (char)index_array[3]);
 		break;
 	case EVENT_ROUNDOVER:
 		event_print(event_text);

@@ -214,35 +214,16 @@ void Sys_Init (void)
 {
 	OSVERSIONINFO	vinfo;
 
-#if 0
-	// allocate a named semaphore on the client so the
-	// front end can tell if it is alive
-
-	// mutex will fail if semephore already exists
-    qwclsemaphore = CreateMutex(
-        NULL,         /* Security attributes */
-        0,            /* owner       */
-        "qwcl"); /* Semaphore name      */
-	if (!qwclsemaphore)
-		Sys_Error ("QWCL is already running on this system");
-	CloseHandle (qwclsemaphore);
-
-    qwclsemaphore = CreateSemaphore(
-        NULL,         /* Security attributes */
-        0,            /* Initial count       */
-        1,            /* Maximum count       */
-        "qwcl"); /* Semaphore name      */
-#endif
-
-	timeBeginPeriod( 1 );
+	timeBeginPeriod(1);
 
 	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
 
-	if (!GetVersionEx (&vinfo))
+	if (!GetVersionEx(&vinfo))
 		Sys_Error ("Couldn't get OS info");
 
 	if (vinfo.dwMajorVersion < 4)
 		Sys_Error ("Paintball2 requires windows version 4 or greater");
+
 	if (vinfo.dwPlatformId == VER_PLATFORM_WIN32s)
 		Sys_Error ("Paintball2 doesn't run on Win32s");
 	else if ( vinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS )
@@ -252,6 +233,7 @@ void Sys_Init (void)
 	{
 		if (!AllocConsole ())
 			Sys_Error ("Couldn't create dedicated server console");
+
 		hinput = GetStdHandle (STD_INPUT_HANDLE);
 		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
 	

@@ -407,7 +407,6 @@ Draw_StretchPic
 =============
 */
 void RS_SetTexcoords2D (rs_stage_t *stage, float *os, float *ot); // jit
-#define USEQUADS
 void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 {
 	rscript_t *rs;
@@ -423,7 +422,9 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 	if (scrap_dirty)
 		Scrap_Upload ();
 
-	if ( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) && !gl->has_alpha) {
+	if (((gl_config.renderer == GL_RENDERER_MCD) ||
+		(gl_config.renderer & GL_RENDERER_RENDITION)) && !gl->has_alpha)
+	{
 		GLSTATE_DISABLE_ALPHATEST
 	}
 
@@ -439,11 +440,10 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 		GLSTATE_DISABLE_ALPHATEST // jitodo (see above)
 		GLSTATE_ENABLE_BLEND // jitodo (see above)
 		qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-
 		GL_Bind(gl->texnum);
-#ifdef USEQUADS
+
 		qglBegin(GL_QUADS);
+
 		qglTexCoord2f(gl->sl, gl->tl);
 		qglVertex2f(x, y);
 		qglTexCoord2f(gl->sh, gl->tl);
@@ -452,26 +452,8 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 		qglVertex2f(x+w, y+h);
 		qglTexCoord2f(gl->sl, gl->th);
 		qglVertex2f(x, y+h);
+
 		qglEnd();
-#else
-		qglBegin(GL_TRIANGLES);
-		qglTexCoord2f(gl->sl, gl->tl);
-		qglVertex2f(x, y);
-		qglTexCoord2f(gl->sh, gl->tl);
-		qglVertex2f(x+w, y);
-		qglTexCoord2f(gl->sh, gl->th);
-		qglVertex2f(x+w, y+h);
-
-		qglTexCoord2f(gl->sh, gl->th);
-		qglVertex2f(x+w, y+h);
-		qglTexCoord2f(gl->sl, gl->th);
-		qglVertex2f(x, y+h);
-		qglTexCoord2f(gl->sl, gl->tl);
-		qglVertex2f(x, y);
-		qglEnd();
-#endif
-
-
 	}
 	else
 	{
@@ -586,7 +568,6 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 				GLSTATE_DISABLE_ALPHATEST
 			}
 
-#ifdef USEQUADS
 			qglBegin(GL_QUADS);
 
 			s = stage_pic->sl;//0.0f;//gl->sl; //
@@ -594,16 +575,19 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 			RS_SetTexcoords2D(stage, &s, &t);
 			qglTexCoord2f(s+txm, t+tym);
 			qglVertex2f(x, y);
+
 			s = stage_pic->sh;//1.0f;//gl->sh; //
 			t = stage_pic->tl;//0.0f;//gl->tl;//
 			RS_SetTexcoords2D(stage, &s, &t);
 			qglTexCoord2f(s+txm, t+tym);
 			qglVertex2f(x+w, y);
+
 			s = stage_pic->sh;//1.0f;//gl->sh;//
 			t = stage_pic->th;//1.0f;//gl->th;//
 			RS_SetTexcoords2D(stage, &s, &t);
 			qglTexCoord2f(s+txm, t+tym);
 			qglVertex2f(x+w, y+h);
+
 			s = stage_pic->sl;//0.0f;//gl->sl;//
 			t = stage_pic->th;//1.0f;//gl->th;//
 			RS_SetTexcoords2D(stage, &s, &t);
@@ -611,43 +595,6 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 			qglVertex2f(x, y+h);
 
 			qglEnd();
-#else // testing to see if tri's are faster on ati's drivers
-			qglBegin(GL_TRIANGLES);
-
-			s = stage_pic->sl;//0.0f;//gl->sl; //
-			t = stage_pic->tl;//0.0f;//gl->tl; //
-			RS_SetTexcoords2D(stage, &s, &t);
-			qglTexCoord2f(s+txm, t+tym);
-			qglVertex2f(x, y);
-			s = stage_pic->sh;//1.0f;//gl->sh; //
-			t = stage_pic->tl;//0.0f;//gl->tl;//
-			RS_SetTexcoords2D(stage, &s, &t);
-			qglTexCoord2f(s+txm, t+tym);
-			qglVertex2f(x+w, y);
-			s = stage_pic->sh;//1.0f;//gl->sh;//
-			t = stage_pic->th;//1.0f;//gl->th;//
-			RS_SetTexcoords2D(stage, &s, &t);
-			qglTexCoord2f(s+txm, t+tym);
-			qglVertex2f(x+w, y+h);
-
-			s = stage_pic->sh;//1.0f;//gl->sh;//
-			t = stage_pic->th;//1.0f;//gl->th;//
-			RS_SetTexcoords2D(stage, &s, &t);
-			qglTexCoord2f(s+txm, t+tym);
-			qglVertex2f(x+w, y+h);
-			s = stage_pic->sl;//0.0f;//gl->sl;//
-			t = stage_pic->th;//1.0f;//gl->th;//
-			RS_SetTexcoords2D(stage, &s, &t);
-			qglTexCoord2f(s+txm, t+tym);
-			qglVertex2f(x, y+h);
-			s = stage_pic->sl;//0.0f;//gl->sl; //
-			t = stage_pic->tl;//0.0f;//gl->tl; //
-			RS_SetTexcoords2D(stage, &s, &t);
-			qglTexCoord2f(s+txm, t+tym);
-			qglVertex2f(x, y);
-
-			qglEnd();
-#endif
 
 			//jit qglColor4f(1,1,1,1);
 			//jit qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -724,34 +671,13 @@ void Draw_TileClear2 (int x, int y, int w, int h, image_t *image)
 		return;
 	}
 
-	if ( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) )  && !image->has_alpha) {
+	if (((gl_config.renderer == GL_RENDERER_MCD) ||
+		(gl_config.renderer & GL_RENDERER_RENDITION)) && !image->has_alpha)
+	{
 		GLSTATE_DISABLE_ALPHATEST
 	}
 
-	GL_Bind (image->texnum);
-
-#ifdef BEEFQUAKERENDER // jit3dfx
-	VA_SetElem2(tex_array[0],x*0.015625, y*0.015625);
-	VA_SetElem2(vert_array[0],x, y);
-	VA_SetElem2(tex_array[1],(x+w)*0.015625, y*0.015625);
-	VA_SetElem2(vert_array[1],x+w, y);
-	VA_SetElem2(tex_array[2],(x+w)*0.015625, (y+h)*0.015625);
-	VA_SetElem2(vert_array[2],x+w, y+h);
-	VA_SetElem2(tex_array[3],x*0.015625, (y+h)*0.015625);
-	VA_SetElem2(vert_array[3],x, y+h);
-
-	qglDrawArrays(GL_QUADS,0,4);
-#else
-	//qglBegin (GL_QUADS);
-	//qglTexCoord2f (x/64.0, y/64.0);
-	//qglVertex2f (x, y);
-	//qglTexCoord2f ( (x+w)/64.0, y/64.0);
-	//qglVertex2f (x+w, y);
-	//qglTexCoord2f ( (x+w)/64.0, (y+h)/64.0);
-	//qglVertex2f (x+w, y+h);
-	//qglTexCoord2f ( x/64.0, (y+h)/64.0 );
-	//qglVertex2f (x, y+h);
-	//qglEnd ();
+	GL_Bind(image->texnum);
 
 	qglBegin(GL_QUADS);
 	qglTexCoord2f(x/256.0f, y/128.0f); // jit -- new pic dimensions
@@ -763,9 +689,10 @@ void Draw_TileClear2 (int x, int y, int w, int h, image_t *image)
 	qglTexCoord2f(x/256.0f, (y+h)/128.0f);
 	qglVertex2f(x, y+h);
 	qglEnd();
-#endif
 
-	if ( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) )  && !image->has_alpha) {
+	if (((gl_config.renderer == GL_RENDERER_MCD) ||
+		(gl_config.renderer & GL_RENDERER_RENDITION)) && !image->has_alpha)
+	{
 		GLSTATE_ENABLE_ALPHATEST
 	}
 }
@@ -774,12 +701,14 @@ void Draw_TileClear (int x, int y, int w, int h, char *pic)
 {
 	image_t	*image;
 
-	image = Draw_FindPic (pic);
+	image = Draw_FindPic(pic);
+
 	if (!image)
 	{
-		ri.Con_Printf (PRINT_ALL, "Can't find pic: %s\n", pic);
+		ri.Con_Printf(PRINT_ALL, "Can't find pic: %s\n", pic);
 		return;
 	}
+
 	Draw_TileClear2(x,y,w,h,image);
 }
 
@@ -791,25 +720,7 @@ Draw_Fill
 Fills a box of pixels with a single color
 =============
 */
-#ifdef BEEFQUAKERENDER // jit3dfx
-void Draw_Fill (int x, int y, int w, int h, int c)
-{
-	if ( (unsigned)c > 255)
-		ri.Sys_Error (ERR_FATAL, "Draw_Fill: bad color");
 
-	qglDisable (GL_TEXTURE_2D);
-	qglColor3f(d_8to24tablef[c][0],d_8to24tablef[c][1],d_8to24tablef[c][2]);
-
-	VA_SetElem2(vert_array[0],x,y);
-	VA_SetElem2(vert_array[1],x+w, y);
-	VA_SetElem2(vert_array[2],x+w, y+h);
-	VA_SetElem2(vert_array[3],x, y+h);
-	qglDrawArrays (GL_QUADS, 0, 4);
-
-	qglColor3f (1,1,1);
-	qglEnable (GL_TEXTURE_2D);
-}
-#else
 void Draw_Fill (int x, int y, int w, int h, int c)
 {
 	union
@@ -839,7 +750,6 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 	qglColor3f (1,1,1);
 	qglEnable (GL_TEXTURE_2D);
 }
-#endif
 
 //=============================================================================
 
@@ -924,7 +834,8 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 			}
 		}
 
-		qglTexImage2D (GL_TEXTURE_2D, 0, gl_tex_solid_format, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, image32);
+		qglTexImage2D(GL_TEXTURE_2D, 0, gl_tex_solid_format, 256,
+			256, 0, GL_RGBA, GL_UNSIGNED_BYTE, image32);
 	}
 	else
 	{
@@ -933,12 +844,15 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 		for (i=0 ; i<trows ; i++)
 		{
 			row = (int)(i*hscale);
+
 			if (row > rows)
 				break;
+
 			source = data + cols*row;
 			dest = &image8[i*256];
 			fracstep = cols*0x10000 *0.00390625; // /256;
 			frac = fracstep >> 1;
+
 			for (j=0 ; j<256 ; j++)
 			{
 				dest[j] = source[frac>>16];
@@ -959,22 +873,12 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	if ((gl_config.renderer == GL_RENDERER_MCD) || (gl_config.renderer & GL_RENDERER_RENDITION))
+	if ((gl_config.renderer == GL_RENDERER_MCD) ||
+		(gl_config.renderer & GL_RENDERER_RENDITION))
 	{
 		GLSTATE_DISABLE_ALPHATEST
 	}
 
-#ifdef BEEFQUAKERENDER // jit3dfx
-	VA_SetElem2(tex_array[0],0, 0);
-	VA_SetElem2(vert_array[0],x, y);
-	VA_SetElem2(tex_array[1],1, 0);
-	VA_SetElem2(vert_array[1],x+w, y);
-	VA_SetElem2(tex_array[2],1, t);
-	VA_SetElem2(vert_array[2],x+w, y+h);
-	VA_SetElem2(tex_array[3],0, t);
-	VA_SetElem2(vert_array[3],x, y+h);
-	qglDrawArrays(GL_QUADS, 0, 4);
-#else
 	qglBegin(GL_QUADS);
 	qglTexCoord2f(0, 0);
 	qglVertex2f(x, y);
@@ -985,9 +889,9 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 	qglTexCoord2f(0, t);
 	qglVertex2f(x, y+h);
 	qglEnd();
-#endif
 
-	if ((gl_config.renderer == GL_RENDERER_MCD) || (gl_config.renderer & GL_RENDERER_RENDITION))
+	if ((gl_config.renderer == GL_RENDERER_MCD) ||
+		(gl_config.renderer & GL_RENDERER_RENDITION))
 	{
 		GLSTATE_ENABLE_ALPHATEST
 	}
