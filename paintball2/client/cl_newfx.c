@@ -96,7 +96,7 @@ void CL_ColorFlash (vec3_t pos, int ent, int intensity, float r, float g, float 
 {
 	cdlight_t	*dl;
 
-	if((vidref_val == VIDREF_SOFT) && ((r < 0) || (g<0) || (b<0)))
+	if ((vidref_val == VIDREF_SOFT) && ((r < 0) || (g<0) || (b<0)))
 	{
 		intensity = -intensity;
 		r = -r;

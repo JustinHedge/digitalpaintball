@@ -385,7 +385,7 @@ void CIN_RunCinematic (void)
 {
 	int		frame;
 
-	if(!cin && !cin->cinematic_file)
+	if (!cin && !cin->cinematic_file)
 		return;
 
 	frame = (Sys_Milliseconds() - cin->time)*14.0*0.001;
@@ -479,7 +479,7 @@ void CIN_PlayCinematic(const char *arg)
 	cin->frame = 0;
 
 	size = ri.FS_LoadFile(arg, (void **)&cin->cinematic_file);
-	if(size == -1)
+	if (size == -1)
 	{
 		ri.Sys_Error (ERR_DROP, "Cinematic %s not found.\n", arg);
 		cin->time = 0; // done
@@ -497,7 +497,7 @@ void CIN_PlayCinematic(const char *arg)
 	for( cin->p2_width = 2 ; cin->p2_width <= cin->width ; cin->p2_width <<= 1 );
 	cin->p2_width >>= 1;
 
-	if(cin->p2_width >= MAX_SCALE_SIZE)
+	if (cin->p2_width >= MAX_SCALE_SIZE)
 	{
 		cin->p2_width = MAX_SCALE_SIZE;
 	}
@@ -505,7 +505,7 @@ void CIN_PlayCinematic(const char *arg)
 	for( cin->p2_height = 2 ; cin->p2_height <= cin->height ; cin->p2_height <<= 1 );
 	cin->p2_height >>= 1;
 
-	if(cin->p2_height >= MAX_SCALE_SIZE)
+	if (cin->p2_height >= MAX_SCALE_SIZE)
 	{
 		cin->p2_height = MAX_SCALE_SIZE;
 	}
@@ -545,7 +545,7 @@ cinematics_t *CIN_OpenCin(const char *name)
 
 	for(i=0; i<8; i++)
 	{
-		if(cinpool[i].texnum)
+		if (cinpool[i].texnum)
 			continue;
 
 		cin = &cinpool[i];
@@ -563,7 +563,7 @@ void CIN_ProcessCins (void)
 
 	for(i=0; i<8; i++)
 	{
-		if(cinpool[i].texnum)
+		if (cinpool[i].texnum)
 		{
 			cin = &cinpool[i];
 
@@ -578,7 +578,7 @@ void CIN_FreeCin (int texnum)
 
 	for(i=0; i<8; i++)
 	{
-		if(cinpool[i].texnum == texnum)
+		if (cinpool[i].texnum == texnum)
 		{
 			cin = &cinpool[i];
 			CIN_StopCinematic();

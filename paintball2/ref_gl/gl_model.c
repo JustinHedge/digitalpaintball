@@ -474,7 +474,7 @@ void Mod_LoadTexinfo (lump_t *l)
 	static int easter_egg = -1;
 
 
-	if(easter_egg == -1)
+	if (easter_egg == -1)
 	{
 		char *atm;
 		time_t temptime;
@@ -482,7 +482,7 @@ void Mod_LoadTexinfo (lump_t *l)
 		atm = asctime(localtime(&temptime));
 		easter_egg = (int)strstr(atm, "Apr 01");
 		
-		if(easter_egg)
+		if (easter_egg)
 		{
 			srand(temptime);
 			//easter_egg = rand() & 1; // 50% chance it happens :)
@@ -520,7 +520,7 @@ void Mod_LoadTexinfo (lump_t *l)
 			RS_ReadyScript((rscript_t *)out->script);
 		}
 		Com_sprintf (name, sizeof(name), "textures/%s.wal", in->texture);
-		if(easter_egg) // jit :D April fools!
+		if (easter_egg) // jit :D April fools!
 			Com_sprintf (name, sizeof(name), "textures/pball/banana.wal");
 		out->image = GL_FindImage (name, it_wall);
 
@@ -687,14 +687,14 @@ void Mod_LoadFaces (lump_t *l)
 // Heffo - Surface Subdivision
 		if (! (out->texinfo->flags & SURF_WARP) )
 		{
-			if(!out->texinfo->script)
+			if (!out->texinfo->script)
 			{
 				GL_BuildPolygonFromSurface(out);
 			}
 			else
 			{
 				rscript_t *rs = (rscript_t *)out->texinfo->script;
-				if(rs->subdivide)
+				if (rs->subdivide)
 				{
 					GL_SubdivideLightmappedSurface(out, rs->subdivide);
 				}
@@ -1213,9 +1213,9 @@ void R_UpdateLightmapGammaTable() // jitgamma
 	int i;
 	float g;
 
-	if(gl_lightmapgamma->value < 0.45f)
+	if (gl_lightmapgamma->value < 0.45f)
 		ri.Cvar_Set("gl_lightmapgamma", ".45");
-	if(gl_lightmapgamma->value > 2.0f)
+	if (gl_lightmapgamma->value > 2.0f)
 		ri.Cvar_Set("gl_lightmapgamma", "2");
 
 	g = gl_lightmapgamma->value;
@@ -1244,13 +1244,13 @@ void R_BeginRegistration (char *model)
 	fogenabled = false; // jitfog
 	// ===
 	// jitanisotropy (make sure nobody goes out of bounds)
-	if(gl_anisotropy->value < 0)
+	if (gl_anisotropy->value < 0)
 		ri.Cvar_Set("gl_anisotropy", "0");
-	if(gl_anisotropy->value > gl_state.max_anisotropy)
+	if (gl_anisotropy->value > gl_state.max_anisotropy)
 		ri.Cvar_SetValue("gl_anisotropy", gl_state.max_anisotropy);
 	// ===
 
-	if(gl_texture_saturation->value > 1 || gl_texture_saturation->value < 0)
+	if (gl_texture_saturation->value > 1 || gl_texture_saturation->value < 0)
 		ri.Cvar_Set("gl_texture_saturation", "1"); // jitsaturation
 	R_UpdateLightmapGammaTable(); // jitgamma
 
@@ -1337,7 +1337,7 @@ void R_EndRegistration (void)
 	}
 
 	RS_UpdateRegistration();
-	if(gl_free_unused_textures->value) // jitfreeunused
+	if (gl_free_unused_textures->value) // jitfreeunused
 		GL_FreeUnusedImages ();
 }
 

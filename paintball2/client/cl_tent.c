@@ -677,7 +677,7 @@ void CL_ParseTEnt (void)
 
 		// ===
 		// jit -- paint stains / paint gren splats
-		if(color>63 && color<80) {
+		if (color>63 && color<80) {
 			// red
 			texnum = 0;
 			rgbcolour[0] = 1.0f;
@@ -705,7 +705,7 @@ void CL_ParseTEnt (void)
 		
 		V_AddStain(pos, rgbcolour, cnt/3); // stain size depends on cnt
 		
-		if(cnt != 16) // grenade splatter
+		if (cnt != 16) // grenade splatter
 		{
 			cnt = rand()&7; // don't do it for every splatter!
 

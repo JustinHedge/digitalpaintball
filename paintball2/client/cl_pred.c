@@ -253,7 +253,7 @@ void CL_PredictMovement (void)
 	frame = 0;
 
 	//if(ack >= current-1) // jitnetfps -- jitodo interpolate between sent frames
-	if(ack+1 >= current) // jitnetfps -- jitodo interpolate between sent frames
+	if (ack+1 >= current) // jitnetfps -- jitodo interpolate between sent frames
 	{
 //		//frame = ack & (CMD_BACKUP-1);
 //		//cmd = &cl.cmds[frame];

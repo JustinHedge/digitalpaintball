@@ -204,7 +204,7 @@ void cl_scores_setisalive_all (qboolean alive)
 	int i;
 
 	for (i=0; i<MAX_CLIENTS; i++)
-		if(cl_scores[i].inuse)
+		if (cl_scores[i].inuse)
 			cl_scores[i].isalive = alive;
 
 	cl_scores_modified = true;
@@ -216,7 +216,7 @@ void cl_scores_sethasflag_all (qboolean hasflag)
 	int i;
 
 	for (i=0; i<MAX_CLIENTS; i++)
-		if(cl_scores[i].inuse)
+		if (cl_scores[i].inuse)
 			cl_scores[i].hasflag = hasflag;
 
 	cl_scores_modified = true;
@@ -327,9 +327,9 @@ int strpos_noformat (const unsigned char *in_str, int pos)
 
 	while(*s)
 	{
-		if(*(s+1) && (*s == CHAR_UNDERLINE || *s == CHAR_ENDFORMAT || *s == CHAR_ITALICS))
+		if (*(s+1) && (*s == CHAR_UNDERLINE || *s == CHAR_ENDFORMAT || *s == CHAR_ITALICS))
 			{ } // don't count character
-		else if(*(s+1) && *s == CHAR_COLOR)
+		else if (*(s+1) && *s == CHAR_COLOR)
 			s++; // skip two characters.
 		else
 			count++;

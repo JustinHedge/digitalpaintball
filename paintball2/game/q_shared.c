@@ -1609,7 +1609,7 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 		c = *v++;
 		// jittext c &= 127;		// strip high bits
 		//if (c >= 32 && c < 127)
-		if(c >= 32) // jittext
+		if (c >= 32) // jittext
 			*s++ = c;
 	}
 	*s = 0;
@@ -1629,7 +1629,7 @@ void hash_table_init(hash_table_t *table, unsigned int sizemask, void *free_func
 
 static void hash_node_free(hash_node_t *node, hash_table_t *table)
 {
-	if(table->free_func)
+	if (table->free_func)
 		table->free_func(node->data);
 
 	//Z_Free(node->key);
@@ -1640,7 +1640,7 @@ static void hash_node_free(hash_node_t *node, hash_table_t *table)
 
 static void hash_node_free_recursive(hash_node_t *node, hash_table_t *table)
 {
-	if(node)
+	if (node)
 	{
 		hash_node_free_recursive(node->next, table);
 		hash_node_free(node, table);
@@ -1753,7 +1753,7 @@ void hash_add(hash_table_t *table, const unsigned char *key, void *data)
 	newnode->data = data;
 
 #if 0 // jittest
-	if(table->table[hashval])
+	if (table->table[hashval])
 	{
 		static int hash_collisions=0;
 
@@ -1783,7 +1783,7 @@ void *hash_get(hash_table_t *table, const unsigned char *key)
 	node = table->table[hashval];
 	while(node)
 	{
-		if(Q_streq(node->key, key))
+		if (Q_streq(node->key, key))
 			return node->data;
 		else
 			node = node->next; // in case there were collisions
@@ -1807,9 +1807,9 @@ void hash_delete(hash_table_t *table, const unsigned char *key)
 	prevnode = node = table->table[hashval];
 	while(node)
 	{
-		if(Q_streq(node->key, key))
+		if (Q_streq(node->key, key))
 		{
-			if(prevnode == node)
+			if (prevnode == node)
 				table->table[hashval] = node->next;
 			else
 				prevnode->next = node->next;

@@ -278,8 +278,15 @@ void CL_AddViewLocs (void)
 
 void CL_LocHelp_f (void)
 {
-    //  Xile simple help cmd for reference
-	Com_Printf("Loc Commands\n-----------\nloc_add <label/description>\n");
-	Com_Printf("loc_del\nloc_save\ncl_drawlocs\n$loc_here\n$lock_there\n-----------");
-	return;
+    // Xile/jitspoe - simple help cmd for reference
+	Com_Printf(
+		"Loc Commands\n"
+		"-----------\n"
+		"loc_add <label/description>\n"
+		"loc_del\n"
+		"loc_save\n"
+		"cl_drawlocs\n"
+		"say_team $loc_here\n"
+		"say_team $loc_there\n"
+		"-----------\n");
 }

@@ -173,7 +173,7 @@ void CL_CatCvar_f (void) // jitconfig
 		return;
 	}
 
-	if(Cmd_Argc() < 3) // add a space
+	if (Cmd_Argc() < 3) // add a space
 		Cvar_Set(Cmd_Argv(1), va("%s ", var->string));
 	else
 		Cvar_Set(Cmd_Argv(1), va("%s%s", var->string, Cmd_Argv(2)));
@@ -527,7 +527,7 @@ void CL_SendConnectPacket (void)
 	// ===
 	// jitdownload -- if we're connecting to a different server,
 	// clear the record of failed download attempts
-	if(!Q_streq(cls.servername, lastservername))
+	if (!Q_streq(cls.servername, lastservername))
 	{
 		strcpy(lastservername, cls.servername);
 		clearfaileddownloads();
@@ -1429,7 +1429,7 @@ void CL_RequestNextDownload (void)
 					// jitodo, strip fog code out of sky
 					if (!CL_CheckOrDownloadFile(fn))
 						return; // started a download
-					if(temp) // jitfog
+					if (temp) // jitfog
 						*temp=' ';
 				}
 			}
@@ -1488,14 +1488,14 @@ void CL_RequestNextDownload (void)
 		char *token;
 		static char *s = NULL;
 
-		if(!s)
+		if (!s)
 			s = cl.configstrings[CS_REQUIREDFILES];
 
 		token = COM_Parse(&s);
 
-		if(token && *token)
+		if (token && *token)
 		{
-			if(!CL_CheckOrDownloadFile(token))
+			if (!CL_CheckOrDownloadFile(token))
 				return; // started download
 		}
 		else
@@ -1618,7 +1618,7 @@ void CL_InitLocal (void)
 	cl_timestamp =		Cvar_Get("cl_timestamp","0",CVAR_ARCHIVE); // jit
 
 	cl_hudscale =		Cvar_Get("cl_hudscale","1",CVAR_ARCHIVE); // jithudscale
-	if(cl_hudscale->value < 1.0)
+	if (cl_hudscale->value < 1.0)
 		Cvar_Set("cl_hudscale","1");
 	hudscale = cl_hudscale->value;
 
@@ -1896,7 +1896,7 @@ void CL_RequestNextDownload2(); // jitdownload
 void CL_SendCommand (void)
 {
 #ifdef USE_DOWNLOAD2
-	if(cls.download2active && cls.download) // jitdownload
+	if (cls.download2active && cls.download) // jitdownload
 		CL_RequestNextDownload2(); // flood some download requests.
 #endif
 	// get new key events
@@ -1944,13 +1944,13 @@ void CL_Frame (int msec)
 		if (cl_locknetfps->value && cls.state == ca_connected && extratime < 100)
 			return;			// don't flood packets out while connecting
 
-		if(cl_maxfps->value) // jitnetfps
+		if (cl_maxfps->value) // jitnetfps
 		{
 			if (extratime < 1000/cl_maxfps->value)
 				return;			// framerate is too high
 		}
 
-		if(cl_locknetfps->value) // jitnetfps
+		if (cl_locknetfps->value) // jitnetfps
 		{
 			if (extratime < 1000/cl_cmdrate->value)
 			{
@@ -1998,9 +1998,9 @@ void CL_Frame (int msec)
 
 	// ===
 	// jitnetfps
-	if(cl_cmdrate->value > 80)
+	if (cl_cmdrate->value > 80)
 		Cvar_Set("cl_cmdrate", "80");
-	if(cl_cmdrate->value < 5)
+	if (cl_cmdrate->value < 5)
 		Cvar_Set("cl_cmdrate", "5");
 
 	/*if(cl_locknetfps->value)
@@ -2011,7 +2011,7 @@ void CL_Frame (int msec)
 	//else
 	//{
 	//	// send a new command message to the server
-	//	if(sendtime > 1000/cl_cmdrate->value) 
+	//	if (sendtime > 1000/cl_cmdrate->value) 
 	//	{
 	//		CL_SendCommand ();
 	//		sendtime = 0;
@@ -2083,7 +2083,7 @@ void KB_Init (void)
 	keyboard = Cvar_Get ("keyboard","qwerty",CVAR_ARCHIVE);
 	Com_sprintf (path, sizeof(path),"%s/configs/%s.kbd",FS_Gamedir(),keyboard->string);
 	f = fopen (path, "rb");
-	if(f)
+	if (f)
 	{
 		fread(scantokey,1,128,f);
 		fclose(f);

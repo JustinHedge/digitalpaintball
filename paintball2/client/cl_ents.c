@@ -793,17 +793,17 @@ void CL_AddPacketEntities (frame_t *frame)
 //PGM
 				if (renderfx & RF_USE_DISGUISE)
 				{
-					if(!strncmp((char *)ent.skin, "players/male", 12))
+					if (!strncmp((char *)ent.skin, "players/male", 12))
 					{
 						ent.skin = re.RegisterSkin ("players/male/disguise.pcx");
 						ent.model = re.RegisterModel ("players/male/tris.md2");
 					}
-					else if(!strncmp((char *)ent.skin, "players/female", 14))
+					else if (!strncmp((char *)ent.skin, "players/female", 14))
 					{
 						ent.skin = re.RegisterSkin ("players/female/disguise.pcx");
 						ent.model = re.RegisterModel ("players/female/tris.md2");
 					}
-					else if(!strncmp((char *)ent.skin, "players/cyborg", 14))
+					else if (!strncmp((char *)ent.skin, "players/cyborg", 14))
 					{
 						ent.skin = re.RegisterSkin ("players/cyborg/disguise.pcx");
 						ent.model = re.RegisterModel ("players/cyborg/tris.md2");
@@ -919,13 +919,13 @@ void CL_AddPacketEntities (frame_t *frame)
 			// PMM - at this point, all of the shells have been handled
 			// if we're in the rogue pack, set up the custom mixing, otherwise just
 			// keep going
-//			if(Developer_searchpath(2) == 2)
+//			if (Developer_searchpath(2) == 2)
 //			{
 				// all of the solo colors are fine.  we need to catch any of the combinations that look bad
 				// (double & half) and turn them into the appropriate color, and make double/quad something special
 				if (renderfx & RF_SHELL_HALF_DAM)
 				{
-					if(Developer_searchpath(2) == 2)
+					if (Developer_searchpath(2) == 2)
 					{
 						// ditch the half damage shell if any of red, blue, or double are on
 						if (renderfx & (RF_SHELL_RED|RF_SHELL_BLUE|RF_SHELL_DOUBLE))
@@ -935,7 +935,7 @@ void CL_AddPacketEntities (frame_t *frame)
 
 				if (renderfx & RF_SHELL_DOUBLE)
 				{
-					if(Developer_searchpath(2) == 2)
+					if (Developer_searchpath(2) == 2)
 					{
 						// lose the yellow shell if we have a red, blue, or green shell
 						if (renderfx & (RF_SHELL_RED|RF_SHELL_BLUE|RF_SHELL_GREEN))
@@ -1113,7 +1113,7 @@ void CL_AddPacketEntities (frame_t *frame)
 
 					intensity = 50 + (500 * (sin(cl.time/500.0) + 1.0));
 					// FIXME - check out this effect in rendition
-					if(vidref_val == VIDREF_GL)
+					if (vidref_val == VIDREF_GL)
 						V_AddLight (ent.origin, intensity, -1.0, -1.0, -1.0);
 					else
 						V_AddLight (ent.origin, -1.0 * intensity, 1.0, 1.0, 1.0);
@@ -1128,7 +1128,7 @@ void CL_AddPacketEntities (frame_t *frame)
 			{
 				CL_TrackerTrail (cent->lerp_origin, ent.origin, 0);
 				// FIXME - check out this effect in rendition
-				if(vidref_val == VIDREF_GL)
+				if (vidref_val == VIDREF_GL)
 					V_AddLight (ent.origin, 200, -1, -1, -1);
 				else
 					V_AddLight (ent.origin, -200, 1, 1, 1);

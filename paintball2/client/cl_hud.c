@@ -196,7 +196,7 @@ void SCR_DrawPaintballHUD1 (void) // todo version check
 		newcount++;
 	}
 
-	if(newcount > 0)
+	if (newcount > 0)
 		teamcount = newcount;
 
 	// Team scores

@@ -62,11 +62,11 @@ int CharOffset (unsigned char *s, int charcount) // pooy
 
 	while(*s && charcount)
 	{
-		if(*(s+1) && (*s == CHAR_UNDERLINE || *s == CHAR_ITALICS))
+		if (*(s+1) && (*s == CHAR_UNDERLINE || *s == CHAR_ITALICS))
 		{
 			// don't count character
 		}
-		else if(*(s+1) && *s == CHAR_COLOR)
+		else if (*(s+1) && *s == CHAR_COLOR)
 		{
 			s++; // skip two characters.
 		}
@@ -325,7 +325,7 @@ void Con_CheckResize (void)
 	int		i, j, width, oldwidth, oldtotallines, numlines, numchars;
 	char	tbuf[CON_TEXTSIZE];
 
-	if(!hudscale)
+	if (!hudscale)
 		hudscale = 1;
 	width = (viddef.width/hudscale >> 3) - 2;
 
@@ -479,19 +479,19 @@ void Con_Print (unsigned char *txt) // jittext
 		{
 			Con_Linefeed ();
 
-			if(isunderlined) // jittext, continue formatting or wordwrapped lines
+			if (isunderlined) // jittext, continue formatting or wordwrapped lines
 			{
 				y = con.current % con.totallines;
 				con.text[y*con.linewidth+con.x] = CHAR_UNDERLINE;
 				con.x++;
 			}
-			if(isitalics)
+			if (isitalics)
 			{
 				y = con.current % con.totallines;
 				con.text[y*con.linewidth+con.x] = CHAR_ITALICS;
 				con.x++;
 			}
-			if(iscolored)
+			if (iscolored)
 			{
 				y = con.current % con.totallines;
 				con.text[y*con.linewidth+con.x] = CHAR_COLOR;
@@ -504,14 +504,14 @@ void Con_Print (unsigned char *txt) // jittext
 				con.times[con.current % NUM_CON_TIMES] = cls.realtime;
 		}
 		
-		if(c == CHAR_COLOR) // jittext
+		if (c == CHAR_COLOR) // jittext
 		{
 			iscolored = true;
 			color = *txt;
 		}
-		else if(c == CHAR_UNDERLINE)
+		else if (c == CHAR_UNDERLINE)
 			isunderlined = !isunderlined;
-		else if(c == CHAR_ITALICS)
+		else if (c == CHAR_ITALICS)
 			isitalics = !isitalics;
 
 		switch (c)
@@ -663,12 +663,12 @@ void Con_DrawNotify (void)
 
 	if (cls.key_dest == key_message)
 	{
-		if(2 == chat_team) // jitlogin
+		if (2 == chat_team) // jitlogin
 		{
 			re.DrawString(8*hudscale, v, "Login:");
 			skip = 8*hudscale;
 		}
-		else if(1 == chat_team) // jitlogin
+		else if (1 == chat_team) // jitlogin
 		{
 			re.DrawString (8*hudscale, v, "Say_team:");
 			skip = 11*hudscale;
@@ -806,12 +806,12 @@ void Con_DrawConsole (float frac)
 			dlbar_fill[j] = ' ';
 		for (j=0; j<n; j++) // jittext
 		{
-			if(j == n-1)
+			if (j == n-1)
 				dlbar_fill[j+i+1] = '\x1f'; // end bar
 			else
 				dlbar_fill[j+i+1] = '\x1e'; // middle bar
 
-			if(j == 0)
+			if (j == 0)
 				dlbar_fill[j+i+1] = '\x1d'; // start bar
 		}
 		dlbar_fill[j+i+1] = '\0';

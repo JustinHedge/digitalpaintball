@@ -818,7 +818,7 @@ void CL_AddDLights (void)
 
 //=====
 //PGM
-	if(vidref_val == VIDREF_GL)
+	if (vidref_val == VIDREF_GL)
 	{
 		for (i=0 ; i<MAX_DLIGHTS ; i++, dl++)
 		{
@@ -950,7 +950,7 @@ void CL_ParticleEffect2 (vec3_t org, vec3_t dir, int color, int count)
 		p->time = cl.time;
 		// ===
 		// jit -- randomize color of each particle slightly
-		if(color>63 && color<80) {
+		if (color>63 && color<80) {
 			// red
 			color = 0x00000047 + (rand()&3) + bleh; 
 		} else if (color>143 && color<160) {
@@ -990,7 +990,7 @@ void CL_ParticleEffect2 (vec3_t org, vec3_t dir, int color, int count)
 
 		// ===
 		// jit
-		if(100==count) // paint gren
+		if (100==count) // paint gren
 			p->alphavel = -1.0 / (1.0f + frand()*0.3); // paint gren spray lasts longer
 		else
 			p->alphavel = -1.0 / (0.2f + frand()*0.3); // jit .2 was .5

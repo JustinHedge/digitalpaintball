@@ -866,7 +866,7 @@ void DrawHUDString (int x, int y, int centerwidth, int xor, unsigned char *strin
 		{
 			if (*strp == CHAR_COLOR) // jittext
 				formatwidth += 2;
-			else if(*strp == CHAR_UNDERLINE || *strp == CHAR_ITALICS)
+			else if (*strp == CHAR_UNDERLINE || *strp == CHAR_ITALICS)
 				formatwidth ++;
 			
 			line[width++] = *strp++;
@@ -989,7 +989,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 	{
 		token = COM_Parse (&s);
 
-		if(token[0]=='a')
+		if (token[0]=='a')
 		{
 			//if (Q_streq(token, "anum"))
 			{	// ammo number
@@ -1012,10 +1012,10 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			}
 		}
 		
-		if(token[0]=='c')
+		if (token[0]=='c')
 		{
 			//if (Q_streq(token, "client"))
-			if(token[1]=='l')
+			if (token[1]=='l')
 			{	// draw a deathmatch client block
 				int		score, ping, time;
 
@@ -1053,7 +1053,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 				continue;
 			}
 			//if (Q_streq(token, "cstring2"))
-			else if(token[7]=='2')
+			else if (token[7]=='2')
 			{
 				//char local_s[MAX_TOKEN_CHARS];
 				token = COM_Parse (&s);
@@ -1072,7 +1072,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 		}
 
 		//if (Q_streq(token, "hnum"))
-		if(token[0]=='h')
+		if (token[0]=='h')
 		{	// health number
 			int		color;
 
@@ -1092,10 +1092,10 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			continue;
 		}
 
-		if(token[0]=='p')
+		if (token[0]=='p')
 		{
 			//if (Q_streq(token, "picn"))
-			if(token[3]=='n')
+			if (token[3]=='n')
 			{	// draw a pic from a name
 				token = COM_Parse (&s);
 				SCR_AddDirtyPoint (x, y);
@@ -1122,7 +1122,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 		}
 
 		//if (Q_streq(token, "num"))
-		if(token[0]=='n')
+		if (token[0]=='n')
 		{	// draw a number
 			token = COM_Parse (&s);
 			width = atoi(token);
@@ -1132,10 +1132,10 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			continue;
 		}
 
-		if(token[0]=='s')
+		if (token[0]=='s')
 		{
 			//if (Q_streq(token, "stat_string"))
-			if(token[4]=='_')
+			if (token[4]=='_')
 			{
 				token = COM_Parse (&s);
 				index = atoi(token);
@@ -1148,7 +1148,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 				continue;
 			}
 			//if (Q_streq(token, "string2"))
-			else if(token[6]=='2')
+			else if (token[6]=='2')
 			{
 				char local_s[MAX_TOKEN_CHARS];
 				token = COM_Parse (&s);
@@ -1167,7 +1167,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 		}
 
 		//if (Q_streq(token, "if"))
-		if(token[0]=='i')
+		if (token[0]=='i')
 		{	// draw a number
 			token = COM_Parse (&s);
 			value = cl.frame.playerstate.stats[atoi(token)];
@@ -1181,7 +1181,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			continue;
 		}
 
-		if(token[0]=='x')
+		if (token[0]=='x')
 		{
 			if (token[1]=='l')
 			{
@@ -1203,7 +1203,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			continue;
 		}
 
-		if(token[0]=='y')
+		if (token[0]=='y')
 		{
 			if (token[1]=='t')
 			{
@@ -1383,15 +1383,15 @@ void SCR_UpdateScreen (void)
 		return;				// not initialized yet
 
 
-	if(cl_hudscale->value < 1.0 || cl_hudscale->value > viddef.width/320.0) // jithudscale
+	if (cl_hudscale->value < 1.0 || cl_hudscale->value > viddef.width/320.0) // jithudscale
 		Cvar_SetValue("cl_hudscale", viddef.width/320.0f); // jithudscale
 	
 	hudscale = cl_hudscale->value;
 
-	if(m_invert->modified || m_pitch->modified) // jitmouse
+	if (m_invert->modified || m_pitch->modified) // jitmouse
 	{
 		// if m_invert is true, set m_pitch to a negative value.
-		if(m_invert->value)
+		if (m_invert->value)
 			Cvar_SetValue("m_pitch", -fabs(m_pitch->value));
 		else
 			Cvar_SetValue("m_pitch", fabs(m_pitch->value));
@@ -1425,7 +1425,7 @@ void SCR_UpdateScreen (void)
 
 	for (i = 0; i < numframes; i++)
 	{
-		if(cl_hudscale->modified) // jithudscale / jitmenu
+		if (cl_hudscale->modified) // jithudscale / jitmenu
 		{
 			M_RefreshMenu();
 			cl_hudscale->modified = false;
@@ -1492,7 +1492,7 @@ void SCR_UpdateScreen (void)
 
 			V_RenderView(separation[i]);
 
-			if(cl_drawhud->value)
+			if (cl_drawhud->value)
 			{
 				// Draw FPS display - MrG - jit, modified
 				if (cl_drawfps->value) 
@@ -1519,11 +1519,11 @@ void SCR_UpdateScreen (void)
 
 
 
-					if(!(framecount & 0xF)) // once every 16 frames
+					if (!(framecount & 0xF)) // once every 16 frames
 					{
 						register float t;
 						t = curtime-lasttime;
-						if(t>160000.0f)
+						if (t>160000.0f)
 							t = 160.0f;
 						else
 							t /= 1000.0f;
@@ -1555,7 +1555,7 @@ void SCR_UpdateScreen (void)
 				CL_DrawEventStrings(); // jitevents
 				// jitodo -- call client scoreboard display here
 
-				if(Cvar_VariableValue("snazbot"))
+				if (Cvar_VariableValue("snazbot"))
 				{
 					re.DrawString(viddef.width/2-76*hudscale, viddef.height-8*hudscale,
 						"SnaZ-BoT v3 Enabled");

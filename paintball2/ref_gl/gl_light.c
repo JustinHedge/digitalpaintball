@@ -417,7 +417,7 @@ void R_StainNode (stain_t *st, mnode_t *node)
 
 		frad = st->size;
 		fdist = DotProduct (st->origin, surf->plane->normal) - surf->plane->dist;
-		if(surf->flags & SURF_PLANEBACK) fdist *= -1;
+		if (surf->flags & SURF_PLANEBACK) fdist *= -1;
 		frad -= fabs(fdist);
 
 		fminlight = DLIGHT_CUTOFF;	// FIXME: make configurable?
@@ -463,7 +463,7 @@ void R_StainNode (stain_t *st, mnode_t *node)
 					{
 						test = pfBL[i] + ((frad - fdist) * st->color[i]);
 
-						if(test < 255 && test > 0)
+						if (test < 255 && test > 0)
 						{
 							col=pfBL[i]*st->color[i];
 
@@ -629,9 +629,9 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 
 	// jitlight
 	sat = gl_lightmap_saturation->value;
-	if(sat<0.0f)
+	if (sat<0.0f)
 		sat=0.0f;
-	if(sat>1.0f)
+	if (sat>1.0f)
 		sat=1.0f;
 	// ===
 
@@ -737,11 +737,11 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 			for (i=0 ; i<size ; i++, bl+=3)
 			{
 				VectorCopy(bl, gammaindex);
-				if(gammaindex[0]>255)
+				if (gammaindex[0]>255)
 					gammaindex[0] = 255;
-				if(gammaindex[1]>255)
+				if (gammaindex[1]>255)
 					gammaindex[1] = 255;
-				if(gammaindex[2]>255)
+				if (gammaindex[2]>255)
 					gammaindex[2] = 255;
 				
 				bl[0] = lightmap_gammatable[gammaindex[0]];

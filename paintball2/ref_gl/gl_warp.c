@@ -645,7 +645,7 @@ void R_DrawSkyBox (void)
 {
 	int		i;
 
-	if(fogenabled) // jitfog
+	if (fogenabled) // jitfog
 		qglDisable(GL_FOG);
 
 	if (skyrotate)
@@ -694,7 +694,7 @@ void R_DrawSkyBox (void)
 	}
 	qglPopMatrix ();
 	
-	if(fogenabled) // jitfog
+	if (fogenabled) // jitfog
 	{
 		qglColor3f(1, 1, 1);
 		GLSTATE_DISABLE_BLEND	
@@ -716,7 +716,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 	char	pathname[MAX_QPATH];
 	char	*s;
 
-	if(fogenabled) // so people can't shut fog off.
+	if (fogenabled) // so people can't shut fog off.
 		return;
 
 	strncpy (skyname, name, sizeof(skyname)-1);
@@ -762,7 +762,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 		
 		if (!sky_images[i])
 		{
-			if(fogenabled) // jitfog
+			if (fogenabled) // jitfog
 				sky_images[i] = r_whitetexture;
 			else
 				sky_images[i] = r_notexture;
@@ -781,7 +781,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 		}
 	}
 
-	if(s) // jitfog -- reenable fog code.
+	if (s) // jitfog -- reenable fog code.
 		*s = ' ';
 }
 

@@ -50,7 +50,7 @@ void Draw_InitLocal (void)
 
 
 	//draw_chars = GL_FindImage("pics/conchars.pcx", it_pic);
-	if(ri.Cvar_Get("gl_overbright", "1", CVAR_ARCHIVE)->value && gl_state.texture_combine)
+	if (ri.Cvar_Get("gl_overbright", "1", CVAR_ARCHIVE)->value && gl_state.texture_combine)
 		draw_chars = GL_FindImage("pics/conchars1ovb.tga", it_pic); // dark conchars (brightness doubled)
 	else
 		draw_chars = GL_FindImage("pics/conchars1.tga", it_pic); // jitconsole
@@ -59,7 +59,7 @@ void Draw_InitLocal (void)
 	//qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	LoadTGA("pics/char_colors.tga", &char_colors, &width, &height); // jittext
-	if(!char_colors || (width*height != 256))
+	if (!char_colors || (width*height != 256))
 	{
 		Sys_Error("Invalid or missing char_colors.tga.");
 	}
@@ -166,7 +166,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 	
 	size = 0.0625;
 
-	if(gl_textshadow->value)
+	if (gl_textshadow->value)
 	{
 		shadowpass = true;
 		px=x+textscale;
@@ -182,7 +182,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 
 	do
 	{
-		if(shadowpass)
+		if (shadowpass)
 			qglColor4f(0.0f, 0.0f, 0.0f, alpha);
 
 		while (*s)
@@ -197,7 +197,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 				switch (num)
 				{
 				case CHAR_COLOR:
-					if(!(*(s+1))) // end of string
+					if (!(*(s+1))) // end of string
 					{
 						nextiscolor = false;
 					}
@@ -212,7 +212,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 				case CHAR_UNDERLINE:
 					s++;
 					underlined = !underlined;
-					if(*s != '\0') // only draw if at end of string
+					if (*s != '\0') // only draw if at end of string
 						continue;
 					else // so the string null-terminates!
 						s--;
@@ -220,7 +220,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 				case CHAR_ITALICS:
 					s++;
 					italicized = !italicized;
-					if(*s != '\0') // only draw if at end of string
+					if (*s != '\0') // only draw if at end of string
 						continue;
 					else
 						s--;
@@ -231,7 +231,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 					underlined = false;
 					if (!shadowpass)
 						qglColor4f(1.0f, 1.0f, 1.0f, alpha);
-					if(*s != '\0') // draw character if at end of string.
+					if (*s != '\0') // draw character if at end of string.
 						continue;
 					else
 						s--;
@@ -265,7 +265,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 				continue;
 			}
 
-			if(underlined) // jitconsole
+			if (underlined) // jitconsole
 			{
 				row = CHAR_UNDERLINE_NUM>>4;
 				col = CHAR_UNDERLINE_NUM&15;
@@ -295,7 +295,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 			frow = row*0.0625;
 			fcol = col*0.0625;
 
-			if(italicized)
+			if (italicized)
 			{
 				qglTexCoord2f (fcol, frow);
 				qglVertex2f (px+2*textscale, py);
@@ -321,7 +321,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 			s++; px+=8*textscale; //jithudscale
 		}
 
-		if(shadowpass)
+		if (shadowpass)
 		{
 			nextiscolor = false;
 			italicized = false;
@@ -340,7 +340,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 
 	qglEnd ();
 
-	if(coloredtext)
+	if (coloredtext)
 	{
 		//qglColor3fv(whitetext);
 		qglColor4f(1.0f, 1.0f, 1.0f, alpha);
@@ -376,7 +376,7 @@ image_t	*Draw_FindPic (const char *name)
 		if (gl != r_notexture)
 			strcpy(gl->bare_name,name);*/
 
-	if(!gl) // jit -- remove "can't find pic" spam
+	if (!gl) // jit -- remove "can't find pic" spam
 		return r_notexture;
 	else
 		return gl;
@@ -429,7 +429,7 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 	}
 
 	/*rs = RS_FindScript(gl->name); // jitrscript
-	if(!rs)
+	if (!rs)
 		rs = RS_FindScript(gl->bare_name);*/
 	rs = gl->rscript; // jitrscript
 
@@ -460,7 +460,7 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 		image_t *stage_pic; // jitrscript
 		image_t *RS_Animate_image (rs_stage_t *stage); // jitrscript
 
-		if(!rs->ready) // jit
+		if (!rs->ready) // jit
 			RS_ReadyScript(rs);
 
 		stage=rs->stage;

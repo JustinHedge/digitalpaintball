@@ -585,7 +585,7 @@ int NET_IPSocket (char *net_interface, int port)
 
 	address.sin_family = AF_INET;
 
-	if( bind (newsocket, (void *)&address, sizeof(address)) == -1)
+	if ( bind (newsocket, (void *)&address, sizeof(address)) == -1)
 	{
 		Com_Printf ("WARNING: UDP_OpenSocket: bind: %s\n", NET_ErrorString());
 		closesocket (newsocket);
@@ -691,7 +691,7 @@ int NET_IPXSocket (int port)
 	else
 		address.sa_socket = htons((short)port);
 
-	if( bind (newsocket, (void *)&address, sizeof(address)) == -1)
+	if ( bind (newsocket, (void *)&address, sizeof(address)) == -1)
 	{
 		Com_Printf ("WARNING: IPX_Socket: bind: %s\n", NET_ErrorString());
 		closesocket (newsocket);

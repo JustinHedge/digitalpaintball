@@ -589,7 +589,7 @@ void PM_AirMove (void)
 
 // PGM	-- fix for negative trigger_gravity fields
 //		pml.velocity[2] = 0;
-		if(pm->s.gravity > 0)
+		if (pm->s.gravity > 0)
 			pml.velocity[2] = 0;
 		else
 			pml.velocity[2] -= pm->s.gravity * pml.frametime;
@@ -1090,7 +1090,7 @@ void PM_SnapPosition/*_old*/ (void)
 //	// snap velocity to eigths
 //	for (i=0; i<3; i++)
 //	{
-//		if(pm->s.velocity[i] < 0) // jitnetwork -- round properly
+//		if (pm->s.velocity[i] < 0) // jitnetwork -- round properly
 //			pm->s.velocity[i] = (int)((pml.velocity[i]-.0625)*8);
 //		else
 //			pm->s.velocity[i] = (int)((pml.velocity[i]+.0625)*8);
@@ -1337,7 +1337,7 @@ void Pmove (pmove_t *pmove)
 	//	int temp;
 	//	//temp = pm->s.origin[2] - 193;
 	//	temp = pm->s.origin[2] - 193+1056+2016;
-	//	if(temp)
+	//	if (temp)
 	//		Com_Printf("%d\n", temp);//,	pm->s.velocity[2]); // jitest
 	//}
 }

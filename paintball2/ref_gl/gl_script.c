@@ -90,7 +90,7 @@ void RS_ResetScript (rscript_t *rs)
 	rs_stage_t		*stage = rs->stage, *tmp_stage;
 	anim_stage_t	*anim, *tmp_anim;
 	
-	if(rs->img_ptr) // jitrscript
+	if (rs->img_ptr) // jitrscript
 		rs->img_ptr->rscript = NULL;
 
 	rs->name[0] = 0;
@@ -809,7 +809,7 @@ void RS_LoadScript(char *script)
 					RS_FreeScript(rs);
 					rs = RS_NewScript(token);
 					
-					if(image) // jit
+					if (image) // jit
 					{
 						rs->img_ptr = image;
 						image->rscript = rs;
@@ -1271,19 +1271,19 @@ void RS_SetTexcoords2D (rs_stage_t *stage, float *os, float *ot)
 		switch (stage->scaleadd.typeX) 
 		{
 		case 0:	// static
-			if(*os > 0)
+			if (*os > 0)
 				*os += stage->scaleadd.scaleX;
 			else
 				*os -= stage->scaleadd.scaleX;
 			break;
 		case 1:	// sine (probably won't get used, but just for completeness)
-			if(*os > 0)
+			if (*os > 0)
 				*os += stage->scaleadd.scaleX*sin(rs_realtime*0.05);
 			else
 				*os -= stage->scaleadd.scaleX*sin(rs_realtime*0.05);
 			break;
 		case 2:	// cosine
-			if(*os > 0)
+			if (*os > 0)
 				*os += stage->scaleadd.scaleX*cos(rs_realtime*0.05);
 			else
 				*os -= stage->scaleadd.scaleX*cos(rs_realtime*0.05);
@@ -1296,19 +1296,19 @@ void RS_SetTexcoords2D (rs_stage_t *stage, float *os, float *ot)
 		switch (stage->scaleadd.typeY)
 		{
 		case 0:	// static
-			if(*ot > 0)
+			if (*ot > 0)
 				*ot += stage->scaleadd.scaleY;
 			else
 				*ot -= stage->scaleadd.scaleY;
 			break;
 		case 1:	// sine
-			if(*ot > 0)
+			if (*ot > 0)
 				*ot += stage->scaleadd.scaleY*sin(rs_realtime*0.05);
 			else
 				*ot -= stage->scaleadd.scaleY*sin(rs_realtime*0.05);
 			break;
 		case 2:	// cosine
-			if(*ot > 0)
+			if (*ot > 0)
 				*ot += stage->scaleadd.scaleY*cos(rs_realtime*0.05);
 			else
 				*ot -= stage->scaleadd.scaleY*cos(rs_realtime*0.05);
@@ -1336,7 +1336,7 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 	float		scale, time, txm=0, tym=0;
 	qboolean	firststage = true; // jitrscript
 
-	if(!rs)
+	if (!rs)
 		rs = (rscript_t *)surf->texinfo->script; // jitrscript
 
 	stage = rs->stage; // jitrscript

@@ -120,7 +120,7 @@ char	*SV_StatusString (void)
 	strcat (status, "\n");
 	statusLength = strlen(status);
 
-	for (i=0 ; i<maxclients->value ; i++)
+	for (i=0; i<maxclients->value; i++)
 	{
 		cl = &svs.clients[i];
 		if (cl->state == cs_connected || cl->state == cs_spawned )
@@ -147,12 +147,7 @@ Responds with all the info that qplug or qspy can see
 */
 void SVC_Status (void)
 {
-	Netchan_OutOfBandPrint (NS_SERVER, net_from, "print\n%s", SV_StatusString());
-#if 0
-	Com_BeginRedirect (RD_PACKET, sv_outputbuf, SV_OUTPUTBUF_LENGTH, SV_FlushRedirect);
-	Com_Printf (SV_StatusString());
-	Com_EndRedirect ();
-#endif
+	Netchan_OutOfBandPrint(NS_SERVER, net_from, "print\n%s", SV_StatusString());
 }
 
 /*
@@ -163,7 +158,7 @@ SVC_Ack
 */
 void SVC_Ack (void)
 {
-	Com_Printf ("Ping acknowledge from %s\n", NET_AdrToString(net_from));
+	Com_Printf("Ping acknowledge from %s\n", NET_AdrToString(net_from));
 }
 
 /*
@@ -387,7 +382,7 @@ gotnewcl:
 	newcl->challenge = challenge; // save challenge for checksumming
 
 	// get the game a chance to reject this connection or modify the userinfo
-	if(!sv.attractloop) // jitdemo - don't call game functions for demo plays
+	if (!sv.attractloop) // jitdemo - don't call game functions for demo plays
 	{
 		if (!(ge->ClientConnect(ent, userinfo)))
 		{

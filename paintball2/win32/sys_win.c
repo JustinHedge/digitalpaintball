@@ -78,7 +78,7 @@ void Sys_Error (char *error, ...)
 	NULLTERMINATE(text); // jitsecurity -- make sure string is null terminated.
 
 	// <!-- jit: don't kill servers with the msg box
-	if(dedicated->value)
+	if (dedicated->value)
 		printf("Error: %s\n",text);
 	else
 		MessageBox(NULL, text, "Error", 0 /* MB_OK */ );

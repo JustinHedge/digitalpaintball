@@ -462,18 +462,18 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 		return;
 	}
 	
-	if(key < 32 || key > 127)
+	if (key < 32 || key > 127)
 		return;	// non printable
 
-	if(keydown[K_CTRL]) // jitconsole / jittext
+	if (keydown[K_CTRL]) // jitconsole / jittext
 	{
-		if(toupper(key) == 'K')
+		if (toupper(key) == 'K')
 			key = CHAR_COLOR;
-		else if(toupper(key) == 'U')
+		else if (toupper(key) == 'U')
 			key = CHAR_UNDERLINE;
-		else if(toupper(key) == 'I')
+		else if (toupper(key) == 'I')
 			key = CHAR_ITALICS;
-		else if(toupper(key) == 'O')
+		else if (toupper(key) == 'O')
 			key = CHAR_ENDFORMAT;
 	}
 
@@ -1007,7 +1007,7 @@ void Key_Event (int key, qboolean down, unsigned time)
 		switch (cls.key_dest) // jitmenu -- we want to activate things when the key goes UP!
 		{
 		case key_menu:
-			if(!M_Keyup(key))
+			if (!M_Keyup(key))
 				GameKeyup(key);
 			break;
 		case key_console:

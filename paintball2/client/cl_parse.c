@@ -109,28 +109,28 @@ qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jp
 
 	// ===
 	// jitdownload, check for jpgs and tga's if pcx's aren't there
-	if(strstr(filename, ".pcx") || strstr(filename, ".jpg") || 
+	if (strstr(filename, ".pcx") || strstr(filename, ".jpg") || 
 		strstr(filename, ".tga") || strstr(filename, ".wal"))
 	{
 		// look for jpg first:
 		COM_StripExtension(filename, name);
 		strcat(name, ".jpg");
-		if(FS_LoadFile(name, NULL) != -1)
+		if (FS_LoadFile(name, NULL) != -1)
 			return true; // jpg exists, don't try to download anything else
 
 		// couldn't find jpg, let's try tga;
 		COM_StripExtension(filename, name);
 		strcat(name, ".tga");
-		if(FS_LoadFile(name, NULL) != -1)
+		if (FS_LoadFile(name, NULL) != -1)
 			return true; // tga exists
 
 		// no tga, try wal/pcx:
 		COM_StripExtension(filename, name);
-		if(strstr(filename, "textures"))
+		if (strstr(filename, "textures"))
 			strcat(name, ".wal");
 		else
 			strcat(name, ".pcx");
-		if(FS_LoadFile(name, NULL) != -1)
+		if (FS_LoadFile(name, NULL) != -1)
 			return true; // pcx/wal exists
 	}
 	// jit
@@ -344,7 +344,7 @@ void CL_ParseDownload (void)
 				else if (file_ext=strstr(cls.downloadname, ".tga"))
 				{
 					*file_ext=0;
-					if(strstr(cls.downloadname, "textures"))
+					if (strstr(cls.downloadname, "textures"))
 						strcat(cls.downloadname, ".wal");
 					else
 						strcat(cls.downloadname, ".pcx");
@@ -512,7 +512,7 @@ void CL_StartDownload2(void)
 	FS_CreatePath (name);
 	cls.download = fopen(name, "r+b");
 
-	if(cls.download) // file already exists, so resume
+	if (cls.download) // file already exists, so resume
 	{
 		fseek(cls.download, 0, SEEK_END);
 		next_write_offset = next_download_offset_request = ftell(cls.download);
@@ -535,7 +535,7 @@ void CL_StartDownload2(void)
 
 void CL_RequestNextDownload2 (void)
 {
-	if(total_dl2_waiting_on <= SIMULT_DL2_PACKETS) // try to keep 16 downloads going at once.
+	if (total_dl2_waiting_on <= SIMULT_DL2_PACKETS) // try to keep 16 downloads going at once.
 	{
 		char downloadcmd[128];
 		int i;
@@ -544,10 +544,10 @@ void CL_RequestNextDownload2 (void)
 		// Check for timed out packets:
 		for(i=0; i<SIMULT_DL2_PACKETS; i++)
 		{
-			if(download_waiting[i].waiting && (curtime - download_waiting[i].timesent > dl2_chunk_timeout))
+			if (download_waiting[i].waiting && (curtime - download_waiting[i].timesent > dl2_chunk_timeout))
 			{
 				dl2_chunk_timeout *= 2; // double the timeout
-				if(dl2_chunk_timeout > DL2_CHUNK_TIMEOUT)
+				if (dl2_chunk_timeout > DL2_CHUNK_TIMEOUT)
 					dl2_chunk_timeout = DL2_CHUNK_TIMEOUT;
 				// requested chunk has timed out.  re-request it.
 				request_offset = download_waiting[i].offset;
@@ -556,7 +556,7 @@ void CL_RequestNextDownload2 (void)
 			}
 		}
 
-		if(total_dl2_waiting_on == SIMULT_DL2_PACKETS) // too many requests -- don't add any more.
+		if (total_dl2_waiting_on == SIMULT_DL2_PACKETS) // too many requests -- don't add any more.
 			return;
 		
 		// none of the chunks timed out -- request a new one
@@ -567,7 +567,7 @@ void CL_RequestNextDownload2 (void)
 		// keep track of our new request in case it times out.
 		for(i=0; i<SIMULT_DL2_PACKETS; i++)
 		{
-			if(!download_waiting[i].waiting)
+			if (!download_waiting[i].waiting)
 			{
 				download_waiting[i].waiting = true;
 				download_waiting[i].offset = request_offset;
@@ -593,7 +593,7 @@ void CL_WriteReceivedDownload2()
 
 	for(i=0; i<SIMULT_DL2_PACKETS; i++)
 	{
-		if(download_chunks[i].used && download_chunks[i].offset == next_write_offset)
+		if (download_chunks[i].used && download_chunks[i].offset == next_write_offset)
 		{
 			download_chunks[i].used = false;
 
@@ -628,7 +628,7 @@ void CL_ParseDownload2 (void) // jitdownload
 	}*/
 
 	size = total_download_size - offset;
-	if(size > DOWNLOAD2_CHUNKSIZE)
+	if (size > DOWNLOAD2_CHUNKSIZE)
 		size = DOWNLOAD2_CHUNKSIZE;
 
 	// open the file if not opened yet (shouldn't happen).
@@ -643,7 +643,7 @@ void CL_ParseDownload2 (void) // jitdownload
 	// remove request from the waiting table:
 	for(i=0; i<SIMULT_DL2_PACKETS; i++)
 	{
-		if(download_waiting[i].waiting && download_waiting[i].offset == offset)
+		if (download_waiting[i].waiting && download_waiting[i].offset == offset)
 		{
 			download_waiting[i].waiting = false;
 			trip_time = curtime - download_waiting[i].timesent;
@@ -659,7 +659,7 @@ request_removed:
 	// find a free slot
 	for(i=0; i<SIMULT_DL2_PACKETS; i++)
 	{
-		if(!download_chunks[i].used || download_chunks[i].offset == offset) // free slot or a repeat
+		if (!download_chunks[i].used || download_chunks[i].offset == offset) // free slot or a repeat
 		{
 			goto a_ok;
 		}
@@ -1249,7 +1249,7 @@ void CL_ParseServerMessage (void)
 			case PRINT_CHAT:
 				S_StartLocalSound("misc/talk.wav");
 
-				if(cl_timestamp->value) // jittext / jitcolor
+				if (cl_timestamp->value) // jittext / jitcolor
 					Com_Printf("%c%c[%s] %s", CHAR_COLOR, COLOR_CHAT, timestamp, MSG_ReadString(&net_message));
 				else
 					Com_Printf("%c%c%s", CHAR_COLOR, COLOR_CHAT, MSG_ReadString(&net_message));
@@ -1279,7 +1279,7 @@ void CL_ParseServerMessage (void)
 				CL_ParseChat(i, MSG_ReadString(&net_message));
 				break;
 			default:
-				if(cl_timestamp->value) // jit:
+				if (cl_timestamp->value) // jit:
 					Com_Printf("[%s] %s", timestamp, MSG_ReadString(&net_message));
 				else
 					Com_Printf("%s", MSG_ReadString(&net_message));

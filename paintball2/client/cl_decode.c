@@ -203,7 +203,7 @@ static void translate_string (char *out_str, const char *in_str)
 			out_str++;
 		}
 
-		if(*in_str)
+		if (*in_str)
 		{
 			in_str++;
 
@@ -260,7 +260,7 @@ static void event_print (char *s)
 {
 	startpos--;
 
-	if(startpos<0)
+	if (startpos<0)
 		startpos = MAX_EVENT_STRINGS - 1;
 
 	strcpy(event_strings[startpos], s);
@@ -274,14 +274,14 @@ void CL_DrawEventStrings (void)
 
 	for (i=0, j=startpos; i<MAX_EVENT_STRINGS; i++, j++, j%=MAX_EVENT_STRINGS)
 	{
-		if(*event_strings[j])
+		if (*event_strings[j])
 		{
 			alpha = (4000 - (curtime-event_string_time[j])) / 3000.0f;
 
-			if(alpha > 1.0f)
+			if (alpha > 1.0f)
 				alpha = 1.0f;
 
-			if(alpha < 0.05f)
+			if (alpha < 0.05f)
 			{
 				event_strings[j][0] = '\0';
 				break;

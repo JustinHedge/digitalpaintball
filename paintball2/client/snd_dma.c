@@ -144,7 +144,7 @@ void S_Init (void)
 		Cmd_AddCommand("soundinfo", S_SoundInfo_f);
 
 		//A3D CHANGE
-		if(s_a3d->value)
+		if (s_a3d->value)
 		{
 			S_Q2A3DInit();
 		}
@@ -184,12 +184,12 @@ void S_Shutdown(void)
 	if (!sound_started && !a3dsound_started)
 		return;
 
-	if(a3dsound_started)
+	if (a3dsound_started)
 	{
 		a3d.A3D_Shutdown();
 		S_Q2A3DCloseLibrary();
 	}
-	if(sound_started)
+	if (sound_started)
 	SNDDMA_Shutdown();
 
 	sound_started = 0;
@@ -329,7 +329,7 @@ sfx_t *S_RegisterSound (const char *name)
 {
 	sfx_t	*sfx;
 	//A3D ADD
-	if(a3dsound_started)
+	if (a3dsound_started)
 		return S_Q2A3DRegisterSound (name);
 	//A3D END
 	if (!sound_started)
@@ -359,7 +359,7 @@ void S_EndRegistration (void)
 
 	// free any sounds not from this registration sequence
 	//A3D ADD
-	if(!a3dsound_started)
+	if (!a3dsound_started)
 	for (i=0, sfx=known_sfx ; i < num_sfx ; i++,sfx++)
 	{
 		if (!sfx->name[0])
@@ -408,7 +408,7 @@ channel_t *S_PickChannel(int entnum, int entchannel)
 	channel_t	*ch;
 
 	//A3D ADD
-	if(a3dsound_started)
+	if (a3dsound_started)
 		return S_Q2A3DPickChannel(entnum, entchannel);
 	//A3D END
 	if (entchannel<0)
@@ -827,7 +827,7 @@ void S_StopAllSounds(void)
 {
 	int		i;
 	//A3D CHANGE
-	if(a3dsound_started)
+	if (a3dsound_started)
 		S_Q2A3DStopAllSounds();
 
 	if (!sound_started && !a3dsound_started )
@@ -848,7 +848,7 @@ void S_StopAllSounds(void)
 
 	// clear all the channels
 	memset(channels, 0, sizeof(channels));
-	if(a3dsound_started)
+	if (a3dsound_started)
 		return;
 	//A3D CHANGE END
 
@@ -960,7 +960,7 @@ void S_RawSamples (int samples, int rate, int width, int channels, byte *data)
 	int		src, dst;
 	float	scale;
 	//A3D ADD
-	if(a3dsound_started)
+	if (a3dsound_started)
 		S_Q2A3DPCMStream (samples, rate, width, channels, data);
 	//A3D Add END
 	if (!sound_started)

@@ -141,7 +141,7 @@ void DrawGLFlowingPoly (msurface_t *fa)
 	p = fa->polys;
 
 	scroll = -64 * ( (r_newrefdef.time / 40.0) - (int)(r_newrefdef.time / 40.0) );
-	if(scroll == 0.0)
+	if (scroll == 0.0)
 		scroll = -64.0;
 
 #ifdef BEEFQUAKERENDER // jit3dfx
@@ -400,7 +400,7 @@ void R_BlendLightmaps (void)
 	if (!r_worldmodel->lightdata)
 		return;
 
-	if(fogenabled)
+	if (fogenabled)
 	{
 		vec3_t v;
 		VectorSet(v, 0.0f, 0.0f, 0.0f);
@@ -426,7 +426,7 @@ void R_BlendLightmaps (void)
 			{
 			case 'I':
 			case 'L':				
-				if(gl_overbright->value)
+				if (gl_overbright->value)
 					qglBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);// jitbright
 				else
 					qglBlendFunc(GL_ZERO, GL_SRC_COLOR);
@@ -439,7 +439,7 @@ void R_BlendLightmaps (void)
 		}
 		else
 		{
-			if(gl_overbright->value)
+			if (gl_overbright->value)
 				qglBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);// jitbright
 			else
 				qglBlendFunc(GL_ZERO, GL_SRC_COLOR );
@@ -612,15 +612,15 @@ void DrawLightmaps (void) // jitfog -- lightmaps need to be drawn before texture
 	*/
 	for(i = 1; i < MAX_LIGHTMAPS; i++)
 	{
-		if(gl_lms.lightmap_surfaces[i])
+		if (gl_lms.lightmap_surfaces[i])
 		{
-			if(currentmodel == r_worldmodel)
+			if (currentmodel == r_worldmodel)
 				c_visible_lightmaps++;
 
 			GL_Bind(gl_state.lightmap_textures + i);
 
 			for(surf=gl_lms.lightmap_surfaces[i]; surf!=0; surf=surf->lightmapchain)
-				if(surf->polys)
+				if (surf->polys)
 					DrawGLPolyChain(surf->polys, 0, 0);
 		}
 	}
@@ -730,7 +730,7 @@ void R_RenderBrushPoly (msurface_t *fa)
 
 //======
 //PGM
-	if(fa->texinfo->flags & SURF_FLOWING) 
+	if (fa->texinfo->flags & SURF_FLOWING) 
 	{
 		GL_Bind(image->texnum);
 		GL_TexEnv(GL_REPLACE);
@@ -817,7 +817,7 @@ void R_DrawCaustics (void) // jitcaustics
 	msurface_t	*s;
 	
 
-	if(!r_caustics->value || !r_caustictexture || !r_caustictexture->rscript)
+	if (!r_caustics->value || !r_caustictexture || !r_caustictexture->rscript)
 	{
 		r_caustic_surfaces = NULL; // prevent infinite loop
 		return;
@@ -888,7 +888,7 @@ void R_DrawAlphaSurfaces (void)
 		GL_Bind(s->texinfo->image->texnum);
 		c_brush_polys++;
 
-		if(s->texinfo->script && !(s->flags & SURF_DRAWTURB)) // jitrscript
+		if (s->texinfo->script && !(s->flags & SURF_DRAWTURB)) // jitrscript
 		{
 			GL_TexEnv(GL_REPLACE);
 			RS_DrawPolyNoLightMap(s); // jitrscript
@@ -911,7 +911,7 @@ void R_DrawAlphaSurfaces (void)
 
 			if (s->flags & SURF_DRAWTURB)
 				EmitWaterPolys (s);
-			else if(s->texinfo->flags & SURF_FLOWING)			// PGM	9/16/98
+			else if (s->texinfo->flags & SURF_FLOWING)			// PGM	9/16/98
 				DrawGLFlowingPoly (s);							// PGM
 			else
 				DrawGLPoly (s->polys);
@@ -960,7 +960,7 @@ void DrawTextureChains (void)
 			for ( ; s; s=s->texturechain)
 				R_RenderBrushPoly(s);
 
-			if(!fogenabled) // jitfog
+			if (!fogenabled) // jitfog
 				image->texturechain = NULL;
 		}
 	}
@@ -1092,7 +1092,7 @@ dynamic:
 			GL_MBind(QGL_TEXTURE0, image->texnum);
 	
 			scroll = -64 * ((r_newrefdef.time*0.025 /* / 40.0*/) - (int)(r_newrefdef.time*0.025 /* / 40.0 */));
-			if(scroll == 0.0)
+			if (scroll == 0.0)
 				scroll = -64.0;
 
 			for (p = surf->polys; p; p = p->chain)
@@ -1149,7 +1149,7 @@ dynamic:
 		
 			scroll = -64 * ((r_newrefdef.time*0.025  /* / 40.0 */) - (int)(r_newrefdef.time*0.025 /* / 40.0 */));
 
-			if(scroll == 0.0)
+			if (scroll == 0.0)
 				scroll = -64.0;
 
 			for (p = surf->polys; p; p = p->chain)
@@ -1273,7 +1273,7 @@ void R_DrawInlineBModel (void)
 				// create chain for fog to render in
 				// multipass mode.
 				// this is a pretty ugly hack.
-				if(fogenabled)
+				if (fogenabled)
 				{
 					psurf->texturechain = gltextures->texturechain;
 					gltextures->texturechain = psurf;
@@ -1289,7 +1289,7 @@ void R_DrawInlineBModel (void)
 		if (!qglMTexCoord2fSGIS)
 		{
 			R_BlendLightmaps(); // jitodo, fog -- test doors
-			if(fogenabled) // jitfog
+			if (fogenabled) // jitfog
 				R_AddFog(); // jitfog
 		}
 	}
@@ -1589,14 +1589,14 @@ void R_DrawWorld (void)
 	{
 		R_RecursiveWorldNode(r_worldmodel->nodes);
 		
-		if(fogenabled)
+		if (fogenabled)
 			qglDisable(GL_FOG);
 		
 		//DrawLightmaps(); // jitfog / jitodo
 		DrawTextureChains(); // jitodo
 
 		R_BlendLightmaps(); // jitodo, remove jitfog
-		if(fogenabled) // jitfog
+		if (fogenabled) // jitfog
 			R_AddFog(); // jitfog
 	}
 

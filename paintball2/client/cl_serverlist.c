@@ -324,19 +324,19 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	int ping;
 	qboolean added = false;
 	
-	if(adr.type == NA_IP)
+	if (adr.type == NA_IP)
 	{
 		Com_sprintf(addrip, sizeof(addrip), 
 			"%d.%d.%d.%d:%d", adr.ip[0], adr.ip[1], adr.ip[2], adr.ip[3], ntohs(adr.port));
 	}
-	else if(adr.type == NA_IPX)
+	else if (adr.type == NA_IPX)
 	{
 		Com_sprintf(addrip, sizeof(addrip), 
 			"%02x%02x%02x%02x:%02x%02x%02x%02x%02x%02x:%i", adr.ipx[0], adr.ipx[1],
 			adr.ipx[2], adr.ipx[3], adr.ipx[4], adr.ipx[5], adr.ipx[6], adr.ipx[7],
 			adr.ipx[8], adr.ipx[9], ntohs(adr.port));
 	}
-	else if(adr.type == NA_LOOPBACK)
+	else if (adr.type == NA_LOOPBACK)
 	{
 		strcpy(addrip, "loopback");
 	}
@@ -382,13 +382,13 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 		}
 	}
 
-	if(!added) // doesn't exist.  Add it.
+	if (!added) // doesn't exist.  Add it.
 	{
 		i++;
 
 		// List too big?  Alloc more memory:
 		// STL would be useful about now
-		if(i > m_serverlist.actualsize) 
+		if (i > m_serverlist.actualsize) 
 		{
 			char **tempinfo;
 			char **tempips;
@@ -516,7 +516,7 @@ static void M_ServerlistUpdate (char *sServerSource)
 		svlist_domain[i] = 0; // terminate string
 	}
 
-	if(!NET_TCPConnect(serverListSocket, svlist_domain, 80))
+	if (!NET_TCPConnect(serverListSocket, svlist_domain, 80))
 	{
 		Com_Printf("Unable to connect to %s\n", svlist_domain);
 		return;	// Couldn't connect

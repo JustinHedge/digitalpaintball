@@ -119,7 +119,7 @@ void SCR_LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *h
 		{
 			dataByte = *raw++;
 
-			if((dataByte & 0xC0) == 0xC0)
+			if ((dataByte & 0xC0) == 0xC0)
 			{
 				runLength = dataByte & 0x3F;
 				dataByte = *raw++;

@@ -702,7 +702,7 @@ void VID_CheckChanges (void)
 		cls.disable_screen = true;
 
 		// jit -- only allow opengl32 or 3dfxgl:
-		if(!Q_streq(gl_driver->string, "opengl32") && !Q_streq(gl_driver->string, "3dfxgl"))
+		if (!Q_streq(gl_driver->string, "opengl32") && !Q_streq(gl_driver->string, "3dfxgl"))
 			Cvar_Set("gl_driver", "opengl32");
 
 //		Com_sprintf( name, sizeof(name), "ref_%s.dll", vid_ref->string );
@@ -710,13 +710,13 @@ void VID_CheckChanges (void)
 		if (!VID_LoadRefresh(name))
 		{
 			// jit3dfx - check if driver string changed:
-			if(!Q_streq(gl_driver->string, driverstring)) 
+			if (!Q_streq(gl_driver->string, driverstring)) 
 			{
 				vid_ref->modified = true;
 				strncpy(driverstring, gl_driver->string, sizeof(driverstring));
 			}
 
-			if(!vid_ref->modified) // jit
+			if (!vid_ref->modified) // jit
 				Com_Error (ERR_FATAL, "Unable to load OpenGL refresh!"); // jit
 /*
 			if ( Q_streq (vid_ref->string, "soft") )
@@ -732,7 +732,7 @@ void VID_CheckChanges (void)
 				Con_ToggleConsole_f();
 			}
 		}
-		if(!vid_ref->modified) // jit3dfx
+		if (!vid_ref->modified) // jit3dfx
 		{
 			cls.disable_screen = false;
 			CL_InitImages();
@@ -770,7 +770,7 @@ void VID_BackupGamma() // jitgamma
 
 void VID_RestoreGamma() // jitgamma
 {
-	if(gammaramp_supported)
+	if (gammaramp_supported)
 	{
 		HDC	hdc;
 

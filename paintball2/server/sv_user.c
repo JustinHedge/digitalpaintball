@@ -321,7 +321,7 @@ void SV_NextDownload2_f (void) // jitdownload
 	else
 		return;
 
-	if(offset > sv_client->downloadsize) // this shouldn't happen unless the client screwed up or is malicious.
+	if (offset > sv_client->downloadsize) // this shouldn't happen unless the client screwed up or is malicious.
 		offset = sv_client->downloadsize;
 
 	r = sv_client->downloadsize - offset;

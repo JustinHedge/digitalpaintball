@@ -205,7 +205,7 @@ rserr_t GLimp_SetMode( int *pwidth, int *pheight, int mode, qboolean fullscreen 
 		dm.dmPelsHeight = height;
 
 		//ep::windows xp refresh rate fix, jitrefresh
-		if(r_displayrefresh->value > 0)
+		if (r_displayrefresh->value > 0)
 		{
 			dm.dmDisplayFrequency = r_displayrefresh->value;
 			dm.dmFields     = DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
@@ -328,7 +328,7 @@ WORD gamma_ramp[3][256];
 
 void GLimp_Shutdown( void )
 {
-//jitgamma	if(vid_gamma_hw->value && gl_state.gammaramp)
+//jitgamma	if (vid_gamma_hw->value && gl_state.gammaramp)
 //		SetDeviceGammaRamp(glw_state.hDC, original_ramp);
 
 	if ( qwglMakeCurrent && !qwglMakeCurrent( NULL, NULL ) )
@@ -578,7 +578,7 @@ qboolean GLimp_InitGL (void)
 
 		if (!((int)pfd.cStencilBits))  // jit
 		{
-			if(gl_debug->value)
+			if (gl_debug->value)
 				ri.Con_Printf(PRINT_ALL, "... No stencil buffer\n");
 
 			have_stencil = false;
@@ -587,7 +587,7 @@ qboolean GLimp_InitGL (void)
 		{
 			if (pfd.cStencilBits) 
 			{
-				if(gl_debug->value)
+				if (gl_debug->value)
 					ri.Con_Printf(PRINT_ALL, "... Using stencil buffer\n");
 
 				have_stencil = true; // Stencil shadows - MrG
@@ -776,13 +776,13 @@ void UpdateGammaRamp (void)
 	//int test;
 
 	// jitgamma -- don't let them go to extreme values:
-	if(vid_gamma->value < 0.7f)
+	if (vid_gamma->value < 0.7f)
 		ri.Cvar_SetValue("vid_gamma", 0.7f);
-	if(vid_gamma->value > 2.0f)
+	if (vid_gamma->value > 2.0f)
 		ri.Cvar_SetValue("vid_gamma", 2.0f);
-	if(vid_lighten->value > 0.5f)
+	if (vid_lighten->value > 0.5f)
 		ri.Cvar_SetValue("vid_lighten", 0.5f);
-	if(vid_lighten->value < 0.0f)
+	if (vid_lighten->value < 0.0f)
 		ri.Cvar_SetValue("vid_lighten", 0.0f);
 
 	if (gl_state.gammaramp)
@@ -796,9 +796,9 @@ void UpdateGammaRamp (void)
 				i_f = (float)i/255.0f;
 				v = pow(i_f, vid_gamma->value);
 				v += vid_lighten->value * (1.0f - v);
-				if(v < 0.0f)
+				if (v < 0.0f)
 					v = 0.0f;
-				else if(v > 1.0f)
+				else if (v > 1.0f)
 					v = 1.0f;
 				gamma_ramp[o][i] = (WORD)(v * 65535.0f + 0.5f);
 			}

@@ -113,7 +113,7 @@ void R_InitNoTexture (void) /// jit, renamed
 
 	r_whitetexture = GL_LoadPic("***r_whitetexture***", (byte*)white, 8, 8, it_sky, 32);
 
-	if(r_caustics->value > 1.0f)
+	if (r_caustics->value > 1.0f)
 		r_caustictexture = GL_FindImage("textures/sfx/caustics/caustics1_02.tga", it_wall); // jitcaustics
 	else
 	//if(r_caustics->value)
@@ -144,7 +144,7 @@ void apply_gamma(byte *rgbdata, int w, int h)
 	register int i,j,k;
 	extern unsigned short gamma_ramp[3][256];
 
-	if(!vid_gamma_hw->value || !gl_state.gammaramp ||
+	if (!vid_gamma_hw->value || !gl_state.gammaramp ||
 		!ri.Cvar_Get("gl_screenshot_applygamma", "0", CVAR_ARCHIVE)->value)
 		return; // don't apply gamma if it's not turned on!
 	else
@@ -199,7 +199,7 @@ void GL_ScreenShot_JPG (void)
 
 	// Open the file for Binary Output
 	file = fopen(checkname, "wb");
-	if(!file)
+	if (!file)
 	{
 		ri.Con_Printf (PRINT_ALL, "SCR_JPGScreenShot_f: Couldn't create a file\n"); 
 		return;
@@ -207,7 +207,7 @@ void GL_ScreenShot_JPG (void)
 
 	// Allocate room for a copy of the framebuffer
 	rgbdata = malloc(vid.width * vid.height * 3);
-	if(!rgbdata)
+	if (!rgbdata)
 	{
 		fclose(file);
 		return;
@@ -228,7 +228,7 @@ void GL_ScreenShot_JPG (void)
 	cinfo.in_color_space = JCS_RGB;
 	cinfo.input_components = 3;
 	jpeg_set_defaults(&cinfo);
-	if((gl_screenshot_jpeg_quality->value >= 101) || (gl_screenshot_jpeg_quality->value <= 0))
+	if ((gl_screenshot_jpeg_quality->value >= 101) || (gl_screenshot_jpeg_quality->value <= 0))
 		ri.Cvar_Set("gl_screenshot_jpeg_quality", "85");
 	jpeg_set_quality(&cinfo, gl_screenshot_jpeg_quality->value, TRUE);
 
@@ -273,7 +273,7 @@ void GL_ScreenShot_f (void)
 	FILE		*f;
 
 	// Heffo - JPEG Screenshots
-	if(gl_screenshot_jpeg->value)
+	if (gl_screenshot_jpeg->value)
 	{
 		GL_ScreenShot_JPG();
 		return;

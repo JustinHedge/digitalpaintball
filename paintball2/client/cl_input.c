@@ -467,7 +467,7 @@ void CL_SendCmd (void)
 
 	*cmd = CL_CreateCmd();
 
-	if(!cl_locknetfps->value) // jitnetfps
+	if (!cl_locknetfps->value) // jitnetfps
 	{
 		static usercmd_t oldcmd;
 		float ppsstate;
@@ -481,7 +481,7 @@ void CL_SendCmd (void)
 		else
 			ppsstate = cl_cmdrate->value;
 
-		if(ppsstate < 5)
+		if (ppsstate < 5)
 			ppsstate = 5;
 
 		if ((cl.time + 1000) < ppscount)

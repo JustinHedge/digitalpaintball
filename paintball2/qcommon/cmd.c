@@ -277,7 +277,7 @@ void Cbuf_AddEarlyCommands (qboolean clear)
 		s = COM_Argv(i);
 		if (strcmp(s, "+set"))
 			continue;
-		if(!Q_streq(COM_Argv(i+1), "build")) // jitversion -- don't let client fake it
+		if (!Q_streq(COM_Argv(i+1), "build")) // jitversion -- don't let client fake it
 			Cbuf_AddText (va("set %s %s\n", COM_Argv(i+1), COM_Argv(i+2)));
 		if (clear)
 		{
@@ -564,7 +564,7 @@ static cmd_macro_t *Cmd_MacroFind(const char *name)
 	hash = Com_HashString( name, MACROHASH_SIZE );
 	for(macro=cmd_macroHash[hash]; macro; macro=macro->hashNext)
 	{
-		if(!Q_strcasecmp(macro->name, name))
+		if (!Q_strcasecmp(macro->name, name))
 		{
 			return macro;
 		}
@@ -583,7 +583,7 @@ void Cmd_AddMacro( const char *name, qboolean (*function)( char *, int ) ) {
 	int hash;
 	
 // fail if the macro already exists
-	if( Cmd_MacroFind( name ) ) {
+	if ( Cmd_MacroFind( name ) ) {
 		Com_Printf( "Cmd_AddMacro: %s already defined\n", name );
 		return;
 	}
@@ -1059,13 +1059,13 @@ char *Cmd_CompleteCommand (char *partial)
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
 		if (!strncmp (partial,cmd->name, len)) {
 			// === jit
-			if(Q_streq(cmd->name, "vid_restart"))
+			if (Q_streq(cmd->name, "vid_restart"))
 				returnfullname = "vid_restart";
-			else if(Q_streq(cmd->name, "quit"))
+			else if (Q_streq(cmd->name, "quit"))
 				returnfullname = "quit";
-			else if(Q_streq(cmd->name, "disconnect"))
+			else if (Q_streq(cmd->name, "disconnect"))
 				returnfullname = "disconnect";
-			else if(Q_streq(cmd->name, "record"))
+			else if (Q_streq(cmd->name, "record"))
 				returnfullname = "record";
 			// jit ===
 			pmatch[i]=cmd->name;
@@ -1106,7 +1106,7 @@ char *Cmd_CompleteCommand (char *partial)
 		}
 		Com_Printf("Found %i matches\n",i);
 
-		if(returnfullname) // jit
+		if (returnfullname) // jit
 			return returnfullname;
 		else
 			return retval;

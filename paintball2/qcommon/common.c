@@ -1135,7 +1135,7 @@ void Z_Free (void *ptr)
 {
 	zhead_t	*z;
 
-	if(!ptr)
+	if (!ptr)
 		Com_Error (ERR_FATAL, "Z_Free: null pointer"); // jitmalloc
 
 	z = ((zhead_t *)ptr) - 1;

@@ -567,7 +567,7 @@ void SV_Map_f (void)
 
 	M_ForceMenuOff(); // jitmenu
 
-	if(strstr(map, ".dm2")) // jitdemo -- in case people use "map" instead of "demomap" for playing a demo
+	if (strstr(map, ".dm2")) // jitdemo -- in case people use "map" instead of "demomap" for playing a demo
 	{
 		SV_DemoMap_f();
 		return;
@@ -900,19 +900,19 @@ void SV_ServerRecord_f (void)
 	int		len;
 	int		i;
 
-	if(Cmd_Argc() != 2)
+	if (Cmd_Argc() != 2)
 	{
 		Com_Printf("serverrecord <demoname>\n");
 		return;
 	}
 
-	if(svs.demofile)
+	if (svs.demofile)
 	{
 		Com_Printf("Already recording.\n");
 		return;
 	}
 
-	if(sv.state != ss_game)
+	if (sv.state != ss_game)
 	{
 		Com_Printf("You must be in a level to record.\n");
 		return;
@@ -926,7 +926,7 @@ void SV_ServerRecord_f (void)
 	Com_Printf("recording to %s.\n", name);
 	FS_CreatePath(name);
 	svs.demofile = fopen(name, "wb");
-	if(!svs.demofile)
+	if (!svs.demofile)
 	{
 		Com_Printf("ERROR: couldn't open.\n");
 		return;

@@ -32,7 +32,7 @@ static void item_print (char *s)
 {
 	startpos--;
 
-	if(startpos<0)
+	if (startpos<0)
 		startpos = MAX_ITEM_STRINGS - 1;
 
 	strcpy(item_strings[startpos], s);
@@ -43,9 +43,9 @@ void CL_ParsePrintItem (char *s) // jit
 {
 	char buff[MAX_QPATH];
 
-	if(*s == '+') // item pickup
+	if (*s == '+') // item pickup
 		sprintf(buff, "%s", cl.configstrings[CS_ITEMS+s[1]]);
-	else if(*s == '-') // item drop
+	else if (*s == '-') // item drop
 		sprintf(buff, "%c%ca%s", CHAR_ITALICS, CHAR_COLOR, cl.configstrings[CS_ITEMS+s[1]]);
 	else // unknown? (shouldn't happen)
 		sprintf("UNKNOWN %s", cl.configstrings[CS_ITEMS+s[1]]);
@@ -60,14 +60,14 @@ void CL_DrawItemPickups (void)
 
 	for (i=0, j=startpos; i<MAX_ITEM_STRINGS; i++, j++, j%=MAX_ITEM_STRINGS)
 	{
-		if(*item_strings[j])
+		if (*item_strings[j])
 		{
 			alpha = (4000 - (curtime-item_string_time[j])) / 3000.0f;
 
-			if(alpha > 1.0f)
+			if (alpha > 1.0f)
 				alpha = 1.0f;
 
-			if(alpha < 0.05f)
+			if (alpha < 0.05f)
 			{
 				item_strings[j][0] = '\0';
 				break;

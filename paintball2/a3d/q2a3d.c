@@ -43,7 +43,7 @@ void S_Q2A3DInit (void)
 	int loadLibError;
 #endif
 
-	if(a3dsound_started)
+	if (a3dsound_started)
 		return;//already enabled?
 	if (!a3d.reflib) {
 	#ifndef WIN32
@@ -120,7 +120,7 @@ void S_Q2A3DInit (void)
 		return;
 	}
 
-	if(a3d.Init_A3D()>1) //initialise A3D
+	if (a3d.Init_A3D()>1) //initialise A3D
 		Com_Printf("\nEAX Extenstions Available\nA3D initialised\n");//engine returned EAX available
 	else
 		Com_Printf("\nA3D initialised\n");
@@ -141,7 +141,7 @@ channel_t *S_Q2A3DPickChannel(int entnum, int entchannel)
 	channel_t	*ch;
 	for (ch_idx=0 ; ch_idx < MAX_CHANNELS ; ch_idx++)
 	{
-		if(channels[ch_idx].autosound)
+		if (channels[ch_idx].autosound)
 			continue;
 		ch = &channels[ch_idx];
 		memset (ch, 0, sizeof(*ch));
@@ -168,11 +168,11 @@ void S_Q2A3DStartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, fl
 		Com_sprintf (namebuffer, sizeof(namebuffer), &name[1]);
 	else
 		Com_sprintf (namebuffer, sizeof(namebuffer), "sound/%s", name);//affix directory structure
-	if(origin)
+	if (origin)
 	{
 		VectorCopy (origin, sound_origin);//set its origin
 	}
-	else if(entnum>1 && entnum != cl.playernum+1)
+	else if (entnum>1 && entnum != cl.playernum+1)
 	{
 		old = &cl_entities[entnum];
 		VectorCopy (old->lerp_origin, sound_origin);
@@ -187,10 +187,10 @@ void S_Q2A3DStartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, fl
 	head_origin[2]+=42;
 	tr = CM_BoxTrace (head_origin,sound_origin, vec3_origin, vec3_origin,0,  MASK_SOLID | MASK_WATER);
 #if 0 // jitsound
-	if(sound_origin[2])
-		if(entchannel==CHAN_WEAPON)
+	if (sound_origin[2])
+		if (entchannel==CHAN_WEAPON)
 			atten=0.2+(tr.fraction/*attenuation*0.8*/);//attenuation > = quieter
-		else if(attenuation==ATTN_NONE)
+		else if (attenuation==ATTN_NONE)
 		{
 			VectorCopy(head_origin, sound_origin); // jitsound
 			atten=1;
@@ -204,7 +204,7 @@ void S_Q2A3DStartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, fl
 	else
 		atten=0.5/*attenuation*/;//attenuation > = quieter*/
 #else // jitsound:
-	if(attenuation == ATTN_NONE) // sound heard no matter what
+	if (attenuation == ATTN_NONE) // sound heard no matter what
 	{
 		atten = 1;
 		VectorCopy(head_origin, sound_origin);
@@ -213,7 +213,7 @@ void S_Q2A3DStartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, fl
 	else
 	{
 		atten = 3.0f / attenuation;
-		if(tr.fraction != 1.0f) // blocked
+		if (tr.fraction != 1.0f) // blocked
 			atten *= (1.0f - tr.fraction);
 	}
 #endif
@@ -221,29 +221,29 @@ void S_Q2A3DStartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, fl
 	//if(sfx->Id)
 	//	Com_Printf("%s %f %f %d  %d %f\n",namebuffer,sound_origin[0],sound_origin[1],water,sfx->Id,atten);
 	
-	if(debugbuff = a3d.A3D_StartSound(sound_origin, listener_forward,listener_origin,namebuffer,atten,s_volume->value,sfx->Id,water))
+	if (debugbuff = a3d.A3D_StartSound(sound_origin, listener_forward,listener_origin,namebuffer,atten,s_volume->value,sfx->Id,water))
 		return;
 	//Com_Printf("try %s\n",namebuffer);
 	//if startsound failed, the A3D engine doesn't have it cahched
 	//so get a handle to the file and cache it.
-	if(!a3d.A3D_cachefile(namebuffer,NULL))//try and reassign it to a buffer
+	if (!a3d.A3D_cachefile(namebuffer,NULL))//try and reassign it to a buffer
 	{
 		FS_LoadFile (namebuffer, (void **)&wavfile);
-		if(!wavfile)
+		if (!wavfile)
 		{
 			//Com_Printf("couldn't find %s\n",namebuffer);
 			a3d.A3D_StartSound(sound_origin, listener_forward,listener_origin,namebuffer,atten,s_volume->value,sfx->Id,0);
 			//Com_Printf("missing %s\n",namebuffer);
 			return;//couldn't find, see if startsound can handle it (e.g. ogg files)
 		}
-		if(!a3d.A3D_cachefile(namebuffer,wavfile))
+		if (!a3d.A3D_cachefile(namebuffer,wavfile))
 		{
 			//Com_Printf("A3D sound failed %s\n",namebuffer);
 			FS_FreeFile (wavfile);//if we fail to cache, free it for use later
 		}
 		//Com_Printf("cached\n");
 		//then try to start it again
-		if(debugbuff = a3d.A3D_StartSound(sound_origin, listener_forward,listener_origin,namebuffer,atten,s_volume->value,sfx->Id,0))
+		if (debugbuff = a3d.A3D_StartSound(sound_origin, listener_forward,listener_origin,namebuffer,atten,s_volume->value,sfx->Id,0))
 		{
 			FS_FreeFile (wavfile);//its now in the cache and nolonger needed
 			//Com_Printf("%s %d\n",namebuffer,debugbuff);
@@ -302,7 +302,7 @@ void S_Q2A3DAddLoopSounds (void)
 		ch->autosound = true;	// removed next frame, enable this channel
 		ch->sfx = sfx;//set the name
 
-		if(ent)
+		if (ent)
 			VectorCopy(ent->origin,ch->origin);//copy in this sounds position
 	}
 }//adds continious looping sounds
@@ -345,7 +345,7 @@ void S_Q2A3DUpdate(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 		if (ch->sfx )
 		{
 			atten=0;
-			if(ch->autosound)
+			if (ch->autosound)
 			{
 				
 				//set up its traceable ID.
@@ -358,7 +358,7 @@ void S_Q2A3DUpdate(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 				//end set up obstructions.
 				ch->sfx->Id = i+1;
 				
-				if(atten<0.1)
+				if (atten<0.1)
 				{
 					a3d.A3D_StopSound(i+1);
 					continue;
@@ -373,7 +373,7 @@ void S_Q2A3DUpdate(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 					Com_sprintf (namebuffer, sizeof(namebuffer), &name[1]);
 				else
 					Com_sprintf (namebuffer, sizeof(namebuffer), "sound/%s", name);
-				if(!(speed = a3d.A3D_UpdateSound(ch->sfx->Id,namebuffer,ch->origin, listener_forward,listener_origin,atten)) && ch->sfx->Id)
+				if (!(speed = a3d.A3D_UpdateSound(ch->sfx->Id,namebuffer,ch->origin, listener_forward,listener_origin,atten)) && ch->sfx->Id)
 				{
 					//Com_Printf("failed %d %s\n",i+1,ch->sfx->name);
 					S_Q2A3DStartSound (ch->origin, 0, 0, ch->sfx, 1, ATTN_NORM, 0);//if we cant update it, its because it hasn't been started
