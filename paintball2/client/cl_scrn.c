@@ -623,15 +623,15 @@ void SCR_TimeRefresh_f (void)
 	int		start, stop;
 	float	time;
 
-	if ( cls.state != ca_active )
+	if (cls.state != ca_active)
 		return;
 
-	start = Sys_Milliseconds ();
+	start = Sys_Milliseconds();
 
 	if (Cmd_Argc() == 3) // jitest
 	{
 		re.BeginFrame(0);
-		for (i=0 ; i<128 ; i++)
+		for (i=0; i<128; i++)
 		{
 			cl.refdef.viewangles[1] = i/128.0*360.0;
 			re.RenderFrame(&cl.refdef);
@@ -642,11 +642,11 @@ void SCR_TimeRefresh_f (void)
 	}
 	else if (Cmd_Argc() == 2)
 	{	// run without page flipping
-		re.BeginFrame( 0 );
-		for (i=0 ; i<128 ; i++)
+		re.BeginFrame(0);
+		for (i=0; i<128; i++)
 		{
 			cl.refdef.viewangles[1] = i/128.0*360.0;
-			re.RenderFrame (&cl.refdef);
+			re.RenderFrame(&cl.refdef);
 		}
 		re.EndFrame();
 	}

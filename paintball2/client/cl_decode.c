@@ -285,6 +285,9 @@ void CL_DrawEventStrings (void)
 			break;
 		}
 	}
+
+	// set transparency back to normal so other stuff renders correctly
+	re.DrawStringAlpha(0, 0, "", 1.0f);
 }
 
 void CL_ParsePrintEvent (const char *str) // jitevents
@@ -308,30 +311,36 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 	{
 		sprintf(event_text, "(null)");
 	}
+
+	Com_Printf("%s\n", event_text);
 	
 	// handle special cases of events here...
 	switch(event)
 	{
 	case EVENT_ENTER:
-		Com_Printf("%s\n", event_text);
-		if (num_elements > 1)
+		if (num_elements > 2)
 		{
 			cl_scores_clear(index_array[2]);
 			cl_scores_setinuse(index_array[2], true);
-			cl_scores_setteam(index_array[2], (num_elements > 3) ? index_array[3] : 0);
+			if (num_elements > 3)
+				cl_scores_setteam(index_array[2], (num_elements > 3) ? index_array[3] : 0);
 		}
 		break;
+	case EVENT_DISCONNECT:
+		if (num_elements > 2)
+			cl_scores_clear(index_array[2]);
+		break;
 	case EVENT_JOIN:
-		Com_Printf("%s\n", event_text);
 		if (num_elements > 3)
 			cl_scores_setteam(index_array[2], index_array[3]);
 		break;
 	case EVENT_ROUNDOVER:
-		Com_Printf("%s\n", event_text);
 		event_print(event_text);
 		break;
+	case EVENT_ROUNDSTART:
+		cl_scores_setisalive_all(true);
+		break;
 	case EVENT_ADMINKILL: // jitodo - fix all these offsets
-		Com_Printf("%s\n", event_text);
 		if (num_elements > 2 && index_array[2] == cl.playernum)
 		{
 			if (num_elements > 3)
@@ -342,13 +351,14 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		}
 		break;
 	case EVENT_KILL: // jitodo - fix all these offsets
-		Com_Printf("%s\n", event_text);
-
 		// Update scoreboard:
 		if (current_element < num_elements)
 			cl_scores_setkills(index_array[2], index_array[current_element++]);
 		if (current_element < num_elements)
+		{
 			cl_scores_setdeaths(index_array[4], index_array[current_element++]);
+			cl_scores_setisalive(index_array[4], false);
+		}
 
 		if (num_elements < 8)
 			break;
@@ -365,14 +375,14 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		event_print(event_text);
 		break;
 	case EVENT_SUICIDE: // jitodo - fix all these offsets
-		Com_Printf("%s\n", event_text);
-
 		if (num_elements < 3)
 			break;
 
 		// Scoreboard:
 		if (current_element < num_elements)
 			cl_scores_setdeaths(index_array[2], index_array[current_element++]);
+
+		cl_scores_setisalive(index_array[2], false);
 
 		if (index_array[2] == cl.playernum)
 		{
@@ -382,8 +392,6 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 
 		break;
 	case EVENT_FFIRE: // jitodo - fix all these offsets
-		Com_Printf("%s\n", event_text);
-
 		if (num_elements < 4)
 			break;
 
@@ -396,8 +404,31 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 
 		event_print(event_text);
 		break;
+	case EVENT_RESPAWN:
+		if (num_elements > 2)
+			cl_scores_setisalive(index_array[2], true);
+		break;
+	case EVENT_GRAB:
+		if (num_elements < 2)
+			break;
+
+		cl_scores_sethasflag(index_array[2], true);
+		if (current_element < num_elements)
+			cl_scores_setgrabs(index_array[2], index_array[current_element++]);
+		break;
+	case EVENT_DROPFLAG:
+		if (num_elements > 2)
+			cl_scores_sethasflag(index_array[2], false);
+		break;
+	case EVENT_CAP:
+		if (num_elements < 2)
+			break;
+
+		cl_scores_sethasflag(index_array[2], false);
+		if (current_element < num_elements)
+			cl_scores_setcaps(index_array[2], index_array[current_element++]);
+		break;
 	default:
-		Com_Printf("%s\n", event_text);
 		break;
 	}
 }

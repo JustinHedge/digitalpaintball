@@ -118,6 +118,11 @@ typedef enum {
 	WIDGET_TYPE_FIELD
 } WIDGET_TYPE;
 
+typedef enum {
+	MENU_TYPE_DEFAULT = 0,
+	MENU_TYPE_DIALOG = 1
+} MENU_TYPE;
+
 // Horizontal alignment of widget
 typedef enum {
 	WIDGET_HALIGN_LEFT		= 0,
@@ -249,11 +254,12 @@ typedef struct MENU_WIDGET_S {
 } menu_widget_t;
 
 typedef struct MENU_SCREEN_S {
-	char *name;
-	image_t *background;
-	menu_widget_t *widget;
-	menu_widget_t *selected_widget;
-	menu_widget_t *hover_widget;
+	char			*name;
+	image_t			*background;
+	MENU_TYPE		type;
+	menu_widget_t	*widget;
+	menu_widget_t	*selected_widget;
+	menu_widget_t	*hover_widget;
 	struct MENU_SCREEN_S *next;
 } menu_screen_t;
 

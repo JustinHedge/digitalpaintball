@@ -117,7 +117,6 @@ void M_ForceMenuOff (void)
 
 void M_Menu_Main_f (void)
 {
-	// jitodo -- different menu in-game
 	if (cls.state == ca_active)
 		Cbuf_AddText("menu main_ingame\n");
 	else
@@ -1439,15 +1438,16 @@ static menu_widget_t *M_GetActiveWidget(menu_screen_t *menu)
 	menu_widget_t *widget;
 
 	if(!menu)
-		menu = m_menu_screens[m_menudepth-1];
+		menu = m_current_menu;
 
 	for(widget=menu->widget; widget && !widget->hover && !widget->selected; widget = widget->next);
 
 	return widget;
 }
 
-
-static void M_InsertField (int key)
+// returns true if key was handled here (user inputed data into field)
+// returns false if no field was active.
+static qboolean M_InsertField (int key)
 {
 	char s[256];
 	menu_widget_t *widget;
@@ -1456,7 +1456,7 @@ static void M_InsertField (int key)
 	widget = M_GetActiveWidget(NULL);
 
 	if (!widget || widget->type != WIDGET_TYPE_FIELD || !widget->cvar)
-		return;
+		return false;
 
 	strcpy(s, Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->string);
 	cursorpos = widget->field_cursorpos;
@@ -1569,9 +1569,10 @@ static void M_InsertField (int key)
 	widget->field_cursorpos = cursorpos;
 	Cvar_Set(widget->cvar, s);
 	field_adjustCursor(widget);
+	return true;
 }
 
-void M_Keyup (int key)
+qboolean M_Keyup (int key)
 {
 	static int old_mouse_x, old_mouse_y, old_clicktime;
 
@@ -1579,38 +1580,43 @@ void M_Keyup (int key)
 	{
 		m_active_bind_widget = NULL;
 		m_active_bind_command = NULL;
-		return;
+		return true;
 	}
 
 	switch (key) 
 	{
 	case K_ENTER:
 	case K_KP_ENTER:
-		M_KBAction(m_menu_screens[m_menudepth-1], M_ACTION_EXECUTE);
+		M_KBAction(m_current_menu, M_ACTION_EXECUTE);
 		break;
 	case K_MOUSE1:
-		M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_EXECUTE);
+		M_MouseAction(m_current_menu, M_ACTION_EXECUTE);
 		if (old_mouse_x == m_mouse.x && old_mouse_y == m_mouse.x
 			&& curtime - old_clicktime < m_doubleclickspeed->value)
 		{
-			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_DOUBLECLICK);
+			M_MouseAction(m_current_menu, M_ACTION_DOUBLECLICK);
 		}
 		old_mouse_x = m_mouse.x;
 		old_mouse_y = m_mouse.x;
 		old_clicktime = curtime;
 		break;
 	case K_RIGHTARROW:
-		M_AdjustWidget(m_menu_screens[m_menudepth-1], 1, false);
+		M_AdjustWidget(m_current_menu, 1, false);
 		break;
 	case K_LEFTARROW:
-		M_AdjustWidget(m_menu_screens[m_menudepth-1], -1, false);
+		M_AdjustWidget(m_current_menu, -1, false);
 		break;
 	default:
+		return false;
 		break;
 	};
+
+	return true;
 }
 
-void M_Keydown (int key)
+// returns true if key was handled by the menu
+// returns false if not
+qboolean M_Keydown (int key)
 {
 	if(m_active_bind_command)
 	{
@@ -1646,39 +1652,42 @@ void M_Keydown (int key)
 			break;
 		case K_ENTER:
 		case K_KP_ENTER:
-			M_KBAction(m_menu_screens[m_menudepth-1], M_ACTION_SELECT);
+			M_KBAction(m_current_menu, M_ACTION_SELECT);
 			break;
 		case K_MOUSE1:
-			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_SELECT);
+			M_MouseAction(m_current_menu, M_ACTION_SELECT);
 			key = K_ENTER;
 			break;
 		case K_MOUSEMOVE:
-			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_HILIGHT);
+			M_MouseAction(m_current_menu, M_ACTION_HILIGHT);
 			break;
 		case K_MWHEELUP:
-			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_SCROLLUP);
+			M_MouseAction(m_current_menu, M_ACTION_SCROLLUP);
 			break;
 		case K_MWHEELDOWN:
-			M_MouseAction(m_menu_screens[m_menudepth-1], M_ACTION_SCROLLDOWN);
+			M_MouseAction(m_current_menu, M_ACTION_SCROLLDOWN);
 			break;
 		case K_DOWNARROW:
-			M_HilightNextWidget(m_menu_screens[m_menudepth-1]);
+			M_HilightNextWidget(m_current_menu);
 			break;
 		case K_UPARROW:
-			M_HilightPreviousWidget(m_menu_screens[m_menudepth-1]);
+			M_HilightPreviousWidget(m_current_menu);
 			break;
 		case K_RIGHTARROW:
-			M_AdjustWidget(m_menu_screens[m_menudepth-1], 1, true);
+			M_AdjustWidget(m_current_menu, 1, true);
 			break;
 		case K_LEFTARROW:
-			M_AdjustWidget(m_menu_screens[m_menudepth-1], -1, true);
+			M_AdjustWidget(m_current_menu, -1, true);
 			break;
 		default:
 			// insert letter into field, if one is active
-			M_InsertField(key);
+			if (!M_InsertField(key))
+				return false;
 			break;
-		};
+		}
 	}
+
+	return true;
 }
 
 
@@ -1721,7 +1730,7 @@ static void select_begin_list(menu_widget_t *widget, char *buf)
 	if(strstr(token, "pair") || strstr(token, "map") || strstr(token, "bind"))
 	{
 		widget->flags |= WIDGET_FLAG_USEMAP;
-		if(strstr(token,"bind"))
+		if(strstr(token, "bind"))
 			widget->flags |= WIDGET_FLAG_BIND;
 
 		token = COM_Parse(&buf);
@@ -1755,8 +1764,34 @@ static void select_begin_list(menu_widget_t *widget, char *buf)
 		}
 	}
 	else if(strstr(token, "single") || strstr(token, "list"))
-	{
-		// jitodo
+	{	
+		// read in list
+		token = COM_Parse(&buf);
+
+		while(token && strlen(token) && !Q_streq(token, "end"))
+		{	
+			new_map = get_new_select_map_list(NULL, token);
+			new_map->next = list_start;
+			list_start = new_map;
+			count ++;
+			token = COM_Parse(&buf);
+		}
+
+		widget->select_totalitems = count;
+		widget->select_map = NULL;
+		widget->select_list = Z_Malloc(sizeof(char*)*count);
+
+		if(count > widget->select_rows)
+			widget->flags |= WIDGET_FLAG_VSCROLLBAR;
+
+		// put the list into the widget's array, and free the list.
+		for(i=count-1; i>=0; i--, finger=finger->next)
+		{
+			finger = list_start;
+			widget->select_list[i] = finger->string;
+			list_start = finger->next;
+			Z_Free(finger);
+		}
 	}
 }
 
@@ -1843,6 +1878,14 @@ static int M_WidgetGetType(const char *s)
 		return WIDGET_TYPE_FIELD;
 
 	return WIDGET_TYPE_UNKNOWN;
+}
+
+static MENU_TYPE M_MenuGetType(const char *s)
+{
+	if(Q_streq(s, "dialog"))
+		return MENU_TYPE_DIALOG;
+	else
+		return MENU_TYPE_DEFAULT;
 }
 
 static int M_WidgetGetAlign(const char *s)
@@ -1972,7 +2015,12 @@ static void menu_from_file(menu_screen_t *menu)
 					}
 					// widget properties:
 					else if(Q_streq(token, "type"))
-						widget->type = M_WidgetGetType(COM_Parse(&buf));
+					{
+						if (widget)
+							widget->type = M_WidgetGetType(COM_Parse(&buf));
+						else
+							menu->type = M_MenuGetType(COM_Parse(&buf));
+					}
 					else if(Q_streq(token, "text"))
 						widget->text = text_copy(COM_Parse(&buf));
 					else if(Q_streq(token, "hovertext"))
@@ -3019,15 +3067,28 @@ static void draw_menu_screen (menu_screen_t *menu)
 	M_DrawCursor();
 }
 
+static void draw_menu_at_depth (int depth)
+{
+	menu_screen_t *menu;
+
+	if (depth > 0 && depth <= m_menudepth)
+	{
+		menu = m_menu_screens[depth-1];
+
+		// if a dialog, draw what's behind it first:
+		if (menu->type == MENU_TYPE_DIALOG)
+			draw_menu_at_depth(depth-1);
+		
+		draw_menu_screen(menu);
+	}
+}
+
 void M_Draw (void)
 {
 	if(cls.key_dest == key_menu && m_menudepth)
 	{
-		menu_screen_t *menu;
-
 		SCR_DirtyScreen();
-		menu = m_menu_screens[m_menudepth-1];
-		draw_menu_screen(menu); // jitodo - if it's a dialog menu, draw what's behind it as well (first)
+		draw_menu_at_depth(m_menudepth);
 	}
 }
 

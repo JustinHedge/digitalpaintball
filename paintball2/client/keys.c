@@ -886,6 +886,52 @@ void Key_Init (void)
 	Cmd_AddCommand ("bindlist",Key_Bindlist_f);
 }
 
+
+static void GameKeyup (int key) // jitscores
+{
+	char *kb;
+	char cmd[1024];
+
+	kb = keybindings[key];
+
+	if (kb && kb[0] == '+')
+	{
+		Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
+		Cbuf_AddText (cmd);
+	}
+
+	if (keyshift[key] != key)
+	{
+		kb = keybindings[keyshift[key]];
+		if (kb && kb[0] == '+')
+		{
+			Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
+			Cbuf_AddText (cmd);
+		}
+	}
+}
+
+static void GameKeyDown (int key) // jitscores
+{
+	char *kb;
+	char cmd[1024];
+
+	kb = keybindings[key];
+	if (kb)
+	{
+		if (kb[0] == '+')
+		{	// button commands add keynum and time as a parm
+			Com_sprintf (cmd, sizeof(cmd), "%s %i %i\n", kb, key, time);
+			Cbuf_AddText (cmd);
+		}
+		else
+		{
+			Cbuf_AddText (kb);
+			Cbuf_AddText ("\n");
+		}
+	}
+}
+
 /*
 ===================
 Key_Event
@@ -896,8 +942,8 @@ Should NOT be called during an interrupt!
 */
 void Key_Event (int key, qboolean down, unsigned time)
 {
-	char	*kb;
-	char	cmd[1024];
+//	char	*kb;
+//	char	cmd[1024];
 
 	// hack for modal presses
 	if (key_waiting == -1)
@@ -943,37 +989,23 @@ void Key_Event (int key, qboolean down, unsigned time)
 		return;
 	}
 
-	// any key during the attract mode will bring up the menu
-	// jitdemo, disabled, that's annoying
-/*	if (cl.attractloop && cls.key_dest != key_menu &&
-		!(key >= K_F1 && key <= K_F12))
-		key = K_ESCAPE;
-*/
-
 	// menu key is hardcoded, so the user can never unbind it
 	if (key == K_ESCAPE)
 	{
 		if (!down)
 			return;
 
-//++ ARTHUR [9/04/03] - Make centerprint not act like another menu layer 
-//		if (cl.frame.playerstate.stats[STAT_LAYOUTS] && cls.key_dest == key_game)
-//		{	// put away help computer / inventory
-//			Cbuf_AddText ("cmd putaway\n");
-//			return;
-//		}
-//-- ARTHUR
 		switch (cls.key_dest)
 		{
 		case key_message:
-			Key_Message (key);
+			Key_Message(key);
 			break;
 		case key_menu:
-			M_Keydown (key);
+			M_Keydown(key);
 			break;
 		case key_game:
 		case key_console:
-			M_Menu_Main_f ();
+			M_Menu_Main_f();
 			break;
 		default:
 			Com_Error (ERR_FATAL, "Bad cls.key_dest");
@@ -1007,75 +1039,79 @@ void Key_Event (int key, qboolean down, unsigned time)
 		switch (cls.key_dest) // jitmenu -- we want to activate things when the key goes UP!
 		{
 		case key_menu:
-			M_Keyup(key);
+			if(!M_Keyup(key))
+				GameKeyup(key);
 			break;
 		case key_console:
-			if(consolekeys[key]) // only send key release to game if it's not a valid console key
+			if (consolekeys[key]) // only send key release to game if it's not a valid console key
 				break; // jitbind -- fix calls of keyup binds while typing in console!
 		case key_game:
 		default:
-			kb = keybindings[key];
-			if (kb && kb[0] == '+')
-			{
-				Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
-				Cbuf_AddText (cmd);
-			}
-			if (keyshift[key] != key)
-			{
-				kb = keybindings[keyshift[key]];
-				if (kb && kb[0] == '+')
-				{
-					Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
-					Cbuf_AddText (cmd);
-				}
-			}
+			//kb = keybindings[key];
+			//if (kb && kb[0] == '+')
+			//{
+			//	Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
+			//	Cbuf_AddText (cmd);
+			//}
+			//if (keyshift[key] != key)
+			//{
+			//	kb = keybindings[keyshift[key]];
+			//	if (kb && kb[0] == '+')
+			//	{
+			//		Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
+			//		Cbuf_AddText (cmd);
+			//	}
+			//}
+			GameKeyup(key);
 			break;
 		}
-		return;
 	}
-
-//
-// if not a consolekey, send to the interpreter no matter what mode is
-//
-	if ( /*jitmenu (cls.key_dest == key_menu && menubound[key])
-	|| */(cls.key_dest == key_console && !consolekeys[key])
-	|| (cls.key_dest == key_game && ( cls.state == ca_active || !consolekeys[key] ) ) )
+	else
 	{
-		kb = keybindings[key];
-		if (kb)
+	//
+	// if not a consolekey, send to the interpreter no matter what mode is
+	//
+		if ( /*jitmenu (cls.key_dest == key_menu && menubound[key])
+			|| */(cls.key_dest == key_console && !consolekeys[key])
+			|| (cls.key_dest == key_game && (cls.state == ca_active || !consolekeys[key])))
 		{
-			if (kb[0] == '+')
-			{	// button commands add keynum and time as a parm
-				Com_sprintf (cmd, sizeof(cmd), "%s %i %i\n", kb, key, time);
-				Cbuf_AddText (cmd);
-			}
-			else
-			{
-				Cbuf_AddText (kb);
-				Cbuf_AddText ("\n");
-			}
+			//kb = keybindings[key];
+			//if (kb)
+			//{
+			//	if (kb[0] == '+')
+			//	{	// button commands add keynum and time as a parm
+			//		Com_sprintf (cmd, sizeof(cmd), "%s %i %i\n", kb, key, time);
+			//		Cbuf_AddText (cmd);
+			//	}
+			//	else
+			//	{
+			//		Cbuf_AddText (kb);
+			//		Cbuf_AddText ("\n");
+			//	}
+			//}
+			GameKeyDown(key);
+			return;
 		}
-		return;
-	}
 
-	if (shift_down)
-		key = keyshift[key];
+		if (shift_down)
+			key = keyshift[key];
 
-	switch (cls.key_dest)
-	{
-	case key_message:
-		Key_Message (key);
-		break;
-	case key_menu:
-		M_Keydown (key);
-		break;
-
-	case key_game:
-	case key_console:
-		Key_Console (key);
-		break;
-	default:
-		Com_Error (ERR_FATAL, "Bad cls.key_dest");
+		switch (cls.key_dest)
+		{
+		case key_message:
+			Key_Message(key);
+			break;
+		case key_menu:
+			if (!M_Keydown(key))
+				GameKeyDown(key);;
+			break;
+		case key_game:
+		case key_console:
+			Key_Console(key);
+			break;
+		default:
+			Com_Error (ERR_FATAL, "Bad cls.key_dest");
+		}
 	}
 }
 

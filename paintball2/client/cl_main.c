@@ -1179,37 +1179,6 @@ void CL_ReadPackets (void)
 
 /*
 ==============
-CL_FixUpGender_f
-==============
-*/
-void CL_FixUpGender(void)
-{
-	char *p;
-	char sk[80];
-
-	if (gender_auto->value) {
-
-		if (gender->modified) {
-			// was set directly, don't override the user
-			gender->modified = false;
-			return;
-		}
-
-		strncpy(sk, skin->string, sizeof(sk) - 1);
-		if ((p = strchr(sk, '/')) != NULL)
-			*p = 0;
-		if (Q_strcasecmp(sk, "male") == 0 || Q_strcasecmp(sk, "cyborg") == 0)
-			Cvar_Set ("gender", "male");
-		else if (Q_strcasecmp(sk, "female") == 0 || Q_strcasecmp(sk, "crackhor") == 0)
-			Cvar_Set ("gender", "female");
-		else
-			Cvar_Set ("gender", "none");
-		gender->modified = false;
-	}
-}
-
-/*
-==============
 CL_Userinfo_f
 ==============
 */
@@ -1793,7 +1762,10 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("botcommand", NULL);
 	Cmd_AddCommand("addbot", NULL);
 	Cmd_AddCommand("removebot", NULL);
-	Cmd_AddCommand("score_cl", CL_Score_f); // jitscores, jitodo -- make "score"
+	Cmd_AddCommand("score_print", CL_Score_f); // jitscores, jitodo -- make "score"
+	Cmd_AddCommand("score", CL_Scoreboard_f); // jitscores
+	Cmd_AddCommand("+scores", CL_ScoreboardShow_f); // jitscores
+	Cmd_AddCommand("-scores", CL_ScoreboardHide_f); // jitscores
 }
 
 

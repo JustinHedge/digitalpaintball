@@ -290,38 +290,41 @@ void CL_PrepRefresh (void)
 	else
 		cls.server_gamebuild = 0;
 
-	SCR_AddDirtyPoint (0, 0);
-	SCR_AddDirtyPoint (viddef.width-1, viddef.height-1);
+	SCR_AddDirtyPoint(0, 0);
+	SCR_AddDirtyPoint(viddef.width-1, viddef.height-1);
 
 	// let the render dll load the map
-	strcpy (mapname, cl.configstrings[CS_MODELS+1] + 5);	// skip "maps/"
+	strcpy(mapname, cl.configstrings[CS_MODELS+1] + 5);	// skip "maps/"
 	mapname[strlen(mapname)-4] = 0;		// cut off ".bsp"
 
 	// register models, pics, and skins
-	Com_Printf ("Map: %s\r", mapname); 
-	SCR_UpdateScreen ();
-	re.BeginRegistration (mapname);
-	Com_Printf ("                                     \r");
+	Com_Printf("Map: %s\r", mapname); 
+	SCR_UpdateScreen();
+	re.BeginRegistration(mapname);
+	Com_Printf("                                     \r");
 
 	// precache status bar pics
-	Com_Printf ("pics\r"); 
-	SCR_UpdateScreen ();
-	SCR_TouchPics ();
-	Com_Printf ("                                     \r");
+	Com_Printf("pics\r"); 
+	SCR_UpdateScreen();
+	SCR_TouchPics();
+	Com_Printf("                                     \r");
 
-	CL_RegisterTEntModels ();
+	CL_RegisterTEntModels();
 
 	num_cl_weaponmodels = 1;
 	strcpy(cl_weaponmodels[0], "weapon.md2");
 
-	for (i=1 ; i<MAX_MODELS && cl.configstrings[CS_MODELS+i][0] ; i++)
+	for (i=1; i<MAX_MODELS && cl.configstrings[CS_MODELS+i][0]; i++)
 	{
-		strcpy (name, cl.configstrings[CS_MODELS+i]);
+		strcpy(name, cl.configstrings[CS_MODELS+i]);
 		name[37] = 0;	// never go beyond one line
+
 		if (name[0] != '*')
 			Com_Printf ("%s\r", name); 
-		SCR_UpdateScreen ();
-		Sys_SendKeyEvents ();	// pump message loop
+
+		SCR_UpdateScreen();
+		Sys_SendKeyEvents();	// pump message loop
+
 		if (name[0] == '#')
 		{
 			// special player weapon model
@@ -341,34 +344,33 @@ void CL_PrepRefresh (void)
 				cl.model_clip[i] = NULL;
 		}
 		if (name[0] != '*')
-			Com_Printf ("                                     \r");
+			Com_Printf("                                     \r");
 	}
-Sys_SendKeyEvents (); // jit, moved
-	Com_Printf ("images\r", i); 
-	SCR_UpdateScreen ();
-	for (i=1 ; i<MAX_IMAGES && cl.configstrings[CS_IMAGES+i][0] ; i++)
+	Sys_SendKeyEvents(); // jit, moved
+	Com_Printf("images\r", i); 
+	SCR_UpdateScreen();
+	for (i=1; i<MAX_IMAGES && cl.configstrings[CS_IMAGES+i][0]; i++)
 	{
 		cl.image_precache[i] = re.RegisterPic (cl.configstrings[CS_IMAGES+i]);
 		//Sys_SendKeyEvents ();	// pump message loop 
 		// jitest
 	}
-	Sys_SendKeyEvents (); // jit, moved	
-	Com_Printf ("                                     \r");
-	for (i=0 ; i<MAX_CLIENTS ; i++)
+	Sys_SendKeyEvents(); // jit, moved	
+	Com_Printf("                                     \r");
+	for (i=0; i<MAX_CLIENTS; i++)
 	{
 		if (!cl.configstrings[CS_PLAYERSKINS+i][0])
 			continue;
 
-		Com_Printf ("client %i\r", i);  
-		SCR_UpdateScreen ();
-		Sys_SendKeyEvents ();	// pump message loop
+		Com_Printf("client %i\r", i);  
+		SCR_UpdateScreen();
+		Sys_SendKeyEvents();	// pump message loop
 
-		CL_ParseClientinfo (i);
-		Com_Printf ("                                     \r");
+		CL_ParseClientinfo(i);
+		Com_Printf("                                     \r");
 	}
 	Sys_SendKeyEvents(); // jit, moved
-	//CL_LoadClientinfo(&cl.baseclientinfo, "unnamed\\male/grunt"); // jitodo, make this use the pball skin
-	CL_LoadClientinfo(&cl.baseclientinfo, "unnamed\\male/pb2y"); // jitodo, make this use the pball skin
+	CL_LoadClientinfo(&cl.baseclientinfo, "unnamed\\male/pb2y");
 
 	// set sky textures and speed
 	Com_Printf("sky\r");
@@ -377,14 +379,14 @@ Sys_SendKeyEvents (); // jit, moved
 	sscanf(cl.configstrings[CS_SKYAXIS], "%f %f %f", 
 		&axis[0], &axis[1], &axis[2]);
 
-	re.SetSky (cl.configstrings[CS_SKY], rotate, axis);
+	re.SetSky(cl.configstrings[CS_SKY], rotate, axis);
 
-	// jit --
+	// === jit
 	Com_Printf("                                     \r");
 	Com_Printf("texture scripts\r");
 	SCR_UpdateScreen();
 	Com_Printf("                                     \r");
-	// -- jit
+	// jit ===
 
 	// the renderer can now free unneeded stuff
 	re.EndRegistration();
@@ -411,11 +413,11 @@ float CalcFov (float fov_x, float width, float height)
 	float	x;
 
 	if (fov_x < 1 || fov_x > 179)
-		Com_Error (ERR_DROP, "Bad fov: %f", fov_x);
+		Com_Error(ERR_DROP, "Bad fov: %f", fov_x);
 
 	x = width/tan(fov_x*(0.002777777777778*M_PI));
 
-	a = atan (height/x);
+	a = atan(height/x);
 
 	a = a*114.59165581759554875079179651068;
 

@@ -18,7 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-// === jitmenu / jitscores
+// ===
+// jitmenu / jitscores
 // cl_scores.c -- Client side scoreboard.
 
 #include "client.h"
@@ -30,6 +31,8 @@ typedef struct cl_score_s {
 	int grabs;
 	int caps;
 	char team;
+	qboolean isalive;
+	qboolean hasflag;
 	// jitodo -- shots fired w/each gun, etc.
 	qboolean inuse;
 } cl_score_t;
@@ -39,8 +42,6 @@ static qboolean cl_scores_modified;
 
 char **cl_scores_nums;
 char **cl_scores_info;
-//char *cl_scores_nums[MAX_CLIENTS];
-//char *cl_scores_info[MAX_CLIENTS];
 int cl_scores_count;
 
 int splat(int teamnum) 
@@ -125,9 +126,45 @@ void cl_scores_setteam (int client, char team)
 	cl_scores_modified = true;
 }
 
-void cl_scores_setinuse (int client, qboolean inuse) // jitodo - call this on player enter and unset on quit.
+void cl_scores_setisalive (int client, qboolean alive) // jitodo - set on roundstarts / deaths
+{
+	cl_scores[client].isalive = alive;
+	cl_scores_modified = true;
+
+	if (!alive)
+		cl_scores_sethasflag(client, false);
+}
+
+void cl_scores_setisalive_all (qboolean alive)
+{
+	int i;
+
+	for (i=0; i<MAX_CLIENTS; i++)
+		if(cl_scores[i].inuse)
+			cl_scores[i].isalive = alive;
+
+	cl_scores_modified = true;
+}
+
+void cl_scores_sethasflag (int client, qboolean hasflag)
+{
+	cl_scores[client].hasflag = hasflag;
+	cl_scores_modified = true;
+}
+
+void cl_scores_setinuse (int client, qboolean inuse)
 {
 	cl_scores[client].inuse = inuse;
+	cl_scores_modified = true;
+}
+
+void cl_scores_setinuse_all (qboolean inuse)
+{
+	int i;
+
+	for (i=0; i<MAX_CLIENTS; i++)
+		cl_scores[i].inuse = inuse;
+
 	cl_scores_modified = true;
 }
 
@@ -152,7 +189,8 @@ void cl_scores_prep_select_widget (void)
 		if (cl_scores[i].inuse)
 		{
 			Com_sprintf(cl_scores_nums[cl_scores_count], 4, "%d", i);
-			Com_sprintf(cl_scores_info[cl_scores_count], 63, "%c%s %d %d %d %d %d", 
+			Com_sprintf(cl_scores_info[cl_scores_count], 63, "%c%c%s %d %d %d %d %d", 
+				cl_scores[i].hasflag ? '#' : cl_scores[i].isalive ? '>' : ' ',
 				splat(cl_scores[i].team), name_from_index(i),
 				cl_scores[i].ping, cl_scores[i].kills,
 				cl_scores[i].deaths, cl_scores[i].grabs,
@@ -177,24 +215,62 @@ void CL_Score_f (void) // jitodo jitscores -- client-side scoreboard
 	}
 }
 
+void CL_Scoreboard_f (void)
+{
+	static qboolean show = true;
+
+	if (cls.server_gamebuild < 100) // test
+	{
+		Cbuf_AddText("cmd score\n");
+		return;
+	}
+
+	if (show)
+		CL_ScoreboardShow_f();
+	else
+		CL_ScoreboardHide_f();
+
+	show = !show;
+}
+
+void CL_ScoreboardShow_f (void)
+{
+	Cbuf_AddText("menu scores\n");
+}
+
+void CL_ScoreboardHide_f (void)
+{
+	Cbuf_AddText("menu pop\n");
+}
+
 #define MAX_DECODE_ARRAY 256
+#define SCORESIZE 10
 static unsigned int temp_array[MAX_DECODE_ARRAY];
+// client index, alive, flag, team, ping, kills, deaths, grabs, caps, reserved
 void CL_ParesScoreData (const unsigned char *data) // jitscores
 {
-	unsigned int i, count;
+	unsigned int i, j=0, idx, count;
 
-	count = decode_unsigned(data, temp_array, MAX_DECODE_ARRAY);
+	count = decode_unsigned(data, temp_array, MAX_DECODE_ARRAY) / SCORESIZE;
 
-	i = temp_array[0];
+	for (i = 0; i < count; i++)
+	{
+		idx = temp_array[j++];
 
-	if (i > 255)
-		return;
+		if (idx > 255)
+			return;
 
-	cl_scores[i].ping = temp_array[1];
-	cl_scores[i].kills = temp_array[2];
-	cl_scores[i].deaths = temp_array[3];
-	cl_scores[i].grabs = temp_array[4];
-	cl_scores[i].caps = temp_array[5];
-	cl_scores[i].team = temp_array[6];
+		cl_scores_setinuse(idx, true);
+		cl_scores_setisalive(idx, temp_array[j++]);
+		cl_scores_sethasflag(idx, temp_array[j++]);
+		cl_scores_setteam(idx, temp_array[j++]);
+		cl_scores_setping(idx, temp_array[j++]);
+		cl_scores_setkills(idx, temp_array[j++]);
+		cl_scores_setdeaths(idx, temp_array[j++]);
+		cl_scores_setgrabs(idx, temp_array[j++]);
+		cl_scores_setcaps(idx, temp_array[j++]);
+		j++; // reserved for later use if needed.
+	}
 }
-// jitscores ===
+// jitscores
+// ===

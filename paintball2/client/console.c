@@ -729,7 +729,7 @@ void Con_DrawConsole (float frac)
 	Com_sprintf (version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
 	re.DrawString(viddef.width-176*hudscale, lines-12*hudscale, version);
 
-	if(cls.key_dest == key_menu)
+	if (cls.key_dest == key_menu)
 		return; // jitmenu
 
 // draw the text

@@ -593,6 +593,7 @@ void CL_ParseFrame (void)
 //			char temp[64]; // jitname
 
 			cls.state = ca_active;
+			cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 			cl.force_refdef = true;
 			cl.predicted_origin[0] = cl.frame.playerstate.pmove.origin[0]*0.125;
 			cl.predicted_origin[1] = cl.frame.playerstate.pmove.origin[1]*0.125;
@@ -601,15 +602,12 @@ void CL_ParseFrame (void)
 			if (cls.disable_servercount != cl.servercount
 				&& cl.refresh_prepped)
 				SCR_EndLoadingPlaque ();	// get rid of loading plaque
-// jitodo -- store funname in actual configstring? (done, needs testing)
-			//sprintf(temp, "cmd funname \"%s\"", name->string); // jitname
-			//Cbuf_AddText(temp); // jitname
 		}
 		cl.sound_prepped = true;	// can start mixing ambient sounds
 	
 		// fire entity events
-		CL_FireEntityEvents (&cl.frame);
-		CL_CheckPredictionError ();
+		CL_FireEntityEvents(&cl.frame);
+		CL_CheckPredictionError();
 	}
 }
 

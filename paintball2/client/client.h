@@ -468,7 +468,6 @@ extern	refexport_t	re;		// interface to refresh .dll
 
 void CL_Init (void);
 
-void CL_FixUpGender(void);
 void CL_Disconnect (void);
 void CL_Disconnect_f (void);
 void CL_GetChallengePacket (void);
@@ -536,6 +535,9 @@ void CL_WriteConfig_f (void); // jitconfig
 // ===
 // jitscores
 void CL_Score_f (void);
+void CL_Scoreboard_f (void);
+void CL_ScoreboardShow_f (void);
+void CL_ScoreboardHide_f (void);
 void CL_ParesScoreData (const unsigned char *data); 
 void init_cl_scores (void);
 void cl_scores_setping (int client, int ping);
@@ -544,7 +546,11 @@ void cl_scores_setdeaths (int client, int deaths);
 void cl_scores_setgrabs (int client, int grabs);
 void cl_scores_setcaps (int client, int caps);
 void cl_scores_setteam (int client, char team);
+void cl_scores_setisalive (int client, qboolean alive);
+void cl_scores_setisalive_all (qboolean alive);
+void cl_scores_sethasflag (int client, qboolean hasflag);
 void cl_scores_setinuse (int client, qboolean inuse);
+void cl_scores_setinuse_all (qboolean inuse);
 void cl_scores_clear (int client);
 // jitscores
 // ===
@@ -604,8 +610,8 @@ void CL_TrapParticles (entity_t *ent);
 // menus
 //
 void M_Init (void);
-void M_Keydown (int key);
-void M_Keyup (int key); // jitmenu
+qboolean M_Keydown (int key);
+qboolean M_Keyup (int key); // jitmenu
 void M_Draw (void);
 void M_Menu_Main_f (void);
 void M_ForceMenuOff (void);

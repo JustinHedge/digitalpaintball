@@ -593,6 +593,7 @@ void SCR_PlayCinematic (char *arg)
 		cl.cinematictime = 1;
 		SCR_EndLoadingPlaque ();
 		cls.state = ca_active;
+		cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 		if (!cin.pic)
 		{
 			Com_Printf ("%s not found.\n", name);
@@ -619,6 +620,7 @@ void SCR_PlayCinematic (char *arg)
 	SCR_EndLoadingPlaque ();
 
 	cls.state = ca_active;
+	cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 
 	FS_Read (&width, 4, cl.cinematic_file);
 	FS_Read (&height, 4, cl.cinematic_file);
