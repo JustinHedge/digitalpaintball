@@ -867,7 +867,12 @@ void R_DrawAlphaSurfaces (void)
 		else
 		{
 			if (s->texinfo->flags & SURF_TRANS33)
-				qglColor4f (intens,intens,intens,0.33);
+			{
+				if (s->texinfo->flags & SURF_TRANS66) // jittrans -- trans33+trans66 only uses texture transparency.
+					qglColor4f (intens,intens,intens, 1.0f);
+				else
+					qglColor4f (intens,intens,intens, 0.33f);
+			}
 			else if (s->texinfo->flags & SURF_TRANS66)
 				qglColor4f (intens,intens,intens,0.66);
 			else
