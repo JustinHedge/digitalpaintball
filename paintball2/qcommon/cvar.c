@@ -372,6 +372,11 @@ void Cvar_Set_f (void)
 		Com_Printf ("usage: set <variable> <value> [u / s]\n");
 		return;
 	}
+	if (Cvar_Get(Cmd_Argv(1), "", 0)->flags & CVAR_NOSET) // jitcvar
+	{
+		Com_Printf ("%s is write protected.\n", Cmd_Argv(1));
+		return;
+	}
 
 	if (c == 4)
 	{
@@ -403,7 +408,11 @@ void Cvar_Seta_f (void) // jitconfig
 		Com_Printf ("usage: seta <variable> <value> [u / s]\n");
 		return;
 	}
-
+	if (Cvar_Get(Cmd_Argv(1), "", 0)->flags & CVAR_NOSET) // jitcvar
+	{
+		Com_Printf ("%s is write protected.\n", Cmd_Argv(1));
+		return;
+	}
 	if (c == 4)
 	{
 		if (!strcmp(Cmd_Argv(3), "u"))

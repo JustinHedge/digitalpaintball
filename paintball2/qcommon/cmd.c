@@ -270,7 +270,7 @@ void Cbuf_AddEarlyCommands (qboolean clear)
 		s = COM_Argv(i);
 		if (strcmp (s, "+set"))
 			continue;
-		if(strcmp(COM_Argv(i+1), "build")) // jitversion -- don't let client fake it
+		if(strcmp(COM_Argv(i+1), "build") != 0) // jitversion -- don't let client fake it
 			Cbuf_AddText (va("set %s %s\n", COM_Argv(i+1), COM_Argv(i+2)));
 		if (clear)
 		{

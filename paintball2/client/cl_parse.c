@@ -258,6 +258,37 @@ void	CL_Download_f (void)
 	cls.downloadnumber++;
 }
 
+#ifdef USE_DOWNLOAD2
+void	CL_Download2_f (void) // jitdownload
+{
+	char filename[MAX_OSPATH];
+
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: download2 <filename>\n");
+		return;
+	}
+
+	Com_sprintf(filename, sizeof(filename), "%s", Cmd_Argv(1));
+	
+	if (strstr (filename, ".."))
+	{
+		Com_Printf ("Refusing to download a path with ..\n");
+		return;
+	}
+
+	if (FS_LoadFile (filename, NULL) != -1)
+	{	// it exists, no need to download
+		Com_Printf("File already exists.\n");
+		return;
+	}
+
+	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+	MSG_WriteString (&cls.netchan.message,
+		va("download2 %s", filename));
+	cls.downloadnumber++; // what is this used for, anyway?!
+}
+#endif
+
 /*
 ======================
 CL_RegisterSounds
@@ -432,6 +463,261 @@ void CL_ParseDownload (void)
 	}
 }
 
+#ifdef USE_DOWNLOAD2
+
+#define DL2_CHUNK_TIMEOUT  100 // jitodo -- this should be scaled according to connection. // 2 seconds before we re-request a packet
+#define SIMULT_DL2_PACKETS 16  // download up to 16 packets at a time for more efficient bandwidth use
+typedef struct {
+	unsigned int offset;
+	unsigned int datasize;
+	char data[DOWNLOAD2_CHUNKSIZE];
+	qboolean used;
+} download_chunk_t; // jitdownload
+
+typedef struct {
+	unsigned int offset;
+	unsigned int timesent;
+	qboolean waiting;
+} download_waiting_t;
+
+download_chunk_t download_chunks[SIMULT_DL2_PACKETS];
+download_waiting_t download_waiting[SIMULT_DL2_PACKETS];
+int total_dl2_waiting_on; // how many download2 packets are up in the air?
+unsigned int total_download_size; // how big is the file?
+unsigned int next_download_offset_request;
+unsigned int next_write_offset;
+
+void CL_StartDownload2(void)
+{
+	char *filename;
+	char	name[MAX_OSPATH];
+
+	memset(&download_chunks, 0, sizeof(download_chunk_t));
+	memset(&download_waiting, 0, sizeof(download_waiting_t));
+	total_dl2_waiting_on = 0;
+	total_download_size = MSG_ReadLong(&net_message);
+	next_write_offset = next_download_offset_request = MSG_ReadLong(&net_message);
+	filename = MSG_ReadString(&net_message); // get the filename
+
+	if (cls.download)
+	{
+		Com_Printf("SHOULD NOT HAPPEN! Cancelled current download.\n");
+		// this can actually happen pretty easily if user manually downloads while
+		// downloading.  May cause some lingering packets to come in to the wrong file.
+		fclose(cls.download);
+	}
+	
+	strcpy(cls.downloadname, filename);
+
+	if (strstr (filename, ".."))
+	{
+		Com_Printf ("Refusing to download a path with ..\n");
+		return;
+	}
+
+	if (FS_LoadFile (filename, NULL) != -1)
+	{	// it exists, no need to download
+		Com_Printf("File already exists.\n");
+		return;
+	}
+
+	strcpy (cls.downloadname, filename);
+	Com_Printf ("Downloading %s\n", cls.downloadname);
+
+	// download to a temp name, and only rename
+	// to the real name when done, so if interrupted
+	// a runt file wont be left
+	COM_StripExtension (cls.downloadname, cls.downloadtempname);
+	strcat (cls.downloadtempname, ".tmp");
+
+	CL_DownloadFileName(name, sizeof(name), cls.downloadtempname);
+
+	FS_CreatePath (name);
+
+	cls.download = fopen (name, "wb");
+	if (!cls.download)
+	{
+		Com_Printf ("Failed to open %s\n", cls.downloadtempname);
+		CL_RequestNextDownload ();
+		return;
+	}
+
+	cls.download2active = true;
+}
+
+void CL_RequestNextDownload2 (void)
+{
+	if(total_dl2_waiting_on <= SIMULT_DL2_PACKETS) // try to keep 16 downloads going at once.
+	{
+		char downloadcmd[128];
+		int i;
+		unsigned int request_offset;
+
+		// Check for timed out packets:
+		for(i=0; i<SIMULT_DL2_PACKETS; i++)
+		{
+			if(download_waiting[i].waiting && (curtime - download_waiting[i].timesent > DL2_CHUNK_TIMEOUT))
+			{
+				// requested chunk has timed out.  re-request it.
+				request_offset = download_waiting[i].offset;
+				download_waiting[i].timesent = curtime;
+				goto request_chunk;
+			}
+		}
+
+		if(total_dl2_waiting_on == SIMULT_DL2_PACKETS) // too many requests -- don't add any more.
+			return;
+		
+		// none of the chunks timed out -- request a new one
+		request_offset = next_download_offset_request;
+		next_download_offset_request += DOWNLOAD2_CHUNKSIZE;
+		total_dl2_waiting_on++;
+
+		// keep track of our new request in case it times out.
+		for(i=0; i<SIMULT_DL2_PACKETS; i++)
+		{
+			if(!download_waiting[i].waiting)
+			{
+				download_waiting[i].waiting = true;
+				download_waiting[i].offset = request_offset;
+				download_waiting[i].timesent = curtime;
+				goto request_chunk;
+			}
+		}
+		Com_Printf("SHOULD NOT HAPPEN! No download waiting slots open.\n");
+
+request_chunk:
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		sprintf(downloadcmd, "nextdl2 %d", request_offset/DOWNLOAD2_CHUNKSIZE); // request next chunk
+		SZ_Print (&cls.netchan.message, downloadcmd);
+		Com_Printf("%cXCL Reqst: %d\n", CHAR_COLOR, request_offset/DOWNLOAD2_CHUNKSIZE);
+	}
+}
+
+// if any of our download chunks are next in line to be written, write them!
+
+void CL_WriteReceivedDownload2()
+{
+	int i;
+
+	for(i=0; i<SIMULT_DL2_PACKETS; i++)
+	{
+		if(download_chunks[i].used && download_chunks[i].offset == next_write_offset)
+		{
+			download_chunks[i].used = false;
+
+			Com_Printf("%cACL Wrote: %d\n", CHAR_COLOR, next_write_offset/DOWNLOAD2_CHUNKSIZE);
+			fwrite(download_chunks[i].data, 1, download_chunks[i].datasize, cls.download);
+			next_write_offset += DOWNLOAD2_CHUNKSIZE;
+			total_dl2_waiting_on --; // safe to request another packet
+
+			CL_WriteReceivedDownload2(); // can we write another one?
+			break;
+		}
+	}
+}
+
+void CL_ParseDownload2 (void) // jitdownload
+{
+	int		size, percent;
+	unsigned int offset;
+	int		r, i;
+
+	// read the data
+//	size = MSG_ReadShort(&net_message);
+	offset = MSG_ReadLong(&net_message) * DOWNLOAD2_CHUNKSIZE;
+
+/*	if (size == -1)
+	{
+		Com_Printf ("Server does not have this file.\n");
+
+		CL_RequestNextDownload ();
+		return;
+	}*/
+
+	size = total_download_size - offset;
+	if(size > DOWNLOAD2_CHUNKSIZE)
+		size = DOWNLOAD2_CHUNKSIZE;
+
+	// open the file if not opened yet (shouldn't happen).
+	if (!cls.download)
+	{
+		Com_Printf ("SHOULD NOT HAPPEN! Recieved download2 packet w/o acknowledgement.\n");
+		
+		CL_RequestNextDownload ();
+		return;
+	}
+
+	Com_Printf("%cECL Recvd: %d\n", CHAR_COLOR, offset/DOWNLOAD2_CHUNKSIZE);
+
+	// remove request from the waiting table:
+	for(i=0; i<SIMULT_DL2_PACKETS; i++)
+	{
+		if(download_waiting[i].waiting && download_waiting[i].offset == offset)
+		{
+			download_waiting[i].waiting = false;
+			goto request_removed;
+		}
+	}
+	Com_Printf("SHOULD NOT HAPPEN! Chunk not found in waiting table!\n");
+request_removed:
+
+	// find a free slot
+	for(i=0; i<SIMULT_DL2_PACKETS; i++)
+	{
+		if(!download_chunks[i].used || download_chunks[i].offset == offset) // free slot or a repeat
+		{
+			goto a_ok;
+		}
+	}
+	Com_Printf("SHOULD NOT HAPPEN!  No temp download2 chunks free!\n");
+	net_message.readcount += size; // just dump the data.
+	return;
+
+a_ok:
+	// save downloaded chunk into a free slot.
+	download_chunks[i].datasize = size;
+	download_chunks[i].used = true;
+	download_chunks[i].offset = offset;
+
+	memcpy(download_chunks[i].data, net_message.data + net_message.readcount, size);
+	net_message.readcount += size;
+
+	CL_WriteReceivedDownload2();
+
+	percent = 100*next_write_offset / total_download_size;
+	cls.downloadpercent = percent;
+
+	if (percent < 100)
+	{
+		CL_RequestNextDownload2();
+	}
+	else
+	{
+		char	oldn[MAX_OSPATH];
+		char	newn[MAX_OSPATH];
+
+		Com_Printf ("CL Download Complete!\n");
+
+		fclose (cls.download);
+		cls.download2active = false;
+
+		// rename the temp file to it's final name
+		CL_DownloadFileName(oldn, sizeof(oldn), cls.downloadtempname);
+		CL_DownloadFileName(newn, sizeof(newn), cls.downloadname);
+		r = rename (oldn, newn);
+		if (r)
+			Com_Printf ("failed to rename.\n");
+
+		cls.download = NULL;
+		cls.downloadpercent = 0;
+
+		// get another file if needed
+
+		CL_RequestNextDownload ();
+	}
+}
+#endif
 
 /*
 =====================================================================
@@ -963,7 +1249,15 @@ void CL_ParseServerMessage (void)
 		case svc_download:
 			CL_ParseDownload ();
 			break;
+#ifdef USE_DOWNLOAD2
+		case svc_download2: // jitdownload
+			CL_ParseDownload2();
+			break;
 
+		case svc_download2ack: // jitdownload
+			CL_StartDownload2();
+			break;
+#endif
 		case svc_frame:
 			CL_ParseFrame ();
 			break;

@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #define	VERSION		2.0 // jitversion (was 3.21)
-#define BUILD		7 // jitversion / jitbuild -- Paintball2 build number
-#define BUILD_S		"7" // jitversion, for strings.
+#define BUILD		8 // jitversion / jitbuild -- Paintball2 build number
+#define BUILD_S		"8" // jitversion, for strings.
 
 #define	BASEDIRNAME	"pball" // jit, was "baseq2"
 
@@ -198,7 +198,8 @@ PROTOCOL
 //==================
 // the svc_strings[] array in cl_parse.c should mirror this
 //==================
-
+#define USE_DOWNLOAD2 // jitdownload
+#define DOWNLOAD2_CHUNKSIZE 1024 // jitdownload
 //
 // server to client
 //
@@ -228,7 +229,11 @@ enum svc_ops_e
 	svc_playerinfo,				// variable
 	svc_packetentities,			// [...]
 	svc_deltapacketentities,	// [...]
-	svc_frame
+	svc_frame,
+#ifdef USE_DOWNLOAD2
+	svc_download2,	// jitdownload - fast downloads
+	svc_download2ack // jitdownload -- server acknowledges download2 request
+#endif
 };
 
 //==============================================

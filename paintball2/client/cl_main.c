@@ -846,7 +846,7 @@ void CL_Changing_f (void)
 {
 	//ZOID
 	//if we are downloading, we don't change!  This so we don't suddenly stop downloading a map
-	if (cls.download)
+	if (cls.download) // jitodo -- we SHOULD make it stop downloading and switch to the next map!
 		return;
 
 	SCR_BeginLoadingPlaque ();
@@ -866,7 +866,7 @@ void CL_Reconnect_f (void)
 {
 	//ZOID
 	//if we are downloading, we don't change!  This so we don't suddenly stop downloading a map
-	if (cls.download)
+	if (cls.download) // jitodo -- we SHOULD make it stop downloading and switch to the next map!
 		return;
 
 	S_StopAllSounds ();
@@ -1563,47 +1563,15 @@ CL_InitLocal
 void CL_InitLocal (void)
 {
 //	char s[16]; // jit
+	memset(&cls, 0, sizeof(client_static_t)); // jitdownload -- didn't like that this wasn't initialized
+
 	cls.state = ca_disconnected;
 	cls.realtime = Sys_Milliseconds ();
 
 	CL_InitInput ();
 
-/*	jitserver / jitmenu -- removed
-	adr0 = Cvar_Get( "adr0", "", CVAR_ARCHIVE );
-	adr1 = Cvar_Get( "adr1", "", CVAR_ARCHIVE );
-	adr2 = Cvar_Get( "adr2", "", CVAR_ARCHIVE );
-	adr3 = Cvar_Get( "adr3", "", CVAR_ARCHIVE );
-	adr4 = Cvar_Get( "adr4", "", CVAR_ARCHIVE );
-	adr5 = Cvar_Get( "adr5", "", CVAR_ARCHIVE );
-	adr6 = Cvar_Get( "adr6", "", CVAR_ARCHIVE );
-	adr7 = Cvar_Get( "adr7", "", CVAR_ARCHIVE );
-	adr8 = Cvar_Get( "adr8", "", CVAR_ARCHIVE );
-	// jitspoe -- lots more server addresses:
-	adr9 = Cvar_Get( "adr9", "", CVAR_ARCHIVE );
-	adr10 = Cvar_Get( "adr10", "", CVAR_ARCHIVE );
-	adr11 = Cvar_Get( "adr11", "", CVAR_ARCHIVE );
-	adr12 = Cvar_Get( "adr12", "", CVAR_ARCHIVE );
-	adr13 = Cvar_Get( "adr13", "", CVAR_ARCHIVE );
-	adr14 = Cvar_Get( "adr14", "", CVAR_ARCHIVE );
-	adr15 = Cvar_Get( "adr15", "", CVAR_ARCHIVE );
-	adr16 = Cvar_Get( "adr16", "", CVAR_ARCHIVE );
-	adr17 = Cvar_Get( "adr17", "", CVAR_ARCHIVE );
-	adr18 = Cvar_Get( "adr18", "", CVAR_ARCHIVE );
-	adr19 = Cvar_Get( "adr19", "", CVAR_ARCHIVE );
-	adr20 = Cvar_Get( "adr20", "", CVAR_ARCHIVE );
-	adr21 = Cvar_Get( "adr21", "", CVAR_ARCHIVE );
-	adr22 = Cvar_Get( "adr22", "", CVAR_ARCHIVE );
-	adr23 = Cvar_Get( "adr23", "", CVAR_ARCHIVE );
-	adr24 = Cvar_Get( "adr24", "", CVAR_ARCHIVE );
-	adr25 = Cvar_Get( "adr25", "", CVAR_ARCHIVE );
-	adr26 = Cvar_Get( "adr26", "", CVAR_ARCHIVE );
-	adr27 = Cvar_Get( "adr27", "", CVAR_ARCHIVE );
-	adr28 = Cvar_Get( "adr28", "", CVAR_ARCHIVE );
-	adr29 = Cvar_Get( "adr29", "", CVAR_ARCHIVE );
-	adr30 = Cvar_Get( "adr30", "", CVAR_ARCHIVE );
-	adr31 = Cvar_Get( "adr31", "", CVAR_ARCHIVE );
-	adr32 = Cvar_Get( "adr32", "", CVAR_ARCHIVE );
-	*/
+	// jitmenu - adr cvars removed
+
 //
 // register our variables
 //
@@ -1722,7 +1690,9 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("precache", CL_Precache_f);
 
 	Cmd_AddCommand ("download", CL_Download_f);
-
+#ifdef USE_DOWNLOAD2
+	Cmd_AddCommand ("download2", CL_Download2_f); // jitdownload
+#endif
 	//Cmd_AddCommand ("scores", CL_Scores_f); // jitscores jitodo
 
 	Cmd_AddCommand ("writeconfig", CL_WriteConfig_f); // jitconfig
@@ -1869,7 +1839,8 @@ void CL_FixCvarCheats (void)
 	{
 		if ( strcmp (var->var->string, var->value) )
 		{
-			Cvar_Set (var->name, var->value);
+			//Cvar_Set (var->name, var->value);
+			Cvar_ForceSet(var->name, var->value); // jitcvar
 		}
 	}
 }
@@ -1883,8 +1854,14 @@ CL_SendCommand
 ==================
 */
 
+void CL_RequestNextDownload2(); // jitdownload
+
 void CL_SendCommand (void)
 {
+#ifdef USE_DOWNLOAD2
+	if(cls.download2active && cls.download) // jitdownload
+		CL_RequestNextDownload2(); // flood some download requests.
+#endif
 	// get new key events
 	Sys_SendKeyEvents ();
 
@@ -1926,7 +1903,8 @@ void CL_Frame (int msec)
 
 	if (!cl_timedemo->value)
 	{
-		if (cls.state == ca_connected && extratime < 100)
+		//if (cls.state == ca_connected && extratime < 100)
+		if (cls.state == ca_connected && extratime < 16) // jitdownload
 			return;			// don't flood packets out while connecting
 		if(cl_maxfps->value) // jitnetfps
 		{

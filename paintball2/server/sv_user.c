@@ -300,6 +300,64 @@ void SV_NextDownload_f (void)
 	sv_client->download = NULL;
 }
 
+#ifdef USE_DOWNLOAD2
+void SV_SendSingleClientMessage(client_t *c, int msglen, char *msgbuff); // jitdownload
+void SV_NextDownload2_f (void) // jitdownload
+{
+	unsigned int		r;
+//	int		percent;
+//	int		size;
+	unsigned int	offset;
+	unsigned char msgbuf[MAX_MSGLEN];
+	sizebuf_t message;
+
+	memset(&message, 0, sizeof(message));
+	message.data = msgbuf;
+	message.maxsize = MAX_MSGLEN;
+
+	if (!sv_client->download)
+		return;
+
+	if (Cmd_Argc() >= 2)
+		offset = atoi(Cmd_Argv(1)) * DOWNLOAD2_CHUNKSIZE; // downloaded offset -- jitodo, make this a long instead.
+	else
+		return;
+
+	r = sv_client->downloadsize - offset;
+	if (r > DOWNLOAD2_CHUNKSIZE)
+		r = DOWNLOAD2_CHUNKSIZE;
+
+//	MSG_WriteByte(&sv_client->netchan.message, svc_download2);
+	MSG_WriteByte(&message, svc_download2);
+//	MSG_WriteShort (&sv_client->netchan.message, r);
+
+	// so the client knows what part of the file this is in the event
+	// that packets get out of order:
+	//MSG_WriteLong(&sv_client->netchan.message, offset/DOWNLOAD2_CHUNKSIZE);
+	MSG_WriteLong(&message, offset/DOWNLOAD2_CHUNKSIZE);
+
+//	size = sv_client->downloadsize;
+//	if (!size)
+//		size = 1;
+//	percent = sv_client->downloadcount*100/size;
+//	MSG_WriteByte (&sv_client->netchan.message, percent);
+	//SZ_Write (&sv_client->netchan.message, sv_client->download + offset, r);
+	SZ_Write (&message, sv_client->download + offset, r);
+
+	Com_Printf("%d SV Sent: %d\n", curtime, offset/DOWNLOAD2_CHUNKSIZE);
+	//SV_SendSingleClientMessage(sv_client, 0, NULL); // hope this works!!!
+	Netchan_Transmit(&sv_client->netchan, message.cursize, message.data);
+	//Netchan_OutOfBand(NC_SERVER, todo_adr, message.cursize, message.data);
+
+	if (offset+r < sv_client->downloadsize)
+		return;
+
+	Com_Printf("SV Completed %d\n", offset/DOWNLOAD2_CHUNKSIZE);
+	FS_FreeFile (sv_client->download);
+	sv_client->download = NULL;
+}
+#endif
+
 /*
 ==================
 SV_BeginDownload_f
@@ -379,7 +437,98 @@ void SV_BeginDownload_f(void)
 	Com_DPrintf ("Downloading %s to %s\n", name, sv_client->name);
 }
 
+#ifdef USE_DOWNLOAD2
+void SV_BeginDownload2_f(void) // jitdownload
+{
+	char	*name;
+	extern	cvar_t *allow_download;
+	extern	cvar_t *allow_download_players;
+	extern	cvar_t *allow_download_models;
+	extern	cvar_t *allow_download_sounds;
+	extern	cvar_t *allow_download_maps;
+	extern	int		file_from_pak; // ZOID did file come from pak?
+	int offset = 0;
 
+	name = Cmd_Argv(1);
+
+	if (Cmd_Argc() > 2)
+		offset = atoi(Cmd_Argv(2)); // downloaded offset
+
+	// hacked by zoid to allow more conrol over download
+	// first off, no .. or global allow check
+	if (strstr (name, "..") || !allow_download->value
+		// leading dot is no good
+		|| *name == '.' 
+		// leading slash bad as well, must be in subdir
+		|| *name == '/'
+		// next up, skin check
+		|| (strncmp(name, "players/", 8) == 0 && !allow_download_players->value)
+		// now models
+		|| (strncmp(name, "models/", 7) == 0 && !allow_download_models->value)
+		// now sounds
+		|| (strncmp(name, "sound/", 6) == 0 && !allow_download_sounds->value)
+		// now maps (note special case for maps, must not be in pak)
+		|| (strncmp(name, "maps/", 5) == 0 && !allow_download_maps->value)
+		// MUST be in a subdirectory	
+		|| !strstr (name, "/") 
+		// **** NiceAss: Ends in a backslash. Linux server crash protection--Start ****
+		|| name[strlen(name) - 1] == '/')
+		// **** NiceAss: Ends in a backslash. Linux server crash protection--End ****
+	{	// don't allow anything with .. path
+		MSG_WriteByte (&sv_client->netchan.message, svc_download);
+		MSG_WriteShort (&sv_client->netchan.message, -1);
+		MSG_WriteByte (&sv_client->netchan.message, 0);
+		return;
+	}
+
+	if (sv_client->download)
+		FS_FreeFile (sv_client->download);
+
+	// jitodo -- if the file came from a pak, tell client to download the pak!
+	// jitodo -- check for different extensions (prefer jpg over wal, etc)
+	sv_client->downloadsize = FS_LoadFile (name, (void **)&sv_client->download);
+	sv_client->downloadcount = offset;
+
+	if (offset > sv_client->downloadsize)
+		sv_client->downloadcount = sv_client->downloadsize;
+
+	/*if (!sv_client->download
+		// special check for maps, if it came from a pak file, don't allow
+		// download  ZOID
+		|| (strncmp(name, "maps/", 5) == 0 && file_from_pak))
+	{
+		Com_DPrintf ("Couldn't download %s to %s\n", name, sv_client->name);
+		if (sv_client->download) {
+			FS_FreeFile (sv_client->download);
+			sv_client->download = NULL;
+		}
+
+		MSG_WriteByte (&sv_client->netchan.message, svc_download);
+		MSG_WriteShort (&sv_client->netchan.message, -1);
+		MSG_WriteByte (&sv_client->netchan.message, 0);
+		return;
+	}*/
+
+	if(sv_client->downloadsize == -1) // file failed to open
+	{
+		MSG_WriteByte (&sv_client->netchan.message, svc_download);
+		MSG_WriteShort (&sv_client->netchan.message, -1);
+		MSG_WriteByte (&sv_client->netchan.message, 0);
+		return;
+	}
+
+//todo;
+	//SV_NextDownload_f ();
+	Com_DPrintf ("Downloading %s to %s\n", name, sv_client->name);
+
+	MSG_WriteByte(&sv_client->netchan.message, svc_download2ack); // acknowledge download request
+	MSG_WriteLong(&sv_client->netchan.message, sv_client->downloadsize); // tell client filesize
+	MSG_WriteLong(&sv_client->netchan.message, offset); // tell client where we're starting
+	MSG_WriteString(&sv_client->netchan.message, name); // tell client what filename should be.
+
+	Com_Printf("SV Acknw: %d\n", offset/DOWNLOAD2_CHUNKSIZE);
+}
+#endif
 
 //============================================================================
 
@@ -474,6 +623,10 @@ ucmd_t ucmds[] =
 
 	{"download", SV_BeginDownload_f},
 	{"nextdl", SV_NextDownload_f},
+#ifdef USE_DOWNLOAD2
+	{"download2", SV_BeginDownload2_f},
+	{"nextdl2", SV_NextDownload2_f}, // jitdownload
+#endif
 
 	{NULL, NULL}
 };

@@ -482,6 +482,45 @@ qboolean SV_RateDrop (client_t *c)
 	return false;
 }
 
+
+
+void SV_SendSingleClientMessage (client_t *c, int msglen, char *msgbuf) // jitdownload (this isn't necessary anymore)
+{
+		if (!c->state)
+			//continue;
+			return;
+
+		// if the reliable message overflowed,
+		// drop the client
+		if (c->netchan.message.overflowed)
+		{
+			SZ_Clear (&c->netchan.message);
+			SZ_Clear (&c->datagram);
+			SV_BroadcastPrintf (PRINT_HIGH, "%s overflowed\n", c->name);
+			SV_DropClient (c);
+		}
+
+		if (sv.state == ss_cinematic 
+			|| sv.state == ss_demo 
+			|| sv.state == ss_pic
+			)
+			Netchan_Transmit (&c->netchan, msglen, msgbuf);
+		else if (c->state == cs_spawned)
+		{
+			// don't overrun bandwidth
+			if (SV_RateDrop (c))
+				//continue;
+				return;
+
+			SV_SendClientDatagram (c);
+		}
+		else
+		{
+	// just update reliable	if needed
+			if (c->netchan.message.cursize	|| curtime - c->netchan.last_sent > 1000 )
+				Netchan_Transmit (&c->netchan, 0, NULL);
+		}
+}
 /*
 =======================
 SV_SendClientMessages
@@ -529,39 +568,9 @@ void SV_SendClientMessages (void)
 	}
 
 	// send a message to each connected client
-	for (i=0, c = svs.clients ; i<maxclients->value; i++, c++)
+	for (i=0, c=svs.clients; i < maxclients->value; i++, c++)
 	{
-		if (!c->state)
-			continue;
-		// if the reliable message overflowed,
-		// drop the client
-		if (c->netchan.message.overflowed)
-		{
-			SZ_Clear (&c->netchan.message);
-			SZ_Clear (&c->datagram);
-			SV_BroadcastPrintf (PRINT_HIGH, "%s overflowed\n", c->name);
-			SV_DropClient (c);
-		}
-
-		if (sv.state == ss_cinematic 
-			|| sv.state == ss_demo 
-			|| sv.state == ss_pic
-			)
-			Netchan_Transmit (&c->netchan, msglen, msgbuf);
-		else if (c->state == cs_spawned)
-		{
-			// don't overrun bandwidth
-			if (SV_RateDrop (c))
-				continue;
-
-			SV_SendClientDatagram (c);
-		}
-		else
-		{
-	// just update reliable	if needed
-			if (c->netchan.message.cursize	|| curtime - c->netchan.last_sent > 1000 )
-				Netchan_Transmit (&c->netchan, 0, NULL);
-		}
+		SV_SendSingleClientMessage(c, msglen, msgbuf); // jitdownload
 	}
 }
 

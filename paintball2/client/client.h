@@ -237,6 +237,8 @@ typedef struct
 	qboolean	demorecording;
 	qboolean	demowaiting;	// don't record until a non-delta message is received
 	FILE		*demofile;
+
+	qboolean	download2active; // jitdownload
 } client_static_t;
 
 extern client_static_t	cls;
@@ -510,6 +512,9 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s);
 void SHOWNET(char *s);
 void CL_ParseClientinfo (int player);
 void CL_Download_f (void);
+#ifdef USE_DOWNLOAD2
+void CL_Download2_f (void); // jitdownload
+#endif
 void CL_WriteConfig_f (void); // jitconfig
 
 //
