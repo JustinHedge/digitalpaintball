@@ -396,9 +396,12 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 
 	if (!rs) 
 	{
+		//GLSTATE_ENABLE_ALPHATEST jitodo / jitmenu - reenable this after rscripts for menu stuff are made.
+		GLSTATE_DISABLE_ALPHATEST // jitodo (see above)
+		GLSTATE_ENABLE_BLEND // jitodo (see above)
+		qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 #ifdef BEEFQUAKERENDER // jit3dfx
-		GLSTATE_ENABLE_ALPHATEST
 		GL_Bind (gl->texnum);
 		VA_SetElem2(tex_array[0],gl->sl, gl->tl);
 		VA_SetElem2(tex_array[1],gl->sh, gl->tl);
