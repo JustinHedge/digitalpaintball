@@ -115,7 +115,7 @@ void GL_TexEnv(GLenum mode)
 			if(gl_state.texture_combine && gl_overbright->value)
 			{
 				//qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-				qglTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
+				qglTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
 				qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
 			}
 			else // failed to combine, default to modulate.
@@ -2266,7 +2266,9 @@ image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t t
 		image->width = 288;
 		image->height = 128;
 	}
-	else if(strstr(name,"pics/alive") || strstr(name,"pics/co2bar") || strstr(name,"pics/ch")) // co2 bar or crosshairs
+	else if(strstr(name,"pics/alive") || strstr(name,"pics/co2bar") || 
+		strstr(name,"pics/ch") || strstr(name, "pics/gamma") || 
+		strstr(name, "pics/menu_char_colors")) // co2 bar or crosshairs
 	{
 		sharp = true; // no bilinear filtering
 	}
