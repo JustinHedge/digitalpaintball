@@ -555,7 +555,7 @@ cmodel_t *CM_LoadMap (char *name, qboolean clientload, unsigned *checksum)
 
 	map_noareas = Cvar_Get ("map_noareas", "0", 0);
 
-	if (!strcmp(map_name, name) && (clientload || !Cvar_VariableValue("flushmap")))
+	if (Q_streq(map_name, name) && (clientload || !Cvar_VariableValue("flushmap")))
 	{
 		*checksum = last_checksum;
 		if (!clientload)

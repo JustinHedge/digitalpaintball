@@ -241,6 +241,7 @@ typedef struct
 	FILE		*demofile;
 
 	qboolean	download2active; // jitdownload
+	unsigned	last_transmit_time; // jitnetfps
 } client_static_t;
 
 extern client_static_t	cls;
@@ -254,7 +255,7 @@ extern	cvar_t	*cl_stereo_separation;
 extern	cvar_t	*cl_stereo;
 
 extern	cvar_t	*cl_gun;
-extern	cvar_t	*cl_add_blend;
+//extern	cvar_t	*cl_add_blend;
 extern	cvar_t	*cl_add_lights;
 extern	cvar_t	*cl_add_particles;
 extern	cvar_t	*cl_add_entities;

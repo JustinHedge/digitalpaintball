@@ -49,7 +49,7 @@ cvar_t *Cvar_FindVar (char *var_name)
 	cvar_t	*var;
 	
 	for (var=cvar_vars ; var ; var=var->next)
-		if (!strcmp (var_name, var->name))
+		if (Q_streq (var_name, var->name))
 			return var;
 
 	return NULL;
@@ -178,13 +178,13 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 		{
 			if (var->latched_string)
 			{
-				if (strcmp(value, var->latched_string) == 0)
+				if (Q_streq(value, var->latched_string))
 					return var;
 				Z_Free (var->latched_string);
 			}
 			else
 			{
-				if (strcmp(value, var->string) == 0)
+				if (Q_streq(value, var->string))
 					return var;
 			}
 
@@ -197,7 +197,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 			{
 				var->string = CopyString(value);
 				var->value = atof (var->string);
-				if (!strcmp(var->name, "game"))
+				if (Q_streq(var->name, "game"))
 				{
 					FS_SetGamedir (var->string);
 					FS_ExecAutoexec ();
@@ -216,7 +216,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 		}
 	}
 
-	if (!strcmp(value, var->string))
+	if (Q_streq(value, var->string))
 		return var;		// not changed
 
 	var->modified = true;
@@ -317,7 +317,7 @@ void Cvar_GetLatchedVars (void)
 		var->string = var->latched_string;
 		var->latched_string = NULL;
 		var->value = atof(var->string);
-		if (!strcmp(var->name, "game"))
+		if (Q_streq(var->name, "game"))
 		{
 			FS_SetGamedir (var->string);
 			FS_ExecAutoexec ();
@@ -380,9 +380,9 @@ void Cvar_Set_f (void)
 
 	if (c == 4)
 	{
-		if (!strcmp(Cmd_Argv(3), "u"))
+		if (Q_streq(Cmd_Argv(3), "u"))
 			flags = CVAR_USERINFO;
-		else if (!strcmp(Cmd_Argv(3), "s"))
+		else if (Q_streq(Cmd_Argv(3), "s"))
 			flags = CVAR_SERVERINFO;
 		else
 		{
@@ -415,9 +415,9 @@ void Cvar_Seta_f (void) // jitconfig
 	}
 	if (c == 4)
 	{
-		if (!strcmp(Cmd_Argv(3), "u"))
+		if (Q_streq(Cmd_Argv(3), "u"))
 			flags |= CVAR_USERINFO;
-		else if (!strcmp(Cmd_Argv(3), "s"))
+		else if (Q_streq(Cmd_Argv(3), "s"))
 			flags |= CVAR_SERVERINFO;
 		else
 		{

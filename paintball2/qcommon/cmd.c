@@ -215,8 +215,10 @@ void Cbuf_Execute (void)
 			if (text[i] == '\n')
 				break;
 		}
-			
-				
+
+		if (i > sizeof(line) - 1) // jitsecurity - buffer overflow fix by [SkulleR]
+			i =  sizeof(line) - 1;
+
 		memcpy (line, text, i);
 		line[i] = 0;
 		
@@ -268,9 +270,9 @@ void Cbuf_AddEarlyCommands (qboolean clear)
 	for (i=0 ; i<COM_Argc() ; i++)
 	{
 		s = COM_Argv(i);
-		if (strcmp (s, "+set"))
+		if (strcmp(s, "+set"))
 			continue;
-		if(strcmp(COM_Argv(i+1), "build") != 0) // jitversion -- don't let client fake it
+		if(!Q_streq(COM_Argv(i+1), "build")) // jitversion -- don't let client fake it
 			Cbuf_AddText (va("set %s %s\n", COM_Argv(i+1), COM_Argv(i+2)));
 		if (clear)
 		{
@@ -451,7 +453,7 @@ void Cmd_Alias_f (void)
 	// if the alias already exists, reuse it
 	for (a = cmd_alias ; a ; a=a->next)
 	{
-		if (!strcmp(s, a->name))
+		if (Q_streq(s, a->name))
 		{
 			Z_Free (a->value);
 			break;
@@ -528,13 +530,16 @@ static cmd_macro_t	*cmd_macroHash[MACROHASH_SIZE];
 Cmd_MacroFind
 ============
 */
-static cmd_macro_t *Cmd_MacroFind( const char *name ) {
+static cmd_macro_t *Cmd_MacroFind(const char *name)
+{
 	cmd_macro_t *macro;
 	int hash;
 
 	hash = Com_HashString( name, MACROHASH_SIZE );
-	for( macro=cmd_macroHash[hash] ; macro ; macro=macro->hashNext ) {
-		if( !Q_stricmp( macro->name, name ) ) {
+	for(macro=cmd_macroHash[hash]; macro; macro=macro->hashNext)
+	{
+		if(!Q_strcasecmp(macro->name, name))
+		{
 			return macro;
 		}
 	}
@@ -917,7 +922,7 @@ void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
 // fail if the command already exists
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
 	{
-		if (!strcmp (cmd_name, cmd->name))
+		if (Q_streq (cmd_name, cmd->name))
 		{
 			Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
 			return;
@@ -949,7 +954,7 @@ void	Cmd_RemoveCommand (char *cmd_name)
 			Com_Printf ("Cmd_RemoveCommand: %s not added\n", cmd_name);
 			return;
 		}
-		if (!strcmp (cmd_name, cmd->name))
+		if (Q_streq (cmd_name, cmd->name))
 		{
 			*back = cmd->next;
 			Z_Free (cmd);
@@ -970,7 +975,7 @@ qboolean	Cmd_Exists (char *cmd_name)
 
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
 	{
-		if (!strcmp (cmd_name,cmd->name))
+		if (Q_streq (cmd_name,cmd->name))
 			return true;
 	}
 
@@ -1003,13 +1008,13 @@ char *Cmd_CompleteCommand (char *partial)
 		
 // check for exact match
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
-		if (!strcmp (partial,cmd->name))
+		if (Q_streq (partial,cmd->name))
 			return cmd->name;
 	for (a=cmd_alias ; a ; a=a->next)
-		if (!strcmp (partial, a->name))
+		if (Q_streq (partial, a->name))
 			return a->name;
 	for (cvar=cvar_vars ; cvar ; cvar=cvar->next)
-		if (!strcmp (partial,cvar->name))
+		if (Q_streq (partial,cvar->name))
 			return cvar->name;
 
 	for (i=0; i<1024; i++)
@@ -1020,13 +1025,13 @@ char *Cmd_CompleteCommand (char *partial)
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
 		if (!strncmp (partial,cmd->name, len)) {
 			// jit <!--
-			if(!strcmp(cmd->name,"vid_restart"))
+			if(Q_streq(cmd->name,"vid_restart"))
 				returnfullname = "vid_restart";
-			else if(!strcmp(cmd->name,"quit"))
+			else if(Q_streq(cmd->name,"quit"))
 				returnfullname = "quit";
-			else if(!strcmp(cmd->name,"disconnect"))
+			else if(Q_streq(cmd->name,"disconnect"))
 				returnfullname = "disconnect";
-			else if(!strcmp(cmd->name,"record"))
+			else if(Q_streq(cmd->name,"record"))
 				returnfullname = "record";
 			// -->
 			pmatch[i]=cmd->name;
@@ -1084,13 +1089,13 @@ qboolean Cmd_IsComplete (char *command)
 			
 // check for exact match
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
-		if (!strcmp (command,cmd->name))
+		if (Q_streq (command,cmd->name))
 			return true;
 	for (a=cmd_alias ; a ; a=a->next)
-		if (!strcmp (command, a->name))
+		if (Q_streq (command, a->name))
 			return true;
 	for (cvar=cvar_vars ; cvar ; cvar=cvar->next)
-		if (!strcmp (command,cvar->name))
+		if (Q_streq (command,cvar->name))
 			return true;
 
 	return false;

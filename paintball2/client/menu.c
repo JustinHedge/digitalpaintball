@@ -136,7 +136,7 @@ static void M_FindKeysForCommand (char *command, int *twokeys)
 		b = keybindings[j];
 		if (!b)
 			continue;
-		if(strcmp (b, command) == 0)
+		if(Q_streq(b, command))
 		{
 			twokeys[count] = j;
 			count++;
@@ -499,7 +499,7 @@ static void update_select_subwidgets(menu_widget_t *widget)
 		{
 			if(widget->flags & WIDGET_FLAG_USEMAP)
 			{
-				if(!strcmp(s, widget->select_map[i]))
+				if(Q_streq(s, widget->select_map[i]))
 				{
 					widget->select_pos = i;
 					break;
@@ -507,7 +507,7 @@ static void update_select_subwidgets(menu_widget_t *widget)
 			}
 			else
 			{
-				if(!strcmp(s, widget->select_list[i]))
+				if(Q_streq(s, widget->select_list[i]))
 				{
 					widget->select_pos = i;
 					break;
@@ -1651,7 +1651,7 @@ static void select_begin_list(menu_widget_t *widget, char *buf)
 		token = COM_Parse(&buf);
 	
 		// read in map pair
-		while(token && strlen(token) && strcmp(token, "end") != 0)
+		while(token && strlen(token) && !Q_streq(token, "end"))
 		{
 			strcpy(cvar_string, token);
 			token = COM_Parse(&buf);
@@ -1756,17 +1756,17 @@ static void M_ErrorMenu(menu_screen_t* menu, const char *text)
 
 static int M_WidgetGetType(const char *s)
 {
-	if(!strcmp(s, "text"))
+	if(Q_streq(s, "text"))
 		return WIDGET_TYPE_TEXT;
-	if(!strcmp(s, "button"))
+	if(Q_streq(s, "button"))
 		return WIDGET_TYPE_BUTTON;
-	if(!strcmp(s, "slider"))
+	if(Q_streq(s, "slider"))
 		return WIDGET_TYPE_SLIDER;
-	if(!strcmp(s, "checkbox"))
+	if(Q_streq(s, "checkbox"))
 		return WIDGET_TYPE_CHECKBOX;
-	if(!strcmp(s, "dropdown") || strstr(s, "select"))
+	if(Q_streq(s, "dropdown") || strstr(s, "select"))
 		return WIDGET_TYPE_SELECT;
-	if(!strcmp(s, "editbox") || !strcmp(s, "field"))
+	if(Q_streq(s, "editbox") || Q_streq(s, "field"))
 		return WIDGET_TYPE_FIELD;
 
 	return WIDGET_TYPE_UNKNOWN;
@@ -1774,18 +1774,18 @@ static int M_WidgetGetType(const char *s)
 
 static int M_WidgetGetAlign(const char *s)
 {
-	if(!strcmp(s, "left"))
+	if(Q_streq(s, "left"))
 		return WIDGET_HALIGN_LEFT;
-	if(!strcmp(s, "center"))
+	if(Q_streq(s, "center"))
 		return WIDGET_HALIGN_CENTER;
-	if(!strcmp(s, "right"))
+	if(Q_streq(s, "right"))
 		return WIDGET_HALIGN_RIGHT;
 
-	if(!strcmp(s, "top"))
+	if(Q_streq(s, "top"))
 		return WIDGET_VALIGN_TOP;
-	if(!strcmp(s, "middle"))
+	if(Q_streq(s, "middle"))
 		return WIDGET_VALIGN_MIDDLE;
-	if(!strcmp(s, "bottom"))
+	if(Q_streq(s, "bottom"))
 		return WIDGET_VALIGN_BOTTOM;
 
 	return WIDGET_HALIGN_LEFT; // default top/left
@@ -1869,7 +1869,7 @@ static void menu_from_file(menu_screen_t *menu)
 
 		// check for header: "pb2menu 1"
 		token = COM_Parse(&buf); // "pb2menu"
-		if(strcmp(token, "pb2menu") == 0)
+		if(Q_streq(token, "pb2menu"))
 		{
 			token = COM_Parse(&buf); // "1"
 			if(atoi(token) == 1)
@@ -1884,7 +1884,7 @@ static void menu_from_file(menu_screen_t *menu)
 				while(*token)
 				{
 					// new widget:
-					if(strcmp(token, "widget") == 0)
+					if(Q_streq(token, "widget"))
 					{
 						if(!widget)
 						{
@@ -1900,21 +1900,21 @@ static void menu_from_file(menu_screen_t *menu)
 						//y += 8;
 					}
 					// widget properties:
-					else if(strcmp(token, "type") == 0)
+					else if(Q_streq(token, "type"))
 						widget->type = M_WidgetGetType(COM_Parse(&buf));
-					else if(strcmp(token, "text") == 0)
+					else if(Q_streq(token, "text"))
 						widget->text = text_copy(COM_Parse(&buf));
-					else if(strcmp(token, "hovertext") == 0)
+					else if(Q_streq(token, "hovertext"))
 						widget->hovertext = text_copy(COM_Parse(&buf));
-					else if(strcmp(token, "selectedtext") == 0)
+					else if(Q_streq(token, "selectedtext"))
 						widget->selectedtext = text_copy(COM_Parse(&buf));
-					else if(strcmp(token, "cvar") == 0)
+					else if(Q_streq(token, "cvar"))
 						widget->cvar = text_copy(COM_Parse(&buf));
-					else if(strcmp(token, "cvar_default") == 0)
+					else if(Q_streq(token, "cvar_default"))
 						widget->cvar_default = text_copy(COM_Parse(&buf));
-					else if(strcmp(token, "command") == 0 || strcmp(token, "cmd") == 0)
+					else if(Q_streq(token, "command") || Q_streq(token, "cmd"))
 						widget->command = text_copy(COM_Parse(&buf));
-					else if(strcmp(token, "pic") == 0)
+					else if(Q_streq(token, "pic"))
 					{
 						widget->pic = re.DrawFindPic(COM_Parse(&buf));
 						// default to double resolution, since it's too blocky otherwise.
@@ -1923,11 +1923,11 @@ static void menu_from_file(menu_screen_t *menu)
 						if(!widget->picheight)
 							widget->picheight = widget->pic->height / 2.0f;
 					}
-					else if(strcmp(token, "picwidth") == 0)
+					else if(Q_streq(token, "picwidth"))
 						widget->picwidth = atoi(COM_Parse(&buf));
-					else if(strcmp(token, "picheight") == 0)
+					else if(Q_streq(token, "picheight"))
 						widget->picheight = atoi(COM_Parse(&buf));
-					else if(strcmp(token, "hoverpic") == 0)
+					else if(Q_streq(token, "hoverpic"))
 					{
 						widget->hoverpic = re.DrawFindPic(COM_Parse(&buf));
 						// default to double resolution, since it's too blocky otherwise.
@@ -1936,21 +1936,21 @@ static void menu_from_file(menu_screen_t *menu)
 						if(!widget->hoverpicheight)
 							widget->hoverpicheight = widget->hoverpic->height / 2.0f;
 					}
-					else if(strcmp(token, "hoverpicwidth") == 0)
+					else if(Q_streq(token, "hoverpicwidth"))
 						widget->hoverpicwidth = atoi(COM_Parse(&buf));
-					else if(strcmp(token, "hoverpicheight") == 0)
+					else if(Q_streq(token, "hoverpicheight"))
 						widget->hoverpicheight = atoi(COM_Parse(&buf));
-					else if(strcmp(token, "selectedpic") == 0)
+					else if(Q_streq(token, "selectedpic"))
 						widget->selectedpic = re.DrawFindPic(COM_Parse(&buf));
-					else if(strcmp(token, "xabs") == 0 || strcmp(token, "xleft") == 0 || strcmp(token, "x") == 0)
+					else if(Q_streq(token, "xabs") || Q_streq(token, "xleft") || Q_streq(token, "x"))
 						x = widget->x = atoi(COM_Parse(&buf));
-					else if(strcmp(token, "yabs") == 0 || strcmp(token, "ytop") == 0 || strcmp(token, "y") == 0)
+					else if(Q_streq(token, "yabs") || Q_streq(token, "ytop") || Q_streq(token, "y"))
 						y = widget->y = atoi(COM_Parse(&buf));
 					else if(strstr(token, "xcent"))
 						x = widget->x = 160 + atoi(COM_Parse(&buf));
 					else if(strstr(token, "ycent"))
 						y = widget->y = 120 + atoi(COM_Parse(&buf));
-					else if(strcmp(token, "xright") == 0)
+					else if(Q_streq(token, "xright"))
 						x = widget->x = 320 + atoi(COM_Parse(&buf));
 					else if(strstr(token, "ybot"))
 						y = widget->y = 240 + atoi(COM_Parse(&buf));
@@ -1958,9 +1958,9 @@ static void menu_from_file(menu_screen_t *menu)
 						x = widget->x += atoi(COM_Parse(&buf));
 					else if(strstr(token, "yrel"))
 						y = widget->y += atoi(COM_Parse(&buf));
-					else if(strcmp(token, "halign") == 0)
+					else if(Q_streq(token, "halign"))
 						widget->halign = M_WidgetGetAlign(COM_Parse(&buf));
-					else if(strcmp(token, "valign") == 0)
+					else if(Q_streq(token, "valign"))
 						widget->valign = M_WidgetGetAlign(COM_Parse(&buf));
 					// slider cvar min, max, and increment
 					else if(strstr(token, "min"))
@@ -1972,9 +1972,9 @@ static void menu_from_file(menu_screen_t *menu)
 					// editbox/field options
 					else if(strstr(token, "width") || strstr(token, "cols"))
 						widget->field_width = atoi(COM_Parse(&buf));
-					else if(strcmp(token, "int") == 0)
+					else if(Q_streq(token, "int"))
 						widget->flags |= WIDGET_FLAG_INT; // jitodo
-					else if(strcmp(token, "float") == 0)
+					else if(Q_streq(token, "float"))
 						widget->flags |= WIDGET_FLAG_FLOAT; // jitodo
 					// select/dropdown options
 					else if(strstr(token, "size") || strstr(token, "rows") || strstr(token, "height"))
@@ -1987,7 +1987,7 @@ static void menu_from_file(menu_screen_t *menu)
 						widget->flags |= WIDGET_FLAG_SERVERLIST;
 					else if(strstr(token, "strip"))
 						select_strip_from_list(widget, COM_Parse(&buf));
-					else if(strcmp(token, "nobg") == 0 || strcmp(token, "nobackground") == 0)
+					else if(Q_streq(token, "nobg") || Q_streq(token, "nobackground"))
 						widget->flags |= WIDGET_FLAG_NOBG;
 
 					token = COM_Parse(&buf);
@@ -2032,7 +2032,7 @@ static menu_screen_t* M_FindMenuScreen(const char *menu_name)
 	// look through "cached" menus
 	while(menu)
 	{
-		if(!strcmp(menu_name, menu->name))
+		if(Q_streq(menu_name, menu->name))
 			return menu;
 
 		menu = menu->next;
@@ -2297,7 +2297,7 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	// check if server exists in current serverlist:
 	for(i=0; i<m_serverlist.numservers; i++)
 	{
-		if(strcmp(addrip, m_serverlist.ips[i]) == 0) // address exists in list
+		if(Q_streq(addrip, m_serverlist.ips[i])) // address exists in list
 		{
 			// update info from server:
 			Z_Free(m_serverlist.info[i]);
@@ -2541,15 +2541,15 @@ void M_Menu_f (void)
 
 	menuname = Cmd_Argv(1);
 	
-	if(strcmp(menuname, "samelevel") == 0)
+	if(Q_streq(menuname, "samelevel"))
 	{
 		menuname = Cmd_Argv(2);
 		samelevel = true;
 	}
 
-	if(strcmp(menuname, "pop") == 0 || strcmp(menuname, "back") == 0)
+	if(Q_streq(menuname, "pop") || Q_streq(menuname, "back"))
 		M_PopMenu();
-	else if(strcmp(menuname, "off") == 0 || strcmp(menuname, "close") == 0)
+	else if(Q_streq(menuname, "off") || Q_streq(menuname, "close"))
 		M_ForceMenuOff();
 	else
 	{
@@ -2557,7 +2557,7 @@ void M_Menu_f (void)
 		menu = M_FindMenuScreen(menuname);
 
 		// hardcoded hack so gamma image is correct:
-		if(strcmp(menuname, "setup_gamma") == 0)
+		if(Q_streq(menuname, "setup_gamma"))
 		{
 			oldscale = cl_hudscale->value;
 			Cvar_Set("cl_hudscale", "2");

@@ -260,7 +260,7 @@ qboolean	NET_StringToAdr (char *s, netadr_t *a)
 {
 	struct sockaddr sadr;
 	
-	if (!strcmp (s, "localhost"))
+	if (Q_streq (s, "localhost"))
 	{
 		memset (a, 0, sizeof(*a));
 		a->type = NA_LOOPBACK;
@@ -446,7 +446,7 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 
 		// some PPP links dont allow broadcasts
 		// Knightmare- NO ERROR fix for pinging servers w/ unplugged LAN cable
-		if (((err == WSAEADDRNOTAVAIL) || !strcmp(NET_ErrorString(), "NO ERROR"))
+		if (((err == WSAEADDRNOTAVAIL) || Q_streq(NET_ErrorString(), "NO ERROR"))
 			&& ((to.type == NA_BROADCAST) || (to.type == NA_BROADCAST_IPX)))
 			return; 
 		//if ((err == WSAEADDRNOTAVAIL) && ((to.type == NA_BROADCAST) || (to.type == NA_BROADCAST_IPX)))

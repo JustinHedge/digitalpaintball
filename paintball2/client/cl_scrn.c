@@ -935,8 +935,8 @@ void SCR_TouchPics (void)
 
 	if (crosshair->value)
 	{
-		if (crosshair->value > 3 || crosshair->value < 0)
-			crosshair->value = 3;
+		//if (crosshair->value > 3 || crosshair->value < 0) // jitcrosshair (removed)
+		//	crosshair->value = 3;
 
 		Com_sprintf (crosshair_pic, sizeof(crosshair_pic), "ch%i", (int)(crosshair->value));
 		re.DrawGetPicSize (&crosshair_width, &crosshair_height, crosshair_pic);
@@ -976,7 +976,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 
 		if(token[0]=='a')
 		{
-			//if (!strcmp(token, "anum"))
+			//if (Q_streq(token, "anum"))
 			{	// ammo number
 				int		color;
 
@@ -999,7 +999,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 		
 		if(token[0]=='c')
 		{
-			//if (!strcmp(token, "client"))
+			//if (Q_streq(token, "client"))
 			if(token[1]=='l')
 			{	// draw a deathmatch client block
 				int		score, ping, time;
@@ -1037,7 +1037,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 				re.DrawPic (x, y, ci->iconname);
 				continue;
 			}
-			//if (!strcmp(token, "cstring2"))
+			//if (Q_streq(token, "cstring2"))
 			else if(token[7]=='2')
 			{
 				//char local_s[MAX_TOKEN_CHARS];
@@ -1047,7 +1047,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 				//re.DrawString (x, y, local_s); // jittext
 				continue;
 			}			
-			//if (!strcmp(token, "cstring"))
+			//if (Q_streq(token, "cstring"))
 			else
 			{
 				token = COM_Parse (&s);
@@ -1056,7 +1056,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			}
 		}
 
-		//if (!strcmp(token, "hnum"))
+		//if (Q_streq(token, "hnum"))
 		if(token[0]=='h')
 		{	// health number
 			int		color;
@@ -1079,7 +1079,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 
 		if(token[0]=='p')
 		{
-			//if (!strcmp(token, "picn"))
+			//if (Q_streq(token, "picn"))
 			if(token[3]=='n')
 			{	// draw a pic from a name
 				token = COM_Parse (&s);
@@ -1089,7 +1089,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 				continue;
 			}
 
-			//if (!strcmp(token, "pic"))
+			//if (Q_streq(token, "pic"))
 			else
 			{	// draw a pic from a stat number
 				token = COM_Parse (&s);
@@ -1106,7 +1106,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			}
 		}
 
-		//if (!strcmp(token, "num"))
+		//if (Q_streq(token, "num"))
 		if(token[0]=='n')
 		{	// draw a number
 			token = COM_Parse (&s);
@@ -1119,7 +1119,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 
 		if(token[0]=='s')
 		{
-			//if (!strcmp(token, "stat_string"))
+			//if (Q_streq(token, "stat_string"))
 			if(token[4]=='_')
 			{
 				token = COM_Parse (&s);
@@ -1132,7 +1132,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 				re.DrawString (x, y, cl.configstrings[index]);
 				continue;
 			}
-			//if (!strcmp(token, "string2"))
+			//if (Q_streq(token, "string2"))
 			else if(token[6]=='2')
 			{
 				char local_s[MAX_TOKEN_CHARS];
@@ -1142,7 +1142,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 				re.DrawString (x, y, local_s); // jittext
 				continue;
 			}
-			//if (!strcmp(token, "string"))
+			//if (Q_streq(token, "string"))
 			else
 			{
 				token = COM_Parse (&s);
@@ -1151,14 +1151,14 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			}			
 		}
 
-		//if (!strcmp(token, "if"))
+		//if (Q_streq(token, "if"))
 		if(token[0]=='i')
 		{	// draw a number
 			token = COM_Parse (&s);
 			value = cl.frame.playerstate.stats[atoi(token)];
 			if (!value)
 			{	// skip to endif
-				while (s && strcmp(token, "endif") )
+				while (s && !Q_streq(token, "endif"))
 				{
 					token = COM_Parse (&s);
 				}
@@ -1210,44 +1210,44 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			continue;
 		}
 		/*
-				if (!strcmp(token, "xl"))
+				if (Q_streq(token, "xl"))
 		{
 			token = COM_Parse (&s);
 			x = atoi(token);
 			continue;
 		}
-		if (!strcmp(token, "xr"))
+		if (Q_streq(token, "xr"))
 		{
 			token = COM_Parse (&s);
 			x = viddef.width + atoi(token);
 			continue;
 		}
-		if (!strcmp(token, "xv"))
+		if (Q_streq(token, "xv"))
 		{
 			token = COM_Parse (&s);
 			x = viddef.width*0.5 - 160 + atoi(token);
 			continue;
 		}
 
-		if (!strcmp(token, "yt"))
+		if (Q_streq(token, "yt"))
 		{
 			token = COM_Parse (&s);
 			y = atoi(token);
 			continue;
 		}
-		if (!strcmp(token, "yb"))
+		if (Q_streq(token, "yb"))
 		{
 			token = COM_Parse (&s);
 			y = viddef.height + atoi(token);
 			continue;
 		}
-		if (!strcmp(token, "yv"))
+		if (Q_streq(token, "yv"))
 		{
 			token = COM_Parse (&s);
 			y = viddef.height*0.5 - 120 + atoi(token);
 			continue;
 		}
-		  if (!strcmp(token, "rnum"))
+		  if (Q_streq(token, "rnum"))
 		{	// armor number
 			int		color;
 
@@ -1264,7 +1264,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			SCR_DrawField (x, y, color, width, value);
 			continue;
 		}*/
-		/*		if (!strcmp(token, "ctf"))
+		/*		if (Q_streq(token, "ctf"))
 		{	// draw a ctf client block
 			int		score, ping;
 			char	block[80];
@@ -1389,12 +1389,12 @@ void SCR_UpdateScreen (void)
 	** brain
 	*/
 
-	if ( cl_stereo_separation->value > 1.0 )
-		Cvar_SetValue( "cl_stereo_separation", 1.0 );
-	else if ( cl_stereo_separation->value < 0 )
-		Cvar_SetValue( "cl_stereo_separation", 0.0 );
+	if (cl_stereo_separation->value > 1.0)
+		Cvar_SetValue("cl_stereo_separation", 1.0);
+	else if (cl_stereo_separation->value < 0)
+		Cvar_SetValue("cl_stereo_separation", 0.0);
 
-	if ( cl_stereo->value )
+	if (cl_stereo->value)
 	{
 		numframes = 2;
 		separation[0] = -cl_stereo_separation->value / 2;
@@ -1407,7 +1407,7 @@ void SCR_UpdateScreen (void)
 		numframes = 1;
 	}
 
-	for ( i = 0; i < numframes; i++ )
+	for (i = 0; i < numframes; i++)
 	{
 		if(cl_hudscale->modified) // jithudscale / jitmenu
 		{
@@ -1415,7 +1415,7 @@ void SCR_UpdateScreen (void)
 			cl_hudscale->modified = false;
 		}
 
-		re.BeginFrame( separation[i] );
+		re.BeginFrame(separation[i]);
 
 		if (scr_draw_loading == 2)
 		{	//  loading plaque over black screen
@@ -1469,38 +1469,56 @@ void SCR_UpdateScreen (void)
 			}
 
 			// do 3D refresh drawing, and then update the screen
-			SCR_CalcVrect ();
+			SCR_CalcVrect();
 
 			// clear any dirty part of the background
-			SCR_TileClear ();
+			SCR_TileClear();
 
-			V_RenderView ( separation[i] );
+			V_RenderView(separation[i]);
 
 			if(cl_drawhud->value)
 			{
 				// Draw FPS display - MrG - jit, modified
 				if (cl_drawfps->value) 
 				{
-					static char s[8];
-					static int fpscounter=0;
-					static float framerate=60.0f; // arbitrary starting value
+					static char s[16];
+					//static int fpscounter=0;
+					//static float framerate=60.0f; // arbitrary starting value
 
-					if(cl.frametime == 0.0f)
-						cl.frametime = 0.001f;
+					//if(cl.frametime == 0.0f)
+					//	cl.frametime = 0.001f;
 
-					framerate *= .80f;
-					//framerate += (1.0f/cls.frametime)*.20;
-					framerate += (1.0f/cl.frametime)*.20f; // jitnetfps
+					//framerate *= .80f;
+					////framerate += (1.0f/cls.frametime)*.20;
+					//framerate += (1.0f/cl.frametime)*.20f; // jitnetfps
 
 
-					if ((cl.time + 1000) < fpscounter)
-						fpscounter = cl.time + 100;
+					//if ((cl.time + 1000) < fpscounter)
+					//	fpscounter = cl.time + 100;
 
-					if (cl.time > fpscounter) // slow fps display
+					//if (cl.time > fpscounter) // slow fps display
+
+					static int framecount = 0;
+					static int lasttime = 0;
+
+
+
+					if(!(framecount & 0xF)) // once every 16 frames
 					{
-						Com_sprintf(s,sizeof(s),"%3.0ffps", framerate);
-						fpscounter = cl.time + 100; 
+						register float t;
+						t = curtime-lasttime;
+						if(t>160000.0f)
+							t = 160.0f;
+						else
+							t /= 1000.0f;
+						//Com_sprintf(s,sizeof(s),"%3.0ffps", framerate);
+						Com_sprintf(s,sizeof(s),"%3.0ffps", framecount/t);
+						//fpscounter = cl.time + 100; 
+						lasttime = curtime;
+						framecount = 0;
 					}
+
+					framecount ++;
 
 					re.DrawString(viddef.width-56*hudscale,64*hudscale,s);
 				}
@@ -1530,14 +1548,10 @@ void SCR_UpdateScreen (void)
 				SCR_DrawPause ();
 			}
 
-			SCR_DrawConsole ();
-
-			M_Draw ();
-
-			SCR_DrawLoading ();
+			SCR_DrawConsole();
+			M_Draw();
+			SCR_DrawLoading();
 		}
 	}
 	re.EndFrame();
-		
-	
 }

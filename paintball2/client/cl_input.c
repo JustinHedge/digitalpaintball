@@ -471,7 +471,41 @@ void CL_SendCmd (void)
 	cmd = &cl.cmds[i];
 	cl.cmd_time[i] = cls.realtime;	// for netgraph ping calculation
 
-	*cmd = CL_CreateCmd ();
+	*cmd = CL_CreateCmd();
+
+	if(!cl_locknetfps->value) // jitnetfps
+	{
+		static usercmd_t oldcmd;
+		int ppsstate;
+		static int ppscount = 0;
+		static unsigned old_frame_time = 0;
+
+		cmd->msec = sys_frame_time - old_frame_time;
+		
+		ppsstate = cl_cmdrate->value;
+
+		if(ppsstate < 5)
+			ppsstate = 5;
+
+		if ((cl.time+1000) < ppscount)
+			ppscount=cl.time+1000/ppsstate;
+
+		if (cl.time > ppscount ||
+			cmd->buttons != oldcmd.buttons ||
+			cmd->forwardmove != oldcmd.forwardmove ||
+			cmd->impulse != oldcmd.impulse ||
+			cmd->sidemove != oldcmd.sidemove ||
+			cmd->upmove != oldcmd.upmove) // user input has changed (jitodo -- check for text cmds)
+		{
+			ppscount = cl.time + 1000/ppsstate;
+			memcpy(&oldcmd, cmd, sizeof(usercmd_t));
+			old_frame_time = sys_frame_time;
+		}
+		else
+		{
+			return;
+		}
+	}
 
 	cl.cmd = *cmd;
 
@@ -541,38 +575,36 @@ void CL_SendCmd (void)
 	//
 	// deliver the message
 	//
+	Netchan_Transmit(&cls.netchan, buf.cursize, buf.data);
+	cls.last_transmit_time = sys_frame_time; // todo
 
-	if(cl_locknetfps->value) // jitodo download2 check here
-	{
-		Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);	
-	}
-	else // jitnetfps (taken from fuzz)
-	{
-		int ppsstate;
-		static int ppscount=0;
+	//if(cl_locknetfps->value) // jitodo download2 check here
+	//{
+	//	Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);	
+	//}
+	//else // jitnetfps (taken from fuzz) -- jitodo, kill this, it sucks
+	//{
+	//	int ppsstate;
+	//	static int ppscount=0;
 
-		ppsstate = cl_cmdrate->value;
+	//	ppsstate = cl_cmdrate->value;
 
-		if(ppsstate < 5)
-			ppsstate = 5;
+	//	if(ppsstate < 5)
+	//		ppsstate = 5;
 
-		if ((cl.time+1000) < ppscount)
-			ppscount=cl.time+1000/ppsstate;
+	//	if ((cl.time+1000) < ppscount)
+	//		ppscount=cl.time+1000/ppsstate;
 
-		if (cl.time>ppscount)
-		{
-			//static int temp = 0;
-			//temp++;
-			Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);
-			ppscount = cl.time + 1000/ppsstate;
-			//if(temp>100)
-			//	temp = 0; // jitodo / jitest (for breakpoint)
-		}
-		else
-		{
-			cls.netchan.outgoing_sequence++;
-		}
-	}
+	//	if (cl.time>ppscount)
+	//	{
+	//		Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);
+	//		ppscount = cl.time + 1000/ppsstate;
+	//	}
+	//	else
+	//	{
+	//		cls.netchan.outgoing_sequence++;
+	//	}
+	//}
 }
 
 

@@ -965,7 +965,7 @@ int COM_CheckParm (char *parm)
 	
 	for (i=1 ; i<com_argc ; i++)
 	{
-		if (!strcmp (parm,com_argv[i]))
+		if (Q_streq (parm,com_argv[i]))
 			return i;
 	}
 		
@@ -1422,6 +1422,9 @@ void Qcommon_Init (int argc, char **argv)
 		Sys_Error ("Error during initialization");
 
 	z_chain.next = z_chain.prev = &z_chain;
+
+	//if (!Cvar_Get("dedicated", "0", CVAR_NOSET)->value)
+	//	Con_Init(); // jitest - majik, console init fix.
 
 	// prepare enough of the subsystems to handle
 	// cvar and command buffer management

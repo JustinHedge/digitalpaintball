@@ -143,6 +143,7 @@ extern vec3_t vec3_origin;
 #define	IS_NAN(x) (((*(int *)&x)&nanmask)==nanmask)
 
 // microsoft's fabs seems to be ungodly slow...
+// jitopt -- it's faster with intrinsic function optimizations
 //float Q_fabs (float f);
 //#define	fabs(f) Q_fabs(f)
 #if !defined C_ONLY && !defined __linux__ && !defined __sgi
@@ -225,9 +226,19 @@ void Com_PageInMemory (byte *buffer, int size);
 //=============================================
 
 // portable case insensitive compare
-int Q_stricmp (const char *s1, const char *s2);
+//int Q_stricmp (const char *s1, const char *s2);
 int Q_strcasecmp (const char *s1, const char *s2);
 int Q_strncasecmp (const char *s1, const char *s2, int n);
+int Q_streq (const char *s1, const char *s2); // jitopt -- faster than !strcmp
+//#ifdef WIN32 // jitstricmp -- don't use these, _stricmp is like 5x's slower!
+//#define Q_strcasecmp(a,b) _stricmp(a,b)
+//#define Q_stricmp(a,b) _stricmp(a,b)
+//#else
+//#define Q_strcasecmp(a,b) strcasecmp(a,b)
+//#define Q_stricmp(a,b) strcasecmp(a,b)
+//#define _stricmp(a,b) strcasecmp(a,b)
+//#define stricmp(a,b) strcasecmp(a,b)
+//#endif
 
 //=============================================
 
@@ -1229,3 +1240,4 @@ void *hash_get(hash_table_t *table, const unsigned char *key);
 void hash_delete(hash_table_t *table, const unsigned char *key);
 // jithash
 // ========
+

@@ -467,9 +467,9 @@ V_RenderView
 
 ==================
 */
-void V_RenderView( float stereo_separation )
+void V_RenderView (float stereo_separation)
 {
-	extern int entitycmpfnc( const entity_t *, const entity_t * );
+	extern int entitycmpfnc(const entity_t *, const entity_t *);
 
 	if (cls.state != ca_active)
 		return;
@@ -480,29 +480,33 @@ void V_RenderView( float stereo_separation )
 	if (cl_timedemo->value)
 	{
 		if (!cl.timedemo_start)
-			cl.timedemo_start = Sys_Milliseconds ();
+			cl.timedemo_start = Sys_Milliseconds();
+
 		cl.timedemo_frames++;
 	}
 
 	// an invalid frame will just use the exact previous refdef
 	// we can't use the old frame if the video mode has changed, though...
-	if ( cl.frame.valid && (cl.force_refdef || !cl_paused->value) )
+	if (cl.frame.valid && (cl.force_refdef || !cl_paused->value))
 	{
 		cl.force_refdef = false;
 
-		V_ClearScene ();
+		V_ClearScene();
 
 		// build a refresh entity list and calc cl.sim*
 		// this also calls CL_CalcViewValues which loads
 		// v_forward, etc.
-		CL_AddEntities ();
+		CL_AddEntities();
 
 		if (cl_testparticles->value)
-			V_TestParticles ();
+			V_TestParticles();
+
 		if (cl_testentities->value)
-			V_TestEntities ();
+			V_TestEntities();
+
 		if (cl_testlights->value)
-			V_TestLights ();
+			V_TestLights();
+
 		if (cl_testblend->value)
 		{
 			cl.refdef.blend[0] = 1;
@@ -512,12 +516,12 @@ void V_RenderView( float stereo_separation )
 		}
 
 		// offset vieworg appropriately if we're doing stereo separation
-		if ( stereo_separation != 0 )
+		if (stereo_separation != 0)
 		{
 			vec3_t tmp;
 
-			VectorScale( cl.v_right, stereo_separation, tmp );
-			VectorAdd( cl.refdef.vieworg, tmp, cl.refdef.vieworg );
+			VectorScale(cl.v_right, stereo_separation, tmp);
+			VectorAdd(cl.refdef.vieworg, tmp, cl.refdef.vieworg);
 		}
 
 		// never let it sit exactly on a node line, because a water plane can
@@ -538,14 +542,17 @@ void V_RenderView( float stereo_separation )
 
 		if (!cl_add_entities->value)
 			r_numentities = 0;
+
 		if (!cl_add_particles->value)
 			r_numparticles = 0;
+
 		if (!cl_add_lights->value)
 			r_numdlights = 0;
-		if (!cl_add_blend->value)
-		{
-			VectorClear (cl.refdef.blend);
-		}
+
+		//if (!cl_add_blend->value) jit -- this should always be enabled
+		//{
+		//	VectorClear (cl.refdef.blend);
+		//}
 
 		cl.refdef.num_newstains = r_numstains;
 		cl.refdef.newstains = r_stains;
@@ -563,21 +570,23 @@ void V_RenderView( float stereo_separation )
 		cl.refdef.rdflags = cl.frame.playerstate.rdflags;
 
 		// sort entities for better cache locality
-        qsort( cl.refdef.entities, cl.refdef.num_entities, sizeof( cl.refdef.entities[0] ), (int (*)(const void *, const void *))entitycmpfnc );
+        qsort(cl.refdef.entities, cl.refdef.num_entities,
+			sizeof(cl.refdef.entities[0]),
+			(int (*)(const void *, const void *))entitycmpfnc);
 	}
 
-	re.RenderFrame (&cl.refdef);
+	re.RenderFrame(&cl.refdef);
+
 	if (cl_stats->value)
-		Com_Printf ("ent:%i  lt:%i  part:%i\n", r_numentities, r_numdlights, r_numparticles);
-	if ( log_stats->value && ( log_stats_file != 0 ) )
-		fprintf( log_stats_file, "%i,%i,%i,",r_numentities, r_numdlights, r_numparticles);
+		Com_Printf("ent:%i  lt:%i  part:%i\n", r_numentities, r_numdlights, r_numparticles);
 
+	if (log_stats->value && (log_stats_file != 0))
+		fprintf(log_stats_file, "%i,%i,%i,", r_numentities, r_numdlights, r_numparticles);
 
-	SCR_AddDirtyPoint (scr_vrect.x, scr_vrect.y);
-	SCR_AddDirtyPoint (scr_vrect.x+scr_vrect.width-1,
-		scr_vrect.y+scr_vrect.height-1);
+	SCR_AddDirtyPoint(scr_vrect.x, scr_vrect.y);
+	SCR_AddDirtyPoint(scr_vrect.x + scr_vrect.width - 1, scr_vrect.y + scr_vrect.height - 1);
 
-	SCR_DrawCrosshair ();
+	SCR_DrawCrosshair();
 }
 
 

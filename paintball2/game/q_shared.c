@@ -250,18 +250,18 @@ void R_ConcatTransforms (float in1[3][4], float in2[3][4], float out[3][4])
 //============================================================================
 
 
-float Q_fabs (float f)
-{
-#if 0
-	if (f >= 0)
-		return f;
-	return -f;
-#else
-	int tmp = * ( int * ) &f;
-	tmp &= 0x7FFFFFFF;
-	return * ( float * ) &tmp;
-#endif
-}
+//float Q_fabs (float f)
+//{
+//#if 0
+//	if (f >= 0)
+//		return f;
+//	return -f;
+//#else
+//	int tmp = * ( int * ) &f;
+//	tmp &= 0x7FFFFFFF;
+//	return * ( float * ) &tmp;
+//#endif
+//}
 
 #if defined _M_IX86 && !defined C_ONLY
 #pragma warning (disable:4035)
@@ -1180,15 +1180,16 @@ void Com_PageInMemory (byte *buffer, int size)
 ============================================================================
 */
 
-// FIXME: replace all Q_stricmp with Q_strcasecmp
-int Q_stricmp (const char *s1, const char *s2)
-{
-#if defined(WIN32)
-	return _stricmp (s1, s2);
-#else
-	return strcasecmp (s1, s2);
-#endif
-}
+// jitstricmp -- _stricmp / strcasecmp directly should be faster.
+//int Q_stricmp (const char *s1, const char *s2)
+//{
+////#if defined(WIN32)
+////	return _stricmp (s1, s2);
+////#else
+////	return strcasecmp (s1, s2);
+////#endif
+//	return Q_strncasecmp(s1, s2, 99999); // jitstricmp
+//}
 
 
 int Q_strncasecmp (const char *s1, const char *s2, int n)
@@ -1219,7 +1220,44 @@ int Q_strncasecmp (const char *s1, const char *s2, int n)
 
 int Q_strcasecmp (const char *s1, const char *s2)
 {
-	return Q_strncasecmp (s1, s2, 99999);
+	//return Q_strncasecmp (s1, s2, 99999); // 1.774
+	register int c1, c2;
+	
+	do
+	{
+		c1 = *s1++;
+		c2 = *s2++;
+		
+		if (c1 != c2)
+		{
+			if (c1 >= 'a' && c1 <= 'z')
+				c1 -= ('a' - 'A');
+			if (c2 >= 'a' && c2 <= 'z')
+				c2 -= ('a' - 'A');
+			if (c1 != c2)
+				return -1;		// strings not equal
+		}
+	} while (c1);
+	
+	return 0;		// strings are equal
+}
+
+int Q_streq (const char *s1, const char *s2) // jitopt -- this is much faster than Q_streq
+{
+	register int	c1, c2;
+	
+	do
+	{
+		c1 = *s1++;
+		c2 = *s2++;
+		
+		if (c1 != c2)
+		{
+			return 0;		// strings not equal
+		}
+	} while (c1);
+	
+	return 1;		// strings are equal
 }
 
 
@@ -1287,7 +1325,7 @@ char *Info_ValueForKey (char *s, char *key)
 		}
 		*o = 0;
 
-		if (!strcmp (key, pkey) )
+		if (Q_streq (key, pkey) )
 			return value[valueindex];
 
 		if (!*s)
@@ -1333,7 +1371,7 @@ void Info_RemoveKey (char *s, char *key)
 		}
 		*o = 0;
 
-		if (!strcmp (key, pkey) )
+		if (Q_streq (key, pkey) )
 		{
 			strcpy (start, s);	// remove this part
 			return;
@@ -1576,7 +1614,7 @@ void hash_add(hash_table_t *table, const unsigned char *key, void *data)
 void *hash_get(hash_table_t *table, const unsigned char *key)
 {
 	register unsigned char c;
-	unsigned int hashval = 0;
+	register unsigned int hashval = 0;
 	hash_node_t *node;
 	const unsigned char *s;
 
@@ -1587,7 +1625,7 @@ void *hash_get(hash_table_t *table, const unsigned char *key)
 	node = table->table[hashval];
 	while(node)
 	{
-		if(strcmp(node->key, key) == 0)
+		if(Q_streq(node->key, key))
 			return node->data;
 		else
 			node = node->next; // in case there were collisions
@@ -1611,7 +1649,7 @@ void hash_delete(hash_table_t *table, const unsigned char *key)
 	prevnode = node = table->table[hashval];
 	while(node)
 	{
-		if(strcmp(node->key, key) == 0)
+		if(Q_streq(node->key, key))
 		{
 			if(prevnode == node)
 				table->table[hashval] = node->next;

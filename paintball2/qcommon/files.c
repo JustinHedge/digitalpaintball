@@ -291,7 +291,7 @@ int FS_FOpenFile (const char *filename, FILE **file)
 	file_from_pak = 0;
 
 	// get config from directory, everything else from pak
-	if (!strcmp(filename, "configs/config.cfg") || !strncmp(filename, "players/", 8)) // jit
+	if (Q_streq(filename, "configs/config.cfg") || !strncmp(filename, "players/", 8)) // jit
 	{
 		Com_sprintf (netpath, sizeof(netpath), "%s/%s",FS_Gamedir(), filename);
 		
@@ -506,7 +506,7 @@ pack_t *FS_LoadPackFile (char *packfile)
 
 int SortList(const void *data1, const void *data2)
 {
-	return _stricmp((char *)data2, (char *)data1);
+	return Q_strcasecmp((char *)data2, (char *)data1);
 }
 
 /*
@@ -669,7 +669,7 @@ void FS_SetGamedir (char *dir)
 
 	Com_sprintf (fs_gamedir, sizeof(fs_gamedir), "%s/%s", fs_basedir->string, dir);
 
-	if (!strcmp(dir,BASEDIRNAME) || (*dir == 0))
+	if (Q_streq(dir,BASEDIRNAME) || (*dir == 0))
 	{
 		Cvar_FullSet ("gamedir", "pball", CVAR_SERVERINFO|CVAR_NOSET); // jit, always display gamedir as "pball"
 		Cvar_FullSet ("game", "pball", CVAR_LATCH|CVAR_SERVERINFO); // jit
@@ -705,7 +705,7 @@ void FS_Link_f (void)
 	prev = &fs_links;
 	for (l=fs_links ; l ; l=l->next)
 	{
-		if (!strcmp (l->from, Cmd_Argv(1)))
+		if (Q_streq (l->from, Cmd_Argv(1)))
 		{
 			Z_Free (l->to);
 			if (!strlen(Cmd_Argv(2)))

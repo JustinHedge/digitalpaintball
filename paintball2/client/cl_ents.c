@@ -1415,10 +1415,12 @@ void CL_CalcViewValues (void)
 	ops = &oldframe->playerstate;
 
 	// see if the player entity was teleported this frame
-	if ( fabs(ops->pmove.origin[0] - ps->pmove.origin[0]) > 256*8
+	if (fabs(ops->pmove.origin[0] - ps->pmove.origin[0]) > 256*8
 		|| abs(ops->pmove.origin[1] - ps->pmove.origin[1]) > 256*8
 		|| abs(ops->pmove.origin[2] - ps->pmove.origin[2]) > 256*8)
+	{
 		ops = ps;		// don't interpolate
+	}
 
 	ent = &cl_entities[cl.playernum+1];
 	lerp = cl.lerpfrac;
@@ -1430,7 +1432,8 @@ void CL_CalcViewValues (void)
 		unsigned	delta;
 
 		backlerp = 1.0 - lerp;
-		for (i=0 ; i<3 ; i++)
+
+		for (i=0; i<3; i++)
 		{
 			cl.refdef.vieworg[i] = cl.predicted_origin[i] + ops->viewoffset[i] 
 				+ cl.lerpfrac * (ps->viewoffset[i] - ops->viewoffset[i])
@@ -1439,33 +1442,34 @@ void CL_CalcViewValues (void)
 
 		// smooth out stair climbing
 		delta = cls.realtime - cl.predicted_step_time;
+
 		if (delta < 100)
 			cl.refdef.vieworg[2] -= cl.predicted_step * (100 - delta) * 0.01;
 	}
 	else
 	{	// just use interpolated values
-		for (i=0 ; i<3 ; i++)
+		for (i=0; i<3; i++)
 			cl.refdef.vieworg[i] = ops->pmove.origin[i]*0.125 + ops->viewoffset[i] 
 				+ lerp * (ps->pmove.origin[i]*0.125 + ps->viewoffset[i] 
-				- (ops->pmove.origin[i]*0.125 + ops->viewoffset[i]) );
+				- (ops->pmove.origin[i]*0.125 + ops->viewoffset[i]));
 	}
 
 	// if not running a demo or on a locked frame, add the local angle movement
-	if ( cl.frame.playerstate.pmove.pm_type < PM_DEAD )
+	if (cl.frame.playerstate.pmove.pm_type < PM_DEAD)
 	{	// use predicted values
-		for (i=0 ; i<3 ; i++)
+		for (i=0; i<3; i++)
 			cl.refdef.viewangles[i] = cl.predicted_angles[i];
 	}
 	else
 	{	// just use interpolated values
-		for (i=0 ; i<3 ; i++)
-			cl.refdef.viewangles[i] = LerpAngle (ops->viewangles[i], ps->viewangles[i], lerp);
+		for (i=0; i<3; i++)
+			cl.refdef.viewangles[i] = LerpAngle(ops->viewangles[i], ps->viewangles[i], lerp);
 	}
 
-	for (i=0 ; i<3 ; i++)
-		cl.refdef.viewangles[i] += LerpAngle (ops->kick_angles[i], ps->kick_angles[i], lerp);
+	for (i=0; i<3; i++)
+		cl.refdef.viewangles[i] += LerpAngle(ops->kick_angles[i], ps->kick_angles[i], lerp);
 
-	AngleVectors (cl.refdef.viewangles, cl.v_forward, cl.v_right, cl.v_up);
+	AngleVectors(cl.refdef.viewangles, cl.v_forward, cl.v_right, cl.v_up);
 
 	// interpolate field of view
 	cl.refdef.fov_x = ops->fov + lerp * (ps->fov - ops->fov);

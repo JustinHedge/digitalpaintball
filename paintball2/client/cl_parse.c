@@ -98,7 +98,7 @@ qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jp
 	// (jitdownload) Knightmare- don't try again to download a file that just failed
 	for (i=0; i<NUM_FAIL_DLDS; i++)
 		if (lastfaileddownload[i] && strlen(lastfaileddownload[i]) &&
-			!strcmp(filename,lastfaileddownload[i]))
+			Q_streq(filename,lastfaileddownload[i]))
 		{	// we already tried downlaoding this, server didn't have it
 			return true;
 		}
@@ -340,7 +340,7 @@ void CL_ParseDownload (void)
 			for (i=0; i<NUM_FAIL_DLDS; i++)
 			{
 				if (lastfaileddownload[i] && strlen(lastfaileddownload[i])
-					&& !strcmp(cls.downloadname, lastfaileddownload[i]))
+					&& Q_streq(cls.downloadname, lastfaileddownload[i]))
 				{
 					found = true;
 					break;
@@ -793,7 +793,7 @@ void CL_ParseServerData (void)
 	strncpy (cl.gamedir, str, sizeof(cl.gamedir)-1);
 
 	// set gamedir
-	if ((*str && (!fs_gamedirvar->string || !*fs_gamedirvar->string || strcmp(fs_gamedirvar->string, str))) || (!*str && (fs_gamedirvar->string || *fs_gamedirvar->string)))
+	if ((*str && (!fs_gamedirvar->string || !*fs_gamedirvar->string || !Q_streq(fs_gamedirvar->string, str))) || (!*str && (fs_gamedirvar->string || *fs_gamedirvar->string)))
 		Cvar_Set("game", str); // jitodo -- don't set game on demos (cl.attractloop)
 
 	// parse player entity number
@@ -930,7 +930,7 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 
 		// if we don't have the skin and the model wasn't male,
 		// see if the male has it (this is for CTF's skins)
- 		if (!ci->skin && Q_stricmp(model_name, "male"))
+ 		if (!ci->skin && Q_strcasecmp(model_name, "male"))
 		{
 			// change model to male
 			strcpy(model_name, "male");
@@ -954,7 +954,8 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 		for (i = 0; i < num_cl_weaponmodels; i++) {
 			Com_sprintf (weapon_filename, sizeof(weapon_filename), "players/%s/%s", model_name, cl_weaponmodels[i]);
 			ci->weaponmodel[i] = re.RegisterModel(weapon_filename);
-			if (!ci->weaponmodel[i] && strcmp(model_name, "cyborg") == 0) {
+			if (!ci->weaponmodel[i] && Q_streq(model_name, "cyborg"))
+			{
 				// try male
 				Com_sprintf (weapon_filename, sizeof(weapon_filename), "players/male/%s", cl_weaponmodels[i]);
 				ci->weaponmodel[i] = re.RegisterModel(weapon_filename);
@@ -1052,7 +1053,7 @@ void CL_ParseConfigString (void)
 	}
 	else if (i >= CS_PLAYERSKINS && i < CS_PLAYERSKINS+MAX_CLIENTS)
 	{
-		if (cl.refresh_prepped && strcmp(olds, s))
+		if (cl.refresh_prepped && !Q_streq(olds, s))
 			CL_ParseClientinfo (i-CS_PLAYERSKINS);
 	}
 }

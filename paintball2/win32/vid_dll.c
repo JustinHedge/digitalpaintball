@@ -695,7 +695,7 @@ void VID_CheckChanges (void)
 		cls.disable_screen = true;
 
 		// jit -- only allow opengl32 or 3dfxgl:
-		if(strcmp(gl_driver->string, "opengl32") && strcmp(gl_driver->string, "3dfxgl"))
+		if(!Q_streq(gl_driver->string, "opengl32") && !Q_streq(gl_driver->string, "3dfxgl"))
 			Cvar_Set("gl_driver", "opengl32");
 
 //		Com_sprintf( name, sizeof(name), "ref_%s.dll", vid_ref->string );
@@ -703,7 +703,7 @@ void VID_CheckChanges (void)
 		if (!VID_LoadRefresh(name))
 		{
 			// jit3dfx - check if driver string changed:
-			if(strcmp(gl_driver->string, driverstring)) 
+			if(!Q_streq(gl_driver->string, driverstring)) 
 			{
 				vid_ref->modified = true;
 				strncpy(driverstring, gl_driver->string, sizeof(driverstring));
@@ -712,7 +712,7 @@ void VID_CheckChanges (void)
 			if(!vid_ref->modified) // jit
 				Com_Error (ERR_FATAL, "Unable to load OpenGL refresh!"); // jit
 /*
-			if ( strcmp (vid_ref->string, "soft") == 0 )
+			if ( Q_streq (vid_ref->string, "soft") )
 				Com_Error (ERR_FATAL, "Couldn't fall back to software refresh!");
 			Cvar_Set( "vid_ref", "soft" );
 */

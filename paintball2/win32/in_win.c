@@ -643,7 +643,7 @@ void Joy_AdvancedUpdate_f (void)
 	}
 	else
 	{
-		if (strcmp (joy_name->string, "joystick") != 0)
+		if (!Q_streq(joy_name->string, "joystick"))
 		{
 			// notify user of advanced controller
 			Com_Printf ("\n%s configured\n\n", joy_name->string);

@@ -622,7 +622,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 		// don't override a cddir on the command line
 		for (i=0 ; i<argc ; i++)
-			if (!strcmp(argv[i], "cddir"))
+			if (Q_streq(argv[i], "cddir"))
 				break;
 		if (i == argc)
 		{

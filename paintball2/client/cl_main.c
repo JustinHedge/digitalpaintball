@@ -81,7 +81,7 @@ cvar_t	*cl_gun;
 cvar_t	*cl_add_particles;
 cvar_t	*cl_add_lights;
 cvar_t	*cl_add_entities;
-cvar_t	*cl_add_blend;
+//cvar_t	*cl_add_blend;
 
 cvar_t	*cl_shownet;
 cvar_t	*cl_showmiss;
@@ -538,7 +538,7 @@ void CL_SendConnectPacket (void)
 	// ===
 	// jitdownload -- if we're connecting to a different server,
 	// clear the record of failed download attempts
-	if(strcmp(cls.servername, lastservername))
+	if(!Q_streq(cls.servername, lastservername))
 	{
 		strcpy(lastservername, cls.servername);
 		clearfaileddownloads();
@@ -1027,7 +1027,7 @@ void CL_ConnectionlessPacket (void)
 	Com_Printf ("%s: %s\n", NET_AdrToString (net_from), c);
 
 	// server connection
-	if (!strcmp(c, "client_connect"))
+	if (Q_streq(c, "client_connect"))
 	{
 		if (cls.state == ca_connected)
 		{
@@ -1042,14 +1042,14 @@ void CL_ConnectionlessPacket (void)
 	}
 
 	// server responding to a status broadcast
-	if (!strcmp(c, "info"))
+	if (Q_streq(c, "info"))
 	{
 		CL_ParseStatusMessage ();
 		return;
 	}
 
 	// remote command from gui front end
-	if (!strcmp(c, "cmd"))
+	if (Q_streq(c, "cmd"))
 	{
 		if (!NET_IsLocalAddress(net_from))
 		{
@@ -1063,7 +1063,7 @@ void CL_ConnectionlessPacket (void)
 		return;
 	}
 	// print command from somewhere
-	if (!strcmp(c, "print"))
+	if (Q_streq(c, "print"))
 	{
 		s = MSG_ReadString (&net_message);
 		Com_Printf ("%s", s);
@@ -1071,14 +1071,14 @@ void CL_ConnectionlessPacket (void)
 	}
 
 	// ping from somewhere
-	if (!strcmp(c, "ping"))
+	if (Q_streq(c, "ping"))
 	{
 		Netchan_OutOfBandPrint (NS_CLIENT, net_from, "ack");
 		return;
 	}
 
 	// challenge from the server we are connecting to
-	if (!strcmp(c, "challenge"))
+	if (Q_streq(c, "challenge"))
 	{
 		cls.challenge = atoi(Cmd_Argv(1));
 		CL_SendConnectPacket ();
@@ -1086,7 +1086,7 @@ void CL_ConnectionlessPacket (void)
 	}
 
 	// echo request from server
-	if (!strcmp(c, "echo"))
+	if (Q_streq(c, "echo"))
 	{
 		Netchan_OutOfBandPrint (NS_CLIENT, net_from, "%s", Cmd_Argv(1) );
 		return;
@@ -1196,9 +1196,9 @@ void CL_FixUpGender(void)
 		strncpy(sk, skin->string, sizeof(sk) - 1);
 		if ((p = strchr(sk, '/')) != NULL)
 			*p = 0;
-		if (Q_stricmp(sk, "male") == 0 || Q_stricmp(sk, "cyborg") == 0)
+		if (Q_strcasecmp(sk, "male") == 0 || Q_strcasecmp(sk, "cyborg") == 0)
 			Cvar_Set ("gender", "male");
-		else if (Q_stricmp(sk, "female") == 0 || Q_stricmp(sk, "crackhor") == 0)
+		else if (Q_strcasecmp(sk, "female") == 0 || Q_strcasecmp(sk, "crackhor") == 0)
 			Cvar_Set ("gender", "female");
 		else
 			Cvar_Set ("gender", "none");
@@ -1586,7 +1586,7 @@ void CL_InitLocal (void)
 	cl_stereo_separation = Cvar_Get( "cl_stereo_separation", "0.4", CVAR_ARCHIVE );
 	cl_stereo = Cvar_Get( "cl_stereo", "0", 0 );
 
-	cl_add_blend = Cvar_Get ("cl_blend", "1", 0);
+	/*cl_add_blend = */Cvar_Get ("cl_blend", "1", 0);
 	cl_add_lights = Cvar_Get ("cl_lights", "1", 0);
 	cl_add_particles = Cvar_Get ("cl_particles", "1", 0);
 	cl_add_entities = Cvar_Get ("cl_entities", "1", 0);
@@ -1827,7 +1827,7 @@ void CL_FixCvarCheats (void)
 	int			i;
 	cheatvar_t	*var;
 
-	if ( !strcmp(cl.configstrings[CS_MAXCLIENTS], "1") 
+	if ( Q_streq(cl.configstrings[CS_MAXCLIENTS], "1") 
 		|| !cl.configstrings[CS_MAXCLIENTS][0] 
 		|| cl.attractloop) // jitdemo, let ppl use "cheats" on demos.
 		return;		// single player can cheat
@@ -1846,7 +1846,7 @@ void CL_FixCvarCheats (void)
 	// make sure they are all set to the proper values
 	for (i=0, var = cheatvars ; i<numcheatvars ; i++, var++)
 	{
-		if ( strcmp (var->var->string, var->value) )
+		if (!Q_streq(var->var->string, var->value))
 		{
 			//Cvar_Set (var->name, var->value);
 			Cvar_ForceSet(var->name, var->value); // jitcvar
@@ -1972,32 +1972,32 @@ void CL_Frame (int msec)
 
 	/*if(cl_locknetfps->value)
 	{*/
-		CL_SendCommand ();
+		CL_SendCommand();
 		sendtime = 0;
-	/*}
-	else
-	{
-		// send a new command message to the server
-		if(sendtime > 1000/cl_cmdrate->value) 
-		{
-			CL_SendCommand ();
-			sendtime = 0;
-		}
-	}*/
+	//}
+	//else
+	//{
+	//	// send a new command message to the server
+	//	if(sendtime > 1000/cl_cmdrate->value) 
+	//	{
+	//		CL_SendCommand ();
+	//		sendtime = 0;
+	//	}
+	//}
 	// ===
 
 	// predict all unacknowledged movements
-	CL_PredictMovement ();
+	CL_PredictMovement();
 
 	// allow rendering DLL change
-	VID_CheckChanges ();
+	VID_CheckChanges();
 	if (!cl.refresh_prepped && cls.state == ca_active)
-		CL_PrepRefresh ();
+		CL_PrepRefresh();
 
 	// update the screen
 	if (host_speeds->value)
 		time_before_ref = Sys_Milliseconds ();
-	SCR_UpdateScreen ();
+	SCR_UpdateScreen();
 	if (host_speeds->value)
 		time_after_ref = Sys_Milliseconds ();
 
@@ -2007,29 +2007,29 @@ void CL_Frame (int msec)
 	CDAudio_Update();
 
 	// advance local effects for next frame
-	CL_RunDLights ();
-	CL_RunLightStyles ();
-	SCR_RunCinematic ();
-	SCR_RunConsole ();
+	CL_RunDLights();
+	CL_RunLightStyles();
+	SCR_RunCinematic();
+	SCR_RunConsole();
 
 	cls.framecount++;
 
-	if ( log_stats->value )
+	if (log_stats->value)
 	{
-		if ( cls.state == ca_active )
+		if (cls.state == ca_active)
 		{
-			if ( !lasttimecalled )
+			if (!lasttimecalled)
 			{
 				lasttimecalled = Sys_Milliseconds();
-				if ( log_stats_file )
-					fprintf( log_stats_file, "0\n" );
+				if (log_stats_file)
+					fprintf(log_stats_file, "0\n");
 			}
 			else
 			{
 				int now = Sys_Milliseconds();
 
-				if ( log_stats_file )
-					fprintf( log_stats_file, "%d\n", now - lasttimecalled );
+				if (log_stats_file)
+					fprintf(log_stats_file, "%d\n", now - lasttimecalled);
 				lasttimecalled = now;
 			}
 		}

@@ -51,9 +51,9 @@ static qboolean VerifyDriver( void )
 {
 	char buffer[1024];
 
-	strcpy( buffer, qglGetString( GL_RENDERER ) );
-	strlwr( buffer );
-	if ( strcmp( buffer, "gdi generic" ) == 0 )
+	strcpy(buffer, qglGetString(GL_RENDERER));
+	strlwr(buffer);
+	if (Q_streq(buffer, "gdi generic"))
 		if (!glw_state.mcd_accelerated)
 			return false;
 	return true;
