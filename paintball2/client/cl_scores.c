@@ -124,4 +124,25 @@ void CL_Score_f (void) // jitodo jitscores -- client-side scoreboard
 	//		Com_Printf("%d: %s %s\n", i, ci->name, ci->cinfo);
 	//}
 }
+
+#define MAX_DECODE_ARRAY 256
+static unsigned int temp_array[MAX_DECODE_ARRAY];
+void CL_ParesScoreData (const unsigned char *data) // jitscores
+{
+	unsigned int i, count;
+
+	count = decode_unsigned(data, temp_array, MAX_DECODE_ARRAY);
+
+	i = temp_array[0];
+
+	if (i > 255)
+		return;
+
+	cl_scores[i].ping = temp_array[1];
+	cl_scores[i].kills = temp_array[2];
+	cl_scores[i].deaths = temp_array[3];
+	cl_scores[i].grabs = temp_array[4];
+	cl_scores[i].caps = temp_array[5];
+	cl_scores[i].team = temp_array[6];
+}
 // jitscores ===

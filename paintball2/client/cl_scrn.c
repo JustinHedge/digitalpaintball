@@ -1547,6 +1547,7 @@ void SCR_UpdateScreen (void)
 				//	CL_DrawInventory();
 
 				CL_DrawItemPickups(); // jit
+				CL_DrawEventStrings(); // jitevents
 				// jitodo -- call client scoreboard display here
 
 				if(Cvar_VariableValue("snazbot"))

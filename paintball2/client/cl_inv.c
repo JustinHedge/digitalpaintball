@@ -24,13 +24,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // ===
 // jit
 #define MAX_ITEM_STRINGS 8
-char item_strings[MAX_ITEM_STRINGS][MAX_QPATH]; // displayed briefly just above hud
-int item_string_time[MAX_ITEM_STRINGS];
-int startpos = 0;
+static char item_strings[MAX_ITEM_STRINGS][MAX_QPATH]; // displayed briefly just above hud
+static int item_string_time[MAX_ITEM_STRINGS];
+static int startpos = 0;
 
 static void item_print (char *s)
 {
 	startpos--;
+
 	if(startpos<0)
 		startpos = MAX_ITEM_STRINGS - 1;
 
@@ -72,12 +73,13 @@ void CL_DrawItemPickups (void)
 				break;
 			}
 
-			//re.DrawStringAlpha((160-4*strlen_noformat(item_strings[j]))*hudscale,
-			//	(200-i*8)*hudscale, item_strings[j], alpha);
-			re.DrawStringAlpha(0+8*hudscale, viddef.height-(40+i*8)*hudscale, item_strings[j], alpha); // jitodo -- cvars for positioning.
+			// jitodo -- cvars for positioning.
+			re.DrawStringAlpha(0+8*hudscale, viddef.height-(40+i*8)*hudscale, item_strings[j], alpha);
 		}
 		else
+		{
 			break;
+		}
 	}
 }
 
@@ -118,92 +120,5 @@ void SetStringHighBit (char *s)
 	while (*s)
 		*s++ |= 128;
 }
-
-/*
-================
-CL_DrawInventory
-================
-*/
-//#define	DISPLAY_ITEMS	17
-//
-//void CL_DrawInventory (void)
-//{
-//	int		i, j;
-//	int		num, selected_num, item;
-//	int		index[MAX_ITEMS];
-//	char	string[1024];
-//	int		x, y;
-//	char	binding[1024];
-//	char	*bind;
-//	int		selected;
-//	int		top;
-//
-//	selected = cl.frame.playerstate.stats[STAT_SELECTED_ITEM];
-//
-//	num = 0;
-//	selected_num = 0;
-//	for (i=0 ; i<MAX_ITEMS ; i++)
-//	{
-//		if (i==selected)
-//			selected_num = num;
-//		if (cl.inventory[i])
-//		{
-//			index[num] = i;
-//			num++;
-//		}
-//	}
-//
-//	// determine scroll point
-//	top = selected_num - DISPLAY_ITEMS*0.5;
-//	if (num - top < DISPLAY_ITEMS)
-//		top = num - DISPLAY_ITEMS;
-//	if (top < 0)
-//		top = 0;
-//
-//	x = (viddef.width-256)*0.5;
-//	y = (viddef.height-240)*0.5;
-//
-//	// repaint everything next frame
-//	SCR_DirtyScreen();
-//
-//	//re.DrawPic2 (x, y+8, i_inventory);
-//
-//	y += 24;
-//	x += 24;
-//	Inv_DrawString(x, y, "hotkey ### item");
-//	Inv_DrawString(x, y+8, "------ --- ----");
-//	y += 16;
-//	for (i=top; i<num && i < top+DISPLAY_ITEMS; i++)
-//	{
-//		item = index[i];
-//		// search for a binding
-//		Com_sprintf (binding, sizeof(binding), "use %s", cl.configstrings[CS_ITEMS+item]);
-//		bind = "";
-//
-//		for (j=0 ; j<256 ; j++)
-//		{
-//			if (keybindings[j] && !Q_strcasecmp(keybindings[j], binding))
-//			{
-//				bind = Key_KeynumToString(j);
-//				break;
-//			}
-//		}
-//
-//		Com_sprintf (string, sizeof(string), "%6s %3i %s", bind, cl.inventory[item],
-//			cl.configstrings[CS_ITEMS+item]);
-//
-//		if (item != selected)
-//			SetStringHighBit (string);
-//		else	// draw a blinky cursor by the selected item
-//		{
-//			if ( (int)(cls.realtime*10) & 1)
-//				re.DrawChar (x-8*hudscale, y, 15);
-//		}
-//
-//		Inv_DrawString (x, y, string);
-//		y += 8*hudscale;
-//	}
-//}
-
 
 

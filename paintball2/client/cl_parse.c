@@ -972,20 +972,24 @@ void CL_ParseConfigString (void)
 	char	*s;
 	char	olds[MAX_QPATH];
 
-	i = MSG_ReadShort (&net_message);
+	i = MSG_ReadShort(&net_message);
+
 	if (i < 0 || i >= MAX_CONFIGSTRINGS)
 		Com_Error (ERR_DROP, "configstring > MAX_CONFIGSTRINGS");
+
 	s = MSG_ReadString(&net_message);
 
-	strncpy (olds, cl.configstrings[i], sizeof(olds));
+	strncpy(olds, cl.configstrings[i], sizeof(olds));
 	olds[sizeof(olds) - 1] = 0;
 
-	strcpy (cl.configstrings[i], s);
+	strcpy(cl.configstrings[i], s);
 
 	// do something apropriate 
 
 	if (i >= CS_LIGHTS && i < CS_LIGHTS+MAX_LIGHTSTYLES)
+	{
 		CL_SetLightstyle (i - CS_LIGHTS);
+	}
 	else if (i == CS_CDTRACK)
 	{
 		if (cl.refresh_prepped)
@@ -1016,6 +1020,15 @@ void CL_ParseConfigString (void)
 	{
 		if (cl.refresh_prepped && !Q_streq(olds, s))
 			CL_ParseClientinfo (i-CS_PLAYERSKINS);
+	}
+	else if (i == CS_SERVERGVERSION) // jitversion
+	{
+		s = strstr(cl.configstrings[CS_SERVERGVERSION], "Gamebuild:");
+
+		if (s)
+			cls.server_gamebuild = atoi(s+10);
+		else
+			cls.server_gamebuild = 0;
 	}
 }
 
@@ -1100,10 +1113,6 @@ void SHOWNET(char *s)
 }
 
 
-void CL_ParsePrintEvent (const char *str) // jitevents
-{
-	// jitodo
-}
 
 /*
 =====================
@@ -1190,7 +1199,7 @@ void CL_ParseServerMessage (void)
 			{
 			case PRINT_CHAT:
 				S_StartLocalSound("misc/talk.wav");
-				// jittext con.ormask = 128;
+
 				if(cl_timestamp->value) // jittext / jitcolor
 					Com_Printf("%c%c[%s] %s", CHAR_COLOR, COLOR_CHAT, timestamp, MSG_ReadString(&net_message));
 				else
@@ -1200,8 +1209,11 @@ void CL_ParseServerMessage (void)
 			case PRINT_ITEM: // jit
 				CL_ParsePrintItem(MSG_ReadString(&net_message));
 				break;
-			case PRINT_EVENT:
+			case PRINT_EVENT: // jit
 				CL_ParsePrintEvent(MSG_ReadString(&net_message));
+				break;
+			case PRINT_SCOREDATA: // jitscores
+				CL_ParesScoreData(MSG_ReadString(&net_message));
 				break;
 			default:
 				if(cl_timestamp->value) // jit:
@@ -1219,9 +1231,9 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_stufftext:
-			s = MSG_ReadString (&net_message);
-			Com_DPrintf ("stufftext: %s\n", s);
-			Cbuf_AddText (s);
+			s = MSG_ReadString(&net_message);
+			Com_DPrintf("stufftext: %s\n", s);
+			Cbuf_AddText(s);
 			break;
 			
 		case svc_serverdata:

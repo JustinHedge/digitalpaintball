@@ -505,6 +505,8 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 			key = CHAR_UNDERLINE;
 		else if(toupper(key) == 'I')
 			key = CHAR_ITALICS;
+		else if(toupper(key) == 'O')
+			key = CHAR_ENDFORMAT;
 	}
 
 	if (key_linepos < MAXCMDLINE-1)

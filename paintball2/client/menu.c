@@ -92,31 +92,6 @@ void M_Menu_Main_f (void)
 {
 	// jitodo -- different menu in-game
 	Cbuf_AddText("menu main\n");
-
-	
-	/*
-	// because I'm too lazy to start a new project to do this:
-	// funname editor
-	{
-		int i;
-		FILE *file;
-		file = fopen("out.txt", "w");
-		for(i=' '; i<255; i++)
-		{
-			fprintf(file, "widget xrel %d ", (i%16)?TEXT_WIDTH_UNSCALED:-15*TEXT_WIDTH_UNSCALED);
-			if(!(i%16))
-				fprintf(file, "yrel %d ", TEXT_HEIGHT_UNSCALED); 
-			fprintf(file, "text \"%c\" command \"cvar_cat name %c\"\n", i, i);
-		}
-
-		for(i=' '; i<255; i++)
-		{
-			fprintf(file, "widget xrel %d ", (i%16)?TEXT_WIDTH_UNSCALED:-15*TEXT_WIDTH_UNSCALED);
-			if(!(i%16))
-				fprintf(file, "yrel %d ", TEXT_HEIGHT_UNSCALED); 
-			fprintf(file, "pic blank picwidth 8 picheight 8 command \"cvar_cat name %c%c\"\n", CHAR_COLOR, i);
-		}
-	}*/
 }
 
 /*
@@ -126,21 +101,19 @@ void M_Menu_Main_f (void)
 int strlen_noformat(const unsigned char *s)
 {
 	int count = 0;
+
 	if(!s)
 		return 0;
 
 	while(*s)
 	{
-		if(*(s+1) && (*s == CHAR_UNDERLINE || *s == CHAR_ITALICS))
+		if (*s != CHAR_UNDERLINE && *s != CHAR_ITALICS && *s != CHAR_ENDFORMAT)
 		{
-			// don't count character
+			if(*s == CHAR_COLOR && *(s+1))
+				s++; // skip two characters.
+			else
+				count++;
 		}
-		else if(*(s+1) && *s == CHAR_COLOR)
-		{
-			s++; // skip two characters.
-		}
-		else
-			count++;
 
 		s++;
 	}
@@ -1532,6 +1505,8 @@ static void M_InsertField (int key)
 				key = CHAR_UNDERLINE;
 			else if(toupper(key) == 'I')
 				key = CHAR_ITALICS;
+			else if(toupper(key) == 'O')
+				key = CHAR_ENDFORMAT;
 		}
 
 		// normal text

@@ -274,33 +274,33 @@ void CL_Record_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("record <demoname>\n");
+		Com_Printf("record <demoname>\n");
 		return;
 	}
 
 	if (cls.demorecording)
 	{
-		Com_Printf ("Already recording.\n");
+		Com_Printf("Already recording.\n");
 		return;
 	}
 
 	if (cls.state != ca_active)
 	{
-		Com_Printf ("You must be in a level to record.\n");
+		Com_Printf("You must be in a level to record.\n");
 		return;
 	}
 
 	//
 	// open the demo file
 	//
-	Com_sprintf (name, sizeof(name), "%s/demos/%s.dm2", FS_Gamedir(), Cmd_Argv(1));
+	Com_sprintf(name, sizeof(name), "%s/demos/%s.dm2", FS_Gamedir(), Cmd_Argv(1));
 
-	Com_Printf ("recording to %s.\n", name);
-	FS_CreatePath (name);
-	cls.demofile = fopen (name, "wb");
+	Com_Printf("recording to %s.\n", name);
+	FS_CreatePath(name);
+	cls.demofile = fopen(name, "wb");
 	if (!cls.demofile)
 	{
-		Com_Printf ("ERROR: couldn't open.\n");
+		Com_Printf("ERROR: couldn't open.\n");
 		return;
 	}
 	cls.demorecording = true;
@@ -314,62 +314,63 @@ void CL_Record_f (void)
 	SZ_Init (&buf, buf_data, sizeof(buf_data));
 
 	// send the serverdata
-	MSG_WriteByte (&buf, svc_serverdata);
-	MSG_WriteLong (&buf, PROTOCOL_VERSION);
-	MSG_WriteLong (&buf, 0x10000 + cl.servercount);
-	MSG_WriteByte (&buf, 1);	// demos are always attract loops
-	MSG_WriteString (&buf, cl.gamedir);
-	MSG_WriteShort (&buf, cl.playernum);
+	MSG_WriteByte(&buf, svc_serverdata);
+	MSG_WriteLong(&buf, PROTOCOL_VERSION);
+	MSG_WriteLong(&buf, 0x10000 + cl.servercount);
+	MSG_WriteByte(&buf, 1);	// demos are always attract loops
+	MSG_WriteString(&buf, cl.gamedir);
+	MSG_WriteShort(&buf, cl.playernum);
 
-	MSG_WriteString (&buf, cl.configstrings[CS_NAME]);
+	MSG_WriteString(&buf, cl.configstrings[CS_NAME]);
 
 	// configstrings
-	for (i=0 ; i<MAX_CONFIGSTRINGS ; i++)
+	for (i=0; i<MAX_CONFIGSTRINGS; i++)
 	{
 		if (cl.configstrings[i][0])
 		{
-			if (buf.cursize + strlen (cl.configstrings[i]) + 32 > buf.maxsize)
+			if (buf.cursize + strlen(cl.configstrings[i]) + 32 > buf.maxsize)
 			{	// write it out
-				len = LittleLong (buf.cursize);
-				fwrite (&len, 4, 1, cls.demofile);
-				fwrite (buf.data, buf.cursize, 1, cls.demofile);
+				len = LittleLong(buf.cursize);
+				fwrite(&len, 4, 1, cls.demofile);
+				fwrite(buf.data, buf.cursize, 1, cls.demofile);
 				buf.cursize = 0;
 			}
 
-			MSG_WriteByte (&buf, svc_configstring);
-			MSG_WriteShort (&buf, i);
-			MSG_WriteString (&buf, cl.configstrings[i]);
+			MSG_WriteByte(&buf, svc_configstring);
+			MSG_WriteShort(&buf, i);
+			MSG_WriteString(&buf, cl.configstrings[i]);
 		}
 	}
 
 	// baselines
-	memset (&nullstate, 0, sizeof(nullstate));
-	for (i=0; i<MAX_EDICTS ; i++)
+	memset(&nullstate, 0, sizeof(nullstate));
+	for (i=0; i<MAX_EDICTS; i++)
 	{
 		ent = &cl_entities[i].baseline;
+
 		if (!ent->modelindex)
 			continue;
 
 		if (buf.cursize + 64 > buf.maxsize)
 		{	// write it out
-			len = LittleLong (buf.cursize);
-			fwrite (&len, 4, 1, cls.demofile);
-			fwrite (buf.data, buf.cursize, 1, cls.demofile);
+			len = LittleLong(buf.cursize);
+			fwrite(&len, 4, 1, cls.demofile);
+			fwrite(buf.data, buf.cursize, 1, cls.demofile);
 			buf.cursize = 0;
 		}
 
-		MSG_WriteByte (&buf, svc_spawnbaseline);		
-		MSG_WriteDeltaEntity (&nullstate, &cl_entities[i].baseline, &buf, true, true);
+		MSG_WriteByte(&buf, svc_spawnbaseline);		
+		MSG_WriteDeltaEntity(&nullstate, &cl_entities[i].baseline, &buf, true, true);
 	}
 
-	MSG_WriteByte (&buf, svc_stufftext);
-	MSG_WriteString (&buf, "precache\n");
+	MSG_WriteByte(&buf, svc_stufftext);
+	MSG_WriteString(&buf, "precache\n");
 
 	// write it to the demo file
 
-	len = LittleLong (buf.cursize);
-	fwrite (&len, 4, 1, cls.demofile);
-	fwrite (buf.data, buf.cursize, 1, cls.demofile);
+	len = LittleLong(buf.cursize);
+	fwrite(&len, 4, 1, cls.demofile);
+	fwrite(buf.data, buf.cursize, 1, cls.demofile);
 
 	// the rest of the demo file will be individual frames
 }
@@ -622,23 +623,20 @@ void CL_Connect_f (void)
 		return;	
 	}
 	
-	if (Com_ServerState ())
-	{	// if running a local server, kill it and reissue
-		SV_Shutdown (va("Server quit\n", msg), false);
-	}
+	// if running a local server, kill it and reissue
+	if (Com_ServerState())
+		SV_Shutdown("Server quit\n", false);
 	else
-	{
-		CL_Disconnect ();
-	}
+		CL_Disconnect();
 
-	server = Cmd_Argv (1);
+	server = Cmd_Argv(1);
 
-	NET_Config (true);		// allow remote
+	NET_Config(true);		// allow remote
 
-	CL_Disconnect ();
+	CL_Disconnect();
 
 	cls.state = ca_connecting;
-	strncpy (cls.servername, server, sizeof(cls.servername)-1);
+	strncpy(cls.servername, server, sizeof(cls.servername)-1);
 	cls.connect_time = -99999;	// CL_CheckForResend() will fire immediately
 }
 
@@ -1016,28 +1014,29 @@ void CL_ConnectionlessPacket (void)
 	char	*s;
 	char	*c;
 	
-	MSG_BeginReading (&net_message);
-	MSG_ReadLong (&net_message);	// skip the -1
+	MSG_BeginReading(&net_message);
+	MSG_ReadLong(&net_message);	// skip the -1
 
-	s = MSG_ReadStringLine (&net_message);
+	s = MSG_ReadStringLine(&net_message);
 
-	Cmd_TokenizeString (s, false);
+	Cmd_TokenizeString(s, false);
 
 	c = Cmd_Argv(0);
 
-	Com_Printf ("%s: %s\n", NET_AdrToString (net_from), c);
+	Com_Printf("%s: %s\n", NET_AdrToString (net_from), c);
 
 	// server connection
 	if (Q_streq(c, "client_connect"))
 	{
 		if (cls.state == ca_connected)
 		{
-			Com_Printf ("Dup connect received.  Ignored.\n");
+			Com_Printf("Dup connect received.  Ignored.\n");
 			return;
 		}
-		Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, cls.quakePort);
-		MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, "new");	
+
+		Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, cls.quakePort);
+		MSG_WriteChar(&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString(&cls.netchan.message, "new");	
 		cls.state = ca_connected;
 		return;
 	}
@@ -1045,7 +1044,7 @@ void CL_ConnectionlessPacket (void)
 	// server responding to a status broadcast
 	if (Q_streq(c, "info"))
 	{
-		CL_ParseStatusMessage ();
+		CL_ParseStatusMessage();
 		return;
 	}
 
@@ -1054,15 +1053,17 @@ void CL_ConnectionlessPacket (void)
 	{
 		if (!NET_IsLocalAddress(net_from))
 		{
-			Com_Printf ("Command packet from remote host.  Ignored.\n");
+			Com_Printf("Command packet from remote host.  Ignored.\n");
 			return;
 		}
-		Sys_AppActivate ();
-		s = MSG_ReadString (&net_message);
-		Cbuf_AddText (s);
-		Cbuf_AddText ("\n");
+
+		Sys_AppActivate();
+		s = MSG_ReadString(&net_message);
+		Cbuf_AddText(s);
+		Cbuf_AddText("\n");
 		return;
 	}
+
 	// print command from somewhere
 	if (Q_streq(c, "print"))
 	{
@@ -1074,7 +1075,7 @@ void CL_ConnectionlessPacket (void)
 	// ping from somewhere
 	if (Q_streq(c, "ping"))
 	{
-		Netchan_OutOfBandPrint (NS_CLIENT, net_from, "ack");
+		Netchan_OutOfBandPrint(NS_CLIENT, net_from, "ack");
 		return;
 	}
 
@@ -1082,18 +1083,18 @@ void CL_ConnectionlessPacket (void)
 	if (Q_streq(c, "challenge"))
 	{
 		cls.challenge = atoi(Cmd_Argv(1));
-		CL_SendConnectPacket ();
+		CL_SendConnectPacket();
 		return;
 	}
 
 	// echo request from server
 	if (Q_streq(c, "echo"))
 	{
-		Netchan_OutOfBandPrint (NS_CLIENT, net_from, "%s", Cmd_Argv(1) );
+		Netchan_OutOfBandPrint(NS_CLIENT, net_from, "%s", Cmd_Argv(1) );
 		return;
 	}
 
-	Com_Printf ("Unknown command.\n");
+	Com_Printf("Unknown command.\n");
 }
 
 
@@ -1107,9 +1108,9 @@ when they overflow
 */
 void CL_DumpPackets (void)
 {
-	while (NET_GetPacket (NS_CLIENT, &net_from, &net_message))
+	while (NET_GetPacket(NS_CLIENT, &net_from, &net_message))
 	{
-		Com_Printf ("dumnping a packet\n");
+		Com_Printf("dumnping a packet\n");
 	}
 }
 
@@ -1297,7 +1298,7 @@ void CL_RequestNextDownload (void)
 				// checking for skins in the model
 				if (!precache_model) {
 
-					FS_LoadFile (cl.configstrings[precache_check], (void **)&precache_model);
+					FS_LoadFile(cl.configstrings[precache_check], (void **)&precache_model);
 					if (!precache_model) {
 						precache_model_skin = 0;
 						precache_check++;
@@ -1451,21 +1452,27 @@ void CL_RequestNextDownload (void)
 		precache_check = ENV_CNT;
 	}
 
-	if (precache_check == ENV_CNT) {
+	if (precache_check == ENV_CNT)
+	{
 		precache_check = ENV_CNT + 1;
 
-		CM_LoadMap (cl.configstrings[CS_MODELS+1], true, &map_checksum);
+		CM_LoadMap(cl.configstrings[CS_MODELS+1], true, &map_checksum);
 
-		if (map_checksum != atoi(cl.configstrings[CS_MAPCHECKSUM])) {
+		if (map_checksum != atoi(cl.configstrings[CS_MAPCHECKSUM]))
+		{
 			Com_Error (ERR_DROP, "Local map version differs from server: %i != '%s'\n",
 				map_checksum, cl.configstrings[CS_MAPCHECKSUM]);
+
 			return;
 		}
 	}
 
-	if (precache_check > ENV_CNT && precache_check < TEXTURE_CNT) {
-		if (allow_download->value && allow_download_maps->value) {
-			while (precache_check < TEXTURE_CNT) {
+	if (precache_check > ENV_CNT && precache_check < TEXTURE_CNT)
+	{
+		if (allow_download->value && allow_download_maps->value)
+		{
+			while (precache_check < TEXTURE_CNT)
+			{
 				int n = precache_check++ - ENV_CNT - 1;
 
 				if ((strstr(cl.configstrings[CS_SKY], "fog ") 
@@ -1584,12 +1591,13 @@ void CL_Precache_f (void)
 	//Yet another hack to let old demos work
 	//the old precache sequence
 
-	if (Cmd_Argc() < 2) {
+	if (Cmd_Argc() < 2)
+	{
 		unsigned	map_checksum;		// for detecting cheater maps
 
-		CM_LoadMap (cl.configstrings[CS_MODELS+1], true, &map_checksum);
+		CM_LoadMap(cl.configstrings[CS_MODELS+1], true, &map_checksum);
 		CL_RegisterSounds ();
-		CL_PrepRefresh ();
+		CL_PrepRefresh();
 		return;
 	}
 
@@ -1874,7 +1882,7 @@ void CL_FixCvarCheats (void)
 	int			i;
 	cheatvar_t	*var;
 
-	if ( Q_streq(cl.configstrings[CS_MAXCLIENTS], "1") 
+	if (Q_streq(cl.configstrings[CS_MAXCLIENTS], "1") 
 		|| !cl.configstrings[CS_MAXCLIENTS][0] 
 		|| cl.attractloop) // jitdemo, let ppl use "cheats" on demos.
 		return;		// single player can cheat

@@ -243,6 +243,8 @@ typedef struct
 
 	qboolean	download2active; // jitdownload
 	unsigned	last_transmit_time; // jitnetfps
+	unsigned	server_gamebuild; // jitversion
+	unsigned	server_enginebuild; // jitversion
 } client_static_t;
 
 extern client_static_t	cls;
@@ -527,7 +529,19 @@ void CL_Download_f (void);
 void CL_Download2_f (void); // jitdownload
 #endif
 void CL_WriteConfig_f (void); // jitconfig
-void CL_Score_f (void); // jitscoreboard
+
+//
+// cl_scores.c
+//
+void CL_Score_f (void); // jitscores
+void CL_ParesScoreData (const unsigned char *data); // jitscores
+
+//
+// cl_decode.c
+//
+int decode_unsigned (const unsigned char *in, unsigned int *out, int max); // jitscores / jitevents
+void CL_ParsePrintEvent (const char *str); // jitevents
+void CL_DrawEventStrings (void); // jitevents
 
 //
 // cl_view.c
