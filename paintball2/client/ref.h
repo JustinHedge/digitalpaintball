@@ -283,6 +283,8 @@ typedef struct
 	qboolean	(*Vid_GetModeInfo)( int *width, int *height, int mode );
 //jitmenu	void		(*Vid_MenuInit)( void );
 	void		(*Vid_NewWindow)( int width, int height );
+	void	*(*Z_Malloc)(int size); // jitmalloc
+	void	(*Z_Free)(void *ptr); // jitmalloc
 } refimport_t;
 
 
