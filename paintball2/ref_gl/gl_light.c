@@ -544,9 +544,13 @@ void R_AddDynamicLights (msurface_t *surf)
 
 				if ( fdist < fminlight )
 				{
-					pfBL[0] += ( frad - fdist ) * dl->color[0];
+					/*pfBL[0] += ( frad - fdist ) * dl->color[0];
 					pfBL[1] += ( frad - fdist ) * dl->color[1];
-					pfBL[2] += ( frad - fdist ) * dl->color[2];
+					pfBL[2] += ( frad - fdist ) * dl->color[2];*/
+					// jit - dynamic light fix (as if this will ever get used) credit: mSparks
+					pfBL[0] += ( fminlight - fdist ) * dl->color[0];
+					pfBL[1] += ( fminlight - fdist ) * dl->color[1];
+					pfBL[2] += ( fminlight - fdist ) * dl->color[2];
 				}
 			}
 		}
@@ -641,9 +645,10 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 			bl = s_blocklights;
 
 			for (i=0 ; i<3 ; i++)
-				scale[i] = gl_modulate->value*r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
+				scale[i] = gl_modulate->value * 
+					r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
 
-			if ( scale[0] == 1.0F &&
+			/*if ( scale[0] == 1.0F &&
 				 scale[1] == 1.0F &&
 				 scale[2] == 1.0F )
 			{
@@ -655,14 +660,14 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 				}
 			}
 			else
-			{
+			{*/
 				for (i=0 ; i<size ; i++, bl+=3)
 				{
 					bl[0] = lightmap[i*3+0] * scale[0];
 					bl[1] = lightmap[i*3+1] * scale[1];
 					bl[2] = lightmap[i*3+2] * scale[2];
 				}
-			}
+			//}
 			lightmap += size*3;		// skip to next lightmap
 		}
 	}
@@ -733,7 +738,15 @@ store:
 					g = 0;
 				if (b < 0)
 					b = 0;
-#if 0 // jitlight
+
+				// jitlight -- reduce oversaturation:
+				// greyscale value:
+				a = (int)((float)r * 0.33f + (float)g * 0.34f + (float)b * 0.33f);
+				
+				r = r*sat + a*(1.0f-sat);
+				g = g*sat + a*(1.0f-sat);
+				b = b*sat + a*(1.0f-sat);
+
 				/*
 				** determine the brightest of the three color components
 				*/
@@ -749,7 +762,8 @@ store:
 				** we set it to the brightest of the color components so that 
 				** things don't get too dim.
 				*/
-				a = max;
+				// jitlight -- alpha value set above.
+				//a = max;
 
 				/*
 				** rescale all the color components if the intensity of the greatest
@@ -764,24 +778,7 @@ store:
 					b = b*t;
 					a = a*t;
 				}
-#else
-				// jitlight -- reduce oversaturation:
-				// greyscale value:
-				a = (int)((float)r * 0.33f + (float)g * 0.34f + (float)b * 0.33f);
-				
-				r = r*sat + a*(1.0f-sat);
-				g = g*sat + a*(1.0f-sat);
-				b = b*sat + a*(1.0f-sat);
 
-				if (r > 255)
-					r = 255;
-				if (g > 255)
-					g = 255;
-				if (b > 255)
-					b = 255;
-				if (a > 255)
-					a = 255;
-#endif
 				dest[0] = r;
 				dest[1] = g;
 				dest[2] = b;
