@@ -683,6 +683,8 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand) // jittext (
 			int		l;
 
 			strcpy (cmd_args, text);
+			//strncpy(cmd_args, text, sizeof(cmd_args)-1); // jitsecurity.  buffer overflow protection by [SkulleR] (removed, see Echon's fix).
+			cmd_args[sizeof(cmd_args)-1] = 0; 
 
 			// strip off any trailing whitespace
 			l = strlen(cmd_args) - 1;
