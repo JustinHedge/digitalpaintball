@@ -1205,4 +1205,6 @@ extern int vidref_val;
 #define CHAR_ITALICS	135
 #define CHAR_COLOR		136
 
+#define COLOR_CHAT		('z'+16)
+
 
