@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-// ===[
+// ===
 // jitmenu
 
 #include <ctype.h>
@@ -30,17 +30,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_MENU_SCREENS 32
 #define INITIAL_SERVERLIST_SIZE 32
 
-int				m_menudepth	= 0;
-menu_screen_t	*root_menu	= NULL;
-menu_screen_t	*m_menu_screens[MAX_MENU_SCREENS];
-menu_mouse_t	m_mouse; // jitmouse
-int				scale;
-static float	oldscale = 0;
-m_serverlist_t	m_serverlist;
-int				m_serverPingSartTime;
-menu_widget_t	*m_active_bind_widget = NULL;
-char			*m_active_bind_command = NULL;
+// Local globals
+static int				m_menudepth	= 0;
+static menu_screen_t	*root_menu	= NULL;
+static menu_screen_t	*m_menu_screens[MAX_MENU_SCREENS];
+static menu_mouse_t		m_mouse; // jitmouse
+static int				scale;
+static float			oldscale = 0;
+static m_serverlist_t	m_serverlist;
+static menu_widget_t	*m_active_bind_widget = NULL;
+static char				*m_active_bind_command = NULL;
+static menu_screen_t	*m_current_menu;
 
+// Project-wide Globals
+int		m_serverPingSartTime;
+
+
+// same thing as strdup, only uses Z_Malloc
+char *text_copy(const char *in)
+{
+	char *out;
+
+	out = Z_Malloc(sizeof(char)*(strlen(in)+1));
+	strcpy(out, in);
+
+	return out;
+}
 
 // these two functions are for the "listsource"
 // key for the select widget.
@@ -76,10 +91,20 @@ static qboolean widget_is_selectable(menu_widget_t *widget)
 	return (widget->enabled && (widget->cvar || widget->command || widget->callback));
 }
 
+static void M_DrawBackground (image_t *background)
+{
+	char version[64];
+
+	re.DrawStretchPic2(0, 0, viddef.width, viddef.height, background);
+	SCR_AddDirtyPoint(0,0);
+	SCR_AddDirtyPoint(viddef.width-1, viddef.height-1);
+
+	Com_sprintf (version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
+	re.DrawString(viddef.width-176*hudscale, viddef.height-12*hudscale, version);
+}
+
 void M_ForceMenuOff (void)
 {
-//	m_drawfunc = 0;
-//	m_keyfunc = 0;
 	m_menudepth = 0;
 
 	cls.key_dest = key_game;
@@ -93,7 +118,10 @@ void M_ForceMenuOff (void)
 void M_Menu_Main_f (void)
 {
 	// jitodo -- different menu in-game
-	Cbuf_AddText("menu main\n");
+	if (cls.state == ca_active)
+		Cbuf_AddText("menu main_ingame\n");
+	else
+		Cbuf_AddText("menu main\n");
 }
 
 /*
@@ -1391,19 +1419,17 @@ static void M_PushMenuScreen(menu_screen_t *menu, qboolean samelevel)
 static void M_PopMenu (void)
 {
 	MENU_SOUND_CLOSE;
+
 	if (m_menudepth < 1)
-		//Com_Error (ERR_FATAL, "M_PopMenu: depth < 1");
 		m_menudepth = 1;
+
 	m_menudepth--;
 
 	if(oldscale && (oldscale != cl_hudscale->value))
 		Cvar_SetValue("cl_hudscale", oldscale);
-/*
-	m_drawfunc = m_layers[m_menudepth].draw;
-	m_keyfunc = m_layers[m_menudepth].key;
-*/
+
 	if (!m_menudepth)
-		M_ForceMenuOff ();
+		M_ForceMenuOff();
 }
 
 // find the first widget that is selected or hilighted and return it
@@ -1774,17 +1800,14 @@ static void select_begin_file_list(menu_widget_t *widget, char *findname)
 }
 
 
-static menu_screen_t* M_GetNewMenuScreen(const char *menu_name)
+static menu_screen_t* M_GetNewMenuScreen(const char *menu_name, const char *background)
 {
 	menu_screen_t* menu;
-	int len;
-
-	len = strlen(menu_name) + 1;
 	
 	menu = Z_Malloc(sizeof(menu_screen_t));
 	memset(menu, 0, sizeof(menu_screen_t));
-	menu->name = Z_Malloc(sizeof(char)*len);
-	memcpy(menu->name, menu_name, sizeof(char)*len);
+	menu->name = text_copy(menu_name);
+	menu->background = re.DrawFindPic(background);
 
 	menu->next = root_menu;
 	root_menu = menu;
@@ -1839,17 +1862,6 @@ static int M_WidgetGetAlign(const char *s)
 		return WIDGET_VALIGN_BOTTOM;
 
 	return WIDGET_HALIGN_LEFT; // default top/left
-}
-
-// same thing as strdup, only uses Z_Malloc
-char *text_copy(const char *in)
-{
-	char *out;
-
-	out = Z_Malloc(sizeof(char)*(strlen(in)+1));
-	strcpy(out, in);
-
-	return out;
 }
 
 
@@ -1933,6 +1945,15 @@ static void menu_from_file(menu_screen_t *menu)
 
 				while(*token)
 				{
+					// Background props:
+					if(Q_streq(token, "background") && !widget)
+					{
+						token = COM_Parse(&buf);
+						if (Q_streq(token, "none"))
+							menu->background = NULL;
+						else
+							menu->background = re.DrawFindPic(token);
+					}
 					// new widget:
 					if(Q_streq(token, "widget"))
 					{
@@ -2077,7 +2098,7 @@ static menu_screen_t* M_LoadMenuScreen(const char *menu_name)
 {
 	menu_screen_t *menu;
 
-	menu = M_GetNewMenuScreen(menu_name);
+	menu = M_GetNewMenuScreen(menu_name, "conback"); // todo - customizeable backgrounds
 	menu_from_file(menu);
 
 	return menu;
@@ -2966,10 +2987,36 @@ static void M_DrawWidget (menu_widget_t *widget)
 	}
 }
 
-static void M_DrawCursor(void)
+static void M_DrawCursor (void)
 {
 	re.DrawStretchPic2(m_mouse.x-CURSOR_WIDTH/2, m_mouse.y-CURSOR_HEIGHT/2,
 		CURSOR_WIDTH, CURSOR_HEIGHT, m_mouse.cursorpic);
+}
+
+static void draw_menu_screen (menu_screen_t *menu)
+{
+	menu_widget_t *widget;
+
+	m_current_menu = menu; // set the global pointer
+
+	if (menu->background)
+		M_DrawBackground(menu->background);
+
+	widget = menu->widget;
+
+	while(widget)
+	{
+		M_DrawWidget(widget);
+		widget = widget->next;
+	}
+	// waiting for user to press bind:
+	if(m_active_bind_command)
+	{
+		re.DrawFadeScreen ();
+		M_DrawWidget(m_active_bind_widget);
+	}
+
+	M_DrawCursor();
 }
 
 void M_Draw (void)
@@ -2977,49 +3024,11 @@ void M_Draw (void)
 	if(cls.key_dest == key_menu && m_menudepth)
 	{
 		menu_screen_t *menu;
-		menu_widget_t *widget;
 
-		SCR_DirtyScreen ();
-		
+		SCR_DirtyScreen();
 		menu = m_menu_screens[m_menudepth-1];
-		widget = menu->widget;
-
-		while(widget)
-		{
-			M_DrawWidget(widget);
-			widget = widget->next;
-		}
-		// waiting for user to press bind:
-		if(m_active_bind_command)
-		{
-			re.DrawFadeScreen ();
-			M_DrawWidget(m_active_bind_widget);
-		}
-		M_DrawCursor();
+		draw_menu_screen(menu); // jitodo - if it's a dialog menu, draw what's behind it as well (first)
 	}
-/*
-	if (cls.key_dest != key_menu)
-		return;
-
-	// repaint everything next frame
-	SCR_DirtyScreen ();
-
-	// dim everything behind it down
-	if (cl.cinematictime > 0)
-		re.DrawFill (0,0,viddef.width, viddef.height, 0);
-	else
-		re.DrawFadeScreen ();
-
-	m_drawfunc ();
-
-	// delay playing the enter sound until after the
-	// menu has been drawn, to avoid delay while
-	// caching images
-	if (m_entersound)
-	{
-		S_StartLocalSound( menu_in_sound );
-		m_entersound = false;
-	}*/
 }
 
 void M_MouseMove(int mx, int my)
@@ -3043,4 +3052,5 @@ qboolean M_MenuActive()
 	return (m_menudepth != 0);
 }
 
-
+// jitmenu
+// ===

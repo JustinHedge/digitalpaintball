@@ -235,7 +235,7 @@ typedef struct
 	void	(*DrawString) (int x, int y, const char *str); // jit, shush little warning
 	void	(*DrawStringAlpha) (int x, int y, const char *str, float alpha); // jit -- transparent strings (for fading out)
 
-	image_t	*(*DrawFindPic) (char *name);
+	image_t	*(*DrawFindPic) (const char *name);
 
 	// Draw images for cinematic rendering (which can have a different palette). Note that calls
 	void	(*DrawStretchRaw) (int x, int y, int w, int h, int cols, int rows, byte *data);

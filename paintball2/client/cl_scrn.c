@@ -518,30 +518,32 @@ SCR_DrawConsole
 */
 void SCR_DrawConsole (void)
 {
-	Con_CheckResize ();
+	Con_CheckResize();
 	
-	if (cls.state == ca_disconnected || cls.state == ca_connecting
-		|| cls.key_dest == key_menu) // jitmenu
+	if (cls.key_dest == key_menu) // jitmenu
+		return;
+
+	if (cls.state == ca_disconnected || cls.state == ca_connecting)
 	{	// forced full screen console
-		Con_DrawConsole (1.0);
+		Con_DrawConsole(1.0);
 		return;
 	}
 
 	if (cls.state != ca_active || !cl.refresh_prepped)
 	{	// connected, but can't render
-		Con_DrawConsole (0.5);
-		re.DrawFill (0, viddef.height*0.5f, viddef.width, viddef.height*0.5f, 0);
+		Con_DrawConsole(0.5);
+		re.DrawFill(0, viddef.height*0.5f, viddef.width, viddef.height*0.5f, 0);
 		return;
 	}
 
 	if (scr_con_current)
 	{
-		Con_DrawConsole (scr_con_current);
+		Con_DrawConsole(scr_con_current);
 	}
 	else
 	{
 		if (cls.key_dest == key_game || cls.key_dest == key_message)
-			Con_DrawNotify ();	// only draw notify in game
+			Con_DrawNotify();	// only draw notify in game
 	}
 }
 
@@ -1445,7 +1447,7 @@ void SCR_UpdateScreen (void)
 					re.CinematicSetPalette(NULL);
 					cl.cinematicpalette_active = false;
 				}
-				M_Draw ();
+				M_Draw();
 //				re.EndFrame();
 //				return;
 			}
@@ -1456,7 +1458,7 @@ void SCR_UpdateScreen (void)
 					re.CinematicSetPalette(NULL);
 					cl.cinematicpalette_active = false;
 				}
-				SCR_DrawConsole ();
+				SCR_DrawConsole();
 //				re.EndFrame();
 //				return;
 			}

@@ -250,6 +250,7 @@ typedef struct MENU_WIDGET_S {
 
 typedef struct MENU_SCREEN_S {
 	char *name;
+	image_t *background;
 	menu_widget_t *widget;
 	menu_widget_t *selected_widget;
 	menu_widget_t *hover_widget;

@@ -699,6 +699,7 @@ void Con_DrawNotify (void)
 Con_DrawConsole
 
 Draws the console with the solid background
+Also draws menu background (for now).
 ================
 */
 void Con_DrawConsole (float frac)
@@ -720,16 +721,12 @@ void Con_DrawConsole (float frac)
 		lines = viddef.height;
 
 // draw the background
-	re.DrawStretchPic2 (0, lines-viddef.height, viddef.width, viddef.height, i_conback); // jit, kill warning
-	SCR_AddDirtyPoint (0,0);
-	SCR_AddDirtyPoint (viddef.width-1,lines-1);
+	//re.DrawStretchPic2 (0, lines-viddef.height, viddef.width, viddef.height, i_conback); // jit, kill warning
+	re.DrawStretchPic(0, lines-viddef.height, viddef.width, viddef.height, "conback"); // jitodo, cl_conback->string
+	SCR_AddDirtyPoint(0,0);
+	SCR_AddDirtyPoint(viddef.width-1, lines-1);
 
 	Com_sprintf (version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
-	/*
-	for (x=0 ; x<22 ; x++) // jit (22 was 5)
-		//re.DrawChar (viddef.width-44*hudscale+x*8*hudscale, lines-12*hudscale, 128 + version[x] );
-		re.DrawChar (viddef.width-168*hudscale+x*8*hudscale, lines-12*hudscale, 128 + version[x] ); // jit
-	*/
 	re.DrawString(viddef.width-176*hudscale, lines-12*hudscale, version);
 
 	if(cls.key_dest == key_menu)
@@ -737,16 +734,8 @@ void Con_DrawConsole (float frac)
 
 // draw the text
 	con.vislines = lines;
-	
-#if 0
-	rows = (lines-8)>>3;		// rows of text to draw
-
-	y = lines - 24;
-#else
 	rows = (lines-22*hudscale)>>3;		// rows of text to draw
-
 	y = lines - 30*hudscale;
-#endif
 
 // draw from the bottom up
 	if (con.display != con.current)
