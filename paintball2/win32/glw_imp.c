@@ -762,7 +762,7 @@ void GLimp_EndFrame (void)
 	// rscript - MrG
 	rs_realtime = Sys_Milliseconds() * 0.001f;
 	
-	Sleep(0);	// fixes a few problems ive been having
+	//jitest Sleep(0);	// fixes a few problems ive been having
 }
 
 void UpdateGammaRamp (void)

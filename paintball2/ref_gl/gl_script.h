@@ -93,6 +93,8 @@ typedef struct rscript_s {
 	float					warpsmooth;	// Heffo - vertex warping smoothness;
 	float					warpspeed;	// Heffo - vertex warping speed;
 	qboolean				mirror;		// mirror
+	int						width;		// jitrscript
+	int						height;		// jitrscript
 
 	qboolean				dontflush;	// dont flush from memory on map change
 	qboolean				ready;		// readied by the engine?
@@ -112,7 +114,7 @@ void RS_LoadScript(char *script);
 void RS_FreeAllScripts(void);
 void RS_FreeScript(rscript_t *rs);
 void RS_FreeUnmarked(void);
-rscript_t *RS_FindScript(char *name);
+rscript_t *RS_FindScript(const char *name);
 void RS_ReadyScript(rscript_t *rs);
 void RS_ScanPathForScripts(char *dir);
 int RS_Animate(rs_stage_t *stage);

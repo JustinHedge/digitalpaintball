@@ -2267,6 +2267,40 @@ qboolean GL_Upload8 (byte *data, int width, int height,  qboolean mipmap, qboole
 }
 
 
+image_t  *GL_LoadBlankPic(const char *name, int width, int height, imagetype_t type) // jitrscript
+{
+	image_t *image;
+	int i;
+
+	for (i=0, image=gltextures; i<numgltextures; i++, image++)
+	{
+		if (!image->texnum)
+			break;
+	}
+	
+	if (i == numgltextures)
+	{
+		if (numgltextures == MAX_GLTEXTURES)
+			ri.Sys_Error (ERR_DROP, "MAX_GLTEXTURES");
+		numgltextures++;
+	}
+
+	image = &gltextures[i];
+
+	if (strlen(name) >= sizeof(image->name))
+		ri.Sys_Error (ERR_DROP, "Draw_LoadPic: \"%s\" is too long", name);
+
+	strcpy (image->name, name);
+	image->registration_sequence = registration_sequence;
+	
+	image->width = width;
+	image->height = height;
+	image->type = type;
+
+	return image;
+}
+
+
 /*
 ================
 GL_LoadPic
@@ -2484,7 +2518,45 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 
 	return image;
 }
-			
+
+
+image_t *GL_LoadRScriptImage (const char *name) // jitrscript
+{
+	rscript_t *rs;
+
+	rs = RS_FindScript(name);
+
+	if (rs)
+	{
+		int width, height;
+		imagetype_t type;
+		image_t *image;
+
+		// The image file is missing, but there is an RScript under the same
+		// name, so create a dummy image with an rscript pointer, since
+		// it's really just the rscript that gets rendered, not the image
+		if (rs->dontflush)
+			type = it_pic;
+		else
+			type = it_wall;
+
+		width = rs->width;
+		height = rs->height;
+		if (!width)
+			width = 64; // just a lame default. Probably better to get width from 1st rscript layer.
+		if (!height)
+			height = 64;
+
+		image = GL_LoadBlankPic(name, width, height, type);
+		image->rscript = rs;
+		rs->img_ptr = image;
+
+		return image;
+	}
+	else
+		return NULL;
+}
+
 /*
 ===============
 GL_FindImage
@@ -2584,15 +2656,28 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 
 		if(!image)
 		{
-			ri.Con_Printf(PRINT_ALL, "GL_FindImage: can't load %s\n", name_noext);
-			image = r_notexture;
+			image = GL_LoadRScriptImage(name_noext); // jitrscript
+
+			if(!image)
+			{
+				ri.Con_Printf(PRINT_ALL, "GL_FindImage: can't load %s\n", name_noext);
+				image = r_notexture;
+			}
 		}
 	}
 
 	image->rscript = RS_FindScript(name_noext); // jitrscript
 
 	if(image->rscript)
+	{
+		if (image->rscript->width)
+			image->width = image->rscript->width;
+		
+		if (image->rscript->height)
+			image->height = image->rscript->height;
+
 		image->rscript->img_ptr = image; // jitrscript -- point back to this image
+	}
 
 	hash_add(&gltextures_hash, name_noext, image); // jithash
 

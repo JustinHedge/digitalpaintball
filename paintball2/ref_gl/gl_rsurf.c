@@ -175,8 +175,8 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
 {
 	int        i;
 	glpoly_t *p;
-	float	distcolor; // jit
-    if (!gl_showtris->value)
+
+	if (!gl_showtris->value)
         return;
 
     // Guy: *\/\/\/ gl_showtris fix begin \/\/\/*

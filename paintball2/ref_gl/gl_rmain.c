@@ -212,13 +212,13 @@ qboolean R_CullBox (const vec3_t mins, const vec3_t maxs)
 			return true;
 	return false;
 }
-#else // jitopt: taken from darkplaces
+#else // jitopt: taken from darkplaces (doesn't seem to make much of a difference)
 int R_CullBox(const vec3_t mins, const vec3_t maxs)
 {
 	int i;
 //	mplane_t *p;
 	cplane_t *p;
-	for (i = 0;i < 4;i++)
+	for (i = 0; i < 4; i++)
 	{
 		p = frustum + i;
 		switch(p->signbits)

@@ -224,7 +224,7 @@ void RS_FreeUnmarked (void)
 	}
 }
 
-rscript_t *RS_FindScript(char *name)
+rscript_t *RS_FindScript(const char *name)
 {
 	rscript_t	*rs = rs_rootscript;
 
@@ -654,6 +654,18 @@ void rs_script_safe (rscript_t *rs, char **token)
 	rs->dontflush = true;
 }
 
+void rs_script_width (rscript_t *rs, char **token) // jitrscript
+{
+	*token = strtok(NULL, TOK_DELIMINATORS);
+	rs->width = atoi(*token);
+}
+
+void rs_script_height (rscript_t *rs, char **token) // jitrscript
+{
+	*token = strtok(NULL, TOK_DELIMINATORS);
+	rs->height = atoi(*token);
+}
+
 void rs_script_subdivide (rscript_t *rs, char **token)
 {
 	int divsize, p2divsize;
@@ -699,6 +711,8 @@ void rs_script_mirror (rscript_t *rs, char **token)
 static rs_scriptkey_t rs_scriptkeys[] = 
 {
 	{	"safe",			&rs_script_safe			},
+	{	"width",		&rs_script_width		},
+	{	"height",		&rs_script_height		},
 	{	"subdivide",	&rs_script_subdivide	},
 	{	"vertexwarp",	&rs_script_vertexwarp	},
 	{	"mirror",		&rs_script_mirror		},
