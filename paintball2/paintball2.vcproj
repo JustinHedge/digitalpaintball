@@ -350,6 +350,9 @@
 					RelativePath=".\client\cl_pred.c">
 				</File>
 				<File
+					RelativePath="cl_scores.c">
+				</File>
+				<File
 					RelativePath=".\client\cl_scrn.c">
 				</File>
 				<File
