@@ -312,7 +312,7 @@ void CL_PredictMovement (void)
 
 	}
 //todo -- create another cmd here...
-#define INTERP
+//#define INTERP
 
 #ifdef INTERP
 	// ===
@@ -333,7 +333,15 @@ void CL_PredictMovement (void)
 
 
 #ifdef INTERP
-	oldframe = (current) & (CMD_BACKUP-1);
+	step = pm.s.origin[2] - cl.oldz;
+
+	if (step > 8 && step < 160 && (pm.s.pm_flags & PMF_ON_GROUND) )
+	{
+		cl.predicted_step = step * 0.125;
+		cl.predicted_step_time = cls.realtime - cls.frametime * 500;
+	}
+
+	cl.oldz = pm.s.origin[2];
 #else
 	oldframe = (ack-2) & (CMD_BACKUP-1); // original q2 code
 	
