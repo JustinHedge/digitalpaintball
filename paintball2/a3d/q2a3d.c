@@ -124,7 +124,7 @@ void S_Q2A3DInit (void)
 	a3dsound_started = 1;//set the enabled flag
 }//initialize the A3D engine
 
-sfx_t *S_Q2A3DRegisterSound (char *name)
+sfx_t *S_Q2A3DRegisterSound (const char *name)
 {
 	sfx_t	*sfx;
 	sfx = S_FindName (name, true);

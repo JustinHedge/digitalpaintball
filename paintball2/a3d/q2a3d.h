@@ -2,7 +2,7 @@ extern cvar_t	*s_a3d;
 extern int a3dsound_started;
 void S_Q2A3DInit (void);
 void S_Q2A3DPCMStream (int samples, int rate, int width, int channels, byte *data);
-sfx_t *S_Q2A3DRegisterSound (char *name);
+sfx_t *S_Q2A3DRegisterSound (const char *name);
 channel_t *S_Q2A3DPickChannel(int entnum, int entchannel);
 void S_Q2A3DStartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float fvol, float attenuation, float timeofs);
 void S_Q2A3DAddLoopSounds (void);

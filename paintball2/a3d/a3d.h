@@ -20,6 +20,9 @@ You should have received a copy of the GNU Library General Public
 
 /*#define Q2A3DAPI __declspec(dllimport)
 #define Q2A3DAPIENTRY __cdecl*/
+#ifndef A3D_H
+#define A3D_H
+
 #ifndef __linux__
 #include <Windows.h>
 #endif
@@ -46,6 +49,8 @@ typedef struct {
 } s_a3d_t;
 
 extern s_a3d_t a3d;
+
+#endif
 
 
 
