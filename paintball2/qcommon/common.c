@@ -906,11 +906,13 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 		//	Com_Error (ERR_FATAL, "SZ_GetSpace: overflow without allowoverflow set"); jit - don't crash the server with this
 			Com_Printf ("SZ_GetSpace: overflow without allowoverflow set\n");
 		
-		if (length > buf->maxsize)
+		else if (length > buf->maxsize)
 		//	Com_Error (ERR_FATAL, "SZ_GetSpace: %i is > full buffer size", length); jit -- don't crash the server with this
-			Com_Printf ("SZ_GetSpace: %i is > full buffer size", length);
+			Com_Printf ("SZ_GetSpace: %i is > full buffer size\n", length);
 			
-		Com_Printf ("SZ_GetSpace: overflow\n");
+		else
+			Com_Printf ("SZ_GetSpace: overflow\n");
+
 		SZ_Clear (buf); 
 		buf->overflowed = true;
 	}
@@ -1125,6 +1127,9 @@ Z_Free
 void Z_Free (void *ptr)
 {
 	zhead_t	*z;
+
+	if(!ptr)
+		Com_Error (ERR_FATAL, "Z_Free: null pointer"); // jitmalloc
 
 	z = ((zhead_t *)ptr) - 1;
 
