@@ -1120,7 +1120,7 @@ skipwhite:
 				*data_p = data;
 				return com_token;
 			}
-			if (len < MAX_TOKEN_CHARS)
+			if (len < MAX_TOKEN_CHARS - 1) // jitsecurity, [SkulleR] - buffer overrun fix
 			{
 				com_token[len] = c;
 				len++;
@@ -1131,7 +1131,7 @@ skipwhite:
 // parse a regular word
 	do
 	{
-		if (len < MAX_TOKEN_CHARS)
+		if (len < MAX_TOKEN_CHARS - 1) // jitsecurity, [SkulleR] - buffer overrun fix
 		{
 			com_token[len] = c;
 			len++;
