@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 #include "snd_loc.h"
+//A3D ADD
+#include "../a3d/q2a3d.h"
 
 void S_Play(void);
 void S_SoundList(void);
@@ -36,6 +38,7 @@ void S_StopAllSounds(void);
 #define		SOUND_FULLVOLUME	80
 
 #define		SOUND_LOOPATTENUATE	0.003
+
 
 int			s_registration_sequence;
 
@@ -132,24 +135,35 @@ void S_Init (void)
 		s_testsound = Cvar_Get ("s_testsound", "0", 0);
 		s_primary = Cvar_Get ("s_primary", "0", CVAR_ARCHIVE);	// win32 specific
 
+		//A3D ADD
+		s_a3d = Cvar_Get ("s_a3d", "0", CVAR_ARCHIVE); //sound engine
+
 		Cmd_AddCommand("play", S_Play);
 		Cmd_AddCommand("stopsound", S_StopAllSounds);
 		Cmd_AddCommand("soundlist", S_SoundList);
 		Cmd_AddCommand("soundinfo", S_SoundInfo_f);
 
-		if (!SNDDMA_Init())
-			return;
+		//A3D CHANGE
+		if(s_a3d->value)
+		{
+			S_Q2A3DInit();
+		}
+		else
+		{
+			if (!SNDDMA_Init())
+				return;
 
-		S_InitScaletable ();
+			S_InitScaletable ();
 
-		sound_started = 1;
+			sound_started = 1;
+				Com_Printf ("sound sampling rate: %i\n", dma.speed);
+		}
 		num_sfx = 0;
 
 		soundtime = 0;
 		paintedtime = 0;
 
-		Com_Printf ("sound sampling rate: %i\n", dma.speed);
-
+		//A3D CHANGE END
 		S_StopAllSounds ();
 	}
 
@@ -165,13 +179,21 @@ void S_Shutdown(void)
 {
 	int		i;
 	sfx_t	*sfx;
-
-	if (!sound_started)
+	//A3D CHANGE
+	if (!sound_started && !a3dsound_started)
 		return;
 
+	if(a3dsound_started)
+	{
+		a3d.A3D_Shutdown();
+		S_Q2A3DCloseLibrary();
+	}
+	if(sound_started)
 	SNDDMA_Shutdown();
 
 	sound_started = 0;
+	a3dsound_started = 0;
+	//A3D CHANGE END
 
 	Cmd_RemoveCommand("play");
 	Cmd_RemoveCommand("stopsound");
@@ -305,7 +327,10 @@ S_RegisterSound
 sfx_t *S_RegisterSound (const char *name)
 {
 	sfx_t	*sfx;
-
+	//A3D ADD
+	if(a3dsound_started)
+		return S_Q2A3DRegisterSound (name);
+	//A3D END
 	if (!sound_started)
 		return NULL;
 
@@ -332,6 +357,8 @@ void S_EndRegistration (void)
 	int		size;
 
 	// free any sounds not from this registration sequence
+	//A3D ADD
+	if(!a3dsound_started)
 	for (i=0, sfx=known_sfx ; i < num_sfx ; i++,sfx++)
 	{
 		if (!sfx->name[0])
@@ -379,6 +406,10 @@ channel_t *S_PickChannel(int entnum, int entchannel)
     int			life_left;
 	channel_t	*ch;
 
+	//A3D ADD
+	if(a3dsound_started)
+		return S_Q2A3DPickChannel(entnum, entchannel);
+	//A3D END
 	if (entchannel<0)
 		Com_Error (ERR_DROP, "S_PickChannel: entchannel<0");
 
@@ -658,16 +689,23 @@ void S_StartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float f
 	int			vol;
 	playsound_t	*ps, *sort;
 	int			start;
+	//A3D CHANGE
 
-	if (!sound_started)
+	if (!sound_started && !a3dsound_started)
 		return;
-
+	//A3D CHANGE END 
 	if (!sfx)
 		return;
 
 	if (sfx->name[0] == '*')
 		sfx = S_RegisterSexedSound(&cl_entities[entnum].current, sfx->name);
-
+	//A3D ADD
+	if (a3dsound_started)
+	{
+		S_Q2A3DStartSound(origin,entnum,entchannel,sfx,fvol,attenuation,timeofs);
+		return;
+	}
+	//A3D END
 	// make sure the sound is loaded
 	sc = S_LoadSound (sfx);
 	if (!sc)
@@ -739,8 +777,10 @@ void S_StartLocalSound (const char *sound)
 {
 	sfx_t	*sfx;
 
-	if (!sound_started)
+	//A3D CHANGE
+	if (!sound_started && !a3dsound_started)
 		return;
+	//A3D CHANGE END
 		
 	sfx = S_RegisterSound (sound);
 	if (!sfx)
@@ -785,8 +825,11 @@ S_StopAllSounds
 void S_StopAllSounds(void)
 {
 	int		i;
+	//A3D CHANGE
+	if(a3dsound_started)
+		S_Q2A3DStopAllSounds();
 
-	if (!sound_started)
+	if (!sound_started && !a3dsound_started )
 		return;
 
 	// clear all the playsounds
@@ -804,6 +847,9 @@ void S_StopAllSounds(void)
 
 	// clear all the channels
 	memset(channels, 0, sizeof(channels));
+	if(a3dsound_started)
+		return;
+	//A3D CHANGE END
 
 	S_ClearBuffer ();
 }
@@ -912,7 +958,10 @@ void S_RawSamples (int samples, int rate, int width, int channels, byte *data)
 	int		i;
 	int		src, dst;
 	float	scale;
-
+	//A3D ADD
+	if(a3dsound_started)
+		S_Q2A3DPCMStream (samples, rate, width, channels, data);
+	//A3D Add END
 	if (!sound_started)
 		return;
 
@@ -1012,7 +1061,14 @@ void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 	int			total;
 	channel_t	*ch;
 	channel_t	*combine;
-
+	//A3D ADD
+	if (a3dsound_started)
+	{
+//return; // jitest XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		S_Q2A3DUpdate(origin,forward,right,up);
+		return;
+	}
+	//A3D END
 	if (!sound_started)
 		return;
 

@@ -98,6 +98,7 @@ cvar_t	*m_pitch;
 cvar_t	*m_yaw;
 cvar_t	*m_forward;
 cvar_t	*m_side;
+cvar_t	*m_invert; // jitmouse
 
 cvar_t	*cl_lightlevel;
 
@@ -611,6 +612,8 @@ CL_Connect_f
 void CL_Connect_f (void)
 {
 	char	*server;
+
+	M_ForceMenuOff(); // jitmenu
 
 	if (Cmd_Argc() != 2)
 	{
@@ -1623,6 +1626,7 @@ void CL_InitLocal (void)
 	m_yaw = Cvar_Get ("m_yaw", "0.022", 0);
 	m_forward = Cvar_Get ("m_forward", "1", 0);
 	m_side = Cvar_Get ("m_side", "1", 0);
+	m_invert = Cvar_Get ("m_invert", "0", CVAR_ARCHIVE); // jitmouse
 
 	cl_shownet = Cvar_Get ("cl_shownet", "0", 0);
 	cl_showmiss = Cvar_Get ("cl_showmiss", "0", 0);
@@ -1903,9 +1907,10 @@ void CL_Frame (int msec)
 
 	if (!cl_timedemo->value)
 	{
-		//if (cls.state == ca_connected && extratime < 100)
-		if (cls.state == ca_connected && extratime < 16) // jitdownload
+		//if (cls.state == ca_connected && extratime < 16) // jitodo -- window sliding
+		if (cls.state == ca_connected && extratime < 100)
 			return;			// don't flood packets out while connecting
+
 		if(cl_maxfps->value) // jitnetfps
 		{
 			if (extratime < 1000/cl_maxfps->value)

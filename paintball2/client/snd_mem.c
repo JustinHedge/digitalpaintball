@@ -21,7 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 #include "snd_loc.h"
-
+//A3D ADD
+#include "../a3d/q2a3d.h"
 int			cache_full_cycle;
 
 byte *S_Alloc (int size);
@@ -105,10 +106,10 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	sfxcache_t	*sc;
 	int		size;
 	char	*name;
-
-	if (s->name[0] == '*')
+	//A3D CHANGE
+	if (s->name[0] == '*' || a3dsound_started)
 		return NULL;
-
+	//A3D CHANGE END
 // see if still in memory
 	sc = s->cache;
 	if (sc)

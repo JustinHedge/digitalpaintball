@@ -86,9 +86,11 @@ struct sfx_s	*cl_sfx_splat2;
 struct sfx_s	*cl_sfx_grensplat1;
 struct sfx_s	*cl_sfx_grensplat2;
 struct sfx_s	*cl_sfx_grensplat3;
+struct sfx_s	*cl_sfx_paintfly[3];
 struct sfx_s	*cl_sfx_footsteps[4];
 struct model_s	*cl_mod_smoke;
 struct model_s	*cl_mod_splat;
+struct model_s	*cl_mod_paintball;
 
 /*
 struct sfx_s	*cl_sfx_ric1;
@@ -135,17 +137,21 @@ CL_RegisterTEntSounds
 */
 void CL_RegisterTEntSounds (void) // jit, cleaned up and adjusted for paintball
 {
-	cl_sfx_splat1 = S_RegisterSound ("splat/splat1.wav");
-	cl_sfx_splat2 = S_RegisterSound ("splat/splat2.wav");
-	cl_sfx_grensplat1 = S_RegisterSound ("splat/grensplat1.wav");
-	cl_sfx_grensplat2 = S_RegisterSound ("splat/grensplat2.wav");
-	cl_sfx_grensplat3 = S_RegisterSound ("splat/grensplat3.wav");
+	cl_sfx_splat1 = S_RegisterSound("splat/splat1.wav");
+	cl_sfx_splat2 = S_RegisterSound("splat/splat2.wav");
+	cl_sfx_grensplat1 = S_RegisterSound("splat/grensplat1.wav");
+	cl_sfx_grensplat2 = S_RegisterSound("splat/grensplat2.wav");
+	cl_sfx_grensplat3 = S_RegisterSound("splat/grensplat3.wav");
+	/*cl_sfx_paintfly[0] = S_RegisterSound("paint/whiz1.wav");
+	cl_sfx_paintfly[1] = S_RegisterSound("paint/whiz2.wav");
+	cl_sfx_paintfly[2] = S_RegisterSound("paint/whiz3.wav");*/
 
-	S_RegisterSound ("player/land1.wav");
-	cl_sfx_footsteps[0] = S_RegisterSound ("player/step0.wav");
-	cl_sfx_footsteps[1] = S_RegisterSound ("player/step1.wav");
-	cl_sfx_footsteps[2] = S_RegisterSound ("player/step2.wav");
-	cl_sfx_footsteps[3] = S_RegisterSound ("player/step3.wav");
+
+	S_RegisterSound("player/land1.wav");
+	cl_sfx_footsteps[0] = S_RegisterSound("player/step0.wav");
+	cl_sfx_footsteps[1] = S_RegisterSound("player/step1.wav");
+	cl_sfx_footsteps[2] = S_RegisterSound("player/step2.wav");
+	cl_sfx_footsteps[3] = S_RegisterSound("player/step3.wav");
 }	
 
 /*
@@ -157,6 +163,7 @@ void CL_RegisterTEntModels (void) // jit: changed to only load paintball stuff:
 {
 	cl_mod_smoke = re.RegisterModel("sprites/smoke.sp2");
 	cl_mod_splat = re.RegisterModel("models/paint/splat2.md2");
+	cl_mod_paintball = re.RegisterModel("models/paint/ball.md2");
 	//cl_mod_bfg_explo = re.RegisterModel ("sprites/s_bfg2.sp2"); // jitodo -- remove, testing only
 /*	cl_mod_explode = re.RegisterModel ("models/objects/explode/tris.md2");
 	cl_mod_smoke = re.RegisterModel ("models/objects/smoke/tris.md2");
@@ -738,11 +745,11 @@ void CL_ParseTEnt (void)
 		{
 			cnt = rand()&7; // don't do it for every splatter!
 			if (cnt == 0)
-				S_StartSound (pos, 0, 0, cl_sfx_grensplat1, 1, ATTN_NORM, 0);
+				S_StartSound (pos, 0, 0, cl_sfx_grensplat1, 1, ATTN_IDLE, 0);
 			else if (cnt == 1)
-				S_StartSound (pos, 0, 0, cl_sfx_grensplat2, 1, ATTN_NORM, 0);
+				S_StartSound (pos, 0, 0, cl_sfx_grensplat2, 1, ATTN_IDLE, 0);
 			else if (cnt == 2)
-				S_StartSound (pos, 0, 0, cl_sfx_grensplat3, 1, ATTN_NORM, 0);
+				S_StartSound (pos, 0, 0, cl_sfx_grensplat3, 1, ATTN_IDLE, 0);
 		}
 		else
 		{

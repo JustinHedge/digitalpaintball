@@ -1782,6 +1782,11 @@ static void widget_complete(menu_widget_t *widget)
 	switch(widget->type)
 	{
 	case WIDGET_TYPE_SLIDER:
+		if(!widget->slider_min && !widget->slider_max)
+		{
+			widget->slider_min = 0.0f;
+			widget->slider_max = 1.0f;
+		}
 		if(!widget->slider_inc)
 			widget->slider_inc = (widget->slider_max - widget->slider_min)/24.0;
 		break;

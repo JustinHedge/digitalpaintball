@@ -506,6 +506,19 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
+		<Filter
+			Name="a3d"
+			Filter="">
+			<File
+				RelativePath="a3d\a3d.h">
+			</File>
+			<File
+				RelativePath="a3d\q2a3d.c">
+			</File>
+			<File
+				RelativePath="a3d\q2a3d.h">
+			</File>
+		</Filter>
 		<File
 			RelativePath="..\pball\menus\main.txt">
 		</File>

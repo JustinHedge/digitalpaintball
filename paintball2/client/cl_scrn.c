@@ -1373,6 +1373,17 @@ void SCR_UpdateScreen (void)
 	
 	hudscale = cl_hudscale->value;
 
+	if(m_invert->modified || m_pitch->modified) // jitmouse
+	{
+		// if m_invert is true, set m_pitch to a negative value.
+		if(m_invert->value)
+			Cvar_SetValue("m_pitch", -fabs(m_pitch->value));
+		else
+			Cvar_SetValue("m_pitch", fabs(m_pitch->value));
+		m_invert->modified = false;
+		m_pitch->modified = false;
+	}
+
 	/*
 	** range check cl_camera_separation so we don't inadvertently fry someone's
 	** brain
