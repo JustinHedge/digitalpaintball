@@ -70,13 +70,13 @@ void SV_ClientPrintf (client_t *cl, int level, char *fmt, ...)
 	if (level < cl->messagelevel)
 		return;
 	
-	va_start (argptr,fmt);
-	vsprintf (string, fmt,argptr);
-	va_end (argptr);
+	va_start(argptr,fmt);
+	vsprintf(string, fmt,argptr);
+	va_end(argptr);
 	
-	MSG_WriteByte (&cl->netchan.message, svc_print);
-	MSG_WriteByte (&cl->netchan.message, level);
-	MSG_WriteString (&cl->netchan.message, string);
+	MSG_WriteByte(&cl->netchan.message, svc_print);
+	MSG_WriteByte(&cl->netchan.message, level);
+	MSG_WriteString(&cl->netchan.message, string);
 }
 
 /*
@@ -483,44 +483,6 @@ qboolean SV_RateDrop (client_t *c)
 }
 
 
-
-void SV_SendSingleClientMessage (client_t *c, int msglen, char *msgbuf) // jitdownload (this isn't necessary anymore)
-{
-		if (!c->state)
-			//continue;
-			return;
-
-		// if the reliable message overflowed,
-		// drop the client
-		if (c->netchan.message.overflowed)
-		{
-			SZ_Clear (&c->netchan.message);
-			SZ_Clear (&c->datagram);
-			SV_BroadcastPrintf (PRINT_HIGH, "%s overflowed\n", c->name);
-			SV_DropClient (c);
-		}
-
-		if (sv.state == ss_cinematic 
-			|| sv.state == ss_demo 
-			|| sv.state == ss_pic
-			)
-			Netchan_Transmit (&c->netchan, msglen, msgbuf);
-		else if (c->state == cs_spawned)
-		{
-			// don't overrun bandwidth
-			if (SV_RateDrop (c))
-				//continue;
-				return;
-
-			SV_SendClientDatagram (c);
-		}
-		else
-		{
-	// just update reliable	if needed
-			if (c->netchan.message.cursize	|| curtime - c->netchan.last_sent > 1000 )
-				Netchan_Transmit (&c->netchan, 0, NULL);
-		}
-}
 /*
 =======================
 SV_SendClientMessages
@@ -544,24 +506,24 @@ void SV_SendClientMessages (void)
 		else
 		{
 			// get the next message
-			r = fread (&msglen, 4, 1, sv.demofile);
+			r = fread(&msglen, 4, 1, sv.demofile);
 			if (r != 1)
 			{
-				SV_DemoCompleted ();
+				SV_DemoCompleted();
 				return;
 			}
-			msglen = LittleLong (msglen);
+			msglen = LittleLong(msglen);
 			if (msglen == -1)
 			{
-				SV_DemoCompleted ();
+				SV_DemoCompleted();
 				return;
 			}
 			if (msglen > MAX_MSGLEN)
 				Com_Error (ERR_DROP, "SV_SendClientMessages: msglen > MAX_MSGLEN");
-			r = fread (msgbuf, msglen, 1, sv.demofile);
+			r = fread(msgbuf, msglen, 1, sv.demofile);
 			if (r != 1)
 			{
-				SV_DemoCompleted ();
+				SV_DemoCompleted();
 				return;
 			}
 		}
@@ -570,7 +532,40 @@ void SV_SendClientMessages (void)
 	// send a message to each connected client
 	for (i=0, c=svs.clients; i < maxclients->value; i++, c++)
 	{
-		SV_SendSingleClientMessage(c, msglen, msgbuf); // jitdownload
+		if (!c->state)
+			continue;
+
+		// if the reliable message overflowed,
+		// drop the client
+		if (c->netchan.message.overflowed)
+		{
+			SZ_Clear(&c->netchan.message);
+			SZ_Clear(&c->datagram);
+			SV_BroadcastPrintf(PRINT_HIGH, "%s overflowed\n", c->name);
+			//SV_DropClient(c);
+			continue; // jitoverflow -- don't actually drop them, just lose the data.
+		}
+
+		if (sv.state == ss_cinematic 
+			|| sv.state == ss_demo 
+			|| sv.state == ss_pic)
+		{
+			Netchan_Transmit (&c->netchan, msglen, msgbuf);
+		}
+		else if (c->state == cs_spawned)
+		{
+			// don't overrun bandwidth
+			if (SV_RateDrop(c))
+				continue;
+
+			SV_SendClientDatagram(c);
+		}
+		else
+		{
+	// just update reliable	if needed
+			if (c->netchan.message.cursize	|| curtime - c->netchan.last_sent > 1000)
+				Netchan_Transmit(&c->netchan, 0, NULL);
+		}
 	}
 }
 

@@ -349,33 +349,38 @@ Sys_SendKeyEvents (); // jit, moved
 		CL_ParseClientinfo (i);
 		Com_Printf ("                                     \r");
 	}
-	Sys_SendKeyEvents (); // jit, moved
+	Sys_SendKeyEvents(); // jit, moved
 	//CL_LoadClientinfo(&cl.baseclientinfo, "unnamed\\male/grunt"); // jitodo, make this use the pball skin
 	CL_LoadClientinfo(&cl.baseclientinfo, "unnamed\\male/pb2y"); // jitodo, make this use the pball skin
 
 	// set sky textures and speed
-	Com_Printf ("sky\r", i); 
-	SCR_UpdateScreen ();
-	rotate = atof (cl.configstrings[CS_SKYROTATE]);
-	sscanf (cl.configstrings[CS_SKYAXIS], "%f %f %f", 
+	Com_Printf("sky\r");
+	SCR_UpdateScreen();
+	rotate = atof(cl.configstrings[CS_SKYROTATE]);
+	sscanf(cl.configstrings[CS_SKYAXIS], "%f %f %f", 
 		&axis[0], &axis[1], &axis[2]);
 
 	re.SetSky (cl.configstrings[CS_SKY], rotate, axis);
 
-	Com_Printf ("                                     \r");
+	// jit --
+	Com_Printf("                                     \r");
+	Com_Printf("texture scripts\r");
+	SCR_UpdateScreen();
+	Com_Printf("                                     \r");
+	// -- jit
 
 	// the renderer can now free unneeded stuff
-	re.EndRegistration ();
+	re.EndRegistration();
 
 	// clear any lines of console text
-	Con_ClearNotify ();
+	Con_ClearNotify();
 
-	SCR_UpdateScreen ();
+	SCR_UpdateScreen();
 	cl.refresh_prepped = true;
 	cl.force_refdef = true;	// make sure we have a valid refdef
 
 	// start the cd track
-	CDAudio_Play (atoi(cl.configstrings[CS_CDTRACK]), true);
+	CDAudio_Play(atoi(cl.configstrings[CS_CDTRACK]), true);
 }
 
 /*

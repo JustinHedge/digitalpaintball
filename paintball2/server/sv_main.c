@@ -383,7 +383,7 @@ gotnewcl:
 	newcl->challenge = challenge; // save challenge for checksumming
 
 	// get the game a chance to reject this connection or modify the userinfo
-	//if(!sv.attractloop) // jitdemo - don't call game functions for demo plays
+	if(!sv.attractloop) // jitdemo - don't call game functions for demo plays
 	{
 		if (!(ge->ClientConnect (ent, userinfo)))
 		{

@@ -500,10 +500,11 @@ void SV_GameMap_f (void)
 
 	Com_DPrintf("SV_GameMap(%s)\n", Cmd_Argv(1));
 
-	FS_CreatePath (va("%s/save/current/", FS_Gamedir()));
+	FS_CreatePath(va("%s/save/current/", FS_Gamedir()));
 
 	// check for clearing the current savegame
 	map = Cmd_Argv(1);
+
 	if (map[0] == '*')
 	{
 		// wipe all the *.sav files
@@ -583,7 +584,7 @@ void SV_Map_f (void)
 
 	sv.state = ss_dead;		// don't save current level when changing
 	SV_WipeSavegame("current");
-	SV_GameMap_f ();
+	SV_GameMap_f();
 }
 
 /*
@@ -897,74 +898,74 @@ void SV_ServerRecord_f (void)
 	int		len;
 	int		i;
 
-	if (Cmd_Argc() != 2)
+	if(Cmd_Argc() != 2)
 	{
-		Com_Printf ("serverrecord <demoname>\n");
+		Com_Printf("serverrecord <demoname>\n");
 		return;
 	}
 
-	if (svs.demofile)
+	if(svs.demofile)
 	{
-		Com_Printf ("Already recording.\n");
+		Com_Printf("Already recording.\n");
 		return;
 	}
 
-	if (sv.state != ss_game)
+	if(sv.state != ss_game)
 	{
-		Com_Printf ("You must be in a level to record.\n");
+		Com_Printf("You must be in a level to record.\n");
 		return;
 	}
 
 	//
 	// open the demo file
 	//
-	Com_sprintf (name, sizeof(name), "%s/demos/%s.dm2", FS_Gamedir(), Cmd_Argv(1));
+	Com_sprintf(name, sizeof(name), "%s/demos/%s.dm2", FS_Gamedir(), Cmd_Argv(1));
 
-	Com_Printf ("recording to %s.\n", name);
-	FS_CreatePath (name);
-	svs.demofile = fopen (name, "wb");
-	if (!svs.demofile)
+	Com_Printf("recording to %s.\n", name);
+	FS_CreatePath(name);
+	svs.demofile = fopen(name, "wb");
+	if(!svs.demofile)
 	{
-		Com_Printf ("ERROR: couldn't open.\n");
+		Com_Printf("ERROR: couldn't open.\n");
 		return;
 	}
 
 	// setup a buffer to catch all multicasts
-	SZ_Init (&svs.demo_multicast, svs.demo_multicast_buf, sizeof(svs.demo_multicast_buf));
+	SZ_Init(&svs.demo_multicast, svs.demo_multicast_buf, sizeof(svs.demo_multicast_buf));
 
 	//
 	// write a single giant fake message with all the startup info
 	//
-	SZ_Init (&buf, buf_data, sizeof(buf_data));
+	SZ_Init(&buf, buf_data, sizeof(buf_data));
 
 	//
 	// serverdata needs to go over for all types of servers
 	// to make sure the protocol is right, and to set the gamedir
 	//
 	// send the serverdata
-	MSG_WriteByte (&buf, svc_serverdata);
-	MSG_WriteLong (&buf, PROTOCOL_VERSION);
-	MSG_WriteLong (&buf, svs.spawncount);
+	MSG_WriteByte(&buf, svc_serverdata);
+	MSG_WriteLong(&buf, PROTOCOL_VERSION);
+	MSG_WriteLong(&buf, svs.spawncount);
 	// 2 means server demo
-	MSG_WriteByte (&buf, 2);	// demos are always attract loops
-	MSG_WriteString (&buf, Cvar_VariableString ("gamedir"));
-	MSG_WriteShort (&buf, -1);
+	MSG_WriteByte(&buf, 2);	// demos are always attract loops
+	MSG_WriteString(&buf, Cvar_VariableString ("gamedir"));
+	MSG_WriteShort(&buf, -1);
 	// send full levelname
-	MSG_WriteString (&buf, sv.configstrings[CS_NAME]);
+	MSG_WriteString(&buf, sv.configstrings[CS_NAME]);
 
-	for (i=0 ; i<MAX_CONFIGSTRINGS ; i++)
+	for (i=0; i<MAX_CONFIGSTRINGS; i++)
 		if (sv.configstrings[i][0])
 		{
-			MSG_WriteByte (&buf, svc_configstring);
-			MSG_WriteShort (&buf, i);
-			MSG_WriteString (&buf, sv.configstrings[i]);
+			MSG_WriteByte(&buf, svc_configstring);
+			MSG_WriteShort(&buf, i);
+			MSG_WriteString(&buf, sv.configstrings[i]);
 		}
 
 	// write it to the demo file
-	Com_DPrintf ("signon message length: %i\n", buf.cursize);
-	len = LittleLong (buf.cursize);
-	fwrite (&len, 4, 1, svs.demofile);
-	fwrite (buf.data, buf.cursize, 1, svs.demofile);
+	Com_DPrintf("signon message length: %i\n", buf.cursize);
+	len = LittleLong(buf.cursize);
+	fwrite(&len, 4, 1, svs.demofile);
+	fwrite(buf.data, buf.cursize, 1, svs.demofile);
 
 	// the rest of the demo file will be individual frames
 }

@@ -50,7 +50,10 @@ void Draw_InitLocal (void)
 
 
 	//draw_chars = GL_FindImage("pics/conchars.pcx", it_pic);
-	draw_chars = GL_FindImage("pics/conchars1.tga", it_pic); // jitconsole
+	if(ri.Cvar_Get("gl_overbright", "1", CVAR_ARCHIVE)->value && gl_state.texture_combine)
+		draw_chars = GL_FindImage("pics/conchars1ovb.tga", it_pic); // dark conchars (brightness doubled)
+	else
+		draw_chars = GL_FindImage("pics/conchars1.tga", it_pic); // jitconsole
 	GL_Bind(draw_chars->texnum);
 	//qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	//qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -135,9 +138,9 @@ void Draw_Char (int x, int y, int num) // jitodo -- try to remove all calls to t
 //#define CHAR_UNDERLINE_NUM 158
 #define CHAR_UNDERLINE_NUM 2
 
-float redtext[] = { 1.0f, .8f, .5f };
-float whitetext[] = { 1.0f, 1.0f, 1.0f };
-void Draw_String (int x, int y, const char *str) // jit, shush little warning
+//float redtext[] = { 1.0f, .8f, .5f };
+//float whitetext[] = { 1.0f, 1.0f, 1.0f };
+void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 {
 	int				px,py,row, col,num,va=0;
 	float			frow, fcol, size;
@@ -156,18 +159,9 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 		GL_Bind (draw_chars->texnum);
 	GLSTATE_DISABLE_ALPHATEST // jitconsole
 	GLSTATE_ENABLE_BLEND // jitconsole
-	GL_TexEnv(GL_MODULATE); // jittext
-
+	GL_TexEnv(GL_COMBINE_EXT); // jittext (brighter text now)
 	
 	size = 0.0625;
-	/*if(strstr(str, "eliminated")) // jitodo (jithighlight)
-	{
-		qglColor3fv(redtext);
-		//qglColor3f(1.0f, 0.5f, 0.5f);
-		coloredtext = 1;
-		GL_TexEnv( GL_MODULATE );
-		GLSTATE_ENABLE_BLEND
-	}*/
 
 	if(gl_textshadow->value)
 	{
@@ -186,7 +180,7 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 	do
 	{
 		if(shadowpass)
-			qglColor3f(0.0f, 0.0f, 0.0f);
+			qglColor4f(0.0f, 0.0f, 0.0f, alpha);
 
 		while (*s)
 		{
@@ -235,8 +229,9 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 				// look up color in char_colors.tga:
 				if (!shadowpass)
 				{
-					qglColor3ub(*(char_colors+num*4), 
-						*(char_colors+num*4+1), *(char_colors+num*4+2));
+					qglColor4f(*(char_colors+num*4)/255.0f, 
+						*(char_colors+num*4+1)/255.0f,
+						*(char_colors+num*4+2)/255.0f, alpha);
 				}
 				nextiscolor = false;
 				s++;
@@ -244,7 +239,8 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 			}
 			// ]==
 
-			if (py <= -8) {	// totally off screen
+			if (py <= -8)
+			{	// totally off screen
 				//s++; px+=8;
 				s++; px+=8*textscale; //jithudscale
 				continue;
@@ -258,14 +254,14 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 				frow = row*0.0625;
 				fcol = col*0.0625;
 
-				qglTexCoord2f (fcol, frow);
-				qglVertex2f (px, py+4*textscale);
-				qglTexCoord2f (fcol + size, frow);
-				qglVertex2f (px+8*textscale, py+4*textscale); // jithudscale...
-				qglTexCoord2f (fcol + size, frow + size);
-				qglVertex2f (px+8*textscale, py+12*textscale);
-				qglTexCoord2f (fcol, frow + size);
-				qglVertex2f (px, py+12*textscale);
+				qglTexCoord2f(fcol, frow);
+				qglVertex2f(px, py+4*textscale);
+				qglTexCoord2f(fcol + size, frow);
+				qglVertex2f(px+8*textscale, py+4*textscale); // jithudscale...
+				qglTexCoord2f(fcol + size, frow + size);
+				qglVertex2f(px+8*textscale, py+12*textscale);
+				qglTexCoord2f(fcol, frow + size);
+				qglVertex2f(px, py+12*textscale);
 			}
 
 			if ((num&127) == 32)		// space
@@ -280,22 +276,28 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 			frow = row*0.0625;
 			fcol = col*0.0625;
 
-			qglTexCoord2f (fcol, frow);
-			if(italicized) // jitconsole
-				qglVertex2f (px+4*textscale, py);
+			if(italicized)
+			{
+				qglTexCoord2f (fcol, frow);
+				qglVertex2f (px+2*textscale, py);
+				qglTexCoord2f (fcol + size, frow);
+				qglVertex2f (px+10*textscale, py); // jithudscale...
+				qglTexCoord2f (fcol + size, frow + size);
+				qglVertex2f (px+6*textscale, py+8*textscale);
+				qglTexCoord2f (fcol, frow + size);
+				qglVertex2f (px-2*textscale, py+8*textscale);
+			}
 			else
+			{
+				qglTexCoord2f (fcol, frow);
 				qglVertex2f (px, py);
-			qglTexCoord2f (fcol + size, frow);
-			if(italicized) // jitconsole
-				qglVertex2f (px+12*textscale, py); // jithudscale...
-			else
+				qglTexCoord2f (fcol + size, frow);
 				qglVertex2f (px+8*textscale, py); // jithudscale...
-			qglTexCoord2f (fcol + size, frow + size);
-			qglVertex2f (px+8*textscale, py+8*textscale);
-			qglTexCoord2f (fcol, frow + size);
-			qglVertex2f (px, py+8*textscale);
-
-			
+				qglTexCoord2f (fcol + size, frow + size);
+				qglVertex2f (px+8*textscale, py+8*textscale);
+				qglTexCoord2f (fcol, frow + size);
+				qglVertex2f (px, py+8*textscale);
+			}
 
 			s++; px+=8*textscale; //jithudscale
 		}
@@ -307,7 +309,8 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 			underlined = false;
 			shadowpass = false;
 			passagain = true;
-			qglColor3fv(whitetext);
+			//qglColor3fv(whitetext);
+			qglColor4f(1.0f, 1.0f, 1.0f, alpha);
 			s = str;
 			px=x;
 			py=y;
@@ -320,8 +323,16 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 
 	if(coloredtext)
 	{
-		qglColor3fv(whitetext);
+		//qglColor3fv(whitetext);
+		qglColor4f(1.0f, 1.0f, 1.0f, alpha);
 	}
+	GL_TexEnv(GL_MODULATE); // jittext
+}
+
+
+void Draw_String(int x, int y, const char *str)
+{
+	Draw_StringAlpha(x, y, str, 1.0f); // jit
 }
 
 /*
@@ -646,16 +657,27 @@ void Draw_TileClear2 (int x, int y, int w, int h, image_t *image)
 
 	qglDrawArrays(GL_QUADS,0,4);
 #else
-	qglBegin (GL_QUADS);
-	qglTexCoord2f (x/64.0, y/64.0);
-	qglVertex2f (x, y);
-	qglTexCoord2f ( (x+w)/64.0, y/64.0);
-	qglVertex2f (x+w, y);
-	qglTexCoord2f ( (x+w)/64.0, (y+h)/64.0);
-	qglVertex2f (x+w, y+h);
-	qglTexCoord2f ( x/64.0, (y+h)/64.0 );
-	qglVertex2f (x, y+h);
-	qglEnd ();
+	//qglBegin (GL_QUADS);
+	//qglTexCoord2f (x/64.0, y/64.0);
+	//qglVertex2f (x, y);
+	//qglTexCoord2f ( (x+w)/64.0, y/64.0);
+	//qglVertex2f (x+w, y);
+	//qglTexCoord2f ( (x+w)/64.0, (y+h)/64.0);
+	//qglVertex2f (x+w, y+h);
+	//qglTexCoord2f ( x/64.0, (y+h)/64.0 );
+	//qglVertex2f (x, y+h);
+	//qglEnd ();
+
+	qglBegin(GL_QUADS);
+	qglTexCoord2f(x/256.0f, y/128.0f); // jit -- new pic dimensions
+	qglVertex2f(x, y);
+	qglTexCoord2f((x+w)/256.0f, y/128.0f);
+	qglVertex2f(x+w, y);
+	qglTexCoord2f((x+w)/256.0f, (y+h)/128.0f);
+	qglVertex2f(x+w, y+h);
+	qglTexCoord2f(x/256.0f, (y+h)/128.0f);
+	qglVertex2f(x, y+h);
+	qglEnd();
 #endif
 
 	if ( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) )  && !image->has_alpha) {

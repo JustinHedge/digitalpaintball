@@ -1298,6 +1298,10 @@ static qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 					widget->modified = true;
 				}
 			}
+			else if (widget->type == WIDGET_TYPE_SLIDER)
+			{
+				M_AdjustWidget(menu, 1, true);
+			}
 			break;
 		case M_ACTION_SCROLLDOWN:
 			if((widget = newSelection)->type == WIDGET_TYPE_SELECT ||
@@ -1309,6 +1313,10 @@ static qboolean M_MouseAction(menu_screen_t* menu, MENU_ACTION action)
 					widget->select_vstart ++;
 					widget->modified = true;
 				}
+			}
+			else if (widget->type == WIDGET_TYPE_SLIDER)
+			{
+				M_AdjustWidget(menu, -1, true);
 			}
 			break;
 		case M_ACTION_NONE:
@@ -2434,10 +2442,7 @@ void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate t
 		}
 		svlist_domain[i] = 0; // terminate string
 	}
-	//s = strstr(serverlist_source->string, "/");
-	//if(s)
-	//	*s = 0;
-	//if(!NET_TCPConnect(serverListSocket, serverlist_source->string, 80))
+
 	if(!NET_TCPConnect(serverListSocket, svlist_domain, 80))
 	{
 		Com_Printf("Unable to connect to %s\n", svlist_domain);
@@ -2449,8 +2454,6 @@ void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate t
 		char msg[256];
 		int len, bytes_sent;
 
-		//if(s)
-		//	*s = '/';
 		sprintf(msg, "GET %s HTTP/1.0\n\n", s);
 
 		len = strlen(msg);
@@ -2475,8 +2478,11 @@ void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate t
 
 		serverlistfile = fopen(va("%s/servers.txt", FS_Gamedir()), "w");
 
+		if(!serverlistfile)
+			return;
+
 		// Read in up to 32767 bytes
-		while ( numread < 32760 && 0 < (bytes_read = recv(serverListSocket, buffer + numread, 32766 - numread, 0)))
+		while (numread < 32760 && 0 < (bytes_read = recv(serverListSocket, buffer + numread, 32766 - numread, 0)))
 		{
 			numread += bytes_read;
 		};
@@ -2497,26 +2503,41 @@ void M_ServerlistUpdate_f(void) // jitodo, this should be called in a separate t
 		// find \n\n, thats the end of header/beginning of the data
 		while (*current != '\n' || *(current+2) != '\n')
 		{
-			if (current > buffer + numread) {
-				free(buffer); return; 
+			if (current > buffer + numread)
+			{
+				free(buffer);
+				return; 
 			}
 			current ++;
 		};
+
 		current = current + 3; // skip the trailing \n.  We're at the beginning of the data now
 		
-		while (current < buffer + numread) {
-			found = current;												// Mark the beginning of the line
-			while (*current != 13) {										// Find the end of the line
+		while (current < buffer + numread)
+		{
+			found = current;						// Mark the beginning of the line
+
+			while (*current != 13)
+			{										// Find the end of the line
 				current ++; 
-				if (current > buffer + numread) { free(buffer); return; }	// Exit if we run out of room
-				if (*(current-1) == 'X' && *(current) == 13) {				// Exit if we find a X\n on a new line
-					goto done; 
+				
+				if (current > buffer + numread)
+				{
+					free(buffer);
+					return;	// Exit if we run out of room
+				}
+
+				if (*(current-1) == 'X' && *(current) == 13)
+				{
+					goto done; // Exit if we find a X\n on a new line
 				}
 			}
-			*current = 0;													// NULL terminate the string
-			fprintf(serverlistfile, "%s\n", found);							// Copy line to local file
-			current += 2;													// Start at the next line
+
+			*current = 0;								// NULL terminate the string
+			fprintf(serverlistfile, "%s\n", found);		// Copy line to local file
+			current += 2;								// Start at the next line
 		};
+
 done:
 		fclose(serverlistfile);
 		free(buffer);
@@ -2727,7 +2748,7 @@ static void M_DrawField(menu_widget_t *widget)
 
 
 	// draw only the portion of the string that fits within the field:
-	if(strlen(cvar_string) > widget->field_start + widget->field_width)
+	if(strlen_noformat(cvar_string) > widget->field_start + widget->field_width)
 	{
 		nullpos = widget->field_start + widget->field_width;
 		temp = cvar_string[nullpos];

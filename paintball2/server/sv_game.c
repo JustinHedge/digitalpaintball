@@ -91,17 +91,17 @@ void PF_cprintf (edict_t *ent, int level, char *fmt, ...)
 	{
 		n = NUM_FOR_EDICT(ent);
 		if (n < 1 || n > maxclients->value)
-			Com_Error (ERR_DROP, "cprintf to a non-client");
+			Com_Error(ERR_DROP, "cprintf to a non-client");
 	}
 
-	va_start (argptr,fmt);
-	vsprintf (msg, fmt, argptr);
-	va_end (argptr);
+	va_start(argptr,fmt);
+	vsprintf(msg, fmt, argptr);
+	va_end(argptr);
 
 	if (ent)
-		SV_ClientPrintf (svs.clients+(n-1), level, "%s", msg);
+		SV_ClientPrintf(svs.clients+(n-1), level, "%s", msg);
 	else
-		Com_Printf ("%s", msg);
+		Com_Printf("%s", msg);
 }
 
 

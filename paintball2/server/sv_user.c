@@ -799,25 +799,25 @@ void SV_ExecuteClientMessage (client_t *cl)
 			if (!sv_paused->value)
 			{
 				net_drop = cl->netchan.dropped;
+
 				if (net_drop < 20)
 				{
+					//if (net_drop > 2)
+					//	Com_Printf ("drop %i\n", net_drop);
 
-//if (net_drop > 2)
-
-//	Com_Printf ("drop %i\n", net_drop);
 					while (net_drop > 2)
 					{
 						SV_ClientThink (cl, &cl->lastcmd);
-
 						net_drop--;
 					}
+
 					if (net_drop > 1)
 						SV_ClientThink (cl, &oldest);
 
 					if (net_drop > 0)
 						SV_ClientThink (cl, &oldcmd);
-
 				}
+
 				SV_ClientThink (cl, &newcmd);
 			}
 

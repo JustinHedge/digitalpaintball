@@ -113,6 +113,7 @@ extern	int			numgltextures;
 extern	image_t		*r_notexture;
 extern	image_t		*r_whitetexture; // jitfog
 extern	image_t		*r_particletexture;
+extern	image_t		*r_caustictexture; // jitcaustics
 extern	entity_t	*currententity;
 extern	model_t		*currentmodel;
 extern	int			r_visframecount;
@@ -209,7 +210,8 @@ extern	cvar_t	*vid_fullscreen;
 extern	cvar_t	*vid_gamma;
 extern	cvar_t	*vid_lighten; // jitgamma
 
-extern	cvar_t		*intensity;
+//extern	cvar_t	*intensity;
+extern	cvar_t	*r_caustics; // jitcaustics
 
 
 extern	int		gl_lightmap_format;
@@ -257,6 +259,7 @@ void R_DrawBeam( entity_t *e );
 void R_DrawWorld (void);
 void R_RenderDlights (void);
 void R_DrawAlphaSurfaces (void);
+void R_DrawCaustics (void); // jitcaustics
 void R_RenderBrushPoly (msurface_t *fa);
 void R_InitNoTexture (void); // jit - renamed
 void Draw_InitLocal (void);

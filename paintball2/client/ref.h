@@ -178,8 +178,8 @@ typedef struct image_s
 	qboolean paletted;
 
 	qboolean is_cin;					// Heffo - To identify a cin texture's image_t
-	//qboolean alreadyloaded;				// jithighres
-	struct rscript_s *rscript; // jitrscript
+
+	struct rscript_s	*rscript;		// jitrscript
 } image_t;
 
 #define	API_VERSION		3
@@ -232,6 +232,7 @@ typedef struct
 	void	(*DrawFadeScreen) (void);
 
 	void	(*DrawString) (int x, int y, const char *str); // jit, shush little warning
+	void	(*DrawStringAlpha) (int x, int y, const char *str, float alpha); // jit -- transparent strings (for fading out)
 
 	image_t	*(*DrawFindPic) (char *name);
 
@@ -241,11 +242,11 @@ typedef struct
 	/*
 	** video mode and refresh state management entry points
 	*/
-	void	(*CinematicSetPalette)( const unsigned char *palette);	// NULL = game palette
-	void	(*BeginFrame)( float camera_separation );
+	void	(*CinematicSetPalette)(const unsigned char *palette);	// NULL = game palette
+	void	(*BeginFrame)(float camera_separation );
 	void	(*EndFrame) (void);
 
-	void	(*AppActivate)( qboolean activate );
+	void	(*AppActivate)(qboolean activate);
 
 } refexport_t;
 

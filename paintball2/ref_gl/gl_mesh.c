@@ -653,7 +653,8 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 	vec3_t	point;
 	float	height, lheight;
 	int		count;
-	int		va = 0; float mode;
+//	int		va = 0;
+	//float mode;
 
 //	vec3_t v[3];
 //	char i,vert;
@@ -691,7 +692,7 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 	{
 		// get the vertex count and primitive type
 		count = *order++;
-		va=0;
+	//	va=0;
 
 		if (!count)
 			break;		// done.

@@ -1528,11 +1528,13 @@ void SCR_UpdateScreen (void)
 						"SnaZ-BoT v3 Enabled");
 				}
 
-				SCR_DrawStats ();
+				SCR_DrawStats();
 				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 1)
-					SCR_DrawLayout ();
+					SCR_DrawLayout();
 				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 2)
-					CL_DrawInventory ();
+					CL_DrawInventory();
+
+				CL_DrawItemPickups(); // jit
 				// jitodo -- call client scoreboard display here
 
 				SCR_DrawNet ();

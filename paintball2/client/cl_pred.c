@@ -200,13 +200,13 @@ void CL_PredictMovement (void)
 {
 	int			ack, current;
 	int			frame;
-	int			oldframe;
+//	int			oldframe;
 	usercmd_t	*cmd;
 	pmove_t		pm;
 	int			i;
 	int			step;
-	int			oldz;
-	usercmd_t	interp_cmd; // jitnetfps - cmd to interpolate movement
+//	int			oldz;
+//	usercmd_t	interp_cmd; // jitnetfps - cmd to interpolate movement
 
 	if (cls.state != ca_active)
 		return;

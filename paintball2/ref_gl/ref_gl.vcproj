@@ -194,7 +194,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/J /Op-"
-				Optimization="3"
+				Optimization="4"
 				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="TRUE"
@@ -227,6 +227,8 @@
 				ModuleDefinitionFile=".\ref_gl.def"
 				ProgramDatabaseFile="..\..\release/ref_gl/ref_pbgl.pdb"
 				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				ImportLibrary="..\..\release/ref_gl/ref_pbgl.lib"/>
 			<Tool
 				Name="VCMIDLTool"

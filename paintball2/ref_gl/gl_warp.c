@@ -780,6 +780,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 			sky_max = 0.998046875f;
 		}
 	}
+
 	if(s) // jitfog -- reenable fog code.
 		*s = ' ';
 }

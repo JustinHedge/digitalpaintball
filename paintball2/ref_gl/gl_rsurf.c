@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static vec3_t	modelorg;		// relative to viewpoint
 
 msurface_t	*r_alpha_surfaces;
+msurface_t	*r_caustic_surfaces; // jitcaustics
 
 #define DYNAMIC_LIGHT_WIDTH  128
 #define DYNAMIC_LIGHT_HEIGHT 128
@@ -66,6 +67,7 @@ extern void R_SetCacheState( msurface_t *surf );
 extern void R_BuildLightMap (msurface_t *surf, byte *dest, int stride);
 
 extern qboolean fogenabled; // jitfog
+extern qboolean alphasurf; // jitrscript
 
 /*
 =============================================================
@@ -104,38 +106,23 @@ image_t *R_TextureAnimation (mtexinfo_t *tex)
 DrawGLPoly
 ================
 */
-#ifdef BEEFQUAKERENDER // jit3dfx -- 3dfx cards apparently don't support this:
+
 _inline void DrawGLPoly (glpoly_t *p)
 {
 	int		i;
 	float	*v;
 
+	qglBegin(GL_POLYGON);
 	v = p->verts[0];
-	for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
-	{
-		VA_SetElem2(tex_array[i],v[3],v[4]);
-		VA_SetElem3(vert_array[i],v[0],v[1],v[2]);
-	}
-	// if (qglLockArraysEXT != 0) qglLockArraysEXT(0,p->numverts);
-	qglDrawArrays (GL_POLYGON, 0, p->numverts);
-	// if (qglUnlockArraysEXT != 0) qglUnlockArraysEXT();
-}
-#else
-_inline void DrawGLPoly (glpoly_t *p)
-{
-	int		i;
-	float	*v;
 
-	qglBegin (GL_POLYGON);
-	v = p->verts[0];
-	for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
+	for (i=0; i<p->numverts; i++,v+=VERTEXSIZE)
 	{
-		qglTexCoord2f (v[3], v[4]);
-		qglVertex3fv (v);
+		qglTexCoord2f(v[3], v[4]);
+		qglVertex3fv(v);
 	}
-	qglEnd ();
+
+	qglEnd();
 }
-#endif
 
 //============
 //PGM
@@ -610,7 +597,8 @@ void R_AddFog (void) // jitfog -- for when multitexture is disabled.
 	qglDepthMask(1);
 }
 
-void DrawLightmaps() // jitfog -- lightmaps need to be drawn before textures
+
+void DrawLightmaps (void) // jitfog -- lightmaps need to be drawn before textures
 {
 	int			i;
 	msurface_t	*surf, *newdrawsurf = 0;
@@ -767,28 +755,28 @@ void R_RenderBrushPoly (msurface_t *fa)
 	/*
 	** check for lightmap modification
 	*/
-	for ( maps = 0; maps < MAXLIGHTMAPS && fa->styles[maps] != 255; maps++ )
+	for (maps=0; maps<MAXLIGHTMAPS && fa->styles[maps] != 255; maps++)
 	{
-		if ( r_newrefdef.lightstyles[fa->styles[maps]].white != fa->cached_light[maps] )
+		if (r_newrefdef.lightstyles[fa->styles[maps]].white != fa->cached_light[maps])
 			goto dynamic;
 	}
 
 	// dynamic this frame or dynamic previously
-	if ( ( fa->dlightframe == r_framecount ) )
+	if ((fa->dlightframe == r_framecount))
 	{
 dynamic:
-		if ( gl_dynamic->value )
+		if (gl_dynamic->value)
 		{
-			if (!( fa->texinfo->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP ) ) )
+			if (!(fa->texinfo->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP)))
 			{
 				is_dynamic = true;
 			}
 		}
 	}
 
-	if ( is_dynamic )
+	if (is_dynamic)
 	{
-		if ( ( fa->styles[maps] >= 32 || fa->styles[maps] == 0 ) && ( fa->dlightframe != r_framecount ) )
+		if ((fa->styles[maps] >= 32 || fa->styles[maps] == 0) && (fa->dlightframe != r_framecount))
 		{
 			unsigned	temp[34*34];
 			int			smax, tmax;
@@ -796,10 +784,10 @@ dynamic:
 			smax = (fa->extents[0]>>4)+1;
 			tmax = (fa->extents[1]>>4)+1;
 
-			R_BuildLightMap( fa, (void *)temp, smax*4 );
-			R_SetCacheState( fa );
+			R_BuildLightMap(fa, (void *)temp, smax*4);
+			R_SetCacheState(fa);
 
-			GL_Bind( gl_state.lightmap_textures + fa->lightmaptexturenum );
+			GL_Bind(gl_state.lightmap_textures + fa->lightmaptexturenum);
 
 			qglTexSubImage2D( GL_TEXTURE_2D, 0,
 							  fa->light_s, fa->light_t, 
@@ -823,6 +811,44 @@ dynamic:
 	}
 }
 
+void R_DrawCaustics (void) // jitcaustics
+{
+	msurface_t	*s;
+	
+
+	if(!r_caustics->value || !r_caustictexture || !r_caustictexture->rscript)
+	{
+		r_caustic_surfaces = NULL; // prevent infinite loop
+		return;
+	}
+
+	GLSTATE_ENABLE_BLEND
+	GL_TexEnv(GL_MODULATE);
+
+	qglEnable(GL_POLYGON_OFFSET_FILL); 
+	qglPolygonOffset(-3, -2); 
+
+	alphasurf = true;
+
+	for (s=r_caustic_surfaces; s; s=s->causticchain)
+	{
+//		GL_Bind(r_caustictexture->texnum);
+//		DrawGLPoly(s->polys);
+		RS_DrawSurface(s, false, r_caustictexture->rscript);
+	}
+
+	alphasurf = false;
+
+	qglDisable(GL_POLYGON_OFFSET_FILL); 
+
+	GL_TexEnv(GL_REPLACE);
+	qglColor4f (1,1,1,1);
+
+	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GLSTATE_DISABLE_BLEND
+
+	r_caustic_surfaces = NULL;
+}
 
 /*
 ================
@@ -837,7 +863,6 @@ void R_DrawAlphaSurfaces (void)
 {
 	msurface_t	*s;
 	float		intens;
-	extern qboolean alphasurf; // jitrscript
 
 	alphasurf = true; // jitrscript
 	//
@@ -896,6 +921,7 @@ void R_DrawAlphaSurfaces (void)
 	alphasurf = false; // jitrscript
 }
 
+
 /*
 ================
 DrawTextureChains
@@ -913,17 +939,20 @@ void DrawTextureChains (void)
 
 	if (!qglSelectTextureSGIS && !qglActiveTextureARB)
 	{
-		for ( i = 0, image=gltextures ; i<numgltextures ; i++,image++)
+		for (i=0,image=gltextures; i<numgltextures; i++,image++)
 		{
 			if (!image->registration_sequence)
 				continue;
+
 			s = image->texturechain;
+
 			if (!s)
 				continue;
+
 			c_visible_textures++;
 
-			for ( ; s ; s=s->texturechain)
-				R_RenderBrushPoly (s);
+			for ( ; s; s=s->texturechain)
+				R_RenderBrushPoly(s);
 
 			if(!fogenabled) // jitfog
 				image->texturechain = NULL;
@@ -935,14 +964,16 @@ void DrawTextureChains (void)
 		{
 			if (!image->registration_sequence)
 				continue;
+
 			if (!image->texturechain)
 				continue;
+
 			c_visible_textures++;
 
 			for (s=image->texturechain; s; s=s->texturechain)
 			{
 				if (!(s->flags & SURF_DRAWTURB))
-					R_RenderBrushPoly (s);
+					R_RenderBrushPoly(s);
 			}
 		}
 
@@ -952,14 +983,16 @@ void DrawTextureChains (void)
 		{
 			if (!image->registration_sequence)
 				continue;
+
 			s = image->texturechain;
+
 			if (!s)
 				continue;
 
 			for (; s; s=s->texturechain)
 			{
 				if (s->flags & SURF_DRAWTURB)
-					R_RenderBrushPoly (s);
+					R_RenderBrushPoly(s);
 			}
 
 			image->texturechain = NULL;
@@ -1196,6 +1229,12 @@ void R_DrawInlineBModel (void)
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
 			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
 		{
+			if (psurf->flags & SURF_UNDERWATER) // jitcaustics
+			{
+				psurf->causticchain = r_caustic_surfaces;
+				r_caustic_surfaces = psurf;
+			}
+
 			if (psurf->texinfo->flags & (SURF_TRANS33|SURF_TRANS66) )
 			{	// add to the translucent chain
 				psurf->texturechain = r_alpha_surfaces;
@@ -1409,7 +1448,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 	R_RecursiveWorldNode (node->children[side]);
 
 	// draw stuff
-	for ( c = node->numsurfaces, surf = r_worldmodel->surfaces + node->firstsurface; c ; c--, surf++)
+	for (c = node->numsurfaces, surf = r_worldmodel->surfaces + node->firstsurface; c; c--, surf++)
 	{
 		if (surf->visframe != r_framecount)
 			continue;
@@ -1422,30 +1461,41 @@ void R_RecursiveWorldNode (mnode_t *node)
 			R_AddSkySurface (surf);
 		}
 		else if (surf->texinfo->flags & SURF_NODRAW)
+		{
 			continue;
-		else if (surf->texinfo->flags & (SURF_TRANS33|SURF_TRANS66))
-		{	// add to the translucent chain
-			surf->texturechain = r_alpha_surfaces;
-			r_alpha_surfaces = surf;
 		}
 		else
 		{
-			if (qglMTexCoord2fSGIS && !(surf->flags & SURF_DRAWTURB))
+			if (surf->flags & SURF_UNDERWATER) // jitcaustics
 			{
-				GL_RenderLightmappedPoly( surf );
+				surf->causticchain = r_caustic_surfaces;
+				r_caustic_surfaces = surf;
+			}
+
+			if (surf->texinfo->flags & (SURF_TRANS33|SURF_TRANS66))
+			{	// add to the translucent chain
+				surf->texturechain = r_alpha_surfaces;
+				r_alpha_surfaces = surf;
 			}
 			else
 			{
-				// the polygon is visible, so add it to the texture
-				// sorted chain
-				// FIXME: this is a hack for animation
-				image = R_TextureAnimation (surf->texinfo);
-				surf->texturechain = image->texturechain;
-				image->texturechain = surf;
+				if (qglMTexCoord2fSGIS && !(surf->flags & SURF_DRAWTURB))
+				{
+					GL_RenderLightmappedPoly( surf );
+				}
+				else
+				{
+					// the polygon is visible, so add it to the texture
+					// sorted chain
+					// FIXME: this is a hack for animation
+					image = R_TextureAnimation (surf->texinfo);
+					surf->texturechain = image->texturechain;
+					image->texturechain = surf;
+				}
 			}
-			/*if (gl_showtris->value && qglMTexCoord2fSGIS) // jit / GuyP
+
+			if (gl_showtris->value && qglMTexCoord2fSGIS) // jit / GuyP
 				R_DrawTriangleOutlines(surf);    // Guy: gl_showtris fix
-				*/
 		}
 	}
 
@@ -1466,23 +1516,23 @@ void R_DrawWorld (void)
 	if (!r_drawworld->value)
 		return;
 
-	if ( r_newrefdef.rdflags & RDF_NOWORLDMODEL )
+	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL)
 		return;
 
 	currentmodel = r_worldmodel;
 
-	VectorCopy (r_newrefdef.vieworg, modelorg);
+	VectorCopy(r_newrefdef.vieworg, modelorg);
 
 	// auto cycle the world frame for texture animation
-	memset (&ent, 0, sizeof(ent));
+	memset(&ent, 0, sizeof(ent));
 	ent.frame = (int)(r_newrefdef.time*2);
 	currententity = &ent;
 
 	gl_state.currenttextures[0] = gl_state.currenttextures[1] = -1;
 
-	qglColor3f (1,1,1);
-	memset (gl_lms.lightmap_surfaces, 0, sizeof(gl_lms.lightmap_surfaces));
-	R_ClearSkyBox ();
+	qglColor3f(1,1,1);
+	memset(gl_lms.lightmap_surfaces, 0, sizeof(gl_lms.lightmap_surfaces));
+	R_ClearSkyBox();
 
 	if (qglMTexCoord2fSGIS)
 	{

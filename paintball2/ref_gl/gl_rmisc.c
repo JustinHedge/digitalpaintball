@@ -108,6 +108,12 @@ void R_InitNoTexture (void) /// jit, renamed
 				white[x][y][i] = 255;
 
 	r_whitetexture = GL_LoadPic("***r_whitetexture***", (byte*)white, 8, 8, it_sky, 32);
+
+	if(r_caustics->value > 1.0f)
+		r_caustictexture = GL_FindImage("textures/sfx/caustics/caustics1_02.tga", it_wall); // jitcaustics
+	else
+	//if(r_caustics->value)
+		r_caustictexture = GL_FindImage("textures/sfx/caustics/caustics1_01.tga", it_wall); // jitcaustics
 }
 
 

@@ -523,6 +523,7 @@ void CL_Download_f (void);
 void CL_Download2_f (void); // jitdownload
 #endif
 void CL_WriteConfig_f (void); // jitconfig
+void CL_Score_f (void); // jitscoreboard
 
 //
 // cl_view.c
@@ -590,6 +591,8 @@ int strlen_noformat(const unsigned char *s);
 void CL_ParseInventory (void);
 void CL_KeyInventory (int key);
 void CL_DrawInventory (void);
+void CL_ParsePrintItem (char *s); // jit
+void CL_DrawItemPickups (void); // jit
 
 //
 // cl_pred.c

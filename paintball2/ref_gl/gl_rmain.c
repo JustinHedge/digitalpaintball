@@ -59,7 +59,8 @@ glstate_t  gl_state;
 
 image_t		*r_notexture;		// use for bad textures
 image_t		*r_particletexture;	// little dot for particles
-image_t		*r_whitetexture; // jitfog
+image_t		*r_whitetexture;	// jitfog
+image_t		*r_caustictexture;	// jitcaustics
 
 entity_t	*currententity;
 model_t		*currentmodel;
@@ -188,6 +189,8 @@ cvar_t	*vid_ref;
 
 cvar_t	*cl_animdump;
 cvar_t	*vid_gamma_hw;
+
+cvar_t	*r_caustics; // jitcaustics
 
 /*
 =================
@@ -1197,7 +1200,7 @@ r_newrefdef must be set before the first call
 ================
 */
 
-void R_ApplyStains();
+void R_ApplyStains (void);
 
 void R_RenderView (refdef_t *fd)
 {
@@ -1239,34 +1242,35 @@ void R_RenderView (refdef_t *fd)
 	}
 	// jit -->
 
-	R_PushDlights ();
+	R_PushDlights();
 
 	if (gl_finish->value)
-		qglFinish ();
+		qglFinish();
 
 	if(r_newrefdef.num_newstains > 0 && gl_stainmaps->value)
-		R_ApplyStains ();
+		R_ApplyStains();
 
-	R_SetupFrame ();
+	R_SetupFrame();
 
-	R_SetFrustum ();
+	R_SetFrustum();
 
-	R_SetupGL ();
+	R_SetupGL();
 
-	R_MarkLeaves ();	// done here so we know if we're in water
+	R_MarkLeaves();	// done here so we know if we're in water
 
-	R_DrawWorld ();
-//qglDepthMask(GL_FALSE); // jitest
-//qglDepthFunc(GL_ALWAYS); // jitest
-	R_DrawEntitiesOnList ();
+	R_DrawWorld();
 
-	R_RenderDlights ();
+	R_DrawCaustics(); // jitcaustics
 
-	R_DrawParticles ();
+	R_DrawEntitiesOnList();
 
-	R_DrawAlphaSurfaces ();
+	R_RenderDlights();
 
-	R_DrawSpritesOnList (); // draw smoke after water so water doesn't cover it!
+	R_DrawParticles();
+
+	R_DrawAlphaSurfaces();
+
+	R_DrawSpritesOnList(); // draw smoke after water so water doesn't cover it!
 
 	if(fogenabled)
 		qglDisable(GL_FOG);
@@ -1353,33 +1357,33 @@ void R_SetGL2D()
 	// -->
 }
 
-static void GL_DrawColoredStereoLinePair( float r, float g, float b, float y )
+static void GL_DrawColoredStereoLinePair(float r, float g, float b, float y)
 {
-	qglColor3f( r, g, b );
-	qglVertex2f( 0, y );
-	qglVertex2f( vid.width, y );
-	qglColor3f( 0, 0, 0 );
-	qglVertex2f( 0, y + 1 );
-	qglVertex2f( vid.width, y + 1 );
+	qglColor3f(r, g, b);
+	qglVertex2f(0, y);
+	qglVertex2f(vid.width, y);
+	qglColor3f(0, 0, 0);
+	qglVertex2f(0, y + 1);
+	qglVertex2f(vid.width, y + 1);
 }
 
 static void GL_DrawStereoPattern( void )
 {
 	int i;
 
-	if ( !( gl_config.renderer & GL_RENDERER_INTERGRAPH ) )
+	if (!(gl_config.renderer & GL_RENDERER_INTERGRAPH))
 		return;
 
-	if ( !gl_state.stereo_enabled )
+	if (!gl_state.stereo_enabled)
 		return;
 
 	R_SetGL2D();
 
-	qglDrawBuffer( GL_BACK_LEFT );
+	qglDrawBuffer(GL_BACK_LEFT);
 
-	for ( i = 0; i < 20; i++ )
+	for (i = 0; i < 20; i++)
 	{
-		qglBegin( GL_LINES );
+		qglBegin(GL_LINES);
 			GL_DrawColoredStereoLinePair( 1, 0, 0, 0 );
 			GL_DrawColoredStereoLinePair( 1, 0, 0, 2 );
 			GL_DrawColoredStereoLinePair( 1, 0, 0, 4 );
@@ -1538,10 +1542,12 @@ void R_Register( void )
 	vid_lighten = ri.Cvar_Get("vid_lighten", "0", CVAR_ARCHIVE); // jitgamma
 	vid_ref = ri.Cvar_Get( "vid_ref", "pbgl", CVAR_ARCHIVE );
 
-	ri.Cmd_AddCommand( "imagelist", GL_ImageList_f );
-	ri.Cmd_AddCommand( "screenshot", GL_ScreenShot_f );
-	ri.Cmd_AddCommand( "modellist", Mod_Modellist_f );
-	ri.Cmd_AddCommand( "gl_strings", GL_Strings_f );
+	r_caustics = ri.Cvar_Get("r_caustics", "1", CVAR_ARCHIVE); // jitcaustics
+
+	ri.Cmd_AddCommand("imagelist", GL_ImageList_f);
+	ri.Cmd_AddCommand("screenshot", GL_ScreenShot_f);
+	ri.Cmd_AddCommand("modellist", Mod_Modellist_f);
+	ri.Cmd_AddCommand("gl_strings", GL_Strings_f);
 }
 
 /*
@@ -1654,7 +1660,7 @@ qboolean UsingGlideDriver() // jit3dfx
 R_Init
 ===============
 */
-qboolean R_Init( void *hinstance, void *hWnd )
+qboolean R_Init(void *hinstance, void *hWnd)
 {	
 	char renderer_buffer[1000];
 	char vendor_buffer[1000];
@@ -1708,7 +1714,7 @@ qboolean R_Init( void *hinstance, void *hWnd )
 	}
 
 	// initialize OS-specific parts of OpenGL
-	if ( !GLimp_Init( hinstance, hWnd ) )
+	if (!GLimp_Init(hinstance, hWnd))
 	{
 		QGL_Shutdown();
 		return -1;
@@ -1718,7 +1724,7 @@ qboolean R_Init( void *hinstance, void *hWnd )
 	gl_state.prev_mode = 3;
 
 	// create the window and set up the context
-	if ( !R_SetMode () )
+	if (!R_SetMode())
 	{
 		QGL_Shutdown();
         ri.Con_Printf (PRINT_ALL, "ref_gl::R_Init() - could not R_SetMode()\n" );
@@ -1734,17 +1740,17 @@ qboolean R_Init( void *hinstance, void *hWnd )
 	/*
 	** get our various GL strings
 	*/
-	gl_config.vendor_string = qglGetString (GL_VENDOR);
-	gl_config.renderer_string = qglGetString (GL_RENDERER);
-	gl_config.version_string = qglGetString (GL_VERSION);
-	gl_config.extensions_string = qglGetString (GL_EXTENSIONS);
+	gl_config.vendor_string = qglGetString(GL_VENDOR);
+	gl_config.renderer_string = qglGetString(GL_RENDERER);
+	gl_config.version_string = qglGetString(GL_VERSION);
+	gl_config.extensions_string = qglGetString(GL_EXTENSIONS);
 
 	if(gl_debug->value) // jit
 	{
-		ri.Con_Printf (PRINT_ALL, "GL_VENDOR: %s\n", gl_config.vendor_string );
-		ri.Con_Printf (PRINT_ALL, "GL_RENDERER: %s\n", gl_config.renderer_string );
-		ri.Con_Printf (PRINT_ALL, "GL_VERSION: %s\n", gl_config.version_string );
-		ri.Con_Printf (PRINT_ALL, "GL_EXTENSIONS: %s\n", gl_config.extensions_string );
+		ri.Con_Printf(PRINT_ALL, "GL_VENDOR: %s\n", gl_config.vendor_string);
+		ri.Con_Printf(PRINT_ALL, "GL_RENDERER: %s\n", gl_config.renderer_string);
+		ri.Con_Printf(PRINT_ALL, "GL_VERSION: %s\n", gl_config.version_string);
+		ri.Con_Printf(PRINT_ALL, "GL_EXTENSIONS: %s\n", gl_config.extensions_string);
 	}
 
 	strcpy( renderer_buffer, gl_config.renderer_string );
@@ -2075,14 +2081,16 @@ qboolean R_Init( void *hinstance, void *hWnd )
 	if(gl_texture_saturation->value > 1 || gl_texture_saturation->value < 0)
 		ri.Cvar_Set("gl_texture_saturation", "1");  // jitsaturation
 
-	GL_InitImages ();
-	Mod_Init ();
-	R_InitNoTexture (); // jit, renamed
-	Draw_InitLocal ();
+	GL_InitImages();
+	Mod_Init();
+	R_InitNoTexture(); // jit, renamed
+	Draw_InitLocal();
 
 	err = qglGetError();
-	if ( err != GL_NO_ERROR )
+
+	if (err != GL_NO_ERROR)
 		ri.Con_Printf (PRINT_ALL, "glGetError() = 0x%x\n", err);
+
 	return 0;
 }
 
@@ -2375,6 +2383,7 @@ void	Draw_TileClear2 (int x, int y, int w, int h, image_t *image);
 void	Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl);
 void	Draw_Pic2 (int x, int y, image_t *gl);
 void	Draw_String (int x, int y, const char *str); // jit, shush little warning
+void	Draw_StringAlpha (int x, int y, const char *str, float alhpa); // jit
 
 /*
 @@@@@@@@@@@@@@@@@@@@@
@@ -2415,6 +2424,7 @@ refexport_t GetRefAPI (refimport_t rimp )
 	re.DrawStretchPic2 = Draw_StretchPic2;
 	re.DrawTileClear2 = Draw_TileClear2;
 	re.DrawString = Draw_String;
+	re.DrawStringAlpha = Draw_StringAlpha;
 
 	re.Init = R_Init;
 	re.Shutdown = R_Shutdown;
