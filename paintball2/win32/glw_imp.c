@@ -330,6 +330,7 @@ void GLimp_Shutdown( void )
 //		SetDeviceGammaRamp(glw_state.hDC, original_ramp);
 
 	RS_FreeAllScripts();	// unload rscript
+	free(char_colors); // jittext
 
 	if ( qwglMakeCurrent && !qwglMakeCurrent( NULL, NULL ) )
 		ri.Con_Printf( PRINT_ALL, "ref_gl::R_Shutdown() - wglMakeCurrent failed\n");

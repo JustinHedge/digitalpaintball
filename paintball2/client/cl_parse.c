@@ -173,6 +173,46 @@ qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jp
 }
 
 /*
+void CL_Scores_f (void) // jitodo jitscores -- client-side scoreboard
+{
+	// draw a deathmatch client block
+	int		score, ping, time;
+
+	token = COM_Parse (&s);
+	x = viddef.width*0.5 - 160 + atoi(token);
+	token = COM_Parse (&s);
+	y = viddef.height*0.5 - 120 + atoi(token);
+	SCR_AddDirtyPoint (x, y);
+	SCR_AddDirtyPoint (x+159, y+31);
+
+	token = COM_Parse (&s);
+	value = atoi(token);
+	if (value >= MAX_CLIENTS || value < 0)
+		Com_Error (ERR_DROP, "client >= MAX_CLIENTS");
+	ci = &cl.clientinfo[value];
+
+	token = COM_Parse (&s);
+	score = atoi(token);
+
+	token = COM_Parse (&s);
+	ping = atoi(token);
+
+	token = COM_Parse (&s);
+	time = atoi(token);
+
+	DrawAltString (x+32, y, ci->name);
+	re.DrawString (x+32, y+8,  "Score: ");
+	DrawAltString (x+32+7*8, y+8,  va("%i", score));
+	re.DrawString (x+32, y+16, va("Ping:  %i", ping));
+	re.DrawString (x+32, y+24, va("Time:  %i", time));
+
+	if (!ci->icon)
+		ci = &cl.baseclientinfo;
+	re.DrawPic (x, y, ci->iconname);
+	continue;
+}*/
+
+/*
 ===============
 CL_Download_f
 
@@ -439,7 +479,7 @@ void CL_ParseServerData (void)
 
 	// set gamedir
 	if ((*str && (!fs_gamedirvar->string || !*fs_gamedirvar->string || strcmp(fs_gamedirvar->string, str))) || (!*str && (fs_gamedirvar->string || *fs_gamedirvar->string)))
-		Cvar_Set("game", str);
+		Cvar_Set("game", str); // jitodo -- don't set game on demos (cl.attractloop)
 
 	// parse player entity number
 	cl.playernum = MSG_ReadShort (&net_message);
@@ -454,8 +494,10 @@ void CL_ParseServerData (void)
 	else
 	{
 		// seperate the printfs so the server message can have a color
-		Com_Printf("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
-		Com_Printf ("%c%s\n", 2, str);
+		//Com_Printf("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
+		Com_Printf("\n\n %c%c\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n", CHAR_COLOR, 240); // jittext
+		//Com_Printf ("%c%s\n", 2, str);
+		Com_Printf ("%c%c%s\n\n", CHAR_COLOR, '`', str); // jittext
 
 		// need to prep refresh at next oportunity
 		cl.refresh_prepped = false;
@@ -862,7 +904,7 @@ void CL_ParseServerMessage (void)
 			if (i == PRINT_CHAT)
 			{
 				S_StartLocalSound ("misc/talk.wav");
-				con.ormask = 128;
+				// jittext con.ormask = 128;
 			}
 			if(cl_timestamp->value) // jit:
 				Com_Printf("[%s] %s", timestamp, MSG_ReadString(&net_message));

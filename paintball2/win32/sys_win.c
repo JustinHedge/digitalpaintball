@@ -272,7 +272,8 @@ char *Sys_ConsoleInput (void)
 {
 	INPUT_RECORD	recs[1024];
 	int		dummy;
-	int		ch, numread, numevents;
+	int		/*ch,*/ numread, numevents;
+	unsigned char ch; // jittext
 
 	if (!dedicated || !dedicated->value)
 		return NULL;

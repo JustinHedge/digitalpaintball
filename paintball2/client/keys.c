@@ -720,9 +720,19 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 		return;
 	}
 	
-	if (key < 32 || key > 127)
+	if(key < 32 || key > 127)
 		return;	// non printable
-		
+
+	if(keydown[K_CTRL]) // jitconsole / jittext
+	{
+		if(toupper(key) == 'K')
+			key = CHAR_COLOR;
+		else if(toupper(key) == 'U')
+			key = CHAR_UNDERLINE;
+		else if(toupper(key) == 'I')
+			key = CHAR_ITALICS;
+	}
+
 	if (key_linepos < MAXCMDLINE-1)
 	{
 		int i;
@@ -1131,6 +1141,7 @@ void Key_Event (int key, qboolean down, unsigned time)
 			&& key != K_KP_PGUP 
 			&& key != K_PGDN
 			&& key != K_KP_PGDN
+			&& key != K_MOUSEMOVE // ARTHUR [9/04/03] Allow auto-repeat on mousemove
 			&& key != K_LEFTARROW && key != K_RIGHTARROW // pooy
 			&& key_repeats[key] > 1)
 			return;	// ignore most autorepeats
@@ -1169,11 +1180,13 @@ void Key_Event (int key, qboolean down, unsigned time)
 		if (!down)
 			return;
 
-		if (cl.frame.playerstate.stats[STAT_LAYOUTS] && cls.key_dest == key_game)
-		{	// put away help computer / inventory
-			Cbuf_AddText ("cmd putaway\n");
-			return;
-		}
+//++ ARTHUR [9/04/03] - Make centerprint not act like another menu layer 
+//		if (cl.frame.playerstate.stats[STAT_LAYOUTS] && cls.key_dest == key_game)
+//		{	// put away help computer / inventory
+//			Cbuf_AddText ("cmd putaway\n");
+//			return;
+//		}
+//-- ARTHUR
 		switch (cls.key_dest)
 		{
 		case key_message:

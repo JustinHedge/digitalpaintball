@@ -14,7 +14,7 @@
 ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished -
 ** rights reserved under the Copyright Laws of the United States.
 **
-** $Header: /home/classic/cvs/paintball2/paintball2/ref_gl/glideutl.h,v 1.1.1.1 2003-09-10 20:03:41 calrathan Exp $
+** $Header: /home/classic/cvs/paintball2/paintball2/ref_gl/glideutl.h,v 1.2 2003-09-10 20:24:57 calrathan Exp $
 ** $Log: not supported by cvs2svn $
  * 
  * 11    1/07/98 11:18a Atai

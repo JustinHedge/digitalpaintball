@@ -23,11 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 
 image_t		*draw_chars;
+byte		*char_colors; // jittext
 
 extern	qboolean	scrap_dirty;
 extern cvar_t *cl_hudscale; //jithudscale
 void Scrap_Upload (void);
-
+extern cvar_t	*gl_textshadow; // jittext
 
 // vertex arrays
 float	tex_array[MAX_ARRAY][2];
@@ -44,11 +45,21 @@ Draw_InitLocal
 
 void Draw_InitLocal (void)
 {
-	// load console characters (don't bilerp characters)
-	draw_chars = GL_FindImage("pics/conchars.pcx", it_pic);
+	int width, height;
+	void LoadTGA (char *name, byte **pic, int *width, int *height);
+
+
+	//draw_chars = GL_FindImage("pics/conchars.pcx", it_pic);
+	draw_chars = GL_FindImage("pics/conchars1.tga", it_pic); // jitconsole
 	GL_Bind(draw_chars->texnum);
-	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	LoadTGA("pics/char_colors.tga", &char_colors, &width, &height); // jittext
+	if(!char_colors || (width*height != 256))
+	{
+		Sys_Error("Invalid or missing char_colors.tga.");
+	}
 }
 
 /*
@@ -60,7 +71,7 @@ It can be clipped to the top of the screen to allow the console to be
 smoothly scrolled off.
 ================
 */
-void Draw_Char (int x, int y, int num)
+void Draw_Char (int x, int y, int num) // jitodo -- try to remove all calls to this, use draw_string
 {
 	int				row, col;
 	float			frow, fcol, size;
@@ -82,7 +93,8 @@ void Draw_Char (int x, int y, int num)
 	frow = row*0.0625;
 	fcol = col*0.0625;
 	size = 0.0625;
-
+	GLSTATE_DISABLE_ALPHATEST // jitconsole
+	GLSTATE_ENABLE_BLEND // jitconsole
 	GL_Bind (draw_chars->texnum);
 
 #ifdef BEEFQUAKERENDER // jit3dfx
@@ -109,6 +121,9 @@ void Draw_Char (int x, int y, int num)
 #endif
 }
 
+//#define CHAR_UNDERLINE_NUM 158
+#define CHAR_UNDERLINE_NUM 2
+
 float redtext[] = { 1.0f, .8f, .5f };
 float whitetext[] = { 1.0f, 1.0f, 1.0f };
 void Draw_String (int x, int y, const char *str) // jit, shush little warning
@@ -118,13 +133,21 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 	const char		*s = str; // jit, shush little warning
 	int				textscale; // jithudscale
 	int				coloredtext = 0;
+	qboolean		nextiscolor = false;
+	qboolean		shadowpass = false;
+	qboolean		passagain = false;
+	qboolean		italicized = false;
+	qboolean		underlined = false;
 
 	textscale = (int)cl_hudscale->value;
 
 	if (gl_state.currenttextures[gl_state.currenttmu] != draw_chars->texnum)
 		GL_Bind (draw_chars->texnum);
+	GLSTATE_DISABLE_ALPHATEST // jitconsole
+	GLSTATE_ENABLE_BLEND // jitconsole
+	GL_TexEnv(GL_MODULATE); // jittext
 
-	px=x; py=y;
+	
 	size = 0.0625;
 	/*if(strstr(str, "eliminated")) // jitodo (jithighlight)
 	{
@@ -134,86 +157,152 @@ void Draw_String (int x, int y, const char *str) // jit, shush little warning
 		GL_TexEnv( GL_MODULATE );
 		GLSTATE_ENABLE_BLEND
 	}*/
-#ifdef BEEFQUAKERENDER // jit3dfx
-	while (*s) {
-		num=*s;
-		num &= 255;
-	
-		if ( (num&127) == 32 ) {		// space
-			//s++; px+=8;
-			s++; px+=8*textscale; //jithudscale
-			continue;
-		}
 
-		if (y <= -8) {	// totally off screen
-			//s++; px+=8;
-			s++; px+=8*textscale; //jithudscale
-			continue;
-		}
-
-		row = num>>4;
-		col = num&15;
-
-		frow = row*0.0625;
-		fcol = col*0.0625;
-
-		VA_SetElem2(tex_array[va],fcol, frow);
-		VA_SetElem2(vert_array[va],px, y);
-		va++;
-		VA_SetElem2(tex_array[va],fcol + size, frow);
-		VA_SetElem2(vert_array[va],px+8*textscale, y); 
-		va++;
-		VA_SetElem2(tex_array[va],fcol + size, frow + size);
-		VA_SetElem2(vert_array[va],px+8*textscale, y+8*textscale); 
-		va++;
-		VA_SetElem2(tex_array[va],fcol, frow + size);
-		VA_SetElem2(vert_array[va],px, y+8*textscale);
-		va++;
-
-		//s++; px+=8;
-		s++; px+=8*textscale; //jithudscale
+	if(gl_textshadow->value)
+	{
+		shadowpass = true;
+		px=x+textscale;
+		py=y+textscale;
 	}
-	
-	qglDrawArrays (GL_QUADS, 0, va);
-#else
+	else
+	{
+		px = x;
+		py = y;
+	}
+
 	qglBegin (GL_QUADS);
 
-	while (*s) {
-		num=*s;
-		num &= 255;
+	do
+	{
+		if(shadowpass)
+			qglColor3f(0.0f, 0.0f, 0.0f);
 
-		if ( (num&127) == 32 ) {		// space
-			//s++; px+=8;
+		while (*s)
+		{
+			num = *s;
+			num &= 255;
+
+			// ===[
+			// jitcoloredtext
+			//if(num == '^')
+			if(num == CHAR_COLOR)
+			{
+				if(!(*(s+1))) // end of string
+				{
+					nextiscolor = false;
+				}
+				else
+				{
+					nextiscolor = true;
+					coloredtext = 1;
+					s++;
+					continue;
+				}
+			}
+			else if(num == CHAR_UNDERLINE)
+			{
+				s++;
+				underlined = !underlined;
+				if(*s != '\0') // only draw if at end of string
+					continue;
+			}
+			else if(num == CHAR_ITALICS)
+			{
+				s++;
+				italicized = !italicized;
+				if(*s != '\0') // only draw if at end of string
+					continue;
+			}
+
+
+			if(nextiscolor)
+			{
+				// look up color in char_colors.tga:
+				if (!shadowpass)
+				{
+					qglColor3ub(*(char_colors+num*4), 
+						*(char_colors+num*4+1), *(char_colors+num*4+2));
+				}
+				nextiscolor = false;
+				s++;
+				continue;
+			}
+			// ]==
+
+			if (py <= -8) {	// totally off screen
+				//s++; px+=8;
+				s++; px+=8*textscale; //jithudscale
+				continue;
+			}
+
+			if(underlined) // jitconsole
+			{
+				CHAR_UNDERLINE_NUM;
+				row = CHAR_UNDERLINE_NUM>>4;
+				col = CHAR_UNDERLINE_NUM&15;
+
+				frow = row*0.0625;
+				fcol = col*0.0625;
+
+				qglTexCoord2f (fcol, frow);
+				qglVertex2f (px, py+4*textscale);
+				qglTexCoord2f (fcol + size, frow);
+				qglVertex2f (px+8*textscale, py+4*textscale); // jithudscale...
+				qglTexCoord2f (fcol + size, frow + size);
+				qglVertex2f (px+8*textscale, py+12*textscale);
+				qglTexCoord2f (fcol, frow + size);
+				qglVertex2f (px, py+12*textscale);
+			}
+
+			if ((num&127) == 32)		// space
+			{
+				s++; px+=8*textscale; //jithudscale
+				continue;
+			}
+
+			row = num>>4;
+			col = num&15;
+
+			frow = row*0.0625;
+			fcol = col*0.0625;
+
+			qglTexCoord2f (fcol, frow);
+			if(italicized) // jitconsole
+				qglVertex2f (px+4*textscale, py);
+			else
+				qglVertex2f (px, py);
+			qglTexCoord2f (fcol + size, frow);
+			if(italicized) // jitconsole
+				qglVertex2f (px+12*textscale, py); // jithudscale...
+			else
+				qglVertex2f (px+8*textscale, py); // jithudscale...
+			qglTexCoord2f (fcol + size, frow + size);
+			qglVertex2f (px+8*textscale, py+8*textscale);
+			qglTexCoord2f (fcol, frow + size);
+			qglVertex2f (px, py+8*textscale);
+
+			
+
 			s++; px+=8*textscale; //jithudscale
-			continue;
 		}
 
-		if (y <= -8) {	// totally off screen
-			//s++; px+=8;
-			s++; px+=8*textscale; //jithudscale
-			continue;
+		if(shadowpass)
+		{
+			nextiscolor = false;
+			italicized = false;
+			underlined = false;
+			shadowpass = false;
+			passagain = true;
+			qglColor3fv(whitetext);
+			s = str;
+			px=x;
+			py=y;
 		}
-
-		row = num>>4;
-		col = num&15;
-
-		frow = row*0.0625;
-		fcol = col*0.0625;
-
-		qglTexCoord2f (fcol, frow);
-		qglVertex2f (px, y);
-		qglTexCoord2f (fcol + size, frow);
-		qglVertex2f (px+8*textscale, y); // jithudscale...
-		qglTexCoord2f (fcol + size, frow + size);
-		qglVertex2f (px+8*textscale, y+8*textscale);
-		qglTexCoord2f (fcol, frow + size);
-		qglVertex2f (px, y+8*textscale);
-
-		s++; px+=8*textscale; //jithudscale
-	}
+		else
+			passagain = false;
+	} while (passagain);
 
 	qglEnd ();
-#endif
 
 	if(coloredtext)
 	{

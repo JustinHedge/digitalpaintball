@@ -33,6 +33,7 @@
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
+				DefaultCharIsUnsigned="FALSE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile="..\release/exe/paintball2.pch"
 				AssemblerListingLocation="..\release/exe/"
@@ -88,6 +89,7 @@
 				OptimizeForProcessor="1"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS"
 				RuntimeLibrary="1"
+				DefaultCharIsUnsigned="FALSE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile="..\debug/exe/paintball2.pch"
 				AssemblerListingLocation="..\debug/exe/"
@@ -103,7 +105,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="winmm.lib wsock32.lib"
-				OutputFile="..\paintball2.exe"
+				OutputFile="..\paintball2\paintball2.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
@@ -313,9 +315,6 @@
 				RelativePath=".\win32\vid_dll.c">
 			</File>
 			<File
-				RelativePath=".\win32\vid_menu.c">
-			</File>
-			<File
 				RelativePath=".\client\x86.c">
 			</File>
 			<Filter
@@ -435,6 +434,9 @@
 			</File>
 			<File
 				RelativePath=".\client\keys.h">
+			</File>
+			<File
+				RelativePath="client\menu.h">
 			</File>
 			<File
 				RelativePath=".\game\q_shared.h">

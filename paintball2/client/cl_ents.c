@@ -752,7 +752,7 @@ void CL_ParseFrame (void)
 		if (cls.state != ca_active)
 		{
 			extern cvar_t *name; // jitname
-			char temp[64]; // jitname
+//			char temp[64]; // jitname
 
 			cls.state = ca_active;
 			cl.force_refdef = true;
@@ -763,9 +763,9 @@ void CL_ParseFrame (void)
 			if (cls.disable_servercount != cl.servercount
 				&& cl.refresh_prepped)
 				SCR_EndLoadingPlaque ();	// get rid of loading plaque
-// jitodo -- store funname in actual configstring?
-			sprintf(temp, "cmd funname \"%s\"", name->string); // jitname
-			Cbuf_AddText(temp); // jitname
+// jitodo -- store funname in actual configstring? (done, needs testing)
+			//sprintf(temp, "cmd funname \"%s\"", name->string); // jitname
+			//Cbuf_AddText(temp); // jitname
 		}
 		cl.sound_prepped = true;	// can start mixing ambient sounds
 	

@@ -89,6 +89,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define K_MOUSE7		247
 #define K_MOUSE8		248
 #define	K_MOUSE9		249
+#define K_MOUSEMOVE		250	// ++ ARTHUR [9/04/03]
 
 //
 // joystick buttons

@@ -103,6 +103,7 @@ cvar_t	*cl_lightlevel;
 //
 // userinfo
 //
+cvar_t	*build; // jitversion
 cvar_t	*info_password;
 cvar_t	*info_spectator;
 cvar_t	*name;
@@ -1533,6 +1534,7 @@ CL_InitLocal
 */
 void CL_InitLocal (void)
 {
+//	char s[16]; // jit
 	cls.state = ca_disconnected;
 	cls.realtime = Sys_Milliseconds ();
 
@@ -1640,6 +1642,7 @@ void CL_InitLocal (void)
 	// userinfo
 	//
 	info_password = Cvar_Get ("password", "", CVAR_USERINFO);
+	build = Cvar_Get ("build", BUILD_S, CVAR_USERINFO|CVAR_NOSET); // jitversion
 	info_spectator = Cvar_Get ("spectator", "0", CVAR_USERINFO);
 	name = Cvar_Get ("name", "newbie", CVAR_USERINFO | CVAR_ARCHIVE); // jit :D
 	skin = Cvar_Get ("skin", "male/pb2b", CVAR_USERINFO | CVAR_ARCHIVE); // jit
@@ -1687,6 +1690,8 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("precache", CL_Precache_f);
 
 	Cmd_AddCommand ("download", CL_Download_f);
+
+	//Cmd_AddCommand ("scores", CL_Scores_f); // jitscores jitodo
 
 
 	//
@@ -1789,6 +1794,7 @@ cheatvar_t	cheatvars[] = {
 	{"gl_showtris", "0"}, // jit
 	{"cl_minfps", "0"}, // jit
 	{"r_drawworld", "1"}, // jit
+	{"build", BUILD_S}, // jitversion
 	{NULL, NULL}
 };
 

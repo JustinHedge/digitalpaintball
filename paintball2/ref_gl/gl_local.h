@@ -432,6 +432,7 @@ typedef struct
 extern glconfig_t  gl_config;
 extern glstate_t   gl_state;
 
+extern byte *char_colors; // jittext
 
 // vertex arrays
 

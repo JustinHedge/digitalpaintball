@@ -558,7 +558,7 @@ void SV_Map_f (void)
 {
 	char	*map;
 	char	expanded[MAX_QPATH];
-
+	
 	// if not a pcx, demo, or cinematic, check to make sure the level exists
 	map = Cmd_Argv(1);
 

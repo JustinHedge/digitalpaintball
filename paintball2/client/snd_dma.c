@@ -127,7 +127,7 @@ void S_Init (void)
 		s_volume = Cvar_Get ("s_volume", "0.7", CVAR_ARCHIVE);
 		s_khz = Cvar_Get ("s_khz", "44", CVAR_ARCHIVE); // jit, default to 44 (was 11)
 		s_loadas8bit = Cvar_Get ("s_loadas8bit", "0", CVAR_ARCHIVE); // jit, was 1
-		s_mixahead = Cvar_Get ("s_mixahead", "0.1", CVAR_ARCHIVE); // jit, was .2
+		s_mixahead = Cvar_Get ("s_mixahead", "0.2", CVAR_ARCHIVE);
 		s_show = Cvar_Get ("s_show", "0", 0);
 		s_testsound = Cvar_Get ("s_testsound", "0", 0);
 		s_primary = Cvar_Get ("s_primary", "0", CVAR_ARCHIVE);	// win32 specific
@@ -202,7 +202,7 @@ S_FindName
 
 ==================
 */
-sfx_t *S_FindName (char *name, qboolean create)
+sfx_t *S_FindName (const char *name, qboolean create)
 {
 	int		i;
 	sfx_t	*sfx;
@@ -302,7 +302,7 @@ S_RegisterSound
 
 ==================
 */
-sfx_t *S_RegisterSound (char *name)
+sfx_t *S_RegisterSound (const char *name)
 {
 	sfx_t	*sfx;
 
@@ -735,7 +735,7 @@ void S_StartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float f
 S_StartLocalSound
 ==================
 */
-void S_StartLocalSound (char *sound)
+void S_StartLocalSound (const char *sound)
 {
 	sfx_t	*sfx;
 

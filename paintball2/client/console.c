@@ -343,7 +343,7 @@ void Con_Init (void)
 //
 // register our commands
 //
-	con_notifytime = Cvar_Get ("con_notifytime", "3", 0);
+	con_notifytime = Cvar_Get ("con_notifytime", "6", CVAR_ARCHIVE); // jittext (was 3, and no archive)
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("togglechat", Con_ToggleChat_f);
@@ -380,22 +380,27 @@ All console printing must go through this in order to be logged to disk
 If no console is visible, the text will appear at the top of the game window
 ================
 */
-void Con_Print (char *txt)
+void Con_Print (unsigned char *txt) // jittext
 {
 	int		y;
-	int		c, l;
+	int		l;
+	unsigned char c; // jittext
 	static int	cr;
 	int		mask;
+	qboolean isitalics = false;
+	qboolean isunderlined = false;
+	qboolean iscolored = false;
+	unsigned char	color;
 
 	if (!con.initialized)
 		return;
-
+/* jittext
 	if (txt[0] == 1 || txt[0] == 2)
 	{
 		mask = 128;		// go to colored text
 		txt++;
 	}
-	else
+	else*/
 		mask = 0;
 
 
@@ -403,8 +408,10 @@ void Con_Print (char *txt)
 	{
 	// count word length
 		for (l=0 ; l< con.linewidth ; l++)
+		{
 			if ( txt[l] <= ' ')
 				break;
+		}
 
 	// word wrap
 		if (l != con.linewidth && (con.x + l > con.linewidth) )
@@ -422,10 +429,41 @@ void Con_Print (char *txt)
 		if (!con.x)
 		{
 			Con_Linefeed ();
-		// mark time for transparent overlay
+
+			if(isunderlined) // jittext, continue formatting or wordwrapped lines
+			{
+				y = con.current % con.totallines;
+				con.text[y*con.linewidth+con.x] = CHAR_UNDERLINE;
+				con.x++;
+			}
+			if(isitalics)
+			{
+				y = con.current % con.totallines;
+				con.text[y*con.linewidth+con.x] = CHAR_ITALICS;
+				con.x++;
+			}
+			if(iscolored)
+			{
+				y = con.current % con.totallines;
+				con.text[y*con.linewidth+con.x] = CHAR_COLOR;
+				con.text[y*con.linewidth+con.x+1] = color;
+				con.x += 2;
+			}
+
+			// mark time for transparent overlay
 			if (con.current >= 0)
 				con.times[con.current % NUM_CON_TIMES] = cls.realtime;
 		}
+		
+		if(c == CHAR_COLOR) // jittext
+		{
+			iscolored = true;
+			color = *txt;
+		}
+		else if(c == CHAR_UNDERLINE)
+			isunderlined = !isunderlined;
+		else if(c == CHAR_ITALICS)
+			isitalics = !isitalics;
 
 		switch (c)
 		{
@@ -440,13 +478,12 @@ void Con_Print (char *txt)
 
 		default:	// display character and advance
 			y = con.current % con.totallines;
-			con.text[y*con.linewidth+con.x] = c | mask | con.ormask;
+			con.text[y*con.linewidth+con.x] = c;// jittext | mask | con.ormask;
 			con.x++;
 			if (con.x >= con.linewidth)
 				con.x = 0;
 			break;
 		}
-		
 	}
 }
 
@@ -653,6 +690,7 @@ void Con_DrawConsole (float frac)
 	int				lines;
 	char			version[64];
 	char			dlbar[1024];
+	char			dlbar_fill[1024]; // jittext
 
 	lines = viddef.height * frac;
 	if (lines <= 0)
@@ -666,10 +704,16 @@ void Con_DrawConsole (float frac)
 	SCR_AddDirtyPoint (0,0);
 	SCR_AddDirtyPoint (viddef.width-1,lines-1);
 
-	Com_sprintf (version, sizeof(version), "v%4.2f Alpha (Build %d)   ", VERSION, BUILD); // jit 
+	Com_sprintf (version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
+	/*
 	for (x=0 ; x<22 ; x++) // jit (22 was 5)
 		//re.DrawChar (viddef.width-44*hudscale+x*8*hudscale, lines-12*hudscale, 128 + version[x] );
 		re.DrawChar (viddef.width-168*hudscale+x*8*hudscale, lines-12*hudscale, 128 + version[x] ); // jit
+	*/
+	re.DrawString(viddef.width-168*hudscale, lines-12*hudscale, version);
+
+	if(cls.key_dest == key_menu)
+		return; // jitmenu
 
 // draw the text
 	con.vislines = lines;
@@ -736,13 +780,36 @@ void Con_DrawConsole (float frac)
 		if (cls.downloadpercent == 0)
 			n = 0;
 		else
-			n = y * cls.downloadpercent / 100;
+			//n = y * cls.downloadpercent / 100;
+			n = ((float)(y+2) * (float)(cls.downloadpercent) / 100.0f + 0.5f); // jit (round properly)
 			
-		for (j = 0; j < y; j++)
-			if (j == n)
-				dlbar[i++] = '\x83';
+		// ===[
+		// jittext -- new download bar:
+		dlbar_fill[0] = CHAR_COLOR;
+		dlbar_fill[1] = 'Q'; // jittext
+		for (j=2; j<=i; j++) // jittext
+			dlbar_fill[j] = ' ';
+		for (j=0; j<n; j++) // jittext
+		{
+			if(j == n-1)
+				dlbar_fill[j+i+1] = '\x1f'; // end bar
 			else
+				dlbar_fill[j+i+1] = '\x1e'; // middle bar
+
+			if(j == 0)
+				dlbar_fill[j+i+1] = '\x1d'; // start bar
+		}
+		dlbar_fill[j+i+1] = '\0';
+		// ]===
+
+
+		for (j = 0; j < y; j++)
+		{
+			/*jittext if (j == n)
+				dlbar[i++] = '\x83';
+			else*/
 				dlbar[i++] = '\x81';
+		}
 		dlbar[i++] = '\x82';
 		dlbar[i] = 0;
 
@@ -753,6 +820,7 @@ void Con_DrawConsole (float frac)
 		//for (i = 0; i < strlen(dlbar); i++)
 		//	re.DrawChar ( (i+1)<<3, y, dlbar[i]);
 		// jitodo - test hudscale download bar
+		re.DrawString(8*hudscale, y, dlbar_fill);  // jittext
 		re.DrawString(8*hudscale, y, dlbar); // jit, draw whole line at once
 	}
 //ZOID

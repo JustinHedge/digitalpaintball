@@ -34,6 +34,7 @@ cvar_t	*zombietime;			// seconds to sink messages after disconnect
 
 cvar_t	*rcon_password;			// password for remote server commands
 
+//cvar_t	*allow_fast_downloads; // jitdownload
 cvar_t	*allow_download;
 cvar_t *allow_download_players;
 cvar_t *allow_download_models;
@@ -911,8 +912,10 @@ void SV_UserinfoChanged (client_t *cl)
 	// name for C code
 	strncpy (cl->name, Info_ValueForKey (cl->userinfo, "name"), sizeof(cl->name)-1);
 	// mask off high bit
-	for (i=0 ; i<sizeof(cl->name) ; i++)
-		cl->name[i] &= 127;
+	// jittext for (i=0 ; i<sizeof(cl->name) ; i++)
+	// jittext	cl->name[i] &= 127;
+
+	// jitodo -- print name changes here
 
 	// rate command
 	val = Info_ValueForKey (cl->userinfo, "rate");
@@ -967,6 +970,7 @@ void SV_Init (void)
 	sv_paused = Cvar_Get ("paused", "0", 0);
 	sv_timedemo = Cvar_Get ("timedemo", "0", 0);
 	sv_enforcetime = Cvar_Get ("sv_enforcetime", "0", 0);
+//	allow_fastdownloads = Cvar_Get("allow_fast_downloads", "1", CVAR_ARCHIVE); // jitdownload (incomplete)
 	allow_download = Cvar_Get ("allow_download", "1", CVAR_ARCHIVE);
 	allow_download_players  = Cvar_Get ("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1
 	allow_download_models = Cvar_Get ("allow_download_models", "1", CVAR_ARCHIVE);

@@ -151,6 +151,7 @@ cvar_t	*gl_texture_saturation; // jitsaturation
 cvar_t	*gl_highres_textures; // jithighres
 cvar_t	*gl_lightmap_saturation; // jitsaturation
 cvar_t	*gl_overbright; // jitbright
+cvar_t	*gl_textshadow; // jittext
 cvar_t	*gl_brightness; // jit
 cvar_t	*gl_autobrightness; // jit
 cvar_t	*gl_showbbox; // jit / Guy
@@ -1425,8 +1426,9 @@ void R_Register( void )
 	gl_autobrightness = ri.Cvar_Get("gl_autobrightness", ".8", CVAR_ARCHIVE); // jit
 	gl_showbbox = ri.Cvar_Get("gl_showbbox", "0", 0);  // jit / Guy
 	gl_modulate = ri.Cvar_Get("gl_modulate", "1.6", CVAR_ARCHIVE); // jit, default to 1.6
+	gl_textshadow = ri.Cvar_Get("gl_textshadow", "1", CVAR_ARCHIVE); // jittext
 	
-	cl_hudscale = ri.Cvar_Get("cl_hudscale", "1", CVAR_ARCHIVE); // jithudscale
+	cl_hudscale = ri.Cvar_Get("cl_hudscale", "2", CVAR_ARCHIVE); // jithudscale
 
 	gl_log = ri.Cvar_Get( "gl_log", "0", 0 );
 	gl_bitdepth = ri.Cvar_Get( "gl_bitdepth", "0", 0 );
@@ -1669,7 +1671,7 @@ qboolean R_Init( void *hinstance, void *hWnd )
 		return -1;
 	}
 
-	ri.Vid_MenuInit();
+//jitmenu	ri.Vid_MenuInit();
 
 	/*
 	** get our various GL strings
@@ -1828,10 +1830,11 @@ qboolean R_Init( void *hinstance, void *hWnd )
 		if ( gl_ext_multitexture->value )
 		{
 			if(gl_debug->value)
-				ri.Con_Printf( PRINT_ALL, "...using GL_ARB_multitexture\n" );
-			qglMTexCoord2fSGIS = ( void * ) qwglGetProcAddress( "glMultiTexCoord2fARB" );
-			qglActiveTextureARB = ( void * ) qwglGetProcAddress( "glActiveTextureARB" );
-			qglClientActiveTextureARB = ( void * ) qwglGetProcAddress( "glClientActiveTextureARB" );
+				ri.Con_Printf(PRINT_ALL, "...using GL_ARB_multitexture\n");
+
+			qglMTexCoord2fSGIS = (void*)qwglGetProcAddress("glMultiTexCoord2fARB");
+			qglActiveTextureARB = (void*)qwglGetProcAddress("glActiveTextureARB");
+			qglClientActiveTextureARB = (void*)qwglGetProcAddress("glClientActiveTextureARB");
 			GL_TEXTURE0 = GL_TEXTURE0_ARB;
 			GL_TEXTURE1 = GL_TEXTURE1_ARB;
 		}
@@ -1847,16 +1850,17 @@ qboolean R_Init( void *hinstance, void *hWnd )
 
 	if ( strstr( gl_config.extensions_string, "GL_SGIS_multitexture" ) )
 	{
-		if ( qglActiveTextureARB && gl_debug->value ) // jit
+		if ( qglActiveTextureARB )
 		{
-			ri.Con_Printf( PRINT_ALL, "...GL_SGIS_multitexture deprecated in favor of ARB_multitexture\n" );
+			if(gl_debug->value)
+				ri.Con_Printf( PRINT_ALL, "...GL_SGIS_multitexture deprecated in favor of ARB_multitexture\n" );
 		}
 		else if ( gl_ext_multitexture->value )
 		{
 			if(gl_debug->value)
 				ri.Con_Printf( PRINT_ALL, "...using GL_SGIS_multitexture\n" );
-			qglMTexCoord2fSGIS = ( void * ) qwglGetProcAddress( "glMTexCoord2fSGIS" );
-			qglSelectTextureSGIS = ( void * ) qwglGetProcAddress( "glSelectTextureSGIS" );
+			qglMTexCoord2fSGIS = (void *)qwglGetProcAddress("glMTexCoord2fSGIS");
+			qglSelectTextureSGIS = (void *)qwglGetProcAddress("glSelectTextureSGIS");
 			GL_TEXTURE0 = GL_TEXTURE0_SGIS;
 			GL_TEXTURE1 = GL_TEXTURE1_SGIS;
 		}

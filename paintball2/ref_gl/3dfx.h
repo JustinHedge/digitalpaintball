@@ -14,8 +14,8 @@
 ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
 ** rights reserved under the Copyright Laws of the United States.
 **
-** $Revision: 1.1.1.1 $
-** $Date: 2003-09-10 20:03:36 $
+** $Revision: 1.2 $
+** $Date: 2003-09-10 20:24:57 $
 */
 #ifndef __3DFX_H__
 #define __3DFX_H__

@@ -270,7 +270,8 @@ void Cbuf_AddEarlyCommands (qboolean clear)
 		s = COM_Argv(i);
 		if (strcmp (s, "+set"))
 			continue;
-		Cbuf_AddText (va("set %s %s\n", COM_Argv(i+1), COM_Argv(i+2)));
+		if(strcmp(COM_Argv(i+1), "build")) // jitversion -- don't let client fake it
+			Cbuf_AddText (va("set %s %s\n", COM_Argv(i+1), COM_Argv(i+2)));
 		if (clear)
 		{
 			COM_ClearArgv(i);
@@ -519,7 +520,7 @@ typedef struct cmd_function_s
 static	int			cmd_argc;
 static	char		*cmd_argv[MAX_STRING_TOKENS];
 static	char		*cmd_null_string = "";
-static	char		cmd_args[MAX_STRING_CHARS];
+static	unsigned char		cmd_args[MAX_STRING_CHARS]; // jittext
 
 static	cmd_function_t	*cmd_functions;		// possible commands to execute
 
@@ -641,10 +642,10 @@ Parses the given string into command line tokens.
 $Cvars will be expanded unless they are in a quoted token
 ============
 */
-void Cmd_TokenizeString (char *text, qboolean macroExpand)
+void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand) // jittext (added unsigned)
 {
 	int		i;
-	char	*com_token;
+	unsigned char *com_token;
 
 // clear the args from the last string
 	for (i=0 ; i<cmd_argc ; i++)
@@ -987,10 +988,10 @@ void Cmd_Init (void)
 //
 // register our commands
 //
-	Cmd_AddCommand ("cmdlist",Cmd_List_f);
-	Cmd_AddCommand ("exec",Cmd_Exec_f);
-	Cmd_AddCommand ("echo",Cmd_Echo_f);
-	Cmd_AddCommand ("alias",Cmd_Alias_f);
+	Cmd_AddCommand ("cmdlist", Cmd_List_f);
+	Cmd_AddCommand ("exec", Cmd_Exec_f);
+	Cmd_AddCommand ("echo", Cmd_Echo_f);
+	Cmd_AddCommand ("alias", Cmd_Alias_f);
 	Cmd_AddCommand ("wait", Cmd_Wait_f);
 }
 

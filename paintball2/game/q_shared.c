@@ -1071,7 +1071,8 @@ Parse a token out of a string
 */
 char *COM_Parse (char **data_p)
 {
-	int		c;
+	//int		c;
+	unsigned char c; // jittext
 	int		len;
 	char	*data;
 
@@ -1084,7 +1085,8 @@ char *COM_Parse (char **data_p)
 		*data_p = NULL;
 		return "";
 	}
-		
+
+
 // skip whitespace
 skipwhite:
 	while ( (c = *data) <= ' ')
@@ -1140,7 +1142,7 @@ skipwhite:
 
 	if (len == MAX_TOKEN_CHARS)
 	{
-//		Com_Printf ("Token exceeded %i chars, discarded.\n", MAX_TOKEN_CHARS);
+		Com_Printf ("Token exceeded %i chars, discarded.\n", MAX_TOKEN_CHARS);
 		len = 0;
 	}
 	com_token[len] = 0;
@@ -1177,7 +1179,7 @@ void Com_PageInMemory (byte *buffer, int size)
 */
 
 // FIXME: replace all Q_stricmp with Q_strcasecmp
-int Q_stricmp (char *s1, char *s2)
+int Q_stricmp (const char *s1, const char *s2)
 {
 #if defined(WIN32)
 	return _stricmp (s1, s2);
@@ -1187,7 +1189,7 @@ int Q_stricmp (char *s1, char *s2)
 }
 
 
-int Q_strncasecmp (char *s1, char *s2, int n)
+int Q_strncasecmp (const char *s1, const char *s2, int n)
 {
 	int		c1, c2;
 	
@@ -1213,7 +1215,7 @@ int Q_strncasecmp (char *s1, char *s2, int n)
 	return 0;		// strings are equal
 }
 
-int Q_strcasecmp (char *s1, char *s2)
+int Q_strcasecmp (const char *s1, const char *s2)
 {
 	return Q_strncasecmp (s1, s2, 99999);
 }
@@ -1362,7 +1364,8 @@ qboolean Info_Validate (char *s)
 void Info_SetValueForKey (char *s, char *key, char *value)
 {
 	char	newi[MAX_INFO_STRING], *v;
-	int		c;
+	//int		c;
+	unsigned char c; // jittext
 	int		maxsize = MAX_INFO_STRING;
 
 	if (strstr (key, "\\") || strstr (value, "\\") )
@@ -1406,8 +1409,9 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 	while (*v)
 	{
 		c = *v++;
-		c &= 127;		// strip high bits
-		if (c >= 32 && c < 127)
+		// jittext c &= 127;		// strip high bits
+		//if (c >= 32 && c < 127)
+		if(c >= 32) // jittext
 			*s++ = c;
 	}
 	*s = 0;

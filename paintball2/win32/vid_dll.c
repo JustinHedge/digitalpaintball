@@ -429,6 +429,10 @@ LONG WINAPI MainWndProc (
 			// ]===
 
 			IN_MouseEvent (temp);
+
+			// ++ ARTHUR [9/04/03] - Mouse movement emulates keystroke
+			Key_Event( K_MOUSEMOVE, true, sys_msg_time);
+			// -- ARTHUR	
 		}
 		break;
 
@@ -609,7 +613,7 @@ qboolean VID_LoadRefresh( char *name )
 	ri.Cvar_Set = Cvar_Set;
 	ri.Cvar_SetValue = Cvar_SetValue;
 	ri.Vid_GetModeInfo = VID_GetModeInfo;
-	ri.Vid_MenuInit = VID_MenuInit;
+//jitmenu	ri.Vid_MenuInit = VID_MenuInit;
 	ri.Vid_NewWindow = VID_NewWindow;
 
 	if ( ( GetRefAPI = (void *) GetProcAddress( reflib_library, "GetRefAPI" ) ) == 0 )

@@ -24,7 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #define	VERSION		2.0 // jitversion (was 3.21)
-#define BUILD		6 // jitversion / jitbuild -- Paintball2 build number
+#define BUILD		7 // jitversion / jitbuild -- Paintball2 build number
+#define BUILD_S		"7" // jitversion, for strings.
 
 #define	BASEDIRNAME	"pball" // jit, was "baseq2"
 
@@ -426,7 +427,7 @@ char	*Cmd_Args (void);
 // functions. Cmd_Argv () will return an empty string, not a NULL
 // if arg > argc, so string operations are always safe.
 
-void	Cmd_TokenizeString (char *text, qboolean macroExpand);
+void	Cmd_TokenizeString (unsigned char *text, qboolean macroExpand); // jittext
 // Takes a null terminated string.  Does not need to be /n terminated.
 // breaks the string up into arg tokens.
 
@@ -700,11 +701,11 @@ char	*FS_NextPath (char *prevpath);
 void	FS_ExecAutoexec (void);
 void	FS_ExecConfig (void); // jit
 
-int		FS_FOpenFile (char *filename, FILE **file);
+int		FS_FOpenFile (const char *filename, FILE **file);
 void	FS_FCloseFile (FILE *f);
 // note: this can't be called from another DLL, due to MS libc issues
 
-int		FS_LoadFile (char *path, void **buffer);
+int		FS_LoadFile (const char *path, void **buffer);
 // a null buffer will just return the file length without loading
 // a -1 length is not present
 
@@ -818,7 +819,7 @@ void CL_Init (void);
 void CL_Drop (void);
 void CL_Shutdown (void);
 void CL_Frame (int msec);
-void Con_Print (char *text);
+void Con_Print (unsigned char *text); // jittext
 void SCR_BeginLoadingPlaque (void);
 
 void SV_Init (void);

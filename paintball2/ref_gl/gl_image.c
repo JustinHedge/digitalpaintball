@@ -105,25 +105,25 @@ void GL_SelectTexture( GLenum texture )
 // <!-- jitbright
 extern cvar_t	*gl_overbright;
 
-void GL_TexEnv( GLenum mode ) 
+void GL_TexEnv(GLenum mode) 
 {
 	static int lastmodes[2] = { -1, -1 };
-	if ( mode != lastmodes[gl_state.currenttmu] )
+	if (mode != lastmodes[gl_state.currenttmu])
 	{
 		if(GL_COMBINE_EXT == mode) // a bit of a hack...
 		{
 			if(gl_state.texture_combine && gl_overbright->value)
 			{
-				qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+				//qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
 				qglTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
-				//qglTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_EXT, GL_MODULATE); // jitest
-				qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2.0);
+				qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
 			}
 			else // failed to combine, default to modulate.
 				mode = GL_MODULATE;
 		}
 
-		qglTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode );
+		//qglTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode );
+		qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode); // jit - should be i, right?
 		lastmodes[gl_state.currenttmu] = mode;		
 	}
 }

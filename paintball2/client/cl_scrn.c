@@ -522,7 +522,8 @@ void SCR_DrawConsole (void)
 {
 	Con_CheckResize ();
 	
-	if (cls.state == ca_disconnected || cls.state == ca_connecting)
+	if (cls.state == ca_disconnected || cls.state == ca_connecting
+		|| cls.key_dest == key_menu) // jitmenu
 	{	// forced full screen console
 		Con_DrawConsole (1.0);
 		return;
@@ -827,9 +828,10 @@ void DrawHUDString (int x, int y, int centerwidth, int xor, char *string, ...)
 	int		margin;
 	char	line[1024];
 	int		width;
-	int		i;
-	va_list		argptr;
-	char		msg[2048], *strp = msg;
+//	int		i;
+	va_list	argptr;
+	char	msg[2048], *strp = msg;
+	int		formatwidth;
 
 	va_start (argptr,string);
 	vsprintf (msg,string,argptr);
@@ -841,19 +843,28 @@ void DrawHUDString (int x, int y, int centerwidth, int xor, char *string, ...)
 	{
 		// scan out one line of text from the string
 		width = 0;
+		formatwidth = 0;
 		while (*strp && *strp != '\n')
+		{
+			if (*strp == CHAR_COLOR) // jittext
+				formatwidth += 2;
+			else if(*strp == CHAR_UNDERLINE || *strp == CHAR_ITALICS)
+				formatwidth ++;
+			
 			line[width++] = *strp++;
+		}
 		line[width] = 0;
 
 		if (centerwidth)
 			x = margin + (centerwidth*hudscale - width*8*hudscale)*0.5;
 		else
 			x = margin;
-		for (i=0 ; i<width ; i++)
+		/*for (i=0 ; i<width ; i++)
 		{
 			re.DrawChar (x, y, line[i]^xor);
 			x += 8*hudscale;
-		}
+		}*/
+		re.DrawString(x, y, line);
 		if (*strp)
 		{
 			strp++;	// skip the \n
@@ -1029,8 +1040,11 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			//if (!strcmp(token, "cstring2"))
 			else if(token[7]=='2')
 			{
+				//char local_s[MAX_TOKEN_CHARS];
 				token = COM_Parse (&s);
-				DrawHUDString (x, y, 320,0x80,token);
+				//sprintf(local_s, "%c%c%s", CHAR_COLOR, ']', token); // jittext
+				DrawHUDString (x, y, 320, 0, "%c%c%s", CHAR_COLOR, ']', token); // jittext
+				//re.DrawString (x, y, local_s); // jittext
 				continue;
 			}			
 			//if (!strcmp(token, "cstring"))
@@ -1121,8 +1135,11 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			//if (!strcmp(token, "string2"))
 			else if(token[6]=='2')
 			{
+				char local_s[MAX_TOKEN_CHARS];
 				token = COM_Parse (&s);
-				DrawAltString (x, y, token);
+				sprintf(local_s, "%c%c%s", CHAR_COLOR, ']', token); // jittext
+				//re.DrawString (x, y, token);
+				re.DrawString (x, y, local_s); // jittext
 				continue;
 			}
 			//if (!strcmp(token, "string"))
@@ -1352,7 +1369,8 @@ void SCR_UpdateScreen (void)
 
 	// jithudscale:
 	if(cl_hudscale->value < 1.0 || cl_hudscale->value > viddef.width/320.0) // jithudscale
-		Cvar_Set("cl_hudscale", "1"); // jithudscale
+		Cvar_SetValue("cl_hudscale", viddef.width/320.0f); // jithudscale
+	
 	hudscale = cl_hudscale->value;
 
 	/*
@@ -1448,6 +1466,7 @@ void SCR_UpdateScreen (void)
 					SCR_DrawLayout ();
 				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 2)
 					CL_DrawInventory ();
+				// jitodo -- call client scoreboard display here
 
 				SCR_DrawNet ();
 				SCR_CheckDrawCenterString ();
