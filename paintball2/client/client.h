@@ -510,6 +510,7 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s);
 void SHOWNET(char *s);
 void CL_ParseClientinfo (int player);
 void CL_Download_f (void);
+void CL_WriteConfig_f (void); // jitconfig
 
 //
 // cl_view.c

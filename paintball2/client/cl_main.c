@@ -182,6 +182,26 @@ void CL_Increase_f (void)
 	Cvar_SetValue(Cmd_Argv(1), var->value+val);
 }
 
+void CL_CatCvar_f (void) // jitconfig
+{
+		cvar_t *var;
+
+	if (Cmd_Argc() < 2) {
+		Com_Printf ("cvar_cat <cvar> <string>\n");
+		return;
+	}
+
+	var = Cvar_FindVar(Cmd_Argv(1));
+	if (!var) {
+		Com_Printf ("Unknown cvar '%s'\n", Cmd_Argv(1));
+		return;
+	}
+
+	if(Cmd_Argc() < 3) // add a space
+		Cvar_Set(Cmd_Argv(1), va("%s ", var->string));
+	else
+		Cvar_Set(Cmd_Argv(1), va("%s%s", var->string, Cmd_Argv(2)));
+}
 
 
 /*
@@ -1675,8 +1695,10 @@ void CL_InitLocal (void)
 
 	Cmd_AddCommand ("cvar_inc", CL_Increase_f);
 	Cmd_AddCommand ("cvar_toggle", CL_Toggle_f);
+	Cmd_AddCommand ("cvar_cat", CL_CatCvar_f); // jitconfig
 
 	Cmd_AddCommand ("quit", CL_Quit_f);
+	Cmd_AddCommand ("exit", CL_Quit_f); // jit (why not?)
 
 	Cmd_AddCommand ("connect", CL_Connect_f);
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
@@ -1692,6 +1714,8 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("download", CL_Download_f);
 
 	//Cmd_AddCommand ("scores", CL_Scores_f); // jitscores jitodo
+
+	Cmd_AddCommand ("writeconfig", CL_WriteConfig_f); // jitconfig
 
 
 	//
@@ -1738,7 +1762,7 @@ Writes key bindings and archived cvars to config.cfg
 ===============
 */
 void WriteAliases(FILE *f); // jitspoe
-void CL_WriteConfiguration (void)
+void CL_WriteConfiguration (const char *filename) // jitconfig -- allow for writing of specific files
 {
 	FILE	*f;
 	char	path[MAX_QPATH];
@@ -1746,11 +1770,11 @@ void CL_WriteConfiguration (void)
 	if (cls.state == ca_uninitialized)
 		return;
 
-	Com_sprintf (path, sizeof(path),"%s/configs/config.cfg",FS_Gamedir()); // jit
+	Com_sprintf (path, sizeof(path),"%s/configs/%s",FS_Gamedir(),filename); // jitconfig
 	f = fopen (path, "w");
 	if (!f)
 	{
-		Com_Printf ("Couldn't write configs/config.cfg.\n"); // jit
+		Com_Printf ("Couldn't write configs/%s.cfg.\n",filename); // jitconfig
 		return;
 	}
 
@@ -1762,6 +1786,15 @@ void CL_WriteConfiguration (void)
 	Cvar_WriteVariables (path);
 }
 
+void CL_WriteConfig_f (void) // jitconfig
+{
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: writeconfig <filename>\n");
+		return;
+	}
+
+	CL_WriteConfiguration(Cmd_Argv(1));
+}
 
 /*
 ==================
@@ -2092,7 +2125,7 @@ void CL_Shutdown(void)
 	}
 	isdown = true;
 
-	CL_WriteConfiguration (); 
+	CL_WriteConfiguration("config.cfg"); 
 
 	CDAudio_Shutdown ();
 	S_Shutdown();
