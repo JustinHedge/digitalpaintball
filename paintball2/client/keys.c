@@ -1228,20 +1228,31 @@ void Key_Event (int key, qboolean down, unsigned time)
 //
 	if (!down)
 	{
-		kb = keybindings[key];
-		if (kb && kb[0] == '+')
+		switch (cls.key_dest) // jitmenu -- we want to activate things when the key goes UP!
 		{
-			Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
-			Cbuf_AddText (cmd);
-		}
-		if (keyshift[key] != key)
-		{
-			kb = keybindings[keyshift[key]];
+		case key_menu:
+			M_Keyup(key);
+			break;
+		case key_console:
+			break; // jitbind -- fix calls of keyup binds while typing in console!
+		case key_game:
+		default:
+			kb = keybindings[key];
 			if (kb && kb[0] == '+')
 			{
 				Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
 				Cbuf_AddText (cmd);
 			}
+			if (keyshift[key] != key)
+			{
+				kb = keybindings[keyshift[key]];
+				if (kb && kb[0] == '+')
+				{
+					Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
+					Cbuf_AddText (cmd);
+				}
+			}
+			break;
 		}
 		return;
 	}
@@ -1269,9 +1280,6 @@ void Key_Event (int key, qboolean down, unsigned time)
 		}
 		return;
 	}
-
-	if (!down)
-		return;		// other systems only care about key down events
 
 	if (shift_down)
 		key = keyshift[key];
