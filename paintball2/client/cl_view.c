@@ -335,22 +335,23 @@ Sys_SendKeyEvents (); // jit, moved
 		//Sys_SendKeyEvents ();	// pump message loop 
 		// jitest
 	}
-Sys_SendKeyEvents (); // jit, moved	
+	Sys_SendKeyEvents (); // jit, moved	
 	Com_Printf ("                                     \r");
 	for (i=0 ; i<MAX_CLIENTS ; i++)
 	{
 		if (!cl.configstrings[CS_PLAYERSKINS+i][0])
 			continue;
-		
+
 		Com_Printf ("client %i\r", i);  
 		SCR_UpdateScreen ();
 		Sys_SendKeyEvents ();	// pump message loop
-		
+
 		CL_ParseClientinfo (i);
 		Com_Printf ("                                     \r");
 	}
-Sys_SendKeyEvents (); // jit, moved
-	CL_LoadClientinfo (&cl.baseclientinfo, "unnamed\\male/grunt"); // jitodo, make this use the pball skin
+	Sys_SendKeyEvents (); // jit, moved
+	//CL_LoadClientinfo(&cl.baseclientinfo, "unnamed\\male/grunt"); // jitodo, make this use the pball skin
+	CL_LoadClientinfo(&cl.baseclientinfo, "unnamed\\male/pb2y"); // jitodo, make this use the pball skin
 
 	// set sky textures and speed
 	Com_Printf ("sky\r", i); 

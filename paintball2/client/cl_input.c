@@ -576,7 +576,7 @@ void CL_SendCmd (void)
 	// deliver the message
 	//
 	Netchan_Transmit(&cls.netchan, buf.cursize, buf.data);
-	cls.last_transmit_time = sys_frame_time; // todo
+	cls.last_transmit_time = cls.realtime;
 
 	//if(cl_locknetfps->value) // jitodo download2 check here
 	//{

@@ -1583,128 +1583,130 @@ void CL_InitLocal (void)
 //
 // register our variables
 //
-	cl_stereo_separation = Cvar_Get( "cl_stereo_separation", "0.4", CVAR_ARCHIVE );
-	cl_stereo = Cvar_Get( "cl_stereo", "0", 0 );
+	cl_stereo_separation =	Cvar_Get("cl_stereo_separation", "0.4", CVAR_ARCHIVE );
+	cl_stereo =				Cvar_Get("cl_stereo", "0", 0 );
 
-	/*cl_add_blend = */Cvar_Get ("cl_blend", "1", 0);
-	cl_add_lights = Cvar_Get ("cl_lights", "1", 0);
-	cl_add_particles = Cvar_Get ("cl_particles", "1", 0);
-	cl_add_entities = Cvar_Get ("cl_entities", "1", 0);
-	cl_gun = Cvar_Get ("cl_gun", "1", 0);
-	cl_footsteps = Cvar_Get ("cl_footsteps", "1", 0);
-	cl_noskins = Cvar_Get ("cl_noskins", "0", 0);
-	cl_autoskins = Cvar_Get ("cl_autoskins", "0", 0);
-	cl_predict = Cvar_Get ("cl_predict", "1", 0);
-	cl_minfps = Cvar_Get ("cl_minfps", "0", 0);
-	cl_maxfps = Cvar_Get ("cl_maxfps", "0", CVAR_ARCHIVE); // jit, default to 0
-	cl_locknetfps = Cvar_Get ("cl_locknetfps", "0", CVAR_ARCHIVE); // jitnetfps
-	cl_cmdrate = Cvar_Get ("cl_cmdrate", "60", CVAR_ARCHIVE); // jitnetfps
-	cl_sleep = Cvar_Get ("cl_sleep", "1", CVAR_ARCHIVE); // jit/pooy
+	/*cl_add_blend = */	Cvar_Get("cl_blend", "1", 0);
+	cl_add_lights =		Cvar_Get("cl_lights", "1", 0);
+	cl_add_particles =	Cvar_Get("cl_particles", "1", 0);
+	cl_add_entities =	Cvar_Get("cl_entities", "1", 0);
+	cl_gun =			Cvar_Get("cl_gun", "1", 0);
+	cl_footsteps =		Cvar_Get("cl_footsteps", "1", 0);
+	cl_noskins =		Cvar_Get("cl_noskins", "0", 0);
+	cl_autoskins =		Cvar_Get("cl_autoskins", "0", 0);
+	cl_predict =		Cvar_Get("cl_predict", "1", 0);
+	cl_minfps =			Cvar_Get("cl_minfps", "0", 0);
+	cl_maxfps =			Cvar_Get("cl_maxfps", "0", CVAR_ARCHIVE); // jit, default to 0
+	cl_locknetfps =		Cvar_Get("cl_locknetfps", "0", CVAR_ARCHIVE); // jitnetfps
+	cl_cmdrate =		Cvar_Get("cl_cmdrate", "60", CVAR_ARCHIVE); // jitnetfps
+	cl_sleep =			Cvar_Get("cl_sleep", "1", CVAR_ARCHIVE); // jit/pooy
 
-	cl_upspeed = Cvar_Get ("cl_upspeed", "200", 0);
-	cl_forwardspeed = Cvar_Get ("cl_forwardspeed", "200", 0);
-	cl_sidespeed = Cvar_Get ("cl_sidespeed", "200", 0);
-	cl_yawspeed = Cvar_Get ("cl_yawspeed", "140", 0);
-	cl_pitchspeed = Cvar_Get ("cl_pitchspeed", "150", 0);
-	cl_anglespeedkey = Cvar_Get ("cl_anglespeedkey", "1.5", 0);
+	cl_upspeed =		Cvar_Get("cl_upspeed", "200", 0);
+	cl_forwardspeed =	Cvar_Get("cl_forwardspeed", "200", 0);
+	cl_sidespeed =		Cvar_Get("cl_sidespeed", "200", 0);
+	cl_yawspeed =		Cvar_Get("cl_yawspeed", "140", 0);
+	cl_pitchspeed =		Cvar_Get("cl_pitchspeed", "150", 0);
+	cl_anglespeedkey =	Cvar_Get("cl_anglespeedkey", "1.5", 0);
 
-	cl_drawfps = Cvar_Get("cl_drawfps", "0", CVAR_ARCHIVE); // drawfps - MrG
-	cl_drawhud = Cvar_Get("cl_drawhud", "1", 0); // jithud
+	cl_drawfps =		Cvar_Get("cl_drawfps", "0", CVAR_ARCHIVE); // drawfps - MrG
+	cl_drawhud =		Cvar_Get("cl_drawhud", "1", 0); // jithud
 	// ===
 	// jit
-	cl_timestamp = Cvar_Get("cl_timestamp","0",CVAR_ARCHIVE); // jit
-	cl_hudscale = Cvar_Get("cl_hudscale","1",CVAR_ARCHIVE); // jithudscale
+	cl_timestamp =		Cvar_Get("cl_timestamp","0",CVAR_ARCHIVE); // jit
+
+	cl_hudscale =		Cvar_Get("cl_hudscale","1",CVAR_ARCHIVE); // jithudscale
 	if(cl_hudscale->value < 1.0)
 		Cvar_Set("cl_hudscale","1");
 	hudscale = cl_hudscale->value;
-	serverlist_source = Cvar_Get("serverlist_source", 
+
+	serverlist_source =	Cvar_Get("serverlist_source", 
 		"http://www.planetquake.com/digitalpaint/servers.txt", CVAR_ARCHIVE); // jitserverlist / jitmenu
 	// ===
 
-	cl_run = Cvar_Get ("cl_run", "1", CVAR_ARCHIVE); // jit, default to 1
-	freelook = Cvar_Get( "freelook", "1", CVAR_ARCHIVE ); // jit, default to 1
-	lookspring = Cvar_Get ("lookspring", "0", CVAR_ARCHIVE);
-	lookstrafe = Cvar_Get ("lookstrafe", "0", CVAR_ARCHIVE);
-	sensitivity = Cvar_Get ("sensitivity", "10", CVAR_ARCHIVE); // jit, was "3"
+	cl_run =			Cvar_Get("cl_run", "1", CVAR_ARCHIVE); // jit, default to 1
+	freelook =			Cvar_Get("freelook", "1", CVAR_ARCHIVE ); // jit, default to 1
+	lookspring =		Cvar_Get("lookspring", "0", CVAR_ARCHIVE);
+	lookstrafe =		Cvar_Get("lookstrafe", "0", CVAR_ARCHIVE);
+	sensitivity =		Cvar_Get("sensitivity", "10", CVAR_ARCHIVE); // jit, was "3"
 
-	m_pitch = Cvar_Get ("m_pitch", "0.022", CVAR_ARCHIVE);
-	m_yaw = Cvar_Get ("m_yaw", "0.022", 0);
-	m_forward = Cvar_Get ("m_forward", "1", 0);
-	m_side = Cvar_Get ("m_side", "1", 0);
-	m_invert = Cvar_Get ("m_invert", "0", CVAR_ARCHIVE); // jitmouse
+	m_pitch =			Cvar_Get("m_pitch", "0.022", CVAR_ARCHIVE);
+	m_yaw =				Cvar_Get("m_yaw", "0.022", 0);
+	m_forward =			Cvar_Get("m_forward", "1", 0);
+	m_side =			Cvar_Get("m_side", "1", 0);
+	m_invert =			Cvar_Get("m_invert", "0", CVAR_ARCHIVE); // jitmouse
 
-	cl_shownet = Cvar_Get ("cl_shownet", "0", 0);
-	cl_showmiss = Cvar_Get ("cl_showmiss", "0", 0);
-	cl_showclamp = Cvar_Get ("showclamp", "0", 0);
-	cl_timeout = Cvar_Get ("cl_timeout", "120", 0);
-	cl_paused = Cvar_Get ("paused", "0", 0);
-	cl_timedemo = Cvar_Get ("timedemo", "0", 0);
+	cl_shownet =		Cvar_Get("cl_shownet", "0", 0);
+	cl_showmiss =		Cvar_Get("cl_showmiss", "0", 0);
+	cl_showclamp =		Cvar_Get("showclamp", "0", 0);
+	cl_timeout =		Cvar_Get("cl_timeout", "120", 0);
+	cl_paused =			Cvar_Get("paused", "0", 0);
+	cl_timedemo =		Cvar_Get("timedemo", "0", 0);
 
-	rcon_client_password = Cvar_Get ("rcon_password", "", 0);
-	rcon_address = Cvar_Get ("rcon_address", "", 0);
+	rcon_client_password =	Cvar_Get("rcon_password", "", 0);
+	rcon_address =			Cvar_Get("rcon_address", "", 0);
 
-	cl_lightlevel = Cvar_Get ("r_lightlevel", "0", 0);
+	cl_lightlevel =		Cvar_Get("r_lightlevel", "0", 0);
 
 	//
 	// userinfo
 	//
-	info_password = Cvar_Get ("password", "", CVAR_USERINFO);
-	build = Cvar_Get ("build", BUILD_S, CVAR_USERINFO|CVAR_NOSET); // jitversion
-	info_spectator = Cvar_Get ("spectator", "0", CVAR_USERINFO);
-	name = Cvar_Get ("name", "newbie", CVAR_USERINFO | CVAR_ARCHIVE); // jit :D
-	skin = Cvar_Get ("skin", "male/pb2b", CVAR_USERINFO | CVAR_ARCHIVE); // jit
-	rate = Cvar_Get ("rate", "25000", CVAR_USERINFO | CVAR_ARCHIVE);	// FIXME
-	msg = Cvar_Get ("msg", "0", CVAR_USERINFO | CVAR_ARCHIVE);
-	hand = Cvar_Get ("hand", "0", CVAR_USERINFO | CVAR_ARCHIVE);
-	fov = Cvar_Get ("fov", "90", CVAR_USERINFO | CVAR_ARCHIVE);
-	gender = Cvar_Get ("gender", "male", CVAR_USERINFO | CVAR_ARCHIVE);
-	gender_auto = Cvar_Get ("gender_auto", "1", CVAR_ARCHIVE);
+	info_password =		Cvar_Get("password", "", CVAR_USERINFO);
+	build =				Cvar_Get("build", BUILD_S, CVAR_USERINFO|CVAR_NOSET); // jitversion
+	info_spectator =	Cvar_Get ("spectator", "0", CVAR_USERINFO);
+	name =				Cvar_Get("name", "newbie", CVAR_USERINFO | CVAR_ARCHIVE); // jit :D
+	skin =				Cvar_Get("skin", "male/pb2b", CVAR_USERINFO | CVAR_ARCHIVE); // jit
+	rate =				Cvar_Get("rate", "25000", CVAR_USERINFO | CVAR_ARCHIVE);	// FIXME
+	msg =				Cvar_Get("msg", "0", CVAR_USERINFO | CVAR_ARCHIVE);
+	hand =				Cvar_Get("hand", "0", CVAR_USERINFO | CVAR_ARCHIVE);
+	fov =				Cvar_Get("fov", "90", CVAR_USERINFO | CVAR_ARCHIVE);
+
+	gender =			Cvar_Get("gender", "male", CVAR_USERINFO | CVAR_ARCHIVE);
+	gender_auto =		Cvar_Get("gender_auto", "1", CVAR_ARCHIVE);
 	gender->modified = false; // clear this so we know when user sets it manually
 
-	cl_vwep = Cvar_Get ("cl_vwep", "1", CVAR_ARCHIVE);
+	cl_vwep =			Cvar_Get("cl_vwep", "1", CVAR_ARCHIVE);
 
 
 	//
 	// register our commands
 	//
-	Cmd_AddCommand ("cmd", CL_ForwardToServer_f);
-	Cmd_AddCommand ("pause", CL_Pause_f);
-	Cmd_AddCommand ("pingservers", CL_PingServers_f);
-	Cmd_AddCommand ("skins", CL_Skins_f);
+	Cmd_AddCommand("cmd", CL_ForwardToServer_f);
+	Cmd_AddCommand("pause", CL_Pause_f);
+	Cmd_AddCommand("pingservers", CL_PingServers_f);
+	Cmd_AddCommand("skins", CL_Skins_f);
 
-	Cmd_AddCommand ("userinfo", CL_Userinfo_f);
-	Cmd_AddCommand ("snd_restart", CL_Snd_Restart_f);
+	Cmd_AddCommand("userinfo", CL_Userinfo_f);
+	Cmd_AddCommand("snd_restart", CL_Snd_Restart_f);
 
-	Cmd_AddCommand ("changing", CL_Changing_f);
-	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
-	Cmd_AddCommand ("record", CL_Record_f);
-	Cmd_AddCommand ("stop", CL_Stop_f);
+	Cmd_AddCommand("changing", CL_Changing_f);
+	Cmd_AddCommand("disconnect", CL_Disconnect_f);
+	Cmd_AddCommand("record", CL_Record_f);
+	Cmd_AddCommand("stop", CL_Stop_f);
 
-	Cmd_AddCommand ("cvar_inc", CL_Increase_f);
-	Cmd_AddCommand ("cvar_toggle", CL_Toggle_f);
-	Cmd_AddCommand ("cvar_cat", CL_CatCvar_f); // jitconfig
+	Cmd_AddCommand("cvar_inc", CL_Increase_f);
+	Cmd_AddCommand("cvar_toggle", CL_Toggle_f);
+	Cmd_AddCommand("cvar_cat", CL_CatCvar_f); // jitconfig
 
-	Cmd_AddCommand ("quit", CL_Quit_f);
-	Cmd_AddCommand ("exit", CL_Quit_f); // jit (why not?)
+	Cmd_AddCommand("quit", CL_Quit_f);
+	Cmd_AddCommand("exit", CL_Quit_f); // jit (why not?)
 
-	Cmd_AddCommand ("connect", CL_Connect_f);
-	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
+	Cmd_AddCommand("connect", CL_Connect_f);
+	Cmd_AddCommand("reconnect", CL_Reconnect_f);
 
-	Cmd_AddCommand ("rcon", CL_Rcon_f);
+	Cmd_AddCommand("rcon", CL_Rcon_f);
 
-// 	Cmd_AddCommand ("packet", CL_Packet_f); // this is dangerous to leave in
+// 	Cmd_AddCommand("packet", CL_Packet_f); // this is dangerous to leave in
 
-	Cmd_AddCommand ("setenv", CL_Setenv_f );
+	Cmd_AddCommand("setenv", CL_Setenv_f );
 
-	Cmd_AddCommand ("precache", CL_Precache_f);
+	Cmd_AddCommand("precache", CL_Precache_f);
 
-	Cmd_AddCommand ("download", CL_Download_f);
+	Cmd_AddCommand("download", CL_Download_f);
 #ifdef USE_DOWNLOAD2
-	Cmd_AddCommand ("download2", CL_Download2_f); // jitdownload
+	Cmd_AddCommand("download2", CL_Download2_f); // jitdownload
 #endif
 	//Cmd_AddCommand ("scores", CL_Scores_f); // jitscores jitodo
-
-	Cmd_AddCommand ("writeconfig", CL_WriteConfig_f); // jitconfig
+	Cmd_AddCommand("writeconfig", CL_WriteConfig_f); // jitconfig
 
 
 	//
@@ -1713,32 +1715,36 @@ void CL_InitLocal (void)
 	// the only thing this does is allow command completion
 	// to work -- all unknown commands are automatically
 	// forwarded to the server
-	Cmd_AddCommand ("wave", NULL);
-	Cmd_AddCommand ("inven", NULL);
-	Cmd_AddCommand ("kill", NULL);
-	Cmd_AddCommand ("use", NULL);
-	Cmd_AddCommand ("drop", NULL);
-	Cmd_AddCommand ("say", NULL);
-	Cmd_AddCommand ("say_team", NULL);
-	Cmd_AddCommand ("info", NULL);
-	Cmd_AddCommand ("prog", NULL);
-	Cmd_AddCommand ("noclip", NULL);
-	Cmd_AddCommand ("invuse", NULL);
-	Cmd_AddCommand ("invprev", NULL);
-	Cmd_AddCommand ("invnext", NULL);
+	Cmd_AddCommand("wave", NULL);
+	Cmd_AddCommand("inven", NULL);
+	Cmd_AddCommand("kill", NULL);
+	Cmd_AddCommand("use", NULL);
+	Cmd_AddCommand("drop", NULL);
+	Cmd_AddCommand("say", NULL);
+	Cmd_AddCommand("say_team", NULL);
+	Cmd_AddCommand("info", NULL);
+	Cmd_AddCommand("prog", NULL);
+	Cmd_AddCommand("noclip", NULL);
+	Cmd_AddCommand("invuse", NULL);
+	Cmd_AddCommand("invprev", NULL);
+	Cmd_AddCommand("invnext", NULL);
 
 	// jit: paintball commands (incomplete)
 	// jitodo: finish this!
-	Cmd_AddCommand ("dropgun", NULL);
-	Cmd_AddCommand ("dropbarrel", NULL);
-	Cmd_AddCommand ("dropgren", NULL);
-	Cmd_AddCommand ("drophopper", NULL);
-	Cmd_AddCommand ("dropammo", NULL);
-	Cmd_AddCommand ("dropflag", NULL);
-	Cmd_AddCommand ("camera", NULL);
-	Cmd_AddCommand ("dropco2", NULL);
-	Cmd_AddCommand ("empty_co2", NULL);
-	Cmd_AddCommand ("tossgren", NULL);
+	Cmd_AddCommand("dropgun", NULL);
+	Cmd_AddCommand("dropbarrel", NULL);
+	Cmd_AddCommand("dropgren", NULL);
+	Cmd_AddCommand("drophopper", NULL);
+	Cmd_AddCommand("dropammo", NULL);
+	Cmd_AddCommand("dropflag", NULL);
+	Cmd_AddCommand("camera", NULL);
+	Cmd_AddCommand("dropco2", NULL);
+	Cmd_AddCommand("empty_co2", NULL);
+	Cmd_AddCommand("tossgren", NULL);
+	Cmd_AddCommand("speedometer", NULL);
+	Cmd_AddCommand("botcommand", NULL);
+	Cmd_AddCommand("addbot", NULL);
+	Cmd_AddCommand("removebot", NULL);
 }
 
 

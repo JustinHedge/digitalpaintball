@@ -311,8 +311,8 @@ void CL_PredictMovement (void)
 		}
 
 	}
-//todo -- create another cmd here...
-//#define INTERP
+
+#define INTERP // jitodo -- cvar?
 
 #ifdef INTERP
 	// ===
@@ -323,7 +323,7 @@ void CL_PredictMovement (void)
 	pm.cmd = *cmd;
 	pm.cmd.msec = cls.realtime - cls.last_transmit_time;
 	Pmove(&pm);
-	
+
 	// save for debug checking
 	VectorCopy(pm.s.origin, cl.predicted_origins[frame]);
 	// jit
