@@ -136,7 +136,7 @@ RECT		window_rect;
 qboolean q_get_cursor_pos(int* x, int* y)
 {
 	POINT		mousePos;
-	RECT		window;
+//	RECT		window;
 	POINT       clientSize;
 	if (!GetCursorPos (&mousePos))
 		return false;
@@ -182,6 +182,7 @@ void IN_ActivateMouse (void)
 	height = GetSystemMetrics (SM_CYSCREEN);
 
 	GetWindowRect ( cl_hwnd, &window_rect);
+	/* jitmouse -- keep from screwing up on dual monitors
 	if (window_rect.left < 0)
 		window_rect.left = 0;
 	if (window_rect.top < 0)
@@ -189,7 +190,7 @@ void IN_ActivateMouse (void)
 	if (window_rect.right >= width)
 		window_rect.right = width-1;
 	if (window_rect.bottom >= height-1)
-		window_rect.bottom = height-1;
+		window_rect.bottom = height-1;*/
 
 	window_center_x = (window_rect.right + window_rect.left)*0.5;
 	window_center_y = (window_rect.top + window_rect.bottom)*0.5;
@@ -300,13 +301,12 @@ void IN_MouseMove (usercmd_t *cmd)
 	if (!GetCursorPos (&current_pos))
 		return;
 
-	mx = current_pos.x - window_center_x;
+	mx = current_pos.x - window_center_x; // jitodo -- fix this for dual monitors.
 	my = current_pos.y - window_center_y;
 
-#if 0
-	if (!mx && !my)
-		return;
-#endif
+	// force the mouse to the center, so there's room to move
+	if (mx || my)
+		SetCursorPos (window_center_x, window_center_y);
 
 	if (m_filter->value)
 	{
@@ -321,6 +321,13 @@ void IN_MouseMove (usercmd_t *cmd)
 
 	old_mouse_x = mx;
 	old_mouse_y = my;
+
+	// If the menu is visible, move the menu cursor
+	if (M_MenuActive()) // todo - linux support
+	{
+		M_MouseMove(mx, my);
+		return;
+	}
 
 	mouse_x *= sensitivity->value;
 	mouse_y *= sensitivity->value;
@@ -340,9 +347,6 @@ void IN_MouseMove (usercmd_t *cmd)
 		cmd->forwardmove -= m_forward->value * mouse_y;
 	}
 
-	// force the mouse to the center, so there's room to move
-	if (mx || my)
-		SetCursorPos (window_center_x, window_center_y);
 }
 
 
@@ -426,7 +430,8 @@ between a deactivate and an activate.
 void IN_Activate (qboolean active)
 {
 	in_appactive = active;
-	mouseactive = !active;		// force a new window check or turn off
+	//mouseactive = !active;		// force a new window check or turn off
+	mouseactive = active; // jitmouse -- stop mouse from recentering when quake2 not active!
 }
 
 
@@ -450,10 +455,10 @@ void IN_Frame (void)
 
 	if ( !cl.refresh_prepped
 		|| cls.key_dest == key_console
-		|| cls.key_dest == key_menu)
+		/*|| cls.key_dest == key_menu*/) // jitmenu
 	{
 		// temporarily deactivate if in fullscreen
-		if (Cvar_VariableValue ("vid_fullscreen") == 0)
+		if (Cvar_VariableValue ("vid_fullscreen") == 0 && !M_MenuActive()) // jitmenu / jitmouse
 		{
 			IN_DeactivateMouse ();
 			return;
