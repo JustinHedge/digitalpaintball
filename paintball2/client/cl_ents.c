@@ -1353,6 +1353,7 @@ void CL_AddEntities (void)
 	CL_CalcViewValues();
 	// PMM - moved this here so the heat beam has the right values for the vieworg, and can lock the beam to the gun
 	CL_AddPacketEntities(&cl.frame);
+	CL_AddViewLocs(); // Xile/NiceAss LOC
 	CL_AddTEnts();
 	CL_AddParticles();
 	CL_AddDLights();

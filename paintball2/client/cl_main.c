@@ -24,42 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t	*freelook;
 
-/* jitserverlist / jitmenu - removed
-cvar_t	*adr0;
-cvar_t	*adr1;
-cvar_t	*adr2;
-cvar_t	*adr3;
-cvar_t	*adr4;
-cvar_t	*adr5;
-cvar_t	*adr6;
-cvar_t	*adr7;
-cvar_t	*adr8;
-// jitspoe -- lots more server addresses
-cvar_t	*adr9;
-cvar_t	*adr10;
-cvar_t	*adr11;
-cvar_t	*adr12;
-cvar_t	*adr13;
-cvar_t	*adr14;
-cvar_t	*adr15;
-cvar_t	*adr16;
-cvar_t	*adr17;
-cvar_t	*adr18;
-cvar_t	*adr19;
-cvar_t	*adr20;
-cvar_t	*adr21;
-cvar_t	*adr22;
-cvar_t	*adr23;
-cvar_t	*adr24;
-cvar_t	*adr25;
-cvar_t	*adr26;
-cvar_t	*adr27;
-cvar_t	*adr28;
-cvar_t	*adr29;
-cvar_t	*adr30;
-cvar_t	*adr31;
-cvar_t	*adr32;
-*/
 cvar_t	*cl_stereo_separation;
 cvar_t	*cl_stereo;
 
@@ -102,6 +66,11 @@ cvar_t	*m_invert; // jitmouse
 cvar_t	*m_doubleclickspeed; // jitmenu
 
 cvar_t	*cl_lightlevel;
+
+// Xile/NiceAss LOC
+cvar_t	*cl_drawlocs;
+cvar_t	*loc_here;
+cvar_t	*loc_there;
 
 //
 // userinfo
@@ -1598,6 +1567,28 @@ void CL_Precache_f (void)
 	CL_RequestNextDownload();
 }
 
+// Xile/NiceAss LOC
+void CL_AddLoc_f (void)
+{
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf("[FX Loc] Usage: loc_add <label/description>\n");
+		return;
+	}
+
+	CL_LocAdd(Cmd_Argv(1));
+}
+
+void CL_DeleteLoc_f (void)
+{
+	CL_LocDelete();
+}
+
+void CL_SaveLoc_f (void)
+{
+	CL_LocWrite(Cmd_Argv(1));
+}
+
 
 /*
 =================
@@ -1684,6 +1675,11 @@ void CL_InitLocal (void)
 	rcon_address =			Cvar_Get("rcon_address", "", 0);
 
 	cl_lightlevel =		Cvar_Get("r_lightlevel", "0", 0);
+
+	// Xile/NiceAss LOC
+	cl_drawlocs =		Cvar_Get("cl_drawlocs", "0", 0);
+	loc_here =			Cvar_Get("loc_here", "", CVAR_NOSET);
+	loc_there =			Cvar_Get("loc_there", "", CVAR_NOSET);
 
 	//
 	// userinfo
@@ -1786,6 +1782,12 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("score", CL_Scoreboard_f); // jitscores
 	Cmd_AddCommand("+scores", CL_ScoreboardShow_f); // jitscores
 	Cmd_AddCommand("-scores", CL_ScoreboardHide_f); // jitscores
+
+	// Xile/NiceAss LOC
+	Cmd_AddCommand("loc_add", CL_AddLoc_f);
+	Cmd_AddCommand("loc_del", CL_DeleteLoc_f);
+	Cmd_AddCommand("loc_save", CL_SaveLoc_f);
+	Cmd_AddCommand("loc_help", CL_LocHelp_f);
 }
 
 

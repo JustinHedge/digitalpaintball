@@ -312,6 +312,11 @@ extern	cvar_t	*cl_timedemo;
 
 extern	cvar_t	*cl_vwep;
 
+// Xile/NiceAss LOC
+extern cvar_t *cl_drawlocs;
+extern cvar_t *loc_here;
+extern cvar_t *loc_there;
+
 typedef struct
 {
 	int		key;				// so entities can reuse same entry
@@ -607,6 +612,7 @@ void CL_InitPrediction (void);
 void CL_PredictMove (void);
 void CL_CheckPredictionError (void);
 
+
 //
 // cl_fx.c
 //
@@ -660,6 +666,16 @@ void x86_TimerStop( void );
 void x86_TimerInit( unsigned long smallest, unsigned longest );
 unsigned long *x86_TimerGetHistogram( void );
 #endif
+
+// Xile/NiceAss LOC
+void CL_LoadLoc (void);
+void CL_LocPlace (void);
+void CL_AddViewLocs (void);
+void CL_LocDelete (void);
+void CL_LocAdd (char *name);
+void CL_LocWrite (char *filename);
+void CL_LocPlace (void);
+void CL_LocHelp_f (void);
 
 extern image_t		*i_conback;
 //extern image_t		*i_inventory;
