@@ -1968,7 +1968,7 @@ void CL_Frame (int msec)
 	if (!cl_timedemo->value)
 	{
 		//if (cls.state == ca_connected && extratime < 16) // jitodo -- window sliding
-		if (cls.state == ca_connected && extratime < 100)
+		if (cl_locknetfps->value && cls.state == ca_connected && extratime < 100)
 			return;			// don't flood packets out while connecting
 
 		if(cl_maxfps->value) // jitnetfps
@@ -2144,6 +2144,7 @@ void CL_Init (void)
 	net_message.data = net_message_buffer;
 	net_message.maxsize = sizeof(net_message_buffer);
 
+	init_cl_scores(); // jitscores
 	M_Init ();	
 	
 	SCR_Init ();
@@ -2190,6 +2191,7 @@ void CL_Shutdown(void)
 	S_Shutdown();
 	IN_Shutdown ();
 	VID_Shutdown();
+	init_cl_scores(); // jitscores
 }
 
 

@@ -46,9 +46,10 @@ char			*m_active_bind_command = NULL;
 // key for the select widget.
 static void list_source(menu_widget_t *widget)
 {
+	extern char **cl_scores_nums; // jitodo - put these in a header or something
 	extern char **cl_scores_info;
-	extern char **cl_scores_nums;
 	extern int cl_scores_count;
+	void cl_scores_prep_select_widget (void);
 
 	if (!widget || !widget->listsource)
 		return;
@@ -62,6 +63,7 @@ static void list_source(menu_widget_t *widget)
 
 	if (Q_streq(widget->listsource, "scores"))
 	{
+		cl_scores_prep_select_widget();
 		widget->select_list = cl_scores_info;
 		widget->select_map = cl_scores_nums;
 		widget->select_totalitems = cl_scores_count;
@@ -212,6 +214,7 @@ static menu_widget_t *free_widgets(menu_widget_t *widget)
 	{
 		if(widget->select_map)
 			free_string_array(widget->select_map, widget->select_totalitems);
+
 		if(widget->select_list)
 		{
 			if(widget->flags & WIDGET_FLAG_FILELIST)
@@ -251,19 +254,19 @@ static menu_widget_t* M_GetNewMenuWidget(int type, const char *text, const char 
 	if(text)
 	{
 		len = sizeof(char) * (strlen(text) + 1);
-		widget->text = Z_Malloc(len);
+		widget->text = Z_Malloc(len*sizeof(char));
 		memcpy(widget->text, text, len);
 	}
 	if(cvar)
 	{
 		len = sizeof(char) * (strlen(cvar) + 1);
-		widget->cvar = Z_Malloc(len);
+		widget->cvar = Z_Malloc(len*sizeof(char));
 		memcpy(widget->cvar, cvar, len);
 	}
 	if(cmd)
 	{
 		len = sizeof(char) * (strlen(cmd) + 1);
-		widget->command = Z_Malloc(len);
+		widget->command = Z_Malloc(len*sizeof(char));
 		memcpy(widget->command, cmd, len);
 	}
 	widget->x = x;
@@ -1663,13 +1666,13 @@ static select_map_list_t *get_new_select_map_list(char *cvar_string, char *strin
 	
 	if(cvar_string)
 	{
-		new_map->cvar_string = Z_Malloc(strlen(cvar_string)+1);
+		new_map->cvar_string = Z_Malloc(sizeof(char)*(strlen(cvar_string)+1));
 		strcpy(new_map->cvar_string, cvar_string);
 	}
 
 	if(string)
 	{
-		new_map->string = Z_Malloc(strlen(string)+1);
+		new_map->string = Z_Malloc(sizeof(char)*(strlen(string)+1));
 		strcpy(new_map->string, string);
 	}
 
@@ -1843,7 +1846,7 @@ char *text_copy(const char *in)
 {
 	char *out;
 
-	out = Z_Malloc(strlen(in)+1);
+	out = Z_Malloc(sizeof(char)*(strlen(in)+1));
 	strcpy(out, in);
 
 	return out;
@@ -1900,7 +1903,7 @@ static void menu_from_file(menu_screen_t *menu)
 	scale = cl_hudscale->value;
 
 	sprintf(menu_filename, "menus/%s.txt", menu->name);
-	file_len = FS_LoadFile (menu_filename, (void **)&buf);
+	file_len = FS_LoadFile(menu_filename, (void **)&buf);
 	
 	if(file_len != -1)
 	{
@@ -1908,7 +1911,7 @@ static void menu_from_file(menu_screen_t *menu)
 		char *buf2;
 
 		// put null terminator at end:
-		buf2 = Z_Malloc(file_len+1);
+		buf2 = Z_Malloc(sizeof(char)*(file_len+1));
 		memcpy(buf2, buf, file_len);
 		buf2[file_len] = '\0';
 		FS_FreeFile(buf);
@@ -2213,7 +2216,7 @@ static void free_serverlist(serverlist_node_t *node)
 	}
 }
 */
-static void free_menu_serverlist()
+static void free_menu_serverlist() // jitodo -- eh, something should call this?
 {
 	if(m_serverlist.info)
 		free_string_array(m_serverlist.info, m_serverlist.numservers);
@@ -2369,6 +2372,7 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 
 			update_serverlist_server(&m_serverlist.server[i], info, ping);
 			m_serverlist.info[i] = text_copy(format_info_from_serverlist_server(&m_serverlist.server[i]));
+			// jitodo - memory leak?
 			
 			added = true;
 			break;

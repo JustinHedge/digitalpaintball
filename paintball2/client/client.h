@@ -533,8 +533,21 @@ void CL_WriteConfig_f (void); // jitconfig
 //
 // cl_scores.c
 //
-void CL_Score_f (void); // jitscores
-void CL_ParesScoreData (const unsigned char *data); // jitscores
+// ===
+// jitscores
+void CL_Score_f (void);
+void CL_ParesScoreData (const unsigned char *data); 
+void init_cl_scores (void);
+void cl_scores_setping (int client, int ping);
+void cl_scores_setkills (int client, int kills);
+void cl_scores_setdeaths (int client, int deaths);
+void cl_scores_setgrabs (int client, int grabs);
+void cl_scores_setcaps (int client, int caps);
+void cl_scores_setteam (int client, char team);
+void cl_scores_setinuse (int client, qboolean inuse);
+void cl_scores_clear (int client);
+// jitscores
+// ===
 
 //
 // cl_decode.c
@@ -542,6 +555,7 @@ void CL_ParesScoreData (const unsigned char *data); // jitscores
 int decode_unsigned (const unsigned char *in, unsigned int *out, int max); // jitscores / jitevents
 void CL_ParsePrintEvent (const char *str); // jitevents
 void CL_DrawEventStrings (void); // jitevents
+#define name_from_index(a) cl.clientinfo[(a)].name // jitevents / jitscores
 
 //
 // cl_view.c

@@ -392,7 +392,7 @@ void Con_Init (void)
 //
 // register our commands
 //
-	con_notifytime = Cvar_Get ("con_notifytime", "6", CVAR_ARCHIVE); // jittext (was 3, and no archive)
+	con_notifytime = Cvar_Get ("con_notifytime", "3", CVAR_ARCHIVE); // jittext (was 3, and no archive)
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("togglechat", Con_ToggleChat_f);

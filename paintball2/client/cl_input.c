@@ -455,7 +455,6 @@ void CL_InitInput (void)
 CL_SendCmd
 =================
 */
-char pps_string[16]; // jitnetfps
 void CL_SendCmd (void)
 {
 	sizebuf_t	buf;
@@ -483,7 +482,10 @@ void CL_SendCmd (void)
 
 		cmd->msec = sys_frame_time - old_frame_time;
 		
-		ppsstate = cl_cmdrate->value;
+		if (cls.state == ca_connected)
+			ppsstate = 10; // only send 10 packets/sec while downloading at console (jitodo - window sliding)
+		else
+			ppsstate = cl_cmdrate->value;
 
 		if(ppsstate < 5)
 			ppsstate = 5;
@@ -582,21 +584,6 @@ void CL_SendCmd (void)
 	// deliver the message
 	//
 	Netchan_Transmit(&cls.netchan, buf.cursize, buf.data);
-
-	if (cl_drawpps->value) // jitnetfps
-	{
-		static int framecount = 0;
-		static int lasttime = 0;
-
-		if(!(framecount & 0xF)) // once every 16 frames
-		{
-			Com_sprintf(pps_string, sizeof(pps_string), "%3.0fpps\n", 1000.0f*framecount/(curtime-lasttime));
-			lasttime = curtime;
-			framecount = 0;
-		}
-
-		framecount ++;
-	}
 
 	cls.last_transmit_time = cls.realtime;
 }

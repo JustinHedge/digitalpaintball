@@ -1197,7 +1197,8 @@ ROGUE - VERSIONS
 #define CS_REQUIREDFILES	(CS_GENERAL+2) // jitdownload
 #define CS_SERVERGVERSION	(CS_GENERAL+7) // jitversion
 #define CS_SERVEREVERSION	(CS_GENERAL+8) // jitversion
-#define CS_WHATEVERSNEXT	(CS_GENERAL+9) // use this for additional stuff
+#define CS_TEAMINDEXES		(CS_GENERAL+9) // jitscores
+#define CS_WHATEVERSNEXT	(CS_GENERAL+10) // use this for additional stuff
 
 #define CS_EVENTS			(CS_GENERAL+256) // jitevents
 
@@ -1334,5 +1335,7 @@ typedef enum {
 	EVENT_ROUNDOVER = 8,
 	EVENT_SUICIDE = 9,
 	EVENT_ADMINKILL = 10,
-	EVENT_FFIRE = 11
+	EVENT_FFIRE = 11,
+	EVENT_QUIT = 12,
+	EVENT_RESPAWN = 13
 } game_event_t;

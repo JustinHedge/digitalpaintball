@@ -28,8 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MARKER_CHAR_SHORT 254
 #define MARKER_CHAR_LONG 253
 
-//#define name_from_index(a) cl.configstrings[CS_PLAYERSKINS+(a)] // jitodo - make an array with just names.
-#define name_from_index(a) cl.clientinfo[(a)].name
+#define item_from_index(a) cl.configstrings[CS_ITEMS+(a)]
 
 static unsigned char *outpos;
 static const char *decode_ptr;
@@ -214,11 +213,10 @@ static void translate_string (char *out_str, const char *in_str)
 					translate_string(out_str, cl.configstrings[CS_EVENTS+index_array[current_element++]]);
 					break;
 				case 'i': // item
-					strcpy(out_str, cl.configstrings[CS_ITEMS+index_array[current_element++]]);
+					strcpy(out_str, item_from_index(index_array[current_element++]));
 					out_str += strlen(out_str);
 					break;
 				case 'n': // name
-					// todo -- strip skin off of player name or use a different array
 					strcpy(out_str, name_from_index(index_array[current_element++]));
 					out_str += strlen(out_str);
 					break;
@@ -279,9 +277,8 @@ void CL_DrawEventStrings (void)
 				break;
 			}
 
-			// jitodo -- cvars for positioning.
 			re.DrawStringAlpha(viddef.width/2-4*hudscale*strlen_noformat(event_strings[j]),
-				viddef.height/2+(8+i*8)*hudscale, event_strings[j], alpha);
+				viddef.height/2+(16+i*8)*hudscale, event_strings[j], alpha);
 		}
 		else
 		{
@@ -315,24 +312,89 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 	// handle special cases of events here...
 	switch(event)
 	{
+	case EVENT_ENTER:
+		Com_Printf("%s\n", event_text);
+		if (num_elements > 1)
+		{
+			cl_scores_clear(index_array[2]);
+			cl_scores_setinuse(index_array[2], true);
+			cl_scores_setteam(index_array[2], (num_elements > 3) ? index_array[3] : 0);
+		}
+		break;
+	case EVENT_JOIN:
+		Com_Printf("%s\n", event_text);
+		if (num_elements > 3)
+			cl_scores_setteam(index_array[2], index_array[3]);
+		break;
 	case EVENT_ROUNDOVER:
 		Com_Printf("%s\n", event_text);
 		event_print(event_text);
 		break;
 	case EVENT_ADMINKILL:
 		Com_Printf("%s\n", event_text);
-		current_element = 3;
-
-		if (current_element < num_elements && index_array[current_element++] == cl.playernum)
+		if (current_element < num_elements && index_array[3] == cl.playernum)
 		{
-			if (current_element < num_elements)
-				sprintf(event_text, "Admin (%s) killed you.", name_from_index(index_array[current_element++]));
+			if (num_elements > 4)
+				sprintf(event_text, "Admin (%s) killed you.", name_from_index(index_array[4]));
 			else
 				sprintf(event_text, "Admin killed you.");
+			event_print(event_text);
+		}
+		break;
+	case EVENT_KILL: // jitodo - fix all these offsets
+		Com_Printf("%s\n", event_text);
 
+		// Update scoreboard:
+		if (current_element < num_elements)
+			cl_scores_setkills(index_array[3], index_array[current_element++]);
+		if (current_element < num_elements)
+			cl_scores_setdeaths(index_array[6], index_array[current_element++]);
+
+		if (num_elements < 8)
+			break;
+		
+		if (index_array[3] == cl.playernum)
+			sprintf(event_text, "You eliminated %s (%s).",
+				name_from_index(index_array[6]), item_from_index(index_array[7]));
+		else if (index_array[6] == cl.playernum)
+			sprintf(event_text, "%s (%s) eliminated you.",
+				name_from_index(index_array[3]), item_from_index(index_array[4]));
+		else
+			break;
+
+		event_print(event_text);
+		break;
+	case EVENT_SUICIDE: // jitodo - fix all these offsets
+		Com_Printf("%s\n", event_text);
+
+		if (num_elements < 4)
+			break;
+
+		// Scoreboard:
+		if (current_element < num_elements)
+			cl_scores_setdeaths(index_array[3], index_array[current_element++]);
+
+		if (index_array[3] == cl.playernum)
+		{
+			sprintf(event_text, "You eliminated yourself!");
 			event_print(event_text);
 		}
 
+		break;
+	case EVENT_FFIRE: // jitodo - fix all these offsets
+		Com_Printf("%s\n", event_text);
+
+		if (num_elements < 4)
+			break;
+
+		if (index_array[3] == cl.playernum)
+			sprintf(event_text, "%cYou eliminated your teammate!!", CHAR_ITALICS);
+		else if (index_array[5] == cl.playernum)
+			sprintf(event_text, "Your teammate (%s) eliminated you.", name_from_index(index_array[3]));
+		else
+			break;
+
+		event_print(event_text);
 		break;
 	default:
 		Com_Printf("%s\n", event_text);

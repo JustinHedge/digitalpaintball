@@ -502,7 +502,6 @@ void SCR_RunConsole (void)
 		scr_con_current -= scr_conspeed->value*cl.frametime; // jitnetfps
 		if (scr_conlines > scr_con_current)
 			scr_con_current = scr_conlines;
-
 	}
 	else if (scr_conlines > scr_con_current)
 	{
@@ -510,7 +509,6 @@ void SCR_RunConsole (void)
 		if (scr_conlines < scr_con_current)
 			scr_con_current = scr_conlines;
 	}
-
 }
 
 /*
