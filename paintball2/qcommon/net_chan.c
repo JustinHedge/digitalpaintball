@@ -210,12 +210,14 @@ transmition / retransmition of the reliable messages.
 A 0 length will still generate a packet and deal with the reliable messages.
 ================
 */
+char pps_string[16]; // jitnetfps
 void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 {
 	sizebuf_t	send;
 	byte		send_buf[MAX_MSGLEN];
 	qboolean	send_reliable;
 	unsigned	w1, w2;
+	extern cvar_t *cl_drawpps; // jitnetfps
 
 // check for message overflow
 	if (chan->message.overflowed)
@@ -284,6 +286,21 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 				, chan->outgoing_sequence - 1
 				, chan->incoming_sequence
 				, chan->incoming_reliable_sequence);
+	}
+
+	if (cl_drawpps->value) // jitnetfps
+	{
+		static int framecount = 0;
+		static int lasttime = 0;
+
+		if(!(framecount & 0xF)) // once every 16 frames
+		{
+			Com_sprintf(pps_string, sizeof(pps_string), "%3.0fpps\n", 1000.0f*framecount/(curtime-lasttime));
+			lasttime = curtime;
+			framecount = 0;
+		}
+
+		framecount ++;
 	}
 }
 
