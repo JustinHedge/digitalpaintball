@@ -1917,22 +1917,22 @@ void CL_SendCommand (void)
 		CL_RequestNextDownload2(); // flood some download requests.
 #endif
 	// get new key events
-	Sys_SendKeyEvents ();
+	Sys_SendKeyEvents();
 
 	// allow mice or other external controllers to add commands
-	IN_Commands ();
+	IN_Commands();
 
 	// process console commands
-	Cbuf_Execute ();
+	Cbuf_Execute();
 
 	// fix any cheating cvars
-	CL_FixCvarCheats ();
+	CL_FixCvarCheats();
 
 	// send intentions now
-	CL_SendCmd ();
+	CL_SendCmd();
 
 	// resend a connection request if necessary
-	CL_CheckForResend ();
+	CL_CheckForResend();
 }
 
 
@@ -1966,6 +1966,7 @@ void CL_Frame (int msec)
 			if (extratime < 1000/cl_maxfps->value)
 				return;			// framerate is too high
 		}
+
 		if(cl_locknetfps->value) // jitnetfps
 		{
 			if (extratime < 1000/cl_cmdrate->value)
@@ -1993,10 +1994,14 @@ void CL_Frame (int msec)
 	cls.realtime = curtime;
 
 	extratime = 0;
-	if (cl_minfps->value) {
+
+	if (cl_minfps->value)
+	{
 		if (cls.frametime > (1.0 / cl_minfps->value))
 			cls.frametime = (1.0 / cl_minfps->value);
-	} else {
+	}
+	else
+	{
 		if (cls.frametime > (1.0 / 5))
 			cls.frametime = (1.0 / 5);
 	}
