@@ -1,18 +1,47 @@
 #include "menu.h"
 
+#define INITIAL_SERVERLIST_SIZE 32
+
 // Local globals
 static sem_t m_sem_serverlist;
 static pthread_t updatethread;
 static pthread_t pingthread;
-static qboolean updating = false;
 static qboolean refreshing = false;
-
-#define INITIAL_SERVERLIST_SIZE 32
+static int m_serverPingSartTime;
 
 // Project-wide Globals
-int m_serverPingSartTime;
 m_serverlist_t m_serverlist;
 
+static void ping_broadcast (void)
+{
+	netadr_t	adr;
+	char		buff[256];
+	cvar_t		*noudp;
+	cvar_t		*noipx;
+
+	NET_Config(true);		// allow remote
+	Com_Printf("pinging broadcast...\n");
+	noudp = Cvar_Get("noudp", "0", CVAR_NOSET);
+	noipx = Cvar_Get("noipx", "0", CVAR_NOSET);
+
+	m_serverPingSartTime = Sys_Milliseconds();
+
+	if (!noudp->value)
+	{
+		adr.type = NA_BROADCAST;
+		adr.port = BigShort(PORT_SERVER);
+		sprintf(buff, "info %i", PROTOCOL_VERSION);
+		Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
+	}
+
+	if (!noipx->value)
+	{
+		adr.type = NA_BROADCAST_IPX;
+		adr.port = BigShort(PORT_SERVER);
+		sprintf(buff, "info %i", PROTOCOL_VERSION);
+		Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
+	}
+}
 
 /*
 =================
@@ -21,71 +50,17 @@ CL_PingServers_f
 */
 void *CL_PingServers_multithreaded (void *ptr) // jitmultithreading
 {
-	netadr_t	adr;
-	char		name[64]; // jitserverlist - increased
-	cvar_t		*noudp;
-	cvar_t		*noipx;
-	FILE		*serverlist; // jitserverlist / jitmenu
-	extern int	m_serverPingSartTime;
+	register int i;
+	char buff[32];
 
-	NET_Config(true);		// allow remote
-
-	// send a broadcast packet
-	Com_Printf ("pinging broadcast...\n");
-
-	noudp = Cvar_Get("noudp", "0", CVAR_NOSET);
-	if (!noudp->value)
+	ping_broadcast();
+	
+	for (i=0; i<m_serverlist.numservers; i++)
 	{
-		adr.type = NA_BROADCAST;
-		adr.port = BigShort(PORT_SERVER);
-		Netchan_OutOfBandPrint(NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
-	}
-
-	noipx = Cvar_Get("noipx", "0", CVAR_NOSET);
-	if (!noipx->value)
-	{
-		adr.type = NA_BROADCAST_IPX;
-		adr.port = BigShort(PORT_SERVER);
-		Netchan_OutOfBandPrint(NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
-	}
-
-	// jitserverlist / jitmenu -- ping all the servers in the list:
-	serverlist = fopen(va("%s/servers.txt", FS_Gamedir()), "r");
-
-	m_serverPingSartTime = Sys_Milliseconds(); // jitserverlist
-
-	if(serverlist)
-	{
-		char buff[256];
-
-		while(!feof(serverlist))
-		{
-			fscanf(serverlist, "%s", &name);
-
-			if(name && *name)
-			{
-				Com_Printf ("pinging %s...\n", name);
-
-				if (!NET_StringToAdr(name, &adr))
-				{
-					Com_Printf ("Bad address: %s\n", name);
-					continue;
-				}
-
-				if (!adr.port)
-					adr.port = BigShort(PORT_SERVER);
-
-				Netchan_OutOfBandPrint(NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
-
-				// jitserverlist -- add to list and get ping request time:
-				sprintf(buff, "%s --- 0/0", name);
-				M_AddToServerList(adr, buff, true);
-			}
-
-			Sleep(16);
-		}
-
-		fclose(serverlist);
+		sprintf(buff, "info %i", PROTOCOL_VERSION);
+		Netchan_OutOfBandPrint(NS_CLIENT, m_serverlist.server[i].adr, buff);
+		M_AddToServerList(m_serverlist.server[i].adr, "", true);
+		Sleep(16); // jitodo - cvar for delay between pings
 	}
 
 	refreshing = false;
@@ -117,10 +92,6 @@ static void free_menu_serverlist (void) // jitodo -- eh, something should call t
 		free_string_array(m_serverlist.info, m_serverlist.nummapped);
 	if (m_serverlist.ips)
 		free_string_array(m_serverlist.ips, m_serverlist.nummapped);
-	//if (m_serverlist.remap)
-	//	Z_Free(m_serverlist.remap);
-	//if (m_serverlist.adr)
-	//	Z_Free(m_serverlist.adr);
 	if (m_serverlist.server)
 		Z_Free(m_serverlist.server);
 
@@ -149,8 +120,6 @@ void Serverlist_Clear_f (void)
 	}
 
 	m_serverlist.nummapped = m_serverlist.numservers = 0;
-	//memset(m_serverlist.remap, -1, sizeof(int)*m_serverlist.actualsize);
-	//memset(m_serverlist.adr, 0, sizeof(netadr_t)*m_serverlist.actualsize);
 }
 
 
@@ -201,7 +170,6 @@ static void set_serverlist_server_pingtime (m_serverlist_server_t *server, int p
 {
 	server->ping_request_time = pingtime;
 }
-
 
 #define SERVER_NAME_MAXLENGTH 19
 #define MAP_NAME_MAXLENGTH 8
@@ -275,8 +243,6 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	int ping;
 	qboolean added = false;
 	
-	//ping = Sys_Milliseconds() - m_serverPingSartTime;
-
 	if(adr.type == NA_IP)
 	{
 		Com_sprintf(addrip, sizeof(addrip), 
@@ -294,14 +260,15 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 		strcpy(addrip, "loopback");
 	}
 	else
+	{
 		return;
+	}
 
 	sem_wait(&m_sem_serverlist); // jitmultithreading
 
 	// check if server exists in current serverlist:
 	for (i=0; i<m_serverlist.numservers; i++)
 	{
-//		if(Q_streq(addrip, m_serverlist.ips[i]))
 		if (adrs_equal(adr, m_serverlist.server[i].adr))
 		{
 			// update info from server:
@@ -313,8 +280,6 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 			{
 				ping = Sys_Milliseconds() - m_serverlist.server[i].ping_request_time;
 				update_serverlist_server(&m_serverlist.server[i], info, ping);
-				/*Z_Free(m_serverlist.info[i]);
-				m_serverlist.info[i] = text_copy(format_info_from_serverlist_server(&m_serverlist.server[i]));*/
 
 				if (m_serverlist.server[i].remap < 0)
 				{
@@ -322,7 +287,9 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 					m_serverlist.ips[m_serverlist.server[i].remap] = text_copy(addrip);
 				}
 				else
+				{
 					Z_Free(m_serverlist.info[m_serverlist.server[i].remap]);
+				}
 
 				m_serverlist.info[m_serverlist.server[i].remap] =
 					text_copy(format_info_from_serverlist_server(&m_serverlist.server[i]));
@@ -344,24 +311,17 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 			char **tempinfo;
 			char **tempips;
 			m_serverlist_server_t *tempserver;
-			//int *tempremap;
-			//netadr_t *tempadr;
 
-			tempinfo = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2); // double size
-			tempips = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2); // double size
+			// Double the size:
+			tempinfo = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2);
+			tempips = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2);
 			tempserver = Z_Malloc(sizeof(m_serverlist_server_t)*m_serverlist.actualsize*2);
-			//tempremap = Z_Malloc(sizeof(int)*m_serverlist.actualsize*2);
-			//memset(tempremap, -1, sizeof(int)*m_serverlist.actualsize*2);
-			//tempadr = Z_Malloc(sizeof(netadr_t)*m_serverlist.actualsize*2);
 
 			for(i=0; i<m_serverlist.actualsize; i++)
 			{
 				tempinfo[i] = m_serverlist.info[i];
 				tempips[i] = m_serverlist.ips[i];
 				tempserver[i] = m_serverlist.server[i];
-				//tempremap[i] = m_serverlist.remap[i];
-				//memcpy(&tempadr[i], &m_serverlist.adr[i], sizeof(netadr_t));
-				// jitodo - make sure this works...
 			}
 
 			for (i=m_serverlist.actualsize; i<m_serverlist.actualsize*2; i++)
@@ -373,19 +333,14 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 			Z_Free(m_serverlist.info);
 			Z_Free(m_serverlist.ips);
 			Z_Free(m_serverlist.server);
-			//Z_Free(m_serverlist.remap);
-			//Z_Free(m_serverlist.adr);
 
 			m_serverlist.info = tempinfo;
 			m_serverlist.ips = tempips;
 			m_serverlist.server = tempserver;
-			//m_serverlist.remap = tempremap;
-			//m_serverlist.adr = tempadr;
 
 			m_serverlist.actualsize *= 2;
 		}
 
-		//memcpy(&m_serverlist.adr[m_serverlist.numservers], &adr, sizeof(netadr_t));
 		m_serverlist.server[m_serverlist.numservers].adr = adr; // jitodo - test
 
 		// add data to serverlist:
@@ -412,24 +367,30 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 
 	// Tell the widget the serverlist has updated:
 	M_RefreshActiveMenu(); // jitodo - target serverlist window specifically.
-
 	sem_post(&m_sem_serverlist); // jitmultithreading
 }
 
-// color servers grey and re-ping them
-void M_ServerlistRefresh_f(void)
+// Color all the items grey:
+static void grey_serverlist (void)
 {
 	char *str;
 	int i;
 
 	for(i=0; i<m_serverlist.nummapped; i++)
 	{
-		str = text_copy(va("%c4%s", CHAR_COLOR, m_serverlist.info[i])); // color grey
-		Z_Free(m_serverlist.info[i]);
-		m_serverlist.info[i] = str;
+		if (m_serverlist.info[i][0] != CHAR_COLOR)
+		{
+			str = text_copy(va("%c4%s", CHAR_COLOR, m_serverlist.info[i]));
+			Z_Free(m_serverlist.info[i]);
+			m_serverlist.info[i] = str;
+		}
 	}
+}
 
-	// jitodo -- make this multithreaded and add some time between each server request.
+// color servers grey and re-ping them
+void M_ServerlistRefresh_f (void)
+{
+	grey_serverlist();
 	CL_PingServers_f();
 }
 
@@ -454,17 +415,9 @@ static void M_ServerlistUpdate (char *sServerSource)
 		return; // No socket created
 	}
 
-	s = strstr(sServerSource, "http://");
+	s = sServerSource;
 
-	if(!s)
-	{
-		// probably an old version -- going to require the http:// now.
-		// jitodo -- allow for sources like "c:\servers.txt" and master server lists.
-		Cvar_Set("serverlist_source", "http://www.planetquake.com/digitalpaint/servers.txt");
-		M_ServerlistUpdate(sServerSource);
-		return;
-	}
-	else
+	if (memicmp(sServerSource, "http://", 7) == 0)
 	{
 		s += 7; // skip past the "http://"
 		i = 0;
@@ -510,9 +463,10 @@ static void M_ServerlistUpdate (char *sServerSource)
 		char *current	= buffer;
 		char *found		= NULL;
 		int WhichOn		= 0;
-		FILE			*serverlistfile;
-		int numread = 0;
-		int bytes_read = 0;
+		int numread		= 0;
+		int bytes_read	= 0;
+		netadr_t adr;
+		char buff[256];
 
 		// Read in up to 32767 bytes
 		while (numread < 32760 && 0 < (bytes_read = recv(serverListSocket, buffer + numread, 32766 - numread, 0)))
@@ -528,24 +482,49 @@ static void M_ServerlistUpdate (char *sServerSource)
 			return;
 		}
 
-		if (strstr(buffer, "<html>"))
-		{
-			Com_Printf("WARNING: unable to read %s\n", sServerSource);
-			free(buffer);
-			return;
-		}
-
 		closesocket(serverListSocket);
 
 		// Okay! We have our data... now lets parse it! =)
 		buffer[numread] = 0; // terminate data.
 		current = buffer;
 
+		// Check for a forward:
+		if (strstr(buffer, "302 Found"))
+		{
+			char *newaddress, *s, *s1;
+
+			if (newaddress = strstr(buffer, "\nLocation: "))
+			{
+				newaddress += sizeof("\nLocation: ") - 1;
+
+				// terminate string at LF or CRLF
+				s = strstr(newaddress, "\r");
+				s1 = strstr(newaddress, "\n");
+				if (s && s < s1)
+					*s = '\0';
+				else
+					*s1 = '\0';
+
+				Com_Printf("Redirect: %s to %s\n", sServerSource, newaddress);
+				M_ServerlistUpdate(newaddress);
+				free(buffer);
+				return;
+			}
+			else
+			{
+				// Should never happen
+				Com_Printf("WARNING: 302 redirect with no new location\n");
+				free(buffer);
+				return;
+			}
+		}
+
 		// find \n\n, thats the end of header/beginning of the data
 		while (*current != '\n' || *(current+2) != '\n')
 		{
 			if (current > buffer + numread)
 			{
+				Com_Printf("WARNING: Invalid serverlist %s (no header).\n", sServerSource);
 				free(buffer);
 				return; 
 			}
@@ -555,18 +534,26 @@ static void M_ServerlistUpdate (char *sServerSource)
 
 		current = current + 3; // skip the trailing \n.  We're at the beginning of the data now
 
-		serverlistfile = fopen(va("%s/servers.txt", FS_Gamedir()), "w");
+		if (strchr(current, '<'))
+		{
+			// If it has any HTML codes in it, we know it's not valid (probably a 404 page).
+			if (strstr(current, "Not Found") || strstr(current, "not found"))
+				Com_Printf("WARNING: %s returned 404 Not Found.\n", sServerSource);
+			else
+				Com_Printf("WARNING: Invalid serverlist %s\n", sServerSource);
 
-		if(!serverlistfile)
+			free(buffer);
 			return;
-		
+		}
+
+		// Ping all of the servers on the list
 		while (current < buffer + numread)
 		{
 			found = current;						// Mark the beginning of the line
 
 			while (*current && *current != 13)
 			{										// Find the end of the line
-				current ++; 
+				current++; 
 				
 				if (current > buffer + numread)
 				{
@@ -574,39 +561,61 @@ static void M_ServerlistUpdate (char *sServerSource)
 					return;	// Exit if we run out of room
 				}
 
-				if (*(current-1) == 'X' && *(current) == 13)
+				if (!*current || (*(current-1) == 'X' && *(current) == 13))
 				{
 					goto done; // Exit if we find a X\n on a new line
 				}
 			}
 
 			*current = 0;								// NULL terminate the string
-			fprintf(serverlistfile, "%s\n", found);		// Copy line to local file
+
+			Com_Printf("pinging %s...\n", found);
+
+			if (!NET_StringToAdr(found, &adr))
+			{
+				Com_Printf("Bad address: %s\n", found);
+				continue;
+			}
+
+			if (!adr.port)
+				adr.port = BigShort(PORT_SERVER);
+
+			sprintf(buff, "info %i", PROTOCOL_VERSION);
+			Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
+			sprintf(buff, "%s --- 0/0", found);
+			// Add to listas being pinged
+			M_AddToServerList(adr, buff, true);
+			Sleep(16); // jitodo -- make a cvar for the time between pings
 			current += 2;								// Start at the next line
 		};
 
 done:
-		fclose(serverlistfile);
 		free(buffer);
-
 		return;
 	}
 }
 
 void *M_ServerlistUpdate_multithreaded (void *ptr)
 {
+	grey_serverlist();
+	ping_broadcast();
+
+	// hack to fix bug in build 7/8 that truncated serverlist_source
+	if (memicmp(serverlist_source->string, "http://", 7) != 0)
+		Cvar_Set("serverlist_source", "http://www.planetquake.com/digitalpaint/servers.txt");
+
 	M_ServerlistUpdate(serverlist_source->string);
-	// jitodo - serverlist_source2->string
-	M_ServerlistRefresh_f();
-	updating = false;
+	M_ServerlistUpdate(serverlist_source2->string);
+	refreshing = false;
+
 	return NULL;
 }
 
 void M_ServerlistUpdate_f (void)
 {
-	if (!updating)
+	if (!refreshing)
 	{
-		updating = true;
+		refreshing = true;
 		pthread_create(&updatethread, NULL, M_ServerlistUpdate_multithreaded, NULL);;
 	}
 }
@@ -627,9 +636,6 @@ static void create_serverlist (int size)
 		memset(&m_serverlist.server[i], 0, sizeof(m_serverlist_server_t));
 		m_serverlist.server[i].remap = -1;
 	}
-	//m_serverlist.remap = Z_Malloc(sizeof(int)*size);
-	//memset(m_serverlist.remap, -1, sizeof(int)*size);
-	//m_serverlist.adr = Z_Malloc(sizeof(netadr_t)*size);
 }
 
 static __inline char *skip_string (char *s)
@@ -677,10 +683,6 @@ static qboolean serverlist_load (void)
 		ptr += sizeof(int);
 		memcpy(&m_serverlist.nummapped, ptr, sizeof(int));
 		ptr += sizeof(int);
-		//memcpy(m_serverlist.adr, ptr, sizeof(netadr_t)*m_serverlist.numservers);
-		//ptr += sizeof(netadr_t)*m_serverlist.numservers;
-		//memcpy(m_serverlist.remap, ptr, sizeof(int)*m_serverlist.nummapped);
-		//ptry += sizeof(int)*m_serverlist.nummapped;
 
 		for (i=0; i<m_serverlist.numservers; i++)
 		{

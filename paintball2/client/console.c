@@ -146,8 +146,8 @@ void Con_ToggleConsole_f (void)
 		return;
 	}
 */
-	Key_ClearTyping ();
-	Con_ClearNotify ();
+	Key_ClearTyping();
+	Con_ClearNotify();
 
 	if (cls.key_dest == key_console)
 	{

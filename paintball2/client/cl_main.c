@@ -96,6 +96,7 @@ cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_drawhud; // jithud
 
 cvar_t	*serverlist_source; // jitserverlist / jitmenu
+cvar_t	*serverlist_source2; // jitserverlist / jitmenu
 
 client_static_t	cls;
 client_state_t	cl;
@@ -456,13 +457,13 @@ CL_Pause_f
 void CL_Pause_f (void)
 {
 	// never pause in multiplayer
-	if (Cvar_VariableValue ("maxclients") > 1 || !Com_ServerState ())
+	if (Cvar_VariableValue("maxclients") > 1 || !Com_ServerState())
 	{
-		Cvar_SetValue ("paused", 0);
+		Cvar_SetValue("paused", 0);
 		return;
 	}
 
-	Cvar_SetValue ("paused", !cl_paused->value);
+	Cvar_SetValue("paused", !cl_paused->value);
 }
 
 /*
@@ -472,8 +473,8 @@ CL_Quit_f
 */
 void CL_Quit_f (void)
 {
-	CL_Disconnect ();
-	Com_Quit ();
+	CL_Disconnect();
+	Com_Quit();
 }
 
 /*
@@ -1579,6 +1580,8 @@ void CL_InitLocal (void)
 
 	serverlist_source =	Cvar_Get("serverlist_source", 
 		"http://www.planetquake.com/digitalpaint/servers.txt", CVAR_ARCHIVE); // jitserverlist / jitmenu
+	serverlist_source2 =	Cvar_Get("serverlist_source2", 
+		"http://dynamic5.gamespy.com/~digitalpaint/serverlist.php", CVAR_ARCHIVE); // jitserverlist / jitmenu
 
 	// ===
 

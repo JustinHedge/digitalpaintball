@@ -116,8 +116,10 @@ void M_ForceMenuOff (void)
 	m_menudepth = 0;
 
 	cls.key_dest = key_game;
-	Key_ClearStates ();
-	Cvar_Set ("paused", "0");
+	Key_ClearStates();
+	Cvar_Set("paused", "0");
+	m_active_bind_widget = NULL;
+		m_active_bind_command = NULL;
 
 	if(oldscale && (oldscale != cl_hudscale->value))
 		Cvar_SetValue("cl_hudscale", oldscale);

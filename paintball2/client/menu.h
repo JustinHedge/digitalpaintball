@@ -39,6 +39,7 @@ char *NET_ErrorString (void);
 #endif
 
 extern cvar_t *serverlist_source; // jitserverlist
+extern cvar_t *serverlist_source2; // jitserverlist
 
 #define TEXT_WIDTH_UNSCALED		8
 #define TEXT_HEIGHT_UNSCALED	8

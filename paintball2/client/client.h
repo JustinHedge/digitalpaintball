@@ -665,6 +665,10 @@ void M_RefreshActiveMenu (void); // jitmenu
 void M_RefreshWidget (const char *name); // jitmenu
 qboolean M_MenuActive(void); // jitmenu
 
+// cl_serverlist.c
+void Serverlist_Init (void);
+void Serverlist_Shutdown (void);
+
 int strlen_noformat(const unsigned char *s);
 
 //
