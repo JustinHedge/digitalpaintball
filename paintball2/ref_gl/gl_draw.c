@@ -402,28 +402,15 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 		rs = RS_FindScript(gl->bare_name);*/
 	rs = gl->rscript; // jitrscript
 
-#ifdef BEEFQUAKERENDER // jit3dfx
-	VA_SetElem2(vert_array[0],x, y);
-	VA_SetElem2(vert_array[1],x+w, y);
-	VA_SetElem2(vert_array[2],x+w, y+h);
-	VA_SetElem2(vert_array[3],x, y+h);
-#endif
 
 	if (!rs) 
 	{
-		//GLSTATE_ENABLE_ALPHATEST jitodo / jitmenu - reenable this after rscripts for menu stuff are made.
+		//GLSTATE_ENABLE_ALPHATEST //jitodo / jitmenu - reenable this after rscripts for menu stuff are made.
 		GLSTATE_DISABLE_ALPHATEST // jitodo (see above)
 		GLSTATE_ENABLE_BLEND // jitodo (see above)
 		qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-#ifdef BEEFQUAKERENDER // jit3dfx
-		GL_Bind (gl->texnum);
-		VA_SetElem2(tex_array[0],gl->sl, gl->tl);
-		VA_SetElem2(tex_array[1],gl->sh, gl->tl);
-		VA_SetElem2(tex_array[2],gl->sh, gl->th);
-		VA_SetElem2(tex_array[3],gl->sl, gl->th);
-		qglDrawArrays (GL_QUADS, 0, 4);
-#else
+
 		GL_Bind (gl->texnum);
 		qglBegin (GL_QUADS);
 		qglTexCoord2f (gl->sl, gl->tl);
@@ -435,20 +422,25 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 		qglTexCoord2f (gl->sl, gl->th);
 		qglVertex2f (x, y+h);
 		qglEnd ();
-#endif
 
 	}
 	else
 	{
-		RS_ReadyScript(rs);
+		if(!rs->ready) // jit
+			RS_ReadyScript(rs);
+
 		stage=rs->stage;
-		while (stage) {
+
+		while (stage)
+		{
 			if (stage->anim_count)
 				GL_Bind(RS_Animate(stage));
 			else
 				GL_Bind (stage->texture->texnum);
-			if (stage->scroll.speedX) {
-				switch(stage->scroll.typeX) {
+			if (stage->scroll.speedX)
+			{
+				switch(stage->scroll.typeX)
+				{
 					case 0:	// static
 						txm=rs_realtime*stage->scroll.speedX;
 						break;
@@ -459,11 +451,16 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 						txm=cos(rs_realtime*stage->scroll.speedX);
 						break;
 				}
-			} else
+			}
+			else
+			{
 				txm=0;
+			}
 
-			if (stage->scroll.speedY) {
-				switch(stage->scroll.typeY) {
+			if (stage->scroll.speedY)
+			{
+				switch(stage->scroll.typeY)
+				{
 					case 0:	// static
 						tym=rs_realtime*stage->scroll.speedY;
 						break;
@@ -474,20 +471,30 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 						tym=cos(rs_realtime*stage->scroll.speedY);
 						break;
 				}
-			} else
+			}
+			else
+			{
 				tym=0;
+			}
 
-			if (stage->blendfunc.blend) {
+			if (stage->blendfunc.blend)
+			{
 				qglBlendFunc(stage->blendfunc.source,stage->blendfunc.dest);
 				GLSTATE_ENABLE_BLEND
-			} else {
+			}
+			else
+			{
 				GLSTATE_DISABLE_BLEND
 			}
 
-			if (stage->alphashift.min || stage->alphashift.speed) {
-				if (!stage->alphashift.speed && stage->alphashift.min > 0) {
+			if (stage->alphashift.min || stage->alphashift.speed)
+			{
+				if (!stage->alphashift.speed && stage->alphashift.min > 0)
+				{
 					alpha=stage->alphashift.min;
-				} else if (stage->alphashift.speed) {
+				}
+				else if (stage->alphashift.speed)
+				{
 					alpha = sin(rs_realtime * stage->alphashift.speed);
 					// jit alpha=(alpha+1)*0.5f;
 					alpha = 0.5f * (alpha + 1) * 
@@ -496,44 +503,31 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 					// jit if (alpha > stage->alphashift.max) alpha=stage->alphashift.max;
 					// jit if (alpha < stage->alphashift.min) alpha=stage->alphashift.min;
 				}
-			} else
+			}
+			else
+			{
 				alpha=1.0f;
+			}
+
 			qglColor4f(1,1,1,alpha);
 			GL_TexEnv(GL_MODULATE); // jitrscript
 
-			if (stage->envmap) {
+			if (stage->envmap)
+			{
 				qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
 				qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
 				GLSTATE_ENABLE_TEXGEN
 			}
 
-			if (stage->alphamask) {
+			if (stage->alphamask)
+			{
 				GLSTATE_ENABLE_ALPHATEST
-			} else {
+			}
+			else
+			{
 				GLSTATE_DISABLE_ALPHATEST
 			}
-#ifdef BEEFQUAKERENDER // jit3dfx
-			s = gl->sl;
-			t = gl->tl;
-			RS_SetTexcoords2D (stage, &s, &t);
-			VA_SetElem2(tex_array[0],s+txm, t+tym);
-			s = gl->sh;
-			t = gl->tl;
-			RS_SetTexcoords2D (stage, &s, &t);
-			VA_SetElem2(tex_array[1],s+txm, t+tym);
-			s = gl->sh;
-			t = gl->th;
-			RS_SetTexcoords2D (stage, &s, &t);
-			VA_SetElem2(tex_array[2],s+txm, t+tym);
-			s = gl->sl;
-			t = gl->th;
-			RS_SetTexcoords2D (stage, &s, &t);
-			VA_SetElem2(tex_array[3],s+txm, t+tym);
 
-			//jit if (qglLockArraysEXT != 0) qglLockArraysEXT(0,4);
-			qglDrawArrays(GL_QUADS,0,4);
-			//jit if (qglUnlockArraysEXT != 0) qglUnlockArraysEXT();
-#else
 			qglBegin(GL_QUADS);
 
 			s = 0.0f;//gl->sl;
@@ -558,7 +552,6 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 			qglVertex2f(x, y+h);
 
 			qglEnd();
-#endif
 
 			//jit qglColor4f(1,1,1,1);
 			//jit qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -599,154 +592,11 @@ Draw_Pic
 
 void Draw_Pic2 (int x, int y, image_t *gl)
 {
-#ifdef BEEFQUAKERENDER // jit3dfx
-	rscript_t *rs;
-	float	txm,tym, alpha,s,t;
-	rs_stage_t *stage;
-	int picscale;
-
-	picscale = (int)cl_hudscale->value; // jithudscale
-
-	if (!gl)
-	{
-		ri.Con_Printf (PRINT_ALL, "NULL pic in Draw_Pic\n");
-		return;
-	}
-	if (scrap_dirty)
-		Scrap_Upload ();
-
-	if ( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) && !gl->has_alpha) {
-		GLSTATE_DISABLE_ALPHATEST
-	}
-
-	rs=RS_FindScript(gl->name);
-
-	VA_SetElem2(vert_array[0],x, y);
-	VA_SetElem2(vert_array[1],x+gl->width*picscale, y);
-	VA_SetElem2(vert_array[2],x+gl->width*picscale, y+gl->height*picscale);
-	VA_SetElem2(vert_array[3],x, y+gl->height*picscale);
-
-	if (!rs) {
-		GLSTATE_ENABLE_ALPHATEST
-		GL_Bind (gl->texnum);
-		VA_SetElem2(tex_array[0],gl->sl, gl->tl);
-		VA_SetElem2(tex_array[1],gl->sh, gl->tl);
-		VA_SetElem2(tex_array[2],gl->sh, gl->th);
-		VA_SetElem2(tex_array[3],gl->sl, gl->th);
-		qglDrawArrays (GL_QUADS, 0, 4);
-	} else {
-		RS_ReadyScript(rs);
-		stage=rs->stage;
-		while (stage) {
-			if (stage->anim_count)
-				GL_Bind(RS_Animate(stage));
-			else
-				GL_Bind (stage->texture->texnum);
-
-			if (stage->scroll.speedX) {
-				switch(stage->scroll.typeX) {
-					case 0:	// static
-						txm=rs_realtime*stage->scroll.speedX;
-						break;
-					case 1:	// sine
-						txm=sin(rs_realtime*stage->scroll.speedX);
-						break;
-					case 2:	// cosine
-						txm=cos(rs_realtime*stage->scroll.speedX);
-						break;
-				}
-			} else
-				txm=0;
-
-			if (stage->scroll.speedY) {
-				switch(stage->scroll.typeY) {
-					case 0:	// static
-						tym=rs_realtime*stage->scroll.speedY;
-						break;
-					case 1:	// sine
-						tym=sin(rs_realtime*stage->scroll.speedY);
-						break;
-					case 2:	// cosine
-						tym=cos(rs_realtime*stage->scroll.speedY);
-						break;
-				}
-			} else
-				tym=0;
-
-			if (stage->blendfunc.blend) {
-				qglBlendFunc(stage->blendfunc.source,stage->blendfunc.dest);
-				GLSTATE_ENABLE_BLEND
-			} else {
-				GLSTATE_DISABLE_BLEND
-			}
-
-			if (stage->alphamask) {
-				GLSTATE_ENABLE_ALPHATEST
-			} else {
-				GLSTATE_DISABLE_ALPHATEST
-			}
-
-			if (stage->alphashift.min || stage->alphashift.speed) {
-				if (!stage->alphashift.speed && stage->alphashift.min > 0) {
-					alpha=stage->alphashift.min;
-				} else if (stage->alphashift.speed) {
-					alpha=sin(rs_realtime * stage->alphashift.speed);
-					alpha=(alpha+1)*0.5f;
-					if (alpha > stage->alphashift.max) alpha=stage->alphashift.max;
-					if (alpha < stage->alphashift.min) alpha=stage->alphashift.min;
-				}
-			} else
-				alpha=1.0f;
-			qglColor4f(1,1,1,alpha);
-
-			if (stage->envmap) {
-				qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-				qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-				GLSTATE_ENABLE_TEXGEN
-			}
-			// jittest <!--
-			s = 0.0f;//gl->sl;
-			t = 0.0f;//gl->tl;
-			RS_SetTexcoords2D (stage, &s, &t);
-			VA_SetElem2(tex_array[0],s+txm, t+tym);
-			s = 1.0f;//gl->sh;
-			t = 0.0f;//gl->tl;
-			RS_SetTexcoords2D (stage, &s, &t);
-			VA_SetElem2(tex_array[1],s+txm, t+tym);
-			s = 1.0f;//gl->sh;
-			t = 1.0f;//gl->th;
-			RS_SetTexcoords2D (stage, &s, &t);
-			VA_SetElem2(tex_array[2],s+txm, t+tym);
-			s = 0.0f;//gl->sl;
-			t = 1.0f;//gl->th;
-			RS_SetTexcoords2D (stage, &s, &t);
-			VA_SetElem2(tex_array[3],s+txm, t+tym);
-			// -->
-			// jitest if (qglLockArraysEXT != 0) qglLockArraysEXT(0,4);
-			qglDrawArrays(GL_QUADS,0,4);
-			// jitest if (qglUnlockArraysEXT != 0) qglUnlockArraysEXT();
-
-			qglColor4f(1,1,1,1);
-			qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			GLSTATE_DISABLE_TEXGEN
-
-			stage=stage->next;
-		}
-		GLSTATE_DISABLE_BLEND
-		GLSTATE_ENABLE_ALPHATEST
-	}
-
-	if ( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) )  && !gl->has_alpha) {
-		GLSTATE_ENABLE_ALPHATEST
-	}
-#else // jit3dfx
-	
-// no sense in doing all the exact same stuff twice -- just call stretchpic.
+// jit - no sense in doing all the exact same stuff twice -- just call stretchpic.
 	int picscale;
 
 	picscale = (int)cl_hudscale->value; // jithudscale
 	Draw_StretchPic2 (x, y, gl->width*picscale, gl->height*picscale, gl);
-#endif
 }
 
 void Draw_Pic (int x, int y, char *pic)

@@ -72,31 +72,37 @@ void RS_ResetScript (rscript_t *rs)
 
 	rs->name[0] = 0;
 	
-	while (stage != NULL) {
-		if (stage->anim_count) {
+	while (stage != NULL)
+	{
+		if (stage->anim_count)
+		{
 			anim = stage->anim_stage;
-			while (anim != NULL) {
+			while (anim != NULL)
+			{
 				tmp_anim = anim;
+
 				if (anim->texture)
 					if (anim->texture->is_cin)
 						CIN_FreeCin(anim->texture->texnum);
+
 				anim = anim->next;
-				free (tmp_anim);
+				free(tmp_anim);
 			}
 		}
 
 		tmp_stage = stage;
 		stage = stage->next;
-		free (tmp_stage);
+		free(tmp_stage);
 	}
 
-	rs->mirror = false;
+	/*rs->mirror = false;
 	rs->stage = NULL;
 	rs->dontflush = false;
 	rs->subdivide = 0;
 	rs->warpdist = 0.0f;
 	rs->warpsmooth = 0.0f;
-	rs->ready = false;
+	rs->ready = false;*/
+	memset(rs, 0, sizeof(rscript_t)); // jitrscript -- make sure we clear everything out.
 }
 
 #if 0
@@ -217,12 +223,14 @@ void RS_FreeAllScripts (void)
 {
 	rscript_t	*rs = rs_rootscript, *tmp_rs;
 
-	while (rs != NULL) {
+	while (rs != NULL)
+	{
 		tmp_rs = rs->next;
 		RS_ResetScript(rs);
-		free (rs);
+		free(rs);
 		rs = tmp_rs;
 	}
+
 	rs_rootscript = NULL; // jitrscript
 }
 
@@ -233,21 +241,23 @@ void RS_FreeScript(rscript_t *rs)
 	if (!rs)
 		return;
 
-	if (rs_rootscript == rs) {
+	if (rs_rootscript == rs)
+	{
 		rs_rootscript = rs_rootscript->next;
 		RS_ResetScript(rs);
-		free (rs);
+		free(rs);
 		return;
 	}
 
 	tmp_rs = rs_rootscript;
+
 	while (tmp_rs->next != rs)
 		tmp_rs = tmp_rs->next;
+
 	tmp_rs->next = rs->next;
 
-	RS_ResetScript (rs);
-
-	free (rs);
+	RS_ResetScript(rs);
+	free(rs);
 }
 
 void RS_FreeUnmarked (void)
@@ -257,7 +267,8 @@ void RS_FreeUnmarked (void)
 	while (rs != NULL) {
 		tmp_rs = rs->next;
 
-		if (!rs->dontflush)
+		//if (!rs->dontflush)
+		if (!rs->dontflush && !rs->img_ptr) // jitrscript
 			RS_FreeScript(rs);
 
 		rs = tmp_rs;
@@ -671,7 +682,9 @@ void RS_LoadScript(char *script)
 	while (token != NULL) 
 	{
 		if (!_stricmp (token, "/*") || !_stricmp (token, "["))
+		{
 			ignored++;
+		}
 		else if (!_stricmp (token, "*/") || !_stricmp (token, "]"))
 		{
 			ignored--;
@@ -680,12 +693,16 @@ void RS_LoadScript(char *script)
 
 		if (!inscript && !ignored) 
 		{
-			if (!_stricmp (token, "{")) {
+			if (!_stricmp (token, "{"))
+			{
 				inscript = true;
-			} else {
+			}
+			else
+			{
 				rs = RS_FindScript(token);
 
-				if (rs) {
+				if (rs)
+				{
 					image_t *image;
 
 					// jitrscript: if we have a texture pointing to this, update the pointer!
@@ -694,35 +711,58 @@ void RS_LoadScript(char *script)
 					RS_FreeScript(rs);
 					rs = RS_NewScript(token);
 					
-					if(image)
+					if(image) // jit
+					{
+						rs->img_ptr = image;
 						image->rscript = rs;
-				} else {
+					}
+				}
+				else
+				{
 					rs = RS_NewScript(token);
 				}
 			}
-		} else if (inscript && !ignored) {
-			if (!_stricmp(token, "}")) {
-				if (instage) {
+		}
+		else if (inscript && !ignored)
+		{
+			if (!_stricmp(token, "}"))
+			{
+				if (instage)
+				{
 					instage = false;
-				} else {
+				}
+				else
+				{
 					inscript = false;
 				}
-			} else if (!_stricmp(token, "{")) {
-				if (!instage) {
+			}
+			else if (!_stricmp(token, "{"))
+			{
+				if (!instage)
+				{
 					instage = true;
 					stage = RS_NewStage(rs);
 				}
-			} else {
-				if (instage && !ignored) {
-					for (i = 0; i < num_stagekeys; i++) {
-						if (!_stricmp (rs_stagekeys[i].stage, token)) {
+			}
+			else
+			{
+				if (instage && !ignored)
+				{
+					for (i = 0; i < num_stagekeys; i++)
+					{
+						if (!_stricmp (rs_stagekeys[i].stage, token))
+						{
 							rs_stagekeys[i].func (stage, &token);
 							break;
 						}
 					}
-				} else {
-					for (i = 0; i < num_scriptkeys; i++) {
-						if (!_stricmp (rs_scriptkeys[i].script, token)) {
+				}
+				else
+				{
+					for (i = 0; i < num_scriptkeys; i++)
+					{
+						if (!_stricmp (rs_scriptkeys[i].script, token))
+						{
 							rs_scriptkeys[i].func (rs, &token);
 							break;
 						}

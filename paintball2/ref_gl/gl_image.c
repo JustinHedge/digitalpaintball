@@ -2727,8 +2727,13 @@ void GL_FreeUnusedImages (void)
 
 		// free it
 		hash_delete(&gltextures_hash, image->name);
+		if(image->rscript) // jitrscript
+			image->rscript->img_ptr = NULL;
+
 		qglDeleteTextures (1, &image->texnum);
-		memset (image, 0, sizeof(*image));
+		
+		//memset (image, 0, sizeof(*image));
+		memset (image, 0, sizeof(image_t)); // jit (not sure if this makes a difference)
 	}
 }
 
