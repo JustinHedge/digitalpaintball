@@ -648,26 +648,21 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 				scale[i] = gl_modulate->value * 
 					r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
 
-			/*if ( scale[0] == 1.0F &&
-				 scale[1] == 1.0F &&
-				 scale[2] == 1.0F )
+			// jit -- removed the scale == 1.0F check,
+			// because that's just retarded.
+			for (i=0 ; i<size ; i++, bl+=3)
 			{
-				for (i=0 ; i<size ; i++, bl+=3)
-				{
-					bl[0] = lightmap[i*3+0];
-					bl[1] = lightmap[i*3+1];
-					bl[2] = lightmap[i*3+2];
-				}
+#if 1 // jitodo, gamma eqn for  lightmaps
+				bl[0] = (lightmap[i*3+0]) * scale[0];
+				bl[1] = (lightmap[i*3+1]) * scale[1];
+				bl[2] = (lightmap[i*3+2]) * scale[2];
+#else
+				bl[0] = pow((lightmap[i*3+0]/255.0), 1.0/scale[0])*255;
+				bl[1] = pow((lightmap[i*3+1]/255.0), 1.0/scale[1])*255;
+				bl[2] = pow((lightmap[i*3+2]/255.0), 1.0/scale[2])*255;
+#endif
 			}
-			else
-			{*/
-				for (i=0 ; i<size ; i++, bl+=3)
-				{
-					bl[0] = lightmap[i*3+0] * scale[0];
-					bl[1] = lightmap[i*3+1] * scale[1];
-					bl[2] = lightmap[i*3+2] * scale[2];
-				}
-			//}
+
 			lightmap += size*3;		// skip to next lightmap
 		}
 	}
@@ -685,25 +680,11 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 			for (i=0 ; i<3 ; i++)
 				scale[i] = gl_modulate->value*r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
 
-			if ( scale[0] == 1.0F &&
-				 scale[1] == 1.0F &&
-				 scale[2] == 1.0F )
+			for (i=0 ; i<size ; i++, bl+=3)
 			{
-				for (i=0 ; i<size ; i++, bl+=3 )
-				{
-					bl[0] += lightmap[i*3+0];
-					bl[1] += lightmap[i*3+1];
-					bl[2] += lightmap[i*3+2];
-				}
-			}
-			else
-			{
-				for (i=0 ; i<size ; i++, bl+=3)
-				{
-					bl[0] += lightmap[i*3+0] * scale[0];
-					bl[1] += lightmap[i*3+1] * scale[1];
-					bl[2] += lightmap[i*3+2] * scale[2];
-				}
+				bl[0] += (lightmap[i*3+0]) * scale[0];
+				bl[1] += (lightmap[i*3+1]) * scale[1];
+				bl[2] += (lightmap[i*3+2]) * scale[2];
 			}
 			lightmap += size*3;		// skip to next lightmap
 		}

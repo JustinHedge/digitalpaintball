@@ -769,8 +769,8 @@ void UpdateGammaRamp()
 	//int test;
 
 	// jitgamma -- don't let them go to extreme values:
-	if(vid_gamma->value < 0.5f)
-		ri.Cvar_SetValue("vid_gamma", 0.5f);
+	if(vid_gamma->value < 0.7f)
+		ri.Cvar_SetValue("vid_gamma", 0.7f);
 	if(vid_gamma->value > 2.0f)
 		ri.Cvar_SetValue("vid_gamma", 2.0f);
 	if(vid_lighten->value > 0.5f)

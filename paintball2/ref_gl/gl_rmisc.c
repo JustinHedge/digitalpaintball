@@ -135,7 +135,7 @@ void apply_gamma(byte *rgbdata, int w, int h)
 	extern WORD gamma_ramp[3][256];
 
 	if(!vid_gamma_hw->value || !gl_state.gammaramp ||
-		!ri.Cvar_Get("gl_screenshot_applygamma", "1", CVAR_ARCHIVE)->value)
+		!ri.Cvar_Get("gl_screenshot_applygamma", "0", CVAR_ARCHIVE)->value)
 		return; // don't apply gamma if it's not turned on!
 	else
 	{

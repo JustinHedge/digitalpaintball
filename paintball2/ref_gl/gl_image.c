@@ -407,7 +407,7 @@ void Scrap_Upload (void)
 {
 	scrap_uploads++;
 	GL_Bind(TEXNUM_SCRAPS);
-	GL_Upload8 (scrap_texels[0], BLOCK_WIDTH, BLOCK_HEIGHT, false, false, false);
+	GL_Upload8 (scrap_texels[0], BLOCK_WIDTH, BLOCK_HEIGHT, false, false, true); // (sharp) false);
 	scrap_dirty = false;
 }
 
@@ -2250,6 +2250,7 @@ image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t t
 	
 	image->width = width;
 	image->height = height;
+	image->type = type;
 
 	// ===
 	// jit -- paintball2 texture fix
@@ -2266,23 +2267,22 @@ image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t t
 		image->width = 288;
 		image->height = 128;
 	}
-	else if(strstr(name,"pics/alive") || strstr(name,"pics/co2bar") || 
-		strstr(name,"pics/ch") || strstr(name, "pics/gamma") || 
-		strstr(name, "pics/menu_char_colors")) // co2 bar or crosshairs
+	else if(strstr(name, "pics/gamma") || strstr(name, "pics/menu_char_colors") ||
+		(image->type == it_pic && bits == 8))
 	{
 		sharp = true; // no bilinear filtering
 	}
 	// jit
 	// ===
 
-	image->type = type;
+
 
 	if (type == it_skin && bits == 8)
 		R_FloodFillSkin(pic, width, height);
 
 	// load little pics into the scrap
 	if (image->type == it_pic && bits == 8
-		&& image->width < 64 && image->height < 64 && !sharp)
+		&& image->width < 64 && image->height < 64 && sharp)// && !sharp)
 	{
 		int		x, y;
 		int		i, j, k;
