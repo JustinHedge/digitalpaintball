@@ -301,7 +301,7 @@ void SV_NextDownload_f (void)
 }
 
 #ifdef USE_DOWNLOAD2
-void SV_SendSingleClientMessage(client_t *c, int msglen, char *msgbuff); // jitdownload
+//void SV_SendSingleClientMessage(client_t *c, int msglen, char *msgbuff); // jitdownload
 void SV_NextDownload2_f (void) // jitdownload
 {
 	unsigned int		r;
@@ -322,6 +322,9 @@ void SV_NextDownload2_f (void) // jitdownload
 		offset = atoi(Cmd_Argv(1)) * DOWNLOAD2_CHUNKSIZE; // downloaded offset -- jitodo, make this a long instead.
 	else
 		return;
+
+	if(offset > sv_client->downloadsize) // this shouldn't happen unless the client screwed up or is malicious.
+		offset = sv_client->downloadsize;
 
 	r = sv_client->downloadsize - offset;
 	if (r > DOWNLOAD2_CHUNKSIZE)
@@ -349,10 +352,20 @@ void SV_NextDownload2_f (void) // jitdownload
 	Netchan_Transmit(&sv_client->netchan, message.cursize, message.data);
 	//Netchan_OutOfBand(NC_SERVER, todo_adr, message.cursize, message.data);
 
-	if (offset+r < sv_client->downloadsize)
+//	if (offset+r < sv_client->downloadsize)
+//		return;
+
+
+}
+
+
+void SV_Download2Complete_f (void) // jitdownload
+{
+	if (!sv_client->download)
 		return;
 
-	Com_Printf("SV Completed %d\n", offset/DOWNLOAD2_CHUNKSIZE);
+	// client said it's done downloading, so close the file:
+	//Com_Printf("SV Completed %d\n", offset/DOWNLOAD2_CHUNKSIZE);
 	FS_FreeFile (sv_client->download);
 	sv_client->download = NULL;
 }
@@ -523,7 +536,7 @@ void SV_BeginDownload2_f(void) // jitdownload
 
 	MSG_WriteByte(&sv_client->netchan.message, svc_download2ack); // acknowledge download request
 	MSG_WriteLong(&sv_client->netchan.message, sv_client->downloadsize); // tell client filesize
-	MSG_WriteLong(&sv_client->netchan.message, offset); // tell client where we're starting
+	MSG_WriteByte(&sv_client->netchan.message, 0); // tell client which compression algorithm to use (0 = none)
 	MSG_WriteString(&sv_client->netchan.message, name); // tell client what filename should be.
 
 	Com_Printf("SV Acknw: %d\n", offset/DOWNLOAD2_CHUNKSIZE);
@@ -623,9 +636,10 @@ ucmd_t ucmds[] =
 
 	{"download", SV_BeginDownload_f},
 	{"nextdl", SV_NextDownload_f},
-#ifdef USE_DOWNLOAD2
+#ifdef USE_DOWNLOAD2 // jitdownload
 	{"download2", SV_BeginDownload2_f},
-	{"nextdl2", SV_NextDownload2_f}, // jitdownload
+	{"nextdl2", SV_NextDownload2_f},
+	{"dl2complete", SV_Download2Complete_f},
 #endif
 
 	{NULL, NULL}

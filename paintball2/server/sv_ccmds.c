@@ -558,9 +558,12 @@ void SV_Map_f (void)
 {
 	char	*map;
 	char	expanded[MAX_QPATH];
+	void	M_ForceMenuOff(); // jitmenu
 	
 	// if not a pcx, demo, or cinematic, check to make sure the level exists
 	map = Cmd_Argv(1);
+
+	M_ForceMenuOff(); // jitmenu
 
 	if(strstr(map, ".dm2")) // jitdemo -- in case people use "map" instead of "demomap" for playing a demo
 	{
