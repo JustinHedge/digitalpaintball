@@ -180,6 +180,7 @@ cvar_t	*gl_3dlabs_broken;
 
 cvar_t	*vid_fullscreen;
 cvar_t	*vid_gamma;
+cvar_t	*vid_lighten; // jitgamma
 cvar_t	*vid_ref;
 
 cvar_t	*cl_animdump;
@@ -1478,6 +1479,7 @@ void R_Register( void )
 
 	vid_fullscreen = ri.Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE );
 	vid_gamma = ri.Cvar_Get( "vid_gamma", "1.0", CVAR_ARCHIVE );
+	vid_lighten = ri.Cvar_Get("vid_lighten", "0", CVAR_ARCHIVE); // jitgamma
 	vid_ref = ri.Cvar_Get( "vid_ref", "pbgl", CVAR_ARCHIVE );
 
 	ri.Cmd_AddCommand( "imagelist", GL_ImageList_f );
@@ -2001,7 +2003,8 @@ qboolean R_Init( void *hinstance, void *hWnd )
 	/*
 	** draw our stereo patterns
 	*/
-#if 0 // commented out until H3D pays us the money they owe us
+//#if 0 // commented out until H3D pays us the money they owe us
+#if 1 // jit
 	GL_DrawStereoPattern();
 #endif
 
@@ -2109,6 +2112,15 @@ void R_BeginFrame( float camera_separation )
 			Com_sprintf( envbuffer, sizeof(envbuffer), "SST_GAMMA=%f", g );
 			putenv( envbuffer );
 		}
+	}
+
+	if (vid_lighten->modified) // jitgamma
+	{
+		vid_lighten->modified = false;
+		if (vid_gamma_hw->value && gl_state.gammaramp) 
+		{
+			UpdateGammaRamp();
+		} 
 	}
 
 	GLimp_BeginFrame( camera_separation );

@@ -517,7 +517,8 @@ vidmode_t vid_modes[] =
 	{ "Mode 8: 1280x960",   1280, 960,  8 },
 	{ "Mode 9: 1280x1024",  1280, 1024, 9 }, // jit
 	{ "Mode 10: 1600x1200", 1600, 1200, 10 },
-	{ "Mode 11: 2048x1536", 2048, 1536, 11 }
+	{ "Mode 11: 2048x1536", 2048, 1536, 11 },
+	// jitodo, custom resolution
 };
 
 qboolean VID_GetModeInfo( int *width, int *height, int mode )
@@ -798,12 +799,14 @@ VID_Init
 void VID_Init (void)
 {
 	/* Create the video variables so we know how to start the graphics drivers */
-	vid_ref = Cvar_Get ("vid_ref", "pbgl", CVAR_ARCHIVE); // jit
-	vid_xpos = Cvar_Get ("vid_xpos", "3", CVAR_ARCHIVE);
-	vid_ypos = Cvar_Get ("vid_ypos", "22", CVAR_ARCHIVE);
-	vid_fullscreen = Cvar_Get ("vid_fullscreen", "0", CVAR_ARCHIVE);
-	vid_gamma = Cvar_Get( "vid_gamma", "1", CVAR_ARCHIVE );
-	win_noalttab = Cvar_Get( "win_noalttab", "0", CVAR_ARCHIVE );
+	vid_ref = Cvar_Get("vid_ref", "pbgl", CVAR_ARCHIVE); // jit
+	vid_xpos = Cvar_Get("vid_xpos", "3", CVAR_ARCHIVE);
+	vid_ypos = Cvar_Get("vid_ypos", "22", CVAR_ARCHIVE);
+	vid_fullscreen = Cvar_Get("vid_fullscreen", "0", CVAR_ARCHIVE);
+	vid_gamma = Cvar_Get("vid_gamma", "1", CVAR_ARCHIVE);
+	Cvar_Get("vid_lighten", "0", CVAR_ARCHIVE); // jitgamma
+	Cvar_Get("gl_screenshot_applygamma", "1", CVAR_ARCHIVE); // jitgamma
+	win_noalttab = Cvar_Get("win_noalttab", "0", CVAR_ARCHIVE);
 
 	/* Add some console commands that we want to handle */
 	Cmd_AddCommand ("vid_restart", VID_Restart_f);

@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qgl.h"
 
-#define	REF_VERSION	"PB2GL 0.06"
+#define	REF_VERSION	"PB2GL 0.07" // jitversion / jitbuild
 
 // up / down
 #define	PITCH	0
@@ -206,6 +206,7 @@ extern  cvar_t  *gl_lockpvs;
 
 extern	cvar_t	*vid_fullscreen;
 extern	cvar_t	*vid_gamma;
+extern	cvar_t	*vid_lighten; // jitgamma
 
 extern	cvar_t		*intensity;
 
@@ -491,3 +492,4 @@ void		GLimp_LogNewFrame( void );
 #define RSCRIPT_COSINE 2
 #define RSCRIPT_SINABS 3
 #define RSCRIPT_COSABS 4
+#define RSCRIPT_CONST  5 // jitrscript (for nonanimated rotations)
