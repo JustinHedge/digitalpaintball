@@ -94,6 +94,7 @@ typedef enum {false, true}	qboolean;
 #define PRINT_DIALOG		11		// pops up a dailog on the client
 #define PRINT_ITEM			12		// for item pickup notifications.
 #define PRINT_EVENT			13		// for events (such as flag captures)
+#define PRINT_SCOREDATA		14		// for server sending ping, kills, deaths, etc of a client.
 
 
 
@@ -1193,9 +1194,12 @@ ROGUE - VERSIONS
 #define CS_GENERAL			(CS_PLAYERSKINS+MAX_CLIENTS)
 #define	MAX_CONFIGSTRINGS	(CS_GENERAL+MAX_GENERAL)
 
-#define CS_REQUIREDFILES	(CS_GENERAL+2) // jit
-#define CS_WHATEVERSNEXT	(CS_REQUIREDFILES+4) // use this for additional stuff
+#define CS_REQUIREDFILES	(CS_GENERAL+2) // jitdownload
+#define CS_SERVERGVERSION	(CS_GENERAL+7) // jitversion
+#define CS_SERVEREVERSION	(CS_GENERAL+8) // jitversion
+#define CS_WHATEVERSNEXT	(CS_GENERAL+9) // use this for additional stuff
 
+#define CS_EVENTS			(CS_GENERAL+256) // jitevents
 
 //==============================================
 
@@ -1287,6 +1291,7 @@ extern int vidref_val;
 
 
 // jittext / jitconsole
+#define CHAR_ENDFORMAT	133
 #define CHAR_UNDERLINE	134
 #define CHAR_ITALICS	135
 #define CHAR_COLOR		136
@@ -1316,3 +1321,18 @@ void hash_delete(hash_table_t *table, const unsigned char *key);
 // jithash
 // ========
 
+// jitevents
+typedef enum {
+	EVENT_NONE = 0,
+	EVENT_ENTER = 1,
+	EVENT_JOIN = 2,
+	EVENT_KILL = 3,
+	EVENT_DEATH = 4,
+	EVENT_GRAB = 5,
+	EVENT_CAP = 6,
+	EVENT_ROUNDSTART = 7,
+	EVENT_ROUNDOVER = 8,
+	EVENT_SUICIDE = 9,
+	EVENT_ADMINKILL = 10,
+	EVENT_FFIRE = 11
+} game_event_t;
