@@ -554,6 +554,7 @@ void cl_scores_setcaps (int client, int caps);
 void cl_scores_setteam (int client, char team);
 void cl_scores_setisalive (int client, qboolean alive);
 void cl_scores_setisalive_all (qboolean alive);
+void cl_scores_sethasflag_all (qboolean hasflag);
 void cl_scores_sethasflag (int client, qboolean hasflag);
 void cl_scores_setinuse (int client, qboolean inuse);
 void cl_scores_setinuse_all (qboolean inuse);
@@ -633,7 +634,8 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging);
 void M_MouseMove(int mx, int my); // jitmenu
 void M_RefreshMenu (void); // jitmenu
 void M_ReloadMenu (void); // jitmenu
-void M_RefreshActiveMenu (void);
+void M_RefreshActiveMenu (void); // jitmenu
+void M_RefreshWidget (const char *name); // jitmenu
 qboolean M_MenuActive(void); // jitmenu
 
 int strlen_noformat(const unsigned char *s);

@@ -106,7 +106,7 @@ qboolean SV_SetPlayer (void)
 		idnum = atoi(Cmd_Argv(1));
 		if (idnum < 0 || idnum >= maxclients->value)
 		{
-			Com_Printf ("Bad client slot: %i\n", idnum);
+			Com_Printf("Bad client slot: %i\n", idnum);
 			return false;
 		}
 
@@ -114,7 +114,7 @@ qboolean SV_SetPlayer (void)
 		sv_player = sv_client->edict;
 		if (!sv_client->state)
 		{
-			Com_Printf ("Client %i is not active\n", idnum);
+			Com_Printf("Client %i is not active\n", idnum);
 			return false;
 		}
 		return true;

@@ -41,6 +41,7 @@ static m_serverlist_t	m_serverlist;
 static menu_widget_t	*m_active_bind_widget = NULL;
 static char				*m_active_bind_command = NULL;
 static menu_screen_t	*m_current_menu;
+static hash_table_t		named_widgets_hash;
 
 // Project-wide Globals
 int		m_serverPingSartTime;
@@ -85,6 +86,15 @@ static void list_source(menu_widget_t *widget)
 	}
 }
 
+static void add_named_widget(menu_widget_t *widget)
+{
+	hash_add(&named_widgets_hash, widget->name, widget);
+}
+
+static void remove_named_widget(menu_widget_t *widget)
+{
+	hash_delete(&named_widgets_hash, widget->name);
+}
 
 static qboolean widget_is_selectable(menu_widget_t *widget)
 {
@@ -219,6 +229,12 @@ static menu_widget_t *free_widgets(menu_widget_t *widget)
 		widget->subwidget = free_widgets(widget->subwidget);
 
 	// free text/string stuff:
+	if(widget->name)
+	{
+		remove_named_widget(widget);
+		Z_Free(widget->command);
+	}
+
 	if(widget->command)
 		Z_Free(widget->command);
 	if(widget->doubleclick)
@@ -346,7 +362,7 @@ static void callback_select_scrollup(menu_widget_t *widget)
 {
 	if(widget->parent->select_vstart > 0)
 	{
-		widget->parent->select_vstart --;
+		widget->parent->select_vstart--;
 		widget->parent->modified = true;
 	}
 }
@@ -1081,7 +1097,7 @@ static void M_HilightNextWidget(menu_screen_t *menu)
 
 static void M_HilightPreviousWidget(menu_screen_t *menu)
 {
-	menu_widget_t *widget, *oldwidget, *prevwidget;
+	menu_widget_t *widget, *oldwidget, *prevwidget = NULL;
 
 	widget = menu->widget;
 
@@ -1111,8 +1127,10 @@ static void M_HilightPreviousWidget(menu_screen_t *menu)
 		oldwidget = widget;
 
 		widget = widget->next;
+
 		if(!widget)
 			widget = menu->widget;
+
 		while(widget != oldwidget)
 		{
 			if(widget_is_selectable(widget))
@@ -1122,6 +1140,9 @@ static void M_HilightPreviousWidget(menu_screen_t *menu)
 			if(!widget)
 				widget = menu->widget;
 		}
+
+		if (!prevwidget)
+			prevwidget = widget;
 
 		prevwidget->hover = true;
 		MENU_SOUND_SELECT;
@@ -1453,7 +1474,7 @@ static qboolean M_InsertField (int key)
 {
 	char s[256];
 	menu_widget_t *widget;
-	int cursorpos, maxlength;//, start;
+	int cursorpos, maxlength;
 
 	widget = M_GetActiveWidget(NULL);
 
@@ -1463,7 +1484,6 @@ static qboolean M_InsertField (int key)
 	strcpy(s, Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->string);
 	cursorpos = widget->field_cursorpos;
 	maxlength = widget->field_width;
-	//start = widget->field_start;
 
 	key = KeyPadKey(key);
 
@@ -1813,27 +1833,11 @@ static void select_strip_from_list(menu_widget_t *widget, const char *striptext)
 
 static void select_begin_file_list(menu_widget_t *widget, char *findname)
 {
-//	int i, numfiles;
-//	char **files;
 	extern char **FS_ListFiles( char *, int *, unsigned, unsigned );
-//	static void FreeFileList( char **list, int n );
-
 
 	widget->select_list = FS_ListFiles(findname, &widget->select_totalitems, 0, 0);
 	widget->select_totalitems--;
 	widget->flags |= WIDGET_FLAG_FILELIST;
-
-/*	files = FS_ListFiles(findname, &numfiles, 0, 0);
-	
-	widget->select_list = Z_Malloc(sizeof(char*) * numfiles);
-
-	for(i = 0; i < numfiles; i++)
-	{
-		widget->select_list[i] = Z_Malloc(sizeof(char)*(strlen(files[i])+1));
-		strcpy(widget->select_list[i], files[i]);
-	}
-	
-	FreeFileList(files, numfiles);*/
 }
 
 
@@ -1981,10 +1985,8 @@ static void menu_from_file(menu_screen_t *menu)
 			token = COM_Parse(&buf); // "1"
 			if(atoi(token) == 1)
 			{
-// jitodo, probably should have different types of menus, like dialog boxes, etc.
 				menu_widget_t *widget=NULL;
 				int x = 0, y = 0;
-				//qboolean enabled = true;
 
 				token = COM_Parse(&buf); 
 
@@ -2116,6 +2118,11 @@ static void menu_from_file(menu_screen_t *menu)
 						widget->flags |= WIDGET_FLAG_LISTSOURCE;
 						widget->listsource = text_copy(COM_Parse(&buf));
 					}
+					else if(Q_streq(token, "name") || Q_streq(token, "id"))
+					{
+						widget->name = text_copy(COM_Parse(&buf));
+						add_named_widget(widget);
+					}
 					else if(strstr(token, "strip"))
 						select_strip_from_list(widget, COM_Parse(&buf));
 					else if(Q_streq(token, "nobg") || Q_streq(token, "nobackground"))
@@ -2176,22 +2183,10 @@ static menu_screen_t* M_FindMenuScreen(const char *menu_name)
 
 static void reload_menu_screen(menu_screen_t *menu)
 {
-//	menu_widget_t *widgetnext;
-//	menu_widget_t *widget;
-
 	if(!menu)
 		return;
 
-	/*widget = menu->widget;
-	
-	while(widget)
-	{
-		widgetnext = widget->next;
-		free_widget(widget);
-		widget = widgetnext;
-	}*/
 	menu->widget = free_widgets(menu->widget);
-
 	menu_from_file(menu); // reload data from file
 }
 
@@ -2231,11 +2226,20 @@ void M_RefreshMenu (void)
 	menu_screen_t *menu;
 
 	menu = root_menu;
+
 	while(menu)
 	{
 		refresh_menu_screen(menu);
 		menu = menu->next;
 	}
+}
+
+void M_RefreshWidget (const char *name)
+{
+	menu_widget_t *widget;
+
+	if (widget = hash_get(&named_widgets_hash, name))
+		widget->modified = true;
 }
 
 void M_RefreshActiveMenu (void)
@@ -2266,40 +2270,13 @@ void M_ServerlistPrint_f(void)
 		Com_Printf("%d) %s %s\n", i+1, m_serverlist.ips[i], m_serverlist.info[i]);
 		
 }
-/*
-static serverlist_node_t *new_serverlist_node()
-{
-	serverlist_node_t *node;
-	node = Z_Malloc(sizeof(serverlist_node_t));
-	memset(node, 0, sizeof(serverlist_node_t));
-	return node;
-}*/
 
-// free single node
-/*static void free_serverlist_node(serverlist_node_t *node)
-{
-	if(node->info)
-		Z_Free(node->info);
-	Z_Free(node);
-}
-
-// recursively free all nodes
-static void free_serverlist(serverlist_node_t *node)
-{
-	if(node)
-	{
-		free_serverlist(node->next);
-		free_serverlist_node(node);
-	}
-}
-*/
 static void free_menu_serverlist() // jitodo -- eh, something should call this?
 {
 	if(m_serverlist.info)
 		free_string_array(m_serverlist.info, m_serverlist.numservers);
 	if(m_serverlist.ips)
 		free_string_array(m_serverlist.ips, m_serverlist.numservers);
-//	free_serverlist(m_serverlist.list);
 
 	memset(&m_serverlist, 0, sizeof(m_serverlist_t));
 }
@@ -2343,15 +2320,7 @@ static void update_serverlist_server(m_serverlist_server_t *server, char *info, 
 	// and the ping
 	server->ping = ping;
 }
-/*
-static m_serverlist_server_t *new_serverlist_server(netadr_t adr, char *info, int ping)
-{
-	m_serverlist_server_t *server;
 
-	server = Z_Malloc(sizeof(m_serverlist_server_t));
-	server->adr = adr;
-	update_serverlist_server(server, info, ping);
-}*/
 #define SERVER_NAME_MAXLENGTH 19
 #define MAP_NAME_MAXLENGTH 8
 static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
@@ -2402,13 +2371,7 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	int ping;
 	qboolean added = false;
 
-	/*if(pinging)
-		ping = 999;
-	else*/
-		ping = Sys_Milliseconds() - m_serverPingSartTime;
-
-	/*if(ping>999)
-		ping = 999;*/
+	ping = Sys_Milliseconds() - m_serverPingSartTime;
 
 	if(adr.type == NA_IP)
 	{
@@ -2429,31 +2392,17 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	else
 		return;
 
-	// jitodo
-	
 	// check if server exists in current serverlist:
 	for(i=0; i<m_serverlist.numservers; i++)
 	{
-		if(Q_streq(addrip, m_serverlist.ips[i])) // address exists in list
+		if(Q_streq(addrip, m_serverlist.ips[i]))
 		{
 			// update info from server:
-			Z_Free(m_serverlist.info[i]);
-
-			/*if(pinging)
-				m_serverlist.server[i].ping_request_time = Sys_Milliseconds();
-			else
-			{
-				ping = curtime - m_serverlist.server[i].ping_request_time;
-				Com_Printf("%d - %d\n", curtime, m_serverlist.server[i].ping_request_time);
-			}*/
-
 			update_serverlist_server(&m_serverlist.server[i], info, ping);
+			Z_Free(m_serverlist.info[i]);
 			m_serverlist.info[i] = text_copy(format_info_from_serverlist_server(&m_serverlist.server[i]));
-			// jitodo - memory leak?
-			
 			added = true;
 			break;
-			//return;
 		}
 	}
 
@@ -2484,7 +2433,7 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 			Z_Free(m_serverlist.ips);
 			Z_Free(m_serverlist.server);
 
-			m_serverlist.info = tempinfo; // jitodo - test -- will this work?? (update widget??)
+			m_serverlist.info = tempinfo;
 			m_serverlist.ips = tempips;
 			m_serverlist.server = tempserver;
 
@@ -2493,27 +2442,14 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 
 		// add data to serverlist:
 		m_serverlist.ips[m_serverlist.numservers] = text_copy(addrip);
-		//m_serverlist.server[m_serverlist.numservers] = new_serverlist_server(adr, info, ping);
-
-		/*if(pinging)
-			m_serverlist.server[m_serverlist.numservers].ping_request_time = Sys_Milliseconds();
-		else // this part shouldn't ever get executed, but just in case:
-			ping = curtime - m_serverlist.server[m_serverlist.numservers].ping_request_time;*/
-
 		update_serverlist_server(&m_serverlist.server[m_serverlist.numservers], info, ping);
-		//m_serverlist.info[m_serverlist.numservers] = text_copy(va("%3d %s", ping, info));
 		m_serverlist.info[m_serverlist.numservers] =
 			text_copy(format_info_from_serverlist_server(&m_serverlist.server[m_serverlist.numservers]));
-		
 		m_serverlist.numservers++;
 	}
 
-
-
-	// Tell the widget the serverlist has updated: (shouldn't this be done after below code?)
+	// Tell the widget the serverlist has updated:
 	M_RefreshActiveMenu();
-
-	//return m_serverlist.numservers - 1;
 }
 
 // color servers grey and re-ping them
@@ -2731,6 +2667,10 @@ void M_Init (void)
 	m_serverlist.server = Z_Malloc(sizeof(m_serverlist_server_t)*INITIAL_SERVERLIST_SIZE);
 	m_serverlist.actualsize = INITIAL_SERVERLIST_SIZE;
 
+	// Init hash table:
+	hash_table_init(&named_widgets_hash, 0xFF, NULL);
+
+    // Add commands
 	Cmd_AddCommand("menu", M_Menu_f);
 	Cmd_AddCommand("serverlist_update", M_ServerlistUpdate_f);
 	Cmd_AddCommand("serverlist_refresh", M_ServerlistRefresh_f);

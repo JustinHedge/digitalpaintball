@@ -345,6 +345,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		break;
 	case EVENT_ROUNDSTART:
 		cl_scores_setisalive_all(true);
+		cl_scores_sethasflag_all(false);
 		break;
 	case EVENT_ADMINKILL: // jitodo - fix all these offsets
 		if (num_elements > 2 && index_array[2] == cl.playernum)

@@ -376,7 +376,7 @@ void CL_Record_f (void)
 	// jitscores -- we need to write the known score data here, otherwise
 	// demos will be messed up.
 	i = 0;
-	while (CL_ScoresDemoData(i, &scorestr))
+	while (i=CL_ScoresDemoData(i, &scorestr))
 	{
 		SZ_Init(&buf, buf_data, sizeof(buf_data));
 		MSG_WriteByte(&buf, svc_print);
@@ -866,9 +866,9 @@ void CL_Changing_f (void)
 	if (cls.download) // jitodo -- we SHOULD make it stop downloading and switch to the next map!
 		return;
 
-	SCR_BeginLoadingPlaque ();
+	SCR_BeginLoadingPlaque();
 	cls.state = ca_connected;	// not active anymore, but not disconnected
-	Com_Printf ("\nChanging map...\n");
+	Com_Printf("\nChanging map...\n");
 }
 
 
@@ -886,24 +886,29 @@ void CL_Reconnect_f (void)
 	if (cls.download) // jitodo -- we SHOULD make it stop downloading and switch to the next map!
 		return;
 
-	S_StopAllSounds ();
-	if (cls.state == ca_connected) {
-		Com_Printf ("reconnecting...\n");
+	S_StopAllSounds();
+
+	if (cls.state == ca_connected)
+	{
+		Com_Printf("reconnecting...\n");
 		cls.state = ca_connected;
-		MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, "new");		
+		MSG_WriteChar(&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString(&cls.netchan.message, "new");		
 		return;
 	}
 
-	if (*cls.servername) {
-		if (cls.state >= ca_connected) {
+	if (*cls.servername)
+	{
+		if (cls.state >= ca_connected)
+		{
 			CL_Disconnect();
 			cls.connect_time = cls.realtime - 1500;
-		} else
+		}
+		else
 			cls.connect_time = -99999; // fire immediately
 
 		cls.state = ca_connecting;
-		Com_Printf ("reconnecting...\n");
+		Com_Printf("reconnecting...\n");
 	}
 }
 
@@ -938,7 +943,6 @@ void CL_PingServers_f (void)
 	cvar_t		*noipx;
 	FILE		*serverlist; // jitserverlist / jitmenu
 	extern int	m_serverPingSartTime;
-//	char		buff[256];
 
 	NET_Config (true);		// allow remote
 

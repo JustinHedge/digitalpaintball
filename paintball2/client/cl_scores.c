@@ -133,7 +133,7 @@ void cl_scores_setping (int client, int ping)
 	cl_scores[client].ping = ping;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_setstarttime (int client, int time)
@@ -141,7 +141,7 @@ void cl_scores_setstarttime (int client, int time)
 	cl_scores[client].starttime = time;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_setkills (int client, int kills)
@@ -149,7 +149,7 @@ void cl_scores_setkills (int client, int kills)
 	cl_scores[client].kills = kills;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_setdeaths (int client, int deaths)
@@ -157,7 +157,7 @@ void cl_scores_setdeaths (int client, int deaths)
 	cl_scores[client].deaths = deaths;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_setgrabs (int client, int grabs)
@@ -165,7 +165,7 @@ void cl_scores_setgrabs (int client, int grabs)
 	cl_scores[client].grabs = grabs;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_setcaps (int client, int caps)
@@ -173,7 +173,7 @@ void cl_scores_setcaps (int client, int caps)
 	cl_scores[client].caps = caps;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_setteam (int client, char team)
@@ -181,7 +181,7 @@ void cl_scores_setteam (int client, char team)
 	cl_scores[client].team = team;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_setisalive (int client, qboolean alive)
@@ -193,7 +193,7 @@ void cl_scores_setisalive (int client, qboolean alive)
 	if (!alive)
 		cl_scores_sethasflag(client, false);
 
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_setisalive_all (qboolean alive)
@@ -205,21 +205,33 @@ void cl_scores_setisalive_all (qboolean alive)
 			cl_scores[i].isalive = alive;
 
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
+}
+
+void cl_scores_sethasflag_all (qboolean hasflag)
+{
+	int i;
+
+	for (i=0; i<MAX_CLIENTS; i++)
+		if(cl_scores[i].inuse)
+			cl_scores[i].hasflag = hasflag;
+
+	cl_scores_modified = true;
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_sethasflag (int client, qboolean hasflag)
 {
 	cl_scores[client].hasflag = hasflag;
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_setinuse (int client, qboolean inuse)
 {
 	cl_scores[client].inuse = inuse;
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_setinuse_all (qboolean inuse)
@@ -230,14 +242,14 @@ void cl_scores_setinuse_all (qboolean inuse)
 		cl_scores[i].inuse = inuse;
 
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 void cl_scores_clear (int client)
 {
 	memset(&cl_scores[client], 0, sizeof(cl_score_t));
 	cl_scores_modified = true;
-	M_RefreshActiveMenu();
+	M_RefreshWidget("scores");
 }
 
 

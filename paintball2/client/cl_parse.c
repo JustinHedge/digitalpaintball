@@ -1213,7 +1213,7 @@ void CL_ParseServerMessage (void)
 		switch (cmd)
 		{
 		default:
-			Com_Error (ERR_DROP,"CL_ParseServerMessage: Illegible server message\n");
+			Com_Error(ERR_DROP, "CL_ParseServerMessage: Illegible server message (%d)\n", cmd); // jit
 			break;
 			
 		case svc_nop:
