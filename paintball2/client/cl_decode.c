@@ -160,7 +160,7 @@ void encode_unsigned (unsigned int count, unsigned int *in, unsigned char *out)
 // out: integer array
 // max: max number of elements in int array.
 // return: number of integers decoded
-int decode_unsigned(const unsigned char *in, unsigned int *out, int max)
+int decode_unsigned (const unsigned char *in, unsigned int *out, int max)
 {
 	int i = 0;
 

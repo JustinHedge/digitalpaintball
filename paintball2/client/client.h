@@ -533,7 +533,7 @@ void CL_WriteConfig_f (void); // jitconfig
 // cl_scores.c
 //
 // ===
-// jitscores
+// jitscores / jitevents
 void CL_Score_f (void);
 void CL_Scoreboard_f (void);
 void CL_ScoreboardShow_f (void);
@@ -555,20 +555,22 @@ void cl_scores_setinuse_all (qboolean inuse);
 void cl_scores_clear (int client);
 int  cl_scores_get_team (int client);
 int  cl_scores_get_team_splat (int client);
-unsigned char cl_scores_get_team_textcolor (int client);
 int  cl_scores_get_isalive (int client);
+int  CL_ScoresDemoData (int startindex, unsigned char **sptr);
+unsigned char cl_scores_get_team_textcolor (int client);
 void init_cl_scores (void);
 void shutdown_cl_scores (void);
-// jitscores
-// ===
 
 //
 // cl_decode.c
 //
-int decode_unsigned (const unsigned char *in, unsigned int *out, int max); // jitscores / jitevents
-void CL_ParsePrintEvent (const char *str); // jitevents
-void CL_DrawEventStrings (void); // jitevents
-#define name_from_index(a) cl.clientinfo[(a)].name // jitevents / jitscores
+int decode_unsigned (const unsigned char *in, unsigned int *out, int max);
+void encode_unsigned (unsigned int count, unsigned int *in, unsigned char *out);
+void CL_ParsePrintEvent (const char *str);
+void CL_DrawEventStrings (void);
+#define name_from_index(a) cl.clientinfo[(a)].name
+// jit
+// ===
 
 //
 // cl_view.c
@@ -624,8 +626,9 @@ void M_Menu_Main_f (void);
 void M_ForceMenuOff (void);
 void M_AddToServerList (netadr_t adr, char *info, qboolean pinging);
 void M_MouseMove(int mx, int my); // jitmenu
-void M_RefreshMenu(); // jitmenu
-void M_ReloadMenu(); // jitmenu
+void M_RefreshMenu (void); // jitmenu
+void M_ReloadMenu (void); // jitmenu
+void M_RefreshActiveMenu (void);
 qboolean M_MenuActive(void); // jitmenu
 
 int strlen_noformat(const unsigned char *s);

@@ -133,13 +133,15 @@ void cl_scores_setping (int client, int ping)
 	cl_scores[client].ping = ping;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_setstarttime (int client, int time)
 {
-	cl_scores[client].starttime = time; // jitodo***************
+	cl_scores[client].starttime = time;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_setkills (int client, int kills)
@@ -147,6 +149,7 @@ void cl_scores_setkills (int client, int kills)
 	cl_scores[client].kills = kills;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_setdeaths (int client, int deaths)
@@ -154,6 +157,7 @@ void cl_scores_setdeaths (int client, int deaths)
 	cl_scores[client].deaths = deaths;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_setgrabs (int client, int grabs)
@@ -161,6 +165,7 @@ void cl_scores_setgrabs (int client, int grabs)
 	cl_scores[client].grabs = grabs;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_setcaps (int client, int caps)
@@ -168,6 +173,7 @@ void cl_scores_setcaps (int client, int caps)
 	cl_scores[client].caps = caps;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_setteam (int client, char team)
@@ -175,6 +181,7 @@ void cl_scores_setteam (int client, char team)
 	cl_scores[client].team = team;
 	cl_scores[client].inuse = true;
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_setisalive (int client, qboolean alive)
@@ -185,6 +192,8 @@ void cl_scores_setisalive (int client, qboolean alive)
 
 	if (!alive)
 		cl_scores_sethasflag(client, false);
+
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_setisalive_all (qboolean alive)
@@ -196,18 +205,21 @@ void cl_scores_setisalive_all (qboolean alive)
 			cl_scores[i].isalive = alive;
 
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_sethasflag (int client, qboolean hasflag)
 {
 	cl_scores[client].hasflag = hasflag;
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_setinuse (int client, qboolean inuse)
 {
 	cl_scores[client].inuse = inuse;
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_setinuse_all (qboolean inuse)
@@ -218,12 +230,14 @@ void cl_scores_setinuse_all (qboolean inuse)
 		cl_scores[i].inuse = inuse;
 
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 void cl_scores_clear (int client)
 {
 	memset(&cl_scores[client], 0, sizeof(cl_score_t));
 	cl_scores_modified = true;
+	M_RefreshActiveMenu();
 }
 
 
@@ -234,7 +248,7 @@ static void RequestPings()
 	if (cls.realtime - lastrequest > 2000) // update at a max of 2 seconds
 	{
 		if (cls.server_gamebuild >= 126) // 1.80+ server version
-			Cbuf_AddText("cmd getpings 0\ntesting\n");
+			Cbuf_AddText("cmd getpings 0\n");
 
 		lastrequest = cls.realtime;
 	}
@@ -246,7 +260,7 @@ static void RequestPings()
 #define GAMETYPE_2FLAG	2
 #define GAMETYPE_SIEGE	3	
 #define GAMETYPE_KOTH	4
-#define GAMETYPE_ELIM	5 // 1.80 -- not actually used
+#define GAMETYPE_ELIM	5
 
 // sort the scoreboard.
 static int cl_sorted_scorelist[MAX_CLIENTS];
@@ -488,6 +502,56 @@ void CL_ParsePingData (const unsigned char *data)
 
 		cl_scores_setping(idx, temp_array[j++]);
 	}
+}
+
+
+#define MAX_SCOREDATA_SEND 32
+#define SCORESIZE 10 // client index, alive, flag, team, ping, kills, deaths, grabs, caps, start time
+static unsigned int scoredata[SCORESIZE*MAX_SCOREDATA_SEND];
+static byte scorestr[SCORESIZE*MAX_SCOREDATA_SEND*6];
+
+// returns true if there's more data
+int CL_ScoresDemoData (int startindex, unsigned char **sptr)
+{
+	register int count = 0, i, j=0;
+	int retcode = 0;
+
+	for (i = startindex; i < MAX_CLIENTS; i++)
+	{
+		if (count >= MAX_SCOREDATA_SEND)
+		{
+			retcode = i;
+			break;
+		}
+
+		if (cl_scores[i].inuse)
+		{
+			 // client index, alive, flag, team, ping, kills, deaths, grabs, caps, start time
+			scoredata[j++] = i;
+			scoredata[j++] = cl_scores[i].isalive;
+			scoredata[j++] = cl_scores[i].hasflag;
+			scoredata[j++] = cl_scores[i].team;
+			scoredata[j++] = cl_scores[i].ping;
+			scoredata[j++] = cl_scores[i].kills;
+			scoredata[j++] = cl_scores[i].deaths;
+			scoredata[j++] = cl_scores[i].grabs;
+			scoredata[j++] = cl_scores[i].caps;
+			scoredata[j++] = cl_scores[i].starttime;
+			count++;
+		}
+	}
+
+	if (j)
+	{
+		encode_unsigned(j, scoredata, scorestr);
+		*sptr = scorestr;
+	}
+	else
+	{
+		*sptr = NULL;
+	}
+
+	return retcode;
 }
 // jitscores
 // ===

@@ -528,8 +528,7 @@ void SV_BeginDownload2_f(void) // jitdownload
 		return;
 	}
 
-//todo;
-	//SV_NextDownload_f ();
+	//SV_NextDownload_f();
 	Com_DPrintf ("Downloading %s to %s\n", name, sv_client->name);
 
 	MSG_WriteByte(&sv_client->netchan.message, svc_download2ack); // acknowledge download request

@@ -1281,7 +1281,7 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_centerprint:
-			SCR_CenterPrint (MSG_ReadString (&net_message));
+			SCR_CenterPrint(MSG_ReadString(&net_message));
 			break;
 			
 		case svc_stufftext:
@@ -1291,12 +1291,12 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_serverdata:
-			Cbuf_Execute ();		// make sure any stuffed commands are done
-			CL_ParseServerData ();
+			Cbuf_Execute();		// make sure any stuffed commands are done
+			CL_ParseServerData();
 			break;
 			
 		case svc_configstring:
-			CL_ParseConfigString ();
+			CL_ParseConfigString();
 			break;
 			
 		case svc_sound:
@@ -1304,23 +1304,23 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_spawnbaseline:
-			CL_ParseBaseline ();
+			CL_ParseBaseline();
 			break;
 
 		case svc_temp_entity:
-			CL_ParseTEnt ();
+			CL_ParseTEnt();
 			break;
 
 		case svc_muzzleflash:
-			CL_ParseMuzzleFlash ();
+			CL_ParseMuzzleFlash();
 			break;
 
 		case svc_muzzleflash2:
-			CL_ParseMuzzleFlash2 ();
+			CL_ParseMuzzleFlash2();
 			break;
 
 		case svc_download:
-			CL_ParseDownload ();
+			CL_ParseDownload();
 			break;
 #ifdef USE_DOWNLOAD2
 		case svc_download2: // jitdownload
@@ -1332,16 +1332,16 @@ void CL_ParseServerMessage (void)
 			break;
 #endif
 		case svc_frame:
-			CL_ParseFrame ();
+			CL_ParseFrame();
 			break;
 
 		case svc_inventory:
-			CL_ParseInventory ();
+			CL_ParseInventory();
 			break;
 
 		case svc_layout:
-			s = MSG_ReadString (&net_message);
-			strncpy (cl.layout, s, sizeof(cl.layout)-1);
+			s = MSG_ReadString(&net_message);
+			strncpy(cl.layout, s, sizeof(cl.layout)-1);
 			break;
 
 		case svc_playerinfo:
@@ -1352,14 +1352,14 @@ void CL_ParseServerMessage (void)
 		}
 	}
 
-	CL_AddNetgraph ();
+	CL_AddNetgraph();
 
 	//
 	// we don't know if it is ok to save a demo message until
 	// after we have parsed the frame
 	//
 	if (cls.demorecording && !cls.demowaiting)
-		CL_WriteDemoMessage ();
+		CL_WriteDemoMessage();
 }
 
 

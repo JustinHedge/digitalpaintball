@@ -271,6 +271,7 @@ void CL_Record_f (void)
 	int		len;
 	entity_state_t	*ent;
 	entity_state_t	nullstate;
+	unsigned char *scorestr;
 
 	if (Cmd_Argc() != 2)
 	{
@@ -311,7 +312,7 @@ void CL_Record_f (void)
 	//
 	// write out messages to hold the startup information
 	//
-	SZ_Init (&buf, buf_data, sizeof(buf_data));
+	SZ_Init(&buf, buf_data, sizeof(buf_data));
 
 	// send the serverdata
 	MSG_WriteByte(&buf, svc_serverdata);
@@ -371,6 +372,20 @@ void CL_Record_f (void)
 	len = LittleLong(buf.cursize);
 	fwrite(&len, 4, 1, cls.demofile);
 	fwrite(buf.data, buf.cursize, 1, cls.demofile);
+
+	// jitscores -- we need to write the known score data here, otherwise
+	// demos will be messed up.
+	i = 0;
+	while (CL_ScoresDemoData(i, &scorestr))
+	{
+		SZ_Init(&buf, buf_data, sizeof(buf_data));
+		MSG_WriteByte(&buf, svc_print);
+		MSG_WriteByte(&buf, PRINT_SCOREDATA);
+		MSG_WriteString(&buf, scorestr);
+		len = LittleLong(buf.cursize);
+		fwrite(&len, 4, 1, cls.demofile);
+		fwrite(buf.data, buf.cursize, 1, cls.demofile);
+	}
 
 	// the rest of the demo file will be individual frames
 }
@@ -964,8 +979,10 @@ void CL_PingServers_f (void)
 					Com_Printf ("Bad address: %s\n", name);
 					continue;
 				}
+
 				if (!adr.port)
 					adr.port = BigShort(PORT_SERVER);
+
 				Netchan_OutOfBandPrint (NS_CLIENT, adr, va("info %i", PROTOCOL_VERSION));
 
 				// jitserverlist -- add to list and get ping request time:

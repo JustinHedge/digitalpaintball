@@ -827,6 +827,7 @@ void SV_ConSay_f(void)
 	{
 		if (client->state != cs_spawned)
 			continue;
+
 		SV_ClientPrintf(client, PRINT_CHAT, "%s\n", text);
 	}
 }

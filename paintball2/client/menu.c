@@ -311,7 +311,6 @@ static void callback_select_item(menu_widget_t *widget)
 	{
 		m_active_bind_widget = widget;
 		m_active_bind_command = widget->parent->select_map[widget->select_pos];
-//		widget->parent->modified = true;
 	}
 	else
 	{
@@ -526,14 +525,9 @@ static void update_select_subwidgets(menu_widget_t *widget)
 	char temp;
 	int width, x, y;
 	char *widget_text;
-//	int keys[2];
 
-	//if(widget->flags & WIDGET_FLAG_SERVERLIST)
 	if(widget->flags & WIDGET_FLAG_LISTSOURCE)
 	{
-		//widget->select_map = m_serverlist.ips;
-		//widget->select_list = m_serverlist.info;
-		//widget->select_totalitems = m_serverlist.numservers;
 		list_source(widget);
 		widget->flags |= WIDGET_FLAG_USEMAP;
 	}
@@ -1194,11 +1188,15 @@ static void M_AdjustWidget(menu_screen_t *menu, int direction, qboolean keydown)
 			if(keydown)
 			{
 				widget->select_pos += direction;
+
 				if(widget->select_pos < 0)
 					widget->select_pos = 0;
+
 				if(widget->select_pos >= widget->select_totalitems)
 					widget->select_pos = widget->select_totalitems - 1;
+
 				widget->modified = true;
+
 				if(widget->cvar)
 				{
 					if(widget->flags & WIDGET_FLAG_USEMAP)
@@ -1206,9 +1204,9 @@ static void M_AdjustWidget(menu_screen_t *menu, int direction, qboolean keydown)
 					else
 						Cvar_Set(widget->cvar, widget->select_list[widget->select_pos]);
 				}
+
 				select_widget_center_pos(widget);
 			}
-
 			break;
 		default:
 			break;
@@ -2201,8 +2199,8 @@ static void reload_menu_screen(menu_screen_t *menu)
 static void refresh_menu_widget(menu_widget_t *widget)
 {
 	widget->modified = true;
-
 	widget = widget->subwidget;
+
 	while(widget)
 	{
 		refresh_menu_widget(widget);
@@ -2228,7 +2226,7 @@ static void refresh_menu_screen(menu_screen_t *menu)
 }
 
 // Flag all widgets as modified so they update
-void M_RefreshMenu(void)
+void M_RefreshMenu (void)
 {
 	menu_screen_t *menu;
 
@@ -2240,8 +2238,14 @@ void M_RefreshMenu(void)
 	}
 }
 
+void M_RefreshActiveMenu (void)
+{
+	if(m_menudepth)
+		refresh_menu_screen(m_menu_screens[m_menudepth-1]);
+}
+
 // Load menu scripts back from disk
-void M_ReloadMenu(void)
+void M_ReloadMenu (void)
 {
 	menu_screen_t *menu;
 
@@ -2507,8 +2511,7 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 
 
 	// Tell the widget the serverlist has updated: (shouldn't this be done after below code?)
-	if(m_menudepth)
-		refresh_menu_screen(m_menu_screens[m_menudepth-1]);
+	M_RefreshActiveMenu();
 
 	//return m_serverlist.numservers - 1;
 }
@@ -3013,6 +3016,7 @@ static void draw_menu_screen (menu_screen_t *menu)
 		M_DrawWidget(widget);
 		widget = widget->next;
 	}
+
 	// waiting for user to press bind:
 	if(m_active_bind_command)
 	{

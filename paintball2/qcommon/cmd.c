@@ -1024,16 +1024,16 @@ char *Cmd_CompleteCommand (char *partial)
 // check for partial match
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
 		if (!strncmp (partial,cmd->name, len)) {
-			// jit <!--
-			if(Q_streq(cmd->name,"vid_restart"))
+			// === jit
+			if(Q_streq(cmd->name, "vid_restart"))
 				returnfullname = "vid_restart";
-			else if(Q_streq(cmd->name,"quit"))
+			else if(Q_streq(cmd->name, "quit"))
 				returnfullname = "quit";
-			else if(Q_streq(cmd->name,"disconnect"))
+			else if(Q_streq(cmd->name, "disconnect"))
 				returnfullname = "disconnect";
-			else if(Q_streq(cmd->name,"record"))
+			else if(Q_streq(cmd->name, "record"))
 				returnfullname = "record";
-			// -->
+			// jit ===
 			pmatch[i]=cmd->name;
 			i++;
 		}
