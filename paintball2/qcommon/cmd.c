@@ -501,6 +501,75 @@ void WriteAliases (FILE *f)
 	}
 }
 
+#if 0 // XXXXXXXXXXXXXXXXXXX not currently implemented
+/*
+=============================================================================
+
+					MACRO EXECUTION - from q2pro by [SkulleR]
+
+=============================================================================
+*/
+
+typedef struct cmd_macro_s {
+	struct cmd_macro_s	*next;
+	struct cmd_macro_s	*hashNext;
+
+	const char		*name;
+	qboolean		(*function)( char *buffer, int bufferSize );
+} cmd_macro_t;
+
+static cmd_macro_t	*cmd_macros;
+
+#define MACROHASH_SIZE	256
+static cmd_macro_t	*cmd_macroHash[MACROHASH_SIZE];
+
+/*
+============
+Cmd_MacroFind
+============
+*/
+static cmd_macro_t *Cmd_MacroFind( const char *name ) {
+	cmd_macro_t *macro;
+	int hash;
+
+	hash = Com_HashString( name, MACROHASH_SIZE );
+	for( macro=cmd_macroHash[hash] ; macro ; macro=macro->hashNext ) {
+		if( !Q_stricmp( macro->name, name ) ) {
+			return macro;
+		}
+	}
+
+	return NULL;
+}
+
+/*
+============
+Cmd_AddMacro
+============
+*/
+void Cmd_AddMacro( const char *name, qboolean (*function)( char *, int ) ) {
+	cmd_macro_t	*macro;
+	int hash;
+	
+// fail if the macro already exists
+	if( Cmd_MacroFind( name ) ) {
+		Com_Printf( "Cmd_AddMacro: %s already defined\n", name );
+		return;
+	}
+
+	hash = Com_HashString( name, MACROHASH_SIZE );
+
+	macro = Z_Malloc( sizeof( cmd_macro_t ) );
+	macro->name = name;
+	macro->function = function;
+	macro->next = cmd_macros;
+	cmd_macros = macro;
+	macro->hashNext = cmd_macroHash[hash];
+	cmd_macroHash[hash] = macro;
+}
+#endif // XXXXXXXXXXXXXXXXXXXXXX
+
+
 /*
 =============================================================================
 
@@ -559,11 +628,128 @@ char		*Cmd_Args (void)
 }
 
 
+
 /*
 ======================
 Cmd_MacroExpandString
 ======================
 */
+#if 1
+char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR]
+{
+   int      i, j, count, len;
+   qboolean   inquote;
+   char   *scan, *start;
+   static   char   expanded[MAX_STRING_CHARS];
+   char   temporary[MAX_STRING_CHARS];
+//   char   buffer[MAX_TOKEN_CHARS];
+   char   *token;
+//   cmd_macro_t *macro;
+   cvar_t   *var;
+
+   inquote = false;
+   scan = text;
+
+   len = strlen( scan );
+   if( len >= MAX_STRING_CHARS ) {
+      Com_Printf( "Line exceeded %i chars, discarded.\n", MAX_STRING_CHARS );
+      return NULL;
+   }
+
+   count = 0;
+
+   for( i=0 ; i<len ; i++ ) {
+      if( !scan[i] ) {
+         break;
+      }
+      if( scan[i] == '"' ) {
+         inquote ^= 1;
+      }
+      if( inquote ) {
+         continue;   // don't expand inside quotes
+      }
+      if( scan[i] != '$' ) {
+         continue;
+      }
+      
+      // scan out the complete macro
+      start = scan + i + 1;
+
+      if( !*start ) {
+         break;
+      }
+
+      // convert $$text to $text and skip
+      if( *start == '$' ) {
+         strncpy( temporary, scan, i );
+         strcpy( temporary + i, start );
+
+         strcpy( expanded, temporary );
+         scan = expanded;
+         i++;
+         continue;
+      }
+
+      // allow $var$ scripting
+      token = temporary;
+      while( *start > 32 ) {
+         *token++ = *start++;
+         if( *start == '$' ) {
+            start++;
+            break;
+         }
+      }
+      *token = 0;
+
+      if( token == temporary ) {
+         continue;
+      }
+
+	  // check for macros first
+      /*macro = Cmd_MacroFind( temporary );
+      if( macro ) {
+         macro->function( buffer, sizeof( buffer ) );
+         token = buffer;
+      } else {*/
+         //var = Cvar_FindVar( temporary );
+		 var = Cvar_Get(temporary, 0, 0); // jit (don't have that func)
+		 if( var ) { //&& !(var->flags & CVAR_PRIVATE)) {
+            token = var->string;
+         } else {
+            token = "";
+         }
+      //}
+
+      j = strlen( token );
+      len += j;
+      if( len >= MAX_STRING_CHARS ) {
+         Com_Printf( "Expanded line exceeded %i chars, discarded.\n", MAX_STRING_CHARS );
+         return NULL;
+      }
+
+      strncpy( temporary, scan, i );
+      strcpy( temporary + i, token );
+      strcpy( temporary + i + j, start );
+
+      strcpy( expanded, temporary );
+      scan = expanded;
+      i--;
+
+      if( ++count == 100 ) {
+         Com_Printf( "Macro expansion loop, discarded.\n" );
+         return NULL;
+      }
+   }
+
+   if( inquote ) {
+      Com_Printf( "Line has unmatched quote, discarded.\n" );
+      return NULL;
+   }
+
+   return scan;
+} 
+
+#else
 char *Cmd_MacroExpandString (char *text)
 {
 	int		i, j, count, len;
@@ -632,7 +818,7 @@ char *Cmd_MacroExpandString (char *text)
 
 	return scan;
 }
-
+#endif
 
 /*
 ============
@@ -642,7 +828,7 @@ Parses the given string into command line tokens.
 $Cvars will be expanded unless they are in a quoted token
 ============
 */
-void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand) // jittext (added unsigned)
+void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 {
 	int		i;
 	unsigned char *com_token;
