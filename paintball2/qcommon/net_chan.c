@@ -288,7 +288,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 				, chan->incoming_reliable_sequence);
 	}
 
-	if (cl_drawpps->value) // jitnetfps
+	if (!dedicated->value && cl_drawpps->value) // jitnetfps
 	{
 		static int framecount = 0;
 		static int lasttime = 0;

@@ -2350,7 +2350,7 @@ void	R_EndRegistration (void);
 
 void	R_RenderFrame (refdef_t *fd);
 
-struct image_s	*Draw_FindPic (char *name);
+struct image_s	*Draw_FindPic (const char *name);
 
 void	Draw_Pic (int x, int y, char *name);
 void	Draw_Char (int x, int y, int c);

@@ -346,7 +346,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 }
 
 
-void Draw_String(int x, int y, const char *str)
+void Draw_String (int x, int y, const char *str)
 {
 	Draw_StringAlpha(x, y, str, 1.0f); // jit
 }
@@ -356,7 +356,7 @@ void Draw_String(int x, int y, const char *str)
 Draw_FindPic
 =============
 */
-image_t	*Draw_FindPic (char *name)
+image_t	*Draw_FindPic (const char *name)
 {
 	image_t *gl;
 	char	fullname[MAX_QPATH];
