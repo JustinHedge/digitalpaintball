@@ -87,14 +87,14 @@ void VID_Printf (int print_level, char *fmt, ...)
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
 	
-	va_start (argptr,fmt);
-	vsnprintf (msg,MAXPRINTMSG,fmt,argptr);
-	va_end (argptr);
+	va_start(argptr,fmt);
+	vsnprintf(msg,MAXPRINTMSG,fmt,argptr);
+	va_end(argptr);
 
 	if (print_level == PRINT_ALL)
-		Com_Printf ("%s", msg);
+		Com_Printf("%s", msg);
 	else
-		Com_DPrintf ("%s", msg);
+		Com_DPrintf("%s", msg);
 }
 
 void VID_Error (int err_level, char *fmt, ...)
@@ -285,6 +285,7 @@ qboolean VID_LoadRefresh(char *name)
 	ri.FS_FreeFile = FS_FreeFile;
 	ri.FS_ListFiles = FS_ListFiles;
 	ri.FS_NextPath = FS_NextPath; // jitrscript
+	ri.FS_FreeFileList = FS_FreeFileList; // jitrscript
 	ri.FS_Gamedir = FS_Gamedir;
 	ri.Cvar_Get = Cvar_Get;
 	ri.Cvar_Set = Cvar_Set;
@@ -382,11 +383,10 @@ void CL_InitImages(); // jit
 void VID_CheckChanges (void)
 {
 	char name[100];
-	cvar_t *sw_mode;
 
 	if (vid_ref->modified)
 	{
-	// jitlinux- jitod, testing	S_StopAllSounds();
+	// jitlinux- jitodo, testing	S_StopAllSounds();
 	}
 
 	while (vid_ref->modified)
@@ -414,7 +414,7 @@ void VID_CheckChanges (void)
 		{
 			cls.disable_screen = false;
 			CL_InitImages();
-			// jitodo - renable M_ReloadMenu(); // jitmenu
+			M_ReloadMenu(); // jitmenu
 		}
 	}
 }
@@ -531,10 +531,17 @@ void IN_Frame (void)
 {
 	if (RW_IN_Activate_fp) 
 	{
-		if (!cl.refresh_prepped || cls.key_dest == key_console/* || cls.key_dest == key_menu*/) // jitmenu
+		/*
+		if (!cl.refresh_prepped || cls.key_dest == key_console)
 			RW_IN_Activate_fp(false);
 		else
 			RW_IN_Activate_fp(true);
+		*/
+		if (cl.refresh_prepped & !(cls.key_dest == key_console) ||
+				cls.key_dest == key_menu) // jitmenu
+			RW_IN_Activate_fp(true);
+		else
+			RW_IN_Activate_fp(false);
 	}
 
 	if (RW_IN_Frame_fp)

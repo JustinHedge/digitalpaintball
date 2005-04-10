@@ -502,10 +502,11 @@ IN_Move
 */
 void IN_Move (usercmd_t *cmd)
 {
-	IN_MouseMove (cmd);
-
-	if (ActiveApp)
-		IN_JoyMove (cmd);
+	if (ActiveApp) // jit/Echon - fix mouse recentering when clicking out of game.
+	{
+		IN_MouseMove(cmd);
+		IN_JoyMove(cmd);
+	}
 }
 
 

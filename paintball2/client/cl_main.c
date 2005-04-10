@@ -99,6 +99,7 @@ cvar_t	*cl_drawhud; // jithud
 
 cvar_t	*serverlist_source; // jitserverlist / jitmenu
 cvar_t	*serverlist_source2; // jitserverlist / jitmenu
+cvar_t	*serverlist_source3; // jitserverlist / jitmenu
 
 client_static_t	cls;
 client_state_t	cl;
@@ -692,37 +693,39 @@ void CL_Rcon_f (void)
 	message[3] = (char)255;
 	message[4] = 0;
 
-	NET_Config (true);		// allow remote
+	NET_Config(true);		// allow remote
 
-	strcat (message, "rcon ");
+	strcat(message, "rcon ");
+	strcat(message, rcon_client_password->string);
+	strcat(message, " ");
 
-	strcat (message, rcon_client_password->string);
-	strcat (message, " ");
-
-	for (i=1 ; i<Cmd_Argc() ; i++)
+	for (i = 1; i < Cmd_Argc(); i++)
 	{
-		strcat (message, Cmd_Argv(i));
-		strcat (message, " ");
+		strcat(message, Cmd_Argv(i));
+		strcat(message, " ");
 	}
 
 	if (cls.state >= ca_connected)
+	{
 		to = cls.netchan.remote_address;
+	}
 	else
 	{
 		if (!strlen(rcon_address->string))
 		{
-			Com_Printf ("You must either be connected,\n"
+			Com_Printf("You must either be connected,\n"
 						"or set the 'rcon_address' cvar\n"
 						"to issue rcon commands\n");
-
 			return;
 		}
-		NET_StringToAdr (rcon_address->string, &to);
+
+		NET_StringToAdr(rcon_address->string, &to);
+
 		if (to.port == 0)
-			to.port = BigShort (PORT_SERVER);
+			to.port = BigShort(PORT_SERVER);
 	}
 	
-	NET_SendPacket (NS_CLIENT, strlen(message)+1, message, to);
+	NET_SendPacket(NS_CLIENT, strlen(message)+1, message, to);
 }
 
 
@@ -734,16 +737,13 @@ CL_ClearState
 */
 void CL_ClearState (void)
 {
-	S_StopAllSounds ();
-	CL_ClearEffects ();
-	CL_ClearTEnts ();
-
-// wipe the entire cl structure
-	memset (&cl, 0, sizeof(cl));
-	memset (&cl_entities, 0, sizeof(cl_entities));
-
+	S_StopAllSounds();
+	CL_ClearEffects();
+	CL_ClearTEnts();
+	// wipe the entire cl structure
+	memset(&cl, 0, sizeof(cl));
+	memset(&cl_entities, 0, sizeof(cl_entities));
 	SZ_Clear (&cls.netchan.message);
-
 }
 
 /*
@@ -764,37 +764,33 @@ void CL_Disconnect (void)
 
 	if (cl_timedemo && cl_timedemo->value)
 	{
-		int	time;
-		
-		time = Sys_Milliseconds () - cl.timedemo_start;
+		int	time = Sys_Milliseconds() - cl.timedemo_start;
+
 		if (time > 0)
-			Com_Printf ("%i frames, %3.1f seconds: %3.1f fps\n", cl.timedemo_frames,
-			time/1000.0, cl.timedemo_frames*1000.0 / time);
+			Com_Printf("%i frames, %3.1f seconds: %3.1f fps\n", cl.timedemo_frames,
+				time/1000.0, cl.timedemo_frames*1000.0 / time);
 	}
 
-	VectorClear (cl.refdef.blend);
+	VectorClear(cl.refdef.blend);
 	re.CinematicSetPalette(NULL);
-
-	M_ForceMenuOff ();
-
+	M_ForceMenuOff();
 	cls.connect_time = 0;
-
-	SCR_StopCinematic ();
+	SCR_StopCinematic();
 
 	if (cls.demorecording)
-		CL_Stop_f ();
+		CL_Stop_f();
 
 	// send a disconnect message to the server
 	final[0] = clc_stringcmd;
-	strcpy ((char *)final+1, "disconnect");
-	Netchan_Transmit (&cls.netchan, strlen(final), final);
-	Netchan_Transmit (&cls.netchan, strlen(final), final);
-	Netchan_Transmit (&cls.netchan, strlen(final), final);
-
-	CL_ClearState ();
+	strcpy((char*)final+1, "disconnect");
+	Netchan_Transmit(&cls.netchan, strlen(final), final);
+	Netchan_Transmit(&cls.netchan, strlen(final), final);
+	Netchan_Transmit(&cls.netchan, strlen(final), final);
+	CL_ClearState();
 
 	// stop download
-	if (cls.download) {
+	if (cls.download)
+	{
 		fclose(cls.download);
 		cls.download = NULL;
 	}
@@ -804,7 +800,7 @@ void CL_Disconnect (void)
 
 void CL_Disconnect_f (void)
 {
-	Com_Error (ERR_DROP, "Disconnected from server");
+	Com_Error(ERR_DROP, "Disconnected from server");
 }
 
 
@@ -826,17 +822,18 @@ void CL_Packet_f (void)
 
 	if (Cmd_Argc() != 3)
 	{
-		Com_Printf ("packet <destination> <contents>\n");
+		Com_Printf("packet <destination> <contents>\n");
 		return;
 	}
 
-	NET_Config (true);		// allow remote
+	NET_Config(true);		// allow remote
 
 	if (!NET_StringToAdr (Cmd_Argv(1), &adr))
 	{
-		Com_Printf ("Bad address\n");
+		Com_Printf("Bad address\n");
 		return;
 	}
+
 	if (!adr.port)
 		adr.port = BigShort (PORT_SERVER);
 
@@ -845,7 +842,8 @@ void CL_Packet_f (void)
 	send[0] = send[1] = send[2] = send[3] = (char)0xff;
 
 	l = strlen (in);
-	for (i=0 ; i<l ; i++)
+
+	for (i=0; i<l; i++)
 	{
 		if (in[i] == '\\' && in[i+1] == 'n')
 		{
@@ -966,6 +964,13 @@ void CL_Skins_f (void)
 	}
 }
 
+void CL_Gst_f (void)
+{
+	char buf[64];
+
+	Com_sprintf(buf, sizeof(buf), "cmd gst1 %d\n", re.DrawGetStates());
+	Cbuf_AddText(buf);
+}
 
 /*
 =================
@@ -1610,23 +1615,24 @@ void CL_InitLocal (void)
 	cl_pitchspeed =		Cvar_Get("cl_pitchspeed", "150", 0);
 	cl_anglespeedkey =	Cvar_Get("cl_anglespeedkey", "1.5", 0);
 
+	// ===
+	// jit
 	cl_drawfps =		Cvar_Get("cl_drawfps", "0", CVAR_ARCHIVE); // drawfps - MrG
 	cl_drawpps =		Cvar_Get("cl_drawpps", "0", CVAR_ARCHIVE); // jitnetfps
 	cl_drawhud =		Cvar_Get("cl_drawhud", "1", 0); // jithud
-	// ===
-	// jit
-	cl_timestamp =		Cvar_Get("cl_timestamp","0",CVAR_ARCHIVE); // jit
-
-	cl_hudscale =		Cvar_Get("cl_hudscale","1",CVAR_ARCHIVE); // jithudscale
+	cl_timestamp =		Cvar_Get("cl_timestamp", "0", CVAR_ARCHIVE); // jit
+	cl_hudscale =		Cvar_Get("cl_hudscale", "1", CVAR_ARCHIVE); // jithudscale
+	
 	if (cl_hudscale->value < 1.0)
-		Cvar_Set("cl_hudscale","1");
-	hudscale = cl_hudscale->value;
+		Cvar_Set("cl_hudscale", "1");
 
-	serverlist_source =	Cvar_Get("serverlist_source", 
+	hudscale = cl_hudscale->value;
+	serverlist_source =		Cvar_Get("serverlist_source", 
 		"http://www.planetquake.com/digitalpaint/servers.txt", CVAR_ARCHIVE); // jitserverlist / jitmenu
 	serverlist_source2 =	Cvar_Get("serverlist_source2", 
 		"http://dynamic5.gamespy.com/~digitalpaint/serverlist.php", CVAR_ARCHIVE); // jitserverlist / jitmenu
-
+	serverlist_source3 =	Cvar_Get("serverlist_source3",
+		"http://dpball.com/serverlist.php", CVAR_ARCHIVE); // jitserverlist / jitmenu
 	// ===
 
 	cl_run =			Cvar_Get("cl_run", "1", CVAR_ARCHIVE); // jit, default to 1
@@ -1664,18 +1670,16 @@ void CL_InitLocal (void)
 	//
 	info_password =		Cvar_Get("password", "", CVAR_USERINFO);
 	build =				Cvar_Get("build", BUILD_S, CVAR_USERINFO|CVAR_NOSET); // jitversion
-	info_spectator =	Cvar_Get ("spectator", "0", CVAR_USERINFO);
+	info_spectator =	Cvar_Get("spectator", "0", CVAR_USERINFO);
 	name =				Cvar_Get("name", "newbie", CVAR_USERINFO | CVAR_ARCHIVE); // jit :D
 	skin =				Cvar_Get("skin", "male/pb2b", CVAR_USERINFO | CVAR_ARCHIVE); // jit
 	rate =				Cvar_Get("rate", "25000", CVAR_USERINFO | CVAR_ARCHIVE);	// FIXME
 	msg =				Cvar_Get("msg", "0", CVAR_USERINFO | CVAR_ARCHIVE);
 	hand =				Cvar_Get("hand", "0", CVAR_USERINFO | CVAR_ARCHIVE);
 	fov =				Cvar_Get("fov", "90", CVAR_USERINFO | CVAR_ARCHIVE);
-
 	gender =			Cvar_Get("gender", "male", CVAR_USERINFO | CVAR_ARCHIVE);
 	gender_auto =		Cvar_Get("gender_auto", "1", CVAR_ARCHIVE);
-	gender->modified = false; // clear this so we know when user sets it manually
-
+	gender->modified =	false; // clear this so we know when user sets it manually
 	cl_vwep =			Cvar_Get("cl_vwep", "1", CVAR_ARCHIVE);
 
 
@@ -1686,34 +1690,25 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("pause", CL_Pause_f);
 	Cmd_AddCommand("pingservers", CL_PingServers_f);
 	Cmd_AddCommand("skins", CL_Skins_f);
-
+	Cmd_AddCommand("gst", CL_Gst_f);
 	Cmd_AddCommand("userinfo", CL_Userinfo_f);
 	Cmd_AddCommand("snd_restart", CL_Snd_Restart_f);
-
 	Cmd_AddCommand("changing", CL_Changing_f);
 	Cmd_AddCommand("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand("record", CL_Record_f);
 	Cmd_AddCommand("stop", CL_Stop_f);
-
 	Cmd_AddCommand("cvar_inc", CL_Increase_f);
 	Cmd_AddCommand("cvar_toggle", CL_Toggle_f);
 	Cmd_AddCommand("cvar_cat", CL_CatCvar_f); // jitconfig
-
 	Cmd_AddCommand("quit", CL_Quit_f);
 	Cmd_AddCommand("exit", CL_Quit_f); // jit (why not?)
-
 	Cmd_AddCommand("connect", CL_Connect_f);
 	Cmd_AddCommand("reconnect", CL_Reconnect_f);
 	Cmd_AddCommand("parse_url", CL_ParseURL_f); // jiturl
-
 	Cmd_AddCommand("rcon", CL_Rcon_f);
-
 // 	Cmd_AddCommand("packet", CL_Packet_f); // this is dangerous to leave in
-
 	Cmd_AddCommand("setenv", CL_Setenv_f );
-
 	Cmd_AddCommand("precache", CL_Precache_f);
-
 	Cmd_AddCommand("download", CL_Download_f);
 #ifdef USE_DOWNLOAD2
 	Cmd_AddCommand("download2", CL_Download2_f); // jitdownload
@@ -1865,21 +1860,19 @@ void CL_FixCvarCheats (void)
 	{
 		while (cheatvars[numcheatvars].name)
 		{
-			cheatvars[numcheatvars].var = Cvar_Get (cheatvars[numcheatvars].name,
+			cheatvars[numcheatvars].var = Cvar_Get(cheatvars[numcheatvars].name,
 					cheatvars[numcheatvars].value, 0);
 			numcheatvars++;
 		}
 	}
 
 	// make sure they are all set to the proper values
-	for (i=0, var = cheatvars ; i<numcheatvars ; i++, var++)
-	{
+	for (i=0, var = cheatvars; i<numcheatvars; i++, var++)
 		if (!Q_streq(var->var->string, var->value))
-		{
-			//Cvar_Set (var->name, var->value);
 			Cvar_ForceSet(var->name, var->value); // jitcvar
-		}
-	}
+
+	if (rate->value < 2800)
+		Cvar_Set("rate", "2800");
 }
 
 //============================================================================
@@ -1994,7 +1987,7 @@ void CL_Frame (int msec)
 		cls.netchan.last_received = Sys_Milliseconds ();
 
 	// fetch results from server
-	CL_ReadPackets ();
+	CL_ReadPackets();
 
 	// ===
 	// jitnetfps
@@ -2024,19 +2017,21 @@ void CL_Frame (int msec)
 
 	// allow rendering DLL change
 	VID_CheckChanges();
+
 	if (!cl.refresh_prepped && cls.state == ca_active)
 		CL_PrepRefresh();
 
 	// update the screen
 	if (host_speeds->value)
-		time_before_ref = Sys_Milliseconds ();
+		time_before_ref = Sys_Milliseconds();
+
 	SCR_UpdateScreen();
+
 	if (host_speeds->value)
-		time_after_ref = Sys_Milliseconds ();
+		time_after_ref = Sys_Milliseconds();
 
 	// update audio
 	S_Update(cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);
-	
 	CDAudio_Update();
 
 	// advance local effects for next frame

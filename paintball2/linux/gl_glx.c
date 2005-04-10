@@ -205,7 +205,7 @@ static void uninstall_grabs(void)
   mouse_active = false;
 }
 
-static void IN_DeactivateMouse( void ) 
+static void IN_DeactivateMouse (void) 
 {
   //if (!mouse_avail || !dpy || !win)
   //return;
@@ -216,7 +216,7 @@ static void IN_DeactivateMouse( void )
   }
 }
 
-static void IN_ActivateMouse( void ) 
+static void IN_ActivateMouse (void) 
 {
   //if (!mouse_avail || !dpy || !win)
   //return;
@@ -234,22 +234,22 @@ void getMouse(int *x, int *y, int *state) {
   *state = mouse_buttonstate;
 }
 
-void doneMouse() {
+void doneMouse (void)
+{
   mx = my = 0;
 }
 
-void RW_IN_PlatformInit()
+void RW_IN_PlatformInit (void)
 {
-  
-  in_dgamouse = ri.Cvar_Get ("in_dgamouse", "0", CVAR_ARCHIVE);
+  in_dgamouse = ri.Cvar_Get("in_dgamouse", "1", CVAR_ARCHIVE);
 }
 
-void RW_IN_Activate(qboolean active)
+void RW_IN_Activate (qboolean active)
 {
   if (active || vidmode_active)
     IN_ActivateMouse();
   else
-    IN_DeactivateMouse ();
+    IN_DeactivateMouse();
 }
 
 /*****************************************************************************/
@@ -433,12 +433,12 @@ static void HandleEvents(void)
     case KeyPress:
       myxtime = event.xkey.time;
       if (in_state && in_state->Key_Event_fp)
-	in_state->Key_Event_fp (XLateKey(&event.xkey), true);
+	in_state->Key_Event_fp(XLateKey(&event.xkey), true);
       break;
     case KeyRelease:
-      if (! X11_KeyRepeat(dpy, &event)) {
+      if (!X11_KeyRepeat(dpy, &event)) {
 	if (in_state && in_state->Key_Event_fp)
-	  in_state->Key_Event_fp (XLateKey(&event.xkey), false);
+	  in_state->Key_Event_fp(XLateKey(&event.xkey), false);
       }
       break;
     case MotionNotify:
@@ -963,6 +963,7 @@ void GLimp_EndFrame (void)
 {
 	qglFlush();
 	qglXSwapBuffers(dpy, win);
+	rs_realtime = Sys_Milliseconds() * 0.001f; // jitrscript
 }
 
 /*

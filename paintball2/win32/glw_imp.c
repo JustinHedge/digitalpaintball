@@ -378,7 +378,7 @@ void GLimp_Shutdown( void )
 ** of OpenGL.  Under Win32 this means dealing with the pixelformats and
 ** doing the wgl interface stuff.
 */
-qboolean GLimp_Init( void *hinstance, void *wndproc )
+qboolean GLimp_Init (void *hinstance, void *wndproc)
 {
 #define OSR2_BUILD_NUMBER 1111
 
@@ -388,21 +388,21 @@ qboolean GLimp_Init( void *hinstance, void *wndproc )
 
 	glw_state.allowdisplaydepthchange = false;
 
-	if ( GetVersionEx( &vinfo) )
+	if (GetVersionEx(&vinfo))
 	{
-		if ( vinfo.dwMajorVersion > 4 )
+		if (vinfo.dwMajorVersion > 4)
 		{
 			glw_state.allowdisplaydepthchange = true;
 		}
-		else if ( vinfo.dwMajorVersion == 4 )
+		else if (vinfo.dwMajorVersion == 4)
 		{
-			if ( vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT )
+			if (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT)
 			{
 				glw_state.allowdisplaydepthchange = true;
 			}
-			else if ( vinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS )
+			else if (vinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
 			{
-				if ( LOWORD( vinfo.dwBuildNumber ) >= OSR2_BUILD_NUMBER )
+				if (LOWORD(vinfo.dwBuildNumber) >= OSR2_BUILD_NUMBER)
 				{
 					glw_state.allowdisplaydepthchange = true;
 				}
@@ -411,11 +411,11 @@ qboolean GLimp_Init( void *hinstance, void *wndproc )
 	}
 	else
 	{
-		ri.Con_Printf( PRINT_ALL, "GLimp_Init() - GetVersionEx failed\n" );
+		ri.Con_Printf(PRINT_ALL, "GLimp_Init() - GetVersionEx failed\n");
 		return false;
 	}
 
-	glw_state.hInstance = ( HINSTANCE ) hinstance;
+	glw_state.hInstance = (HINSTANCE)hinstance;
 	glw_state.wndproc = wndproc;
 
 	return true;

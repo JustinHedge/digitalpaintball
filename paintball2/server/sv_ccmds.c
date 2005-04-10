@@ -313,14 +313,16 @@ void SV_ReadLevelFile (void)
 
 	Com_sprintf (name, sizeof(name), "%s/save/current/%s.sv2", FS_Gamedir(), sv.name);
 	f = fopen(name, "rb");
+
 	if (!f)
 	{
 		Com_Printf ("Failed to open %s\n", name);
 		return;
 	}
+
 	FS_Read (sv.configstrings, sizeof(sv.configstrings), f);
-	CM_ReadPortalState (f);
-	fclose (f);
+	CM_ReadPortalState(f);
+	fclose(f);
 
 	Com_sprintf (name, sizeof(name), "%s/save/current/%s.sav", FS_Gamedir(), sv.name);
 	ge->ReadLevel (name);

@@ -556,14 +556,18 @@ void SV_Nextserver (void)
 
 	svs.spawncount++;	// make sure another doesn't sneak in
 	v = Cvar_VariableString("nextserver");
+
 	if (!v[0])
+	{
 		Cbuf_AddText("killserver\n");
+	}
 	else
 	{
 		Cbuf_AddText(v);
 		Cbuf_AddText("\n");
 	}
-	Cvar_Set("nextserver","");
+
+	Cvar_Set("nextserver", "");
 }
 
 /*

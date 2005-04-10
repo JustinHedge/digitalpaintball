@@ -20,6 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cmd.c -- Quake script command processing module
 
 #include "qcommon.h"
+#ifdef WIN32
+#include "../win32/pthread.h" // jitmultithreading
+#else
+#include <pthread.h>
+#endif
 
 void CL_LocPlace (void); // Xile/NiceAss LOC
 void Cmd_ForwardToServer (void);
@@ -68,8 +73,9 @@ void Cmd_Wait_f (void)
 
 sizebuf_t	cmd_text;
 byte		cmd_text_buf[8192];
-
 byte		defer_text_buf[8192];
+byte		cmd_text_buf_threadsafe[1024] = ""; // jitmultithreading
+pthread_mutex_t cbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*
 ============
@@ -78,7 +84,7 @@ Cbuf_Init
 */
 void Cbuf_Init (void)
 {
-	SZ_Init (&cmd_text, cmd_text_buf, sizeof(cmd_text_buf));
+	SZ_Init(&cmd_text, cmd_text_buf, sizeof(cmd_text_buf));
 }
 
 /*
@@ -103,6 +109,18 @@ void Cbuf_AddText (char *text)
 	SZ_Write(&cmd_text, text, strlen(text));
 }
 
+
+// jitmultithreading - so multithreaded functions can add to the
+// command buffer without screwing stuff up.
+void Cbuf_AddTextThreadsafe (const char *text)
+{
+	pthread_mutex_lock(&cbuf_mutex);
+
+	if (strlen(cmd_text_buf_threadsafe) + strlen(text) < sizeof(cmd_text_buf_threadsafe))
+		strcat(cmd_text_buf_threadsafe, text);
+
+	pthread_mutex_unlock(&cbuf_mutex);
+}
 
 /*
 ============
@@ -202,6 +220,21 @@ void Cbuf_Execute (void)
 	char	*text;
 	char	line[1024];
 	int		quotes;
+
+	// === jitmultithreading - add buffers created by other threads if there are any.
+	if (*cmd_text_buf_threadsafe) // this will be empty most of the time, so check before wasting time with locks`
+	{
+		pthread_mutex_lock(&cbuf_mutex);
+
+		if (*cmd_text_buf_threadsafe)
+		{
+			Cbuf_AddText(cmd_text_buf_threadsafe);
+			*cmd_text_buf_threadsafe = 0;
+		}
+
+		pthread_mutex_unlock(&cbuf_mutex);
+	}
+	// jitmultithreading ===
 
 	alias_count = 0;		// don't allow infinite alias loops
 

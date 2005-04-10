@@ -472,22 +472,24 @@ void *Sys_GetGameAPI (void *parms)
 		Com_Error (ERR_FATAL, "Sys_GetGameAPI without Sys_UnloadingGame");
 
 	// check the current debug directory first for development purposes
-	_getcwd (cwd, sizeof(cwd));
-	Com_sprintf (name, sizeof(name), "%s/%s/%s", cwd, debugdir, gamename);
-	game_library = LoadLibrary ( name );
+	_getcwd(cwd, sizeof(cwd));
+	Com_sprintf(name, sizeof(name), "%s/%s/%s", cwd, debugdir, gamename);
+	game_library = LoadLibrary(name);
+
 	if (game_library)
 	{
-		Com_DPrintf ("LoadLibrary (%s)\n", name);
+		Com_DPrintf("LoadLibrary (%s)\n", name);
 	}
 	else
 	{
 #ifdef DEBUG
 		// check the current directory for other development purposes
-		Com_sprintf (name, sizeof(name), "%s/%s", cwd, gamename);
-		game_library = LoadLibrary ( name );
+		Com_sprintf(name, sizeof(name), "%s/%s", cwd, gamename);
+		game_library = LoadLibrary(name);
+
 		if (game_library)
 		{
-			Com_DPrintf ("LoadLibrary (%s)\n", name);
+			Com_DPrintf("LoadLibrary (%s)\n", name);
 		}
 		else
 #endif
@@ -496,28 +498,32 @@ void *Sys_GetGameAPI (void *parms)
 			path = NULL;
 			while (1)
 			{
-				path = FS_NextPath (path);
+				path = FS_NextPath(path);
+				
 				if (!path)
 					return NULL;		// couldn't find one anywhere
-				Com_sprintf (name, sizeof(name), "%s/%s", path, gamename);
-				game_library = LoadLibrary (name);
+
+				Com_sprintf(name, sizeof(name), "%s/%s", path, gamename);
+				game_library = LoadLibrary(name);
+
 				if (game_library)
 				{
-					Com_DPrintf ("LoadLibrary (%s)\n",name);
+					Com_DPrintf("LoadLibrary (%s)\n",name);
 					break;
 				}
 			}
 		}
 	}
 
-	GetGameAPI = (void *)GetProcAddress (game_library, "GetGameAPI");
+	GetGameAPI = (void *)GetProcAddress(game_library, "GetGameAPI");
+
 	if (!GetGameAPI)
 	{
-		Sys_UnloadGame ();		
+		Sys_UnloadGame();
 		return NULL;
 	}
 
-	return GetGameAPI (parms);
+	return GetGameAPI(parms);
 }
 
 //=======================================================================
@@ -552,16 +558,13 @@ void ParseCommandLine (LPSTR lpCmdLine)
 				*lpCmdLine = 0;
 				lpCmdLine++;
 			}
-			
 		}
 	}
-
 }
 
 /*
 ==================
 WinMain
-
 ==================
 */
 HINSTANCE	global_hInstance;

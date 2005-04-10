@@ -2084,9 +2084,7 @@ void R_BeginFrame(float camera_separation)
 
 	gl_state.camera_separation = camera_separation;
 
-	/*
-	** change modes if necessary
-	*/
+	// change modes if necessary
 	if (gl_mode->modified || vid_fullscreen->modified)
 	{	// FIXME: only restart if CDS is required
 		cvar_t	*ref;
@@ -2102,9 +2100,7 @@ void R_BeginFrame(float camera_separation)
 	}
 
 	if (gl_log->value)
-	{
 		GLimp_LogNewFrame();
-	}
 
 	if (vid_gamma->modified)
 	{
@@ -2130,6 +2126,7 @@ void R_BeginFrame(float camera_separation)
 	if (vid_lighten->modified) // jitgamma
 	{
 		vid_lighten->modified = false;
+
 		if (vid_gamma_hw->value && gl_state.gammaramp) 
 		{
 			UpdateGammaRamp();
@@ -2138,9 +2135,7 @@ void R_BeginFrame(float camera_separation)
 
 	GLimp_BeginFrame(camera_separation);
 
-	/*
-	** go into 2D mode
-	*/
+	// go into 2D mode
 	qglViewport(0,0, vid.width, vid.height);
 	qglMatrixMode(GL_PROJECTION);
     qglLoadIdentity();
@@ -2153,9 +2148,7 @@ void R_BeginFrame(float camera_separation)
 	GLSTATE_ENABLE_ALPHATEST
 	qglColor4f(1,1,1,1);
 
-	/*
-	** draw buffer stuff
-	*/
+	// draw buffer stuff
 	if (gl_drawbuffer->modified)
 	{
 		gl_drawbuffer->modified = false;
@@ -2169,9 +2162,7 @@ void R_BeginFrame(float camera_separation)
 		}
 	}
 
-	/*
-	** texturemode stuff
-	*/
+	// texturemode stuff
 	if (gl_texturemode->modified)
 	{
 		GL_TextureMode(gl_texturemode->string);
@@ -2190,14 +2181,10 @@ void R_BeginFrame(float camera_separation)
 		gl_texturesolidmode->modified = false;
 	}
 
-	/*
-	** swapinterval stuff
-	*/
+	// swapinterval stuff (vsync)
 	GL_UpdateSwapInterval();
 
-	//
 	// clear screen if desired
-	//
 	R_Clear();
 }
 
@@ -2310,17 +2297,13 @@ void R_DrawBeam(entity_t *e)
 
 //===================================================================
 
-
-void	R_BeginRegistration(const char *map);
 struct model_s	*R_RegisterModel(const char *name);
 struct image_s	*R_RegisterSkin(const char *name);
-void R_SetSky(const char *name, float rotate, vec3_t axis);
-void	R_EndRegistration(void);
-
-void	R_RenderFrame(refdef_t *fd);
-
 struct image_s	*Draw_FindPic(const char *name);
-
+void	R_BeginRegistration(const char *map);
+void	R_SetSky(const char *name, float rotate, vec3_t axis);
+void	R_EndRegistration(void);
+void	R_RenderFrame(refdef_t *fd);
 void	Draw_Pic(int x, int y, char *name);
 void	Draw_Char(int x, int y, int c);
 void	Draw_TileClear(int x, int y, int w, int h, char *name);
@@ -2331,6 +2314,7 @@ void	Draw_StretchPic2(int x, int y, int w, int h, image_t *gl);
 void	Draw_Pic2(int x, int y, image_t *gl);
 void	Draw_String(int x, int y, const char *str); // jit, shush little warning
 void	Draw_StringAlpha(int x, int y, const char *str, float alhpa); // jit
+int		Draw_GetStates (void);
 
 /*
 @@@@@@@@@@@@@@@@@@@@@
@@ -2372,6 +2356,7 @@ refexport_t GetRefAPI (refimport_t rimp)
 	re.DrawTileClear2 = Draw_TileClear2;
 	re.DrawString = Draw_String;
 	re.DrawStringAlpha = Draw_StringAlpha;
+	re.DrawGetStates = Draw_GetStates;
 
 	re.Init = R_Init;
 	re.Shutdown = R_Shutdown;

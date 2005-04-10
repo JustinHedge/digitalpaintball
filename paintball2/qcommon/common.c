@@ -1501,7 +1501,8 @@ void Qcommon_Init (int argc, char **argv)
 			Cbuf_AddText ("\n"); // jitspoe, don't start any demos or anything
 		else
 			Cbuf_AddText ("dedicated_start\n");
-		Cbuf_Execute ();
+		
+		Cbuf_Execute();
 	}
 	else
 	{	// the user asked for something explicit
@@ -1575,17 +1576,18 @@ void Qcommon_Frame (int msec)
 		if (s)
 			Cbuf_AddText (va("%s\n",s));
 	} while (s);
-	Cbuf_Execute ();
+
+	Cbuf_Execute();
 
 	if (host_speeds->value)
 		time_before = Sys_Milliseconds ();
 
-	SV_Frame (msec);
+	SV_Frame(msec);
 
 	if (host_speeds->value)
 		time_between = Sys_Milliseconds ();		
 
-	CL_Frame (msec);
+	CL_Frame(msec);
 
 	if (host_speeds->value)
 		time_after = Sys_Milliseconds ();		

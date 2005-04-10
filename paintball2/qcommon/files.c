@@ -834,6 +834,7 @@ void FS_FreeFileList (char **list, int n) // jit
 			list[i] = 0;
 		}
 	}
+
 	free(list);
 }
 

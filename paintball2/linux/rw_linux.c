@@ -86,17 +86,17 @@ void RW_IN_Init(in_state_t *in_state_p)
 
 void RW_IN_Shutdown(void)
 {
-  if (mouse_avail) {
-    RW_IN_Activate (false);
-    
+  if (mouse_avail)
+  {
+    RW_IN_Activate(false);
     mouse_avail = false;
-    
-    ri.Cmd_RemoveCommand ("+mlook");
-    ri.Cmd_RemoveCommand ("-mlook");
-    ri.Cmd_RemoveCommand ("force_centerview");
+    ri.Cmd_RemoveCommand("+mlook");
+    ri.Cmd_RemoveCommand("-mlook");
+    ri.Cmd_RemoveCommand("force_centerview");
   }
+
 #ifdef Joystick
-  ri.Cmd_RemoveCommand ("joy_advancedupdate"); 
+  ri.Cmd_RemoveCommand("joy_advancedupdate"); 
   CloseJoystick();
 #endif
 }
@@ -109,25 +109,34 @@ IN_Commands
 void RW_IN_Commands (void)
 {
   int i;
+  static int old_mouse_x = 0, old_mouse_y = 0; // jitlinux / jitmenu
   
   getMouse(&mouse_x, &mouse_y, &mouse_buttonstate);
+
   if (mouse_avail) { 
-    for (i=0 ; i<3 ; i++) {
-      if ( (mouse_buttonstate & (1<<i)) && !(mouse_oldbuttonstate & (1<<i)) )
-	in_state->Key_Event_fp (K_MOUSE1 + i, true);
+  	if (mouse_x != old_mouse_x || mouse_y != old_mouse_y) // jitlinux / jitmenu
+	  in_state->Key_Event_fp(K_MOUSEMOVE, true);
+
+    for (i = 0; i < 3; i++)
+    {
+      if ((mouse_buttonstate & (1<<i)) && !(mouse_oldbuttonstate & (1<<i)) )
+	in_state->Key_Event_fp(K_MOUSE1 + i, true);
       
-      if ( !(mouse_buttonstate & (1<<i)) && (mouse_oldbuttonstate & (1<<i)) )
-	in_state->Key_Event_fp (K_MOUSE1 + i, false);
+      if (!(mouse_buttonstate & (1<<i)) && (mouse_oldbuttonstate & (1<<i)) )
+	in_state->Key_Event_fp(K_MOUSE1 + i, false);
     }
-    if ( (mouse_buttonstate & (1<<3)) && !(mouse_oldbuttonstate & (1<<3)) )
-      in_state->Key_Event_fp (K_MOUSE4, true);
-    if ( !(mouse_buttonstate & (1<<3)) && (mouse_oldbuttonstate & (1<<3)) )
-      in_state->Key_Event_fp (K_MOUSE4, false);
+
+    if ((mouse_buttonstate & (1<<3)) && !(mouse_oldbuttonstate & (1<<3)) )
+      in_state->Key_Event_fp(K_MOUSE4, true);
+
+    if (!(mouse_buttonstate & (1<<3)) && (mouse_oldbuttonstate & (1<<3)) )
+      in_state->Key_Event_fp(K_MOUSE4, false);
     
-    if ( (mouse_buttonstate & (1<<4)) && !(mouse_oldbuttonstate & (1<<4)) )
-      in_state->Key_Event_fp (K_MOUSE5, true);
-    if ( !(mouse_buttonstate & (1<<4)) && (mouse_oldbuttonstate & (1<<4)) )
-      in_state->Key_Event_fp (K_MOUSE5, false);
+    if ((mouse_buttonstate & (1<<4)) && !(mouse_oldbuttonstate & (1<<4)) )
+      in_state->Key_Event_fp(K_MOUSE5, true);
+
+    if (!(mouse_buttonstate & (1<<4)) && (mouse_oldbuttonstate & (1<<4)) )
+      in_state->Key_Event_fp(K_MOUSE5, false);
     
     mouse_oldbuttonstate = mouse_buttonstate;
   }
@@ -145,6 +154,10 @@ void RW_IN_Move (usercmd_t *cmd)
 {
   if (mouse_avail) {
     getMouse(&mouse_x, &mouse_y, &mouse_buttonstate);
+
+    //if (mouse_x || mouse_y)
+    	//ri.Con_Printf(PRINT_ALL, "mx: %3d my: %3d\n", mouse_x, mouse_y);
+
     if (m_filter->value)
       {
 	mouse_x = (mouse_x + old_mouse_x) * 0.5;
@@ -157,6 +170,7 @@ void RW_IN_Move (usercmd_t *cmd)
     if (ri.M_MenuActive()) // jitmenu
     {
 	    ri.M_MouseMove(mouse_x, mouse_y);
+	    doneMouse();
 	    return;
     }
     

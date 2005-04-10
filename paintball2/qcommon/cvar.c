@@ -48,8 +48,8 @@ cvar_t *Cvar_FindVar (char *var_name)
 {
 	cvar_t	*var;
 	
-	for (var=cvar_vars ; var ; var=var->next)
-		if (Q_streq (var_name, var->name))
+	for (var=cvar_vars; var; var=var->next)
+		if (var->name && Q_streq(var_name, var->name)) // jit - somehow this was null...
 			return var;
 
 	return NULL;

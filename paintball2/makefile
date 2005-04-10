@@ -1,7 +1,8 @@
 #
-# Quake2 Makefile for Linux 2.0
+# Paintball2 Makefile for Linux
 #
 # Nov '97 by Zoid <zoid@idsoftware.com>
+# Modified Jan 2005 by jitspoe
 #
 # ELF only
 #
@@ -12,14 +13,12 @@
 # (Note: not all options are available for all platforms).
 # paintball2 (uses OSS for sound, cdrom ioctls for cd audio) is automatically built.
 # game$(ARCH).so is automatically built.
+#
 BUILD_SDLQUAKE2=NO	# sdlpaintball2 executable (uses SDL for cdrom and sound)
 BUILD_SVGA=NO		# SVGAlib driver. Seems to work fine.
 BUILD_GLX=YES		# X11 GLX driver. Works somewhat ok.
 BUILD_FXGL=NO		# FXMesa driver. Not tested. (used only for V1 and V2).
 BUILD_SDLGL=NO		# SDL OpenGL driver. Works fine for some people.
-BUILD_CTFDLL=NO	# game$(ARCH).so for ctf
-BUILD_XATRIX=NO		# game$(ARCH).so for xatrix (see README.r for details)
-BUILD_ROGUE=NO		# game$(ARCH).so for rogue (see README.r for details)
 BUILD_JOYSTICK=NO	# build in joystick support
 BUILD_ARTS=NO		# build in support for libaRts sound.
 BUILD_ALSA=NO		# build in support for ALSA (default sound on 2.6)
@@ -67,6 +66,17 @@ endif
 
 CC=gcc
 
+ifeq ($(ARCH),i386)
+#RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops -falign-loops=2 \
+#	-falign-jumps=2 -falign-functions=2 -fno-strict-aliasing
+#RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx -fomit-frame-pointer -ffast-math -ffloat-store -funroll-loops
+RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx -ffast-math -ffloat-store -funroll-loops
+# compiler bugs with gcc 2.96 and 3.0.1 can cause bad builds with heavy opts.
+#RELEASE_CFLAGS=$(BASE_CFLAGS) -O6 -m486 -ffast-math -funroll-loops \
+#	-fomit-frame-pointer -fexpensive-optimizations -malign-loops=2 \
+#	-malign-jumps=2 -malign-functions=2
+endif
+
 ifeq ($(ARCH),axp)
 RELEASE_CFLAGS=$(BASE_CFLAGS) -ffast-math -funroll-loops \
 	-fomit-frame-pointer -fexpensive-optimizations
@@ -80,15 +90,6 @@ endif
 ifeq ($(ARCH),sparc)
 RELEASE_CFLAGS=$(BASE_CFLAGS) -ffast-math -funroll-loops \
 	-fomit-frame-pointer -fexpensive-optimizations
-endif
-
-ifeq ($(ARCH),i386)
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops -falign-loops=2 \
-	-falign-jumps=2 -falign-functions=2 -fno-strict-aliasing
-# compiler bugs with gcc 2.96 and 3.0.1 can cause bad builds with heavy opts.
-#RELEASE_CFLAGS=$(BASE_CFLAGS) -O6 -m486 -ffast-math -funroll-loops \
-#	-fomit-frame-pointer -fexpensive-optimizations -malign-loops=2 \
-#	-malign-jumps=2 -malign-functions=2
 endif
 
 ifeq ($(ARCH),x86_64)
@@ -115,7 +116,11 @@ XATRIX_DIR=$(MOUNT_DIR)/xatrix
 ROGUE_DIR=$(MOUNT_DIR)/rogue
 NULL_DIR=$(MOUNT_DIR)/null
 
-BASE_CFLAGS=-Wall -pipe -Dstricmp=strcasecmp -lrt -DSleep=usleep -D_inline= -ljpeg
+BASE_CFLAGS=-Wall -pipe -Dstricmp=strcasecmp -D_inline= -DSleep=usleep
+# ifeq ($(ENABLE_PROFILING),YES)
+BASE_CFLAGS+= -pg
+# endif
+
 ifeq ($(HAVE_IPV6),YES)
 BASE_CFLAGS+= -DHAVE_IPV6
 ifeq ($(OSTYPE),FreeBSD)
@@ -151,7 +156,7 @@ ifeq ($(OSTYPE),FreeBSD)
 LDFLAGS=-lm
 endif
 ifeq ($(OSTYPE),Linux)
-LDFLAGS=-lm -ldl
+LDFLAGS=-lm -ldl -lrt
 endif
 
 ifeq ($(strip $(BUILD_ARTS)),YES)
@@ -166,7 +171,7 @@ endif
 SVGALDFLAGS=-lvga
 
 XCFLAGS=-I/usr/X11R6/include
-XLDFLAGS=-L/usr/X11R6/lib$(_LIB) -lX11 -lXext -lXxf86dga -lXxf86vm
+XLDFLAGS=-L/usr/X11R6/lib$(_LIB) -lX11 -lXext -lXxf86dga -lXxf86vm -ljpeg
 AALDFLAGS=-lm -laa
 
 SDLCFLAGS=$(shell sdl-config --cflags)
@@ -188,7 +193,7 @@ FXGLLDFLAGS=-L/usr/local/glide/lib -L/usr/X11/lib -L/usr/local/lib \
 	-L/usr/X11R6/lib -lX11 -lXext -lGL -lvga
 
 GLXCFLAGS=-I/usr/X11R6/include -DOPENGL
-GLXLDFLAGS=-L/usr/X11R6/lib$(_LIB) -lX11 -lXext -lXxf86dga -lXxf86vm
+GLXLDFLAGS=-L/usr/X11R6/lib$(_LIB) -lX11 -lXext -lXxf86dga -lXxf86vm -ljpeg
 
 SDLGLCFLAGS=$(SDLCFLAGS) -DOPENGL
 SDLGLLDFLAGS=$(SDLLDFLAGS)

@@ -237,6 +237,7 @@ typedef struct
 
 	void	(*DrawString) (int x, int y, const char *str); // jit, shush little warning
 	void	(*DrawStringAlpha) (int x, int y, const char *str, float alpha); // jit -- transparent strings (for fading out)
+	int		(*DrawGetStates) (void);
 
 	image_t	*(*DrawFindPic) (const char *name);
 

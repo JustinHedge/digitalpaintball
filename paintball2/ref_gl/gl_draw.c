@@ -354,6 +354,30 @@ void Draw_String (int x, int y, const char *str)
 	Draw_StringAlpha(x, y, str, 1.0f); // jit
 }
 
+int Draw_GetStates (void)
+{
+	int states = 0;
+
+	qglPushAttrib(GL_ENABLE_BIT);
+	qglDisable(GL_BLEND);
+	qglDisable(GL_ALPHA_TEST);
+	qglEnable(GL_DEPTH_TEST);
+	qglEnable(GL_FOG);
+	qglBegin(GL_TRIANGLES);
+	qglEnd();
+	states |= qglIsEnabled(GL_FOG) ? 1 : 0;
+	states <<= 1;
+	states |= qglIsEnabled(GL_BLEND) ? 1 : 0;
+	states <<= 1;
+	states |= qglIsEnabled(GL_ALPHA_TEST) ? 1 : 0;
+	states <<= 1;
+	states |= qglIsEnabled(GL_DEPTH_TEST) ? 1 : 0;
+	states <<= 1;
+	qglPopAttrib();
+
+	return states;
+}
+
 /*
 =============
 Draw_FindPic

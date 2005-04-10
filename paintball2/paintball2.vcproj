@@ -315,9 +315,6 @@
 				RelativePath=".\qcommon\md4.c">
 			</File>
 			<File
-				RelativePath=".\client\menu.c">
-			</File>
-			<File
 				RelativePath=".\qcommon\net_chan.c">
 			</File>
 			<File
@@ -400,6 +397,9 @@
 				</File>
 				<File
 					RelativePath="client\cl_vote.c">
+				</File>
+				<File
+					RelativePath=".\client\menu.c">
 				</File>
 			</Filter>
 			<Filter
@@ -573,9 +573,6 @@
 				RelativePath="a3d\q2a3d.h">
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\pball\menus\main.txt">
-		</File>
 		<File
 			RelativePath="win32\pthreadVC.lib">
 		</File>

@@ -128,9 +128,9 @@ void Serverlist_Clear_f (void)
 		}
 	}
 
-	//pthread_mutex_unlock(&m_mut_widgets);
+	pthread_mutex_unlock(&m_mut_widgets);
 	M_RefreshWidget("serverlist", false);
-	//pthread_mutex_unlock(&m_mut_serverlist);
+	pthread_mutex_unlock(&m_mut_serverlist);
 	m_serverlist.nummapped = m_serverlist.numservers = 0;
 }
 
@@ -345,7 +345,7 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 		return;
 	}
 
-	pthread_mutex_lock(&m_mut_serverlist); // jitmultithreading
+	pthread_mutex_lock(&m_mut_serverlist); // jitmultithreading -- todo, deadlock
 	pthread_mutex_lock(&m_mut_widgets);
 
 	// check if server exists in current serverlist:
@@ -448,10 +448,10 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	}
 
 	// Tell the widget the serverlist has updated:
-	//pthread_mutex_unlock(&m_mut_widgets);
+	pthread_mutex_unlock(&m_mut_widgets);
 	//M_RefreshActiveMenu(); // jitodo - target serverlist window specifically.
 	M_RefreshWidget("serverlist", false);
-	//pthread_mutex_unlock(&m_mut_serverlist); // jitmultithreading
+	pthread_mutex_unlock(&m_mut_serverlist); // jitmultithreading
 }
 
 // Color all the items grey:
@@ -506,7 +506,7 @@ static void M_ServerlistUpdate (char *sServerSource)
 		s += 7; // skip past the "http://"
 		i = 0;
 
-		while(*s && *s != '/')
+		while (*s && *s != '/')
 		{
 			svlist_domain[i] = *s;
 			s++;
@@ -527,15 +527,13 @@ static void M_ServerlistUpdate (char *sServerSource)
 		char msg[256];
 		int len, bytes_sent;
 
-		//sprintf(msg, "GET %s HTTP/1.0\n\n", s);
 		sprintf(msg, "GET %s HTTP/1.0\n\n", sServerSource);
-
 		len = strlen(msg);
 		bytes_sent = send(serverListSocket, msg, len, 0);
 
 		if  (bytes_sent < len)
 		{
-			Com_Printf ("HTTP Server did not accept request, aborting\n");
+			Com_Printf("HTTP Server did not accept request, aborting\n");
 			closesocket(serverListSocket);
 			return;
 		}
@@ -674,6 +672,26 @@ static void M_ServerlistUpdate (char *sServerSource)
 		};
 
 done:
+		// Check to make sure they're updated with the latest version.
+		if (found = strstr(current, "LatestClientBuild:"))
+		{
+			int latest_build;
+
+			found += sizeof("LatestClientBuild:")-1;
+			latest_build = atoi(found);
+
+			if (latest_build > BUILD)
+			{
+				static qboolean notified = false;
+
+				if (!notified) // only pop it up once.
+				{
+					Cbuf_AddTextThreadsafe("menu newversion\n");
+					notified = true;
+				}
+			}
+		}
+
 		free(buffer);
 		return;
 	}
@@ -690,6 +708,7 @@ void *M_ServerlistUpdate_multithreaded (void *ptr)
 
 	M_ServerlistUpdate(serverlist_source->string);
 	M_ServerlistUpdate(serverlist_source2->string);
+	M_ServerlistUpdate(serverlist_source3->string);
 	refreshing = false;
 
 	pthread_exit(0);
