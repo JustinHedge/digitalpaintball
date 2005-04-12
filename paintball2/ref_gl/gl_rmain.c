@@ -1462,7 +1462,7 @@ void R_Register(void)
 R_SetMode
 ==================
 */
-qboolean R_SetMode(void)
+qboolean R_SetMode (void)
 {
 	rserr_t err;
 	qboolean fullscreen;
@@ -1479,7 +1479,7 @@ qboolean R_SetMode(void)
 	vid_fullscreen->modified = false;
 	gl_mode->modified = false;
 
-	if ((err = GLimp_SetMode(&vid.width, &vid.height, gl_mode->value, 0 /*jitodo - renable: fullscreen*/)) == rserr_ok)
+	if ((err = GLimp_SetMode(&vid.width, &vid.height, gl_mode->value, fullscreen)) == rserr_ok)
 	{
 		gl_state.prev_mode = gl_mode->value;
 	}

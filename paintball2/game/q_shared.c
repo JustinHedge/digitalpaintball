@@ -77,22 +77,22 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, 
 	memset( zrot, 0, sizeof( zrot ) );
 	zrot[0][0] = zrot[1][1] = zrot[2][2] = 1.0F;
 
-	zrot[0][0] = cos( DEG2RAD( degrees ) );
-	zrot[0][1] = sin( DEG2RAD( degrees ) );
-	zrot[1][0] = -sin( DEG2RAD( degrees ) );
-	zrot[1][1] = cos( DEG2RAD( degrees ) );
+	zrot[0][0] = cos(DEG2RAD(degrees));
+	zrot[0][1] = sin(DEG2RAD(degrees));
+	zrot[1][0] = -sin(DEG2RAD(degrees));
+	zrot[1][1] = cos(DEG2RAD(degrees));
 
-	R_ConcatRotations( m, zrot, tmpmat );
-	R_ConcatRotations( tmpmat, im, rot );
+	R_ConcatRotations(m, zrot, tmpmat);
+	R_ConcatRotations(tmpmat, im, rot);
 
-	for ( i = 0; i < 3; i++ )
+	for (i = 0; i < 3; i++)
 	{
 		dst[i] = rot[i][0] * point[0] + rot[i][1] * point[1] + rot[i][2] * point[2];
 	}
 }
 
 #ifdef _WIN32
-#pragma optimize( "", on )
+#pragma optimize("", on)
 #endif
 
 

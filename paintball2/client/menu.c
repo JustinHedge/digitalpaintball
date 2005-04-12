@@ -1534,7 +1534,7 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 					widget->modified = true;
 				}
 			}
-			else if (widget->type == WIDGET_TYPE_SLIDER)
+			else if (newSelection->type == WIDGET_TYPE_SLIDER)
 			{
 				M_AdjustWidget(menu, 1, true);
 			}
@@ -1548,7 +1548,7 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 					widget->modified = true;
 				}
 			}
-			else if (widget->type == WIDGET_TYPE_SLIDER)
+			else if (newSelection->type == WIDGET_TYPE_SLIDER)
 			{
 				M_AdjustWidget(menu, -1, true);
 			}
