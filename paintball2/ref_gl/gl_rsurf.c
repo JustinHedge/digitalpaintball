@@ -877,6 +877,7 @@ void R_DrawAlphaSurfaces (void)
     qglLoadMatrixf (r_world_matrix);
 
 	GLSTATE_ENABLE_BLEND
+	qglDepthMask(0); // jitalpha - disable depth writing
 	GL_TexEnv(GL_MODULATE);
 
 	// the textures are prescaled up for a better lighting range,
@@ -921,6 +922,7 @@ void R_DrawAlphaSurfaces (void)
 	GL_TexEnv( GL_REPLACE );
 	qglColor4f (1,1,1,1);
 	GLSTATE_DISABLE_BLEND
+	qglDepthMask(1); // jitalpha - reenable depth writing
 
 	r_alpha_surfaces = NULL;
 
