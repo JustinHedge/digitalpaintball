@@ -3028,6 +3028,9 @@ qboolean QGL_Init( const char *dllname )
 	  Com_Printf ("Opened GLU sucessfully OpenGLU...", dllname);
 	}
 #endif
+
+	gl_config.allow_cds = true; // jitlinux -- fix stupid fullscreen bug
+
 	qglAccum                     = dllAccum = GPA( "glAccum" );
 	qglAlphaFunc                 = dllAlphaFunc = GPA( "glAlphaFunc" );
 	qglAreTexturesResident       = dllAreTexturesResident = GPA( "glAreTexturesResident" );

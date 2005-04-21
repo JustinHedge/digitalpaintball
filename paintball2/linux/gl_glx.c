@@ -610,7 +610,7 @@ static void InitSig(void)
 /*
 ** GLimp_SetMode
 */
-int GLimp_SetMode( int *pwidth, int *pheight, int mode, qboolean fullscreen )
+int GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 {
 	int width, height;
 	int attrib[] = {
@@ -1012,6 +1012,12 @@ void Fake_glColorTableEXT( GLenum target, GLenum internalformat,
 	qgl3DfxSetPaletteEXT((GLuint *)temptable);
 }
 
+void UpdateGammaRamp (void)
+{
+	// jitlinux -- not sure if there's a way to modify
+	// the gamma ramp in linux.  This is just a dummy
+	// function for now.
+}
 
 #ifdef Joystick
 qboolean OpenJoystick(cvar_t *joy_dev) {
