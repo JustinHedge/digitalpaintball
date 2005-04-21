@@ -203,56 +203,42 @@ Interactive line editing and console scrollback
 ====================
 */
 
-int KeyPadKey(int key) // jitmenu
+int KeyPadKey (int key) // jitmenu
 {
 	// jitodo -- check numlock
 	switch (key)
 	{
 	case K_KP_SLASH:
 		return '/';
-		break;
 	case K_KP_MINUS:
 		return '-';
-		break;
 	case K_KP_PLUS:
 		return '+';
-		break;
 	case K_KP_HOME:
 		return '7';
-		break;
 	case K_KP_UPARROW:
 		return '8';
-		break;
 	case K_KP_PGUP:
 		return '9';
-		break;
 	case K_KP_LEFTARROW:
 		return '4';
-		break;
 	case K_KP_5:
 		return '5';
-		break;
 	case K_KP_RIGHTARROW:
 		return '6';
-		break;
 	case K_KP_END:
 		return '1';
-		break;
 	case K_KP_DOWNARROW:
 		return '2';
-		break;
 	case K_KP_PGDN:
 		return '3';
-		break;
 	case K_KP_INS:
 		return '0';
-		break;
 	case K_KP_DEL:
 		return '.';
-		break;
+	default:
+		return key;
 	}
-
-	return key;
 }
 
 keydest_t Key_GetDest (void) // jitmenu

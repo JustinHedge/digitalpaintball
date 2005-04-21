@@ -163,19 +163,19 @@ qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
 /*
 ** GLimp_SetMode
 */
-void GL_UpdateSwapInterval();
-rserr_t GLimp_SetMode( int *pwidth, int *pheight, int mode, qboolean fullscreen )
+void GL_UpdateSwapInterval (void);
+rserr_t GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 {
 	int width, height;
 	const char *win_fs[] = { "W", "FS" };
 
-	ri.Con_Printf( PRINT_ALL, "Initializing OpenGL display\n");
+	ri.Con_Printf(PRINT_ALL, "Initializing OpenGL display\n");
 
-	ri.Con_Printf (PRINT_ALL, "...setting mode %d:", mode );
+	ri.Con_Printf(PRINT_ALL, "...setting mode %d:", mode);
 
-	if ( !ri.Vid_GetModeInfo( &width, &height, mode ) )
+	if (!ri.Vid_GetModeInfo(&width, &height, mode))
 	{
-		ri.Con_Printf( PRINT_ALL, " invalid mode\n" );
+		ri.Con_Printf(PRINT_ALL, " invalid mode\n");
 		return rserr_invalid_mode;
 	}
 

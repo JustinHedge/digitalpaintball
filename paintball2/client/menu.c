@@ -1753,9 +1753,12 @@ qboolean M_Keyup (int key)
 
 	if (m_active_bind_command)
 	{
-		m_active_bind_widget = NULL;
-		m_active_bind_command = NULL;
-		return true;
+		if (key != K_MOUSE1) // linux hack
+		{
+			m_active_bind_widget = NULL;
+			m_active_bind_command = NULL;
+			return true;
+		}
 	}
 
 	switch (key) 
