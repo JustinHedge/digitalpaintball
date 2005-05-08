@@ -29,7 +29,8 @@ key up events are sent even if in console mode
 #define		MAXCMDLINE	256
 unsigned char	key_lines[32][MAXCMDLINE]; // jittext
 int			key_linepos;
-int			shift_down=false;
+int			shift_down = false;
+int			ctrl_down = false; // jitkeyboard
 int			anykeydown;
 
 int			edit_line=0;
@@ -939,7 +940,8 @@ void Key_Event (int key, qboolean down, unsigned time)
 	{
 		if (!down)
 			return;
-		Con_ToggleConsole_f ();
+
+		Con_ToggleConsole_f();
 		return;
 	}
 
@@ -962,13 +964,14 @@ void Key_Event (int key, qboolean down, unsigned time)
 			M_Menu_Main_f();
 			break;
 		default:
-			Com_Error (ERR_FATAL, "Bad cls.key_dest");
+			Com_Error(ERR_FATAL, "Bad cls.key_dest");
 		}
 		return;
 	}
 
 	// track if any key is down for BUTTON_ANY
 	keydown[key] = down;
+
 	if (down)
 	{
 		if (key_repeats[key] == 1)
