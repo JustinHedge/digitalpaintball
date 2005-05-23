@@ -106,7 +106,6 @@ void CL_RegisterTEntSounds (void) // jit, cleaned up and adjusted for paintball
 	cl_sfx_paintfly[1] = S_RegisterSound("paint/whiz2.wav");
 	cl_sfx_paintfly[2] = S_RegisterSound("paint/whiz3.wav");*/
 
-
 	S_RegisterSound("player/land1.wav");
 	cl_sfx_footsteps[0] = S_RegisterSound("player/step0.wav");
 	cl_sfx_footsteps[1] = S_RegisterSound("player/step1.wav");
@@ -124,40 +123,7 @@ void CL_RegisterTEntModels (void) // jit: changed to only load paintball stuff:
 	cl_mod_smoke = re.RegisterModel("sprites/smoke.sp2");
 	cl_mod_splat = re.RegisterModel("models/paint/splat2.md2");
 	cl_mod_paintball = re.RegisterModel("models/paint/ball.md2");
-//	//cl_mod_bfg_explo = re.RegisterModel ("sprites/s_bfg2.sp2"); // jitodo -- remove, testing only
-//	cl_mod_explode = re.RegisterModel ("models/objects/explode/tris.md2");
-//	cl_mod_smoke = re.RegisterModel ("models/objects/smoke/tris.md2");
-//	cl_mod_flash = re.RegisterModel ("models/objects/flash/tris.md2");
-//	cl_mod_parasite_segment = re.RegisterModel ("models/monsters/parasite/segment/tris.md2");
-//	cl_mod_grapple_cable = re.RegisterModel ("models/ctf/segment/tris.md2");
-//	cl_mod_parasite_tip = re.RegisterModel ("models/monsters/parasite/tip/tris.md2");
-//	cl_mod_explo4 = re.RegisterModel ("models/objects/r_explode/tris.md2");
-//
-//	cl_mod_powerscreen = re.RegisterModel ("models/items/armor/effect/tris.md2");
-//
-//	re.RegisterModel ("models/objects/laser/tris.md2");
-//	re.RegisterModel ("models/objects/grenade2/tris.md2");
-//	re.RegisterModel ("models/weapons/v_machn/tris.md2");
-//	re.RegisterModel ("models/weapons/v_handgr/tris.md2");
-//	re.RegisterModel ("models/weapons/v_shotg2/tris.md2");
-//	re.RegisterModel ("models/objects/gibs/bone/tris.md2");
-//	re.RegisterModel ("models/objects/gibs/sm_meat/tris.md2");
-//	re.RegisterModel ("models/objects/gibs/bone2/tris.md2");
-//	// RAFAEL
-//	// re.RegisterModel ("models/objects/blaser/tris.md2");
-//
-//	re.RegisterPic ("w_machinegun");
-//	re.RegisterPic ("a_bullets");
-//	re.RegisterPic ("i_health");
-//	re.RegisterPic ("a_grenades");
-//
-////ROGUE
-//	cl_mod_explo4_big = re.RegisterModel ("models/objects/r_explode2/tris.md2");
-//	cl_mod_lightning = re.RegisterModel ("models/proj/lightning/tris.md2");
-//	cl_mod_heatbeam = re.RegisterModel ("models/proj/beam/tris.md2");
-//	cl_mod_monster_heatbeam = re.RegisterModel ("models/proj/widowbeam/tris.md2");
-//ROGUE
-}	
+}
 
 // jit -->
 
