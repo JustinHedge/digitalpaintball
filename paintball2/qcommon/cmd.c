@@ -415,31 +415,32 @@ void Cmd_Exec_f (void)
 	int		len;
 	char	configfile[MAX_QPATH];
 
-	if (Cmd_Argc () != 2)
+	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("exec <filename> : execute a script file\n");
+		Com_Printf("exec <filename> : execute a script file\n");
 		return;
 	}
 
-	sprintf(configfile,"configs/%s",Cmd_Argv(1)); // jit
-	len = FS_LoadFile (configfile, (void **)&f); // jit
+	sprintf(configfile, "configs/%s", Cmd_Argv(1)); // jit
+	len = FS_LoadFile(configfile, (void **)&f); // jit
 
 	if (!f)
 	{
-		Com_Printf ("couldn't exec configs/%s\n",Cmd_Argv(1));
+		Com_Printf("couldn't exec configs/%s\n",Cmd_Argv(1));
 		return;
 	}
-	Com_Printf ("execing configs/%s\n",Cmd_Argv(1));
+
+	Com_Printf("execing configs/%s\n", Cmd_Argv(1));
 	
 	// the file doesn't have a trailing 0, so we need to copy it off
 	f2 = Z_Malloc(len+1);
-	memcpy (f2, f, len);
+	memcpy(f2, f, len);
 	f2[len] = 0;
 
-	Cbuf_InsertText (f2);
+	Cbuf_InsertText(f2);
 
-	Z_Free (f2);
-	FS_FreeFile (f);
+	Z_Free(f2);
+	FS_FreeFile(f);
 }
 
 

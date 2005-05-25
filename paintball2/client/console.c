@@ -142,7 +142,7 @@ void Con_ToggleConsole_f (void)
 
 	if (cls.state == ca_disconnected)
 	{	// start the demo loop again
-		Cbuf_AddText ("d1\n");
+		Cbuf_AddText("d1\n");
 		return;
 	}
 */
@@ -161,7 +161,7 @@ void Con_ToggleConsole_f (void)
 
 		//if (Cvar_VariableValue("maxclients") == 1 
 		//	&& Com_ServerState())
-		//	Cvar_Set ("paused", "1");
+		//	Cvar_Set("paused", "1");
 	}
 }
 

@@ -309,23 +309,26 @@ void CL_PrepRefresh (void)
 	Com_Printf("                                     \r");
 
 	// precache status bar pics
-	Com_Printf("pics\r"); 
+	Com_Printf("pics\r");
 	SCR_UpdateScreen();
 	SCR_TouchPics();
 	Com_Printf("                                     \r");
 
+	Com_Printf("models\r"); // jit (so if it crashes, we know it's when loading models, not pics)
+	SCR_UpdateScreen(); // jit
+	Com_Printf("                                     \r"); // jit
 	CL_RegisterTEntModels();
 
 	num_cl_weaponmodels = 1;
 	strcpy(cl_weaponmodels[0], "weapon.md2");
 
-	for (i=1; i<MAX_MODELS && cl.configstrings[CS_MODELS+i][0]; i++)
+	for (i = 1; i < MAX_MODELS && cl.configstrings[CS_MODELS+i][0]; i++)
 	{
 		strcpy(name, cl.configstrings[CS_MODELS+i]);
 		name[37] = 0;	// never go beyond one line
 
 		if (name[0] != '*')
-			Com_Printf ("%s\r", name); 
+			Com_Printf("%s\r", name); 
 
 		SCR_UpdateScreen();
 		Sys_SendKeyEvents();	// pump message loop
@@ -342,19 +345,23 @@ void CL_PrepRefresh (void)
 		} 
 		else
 		{
-			cl.model_draw[i] = re.RegisterModel (cl.configstrings[CS_MODELS+i]);
+			cl.model_draw[i] = re.RegisterModel(cl.configstrings[CS_MODELS+i]);
+
 			if (name[0] == '*')
-				cl.model_clip[i] = CM_InlineModel (cl.configstrings[CS_MODELS+i]);
+				cl.model_clip[i] = CM_InlineModel(cl.configstrings[CS_MODELS+i]);
 			else
 				cl.model_clip[i] = NULL;
 		}
+
 		if (name[0] != '*')
 			Com_Printf("                                     \r");
 	}
+
 	Sys_SendKeyEvents(); // jit, moved
 	Com_Printf("images\r", i); 
 	SCR_UpdateScreen();
-	for (i=1; i<MAX_IMAGES && cl.configstrings[CS_IMAGES+i][0]; i++)
+
+	for (i = 1; i < MAX_IMAGES && cl.configstrings[CS_IMAGES+i][0]; i++)
 	{
 		cl.image_precache[i] = re.RegisterPic (cl.configstrings[CS_IMAGES+i]);
 		//Sys_SendKeyEvents ();	// pump message loop 

@@ -826,7 +826,8 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 	// isolate the player's name
 	strncpy(ci->name, s, sizeof(ci->name));
 	ci->name[sizeof(ci->name)-1] = 0;
-	t = strstr (s, "\\");
+	t = strstr(s, "\\");
+
 	if (t)
 	{
 		ci->name[t-s] = 0;
@@ -835,45 +836,48 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 
 	if (cl_noskins->value || *s == 0)
 	{
-		Com_sprintf (model_filename, sizeof(model_filename), "players/male/tris.md2");
-		Com_sprintf (weapon_filename, sizeof(weapon_filename), "players/male/weapon.md2");
+		Com_sprintf(model_filename, sizeof(model_filename), "players/male/tris.md2");
+		Com_sprintf(weapon_filename, sizeof(weapon_filename), "players/male/weapon.md2");
 
 		//===
 		//jit
 		switch(s ? s[strlen(s)-1] : 0)
 		{
 		case 'r':
-			Com_sprintf (skin_filename, sizeof(skin_filename), "players/male/pb2r.pcx");
+			Com_sprintf(skin_filename, sizeof(skin_filename), "players/male/pb2r.pcx");
 			break;
 		case 'b':
-			Com_sprintf (skin_filename, sizeof(skin_filename), "players/male/pb2b.pcx");
+			Com_sprintf(skin_filename, sizeof(skin_filename), "players/male/pb2b.pcx");
 			break;
 		case 'p':
-			Com_sprintf (skin_filename, sizeof(skin_filename), "players/male/pb2p.pcx");
+			Com_sprintf(skin_filename, sizeof(skin_filename), "players/male/pb2p.pcx");
 			break;
 		default:
-			Com_sprintf (skin_filename, sizeof(skin_filename), "players/male/pb2y.pcx");
+			Com_sprintf(skin_filename, sizeof(skin_filename), "players/male/pb2y.pcx");
 		}
 		
-		Com_sprintf (ci->iconname, sizeof(ci->iconname), "/players/male/pb2b_i.pcx");
+		Com_sprintf(ci->iconname, sizeof(ci->iconname), "/players/male/pb2b_i.pcx");
 		//jit
 		//===
 
-		ci->model = re.RegisterModel (model_filename);
+		ci->model = re.RegisterModel(model_filename);
 		memset(ci->weaponmodel, 0, sizeof(ci->weaponmodel));
-		ci->weaponmodel[0] = re.RegisterModel (weapon_filename);
-		ci->skin = re.RegisterSkin (skin_filename);
-		ci->icon = re.RegisterPic (ci->iconname);
+		ci->weaponmodel[0] = re.RegisterModel(weapon_filename);
+		ci->skin = re.RegisterSkin(skin_filename);
+		ci->icon = re.RegisterPic(ci->iconname);
 	}
 	else
 	{
 		// isolate the model name
 		strcpy (model_name, s);
 		t = strstr(model_name, "/");
+
 		if (!t)
 			t = strstr(model_name, "\\");
+
 		if (!t)
 			t = model_name;
+
 		*t = 0;
 
 		// isolate the skin name
@@ -890,7 +894,7 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 		}
 
 		// skin file
-		Com_sprintf (skin_filename, sizeof(skin_filename), "players/%s/%s.pcx", model_name, skin_name);
+		Com_sprintf(skin_filename, sizeof(skin_filename), "players/%s/%s.pcx", model_name, skin_name);
 		ci->skin = re.RegisterSkin (skin_filename);
 
 		// if we don't have the skin and the model wasn't male,
@@ -909,22 +913,26 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 
 		// if we still don't have a skin, it means that the male model didn't have
 		// it, so default to grunt
-		if (!ci->skin) {
+		if (!ci->skin)
+		{
 			// see if the skin exists for the male model
 			Com_sprintf (skin_filename, sizeof(skin_filename), "players/%s/grunt.pcx", model_name, skin_name); // jitodo -- check for appropriate pball skin
-			ci->skin = re.RegisterSkin (skin_filename);
+			ci->skin = re.RegisterSkin(skin_filename);
 		}
 
 		// weapon file
-		for (i = 0; i < num_cl_weaponmodels; i++) {
+		for (i = 0; i < num_cl_weaponmodels; i++)
+		{
 			Com_sprintf (weapon_filename, sizeof(weapon_filename), "players/%s/%s", model_name, cl_weaponmodels[i]);
 			ci->weaponmodel[i] = re.RegisterModel(weapon_filename);
+
 			if (!ci->weaponmodel[i] && Q_streq(model_name, "cyborg"))
 			{
 				// try male
 				Com_sprintf (weapon_filename, sizeof(weapon_filename), "players/male/%s", cl_weaponmodels[i]);
 				ci->weaponmodel[i] = re.RegisterModel(weapon_filename);
 			}
+
 			if (!cl_vwep->value)
 				break; // only one when vwep is off
 		}

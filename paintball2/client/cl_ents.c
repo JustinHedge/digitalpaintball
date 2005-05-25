@@ -758,7 +758,7 @@ void CL_AddPacketEntities (frame_t *frame)
 		}
 		else
 		{	// interpolate origin
-			for (i=0 ; i<3 ; i++)
+			for (i = 0; i < 3; i++)
 			{
 				ent.origin[i] = ent.oldorigin[i] = cent->prev.origin[i] + cl.lerpfrac * 
 					(cent->current.origin[i] - cent->prev.origin[i]);
@@ -778,39 +778,18 @@ void CL_AddPacketEntities (frame_t *frame)
 		{
 			// set skin
 			if (s1->modelindex == 255)
-			{	// use custom player skin
+			{
+				// use custom player skin
 				ent.skinnum = 0;
 				ci = &cl.clientinfo[s1->skinnum & 0xff];
 				ent.skin = ci->skin;
 				ent.model = ci->model;
+
 				if (!ent.skin || !ent.model)
 				{
 					ent.skin = cl.baseclientinfo.skin;
 					ent.model = cl.baseclientinfo.model;
 				}
-
-//============
-//PGM
-				if (renderfx & RF_USE_DISGUISE)
-				{
-					if (!strncmp((char *)ent.skin, "players/male", 12))
-					{
-						ent.skin = re.RegisterSkin ("players/male/disguise.pcx");
-						ent.model = re.RegisterModel ("players/male/tris.md2");
-					}
-					else if (!strncmp((char *)ent.skin, "players/female", 14))
-					{
-						ent.skin = re.RegisterSkin ("players/female/disguise.pcx");
-						ent.model = re.RegisterModel ("players/female/tris.md2");
-					}
-					else if (!strncmp((char *)ent.skin, "players/cyborg", 14))
-					{
-						ent.skin = re.RegisterSkin ("players/cyborg/disguise.pcx");
-						ent.model = re.RegisterModel ("players/cyborg/tris.md2");
-					}
-				}
-//PGM
-//============
 			}
 			else
 			{
@@ -847,16 +826,16 @@ void CL_AddPacketEntities (frame_t *frame)
 				vec3_t forward;
 				vec3_t start;
 
-				AngleVectors (ent.angles, forward, NULL, NULL);
-				VectorMA (ent.origin, 64, forward, start);
-				V_AddLight (start, 100, 1, 0, 0);
+				AngleVectors(ent.angles, forward, NULL, NULL);
+				VectorMA(ent.origin, 64, forward, start);
+				V_AddLight(start, 100, 1, 0, 0);
 			}
 		}
 		else
 		{	// interpolate angles
 			float	a1, a2;
 
-			for (i=0 ; i<3 ; i++)
+			for (i = 0; i < 3; i++)
 			{
 				a1 = cent->current.angles[i];
 				a2 = cent->prev.angles[i];
