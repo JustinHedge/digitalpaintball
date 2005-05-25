@@ -44,13 +44,14 @@ void *Hunk_Begin (int maxsize)
 	cursize = 0;
 	hunkmaxsize = maxsize;
 #ifdef VIRTUAL_ALLOC
-	membase = VirtualAlloc (NULL, maxsize, MEM_RESERVE, PAGE_NOACCESS);
+	membase = VirtualAlloc(NULL, maxsize, MEM_RESERVE, PAGE_NOACCESS);
 #else
-	membase = malloc (maxsize);
-	memset (membase, 0, maxsize);
+	membase = malloc(maxsize);
+	memset(membase, 0, maxsize);
 #endif
 	if (!membase)
-		Sys_Error ("VirtualAlloc reserve failed");
+		Sys_Error("VirtualAlloc reserve failed");
+
 	return (void *)membase;
 }
 

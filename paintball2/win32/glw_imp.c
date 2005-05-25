@@ -281,34 +281,36 @@ rserr_t GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 				*pwidth = width;
 				*pheight = height;
 				gl_state.fullscreen = false;
-				if ( !VID_CreateWindow (width, height, false) )
+
+				if (!VID_CreateWindow(width, height, false))
 					return rserr_invalid_mode;
+
 				return rserr_invalid_fullscreen;
 			}
 			else
 			{
-				ri.Con_Printf( PRINT_ALL, " ok\n" );
-				if ( !VID_CreateWindow (width, height, true) )
+				ri.Con_Printf(PRINT_ALL, " ok\n");
+
+				if (!VID_CreateWindow(width, height, true))
 					return rserr_invalid_mode;
 
 				gl_state.fullscreen = true;
+
 				return rserr_ok;
 			}
 		}
 	}
 	else
 	{
-		ri.Con_Printf( PRINT_ALL, "...setting windowed mode\n" );
-
-		ChangeDisplaySettings( 0, 0 );
-
+		ri.Con_Printf(PRINT_ALL, "...setting windowed mode\n");
+		ChangeDisplaySettings(0, 0);
 		*pwidth = width;
 		*pheight = height;
 		gl_state.fullscreen = false;
-		if ( !VID_CreateWindow (width, height, false) )
+
+		if (!VID_CreateWindow(width, height, false))
 			return rserr_invalid_mode;
 	}
-	GL_UpdateSwapInterval();
 
 	return rserr_ok;
 }
