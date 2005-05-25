@@ -301,7 +301,7 @@ int Sys_MapKeyModified (int vk, int key)
 	int scancode;
 	qboolean is_extended = false;
 	byte result[4];
-	byte State[256];
+	static byte State[256];
 
 	if (key & (1 << 24))
 		is_extended = true;
@@ -382,12 +382,13 @@ int Sys_MapKeyModified (int vk, int key)
 		}
 	}
 
-	if (!GetKeyboardState(State))
-		return MapKey(key); // probably won't happen, but revert to old Q2 style keymapping
+	if (!(keydown[K_SHIFT] || keydown[K_CTRL] || keydown[K_ALT]))
+		if (!GetKeyboardState(State))
+			return MapKey(key); // probably won't happen, but revert to old Q2 style keymapping
 
 	if (ToAscii(vk, scancode, State, (unsigned short*)result, 0))
 	{
-		return result[0];
+		return tolower(result[0]);
 	}
 	else
 	{
@@ -880,8 +881,9 @@ void VID_CheckChanges (void)
 		if (!Q_streq(gl_driver->string, "opengl32") && !Q_streq(gl_driver->string, "3dfxgl"))
 			Cvar_Set("gl_driver", "opengl32");
 
-//		Com_sprintf( name, sizeof(name), "ref_%s.dll", vid_ref->string );
-		Com_sprintf( name, sizeof(name), "ref_pbgl.dll"); // jit
+//		Com_sprintf(name, sizeof(name), "ref_%s.dll", vid_ref->string );
+		Com_sprintf(name, sizeof(name), "ref_pbgl.dll"); // jit
+
 		if (!VID_LoadRefresh(name))
 		{
 			// jit3dfx - check if driver string changed:
@@ -892,21 +894,13 @@ void VID_CheckChanges (void)
 			}
 
 			if (!vid_ref->modified) // jit
-				Com_Error (ERR_FATAL, "Unable to load OpenGL refresh!"); // jit
-/*
-			if ( Q_streq (vid_ref->string, "soft") )
-				Com_Error (ERR_FATAL, "Couldn't fall back to software refresh!");
-			Cvar_Set( "vid_ref", "soft" );
-*/
+				Com_Error(ERR_FATAL, "Unable to load OpenGL refresh!"); // jit
 
-			/*
-			** drop the console if we fail to load a refresh
-			*/
-			if ( cls.key_dest != key_console )
-			{
+			// drop the console if we fail to load a refresh
+			if (cls.key_dest != key_console)
 				Con_ToggleConsole_f();
-			}
 		}
+
 		if (!vid_ref->modified) // jit3dfx
 		{
 			cls.disable_screen = false;
