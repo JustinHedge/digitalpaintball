@@ -82,12 +82,22 @@ typedef struct
 /*
 ========================================================================
 
+.SKM skeletal animation format
+
+========================================================================
+*/
+
+// jitodo
+
+/*
+========================================================================
+
 .MD2 triangle model file format
 
 ========================================================================
 */
 
-#define IDALIASHEADER		(('2'<<24)+('P'<<16)+('D'<<8)+'I')
+#define IDALIASHEADER		(('2'<<24)+('P'<<16)+('D'<<8)+'I') // "IDP2"
 #define ALIAS_VERSION	8
 
 #define	MAX_TRIANGLES	4096
@@ -162,6 +172,120 @@ typedef struct
 	int			ofs_end;		// end of file
 
 } dmdl_t;
+
+/*
+========================================================================
+
+.SKM and .SKP models file formats
+
+========================================================================
+*/
+
+#define SKMHEADER		('S'|('K'<<8)|('M'<<16)|('1'<<24)) // "SKM1"
+
+#define SKM_MAX_NAME			64
+#define SKM_MAX_MESHES			32
+#define SKM_MAX_FRAMES			65536
+#define SKM_MAX_TRIS			65536
+#define SKM_MAX_VERTS			(SKM_MAX_TRIS * 3)
+#define SKM_MAX_BONES			256
+#define SKM_MAX_SHADERS			256
+#define SKM_MAX_FILESIZE		16777216
+#define SKM_MAX_ATTACHMENTS		SKM_MAX_BONES
+#define SKM_MAX_LODS			4
+
+// model format related flags
+#define SKM_BONEFLAG_ATTACH		1
+#define SKM_MODELTYPE			2	// (hierarchical skeletal pose)
+
+typedef struct
+{
+	char id[4];				// SKMHEADER
+	unsigned int type;
+	unsigned int filesize;	// size of entire model file
+
+	unsigned int num_bones;
+	unsigned int num_meshes;
+
+	// this offset is relative to the file
+	unsigned int ofs_meshes;
+} dskmheader_t;
+
+// there may be more than one of these
+typedef struct
+{
+	// these offsets are relative to the file
+	char shadername[SKM_MAX_NAME];		// name of the shader to use
+	char meshname[SKM_MAX_NAME];
+
+	unsigned int num_verts;
+	unsigned int num_tris;
+	unsigned int num_references;
+	unsigned int ofs_verts;	
+	unsigned int ofs_texcoords;
+	unsigned int ofs_indices;
+	unsigned int ofs_references;
+} dskmmesh_t;
+
+// one or more of these per vertex
+typedef struct
+{
+	float origin[3];		// vertex location (these blend)
+	float influence;		// influence fraction (these must add up to 1)
+	float normal[3];		// surface normal (these blend)
+	unsigned int bonenum;	// number of the bone
+} dskmbonevert_t;
+
+// variable size, parsed sequentially
+typedef struct
+{
+	unsigned int numbones;
+	// immediately followed by 1 or more ddpmbonevert_t structures
+	dskmbonevert_t verts[1];
+} dskmvertex_t;
+
+typedef struct
+{
+	float			st[2];
+} dskmcoord_t;
+
+typedef struct
+{
+	char id[4];				// SKMHEADER
+	unsigned int type;
+	unsigned int filesize;	// size of entire model file
+
+	unsigned int num_bones;
+	unsigned int num_frames;
+
+	// these offsets are relative to the file
+	unsigned int ofs_bones;
+	unsigned int ofs_frames;
+} dskpheader_t;
+
+// one per bone
+typedef struct
+{
+	// name examples: upperleftarm leftfinger1 leftfinger2 hand, etc
+	char name[SKM_MAX_NAME];
+	signed int parent;		// parent bone number
+	unsigned int flags;		// flags for the bone
+} dskpbone_t;
+
+typedef struct
+{
+	float quat[4];
+	float origin[3];
+} dskpbonepose_t;
+
+// immediately followed by bone positions for the frame
+typedef struct
+{
+	// name examples: idle_1 idle_2 idle_3 shoot_1 shoot_2 shoot_3, etc
+	char name[SKM_MAX_NAME];
+	unsigned int ofs_bonepositions;
+} dskpframe_t;
+
 
 /*
 ========================================================================

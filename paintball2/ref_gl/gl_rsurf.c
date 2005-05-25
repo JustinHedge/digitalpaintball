@@ -714,17 +714,14 @@ void R_RenderBrushPoly (msurface_t *fa)
 	qboolean is_dynamic = false;
 
 	c_brush_polys++;
-
-	image = R_TextureAnimation (fa->texinfo);
+	image = R_TextureAnimation(fa->texinfo);
 
 	if (fa->flags & SURF_DRAWTURB)
 	{	
-		GL_Bind( image->texnum );
-
 		// warp texture, no lightmaps
+		GL_Bind(image->texnum);
 		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f); // jit
-
-		EmitWaterPolys (fa);
+		EmitWaterPolys(fa);
 		return;
 	}
 
@@ -815,7 +812,6 @@ dynamic:
 void R_DrawCaustics (void) // jitcaustics
 {
 	msurface_t	*s;
-	
 
 	if (!r_caustics->value || !r_caustictexture || !r_caustictexture->rscript)
 	{
@@ -823,36 +819,23 @@ void R_DrawCaustics (void) // jitcaustics
 		return;
 	}
 
-	// don't bother writing Z
-	qglDepthMask(0);
-
+	qglDepthMask(0); // don't bother writing Z
 	GLSTATE_ENABLE_BLEND
 	GL_TexEnv(GL_MODULATE);
-
 	qglEnable(GL_POLYGON_OFFSET_FILL); 
 	qglPolygonOffset(-3, -2); 
-
 	alphasurf = true;
 
-	for (s=r_caustic_surfaces; s; s=s->causticchain)
-	{
-//		GL_Bind(r_caustictexture->texnum);
-//		DrawGLPoly(s->polys);
+	for (s = r_caustic_surfaces; s; s = s->causticchain)
 		RS_DrawSurface(s, false, r_caustictexture->rscript);
-	}
 
 	alphasurf = false;
-
 	qglDisable(GL_POLYGON_OFFSET_FILL); 
-
 	GL_TexEnv(GL_REPLACE);
-	qglColor4f (1,1,1,1);
-
+	qglColor4f(1,1,1,1);
 	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GLSTATE_DISABLE_BLEND
-
 	qglDepthMask(1); // re-enable z writing
-
 	r_caustic_surfaces = NULL;
 }
 
@@ -947,7 +930,7 @@ void DrawTextureChains (void)
 
 	if (!qglSelectTextureSGIS && !qglActiveTextureARB)
 	{
-		for (i=0,image=gltextures; i<numgltextures; i++,image++)
+		for (i=0, image=gltextures; i<numgltextures; i++, image++)
 		{
 			if (!image->registration_sequence)
 				continue;
@@ -968,7 +951,7 @@ void DrawTextureChains (void)
 	}
 	else
 	{
-		for (i=0, image=gltextures; i<numgltextures; i++,image++)
+		for (i=0, image=gltextures; i<numgltextures; i++, image++)
 		{
 			if (!image->registration_sequence)
 				continue;
@@ -987,7 +970,7 @@ void DrawTextureChains (void)
 
 		GL_EnableMultitexture(false);
 
-		for (i=0, image=gltextures; i<numgltextures; i++,image++)
+		for (i=0, image=gltextures; i<numgltextures; i++, image++)
 		{
 			if (!image->registration_sequence)
 				continue;
@@ -1243,7 +1226,7 @@ void R_DrawInlineBModel (void)
 	// find which side of the node we are on
 		pplane = psurf->plane;
 
-		dot = DotProduct (modelorg, pplane->normal) - pplane->dist;
+		dot = DotProduct(modelorg, pplane->normal) - pplane->dist;
 
 	// draw the polygon
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||

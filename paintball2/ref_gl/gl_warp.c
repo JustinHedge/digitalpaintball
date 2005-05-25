@@ -46,8 +46,8 @@ void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs)
 	mins[0] = mins[1] = mins[2] = 9999;
 	maxs[0] = maxs[1] = maxs[2] = -9999;
 	v = verts;
-	for (i=0 ; i<numverts ; i++)
-		for (j=0 ; j<3 ; j++, v++)
+	for (i=0; i<numverts; i++)
+		for (j=0; j<3; j++, v++)
 		{
 			if (*v < mins[j])
 				mins[j] = *v;
@@ -76,7 +76,7 @@ void SubdividePolygon (int numverts, float *verts)
 
 	BoundPoly (numverts, verts, mins, maxs);
 
-	for (i=0 ; i<3 ; i++)
+	for (i=0; i<3; i++)
 	{
 		m = (mins[i] + maxs[i]) * 0.5;
 		m = SUBDIVIDE_SIZE * floor (m/SUBDIVIDE_SIZE + 0.5f);
@@ -87,7 +87,7 @@ void SubdividePolygon (int numverts, float *verts)
 
 		// cut it
 		v = verts + i;
-		for (j=0 ; j<numverts ; j++, v+= 3)
+		for (j=0; j<numverts; j++, v+= 3)
 			dist[j] = *v - m;
 
 		// wrap cases
@@ -97,7 +97,7 @@ void SubdividePolygon (int numverts, float *verts)
 
 		f = b = 0;
 		v = verts;
-		for (j=0 ; j<numverts ; j++, v+= 3)
+		for (j=0; j<numverts; j++, v+= 3)
 		{
 			if (dist[j] >= 0)
 			{
@@ -111,11 +111,11 @@ void SubdividePolygon (int numverts, float *verts)
 			}
 			if (dist[j] == 0 || dist[j+1] == 0)
 				continue;
-			if ( (dist[j] > 0) != (dist[j+1] > 0) )
+			if ((dist[j] > 0) != (dist[j+1] > 0))
 			{
 				// clip point
 				frac = dist[j] / (dist[j] - dist[j+1]);
-				for (k=0 ; k<3 ; k++)
+				for (k=0; k<3; k++)
 					front[f][k] = back[b][k] = v[k] + frac*(v[3+k] - v[k]);
 				f++;
 				b++;
@@ -135,7 +135,7 @@ void SubdividePolygon (int numverts, float *verts)
 	VectorClear (total);
 	total_s = 0;
 	total_t = 0;
-	for (i=0 ; i<numverts ; i++, verts+= 3)
+	for (i=0; i<numverts; i++, verts+= 3)
 	{
 		VectorCopy (verts, poly->verts[i+1]);
 		s = DotProduct (verts, warpface->texinfo->vecs[0]);
@@ -180,7 +180,7 @@ void GL_SubdivideSurface (msurface_t *fa)
 	// convert edges back to a normal polygon
 	//
 	numverts = 0;
-	for (i=0 ; i<fa->numedges ; i++)
+	for (i=0; i<fa->numedges; i++)
 	{
 		lindex = loadmodel->surfedges[fa->firstedge + i];
 
@@ -255,81 +255,39 @@ void EmitWaterPolys (msurface_t *fa)
 	float		*v;
 	int			i;
 	float		s, t;
-	float		scroll, dstscroll;
+	float		scroll;
 	float		rdt = r_newrefdef.time;
-	float		args[4] = {0.05f,0,0,0.04f};
-
-	/*
-	Texture Shader waterwarp
-	Damn this looks fantastic
-
-	WHY texture shaders? because I can!
-	- MrG
-	*/
-	if (gl_state.texshaders) {
-		qglActiveTextureARB(GL_TEXTURE0_ARB);
-		if (!dst_texture)
-			CreateDSTTex();
-		qglBindTexture(GL_TEXTURE_2D,dst_texture);
-		qglTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_2D);
-		
-		qglActiveTextureARB(GL_TEXTURE1_ARB);
-		qglBindTexture(GL_TEXTURE_2D,fa->texinfo->image->texnum);
-		qglEnable(GL_TEXTURE_2D);
-
-		qglTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_2D);
-		qglTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_OFFSET_TEXTURE_2D_NV);
-		qglTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB);
-		qglTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, &args[0]);
-
-		// use this so that the new water isnt so bright anymore
-		// We wont bother check for the extensions availabiliy, as the hardware required
-		// to make it this far definately supports this as well
-		qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-
-		qglEnable(GL_TEXTURE_SHADER_NV);
-		dstscroll = -64 * ( (r_newrefdef.time*0.15f) - (int)(r_newrefdef.time*0.15f) );
-	}
 
 	if (fa->texinfo->flags & SURF_FLOWING)
-		scroll = -64 * ( (r_newrefdef.time*0.5f) - (int)(r_newrefdef.time*0.5f) );
+		scroll = -64 * ((r_newrefdef.time*0.5f) - (int)(r_newrefdef.time*0.5f));
 	else
 		scroll = 0;
-	for (bp=fa->polys ; bp ; bp=bp->next)
+
+	for (bp=fa->polys; bp; bp=bp->next)
 	{
 		p = bp;
-		
+
 		qglBegin(GL_TRIANGLE_FAN);
-		for (i=0,v=p->verts[0] ; i<p->numverts ; i++, v+=VERTEXSIZE)
+
+		for (i=0, v=p->verts[0]; i<p->numverts; i++, v+=VERTEXSIZE)
 		{
 #if !id386
 			s = v[3] + r_turbsin[(int)((v[4]*0.125f+r_newrefdef.time) * TURBSCALE) & 255];
 			t = v[4] + r_turbsin[(int)((v[3]*0.125f+rdt) * TURBSCALE) & 255];
 #else
-			s = v[3] + r_turbsin[Q_ftol( ((v[4]*0.125f+rdt) * TURBSCALE) ) & 255];
-			t = v[4] + r_turbsin[Q_ftol( ((v[3]*0.125f+rdt) * TURBSCALE) ) & 255];
+			s = v[3] + r_turbsin[Q_ftol(((v[4]*0.125f+rdt) * TURBSCALE)) & 255];
+			t = v[4] + r_turbsin[Q_ftol(((v[3]*0.125f+rdt) * TURBSCALE)) & 255];
 #endif
 			s += scroll;
 			s *= 0.015625;	// divide by empatpuluh enam
 			t *= 0.015625;	// ditto
 							// dont we love multilingual comments? :)
-				
-			if (gl_state.texshaders) { // MrG - texture shader waterwarp
-				qglMTexCoord2fSGIS(GL_TEXTURE0_ARB,(v[3]+dstscroll)*0.015625f,v[4]*0.015625f);
-				qglMTexCoord2fSGIS(GL_TEXTURE1_ARB,s,t);
-			} else {
-				qglTexCoord2f(s,t);
-			}
+
+			qglTexCoord2f(s,t);
 	 		qglVertex3fv(v);
 		}
-		qglEnd();
-	}
 
-	if (gl_state.texshaders) { // MrG - texture shader waterwarp
-		qglDisable(GL_TEXTURE_2D);
-		qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		qglActiveTextureARB(GL_TEXTURE0_ARB);
-		qglDisable(GL_TEXTURE_SHADER_NV);
+		qglEnd();
 	}
 }
 
@@ -393,7 +351,7 @@ void DrawSkyPolygon (int nump, vec3_t vecs)
 	c_sky++;
 #if 0
 glBegin (GL_POLYGON);
-for (i=0 ; i<nump ; i++, vecs+=3)
+for (i=0; i<nump; i++, vecs+=3)
 {
 	VectorAdd(vecs, r_origin, v);
 	qglVertex3fv (v);
@@ -403,7 +361,7 @@ return;
 #endif
 	// decide which face it maps to
 	VectorCopy (vec3_origin, v);
-	for (i=0, vp=vecs ; i<nump ; i++, vp+=3)
+	for (i=0, vp=vecs; i<nump; i++, vp+=3)
 	{
 		VectorAdd (vp, v, v);
 	}
@@ -433,7 +391,7 @@ return;
 	}
 
 	// project new texture coords
-	for (i=0 ; i<nump ; i++, vecs+=3)
+	for (i=0; i<nump; i++, vecs+=3)
 	{
 		j = vec_to_st[axis][2];
 		if (j > 0)
@@ -488,7 +446,7 @@ void ClipSkyPolygon (int nump, vec3_t vecs, int stage)
 
 	front = back = false;
 	norm = skyclip[stage];
-	for (i=0, v = vecs ; i<nump ; i++, v+=3)
+	for (i=0, v = vecs; i<nump; i++, v+=3)
 	{
 		d = DotProduct (v, norm);
 		if (d > ON_EPSILON)
@@ -515,10 +473,10 @@ void ClipSkyPolygon (int nump, vec3_t vecs, int stage)
 	// clip it
 	sides[i] = sides[0];
 	dists[i] = dists[0];
-	VectorCopy (vecs, (vecs+(i*3)) );
+	VectorCopy (vecs, (vecs+(i*3)));
 	newc[0] = newc[1] = 0;
 
-	for (i=0, v = vecs ; i<nump ; i++, v+=3)
+	for (i=0, v = vecs; i<nump; i++, v+=3)
 	{
 		switch (sides[i])
 		{
@@ -542,7 +500,7 @@ void ClipSkyPolygon (int nump, vec3_t vecs, int stage)
 			continue;
 
 		d = dists[i] / (dists[i] - dists[i+1]);
-		for (j=0 ; j<3 ; j++)
+		for (j=0; j<3; j++)
 		{
 			e = v[j] + d*(v[j+3] - v[j]);
 			newv[0][newc[0]][j] = e;
@@ -569,9 +527,9 @@ void R_AddSkySurface (msurface_t *fa)
 	glpoly_t	*p;
 
 	// calculate vertex values for sky box
-	for (p=fa->polys ; p ; p=p->next)
+	for (p=fa->polys; p; p=p->next)
 	{
-		for (i=0 ; i<p->numverts ; i++)
+		for (i=0; i<p->numverts; i++)
 		{
 			VectorSubtract (p->verts[i], r_origin, verts[i]);
 		}
@@ -589,7 +547,7 @@ void R_ClearSkyBox (void)
 {
 	int		i;
 
-	for (i=0 ; i<6 ; i++)
+	for (i=0; i<6; i++)
 	{
 		skymins[0][i] = skymins[1][i] = 9999;
 		skymaxs[0][i] = skymaxs[1][i] = -9999;
@@ -607,7 +565,7 @@ void MakeSkyVec (float s, float t, int axis)
 	b[1] = t*8192/*2300*/; // jit -- bigger skybox
 	b[2] = 8192/*2300*/;   // jit -- bigger sky box
 
-	for (j=0 ; j<3 ; j++)
+	for (j=0; j<3; j++)
 	{
 		k = st_to_vec[axis][j];
 		if (k < 0)
@@ -650,7 +608,7 @@ void R_DrawSkyBox (void)
 
 	if (skyrotate)
 	{	// check for no sky at all
-		for (i=0 ; i<6 ; i++)
+		for (i=0; i<6; i++)
 			if (skymins[0][i] < skymaxs[0][i]
 			&& skymins[1][i] < skymaxs[1][i])
 				break;
@@ -669,7 +627,7 @@ void R_DrawSkyBox (void)
 		GL_TexEnv(GL_MODULATE);
 	}
 
-	for (i=0 ; i<6 ; i++)
+	for (i=0; i<6; i++)
 	{
 		if (skyrotate)
 		{	// hack, forces full sky to draw when rotating
@@ -750,7 +708,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 	if ((s = strchr(skyname, ' ')))
 		*s = 0;
 
-	for (i=0 ; i<6 ; i++)
+	for (i=0; i<6; i++)
 	{
 		// chop down rotating skies for less memory
 		if (gl_skymip->value)// || skyrotate)
@@ -813,7 +771,7 @@ void SubdivideLightmappedPolygon (int numverts, float *verts, float subdivide_si
 
 	BoundPoly (numverts, verts, mins, maxs);
 
-	for (i=0 ; i<3 ; i++)
+	for (i=0; i<3; i++)
 	{
 		m = (mins[i] + maxs[i]) * 0.5f;
 		m = subdivide_size * floor (m/subdivide_size + 0.5f);
@@ -824,7 +782,7 @@ void SubdivideLightmappedPolygon (int numverts, float *verts, float subdivide_si
 
 		// cut it
 		v = verts + i;
-		for (j=0 ; j<numverts ; j++, v+= 3)
+		for (j=0; j<numverts; j++, v+= 3)
 			dist[j] = *v - m;
 
 		// wrap cases
@@ -834,7 +792,7 @@ void SubdivideLightmappedPolygon (int numverts, float *verts, float subdivide_si
 
 		f = b = 0;
 		v = verts;
-		for (j=0 ; j<numverts ; j++, v+= 3)
+		for (j=0; j<numverts; j++, v+= 3)
 		{
 			if (dist[j] >= 0)
 			{
@@ -848,11 +806,11 @@ void SubdivideLightmappedPolygon (int numverts, float *verts, float subdivide_si
 			}
 			if (dist[j] == 0 || dist[j+1] == 0)
 				continue;
-			if ( (dist[j] > 0) != (dist[j+1] > 0) )
+			if ((dist[j] > 0) != (dist[j+1] > 0))
 			{
 				// clip point
 				frac = dist[j] / (dist[j] - dist[j+1]);
-				for (k=0 ; k<3 ; k++)
+				for (k=0; k<3; k++)
 					front[f][k] = back[b][k] = v[k] + frac*(v[3+k] - v[k]);
 				f++;
 				b++;
@@ -873,7 +831,7 @@ void SubdivideLightmappedPolygon (int numverts, float *verts, float subdivide_si
 	total_s = 0; total_t = 0;
 	total_u = 0; total_v = 0;
 
-	for (i=0 ; i<numverts ; i++, verts+= 3)
+	for (i=0; i<numverts; i++, verts+= 3)
 	{
 		VectorCopy (verts, poly->verts[i+1]);
 		s = DotProduct (verts, warpface->texinfo->vecs[0]) + warpface->texinfo->vecs[0][3];
@@ -945,7 +903,7 @@ void GL_SubdivideLightmappedSurface (msurface_t *fa, float subdivide_size)
 	// convert edges back to a normal polygon
 	//
 	numverts = 0;
-	for (i=0 ; i<fa->numedges ; i++)
+	for (i=0; i<fa->numedges; i++)
 	{
 		lindex = loadmodel->surfedges[fa->firstedge + i];
 

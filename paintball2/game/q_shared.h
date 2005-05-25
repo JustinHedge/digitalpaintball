@@ -141,6 +141,9 @@ typedef vec_t vec3_t[3];
 typedef vec_t vec4_t[4];
 typedef vec_t vec5_t[5];
 
+typedef vec_t quat_t[4]; // jitskm
+extern quat_t quat_identity; // jitskm
+
 typedef vec3_t mat3_t[3];
 
 typedef	int	fixed4_t;
@@ -252,6 +255,33 @@ void ProjectPointOnPlane( vec3_t dst, const vec3_t p, const vec3_t normal );
 void PerpendicularVector( vec3_t dst, const vec3_t src );
 void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees );
 qboolean	AxisCompare (const vec3_t axis1[3], const vec3_t axis2[3]); // jit - taken from Quake2Evolved
+
+// === jitskm - skeletal model support from QFusion
+void Matrix_Identity (vec3_t m[3]);
+void Matrix_Copy (vec3_t m1[3], vec3_t m2[3]);
+qboolean Matrix_Compare (vec3_t m1[3], vec3_t m2[3]);
+void Matrix_Multiply (vec3_t m1[3], vec3_t m2[3], vec3_t out[3]);
+void Matrix_TransformVector (vec3_t m[3], vec3_t v, vec3_t out);
+void Matrix_Transpose (vec3_t in[3], vec3_t out[3]);
+void Matrix_EulerAngles (vec3_t m[3], vec3_t angles);
+void Matrix_Rotate (vec3_t m[3], vec_t angle, vec_t x, vec_t y, vec_t z);
+void Matrix_FromPoints (const vec3_t v1, const vec3_t v2, const vec3_t v3, vec3_t m[3]);
+
+void Quat_Identity (quat_t q);
+void Quat_Copy (const quat_t q1, quat_t q2);
+qboolean Quat_Compare (const quat_t q1, const quat_t q2);
+void Quat_Conjugate (const quat_t q1, quat_t q2);
+vec_t Quat_Normalize (quat_t q);
+vec_t Quat_Inverse (const quat_t q1, quat_t q2);
+void Quat_Multiply (const quat_t q1, const quat_t q2, quat_t out);
+void Quat_Lerp (const quat_t q1, const quat_t q2, vec_t t, quat_t out);
+void Quat_Vectors (const quat_t q, vec3_t f, vec3_t r, vec3_t u);
+void Quat_Matrix (const quat_t q, vec3_t m[3]);
+void Matrix_Quat (vec3_t m[3], quat_t q);
+void Quat_TransformVector (const quat_t q, const vec3_t v, vec3_t out);
+void Quat_ConcatTransforms (const quat_t q1, const vec3_t v1, const quat_t q2, const vec3_t v2, quat_t q, vec3_t v);
+void Quat_FromEulerAngle (const vec3_t angle, quat_t q);
+// jitskm ===
 
 //=============================================
 
@@ -1323,11 +1353,11 @@ typedef struct hash_table_s {
 	hash_node_t **table;
 } hash_table_t;
 
-void hash_table_init(hash_table_t *table, unsigned int size, void *free_func);
-void hash_table_clear(hash_table_t *table);
-void hash_add(hash_table_t *table, const unsigned char *key, void *data);
-void *hash_get(hash_table_t *table, const unsigned char *key);
-void hash_delete(hash_table_t *table, const unsigned char *key);
+void hash_table_init (hash_table_t *table, unsigned int size, void *free_func);
+void hash_table_clear (hash_table_t *table);
+void hash_add (hash_table_t *table, const unsigned char *key, void *data);
+void *hash_get (hash_table_t *table, const unsigned char *key);
+void hash_delete (hash_table_t *table, const unsigned char *key);
 // jithash
 // ========
 
@@ -1359,3 +1389,6 @@ qboolean FileExists (const char *filename); // jit
 #define _vsnprintf(a, b, c, d) vsnprintf(a, b, c, d)
 #endif
 
+float RadiusFromBounds (const vec3_t mins, const vec3_t maxs); // jitskm
+void Q_snprintfz (char *dest, size_t size, const char *fmt, ...); // jitskm
+void Q_strncpyz (char *dest, const char *src, size_t size); // jitskm

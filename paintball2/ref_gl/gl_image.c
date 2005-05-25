@@ -1572,7 +1572,8 @@ image_t *GL_LoadWal (char *name)
 	int			width, height, ofs;
 	image_t		*image;
 
-	ri.FS_LoadFile (name, (void **)&mt);
+	ri.FS_LoadFile(name, (void **)&mt);
+
 	if (!mt)
 	{
 		//ri.Con_Printf (PRINT_ALL, "GL_FindImage: can't load %s\n", name);
@@ -1580,13 +1581,13 @@ image_t *GL_LoadWal (char *name)
 		return NULL; // jithash / jittexture
 	}
 
-	width = LittleLong (mt->width);
-	height = LittleLong (mt->height);
-	ofs = LittleLong (mt->offsets[0]);
+	width = LittleLong(mt->width);
+	height = LittleLong(mt->height);
+	ofs = LittleLong(mt->offsets[0]);
 
-	image = GL_LoadPic (name, (byte *)mt + ofs, width, height, it_wall, 8);
+	image = GL_LoadPic(name, (byte *)mt + ofs, width, height, it_wall, 8);
 
-	ri.FS_FreeFile ((void *)mt);
+	ri.FS_FreeFile((void *)mt);
 
 	return image;
 }
@@ -1717,25 +1718,27 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 	int		i, len;
 	const char *in;
 	char *out;
-//	byte	*pic, *palette;
-//	int		width, height;
 	extern cvar_t *gl_highres_textures;
 	extern cvar_t *gl_hash_textures; // jithash
 	static unsigned char name_noext[MAX_QPATH];
 
 	if (!name)
-		return NULL;	//	ri.Sys_Error (ERR_DROP, "GL_FindImage: NULL name");
+		return NULL;
+
 	len = strlen(name);
-	if (len<5)
-		return NULL;	//	ri.Sys_Error (ERR_DROP, "GL_FindImage: bad name: %s", name);
+
+	if (len < 5)
+		return NULL;
 
 	// look for it
 
 	// strip extension:
 	in = name;
 	out = name_noext;
+
 	while (*in && *in != '.')
 		*out++ = tolower(*in++);
+
 	*out = 0;
 
 	if (gl_hash_textures->value) // jithash
@@ -1750,7 +1753,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 	}
 	else
 	{
-		for (i=0, image=gltextures; i<numgltextures; i++,image++)
+		for (i=0, image=gltextures; i<numgltextures; i++, image++)
 		{
 			if (Q_streq(name_noext, image->name))
 			{
@@ -1773,8 +1776,10 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 		// insert hr4/ before the filename:
 		len = strlen(name_noext);
 		s = name_noext + len - 1; // start at the end of the string and work backwards.
-		while(s > name_noext && *s != '/' && *s != '\\') // till we hit '/'
+		
+		while (s > name_noext && *s != '/' && *s != '\\') // till we hit '/'
 			s --;
+
 		*s = 0; // temporarily terminate it at the '/'
 		sprintf(name_hr4_noext, "%s/hr4/%s", name_noext, s+1);
 		*s = '/'; // put the '/' back.
@@ -1786,10 +1791,6 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 			image->width /= 4;
 			image->height /= 4;
 			strcpy(image->name, name_noext);
-
-			//hash_add(&gltextures_hash, name_noext, image); // jithash
-
-			//return image;
 		}
 	}
 

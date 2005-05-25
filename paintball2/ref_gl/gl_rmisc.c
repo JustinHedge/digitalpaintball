@@ -115,8 +115,7 @@ void R_InitNoTexture (void) /// jit, renamed
 
 	if (r_caustics->value > 1.0f)
 		r_caustictexture = GL_FindImage("textures/sfx/caustics/caustics1_02.tga", it_wall); // jitcaustics
-	else
-	//if(r_caustics->value)
+	else if(r_caustics->value)
 		r_caustictexture = GL_FindImage("textures/sfx/caustics/caustics1_01.tga", it_wall); // jitcaustics
 }
 
@@ -361,18 +360,18 @@ void GL_SetDefaultState( void )
 	qglEnable(GL_TEXTURE_2D);
 
 	qglEnable(GL_ALPHA_TEST);
-	qglAlphaFunc(GL_GREATER, 0.666);
+	qglAlphaFunc(GL_GREATER, 0.666f);
 	gl_state.alpha_test=true;
 
-	qglDisable (GL_DEPTH_TEST);
-	qglDisable (GL_CULL_FACE);
-	qglDisable (GL_BLEND);
-	gl_state.blend=false;
+	qglDisable(GL_DEPTH_TEST);
+	qglDisable(GL_CULL_FACE);
+	qglDisable(GL_BLEND);
+	gl_state.blend = false;
 
-	qglColor4f (1,1,1,1);
+	qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-	qglPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
-	qglShadeModel (GL_FLAT);
+	qglPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	qglShadeModel(GL_FLAT);
 
 	GL_TextureMode( gl_texturemode->string );
 	GL_TextureAlphaMode( gl_texturealphamode->string );
@@ -384,11 +383,11 @@ void GL_SetDefaultState( void )
 	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	GL_TexEnv(GL_REPLACE);
 
-	gl_state.texgen=false;
+	gl_state.texgen = false;
 	qglDisable(GL_TEXTURE_GEN_S);
 	qglDisable(GL_TEXTURE_GEN_T);
 
@@ -409,15 +408,18 @@ void GL_SetDefaultState( void )
 
 void GL_UpdateSwapInterval (void)
 {
-        if (gl_swapinterval->modified)
-        {
-                gl_swapinterval->modified = false;
+	if (gl_swapinterval->modified)
+	{
+		gl_swapinterval->modified = false;
 
-                if (!gl_state.stereo_enabled)
-                {
+		if (!gl_state.stereo_enabled)
+		{
 #ifdef _WIN32
 			if (qwglSwapIntervalEXT)
+			{
+				qwglSwapIntervalEXT(!gl_swapinterval->value); // jitest -- ugly hack
 				qwglSwapIntervalEXT(gl_swapinterval->value);
+			}
 #endif
 		}
 	}

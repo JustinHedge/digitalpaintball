@@ -229,7 +229,7 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	if (r >= 0)
 		return r;		// hit something
 		
-	if ( (back < 0) == side )
+	if ((back < 0) == side)
 		return -1;		// didn't hit anuthing
 		
 // check for impact on this node
@@ -237,24 +237,23 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	lightplane = plane;
 
 	surf = r_worldmodel->surfaces + node->firstsurface;
-	for (i=0 ; i<node->numsurfaces ; i++, surf++)
+	for (i = 0; i < node->numsurfaces; i++, surf++)
 	{
-		if (surf->flags&(SURF_DRAWTURB|SURF_DRAWSKY)) 
+		if (surf->flags & (SURF_DRAWTURB|SURF_DRAWSKY)) 
 			continue;	// no lightmaps
 
 		tex = surf->texinfo;
-		
+
 		s = DotProduct (mid, tex->vecs[0]) + tex->vecs[0][3];
 		t = DotProduct (mid, tex->vecs[1]) + tex->vecs[1][3];;
 
-		if (s < surf->texturemins[0] ||
-		t < surf->texturemins[1])
+		if (s < surf->texturemins[0] || t < surf->texturemins[1])
 			continue;
-		
+
 		ds = s - surf->texturemins[0];
 		dt = t - surf->texturemins[1];
-		
-		if ( ds > surf->extents[0] || dt > surf->extents[1] )
+
+		if (ds > surf->extents[0] || dt > surf->extents[1])
 			continue;
 
 		if (!surf->samples)
@@ -265,6 +264,7 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 
 		lightmap = surf->stain_samples;
 		VectorCopy (vec3_origin, pointcolor);
+
 		if (lightmap)
 		{
 			//vec3_t scale;

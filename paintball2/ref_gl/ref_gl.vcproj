@@ -327,6 +327,9 @@
 			<File
 				RelativePath="..\win32\qgl_win.c">
 			</File>
+			<File
+				RelativePath="r_skm.c">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

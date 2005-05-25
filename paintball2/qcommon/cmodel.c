@@ -179,23 +179,27 @@ void CMod_LoadSurfaces (lump_t *l)
 	int			i, count;
 
 	in = (void *)(cmod_base + l->fileofs);
+
 	if (l->filelen % sizeof(*in))
-		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
+		Com_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size");
+
 	count = l->filelen / sizeof(*in);
+
 	if (count < 1)
-		Com_Error (ERR_DROP, "Map with no surfaces");
+		Com_Error(ERR_DROP, "Map with no surfaces");
+
 	if (count > MAX_MAP_TEXINFO)
-		Com_Error (ERR_DROP, "Map has too many surfaces");
+		Com_Error(ERR_DROP, "Map has too many surfaces");
 
 	numtexinfo = count;
 	out = map_surfaces;
 
-	for ( i=0 ; i<count ; i++, in++, out++)
+	for (i = 0; i < count; i++, in++, out++)
 	{
-		strncpy (out->c.name, in->texture, sizeof(out->c.name)-1);
-		strncpy (out->rname, in->texture, sizeof(out->rname)-1);
-		out->c.flags = LittleLong (in->flags);
-		out->c.value = LittleLong (in->value);
+		strncpy(out->c.name, in->texture, sizeof(out->c.name)-1);
+		strncpy(out->rname, in->texture, sizeof(out->rname)-1);
+		out->c.flags = LittleLong(in->flags);
+		out->c.value = LittleLong(in->value);
 	}
 }
 
@@ -284,12 +288,15 @@ void CMod_LoadLeafs (lump_t *l)
 	int			count;
 	
 	in = (void *)(cmod_base + l->fileofs);
+
 	if (l->filelen % sizeof(*in))
 		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
+
 	count = l->filelen / sizeof(*in);
 
 	if (count < 1)
 		Com_Error (ERR_DROP, "Map with no leafs");
+
 	// need to save space for box planes
 	if (count > MAX_MAP_PLANES)
 		Com_Error (ERR_DROP, "Map has too many planes");
@@ -298,7 +305,7 @@ void CMod_LoadLeafs (lump_t *l)
 	numleafs = count;
 	numclusters = 0;
 
-	for ( i=0 ; i<count ; i++, in++, out++)
+	for (i = 0; i < count; i++, in++, out++)
 	{
 		out->contents = LittleLong (in->contents);
 		out->cluster = LittleShort (in->cluster);
@@ -312,9 +319,11 @@ void CMod_LoadLeafs (lump_t *l)
 
 	if (map_leafs[0].contents != CONTENTS_SOLID)
 		Com_Error (ERR_DROP, "Map leaf 0 is not CONTENTS_SOLID");
+
 	solidleaf = 0;
 	emptyleaf = -1;
-	for (i=1 ; i<numleafs ; i++)
+
+	for (i = 1; i < numleafs; i++)
 	{
 		if (!map_leafs[i].contents)
 		{
@@ -322,8 +331,9 @@ void CMod_LoadLeafs (lump_t *l)
 			break;
 		}
 	}
+
 	if (emptyleaf == -1)
-		Com_Error (ERR_DROP, "Map does not have an empty leaf");
+		Com_Error(ERR_DROP, "Map does not have an empty leaf");
 }
 
 /*
@@ -552,16 +562,18 @@ cmodel_t *CM_LoadMap (char *name, qboolean clientload, unsigned *checksum)
 	int				length;
 	static unsigned	last_checksum = 0; // jit, set to 0
 
-	map_noareas = Cvar_Get ("map_noareas", "0", 0);
+	map_noareas = Cvar_Get("map_noareas", "0", 0);
 
 	if (Q_streq(map_name, name) && (clientload || !Cvar_VariableValue("flushmap")))
 	{
 		*checksum = last_checksum;
+
 		if (!clientload)
 		{
-			memset (portalopen, 0, sizeof(portalopen));
-			FloodAreaConnections ();
+			memset(portalopen, 0, sizeof(portalopen));
+			FloodAreaConnections();
 		}
+
 		return &map_cmodels[0];		// still have the right version
 	}
 
@@ -584,48 +596,49 @@ cmodel_t *CM_LoadMap (char *name, qboolean clientload, unsigned *checksum)
 		return &map_cmodels[0];			// cinematic servers won't have anything at all
 	}
 
-	//
 	// load the file
-	//
-	length = FS_LoadFile (name, (void **)&buf);
+	length = FS_LoadFile(name, (void **)&buf);
+
 	if (!buf)
-		Com_Error (ERR_DROP, "Couldn't load %s", name);
+		Com_Error(ERR_DROP, "Couldn't load %s", name);
 
-	last_checksum = LittleLong (Com_BlockChecksum (buf, length));
+	last_checksum = LittleLong(Com_BlockChecksum(buf, length));
 	*checksum = last_checksum;
-
 	header = *(dheader_t *)buf;
-	for (i=0 ; i<sizeof(dheader_t)/4 ; i++)
-		((int *)&header)[i] = LittleLong ( ((int *)&header)[i]);
+
+	for (i=0; i<sizeof(dheader_t)/4; i++)
+		((int *)&header)[i] = LittleLong(((int *)&header)[i]);
 
 	if (header.version != BSPVERSION)
-		Com_Error (ERR_DROP, "CMod_LoadBrushModel: %s has wrong version number (%i should be %i)"
-		, name, header.version, BSPVERSION);
+		Com_Error(ERR_DROP, "CMod_LoadBrushModel: %s has wrong version number (%i should be %i)",
+			name, header.version, BSPVERSION);
 
 	cmod_base = (byte *)buf;
 
+	strcpy(map_name, name); // jitnodraw
+
 	// load into heap
-	CMod_LoadSurfaces (&header.lumps[LUMP_TEXINFO]);
-	CMod_LoadLeafs (&header.lumps[LUMP_LEAFS]);
-	CMod_LoadLeafBrushes (&header.lumps[LUMP_LEAFBRUSHES]);
-	CMod_LoadPlanes (&header.lumps[LUMP_PLANES]);
-	CMod_LoadBrushes (&header.lumps[LUMP_BRUSHES]);
-	CMod_LoadBrushSides (&header.lumps[LUMP_BRUSHSIDES]);
-	CMod_LoadSubmodels (&header.lumps[LUMP_MODELS]);
-	CMod_LoadNodes (&header.lumps[LUMP_NODES]);
-	CMod_LoadAreas (&header.lumps[LUMP_AREAS]);
-	CMod_LoadAreaPortals (&header.lumps[LUMP_AREAPORTALS]);
-	CMod_LoadVisibility (&header.lumps[LUMP_VISIBILITY]);
-	CMod_LoadEntityString (&header.lumps[LUMP_ENTITIES]);
+	CMod_LoadSurfaces(&header.lumps[LUMP_TEXINFO]);
+	CMod_LoadLeafs(&header.lumps[LUMP_LEAFS]);
+	CMod_LoadLeafBrushes(&header.lumps[LUMP_LEAFBRUSHES]);
+	CMod_LoadPlanes(&header.lumps[LUMP_PLANES]);
+	CMod_LoadBrushes(&header.lumps[LUMP_BRUSHES]);
+	CMod_LoadBrushSides(&header.lumps[LUMP_BRUSHSIDES]);
+	CMod_LoadSubmodels(&header.lumps[LUMP_MODELS]);
+	CMod_LoadNodes(&header.lumps[LUMP_NODES]);
+	CMod_LoadAreas(&header.lumps[LUMP_AREAS]);
+	CMod_LoadAreaPortals(&header.lumps[LUMP_AREAPORTALS]);
+	CMod_LoadVisibility(&header.lumps[LUMP_VISIBILITY]);
+	CMod_LoadEntityString(&header.lumps[LUMP_ENTITIES]);
 
-	FS_FreeFile (buf);
+	FS_FreeFile(buf);
 
-	CM_InitBoxHull ();
+	CM_InitBoxHull();
 
-	memset (portalopen, 0, sizeof(portalopen));
-	FloodAreaConnections ();
+	memset(portalopen, 0, sizeof(portalopen));
+	FloodAreaConnections();
 
-	strcpy (map_name, name);
+	// jitnodraw strcpy(map_name, name);
 
 	return &map_cmodels[0];
 }

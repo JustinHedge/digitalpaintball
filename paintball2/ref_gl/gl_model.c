@@ -34,6 +34,7 @@ byte	mod_novis[MAX_MAP_LEAFS/8];
 #define	MAX_MOD_KNOWN	512
 model_t	mod_known[MAX_MOD_KNOWN];
 int		mod_numknown;
+char	current_map_name[MAX_QPATH]; // jitnodraw
 
 // the inline * models from the current map are kept seperate
 model_t	mod_inline[MAX_MOD_KNOWN];
@@ -176,118 +177,122 @@ Mod_ForName
 Loads in a model for the given name
 ==================
 */
-model_t *Mod_ForName (char *name, qboolean crash)
+model_t *Mod_ForName (const char *name, qboolean crash) // jit - added const
 {
 	model_t	*mod;
 	unsigned *buf;
 	int		i;
-	
+
 	if (!name[0])
-		ri.Sys_Error (ERR_DROP, "Mod_ForName: NULL name");
-		
-	//
+		ri.Sys_Error(ERR_DROP, "Mod_ForName: NULL name");
+
 	// inline models are grabbed only from worldmodel
-	//
 	if (name[0] == '*')
 	{
 		i = atoi(name+1);
+
 		if (i < 1 || !r_worldmodel || i >= r_worldmodel->numsubmodels)
-			ri.Sys_Error (ERR_DROP, "bad inline model number");
+			ri.Sys_Error(ERR_DROP, "bad inline model number");
+
 		return &mod_inline[i];
 	}
 
-	//
 	// search the currently loaded models
-	//
-	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
+	for (i = 0, mod = mod_known; i < mod_numknown; i++, mod++)
 	{
 		if (!mod->name[0])
 			continue;
-		if (Q_streq (mod->name, name) ) {
-			if (mod->type == mod_alias) {
+
+		if (Q_streq(mod->name, name))
+		{
+			if (mod->type == mod_alias)
+			{
 				// Make sure models scripts are definately reloaded between maps - MrG
 				char rs[48];
 				int i = 0;
 				image_t *img;
 
-				img=mod->skins[i];
-				while (img != NULL) {
-					strcpy(rs,mod->skins[i]->name);
+				img = mod->skins[i];
+
+				while (img != NULL)
+				{
+					strcpy(rs, mod->skins[i]->name);
 					rs[strlen(rs)-4]=0;
 					(struct rscript_s *)mod->script[i] = RS_FindScript(rs);
+
 					if (mod->script[i])
 						RS_ReadyScript((rscript_t *)mod->script[i]);
+
 					i++;
-					img=mod->skins[i];
+					img = mod->skins[i];
 				}
 			}
 
 			return mod;
 		}
 	}
-	
-	//
+
 	// find a free model slot spot
-	//
-	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
-	{
+	for (i = 0, mod = mod_known; i < mod_numknown; i++, mod++)
 		if (!mod->name[0])
 			break;	// free spot
-	}
+
 	if (i == mod_numknown)
 	{
 		if (mod_numknown == MAX_MOD_KNOWN)
-			ri.Sys_Error (ERR_DROP, "mod_numknown == MAX_MOD_KNOWN");
+			ri.Sys_Error(ERR_DROP, "mod_numknown == MAX_MOD_KNOWN");
+
 		mod_numknown++;
 	}
-	strcpy (mod->name, name);
+
+	strcpy(mod->name, name);
 	
-	//
 	// load the file
-	//
-	modfilelen = ri.FS_LoadFile (mod->name, &buf);
+	modfilelen = ri.FS_LoadFile(mod->name, &buf);
+
 	if (!buf)
 	{
 		if (crash)
-			ri.Sys_Error (ERR_DROP, "Mod_NumForName: %s not found", mod->name);
-		memset (mod->name, 0, sizeof(mod->name));
+			ri.Sys_Error(ERR_DROP, "Mod_NumForName: %s not found", mod->name);
+
+		memset(mod->name, 0, sizeof(mod->name));
+
 		return NULL;
 	}
 	
 	loadmodel = mod;
 
-	//
-	// fill it in
-	//
-
-
 	// call the apropriate loader
-	
 	switch (LittleLong(*(unsigned *)buf))
 	{
 	case IDALIASHEADER:
-		loadmodel->extradata = Hunk_Begin (0x200000);
-		Mod_LoadAliasModel (mod, buf);
+		loadmodel->extradata = Hunk_Begin(0x200000);
+		Mod_LoadAliasModel(mod, buf);
+		break;
+
+	case SKMHEADER: // jitskm
+		loadmodel->extradata = Hunk_Begin(0x200000);
+		Mod_LoadSkeletalModel(mod, NULL, buf);
 		break;
 		
 	case IDSPRITEHEADER:
-		loadmodel->extradata = Hunk_Begin (0x10000);
-		Mod_LoadSpriteModel (mod, buf);
+		loadmodel->extradata = Hunk_Begin(0x10000);
+		Mod_LoadSpriteModel(mod, buf);
 		break;
 	
 	case IDBSPHEADER:
-		loadmodel->extradata = Hunk_Begin (0x1000000);
-		Mod_LoadBrushModel (mod, buf);
+		loadmodel->extradata = Hunk_Begin(0x1000000);
+		strcpy(current_map_name, name); // jitnodraw
+		Mod_LoadBrushModel(mod, buf);
 		break;
 
 	default:
-		ri.Sys_Error (ERR_DROP,"Mod_NumForName: unknown fileid for %s", mod->name);
+		ri.Sys_Error(ERR_DROP, "Mod_NumForName: unknown fileid for %s", mod->name);
 		break;
 	}
 
-	loadmodel->extradatasize = Hunk_End ();
-
-	ri.FS_FreeFile (buf);
+	loadmodel->extradatasize = Hunk_End();
+	ri.FS_FreeFile(buf);
 
 	return mod;
 }
@@ -360,19 +365,21 @@ void Mod_LoadVertexes (lump_t *l)
 	int			i, count;
 
 	in = (void *)(mod_base + l->fileofs);
+	
 	if (l->filelen % sizeof(*in))
-		ri.Sys_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
+		ri.Sys_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
+
 	count = l->filelen / sizeof(*in);
-	out = Hunk_Alloc ( count*sizeof(*out));	
+	out = Hunk_Alloc(count*sizeof(*out));	
 
 	loadmodel->vertexes = out;
 	loadmodel->numvertexes = count;
 
-	for ( i=0 ; i<count ; i++, in++, out++)
+	for (i = 0; i < count; i++, in++, out++)
 	{
-		out->position[0] = LittleFloat (in->point[0]);
-		out->position[1] = LittleFloat (in->point[1]);
-		out->position[2] = LittleFloat (in->point[2]);
+		out->position[0] = LittleFloat(in->point[0]);
+		out->position[1] = LittleFloat(in->point[1]);
+		out->position[2] = LittleFloat(in->point[2]);
 	}
 }
 
@@ -381,17 +388,20 @@ void Mod_LoadVertexes (lump_t *l)
 RadiusFromBounds
 =================
 */
-float RadiusFromBounds (vec3_t mins, vec3_t maxs)
+float RadiusFromBounds (const vec3_t mins, const vec3_t maxs)
 {
-	int		i;
-	vec3_t	corner;
+	register int	i;
+	vec3_t			corner;
+	register float	val1, val2; // jitopt
 
-	for (i=0 ; i<3 ; i++)
+	for (i = 0; i < 3; i++)
 	{
-		corner[i] = fabs(mins[i]) > fabs(maxs[i]) ? fabs(mins[i]) : fabs(maxs[i]);
+		val1 = fabs(mins[i]);
+		val2 = fabs(maxs[i]);
+		corner[i] = (val1 > val2) ? val1 : val2;
 	}
 
-	return VectorLength (corner);
+	return VectorLength(corner);
 }
 
 
@@ -469,10 +479,10 @@ void Mod_LoadTexinfo (lump_t *l)
 	int 	i, j, count;
 	char	name[MAX_QPATH];
 	int		next;
+	qboolean remove_nodraw = false; // jitnodraw
 	// ===
 	// jit - banana texture
 	static int easter_egg = -1;
-
 
 	if (easter_egg == -1)
 	{
@@ -489,56 +499,71 @@ void Mod_LoadTexinfo (lump_t *l)
 			easter_egg = !(rand() % 5);
 		}
 	}
+
+	if (stricmp(current_map_name, "maps/tranquilhavoc.bsp") == 0) // jitnodraw
+		remove_nodraw = true;
 	// jit
 	// ===
 
-
 	in = (void *)(mod_base + l->fileofs);
+
 	if (l->filelen % sizeof(*in))
 		ri.Sys_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
+
 	count = l->filelen / sizeof(*in);
-	out = Hunk_Alloc ( count*sizeof(*out));	
+	out = Hunk_Alloc(count*sizeof(*out));	
 
 	loadmodel->texinfo = out;
 	loadmodel->numtexinfo = count;
 
-	for ( i=0 ; i<count ; i++, in++, out++)
+	for (i = 0; i < count; i++, in++, out++)
 	{
-		for (j=0 ; j<8 ; j++)
-			out->vecs[0][j] = LittleFloat (in->vecs[0][j]);
+		for (j = 0; j < 8; j++)
+			out->vecs[0][j] = LittleFloat(in->vecs[0][j]);
 
-		out->flags = LittleLong (in->flags);
-		next = LittleLong (in->nexttexinfo);
+		out->flags = LittleLong(in->flags);
+		
+		if (remove_nodraw) // jitnodraw
+			out->flags &= ~SURF_NODRAW;
+
+		next = LittleLong(in->nexttexinfo);
+
 		if (next > 0)
 			out->next = loadmodel->texinfo + next;
 		else
 		    out->next = NULL;
-		Com_sprintf (name, sizeof(name), "textures/%s", in->texture);
+
+		Com_sprintf(name, sizeof(name), "textures/%s", in->texture);
 
 		(struct rscript_s *)out->script = RS_FindScript(name);
-		if (out->script) {
+
+		if (out->script)
 			RS_ReadyScript((rscript_t *)out->script);
-		}
-		Com_sprintf (name, sizeof(name), "textures/%s.wal", in->texture);
+
+		Com_sprintf(name, sizeof(name), "textures/%s.wal", in->texture);
+		
 		if (easter_egg) // jit :D April fools!
-			Com_sprintf (name, sizeof(name), "textures/pball/banana.wal");
+			Com_sprintf(name, sizeof(name), "textures/pball/banana.wal");
+
 		out->image = GL_FindImage (name, it_wall);
 
 		if (!out->image && !out->script)
 		{
 			ri.Con_Printf (PRINT_ALL, "Couldn't load %s\n", name);
 			out->image = GL_FindImage ("pics/noimage.tga", it_pic);
+
 			if (!out->image)
 				out->image = r_notexture;
 		}
 	}
 
 	// count animation frames
-	for (i=0 ; i<count ; i++)
+	for (i = 0; i < count; i++)
 	{
 		out = &loadmodel->texinfo[i];
 		out->numframes = 1;
-		for (step = out->next ; step && step != out ; step=step->next)
+
+		for (step = out->next; step && step != out; step = step->next)
 			out->numframes++;
 	}
 }
@@ -793,7 +818,7 @@ void Mod_LoadLeafs (lump_t *l)
 	in = (void *)(mod_base + l->fileofs);
 
 	if (l->filelen % sizeof(*in))
-		ri.Sys_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
+		ri.Sys_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", loadmodel->name);
 
 	count = l->filelen / sizeof(*in);
 	out = Hunk_Alloc(count*sizeof(*out));	
@@ -801,28 +826,25 @@ void Mod_LoadLeafs (lump_t *l)
 	loadmodel->leafs = out;
 	loadmodel->numleafs = count;
 
-	for (i=0 ; i<count ; i++, in++, out++)
+	for (i = 0; i < count; i++, in++, out++)
 	{
-		for (j=0 ; j<3 ; j++)
+		for (j = 0; j < 3; j++)
 		{
-			out->minmaxs[j] = LittleShort (in->mins[j]);
-			out->minmaxs[3+j] = LittleShort (in->maxs[j]);
+			out->minmaxs[j] = LittleShort(in->mins[j]);
+			out->minmaxs[3+j] = LittleShort(in->maxs[j]);
 		}
 
 		p = LittleLong(in->contents);
 		out->contents = p;
-
 		out->cluster = LittleShort(in->cluster);
 		out->area = LittleShort(in->area);
-
 		out->firstmarksurface = loadmodel->marksurfaces +
 			LittleShort(in->firstleafface);
 		out->nummarksurfaces = LittleShort(in->numleaffaces);
-		
-//#if 0
+
 		if (out->contents & (CONTENTS_WATER|CONTENTS_SLIME|CONTENTS_LAVA) && r_caustics->value) // jitcaustics
 		{
-			for (j=0; j<out->nummarksurfaces; j++)
+			for (j = 0; j < out->nummarksurfaces; j++)
 			{
 				if ((out->firstmarksurface[j]->texinfo->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP)))
 					continue; // jitcaustics -- don't mark water surface as underwater
@@ -833,7 +855,15 @@ void Mod_LoadLeafs (lump_t *l)
 					poly->flags |= SURF_UNDERWATER;
 			}
 		}
-//#endif
+
+		/*if (in->contents & CONTENTS_TRANSLUCENT) // jittest
+		{
+			for (j = 0; j < out->nummarksurfaces; j++)
+			{
+				out->firstmarksurface[j]->flags |= SURF_TRANSLUCENT;
+				out->firstmarksurface[j]->texinfo->flags |= SURF_TRANS66; // jittest
+			}
+		}*/
 	}	
 }
 
@@ -844,24 +874,27 @@ Mod_LoadMarksurfaces
 */
 void Mod_LoadMarksurfaces (lump_t *l)
 {	
-	int		i, j, count;
+	int			i, j, count;
 	short		*in;
-	msurface_t **out;
+	msurface_t	**out;
 	
 	in = (void *)(mod_base + l->fileofs);
-	if (l->filelen % sizeof(*in))
-		ri.Sys_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
-	count = l->filelen / sizeof(*in);
-	out = Hunk_Alloc ( count*sizeof(*out));	
 
+	if (l->filelen % sizeof(*in))
+		ri.Sys_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
+
+	count = l->filelen / sizeof(*in);
+	out = Hunk_Alloc(count * sizeof(*out));	
 	loadmodel->marksurfaces = out;
 	loadmodel->nummarksurfaces = count;
 
-	for ( i=0 ; i<count ; i++)
+	for (i = 0; i < count; i++)
 	{
 		j = LittleShort(in[i]);
+
 		if (j < 0 ||  j >= loadmodel->numsurfaces)
-			ri.Sys_Error (ERR_DROP, "Mod_ParseMarksurfaces: bad surface number");
+			ri.Sys_Error(ERR_DROP, "Mod_ParseMarksurfaces: bad surface number");
+
 		out[i] = loadmodel->surfaces + j;
 	}
 }
@@ -1044,19 +1077,20 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 
 	pinmodel = (dmdl_t *)buffer;
 
-	version = LittleLong (pinmodel->version);
+	version = LittleLong(pinmodel->version);
+
 	if (version != ALIAS_VERSION)
-		ri.Sys_Error (ERR_DROP, "%s has wrong version number (%i should be %i)",
+		ri.Sys_Error(ERR_DROP, "%s has wrong version number (%i should be %i)",
 				 mod->name, version, ALIAS_VERSION);
 
-	pheader = Hunk_Alloc (LittleLong(pinmodel->ofs_end));
+	pheader = Hunk_Alloc(LittleLong(pinmodel->ofs_end));
 	
 	// byte swap the header fields and sanity check
-	for (i=0 ; i<sizeof(dmdl_t)*0.25 ; i++)
-		((int *)pheader)[i] = LittleLong (((int *)buffer)[i]);
+	for (i = 0; i < sizeof(dmdl_t) * 0.25; i++)
+		((int *)pheader)[i] = LittleLong(((int *)buffer)[i]);
 
 	if (pheader->skinheight > MAX_LBM_HEIGHT)
-		ri.Sys_Error (ERR_DROP, "model %s has a skin taller than %d", mod->name,
+		ri.Sys_Error(ERR_DROP, "model %s has a skin taller than %d", mod->name,
 				   MAX_LBM_HEIGHT);
 
 	if (pheader->num_xyz <= 0)
@@ -1077,27 +1111,27 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 //
 // load base s and t vertices (not used in gl version)
 //
-	pinst = (dstvert_t *) ((byte *)pinmodel + pheader->ofs_st);
-	poutst = (dstvert_t *) ((byte *)pheader + pheader->ofs_st);
+	pinst = (dstvert_t *)((byte *)pinmodel + pheader->ofs_st);
+	poutst = (dstvert_t *)((byte *)pheader + pheader->ofs_st);
 
-	for (i=0 ; i<pheader->num_st ; i++)
+	for (i = 0; i < pheader->num_st; i++)
 	{
-		poutst[i].s = LittleShort (pinst[i].s);
-		poutst[i].t = LittleShort (pinst[i].t);
+		poutst[i].s = LittleShort(pinst[i].s);
+		poutst[i].t = LittleShort(pinst[i].t);
 	}
 
 //
 // load triangle lists
 //
-	pintri = (dtriangle_t *) ((byte *)pinmodel + pheader->ofs_tris);
-	pouttri = (dtriangle_t *) ((byte *)pheader + pheader->ofs_tris);
+	pintri = (dtriangle_t *)((byte *)pinmodel + pheader->ofs_tris);
+	pouttri = (dtriangle_t *)((byte *)pheader + pheader->ofs_tris);
 
-	for (i=0 ; i<pheader->num_tris ; i++)
+	for (i = 0; i < pheader->num_tris; i++)
 	{
-		for (j=0 ; j<3 ; j++)
+		for (j = 0; j < 3; j++)
 		{
-			pouttri[i].index_xyz[j] = LittleShort (pintri[i].index_xyz[j]);
-			pouttri[i].index_st[j] = LittleShort (pintri[i].index_st[j]);
+			pouttri[i].index_xyz[j] = LittleShort(pintri[i].index_xyz[j]);
+			pouttri[i].index_st[j] = LittleShort(pintri[i].index_st[j]);
 		}
 	}
 
@@ -1135,16 +1169,18 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 
 
 	// register all skins
-	memcpy ((char *)pheader + pheader->ofs_skins, (char *)pinmodel + pheader->ofs_skins,
+	memcpy((char *)pheader + pheader->ofs_skins, (char *)pinmodel + pheader->ofs_skins,
 		pheader->num_skins*MAX_SKINNAME);
-	for (i=0 ; i<pheader->num_skins ; i++)
+
+	for (i = 0; i < pheader->num_skins; i++)
 	{
 		char rs[48];
-		mod->skins[i] = GL_FindImage ((char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME
-			, it_skin);
-		strcpy(rs,(char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME);
-		rs[strlen(rs)-4]=0;
+
+		mod->skins[i] = GL_FindImage((char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME, it_skin);
+		strcpy(rs, (char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME);
+		rs[strlen(rs)-4] = 0;
 		(struct rscript_s *)mod->script[i] = RS_FindScript(rs);
+
 		if (mod->script[i])
 			RS_ReadyScript((rscript_t *)mod->script[i]);
 	}
@@ -1191,7 +1227,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 				 mod->name, sprout->numframes, MAX_MD2SKINS);
 
 	// byte swap everything
-	for (i=0 ; i<sprout->numframes ; i++)
+	for (i=0; i<sprout->numframes; i++)
 	{
 		sprout->frames[i].width = LittleLong (sprin->frames[i].width);
 		sprout->frames[i].height = LittleLong (sprin->frames[i].height);
@@ -1276,14 +1312,30 @@ R_RegisterModel
 
 @@@@@@@@@@@@@@@@@@@@@
 */
-struct model_s *R_RegisterModel (char *name)
+struct model_s *R_RegisterModel (const char *name) // jit -- should be const
 {
-	model_t	*mod;
-	int		i;
+	model_t		*mod;
+	int			i;
 	dsprite_t	*sprout;
 	dmdl_t		*pheader;
+	// === jitskm -- load .skm instead of .md2 if it exists
+	char		*s;
+	char		skmname[MAX_QPATH];	
 
-	mod = Mod_ForName (name, false);
+	strcpy(skmname, name);
+	s = strrchr(skmname, '.');
+
+	if (s && Q_strcasecmp(s, ".md2") == 0)
+	{
+		strcpy(s, ".skm");
+
+		if (ri.FS_LoadFile(skmname, NULL) == -1)
+			strcpy(s, ".md2");
+	}
+
+	mod = Mod_ForName(skmname, false);
+	// jitskm ===
+
 	if (mod)
 	{
 		mod->registration_sequence = registration_sequence;
@@ -1292,24 +1344,87 @@ struct model_s *R_RegisterModel (char *name)
 		if (mod->type == mod_sprite)
 		{
 			sprout = (dsprite_t *)mod->extradata;
-			for (i=0 ; i<sprout->numframes ; i++)
-				mod->skins[i] = GL_FindImage (sprout->frames[i].name, it_sprite);
+
+			for (i = 0; i < sprout->numframes; i++)
+				mod->skins[i] = GL_FindImage(sprout->frames[i].name, it_sprite);
 		}
 		else if (mod->type == mod_alias)
 		{
 			pheader = (dmdl_t *)mod->extradata;
-			for (i=0 ; i<pheader->num_skins ; i++)
-				mod->skins[i] = GL_FindImage ((char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME, it_skin);
+
+			for (i = 0; i < pheader->num_skins; i++)
+				mod->skins[i] = GL_FindImage((char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME, it_skin);
 //PGM
 			mod->numframes = pheader->num_frames;
 //PGM
 		}
 		else if (mod->type == mod_brush)
 		{
-			for (i=0 ; i<mod->numtexinfo ; i++)
+			for (i = 0; i < mod->numtexinfo; i++)
 				mod->texinfo[i].image->registration_sequence = registration_sequence;
 		}
+		// === jitskm -- load skins for skm
+		else if (mod->type == mod_skeletal && mod->skmodel)
+		{
+			char skinname[MAX_QPATH];
+			char *s;
+			int j;
+			char *pSkinList, *pTemp;
+			int len;
+			char *skinname2;
+
+			for (i = 0; i < mod->skmodel->nummeshes; i++)
+			{
+				strcpy(skinname, mod->name);
+				s = strrchr(skinname, '/');
+
+				if (!s)
+					s = skinname;
+				else
+					s++;
+
+				strcpy(s, mod->skmodel->meshes[i].shadername);
+				s += strlen(s);
+				strcpy(s, ".skinlist");
+				len = ri.FS_LoadFile(skinname, (void**)&pTemp);
+
+				if (len >= 0)
+				{
+					// null terminate the list
+					pSkinList = malloc(len + 1);
+					memcpy(pSkinList, pTemp, len);
+					pSkinList[len] = 0;
+					ri.FS_FreeFile(pTemp);
+				}
+				else
+				{
+					pSkinList = NULL;
+				}
+
+				// load the skin list for index skins if it exists
+				if (len > 0)
+				{
+
+					skinname2 = strtok(pSkinList, "\r\n");
+
+					for (j = 0; j < MAX_MD2SKINS && skinname2; j++)
+					{
+						mod->skmodel->meshes[i].skins[j] = GL_FindImage(skinname2, it_skin);
+						skinname2 = strtok(NULL, "\r\n");
+					}
+
+					free(pSkinList);
+				}
+				else
+				{
+					strcpy(s, ".pcx");
+					mod->skmodel->meshes[i].skins[0] = GL_FindImage(skinname, it_skin);
+				}
+			}
+		}
+		// jitskm ===
 	}
+
 	return mod;
 }
 
@@ -1326,19 +1441,19 @@ void R_EndRegistration (void)
 	model_t	*mod;
 	extern cvar_t *gl_free_unused_textures; // jitfreeunused
 
-	for (i=0, mod=mod_known ; i<mod_numknown ; i++, mod++)
+	for (i = 0, mod = mod_known; i < mod_numknown; i++, mod++)
 	{
 		if (!mod->name[0])
 			continue;
+
 		if (mod->registration_sequence != registration_sequence)
-		{	// don't need this model
-			Mod_Free (mod);
-		}
+			Mod_Free(mod); // don't need this model
 	}
 
 	RS_UpdateRegistration();
+
 	if (gl_free_unused_textures->value) // jitfreeunused
-		GL_FreeUnusedImages ();
+		GL_FreeUnusedImages();
 }
 
 
@@ -1352,9 +1467,9 @@ Mod_Free
 */
 void Mod_Free (model_t *mod)
 {
-	Hunk_Free (mod->extradata);
+	Hunk_Free(mod->extradata);
 //	free(mod->poly_edges);
-	memset (mod, 0, sizeof(*mod));
+	memset(mod, 0, sizeof(*mod));
 }
 
 /*
@@ -1366,9 +1481,32 @@ void Mod_FreeAll (void)
 {
 	int		i;
 
-	for (i=0 ; i<mod_numknown ; i++)
+	for (i = 0; i < mod_numknown; i++)
 	{
 		if (mod_known[i].extradatasize)
-			Mod_Free (&mod_known[i]);
+			Mod_Free(&mod_known[i]);
+	}
+}
+
+/*
+=================
+Mod_StripLODSuffix
+=================
+*/
+void Mod_StripLODSuffix (char *name)
+{
+	int len, lodnum;
+
+	len = strlen(name);
+
+	if (len <= 2)
+		return;
+
+	lodnum = atoi(&name[len - 1]);
+
+	if (lodnum < SKM_MAX_LODS)
+	{
+		if (name[len-2] == '_')
+			name[len-2] = 0;
 	}
 }

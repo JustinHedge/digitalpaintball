@@ -58,12 +58,12 @@ typedef struct
 #define	SIDE_BACK	1
 #define	SIDE_ON		2
 
-
 #define	SURF_PLANEBACK		2
 #define	SURF_DRAWSKY		4
 #define SURF_DRAWTURB		0x10
 #define SURF_DRAWBACKGROUND	0x40
 #define SURF_UNDERWATER		0x80
+#define SURF_TRANSLUCENT	0x100
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct
@@ -167,6 +167,94 @@ typedef struct mleaf_s
 	int			nummarksurfaces;
 } mleaf_t;
 
+// === jitskm
+/*
+==============================================================================
+
+SKELETAL MODELS
+
+==============================================================================
+*/
+
+// in memory representation
+
+typedef struct
+{
+	quat_t				quat;
+	vec3_t				origin;
+} bonepose_t;
+
+typedef struct
+{
+	vec3_t			origin;
+	float			influence;
+	vec3_t			normal;
+	unsigned int	bonenum;
+} mskbonevert_t;
+
+typedef struct
+{
+	unsigned int	numbones;
+	mskbonevert_t	*verts;
+} mskvertex_t;
+
+/*
+typedef struct
+{
+	shader_t		*shader;
+} mskskin_t;
+*/
+typedef struct
+{
+	char			name[SKM_MAX_NAME];
+
+	unsigned int	numverts;
+	mskvertex_t		*vertexes;
+	vec2_t			*stcoords;
+
+	unsigned int	numtris;
+	unsigned int	*indexes;
+
+	unsigned int	numreferences;
+	unsigned int	*references;
+
+#if SHADOW_VOLUMES
+	int				*trneighbors;
+#endif
+
+	//mskskin_t		skin;
+	image_t			*skins[MAX_MD2SKINS]; // jitskm - for compatibility
+	char			shadername[SKM_MAX_NAME]; // jitskm
+} mskmesh_t;
+
+typedef struct
+{
+	char			name[SKM_MAX_NAME];
+	signed int		parent;
+	unsigned int	flags;
+} mskbone_t;
+
+typedef struct
+{
+	bonepose_t		*boneposes;
+
+	float			mins[3], maxs[3];
+	float			radius;					// for clipping uses
+} mskframe_t;
+
+typedef struct
+{
+	unsigned int	numbones;
+	mskbone_t		*bones;
+
+	unsigned int	nummeshes;
+	mskmesh_t		*meshes;
+
+	unsigned int	numframes;
+	mskframe_t		*frames;
+} mskmodel_t;
+
+// jitskm ===
 
 //===================================================================
 
@@ -174,7 +262,13 @@ typedef struct mleaf_s
 // Whole model
 //
 
-typedef enum {mod_bad, mod_brush, mod_sprite, mod_alias } modtype_t;
+typedef enum {
+	mod_bad,
+	mod_brush,
+	mod_sprite,
+	mod_alias,
+	mod_skeletal
+} modtype_t;
 
 typedef struct model_s
 {
@@ -237,6 +331,7 @@ typedef struct model_s
 	msurface_t	**marksurfaces;
 
 	dvis_t		*vis;
+	mskmodel_t	*skmodel; // jitskm
 
 	byte		*lightdata;
 	byte		*staindata;
@@ -253,7 +348,7 @@ typedef struct model_s
 
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
-model_t *Mod_ForName (char *name, qboolean crash);
+model_t *Mod_ForName (const char *name, qboolean crash); // jit - added const
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte	*Mod_ClusterPVS (int cluster, model_t *model);
 
@@ -266,3 +361,11 @@ void	Hunk_Free (void *base);
 
 void	Mod_FreeAll (void);
 void	Mod_Free (model_t *mod);
+
+// === jitskm
+void	Mod_StripLODSuffix (char *name);
+void	Mod_LoadSkeletalModel (model_t *mod, model_t *parent, void *buffer);
+void	R_DrawSkeletalModel (entity_t *e);
+#define Mod_Malloc(mod,size) ((mod)->extradata = Hunk_Alloc(size))
+//#define Mod_Free(data) free(data)
+// jitskm ===
