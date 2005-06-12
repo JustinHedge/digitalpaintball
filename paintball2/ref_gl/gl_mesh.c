@@ -979,6 +979,7 @@ void R_DrawAliasModel (entity_t *e)
 	float		an;
 	vec3_t		bbox[8];
 	image_t		*skin;
+	extern qboolean g_drawing_refl;
 
 	if (!(e->flags & RF_WEAPONMODEL))
 	{
@@ -987,7 +988,7 @@ void R_DrawAliasModel (entity_t *e)
 	}
 	else //if (e->flags & RF_WEAPONMODEL)
 	{
-		if (r_lefthand->value == 2)
+		if (r_lefthand->value == 2 || g_drawing_refl) // jitwater - don't reflect the weapon model
 			return;
 	}
 

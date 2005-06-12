@@ -352,7 +352,7 @@ void GL_Strings_f( void )
 */
 extern qboolean fogenabled;
 extern vec3_t fogcolor;
-void GL_SetDefaultState( void )
+void GL_SetDefaultState (void)
 {
 	//qglClearColor (1,0, 0.5 , 0.5); jitclearcolor
 

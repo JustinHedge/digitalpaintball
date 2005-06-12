@@ -301,6 +301,9 @@
 				RelativePath=".\gl_model.c">
 			</File>
 			<File
+				RelativePath="gl_refl.c">
+			</File>
+			<File
 				RelativePath=".\gl_rmain.c">
 			</File>
 			<File
@@ -348,6 +351,9 @@
 			</File>
 			<File
 				RelativePath=".\gl_model.h">
+			</File>
+			<File
+				RelativePath="gl_refl.h">
 			</File>
 			<File
 				RelativePath=".\gl_script.h">

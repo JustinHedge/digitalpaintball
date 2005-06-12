@@ -267,7 +267,7 @@ typedef enum {
 	mod_brush,
 	mod_sprite,
 	mod_alias,
-	mod_skeletal
+	mod_skeletal // jitskm
 } modtype_t;
 
 typedef struct model_s

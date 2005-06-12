@@ -1256,11 +1256,13 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, qboolean mipmap, qb
 
 	if (scaled_width > max_size)
 		scaled_width = max_size;
+
 	if (scaled_height > max_size)
 		scaled_height = max_size;
 
 	if (scaled_width <= 0)
 		scaled_width = 1;
+
 	if (scaled_height <= 0)
 		scaled_height = 1;
 
@@ -1272,7 +1274,7 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, qboolean mipmap, qb
 	scan = ((byte*)data) + 3;
 	samples = gl_solid_format;
 
-	for (i=0; i<c; i++, scan += 4)
+	for (i = 0; i < c; i++, scan += 4)
 	{
 		if (*scan != 255)
 		{
@@ -1316,15 +1318,17 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, qboolean mipmap, qb
 
 			while (scaled_width > 1 || scaled_height > 1)
 			{
-				GL_MipMap ((byte *)scaled, scaled_width, scaled_height);
+				GL_MipMap((byte *)scaled, scaled_width, scaled_height);
 				scaled_width >>= 1;
 				scaled_height >>= 1;
+
 				if (scaled_width < 1)
 					scaled_width = 1;
+
 				if (scaled_height < 1)
 					scaled_height = 1;
-				miplevel++;
 
+				miplevel++;
 				qglTexImage2D(GL_TEXTURE_2D, miplevel, comp, scaled_width, scaled_height,
 					0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 			}

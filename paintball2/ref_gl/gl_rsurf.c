@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <assert.h>
 
 #include "gl_local.h"
+#include "gl_refl.h" // jitwater
 
 static vec3_t	modelorg;		// relative to viewpoint
 
@@ -854,9 +855,8 @@ void R_DrawAlphaSurfaces (void)
 	float		intens;
 
 	alphasurf = true; // jitrscript
-	//
+
 	// go back to the world matrix
-	//
     qglLoadMatrixf (r_world_matrix);
 
 	GLSTATE_ENABLE_BLEND
@@ -867,7 +867,7 @@ void R_DrawAlphaSurfaces (void)
 	// so scale it back down
 	intens = 1.0f; // jit -- was gl_state.inverse_intensity;
 
-	for (s=r_alpha_surfaces ; s ; s=s->texturechain)
+	for (s = r_alpha_surfaces; s; s = s->texturechain)
 	{
 		GL_Bind(s->texinfo->image->texnum);
 		c_brush_polys++;
@@ -884,31 +884,33 @@ void R_DrawAlphaSurfaces (void)
 			if (s->texinfo->flags & SURF_TRANS33)
 			{
 				if (s->texinfo->flags & SURF_TRANS66) // jittrans -- trans33+trans66 only uses texture transparency.
-					qglColor4f (intens,intens,intens, 1.0f);
+					qglColor4f(intens,intens,intens, 1.0f);
 				else
-					qglColor4f (intens,intens,intens, 0.33f);
+					qglColor4f(intens,intens,intens, 0.33f);
 			}
 			else if (s->texinfo->flags & SURF_TRANS66)
-				qglColor4f (intens,intens,intens,0.66);
+			{
+				qglColor4f(intens, intens, intens, 0.66f);
+			}
 			else
-				qglColor4f (intens,intens,intens,1);
+			{
+				qglColor4f(intens, intens, intens, 1.0f);
+			}
 
 			if (s->flags & SURF_DRAWTURB)
-				EmitWaterPolys (s);
+				EmitWaterPolys(s);
 			else if (s->texinfo->flags & SURF_FLOWING)			// PGM	9/16/98
-				DrawGLFlowingPoly (s);							// PGM
+				DrawGLFlowingPoly(s);							// PGM
 			else
-				DrawGLPoly (s->polys);
+				DrawGLPoly(s->polys);
 		}
 	}
 
-	GL_TexEnv( GL_REPLACE );
-	qglColor4f (1,1,1,1);
+	GL_TexEnv(GL_REPLACE);
+	qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	GLSTATE_DISABLE_BLEND
 	qglDepthMask(1); // jitalpha - reenable depth writing
-
 	r_alpha_surfaces = NULL;
-
 	alphasurf = false; // jitrscript
 }
 
@@ -1322,10 +1324,24 @@ void R_DrawBrushModel (entity_t *e)
 	if (R_CullBox (mins, maxs))
 		return;
 
-	qglColor3f (1,1,1);
-	memset (gl_lms.lightmap_surfaces, 0, sizeof(gl_lms.lightmap_surfaces));
+	qglColor3f(1.0f, 1.0f, 1.0f);
+	memset(gl_lms.lightmap_surfaces, 0, sizeof(gl_lms.lightmap_surfaces));
 
-	VectorSubtract (r_newrefdef.vieworg, e->origin, modelorg);
+	// === jitwater
+	// MPO: if this is a reflection we're drawing, we need to flip the vertical
+	// position across the water.
+	if (g_drawing_refl)
+	{
+		modelorg[0] = r_newrefdef.vieworg[0] - e->origin[0];
+		modelorg[0] = r_newrefdef.vieworg[1] - e->origin[1];
+		modelorg[2] = ((2.0f * g_refl_Z[g_active_refl]) - r_newrefdef.vieworg[2]) - e->origin[2];
+	}
+	else
+	{
+		VectorSubtract(r_newrefdef.vieworg, e->origin, modelorg);
+	}
+	// jitwater ===
+
 	if (rotated)
 	{
 		vec3_t	temp;
@@ -1543,6 +1559,9 @@ void R_DrawWorld (void)
 	currentmodel = r_worldmodel;
 
 	VectorCopy(r_newrefdef.vieworg, modelorg);
+
+	if (g_drawing_refl) // jitwater / MPO
+		modelorg[2] = (2.0f * g_refl_Z[g_active_refl]) - modelorg[2]; // flip
 
 	// auto cycle the world frame for texture animation
 	memset(&ent, 0, sizeof(ent));

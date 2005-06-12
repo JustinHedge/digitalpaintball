@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // r_main.c
 #include "gl_local.h"
+#include "gl_refl.h" // jitwater
 
 #include "glide.h" // jit3dfx
 #ifndef WIN32
@@ -196,6 +197,9 @@ cvar_t	*cl_animdump;
 cvar_t	*vid_gamma_hw;
 
 cvar_t	*r_caustics; // jitcaustics
+cvar_t	*r_reflectivewater; // jitwater
+cvar_t	*r_reflectivewater_debug; // jitwater
+cvar_t	*r_reflectivewater_max; // jitwater
 
 /*
 =================
@@ -904,6 +908,40 @@ void R_SetupFrame(void)
 
 	AngleVectors(r_newrefdef.viewangles, vpn, vright, vup);
 
+	// === jitwater - MPO's code to draw reflective water
+	if (g_drawing_refl)
+	{
+		vec3_t tmp;
+
+		r_origin[2] = (2 * g_refl_Z[g_active_refl]) - r_origin[2]; // flip
+
+		VectorCopy(r_newrefdef.viewangles, tmp);
+		tmp[0] *= -1.0f;
+		AngleVectors(tmp, vpn, vright, vup);
+
+		if (!(r_newrefdef.rdflags & RDF_NOWORLDMODEL))
+		{
+			vec3_t temp;
+			
+			leaf = Mod_PointInLeaf(r_origin, r_worldmodel);
+			r_viewcluster = leaf->cluster;
+			VectorCopy(r_origin, temp);
+
+			if (r_newrefdef.rdflags & RDF_UNDERWATER)
+				temp[2] = g_refl_Z[g_active_refl] - 1; // just above water level
+			else
+				temp[2] = g_refl_Z[g_active_refl] + 1; // just below water level
+
+			leaf = Mod_PointInLeaf(temp, r_worldmodel);
+
+			if (!(leaf->contents & CONTENTS_SOLID) && (leaf->cluster != r_viewcluster))
+				r_viewcluster2 = leaf->cluster;
+		}
+
+		return;
+	}
+	// jitwater ===
+
 // current viewcluster
 	if (!(r_newrefdef.rdflags & RDF_NOWORLDMODEL))
 	{
@@ -979,7 +1017,7 @@ void MYgluPerspective (GLdouble fovy, GLdouble aspect,
 R_SetupGL
 =============
 */
-void R_SetupGL(void)
+void R_SetupGL (void)
 {
 	float	screenaspect;
 //	float	yfov;
@@ -996,43 +1034,53 @@ void R_SetupGL(void)
 	w = x2 - x;
 	h = y - y2;
 
-	qglViewport(x, y2, w, h);
-
+	// === jitwater
+	if (!g_drawing_refl)
+		qglViewport(x, y2, w, h);
+	else
+		qglViewport(0, 0, g_reflTexW, g_reflTexH); // width/height of texture, not screen
+	// jitwater ===
+	
 	//
 	// set up projection matrix
 	//
-    screenaspect =(float)r_newrefdef.width/r_newrefdef.height;
-//	yfov = 2*atan((float)r_newrefdef.height/r_newrefdef.width)*180/M_PI;
+    screenaspect = (float)r_newrefdef.width/r_newrefdef.height;
 	qglMatrixMode(GL_PROJECTION);
     qglLoadIdentity();
-
 
 	if (fogenabled && fogdistance) // jitfog
 		MYgluPerspective(r_newrefdef.fov_y, screenaspect, 4, fogdistance+128);
 	else
 		MYgluPerspective(r_newrefdef.fov_y, screenaspect, 4, 15000/*4096*/);  //jit
 
-	qglCullFace(GL_FRONT);
-
+	qglCullFace(GL_FRONT); // todo
 	qglMatrixMode(GL_MODELVIEW);
     qglLoadIdentity();
-
     qglRotatef(-90,  1, 0, 0);	    // put Z going up
     qglRotatef(90,  0, 0, 1);	    // put Z going up
-    qglRotatef(-r_newrefdef.viewangles[2],  1, 0, 0);
-    qglRotatef(-r_newrefdef.viewangles[0],  0, 1, 0);
-    qglRotatef(-r_newrefdef.viewangles[1],  0, 0, 1);
-    qglTranslatef(-r_newrefdef.vieworg[0],  -r_newrefdef.vieworg[1],  -r_newrefdef.vieworg[2]);
 
-//	if (gl_state.camera_separation != 0 && gl_state.stereo_enabled)
-//		qglTranslatef(gl_state.camera_separation, 0, 0);
+	// === jitwater
+	if (!g_drawing_refl)
+	{
+		qglRotatef(-r_newrefdef.viewangles[2],  1, 0, 0);
+		qglRotatef(-r_newrefdef.viewangles[0],  0, 1, 0);
+		qglRotatef(-r_newrefdef.viewangles[1],  0, 0, 1);
+		qglTranslatef(-r_newrefdef.vieworg[0],  -r_newrefdef.vieworg[1],  -r_newrefdef.vieworg[2]);
+	}
+	else
+	{
+		R_DoReflTransform();
+		qglTranslatef(0, 0, -0); // what the hell does this do?! (todo, remove?)
+	}
+	// jitwater ===
+
+	if (gl_state.camera_separation != 0 && gl_state.stereo_enabled)
+		qglTranslatef(gl_state.camera_separation, 0, 0);
 
 	qglGetFloatv(GL_MODELVIEW_MATRIX, r_world_matrix);
 
-	//
 	// set drawing parms
-	//
-	if (gl_cull->value)
+	if (gl_cull->value) // jitwater -- culling disabled for reflection (todo - cull front instead of back?)
 		qglEnable(GL_CULL_FACE);
 	else
 		qglDisable(GL_CULL_FACE);
@@ -1169,6 +1217,30 @@ void R_RenderView(refdef_t *fd)
 
 	R_SetupGL();
 
+	// === jitwater
+	// MPO - if we are doing a reflection, we want to do a clip plane now,
+	// after  we've set up our projection/modelview matrices
+	if (g_drawing_refl)
+	{
+		double clipPlane[] = { 0.0, 0.0, 0.0, 0.0 }; // this must be double, glClipPlane requires double
+
+		if (r_newrefdef.rdflags & RDF_UNDERWATER)
+		{
+			clipPlane[2] = -1.0;
+			clipPlane[3] = g_refl_Z[g_active_refl];
+		}
+		else
+		{
+			clipPlane[2] = 1.0;
+			clipPlane[3] = -g_refl_Z[g_active_refl];
+		}
+
+		// we need clipping so we don't reflect objects behind the water
+		qglEnable(GL_CLIP_PLANE0);
+		qglClipPlane(GL_CLIP_PLANE0, clipPlane);
+	}
+	// jitwater ===
+
 	R_MarkLeaves();	// done here so we know if we're in water
 
 	R_DrawWorld();
@@ -1183,12 +1255,17 @@ void R_RenderView(refdef_t *fd)
 
 	R_DrawAlphaSurfaces();
 
+	// todo R_DrawParticles();			// MPO dukey particles have to be drawn twice .. otherwise you dont get reflection of them.
+
 	R_DrawSpritesOnList(); // draw smoke after water so water doesn't cover it!
 
 	if (fogenabled)
 		qglDisable(GL_FOG);
 
-	R_PolyBlend(); // jit, replaced R_Flash();
+	if (g_drawing_refl) // jitwater
+		qglDisable(GL_CLIP_PLANE0);
+	else
+		R_PolyBlend(); // jit, replaced R_Flash();
 }
 
 unsigned int blurtex = 0;
@@ -1356,9 +1433,23 @@ R_RenderFrame
 */
 void R_RenderFrame(refdef_t *fd)
 {
+	// === jitwater
+	g_refl_enabled = false;
+
+	if (r_reflectivewater->value)
+		R_UpdateReflTex(fd);
+	// jitwater ===
+
 	R_RenderView(fd);
 	R_SetLightLevel();
 	R_SetGL2D();
+
+	// === jitwater
+	if (r_reflectivewater_debug->value && g_refl_enabled)
+		R_DrawDebugReflTexture();
+
+	if (!g_refl_enabled)
+		R_clear_refl(); // todo - necessary?
 }
 
 
@@ -1460,6 +1551,9 @@ void R_Register(void)
 	vid_ref = ri.Cvar_Get("vid_ref", "pbgl", CVAR_ARCHIVE);
 
 	r_caustics = ri.Cvar_Get("r_caustics", "2", CVAR_ARCHIVE); // jitcaustics
+	r_reflectivewater = ri.Cvar_Get("r_reflectivewater", "0", 0); // jitwater
+	r_reflectivewater_debug = ri.Cvar_Get("r_reflectivewater_debug", "0", 0); // jitwater
+	r_reflectivewater_max = ri.Cvar_Get("r_reflectivewater_max", "2", CVAR_ARCHIVE); // jitwater
 
 	ri.Cmd_AddCommand("imagelist", GL_ImageList_f);
 	ri.Cmd_AddCommand("screenshot", GL_ScreenShot_f);
@@ -2046,6 +2140,8 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	if (err != GL_NO_ERROR)
 		ri.Con_Printf(PRINT_ALL, "glGetError() = 0x%x\n", err);
 
+	R_init_refl(r_reflectivewater_max->value); // jitwater / MPO
+
 	return 0;
 }
 
@@ -2089,7 +2185,7 @@ R_BeginFrame
 */
 void UpdateGammaRamp ();
 
-void R_BeginFrame(float camera_separation)
+void R_BeginFrame (float camera_separation)
 {
 
 	gl_state.camera_separation = camera_separation;
@@ -2149,7 +2245,7 @@ void R_BeginFrame(float camera_separation)
 	qglViewport(0,0, vid.width, vid.height);
 	qglMatrixMode(GL_PROJECTION);
     qglLoadIdentity();
-	qglOrtho (0, vid.width, vid.height, 0, -99999, 99999);
+	qglOrtho(0, vid.width, vid.height, 0, -99999, 99999);
 	qglMatrixMode(GL_MODELVIEW);
     qglLoadIdentity();
 	qglDisable(GL_DEPTH_TEST);

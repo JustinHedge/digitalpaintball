@@ -212,6 +212,9 @@ extern	cvar_t	*vid_lighten; // jitgamma
 
 //extern	cvar_t	*intensity;
 extern	cvar_t	*r_caustics; // jitcaustics
+extern	cvar_t	*r_reflectivewater; // jitwater
+extern	cvar_t	*r_reflectivewater_debug; // jitwater
+extern	cvar_t	*r_reflectivewater_max; // jitwater
 
 
 extern	int		gl_lightmap_format;
@@ -271,6 +274,7 @@ void R_RotateForEntity (entity_t *e);
 void R_MarkLeaves (void);
 
 glpoly_t *WaterWarpPolyVerts (glpoly_t *p);
+float CalcWave (float x, float y); // jitwater
 void EmitWaterPolys (msurface_t *fa);
 void R_AddSkySurface (msurface_t *fa);
 void R_ClearSkyBox (void);

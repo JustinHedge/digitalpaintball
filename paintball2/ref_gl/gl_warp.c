@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_warp.c -- sky and water polygons
 
 #include "gl_local.h"
+#include "gl_refl.h" // jitwater / MPO
 
 extern	model_t	*loadmodel;
 
@@ -35,7 +36,7 @@ extern qboolean fogenabled;
 
 msurface_t	*warpface;
 
-#define	SUBDIVIDE_SIZE	64
+#define	SUBDIVIDE_SIZE	64 // todo - make this a cvar.
 //#define	SUBDIVIDE_SIZE	1024
 
 void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs)
@@ -94,9 +95,9 @@ void SubdividePolygon (int numverts, float *verts)
 		dist[j] = dist[0];
 		v-=i;
 		VectorCopy (verts, v);
-
 		f = b = 0;
 		v = verts;
+
 		for (j=0; j<numverts; j++, v+= 3)
 		{
 			if (dist[j] >= 0)
@@ -204,7 +205,8 @@ float	r_turbsin[] =
 {
 	#include "warpsin.h"
 };
-#define TURBSCALE (256.0 / (2 * M_PI))
+#define TURBSCALE (256.0f / (2.0f * (float)M_PI))
+#define TURBOSCALE (256.0f / ((float)M_PI / 2.5f)) // jitwater / dukey
 
 
 // MrG - texture shader stuffs
@@ -249,7 +251,7 @@ Does a water warp on the pre-fragmented glpoly_t chain
 =============
 */
 
-void EmitWaterPolys (msurface_t *fa)
+void EmitWaterPolys_original (msurface_t *fa) // jitwater - old code
 {
 	glpoly_t	*p, *bp;
 	float		*v;
@@ -291,6 +293,190 @@ void EmitWaterPolys (msurface_t *fa)
 	}
 }
 
+float CalcWave (float x, float y) // jitwater / MPO
+{
+	return (r_turbsin[(int)((x*3+r_newrefdef.time) * TURBOSCALE) & 255] / 4.0f) + 
+		(r_turbsin[(int)((y*5+r_newrefdef.time) * TURBOSCALE) & 255] / 4.0f);
+}
+
+// === jitwater
+// MPO : this is my version...
+void EmitWaterPolys (msurface_t *fa)
+{
+	//==============================
+	glpoly_t	*p;
+	glpoly_t	*bp;
+	float		*v;
+	int			i;
+	float		s; 
+	float		t; 
+	float		os; 
+	float		ot;
+	float		scroll;
+	float		rdt = r_newrefdef.time;
+	float		zValue = 0.0;			// height of water
+	qboolean	waterNotFlat = false;
+	//==============================
+
+	if (g_drawing_refl)
+		return;	// we don't want any water drawn while we are doing our reflection
+
+	if (fa->texinfo->flags & SURF_FLOWING)
+		scroll = -64.0f * ((r_newrefdef.time * 0.5f) - (int)(r_newrefdef.time * 0.5f));
+	else
+		scroll = 0.0f;
+
+	// skip the water texture on transparent surfaces
+	if (r_reflectivewater->value && (fa->texinfo->flags & (SURF_TRANS33|SURF_TRANS66)))
+	{
+		for (bp = fa->polys; bp; bp = bp->next)
+		{
+			p = bp;
+
+			for (i=0, v=p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
+			{
+				// if it hasn't been initalized before
+				if (zValue == 0.0f)
+					zValue = v[2];
+
+				// Make sure polygons are on the same plane
+				// Fix for not perfectly flat water on base1 - strange ..
+				else if (fabs(zValue - v[2]) > 0.1f)
+					waterNotFlat = true;
+			}
+		}
+	}
+
+	if (waterNotFlat || !r_reflectivewater->value || !(fa->texinfo->flags & (SURF_TRANS33|SURF_TRANS66)))
+	{
+		for (bp = fa->polys; bp; bp = bp->next)
+		{
+			p = bp;
+			qglBegin(GL_TRIANGLE_FAN);
+
+			for (i=0, v=p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
+			{
+				os = v[3]; 
+				ot = v[4];
+
+				#if !id386
+				s = os + r_turbsin[(int)((ot*0.125+r_newrefdef.time) * TURBSCALE) & 255];
+				#else
+				s = os + r_turbsin[Q_ftol(((ot*0.125+rdt) * TURBSCALE)) & 255];
+				#endif
+
+				s += scroll;
+				s *= (1.0/64);
+
+				#if !id386
+				t = ot + r_turbsin[(int)((os*0.125+rdt) * TURBSCALE) & 255];
+				#else
+				t = ot + r_turbsin[Q_ftol(((os*0.125+rdt) * TURBSCALE)) & 255];
+				#endif
+				t *= (1.0f / 64.0f);
+
+				// if it hasn't been initalized before
+				if (zValue == 0.0f)
+					zValue = v[2];
+
+				// Make sure polygons are on the same plane
+				// Fix for not perfectly flat water on base1 - strange ..
+				else if (fabs(zValue - v[2]) > 0.1f)
+					waterNotFlat = true;
+
+				qglTexCoord2f(s, t);
+				qglVertex3f(v[0], v[1], v[2]);
+			}
+
+			qglEnd();
+		} 
+	}
+
+	if (waterNotFlat)
+		return;
+
+	if (r_reflectivewater->value)
+	{
+		//====================
+		vec3_t	distanceVector;
+		float	distance;
+		//====================
+
+		v = p->verts[0];
+		VectorSubtract(v, r_newrefdef.vieworg, distanceVector);
+		distance = VectorLength(distanceVector);
+		R_add_refl(zValue, distance);
+		g_refl_enabled = true;
+	}
+
+	// find out which reflection we have that corresponds to the surface that we're drawing	
+	for (g_active_refl = 0; g_active_refl < g_num_refl; g_active_refl++)
+	{
+		// if we find which reflection to bind
+		if (fabs(g_refl_Z[g_active_refl] - zValue) < 0.1)
+		{
+			GL_Bind(g_tex_num[g_active_refl]);
+			break;
+		}
+	}
+
+	// if we found a reflective surface correctly, then go ahead and draw it
+	if (g_active_refl != g_num_refl)
+	{
+		qglColor4f		( 1, 1, 1, r_reflectivewater->value);// add some alpha transparency
+		qglEnable		( GL_BLEND		);
+		GL_TexEnv		( GL_MODULATE	);
+		qglShadeModel	( GL_SMOOTH		);
+		qglEnable		( GL_POLYGON_OFFSET_FILL );		//to stop z buffer fighting
+		qglPolygonOffset( -1, -2);
+
+		R_LoadReflMatrix();	
+
+  		// draw reflected water layer on top of regular
+  		for (bp = fa->polys; bp; bp = bp->next)
+  		{
+			p = bp;
+			qglBegin(GL_TRIANGLE_FAN);
+
+			for (i=0, v=p->verts[0]; i < p->numverts; i++, v+=VERTEXSIZE)
+			{
+				vec3_t	vAngle;
+
+				qglTexCoord3f(v[0], v[1] + CalcWave(v[0], v[1]), v[2]);
+
+				if (r_newrefdef.rdflags & RDF_UNDERWATER )
+				{
+					VectorSubtract(v, r_newrefdef.vieworg, vAngle);
+					VectorNormalize(vAngle);
+
+					if (vAngle[2] > 0.55f)
+						vAngle[2] = 0.55f;
+
+					qglColor4f(1.0f, 1.0f, 1.0f, 0.9f - (vAngle[2] * 1.0f));
+				}
+
+				else
+				{
+					VectorSubtract(r_newrefdef.vieworg, v, vAngle);
+					VectorNormalize(vAngle);
+
+					if (vAngle[2] > 0.55f)
+						vAngle[2] = 0.55f;
+
+					qglColor4f(1, 1, 1, 0.9f - (vAngle[2] * 1.0f));
+				}
+
+				qglVertex3f (v[0], v[1], v[2]);
+			}
+
+			qglEnd (); 
+  		}
+
+		R_ClearReflMatrix();
+		qglDisable(GL_POLYGON_OFFSET_FILL);
+    }
+}
+// jitwater ===
 
 //===================================================================
 
