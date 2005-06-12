@@ -1630,7 +1630,7 @@ void CL_InitLocal (void)
 	serverlist_source =		Cvar_Get("serverlist_source", 
 		"http://www.planetquake.com/digitalpaint/servers.txt", CVAR_ARCHIVE); // jitserverlist / jitmenu
 	serverlist_source2 =	Cvar_Get("serverlist_source2", 
-		"http://dynamic5.gamespy.com/~digitalpaint/serverlist.php", CVAR_ARCHIVE); // jitserverlist / jitmenu
+		"http://dynamic.gamespy.com/~digitalpaint/serverlist.php", CVAR_ARCHIVE); // jitserverlist / jitmenu
 	serverlist_source3 =	Cvar_Get("serverlist_source3",
 		"http://dpball.com/serverlist.php", CVAR_ARCHIVE); // jitserverlist / jitmenu
 	// ===
