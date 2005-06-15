@@ -653,21 +653,29 @@ USER CMD EXECUTION
 ===========================================================================
 */
 
-
-
 void SV_ClientThink (client_t *cl, usercmd_t *cmd)
 {
 	cl->commandMsec -= cmd->msec;
 
-	if (cl->commandMsec < 0 && sv_enforcetime->value)
+	if (cl->commandMsec < 0)
 	{
+		cl->timediff -= cl->commandMsec; // jitspeedhackcheck
 		Com_DPrintf("commandMsec underflow from %s\n", cl->name);
-		return;
+		//SV_BroadcastPrintf(PRINT_HIGH, "%s discrepancy: %d\n", cl->name, cl->timediff); // testing
+
+		if (sv_enforcetime->value == 1.0f)
+		{
+			return; // old-style sv_enforcetime
+		}
+		else if (sv_enforcetime->value && cl->timediff / 1000 > sv_enforcetime->value) // jitspeedhackcheck
+		{
+			SV_BroadcastPrintf(PRINT_HIGH, "%s kicked for time discrepancy.\n", cl->name);
+			SV_DropClient(cl);
+		}
 	}
 
 	ge->ClientThink(cl->edict, cmd);
 }
-
 
 
 #define	MAX_STRINGCMDS	8
