@@ -831,9 +831,11 @@ float Q_rsqrt (float number) // jit - Fast approximation reciprocal square root
 
 int Q_log2 (int val)
 {
-	int answer=0;
-	while (val>>=1)
+	int answer = 0;
+
+	while (val >>= 1)
 		answer++;
+
 	return answer;
 }
 
@@ -864,7 +866,7 @@ qboolean Quat_Compare (const quat_t q1, const quat_t q2)
 
 	return true;
 }
-
+/*
 void Quat_Conjugate (const quat_t q1, quat_t q2)
 {
 	q2[0] = -q1[0];
@@ -872,7 +874,7 @@ void Quat_Conjugate (const quat_t q1, quat_t q2)
 	q2[2] = -q1[2];
 	q2[3] = q1[3];
 }
-
+*/
 vec_t Quat_Normalize (quat_t q)
 {
 	vec_t length = q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3];
@@ -888,7 +890,7 @@ vec_t Quat_Normalize (quat_t q)
 
 	return length;
 }
-
+/*
 vec_t Quat_Inverse (const quat_t q1, quat_t q2)
 {
 	Quat_Conjugate(q1, q2);
@@ -935,7 +937,7 @@ void Matrix_Quat (vec3_t m[3], quat_t q)
 
 	Quat_Normalize(q);
 }
-
+*/
 void Quat_Multiply (const quat_t q1, const quat_t q2, quat_t out)
 {
 	// jitodo - optimize
@@ -1066,7 +1068,6 @@ void Quat_FromEulerAngle (const vec3_t angle, quat_t q) // jitskm
 	q[2] = cr*sp*cy + sr*cp*sy;
 	q[0] = cr*cp*sy + sr*sp*cy;
 }
-
 
 void Matrix3_Transpose (mat3_t in, mat3_t out)
 {

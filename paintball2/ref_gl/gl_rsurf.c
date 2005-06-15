@@ -221,7 +221,6 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
         float    tex_state0,
                  tex_state1;
 
-
         GL_SelectTexture(QGL_TEXTURE0);
         qglGetTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_state0);
 
@@ -251,12 +250,12 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
         qglEnable(GL_TEXTURE_2D);
         GL_EnableMultitexture(true);
         
-        GL_SelectTexture(QGL_TEXTURE0);
-        GL_TexEnv(tex_state0);
+		GL_SelectTexture(QGL_TEXTURE0);
+		GL_TexEnv(tex_state0);
 
-        GL_SelectTexture(QGL_TEXTURE1);
-        GL_TexEnv(tex_state1);
-    }
+		GL_SelectTexture(QGL_TEXTURE1);
+		GL_TexEnv(tex_state1);
+	}
 
 	qglEnable(GL_DEPTH_TEST);
 	// Guy: */\/\/\ gl_showtris fix end /\/\/\*
@@ -858,14 +857,13 @@ void R_DrawAlphaSurfaces (void)
 
 	// go back to the world matrix
     qglLoadMatrixf (r_world_matrix);
-
 	GLSTATE_ENABLE_BLEND
 	qglDepthMask(0); // jitalpha - disable depth writing
 	GL_TexEnv(GL_MODULATE);
+	intens = 1.0f; // jit -- was gl_state.inverse_intensity;
 
 	// the textures are prescaled up for a better lighting range,
 	// so scale it back down
-	intens = 1.0f; // jit -- was gl_state.inverse_intensity;
 
 	for (s = r_alpha_surfaces; s; s = s->texturechain)
 	{
@@ -1088,8 +1086,8 @@ dynamic:
 				qglBegin(GL_POLYGON);
 				for (i=0; i< nv; i++, v+= VERTEXSIZE)
 				{
-					qglMTexCoord2fSGIS(QGL_TEXTURE0, (v[3]+scroll), v[4]);
-					qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
+					qglMultiTexCoord2fARB(QGL_TEXTURE0, (v[3]+scroll), v[4]);
+					qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 					qglVertex3fv(v);
 				}
 				qglEnd();
@@ -1111,8 +1109,8 @@ dynamic:
 					qglBegin(GL_POLYGON);
 					for (i=0; i<nv; i++, v+=VERTEXSIZE)
 					{
-						qglMTexCoord2fSGIS(QGL_TEXTURE0, v[3], v[4]);
-						qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
+						qglMultiTexCoord2fARB(QGL_TEXTURE0, v[3], v[4]);
+						qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 						qglVertex3fv(v);
 					}
 					qglEnd();
@@ -1145,8 +1143,8 @@ dynamic:
 				qglBegin(GL_POLYGON);
 				for (i=0; i<nv; i++, v+=VERTEXSIZE)
 				{
-					qglMTexCoord2fSGIS(QGL_TEXTURE0, (v[3]+scroll), v[4]);
-					qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
+					qglMultiTexCoord2fARB(QGL_TEXTURE0, (v[3]+scroll), v[4]);
+					qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 					qglVertex3fv (v);
 				}
 				qglEnd();
@@ -1173,8 +1171,8 @@ dynamic:
 					qglBegin(GL_POLYGON);
 					for (i=0 ; i<nv; i++, v+=VERTEXSIZE)
 					{
-						qglMTexCoord2fSGIS(QGL_TEXTURE0, v[3], v[4]);
-						qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
+						qglMultiTexCoord2fARB(QGL_TEXTURE0, v[3], v[4]);
+						qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 						qglVertex3fv(v);
 					}
 					qglEnd();
@@ -1202,28 +1200,27 @@ void R_DrawInlineBModel (void)
 	dlight_t	*lt;
 
 	// calculate dynamic lighting for bmodel
-	if ( !gl_flashblend->value )
+	if (!gl_flashblend->value)
 	{
 		lt = r_newrefdef.dlights;
-		for (k=0 ; k<r_newrefdef.num_dlights ; k++, lt++)
-		{
-			R_MarkLights (lt, 1<<k, currentmodel->nodes + currentmodel->firstnode);
-		}
+
+		for (k = 0; k < r_newrefdef.num_dlights; k++, lt++)
+			R_MarkLights(lt, 1<<k, currentmodel->nodes + currentmodel->firstnode);
 	}
 
 	psurf = &currentmodel->surfaces[currentmodel->firstmodelsurface];
 
-	if ( currententity->flags & RF_TRANSLUCENT )
+	if (currententity->flags & RF_TRANSLUCENT)
 	{
 		GLSTATE_ENABLE_BLEND
-		qglColor4f (1,1,1,0.25);
-		GL_TexEnv( GL_MODULATE );
+		qglColor4f(1,1,1,0.25);
+		GL_TexEnv(GL_MODULATE);
 	}
 
 	//
 	// draw texture
 	//
-	for (i=0 ; i<currentmodel->nummodelsurfaces ; i++, psurf++)
+	for (i = 0; i < currentmodel->nummodelsurfaces; i++, psurf++)
 	{
 	// find which side of the node we are on
 		pplane = psurf->plane;
@@ -1245,11 +1242,11 @@ void R_DrawInlineBModel (void)
 				psurf->texturechain = r_alpha_surfaces;
 				r_alpha_surfaces = psurf;
 			}
-			else if (qglMTexCoord2fSGIS && !(psurf->flags & SURF_DRAWTURB))
+			else if (qglMultiTexCoord2fARB && !(psurf->flags & SURF_DRAWTURB))
 			{
 				GL_RenderLightmappedPoly(psurf);
 			}
-			else if (qglMTexCoord2fSGIS) // jitfog
+			else if (qglMultiTexCoord2fARB) // jitfog
 			{
 				GL_EnableMultitexture(false);
 				R_RenderBrushPoly(psurf);
@@ -1266,6 +1263,7 @@ void R_DrawInlineBModel (void)
 					gltextures->texturechain = psurf;
 					qglDisable(GL_FOG);
 				}
+
 				R_RenderBrushPoly(psurf);
 			}
 		}
@@ -1273,9 +1271,10 @@ void R_DrawInlineBModel (void)
 
 	if (!(currententity->flags & RF_TRANSLUCENT))
 	{
-		if (!qglMTexCoord2fSGIS)
+		if (!qglMultiTexCoord2fARB)
 		{
 			R_BlendLightmaps(); // jitodo, fog -- test doors
+
 			if (fogenabled) // jitfog
 				R_AddFog(); // jitfog
 		}
@@ -1283,8 +1282,8 @@ void R_DrawInlineBModel (void)
 	else
 	{
 		GLSTATE_DISABLE_BLEND
-		qglColor4f (1,1,1,1);
-		GL_TexEnv( GL_REPLACE );
+		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		GL_TexEnv(GL_REPLACE);
 	}
 }
 
@@ -1516,7 +1515,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 				qglColor3ub(r,g,b);
 #endif
 				// jitest == *note, be sure to remove gl_combine_ext
-				if (qglMTexCoord2fSGIS && !(surf->flags & SURF_DRAWTURB))
+				if (qglMultiTexCoord2fARB && !(surf->flags & SURF_DRAWTURB))
 				{
 					GL_RenderLightmappedPoly(surf);
 				}
@@ -1531,7 +1530,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 				}
 			}
 
-			if (gl_showtris->value && qglMTexCoord2fSGIS) // jit / GuyP
+			if (gl_showtris->value && qglMultiTexCoord2fARB) // jit / GuyP
 				R_DrawTriangleOutlines(surf);    // Guy: gl_showtris fix
 		}
 	}
@@ -1574,7 +1573,7 @@ void R_DrawWorld (void)
 	memset(gl_lms.lightmap_surfaces, 0, sizeof(gl_lms.lightmap_surfaces));
 	R_ClearSkyBox();
 
-	if (qglMTexCoord2fSGIS)
+	if (qglMultiTexCoord2fARB)
 	{
 		GL_EnableMultitexture(true);
 		GL_SelectTexture(QGL_TEXTURE0);
@@ -1606,7 +1605,7 @@ void R_DrawWorld (void)
 
 	R_DrawSkyBox();
 
-	if (gl_showtris->value && !qglMTexCoord2fSGIS)
+	if (gl_showtris->value && !qglMultiTexCoord2fARB)
 		R_DrawTriangleOutlines(NULL);
 }
 

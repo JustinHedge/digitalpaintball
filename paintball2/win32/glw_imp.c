@@ -751,25 +751,21 @@ extern cvar_t	*cl_animdump;
 
 void GLimp_EndFrame (void)
 {
-	int		err;
+	int err;
 
 	err = qglGetError();
-	assert( err == GL_NO_ERROR );
+	assert(err == GL_NO_ERROR);
 
-// frame dump - MrG
+	// frame dump - MrG
 	if (cl_animdump->value)
 		CL_AnimDump();
 
 	if (stricmp(gl_drawbuffer->string, "GL_BACK") == 0)
-	{
 		if (!qwglSwapBuffers(glw_state.hDC))
 			ri.Sys_Error(ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n");
-	}
 
 	// rscript - MrG
 	rs_realtime = Sys_Milliseconds() * 0.001f;
-	
-	//jitest Sleep(0);	// fixes a few problems ive been having
 }
 
 void UpdateGammaRamp (void)

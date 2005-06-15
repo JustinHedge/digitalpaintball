@@ -386,7 +386,9 @@ extern	void ( APIENTRY * qglColorTableEXT)( GLenum, GLenum, GLsizei, GLenum, GLe
 extern	void ( APIENTRY * qglLockArraysEXT) (int , int);
 extern	void ( APIENTRY * qglUnlockArraysEXT) (void);
 
-extern	void ( APIENTRY * qglMTexCoord2fSGIS)( GLenum, GLfloat, GLfloat );
+extern	void ( APIENTRY * qglMultiTexCoord2fARB)( GLenum, GLfloat, GLfloat );
+extern	void ( APIENTRY * qglMultiTexCoord3fARB)( GLenum, GLfloat, GLfloat, GLfloat );
+extern	void ( APIENTRY * qglMultiTexCoord3fvARB)( GLenum, GLfloat * );
 extern	void ( APIENTRY * qglSelectTextureSGIS)( GLenum );
 
 extern	void ( APIENTRY * qglActiveTextureARB)( GLenum );
@@ -481,8 +483,10 @@ void Fake_glColorTableEXT( GLenum target, GLenum internalformat,
 #define GL_TEXTURE0_ARB						0x84C0
 #define GL_TEXTURE1_ARB						0x84C1
 
-extern int QGL_TEXTURE0, QGL_TEXTURE1;
+extern int QGL_TEXTURE0, QGL_TEXTURE1, QGL_TEXTURE2;
 
+#define  GL_FRAGMENT_PROGRAM_ARB			0x8804 // jitwater
+#define  GL_PROGRAM_FORMAT_ASCII_ARB		0x8875 // jitwater
 
 // nVidia extensions
 
@@ -499,5 +503,14 @@ extern	PFNGLGETCOMBINEROUTPUTPARAMETERFVNVPROC			qglGetCombinerOutputParameterfv
 extern	PFNGLGETCOMBINEROUTPUTPARAMETERIVNVPROC			qglGetCombinerOutputParameterivNV;
 extern	PFNGLGETFINALCOMBINERINPUTPARAMETERFVNVPROC		qglGetFinalCombinerInputParameterfvNV;
 extern	PFNGLGETFINALCOMBINERINPUTPARAMETERIVNVPROC		qglGetFinalCombinerInputParameterivNV;
+
+// === jitwater - arb fragmetn program extensions
+extern	PFNGLGENPROGRAMSARBPROC             qglGenProgramsARB;
+extern	PFNGLDELETEPROGRAMSARBPROC          qglDeleteProgramsARB;
+extern	PFNGLBINDPROGRAMARBPROC             qglBindProgramARB;
+extern	PFNGLPROGRAMSTRINGARBPROC           qglProgramStringARB;
+extern	PFNGLPROGRAMENVPARAMETER4FARBPROC   qglProgramEnvParameter4fARB;
+extern	PFNGLPROGRAMLOCALPARAMETER4FARBPROC qglProgramLocalParameter4fARB;
+// jitwater ===
 
 #endif

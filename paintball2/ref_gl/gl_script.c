@@ -1345,9 +1345,9 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 	do
 	{
 		if (stage->anim_count)
-			GL_MBind (QGL_TEXTURE0, RS_Animate(stage));
+			GL_MBind(QGL_TEXTURE0, RS_Animate(stage));
 		else
-			GL_MBind (QGL_TEXTURE0, stage->texture->texnum);
+			GL_MBind(QGL_TEXTURE0, stage->texture->texnum);
 
 		// sane defaults
 		alpha = 1.0f;
@@ -1485,16 +1485,18 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 
 					if (lightmap)
 					{
-						qglMTexCoord2fSGIS(QGL_TEXTURE0, os+txm, ot+tym);
-						qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
+						qglMultiTexCoord2fARB(QGL_TEXTURE0, os+txm, ot+tym);
+						qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 					}
 					else
 					{
-						qglTexCoord2f (os+txm, ot+tym); // jitrscript (added txm/tym)
+						qglTexCoord2f(os+txm, ot+tym); // jitrscript (added txm/tym)
 					}
 
 					if (!rs->warpsmooth)
-						qglVertex3fv (v);
+					{
+						qglVertex3fv(v);
+					}
 					else
 					{
 						scale = rs->warpdist * sin(v[0]*rs->warpsmooth+time)*sin(v[1]*rs->warpsmooth+time)*sin(v[2]*rs->warpsmooth+time);
@@ -1557,8 +1559,8 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 
 					if (lightmap)
 					{
-						qglMTexCoord2fSGIS(QGL_TEXTURE0, os+txm, ot+tym);
-						qglMTexCoord2fSGIS(QGL_TEXTURE1, v[5], v[6]);
+						qglMultiTexCoord2fARB(QGL_TEXTURE0, os+txm, ot+tym);
+						qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 					}
 					else
 					{

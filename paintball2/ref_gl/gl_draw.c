@@ -390,15 +390,13 @@ image_t	*Draw_FindPic (const char *name)
 
 	if (name[0] != '/' && name[0] != '\\')
 	{
-		Com_sprintf (fullname, sizeof(fullname), "pics/%s.pcx", name);
-		gl = GL_FindImage (fullname, it_pic);
+		Com_sprintf(fullname, sizeof(fullname), "pics/%s.pcx", name);
+		gl = GL_FindImage(fullname, it_pic);
 	}
 	else
-		gl = GL_FindImage (name+1, it_pic);
-
-	/*if (gl)
-		if (gl != r_notexture)
-			strcpy(gl->bare_name,name);*/
+	{
+		gl = GL_FindImage(name + 1, it_pic);
+	}
 
 	if (!gl) // jit -- remove "can't find pic" spam
 		return r_notexture;
@@ -415,12 +413,12 @@ void Draw_GetPicSize (int *w, int *h, char *pic)
 {
 	image_t *gl;
 
-	gl = Draw_FindPic (pic);
-	if (!gl)
+	if (!(gl = Draw_FindPic(pic)))
 	{
 		*w = *h = -1;
 		return;
 	}
+
 	*w = gl->width;
 	*h = gl->height;
 }

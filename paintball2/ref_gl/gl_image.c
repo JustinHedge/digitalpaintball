@@ -79,30 +79,25 @@ void GL_SelectTexture (GLenum texture)
 	if (!qglSelectTextureSGIS && !qglActiveTextureARB)
 		return;
 
-	if (texture == QGL_TEXTURE0)
-	{
+	/*if (texture == QGL_TEXTURE0)
 		tmu = 0;
-	}
 	else
-	{
-		tmu = 1;
-	}
+		tmu = 1;*/
+	tmu = texture - QGL_TEXTURE0; // jit
 
-	if ( tmu == gl_state.currenttmu )
-	{
+	if (tmu == gl_state.currenttmu)
 		return;
-	}
 
 	gl_state.currenttmu = tmu;
 
-	if ( qglSelectTextureSGIS )
+	if (qglSelectTextureSGIS)
 	{
-		qglSelectTextureSGIS( texture );
+		qglSelectTextureSGIS(texture);
 	}
-	else if ( qglActiveTextureARB )
+	else if (qglActiveTextureARB)
 	{
-		qglActiveTextureARB( texture );
-		qglClientActiveTextureARB( texture );
+		qglActiveTextureARB(texture);
+		qglClientActiveTextureARB(texture);
 	}
 }
 
@@ -111,19 +106,21 @@ extern cvar_t	*gl_overbright;
 
 void GL_TexEnv(GLenum mode) 
 {
-	static int lastmodes[2] = { -1, -1 };
+	static int lastmodes[32] = { -1, -1 };
+
 	if (mode != lastmodes[gl_state.currenttmu])
 	{
 		if (GL_COMBINE_EXT == mode) // a bit of a hack...
 		{
 			if (gl_state.texture_combine && gl_overbright->value)
 			{
-				//qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
 				qglTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
 				qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
 			}
 			else // failed to combine, default to modulate.
+			{
 				mode = GL_MODULATE;
+			}
 		}
 
 		//qglTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode );

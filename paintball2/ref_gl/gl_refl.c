@@ -21,14 +21,16 @@ float	*g_refl_Z;				// the Z (vertical) value of each reflection
 float	*g_waterDistance;		// the rough distance from player to water .. we want to render the closest water surface.
 int		*g_tex_num;				// corresponding texture numbers for each reflection
 int		maxReflections;			// maximum number of reflections
-
+unsigned int g_water_program_id; // jitwater
+image_t *distort_tex = NULL; // jitwater
+image_t *water_normal_tex = NULL; // jitwater
 
 // whether we are actively rendering a reflection of the world
 // (instead of the world itself)
 qboolean g_drawing_refl = false;
 qboolean g_refl_enabled = true;	// whether reflections should be drawn at all
 
-float	g_last_known_fov = 0.0;	// this is no longer necessary
+float	g_last_known_fov = 90.0f;	// jit - default to 90.
 
 void MYgluPerspective (GLdouble fovy, GLdouble aspect,
 		     GLdouble zNear, GLdouble zFar); // jit
@@ -49,9 +51,15 @@ void R_init_refl (int maxNoReflections)
 	int				maxSize;
 	unsigned char	*buf = NULL;
 	int				i = 0;
+	int len; // jitwater
+	char *fragment_program_text; // jitwater
 	//===========================
 
-	R_setupArrays( maxNoReflections );	// setup number of reflections
+	if (maxNoReflections < 1) // jit
+		maxNoReflections = 1;
+
+	R_setupArrays(maxNoReflections);	// setup number of reflections
+	assert(qglGetError() == GL_NO_ERROR);
 
 	//okay we want to set REFL_TEXH etc to be less than the resolution 
 	//otherwise white boarders are left .. we dont want that.
@@ -59,13 +67,13 @@ void R_init_refl (int maxNoReflections)
 	//however if it is turned on in game white marks round the sides will be left again
 	//so maybe its best to leave this alone.
 
-	for(power = 2; power < vid.height; power*=2)
+	for (power = 2; power < vid.height; power*=2)
 	{	
 		REFL_TEXW = power;	
 		REFL_TEXH = power;  
 	}
 
-	qglGetIntegerv(GL_MAX_TEXTURE_SIZE,&maxSize);		//get max supported texture size
+	qglGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);		//get max supported texture size
 
 	if (REFL_TEXW > maxSize)
 	{
@@ -96,14 +104,45 @@ void R_init_refl (int maxNoReflections)
 	}
 
 	// if screen dimensions are smaller than texture size, we have to use screen dimensions instead (doh!)
-	g_reflTexW = (vid.width < REFL_TEXW) ? vid.width :  REFL_TEXW;	//keeping these in for now ..
-	g_reflTexH = (vid.height< REFL_TEXH) ? vid.height : REFL_TEXH;
+	g_reflTexW = (vid.width < REFL_TEXW) ? vid.width : REFL_TEXW;	//keeping these in for now ..
+	g_reflTexH = (vid.height < REFL_TEXH) ? vid.height : REFL_TEXH;
 
-	ri.Con_Printf(PRINT_ALL, "Initialising reflective textures\n");
-	ri.Con_Printf(PRINT_ALL, "...reflective texture size set at %d\n",g_reflTexH);
-	ri.Con_Printf(PRINT_ALL, "...maximum reflective textures %d\n", maxReflections);
+	if (gl_debug->value)
+	{
+		ri.Con_Printf(PRINT_ALL, "Initialising reflective textures\n");
+		ri.Con_Printf(PRINT_ALL, "...reflective texture size set at %d\n",g_reflTexH);
+		ri.Con_Printf(PRINT_ALL, "...maximum reflective textures %d\n", maxReflections);
+	}
+
+	// === jitwater - fragment program initializiation
+	qglGenProgramsARB(1, &g_water_program_id);
+    qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_program_id);
+	qglProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2, 1.0f, 0.1f, 0.6f, 0.5f); // jitest
+	len = ri.FS_LoadFileZ("scripts/water1.arbf", &fragment_program_text);
+
+	if (len > 0)
+		qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, len, fragment_program_text);
+	else
+		ri.Con_Printf(PRINT_ALL, "Unable to find scripts/water1.arbf\n");
+
+	ri.FS_FreeFile(fragment_program_text);
+	
+	// Make sure the program loaded correctly
+	{
+		int err;
+		assert((err = qglGetError()) == GL_NO_ERROR);
+		err = err; // for debugging only -- todo, remove
+	}
+
+	distort_tex = Draw_FindPic("/textures/sfx/water/distort3.tga");
+	water_normal_tex = Draw_FindPic("/textures/sfx/water/normal1.tga");
+	// jitwater ===
 }
 
+void R_shutdown_refl (void) // jitodo - call this.
+{
+	qglDeleteProgramsARB(1, &g_water_program_id);
+}
 
 /*
 ================
@@ -113,7 +152,7 @@ creates the actual arrays
 to hold the reflections in
 ================
 */
-void R_setupArrays(int maxNoReflections)
+void R_setupArrays (int maxNoReflections)
 {
 	R_clear_refl();
 
@@ -459,38 +498,38 @@ void print_matrix(int which_matrix, const char *desc)
 
 
 // alters texture matrix to handle our reflection
-void R_LoadReflMatrix()
+void R_LoadReflMatrix (void)
 {
 	float aspect = (float)r_newrefdef.width/r_newrefdef.height;
 
-	qglMatrixMode	(GL_TEXTURE);
-	qglLoadIdentity	( );
+	qglMatrixMode(GL_TEXTURE);
+	qglLoadIdentity();
 
-	qglTranslatef	(0.5, 0.5, 0);				/* Center texture */
+	qglTranslatef(0.5f, 0.5f, 0.0f); // Center texture
 
-	qglScalef(0.5f *(float)g_reflTexW / REFL_TEXW,
-			 0.5f * (float)g_reflTexH / REFL_TEXH,
-			 1.0);								/* Scale and bias */
+	qglScalef(0.5f * (float)g_reflTexW / REFL_TEXW,
+			  0.5f * (float)g_reflTexH / REFL_TEXH,
+			  1.0f);								/* Scale and bias */
 
 	MYgluPerspective(g_last_known_fov, aspect, 4, 4096);
 
-	qglRotatef (-90, 1, 0, 0);	    // put Z going up
-	qglRotatef (90,  0, 0, 1);	    // put Z going up
+	qglRotatef(-90.0f, 1.0f, 0.0f, 0.0f);	    // put Z going up
+	qglRotatef(90.0f,  0.0f, 0.0f, 1.0f);	    // put Z going up
 
 	// do transform
-	R_DoReflTransform	( );
-	qglTranslatef		( 0, 0, 0 );
-	qglMatrixMode		( GL_MODELVIEW );
+	R_DoReflTransform();
+	qglTranslatef(0.0f, 0.0f, 0.0f);
+	qglMatrixMode(GL_MODELVIEW);
 }
 
 /*
  * Load identity into texture matrix
  */
-void R_ClearReflMatrix() {
-
-	qglMatrixMode	( GL_TEXTURE	);
-	qglLoadIdentity	(				);
-	qglMatrixMode	( GL_MODELVIEW	);
+void R_ClearReflMatrix()
+{
+	qglMatrixMode(GL_TEXTURE);
+	qglLoadIdentity();
+	qglMatrixMode(GL_MODELVIEW);
 }
 
 // the frustum function from the Mesa3D Library

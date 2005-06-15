@@ -32,3 +32,4 @@ extern float *g_refl_Z;
 extern int *g_tex_num;
 extern int g_active_refl;
 extern int g_num_refl;
+extern unsigned int g_water_program_id; // jitwater

@@ -209,7 +209,7 @@ extern  cvar_t  *gl_lockpvs;
 extern	cvar_t	*vid_fullscreen;
 extern	cvar_t	*vid_gamma;
 extern	cvar_t	*vid_lighten; // jitgamma
-
+extern	cvar_t	*gl_debug; // jit
 //extern	cvar_t	*intensity;
 extern	cvar_t	*r_caustics; // jitcaustics
 extern	cvar_t	*r_reflectivewater; // jitwater
@@ -406,7 +406,7 @@ typedef struct
 
 	int lightmap_textures;
 
-	int	currenttextures[2];
+	int	currenttextures[32];
 	int currenttmu;
 
 	float camera_separation;
@@ -432,7 +432,8 @@ typedef struct
 	qboolean	texture_compression; // Heffo - ARB Texture Compression
 
 	qboolean	texture_combine; // jitbright
-	float			max_anisotropy; // jitanisotropy
+	float		max_anisotropy; // jitanisotropy
+	qboolean	fragment_program; // jitwater
 
 	unsigned char originalRedGammaTable[256];
 	unsigned char originalGreenGammaTable[256];

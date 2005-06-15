@@ -44,6 +44,15 @@ PFNGLGETCOMBINEROUTPUTPARAMETERIVNVPROC			qglGetCombinerOutputParameterivNV;
 PFNGLGETFINALCOMBINERINPUTPARAMETERFVNVPROC		qglGetFinalCombinerInputParameterfvNV;
 PFNGLGETFINALCOMBINERINPUTPARAMETERIVNVPROC		qglGetFinalCombinerInputParameterivNV;
 //****************************************************************************
+// === jitwater -- fragment program extensions
+PFNGLGENPROGRAMSARBPROC             qglGenProgramsARB            = NULL;
+PFNGLDELETEPROGRAMSARBPROC          qglDeleteProgramsARB         = NULL;
+PFNGLBINDPROGRAMARBPROC             qglBindProgramARB            = NULL;
+PFNGLPROGRAMSTRINGARBPROC           qglProgramStringARB          = NULL;
+PFNGLPROGRAMENVPARAMETER4FARBPROC   qglProgramEnvParameter4fARB  = NULL;
+PFNGLPROGRAMLOCALPARAMETER4FARBPROC qglProgramLocalParameter4fARB = NULL;
+// jitwater ===
+//****************************************************************************
 
 cvar_t	*gl_debug; // jit
 cvar_t	*gl_sgis_generate_mipmap;
@@ -54,7 +63,7 @@ viddef_t	vid;
 
 refimport_t	ri;
 
-int QGL_TEXTURE0, QGL_TEXTURE1;
+int QGL_TEXTURE0, QGL_TEXTURE1, QGL_TEXTURE2;
 
 model_t		*r_worldmodel;
 
@@ -712,26 +721,22 @@ void R_DrawParticles(void)
 		qglDepthMask(GL_FALSE);
 		GLSTATE_ENABLE_BLEND
 		qglDisable(GL_TEXTURE_2D);
-
 		qglPointSize(gl_particle_size->value);
-
 		qglBegin(GL_POINTS);
+
 		for (i = 0, p = r_newrefdef.particles; i < r_newrefdef.num_particles; i++, p++)
 		{
 			*(int *)color = d_8to24table[p->color];
 			color[3] = p->alpha*255;
-
 			qglColor4ubv(color);
-
 			qglVertex3fv(p->origin);
 		}
-		qglEnd();
 
+		qglEnd();
 		GLSTATE_DISABLE_BLEND
 		qglColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		qglDepthMask(GL_TRUE);
 		qglEnable(GL_TEXTURE_2D);
-
 	}
 	else
 	{
@@ -745,11 +750,10 @@ void R_DrawParticles(void)
 R_PolyBlend
 ============
 */
-void R_PolyBlend(void)
+void R_PolyBlend (void)
 {
 	// === 
 	// jit
-
 	static float autobright=0;
 	vec3_t shadelight;
 	float shadeavg;
@@ -761,8 +765,6 @@ void R_PolyBlend(void)
 		GLSTATE_ENABLE_BLEND
 		qglDisable(GL_DEPTH_TEST);
 		qglDisable(GL_TEXTURE_2D);
-
-
 		qglLoadIdentity();
 
 		// FIXME: get rid of these
@@ -772,29 +774,15 @@ void R_PolyBlend(void)
 
 	if (gl_brightness->value)
 	{
-		if (gl_autobrightness->value>1.0 || gl_autobrightness->value < 0.0)
+		if (gl_autobrightness->value > 1.0 || gl_autobrightness->value < 0.0)
 			ri.Cvar_SetValue("gl_autobrightness", 1);
 
 		R_LightPoint(r_newrefdef.vieworg, shadelight);
-		//VectorScale(shadelight, 1/gl_modulate->value, shadelight);
-		shadeavg=(shadelight[0]+shadelight[1]+shadelight[2]);
-
-
-		//if(shadeavg*gl_modulate->value == 3.0 || shadeavg > 4.5) // hack for fullbright maps
-		//	shadeavg = 4.5;
-
+		shadeavg = (shadelight[0]+shadelight[1]+shadelight[2]);
 		shadeavg /= 4.5;
-
 		autobright=0.985*autobright + 0.015*(0.5-sqrt(shadeavg)/2.0);
-		
-	/*	ri.Con_Printf(PRINT_ALL, "%f: %f %f %f - %f\n",shadeavg,
-			shadelight[0],shadelight[1],shadelight[2],autobright);
-			*/
-
-
 		qglBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-
-		b=gl_brightness->value *(1.0-gl_autobrightness->value +
+		b = gl_brightness->value *(1.0-gl_autobrightness->value +
 			gl_autobrightness->value*autobright)/2.0+0.5;
 		qglColor4f(b,b,b,1);
 
@@ -803,11 +791,6 @@ void R_PolyBlend(void)
 			qglVertex3f(10, -100, 100);
 			qglVertex3f(10, -100, -100);
 			qglVertex3f(10, 100, -100);
-
-		/*	qglVertex3f(10, 100, 100);
-			qglVertex3f(10, -100, 100);
-			qglVertex3f(10, -100, -100);
-			qglVertex3f(10, 100, -100);*/
 		qglEnd();
 
 		qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -831,11 +814,10 @@ void R_PolyBlend(void)
 	qglDisable(GL_STENCIL_TEST);
 #endif
 
-	if (v_blend[3]) {
+	if (v_blend[3])
+	{
 		qglColor4fv(v_blend);
-
 		qglBegin(GL_QUADS);
-
 		qglVertex3f(10, 100, 100);
 		qglVertex3f(10, -100, 100);
 		qglVertex3f(10, -100, -100);
@@ -1896,8 +1878,8 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		//if(gl_ext_pointparameters->value)
 		if (0) // Workaround for ATI driver bug.
 		{
-			qglPointParameterfEXT =(void(APIENTRY*)(GLenum, GLfloat))qwglGetProcAddress("glPointParameterfEXT");
-			qglPointParameterfvEXT =(void(APIENTRY*)(GLenum, const GLfloat*))qwglGetProcAddress("glPointParameterfvEXT");
+			qglPointParameterfEXT = (void(APIENTRY*)(GLenum, GLfloat))qwglGetProcAddress("glPointParameterfEXT");
+			qglPointParameterfvEXT = (void(APIENTRY*)(GLenum, const GLfloat*))qwglGetProcAddress("glPointParameterfvEXT");
 
 			if (gl_debug->value)
 				ri.Con_Printf(PRINT_ALL, "...using GL_EXT_point_parameters\n");
@@ -1919,11 +1901,14 @@ qboolean R_Init (void *hinstance, void *hWnd)
 			if (gl_debug->value)
 				ri.Con_Printf(PRINT_ALL, "...using GL_ARB_multitexture\n");
 
-			qglMTexCoord2fSGIS =(void*)qwglGetProcAddress("glMultiTexCoord2fARB");
-			qglActiveTextureARB =(void*)qwglGetProcAddress("glActiveTextureARB");
-			qglClientActiveTextureARB =(void*)qwglGetProcAddress("glClientActiveTextureARB");
+			qglMultiTexCoord2fARB = (void*)qwglGetProcAddress("glMultiTexCoord2fARB");
+			qglMultiTexCoord3fvARB = (void*)qwglGetProcAddress("glMultiTexCoord3fvARB");
+			qglMultiTexCoord3fARB = (void*)qwglGetProcAddress("glMultiTexCoord3fARB");
+			qglActiveTextureARB = (void*)qwglGetProcAddress("glActiveTextureARB");
+			qglClientActiveTextureARB = (void*)qwglGetProcAddress("glClientActiveTextureARB");
 			QGL_TEXTURE0 = GL_TEXTURE0_ARB;
 			QGL_TEXTURE1 = GL_TEXTURE1_ARB;
+			QGL_TEXTURE2 = GL_TEXTURE2_ARB;
 		}
 		else if (gl_debug->value)
 		{
@@ -1946,8 +1931,9 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		{
 			if (gl_debug->value)
 				ri.Con_Printf(PRINT_ALL, "...using GL_SGIS_multitexture\n");
-			qglMTexCoord2fSGIS =(void *)qwglGetProcAddress("glMTexCoord2fSGIS");
-			qglSelectTextureSGIS =(void *)qwglGetProcAddress("glSelectTextureSGIS");
+
+			qglMultiTexCoord2fARB = (void*)qwglGetProcAddress("glMTexCoord2fSGIS");
+			qglSelectTextureSGIS = (void*)qwglGetProcAddress("glSelectTextureSGIS");
 			QGL_TEXTURE0 = GL_TEXTURE0_SGIS;
 			QGL_TEXTURE1 = GL_TEXTURE1_SGIS;
 		}
@@ -2057,30 +2043,56 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	// jitanisotropy
 	gl_state.max_anisotropy = 0;
 
-	if (strstr(gl_config.extensions_string,"texture_filter_anisotropic"))
+	if (strstr(gl_config.extensions_string, "texture_filter_anisotropic"))
 	{
 		qglGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_state.max_anisotropy);
 	}
 
 	if (gl_debug->value)
 		ri.Con_Printf(PRINT_ALL, "Max anisotropy level: %g\n", gl_state.max_anisotropy);
-	// ===
-	// <!-- jitbright
-	if (strstr(gl_config.extensions_string,"texture_env_combine")) 
+
+	// === jitbright
+	if (strstr(gl_config.extensions_string, "texture_env_combine")) 
 	{
 		gl_state.texture_combine = true;
 
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...using GL_ARB_texture_env_combine");
+			ri.Con_Printf(PRINT_ALL, "...using GL_ARB_texture_env_combine\n");
 	}
 	else
 	{
 		gl_state.texture_combine = false;
 	}
-	// jit -->
+	// jitbright ===
 
+	// === jitwater
+	if (strstr(gl_config.extensions_string, "GL_ARB_fragment_program"))
+	{
+		gl_state.fragment_program = true;
 
-	if (strstr(gl_config.extensions_string, "GL_NV_register_combiners")) {
+		if (gl_debug->value)
+			ri.Con_Printf(PRINT_ALL, "...using GL_ARB_fragment_program\n");
+
+		qglGenProgramsARB = (PFNGLGENPROGRAMSARBPROC)qwglGetProcAddress("glGenProgramsARB");
+		qglDeleteProgramsARB = (PFNGLDELETEPROGRAMSARBPROC)qwglGetProcAddress("glDeleteProgramsARB");
+		qglBindProgramARB = (PFNGLBINDPROGRAMARBPROC)qwglGetProcAddress("glBindProgramARB");
+		qglProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC)qwglGetProcAddress("glProgramStringARB");
+		qglProgramEnvParameter4fARB =
+			(PFNGLPROGRAMENVPARAMETER4FARBPROC)qwglGetProcAddress("glProgramEnvParameter4fARB");
+		qglProgramLocalParameter4fARB =
+			(PFNGLPROGRAMLOCALPARAMETER4FARBPROC)qwglGetProcAddress("glProgramLocalParameter4fARB");
+	}
+	else
+	{
+		gl_state.fragment_program = false;
+
+		if (gl_debug->value)
+			ri.Con_Printf(PRINT_ALL, "...GL_ARB_fragment_program not found\n");
+	}
+	// jitwater ===
+
+	if (strstr(gl_config.extensions_string, "GL_NV_register_combiners"))
+	{
 		if (gl_debug->value)
 			ri.Con_Printf(PRINT_ALL, "...using GL_NV_register_combiners\n");
 

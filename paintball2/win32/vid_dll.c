@@ -787,6 +787,7 @@ qboolean VID_LoadRefresh (char *name)
 	ri.Con_Printf = VID_Printf;
 	ri.Sys_Error = VID_Error;
 	ri.FS_LoadFile = FS_LoadFile;
+	ri.FS_LoadFileZ = FS_LoadFileZ; // jit
 	ri.FS_FreeFile = FS_FreeFile;
 	ri.FS_ListFiles = FS_ListFiles; // jit
 	ri.FS_FreeFileList = FS_FreeFileList; // jit

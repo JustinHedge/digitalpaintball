@@ -276,6 +276,7 @@ typedef struct
 	// a -1 return means the file does not exist
 	// NULL can be passed for buf to just determine existance
 	int		(*FS_LoadFile) (const char *name, void **buf);
+	int		(*FS_LoadFileZ) (const char *name, void **buf); // jit
 	void	(*FS_FreeFile) (void *buf);
 	char	**(*FS_ListFiles) (char*, int*, unsigned, unsigned); // jitrscript
 	void	(*FS_FreeFileList) (char **list, int n); // jit

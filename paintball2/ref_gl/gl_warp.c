@@ -300,6 +300,8 @@ float CalcWave (float x, float y) // jitwater / MPO
 }
 
 // === jitwater
+extern image_t *distort_tex;
+extern image_t *water_normal_tex;
 // MPO : this is my version...
 void EmitWaterPolys (msurface_t *fa)
 {
@@ -341,7 +343,7 @@ void EmitWaterPolys (msurface_t *fa)
 
 				// Make sure polygons are on the same plane
 				// Fix for not perfectly flat water on base1 - strange ..
-				else if (fabs(zValue - v[2]) > 0.1f)
+				else if (fabs(zValue - v[2]) > 2.0f)
 					waterNotFlat = true;
 			}
 		}
@@ -415,7 +417,22 @@ void EmitWaterPolys (msurface_t *fa)
 		// if we find which reflection to bind
 		if (fabs(g_refl_Z[g_active_refl] - zValue) < 0.1)
 		{
-			GL_Bind(g_tex_num[g_active_refl]);
+			if (1 && gl_state.fragment_program) // jitwater
+			{
+				qglEnable(GL_FRAGMENT_PROGRAM_ARB);
+				qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_program_id);
+				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, r_newrefdef.time * 0.2f, 1.0f, 1.0f, 1.0f);
+				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, r_newrefdef.time * -0.2f, 10.0f, 1.0f, 1.0f);
+				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2,
+					r_newrefdef.vieworg[0], r_newrefdef.vieworg[1], r_newrefdef.vieworg[2], 1.0f);
+			}
+
+			// === jitwater -- jitodo, check for feature availability
+			GL_MBind(QGL_TEXTURE0, g_tex_num[g_active_refl]); // Reflection texture
+			GL_MBind(QGL_TEXTURE1, distort_tex->texnum);      // Distortion texture
+			GL_MBind(QGL_TEXTURE2, water_normal_tex->texnum); // Normal texture
+			GL_SelectTexture(QGL_TEXTURE0);
+			// jitwater ===
 			break;
 		}
 	}
@@ -423,14 +440,14 @@ void EmitWaterPolys (msurface_t *fa)
 	// if we found a reflective surface correctly, then go ahead and draw it
 	if (g_active_refl != g_num_refl)
 	{
-		qglColor4f		( 1, 1, 1, r_reflectivewater->value);// add some alpha transparency
-		qglEnable		( GL_BLEND		);
-		GL_TexEnv		( GL_MODULATE	);
-		qglShadeModel	( GL_SMOOTH		);
-		qglEnable		( GL_POLYGON_OFFSET_FILL );		//to stop z buffer fighting
-		qglPolygonOffset( -1, -2);
+		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		
+		if (!gl_state.blend)
+			qglEnable(GL_BLEND);
 
-		R_LoadReflMatrix();	
+		GL_TexEnv(GL_MODULATE);
+		qglShadeModel(GL_SMOOTH);
+		R_LoadReflMatrix();
 
   		// draw reflected water layer on top of regular
   		for (bp = fa->polys; bp; bp = bp->next)
@@ -440,40 +457,53 @@ void EmitWaterPolys (msurface_t *fa)
 
 			for (i=0, v=p->verts[0]; i < p->numverts; i++, v+=VERTEXSIZE)
 			{
-				vec3_t	vAngle;
-
-				qglTexCoord3f(v[0], v[1] + CalcWave(v[0], v[1]), v[2]);
-
-				if (r_newrefdef.rdflags & RDF_UNDERWATER )
+				if (gl_state.fragment_program)
 				{
-					VectorSubtract(v, r_newrefdef.vieworg, vAngle);
-					VectorNormalize(vAngle);
-
-					if (vAngle[2] > 0.55f)
-						vAngle[2] = 0.55f;
-
-					qglColor4f(1.0f, 1.0f, 1.0f, 0.9f - (vAngle[2] * 1.0f));
+					qglMultiTexCoord3fvARB(QGL_TEXTURE0, v);
+					qglMultiTexCoord3fvARB(QGL_TEXTURE1, v);
+					qglMultiTexCoord3fvARB(QGL_TEXTURE2, v);
 				}
-
 				else
 				{
-					VectorSubtract(r_newrefdef.vieworg, v, vAngle);
-					VectorNormalize(vAngle);
+					vec3_t	vAngle;
 
-					if (vAngle[2] > 0.55f)
-						vAngle[2] = 0.55f;
+					qglTexCoord3f(v[0], v[1] + CalcWave(v[0], v[1]), v[2]);
+				
+					if (r_newrefdef.rdflags & RDF_UNDERWATER)
+					{
+						VectorSubtract(v, r_newrefdef.vieworg, vAngle);
+						VectorNormalize(vAngle);
 
-					qglColor4f(1, 1, 1, 0.9f - (vAngle[2] * 1.0f));
+						if (vAngle[2] > 0.55f)
+							vAngle[2] = 0.55f;
+
+						qglColor4f(1.0f, 1.0f, 1.0f, 0.9f - (vAngle[2] * 1.0f));
+					}
+					else
+					{
+						VectorSubtract(r_newrefdef.vieworg, v, vAngle);
+						VectorNormalize(vAngle);
+
+						if (vAngle[2] > 0.55f)
+							vAngle[2] = 0.55f;
+
+						qglColor4f(1, 1, 1, 0.9f - (vAngle[2] * 1.0f));
+					}
 				}
 
-				qglVertex3f (v[0], v[1], v[2]);
+				qglVertex3f(v[0], v[1], v[2]);
 			}
 
 			qglEnd (); 
   		}
 
 		R_ClearReflMatrix();
-		qglDisable(GL_POLYGON_OFFSET_FILL);
+
+		if (!gl_state.blend)
+			qglDisable(GL_BLEND);
+
+		if (gl_state.fragment_program) // jitwater
+			qglDisable(GL_FRAGMENT_PROGRAM_ARB);
     }
 }
 // jitwater ===
