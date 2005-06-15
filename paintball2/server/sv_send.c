@@ -506,17 +506,22 @@ void SV_SendClientMessages (void)
 	if (sv.state == ss_demo && sv.demofile)
 	{
 		if (sv_paused->value)
+		{
 			msglen = 0;
+		}
 		else
 		{
 			// get the next message
 			r = fread(&msglen, 4, 1, sv.demofile);
+
 			if (r != 1)
 			{
 				SV_DemoCompleted();
 				return;
 			}
+
 			msglen = LittleLong(msglen);
+
 			if (msglen == -1)
 			{
 				SV_DemoCompleted();
@@ -524,7 +529,9 @@ void SV_SendClientMessages (void)
 			}
 			if (msglen > MAX_MSGLEN)
 				Com_Error (ERR_DROP, "SV_SendClientMessages: msglen > MAX_MSGLEN");
+
 			r = fread(msgbuf, msglen, 1, sv.demofile);
+
 			if (r != 1)
 			{
 				SV_DemoCompleted();
@@ -546,15 +553,15 @@ void SV_SendClientMessages (void)
 			SZ_Clear(&c->netchan.message);
 			SZ_Clear(&c->datagram);
 			SV_BroadcastPrintf(PRINT_HIGH, "%s overflowed\n", c->name);
-			//SV_DropClient(c);
-			continue; // jitoverflow -- don't actually drop them, just lose the data.
+			SV_DropClient(c);
+			//caused too many zombies, removed. continue; // jitoverflow -- don't actually drop them, just lose the data.
 		}
 
 		if (sv.state == ss_cinematic 
 			|| sv.state == ss_demo 
 			|| sv.state == ss_pic)
 		{
-			Netchan_Transmit (&c->netchan, msglen, msgbuf);
+			Netchan_Transmit(&c->netchan, msglen, msgbuf);
 		}
 		else if (c->state == cs_spawned)
 		{
@@ -566,7 +573,7 @@ void SV_SendClientMessages (void)
 		}
 		else
 		{
-	// just update reliable	if needed
+			// just update reliable	if needed
 			if (c->netchan.message.cursize	|| curtime - c->netchan.last_sent > 1000)
 				Netchan_Transmit(&c->netchan, 0, NULL);
 		}
