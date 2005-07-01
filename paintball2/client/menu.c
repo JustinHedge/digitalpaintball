@@ -1228,6 +1228,7 @@ static void M_HilightPreviousWidget (menu_screen_t *menu)
 	if (!widget)
 	{
 		widget = menu->widget;
+
 		while(widget && !widget_is_selectable(widget))
 			widget = widget->next;
 
@@ -1243,7 +1244,6 @@ static void M_HilightPreviousWidget (menu_screen_t *menu)
 		widget->hover = false;
 		widget->selected = false;
 		oldwidget = widget;
-
 		widget = widget->next;
 
 		if (!widget)
@@ -1255,6 +1255,7 @@ static void M_HilightPreviousWidget (menu_screen_t *menu)
 				prevwidget = widget;
 
 			widget = widget->next;
+
 			if (!widget)
 				widget = menu->widget;
 		}
@@ -1747,9 +1748,14 @@ static qboolean M_InsertField (int key)
 	return true;
 }
 
+extern qboolean gamekeydown[256];
+
 qboolean M_Keyup (int key)
 {
 	static int old_mouse_x, old_mouse_y, old_clicktime;
+
+	if (gamekeydown[key])
+		return false;
 
 	if (m_active_bind_command)
 	{
@@ -2480,9 +2486,13 @@ void M_Menu_f (void)
 	pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 
 	if (Q_streq(menuname, "pop") || Q_streq(menuname, "back"))
+	{
 		M_PopMenu();
+	}
 	else if (Q_streq(menuname, "off") || Q_streq(menuname, "close"))
+	{
 		M_ForceMenuOff();
+	}
 	else
 	{
 		menu_screen_t *menu;
@@ -2501,7 +2511,9 @@ void M_Menu_f (void)
 			Cvar_Set("cl_hudscale", "2");
 		}
 		else
+		{
 			oldscale = 0;
+		}
 
 		M_PushMenuScreen(menu, samelevel);
 	}

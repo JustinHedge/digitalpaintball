@@ -39,10 +39,10 @@ int			history_line=0;
 int			key_waiting;
 unsigned char	*keybindings[256]; // jittext
 qboolean	consolekeys[256];	// if true, can't be rebound while in console
-//qboolean	menubound[256];	// if true, can't be rebound while in menu
 int			keyshift[256];		// key to map to if shift held down in console
 int			key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
+qboolean	gamekeydown[256]; // jitmenu
 qboolean	key_insert = true; // pooy / jitmenu
 
 typedef struct
@@ -379,31 +379,33 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 		return;
 	}
 
-	if ( ( key == K_UPARROW ) || ( key == K_KP_UPARROW ) ||
-		 ( ( key == 'p' ) && keydown[K_CTRL] ) )
+	if ((key == K_UPARROW) || (key == K_KP_UPARROW) ||
+		 ((key == 'p') && keydown[K_CTRL]))
 	{
-		do
-		{
+		do {
 			history_line = (history_line - 1) & 31;
 		} while (history_line != edit_line
 				&& !key_lines[history_line][1]);
+
 		if (history_line == edit_line)
-			history_line = (edit_line+1)&31;
+			history_line = (edit_line+1) & 31;
+
 		strcpy(key_lines[edit_line], key_lines[history_line]);
 		key_linepos = strlen(key_lines[edit_line]);
 		return;
 	}
 
-	if ( ( key == K_DOWNARROW ) || ( key == K_KP_DOWNARROW ) ||
-		 ( ( key == 'n' ) && keydown[K_CTRL] ) )
+	if ((key == K_DOWNARROW) || (key == K_KP_DOWNARROW) ||
+		 ((key == 'n') && keydown[K_CTRL]))
 	{
-		if (history_line == edit_line) return;
-		do
-		{
+		if (history_line == edit_line)
+			return;
+
+		do {
 			history_line = (history_line + 1) & 31;
-		}
-		while (history_line != edit_line
+		} while (history_line != edit_line
 			&& !key_lines[history_line][1]);
+
 		if (history_line == edit_line)
 		{
 			key_lines[edit_line][0] = ']';
@@ -414,6 +416,7 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 			strcpy(key_lines[edit_line], key_lines[history_line]);
 			key_linepos = strlen(key_lines[edit_line]);
 		}
+
 		return;
 	}
 
@@ -760,6 +763,7 @@ void Key_Init (void)
 		key_lines[i][0] = ']';
 		key_lines[i][1] = 0;
 	}
+
 	key_linepos = 1;
 	
 //
@@ -767,6 +771,7 @@ void Key_Init (void)
 //
 	for (i=32 ; i<128 ; i++)
 		consolekeys[i] = true;
+
 	consolekeys[K_ENTER] = true;
 	consolekeys[K_KP_ENTER] = true;
 	consolekeys[K_TAB] = true;
@@ -804,8 +809,10 @@ void Key_Init (void)
 
 	for (i=0 ; i<256 ; i++)
 		keyshift[i] = i;
+
 	for (i='a' ; i<='z' ; i++)
 		keyshift[i] = i - 'a' + 'A';
+
 	keyshift['1'] = '!';
 	keyshift['2'] = '@';
 	keyshift['3'] = '#';
@@ -848,20 +855,22 @@ static void GameKeyup (int key) // jitscores
 	char cmd[1024];
 
 	kb = keybindings[key];
+	gamekeydown[key] = false;
 
 	if (kb && kb[0] == '+')
 	{
-		Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
-		Cbuf_AddText (cmd);
+		Com_sprintf(cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
+		Cbuf_AddText(cmd);
 	}
 
 	if (keyshift[key] != key)
 	{
 		kb = keybindings[keyshift[key]];
+
 		if (kb && kb[0] == '+')
 		{
-			Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
-			Cbuf_AddText (cmd);
+			Com_sprintf(cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
+			Cbuf_AddText(cmd);
 		}
 	}
 }
@@ -872,17 +881,19 @@ static void GameKeyDown (int key) // jitscores
 	char cmd[1024];
 
 	kb = keybindings[key];
+	gamekeydown[key] = true;
+
 	if (kb)
 	{
 		if (kb[0] == '+')
 		{	// button commands add keynum and time as a parm
-			Com_sprintf (cmd, sizeof(cmd), "%s %i %i\n", kb, key, time);
-			Cbuf_AddText (cmd);
+			Com_sprintf(cmd, sizeof(cmd), "%s %i %i\n", kb, key, time);
+			Cbuf_AddText(cmd);
 		}
 		else
 		{
-			Cbuf_AddText (kb);
-			Cbuf_AddText ("\n");
+			Cbuf_AddText(kb);
+			Cbuf_AddText("\n");
 		}
 	}
 }
@@ -897,9 +908,6 @@ Should NOT be called during an interrupt!
 */
 void Key_Event (int key, qboolean down, unsigned time)
 {
-//	char	*kb;
-//	char	cmd[1024];
-
 	// hack for modal presses
 	if (key_waiting == -1)
 	{
@@ -912,6 +920,7 @@ void Key_Event (int key, qboolean down, unsigned time)
 	if (down)
 	{
 		key_repeats[key]++;
+
 		if (key != K_BACKSPACE 
 			&& key != K_PAUSE 
 			&& key != K_PGUP 
