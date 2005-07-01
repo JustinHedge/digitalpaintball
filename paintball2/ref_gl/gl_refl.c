@@ -44,6 +44,9 @@ R_init_refl
 sets everything up 
 ================
 */
+
+image_t *Draw_FindPic(const char *name);
+
 void R_init_refl (int maxNoReflections)
 {
 	//===========================
@@ -206,7 +209,7 @@ void R_add_refl (float Z, float distance)
 	for (; i < g_num_refl; i++)
 	{
 		// if this is a duplicate entry then we don't want to add anything
-		if (fabs(g_refl_Z[i] - Z) < 0.1)
+		if (fabs(g_refl_Z[i] - Z) < 4.0f)
 			return;
 	}
 
@@ -453,8 +456,8 @@ void R_UpdateReflTex (refdef_t *fd)
 	// go through each reflection and render it
 	for (g_active_refl = 0; g_active_refl < g_num_refl; g_active_refl++)
 	{
-		qglClearColor(0, 0, 0, 1);								//clear screen
-		qglClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//qglClearColor(0, 0, 0, 1);								//clear screen
+		qglClear(/*GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT);
 		
 		R_RenderView(fd);	// draw the scene here!
 

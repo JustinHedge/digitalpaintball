@@ -343,7 +343,7 @@ void EmitWaterPolys (msurface_t *fa)
 
 				// Make sure polygons are on the same plane
 				// Fix for not perfectly flat water on base1 - strange ..
-				else if (fabs(zValue - v[2]) > 2.0f)
+				else if (fabs(zValue - v[2]) > 4.0f)
 					waterNotFlat = true;
 			}
 		}
@@ -415,7 +415,7 @@ void EmitWaterPolys (msurface_t *fa)
 	for (g_active_refl = 0; g_active_refl < g_num_refl; g_active_refl++)
 	{
 		// if we find which reflection to bind
-		if (fabs(g_refl_Z[g_active_refl] - zValue) < 0.1)
+		if (fabs(g_refl_Z[g_active_refl] - zValue) < 4.0f)
 		{
 			if (1 && gl_state.fragment_program) // jitwater
 			{
@@ -784,6 +784,7 @@ void MakeSkyVec (float s, float t, int axis)
 	for (j=0; j<3; j++)
 	{
 		k = st_to_vec[axis][j];
+
 		if (k < 0)
 			v[j] = -b[-k - 1];
 		else
@@ -798,14 +799,15 @@ void MakeSkyVec (float s, float t, int axis)
 		s = sky_min;
 	else if (s > sky_max)
 		s = sky_max;
+
 	if (t < sky_min)
 		t = sky_min;
 	else if (t > sky_max)
 		t = sky_max;
 
 	t = 1.0 - t;
-	qglTexCoord2f (s, t);
-	qglVertex3fv (v);
+	qglTexCoord2f(s, t);
+	qglVertex3fv(v);
 }
 
 /*
@@ -924,7 +926,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 	if ((s = strchr(skyname, ' ')))
 		*s = 0;
 
-	for (i=0; i<6; i++)
+	for (i = 0; i < 6; i++)
 	{
 		// chop down rotating skies for less memory
 		if (gl_skymip->value)// || skyrotate)
