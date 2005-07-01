@@ -906,8 +906,8 @@ void R_SetupFrame(void)
 			vec3_t temp;
 			
 			leaf = Mod_PointInLeaf(r_origin, r_worldmodel);
-			r_viewcluster = leaf->cluster;
-			VectorCopy(r_origin, temp);
+			temp[0] = g_refl_X[g_active_refl];
+			temp[1] = g_refl_Y[g_active_refl];
 
 			if (r_newrefdef.rdflags & RDF_UNDERWATER)
 				temp[2] = g_refl_Z[g_active_refl] - 1; // just above water level
@@ -1415,6 +1415,7 @@ R_RenderFrame
 */
 void R_RenderFrame(refdef_t *fd)
 {
+#if 1
 	// === jitwater
 	g_refl_enabled = false;
 
@@ -1431,7 +1432,34 @@ void R_RenderFrame(refdef_t *fd)
 		R_DrawDebugReflTexture();
 
 	if (!g_refl_enabled)
-		R_clear_refl(); // todo - necessary?
+		R_clear_refl();
+#else
+	//start MPO
+	if (gl_reflection->value)
+	{
+		R_clear_refl();								//clear our reflections found in last frame
+		R_RecursiveFindRefl(r_worldmodel->nodes);	//find reflections for this frame
+		R_UpdateReflTex(fd);						//render reflections to textures
+	}
+	else
+	{
+		R_clear_refl();
+	}
+	// end MPO
+
+  	R_RenderView(fd);
+	R_SetLightLevel();
+	R_SetGL2D();
+
+	// start MPO
+	// if debugging is enabled and reflections are enabled.. draw it
+	if ((gl_reflection_debug->value) && (g_refl_enabled))
+		R_DrawDebugReflTexture();
+
+	if(!g_refl_enabled)
+		R_clear_refl();
+	// end MPO
+#endif
 }
 
 

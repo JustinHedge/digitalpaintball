@@ -17,6 +17,8 @@ unsigned int g_reflTexH;
 int		g_num_refl		= 0;	// how many reflections we need to generate
 int		g_active_refl	= 0;	// which reflection is being rendered at the moment
 
+float	*g_refl_X;
+float	*g_refl_Y;
 float	*g_refl_Z;				// the Z (vertical) value of each reflection
 float	*g_waterDistance;		// the rough distance from player to water .. we want to render the closest water surface.
 int		*g_tex_num;				// corresponding texture numbers for each reflection
@@ -159,16 +161,22 @@ void R_setupArrays (int maxNoReflections)
 {
 	R_clear_refl();
 
+	free(g_refl_X);
+	free(g_refl_Y);
 	free(g_refl_Z);
 	free(g_tex_num);
 	free(g_waterDistance);
 
+	g_refl_X		= (float *)	malloc ( sizeof(float) * maxNoReflections );
+	g_refl_Y		= (float *)	malloc ( sizeof(float) * maxNoReflections );
 	g_refl_Z		= (float *)	malloc ( sizeof(float) * maxNoReflections );
 	g_waterDistance	= (float *)	malloc ( sizeof(float) * maxNoReflections );
 	g_tex_num		= (int   *) malloc ( sizeof(int)   * maxNoReflections );
 	
-	memset(g_refl_Z			, 0, sizeof(float));	//initilise to zero
-	memset(g_waterDistance	, 0, sizeof(float));	//to stop fuck ups
+	memset(g_refl_X			, 0, sizeof(float));
+	memset(g_refl_Y			, 0, sizeof(float));
+	memset(g_refl_Z			, 0, sizeof(float));
+	memset(g_waterDistance	, 0, sizeof(float));
 
 	maxReflections = maxNoReflections;
 }
@@ -194,9 +202,11 @@ R_add_refl
 creates an array of reflections
 ================
 */
-void R_add_refl (float Z, float distance)
+void R_add_refl (float x, float y, float z)
 {
+	float distance;
 	int i = 0;
+	vec3_t v, v2;
 
 	if (!maxReflections)
 		return;		//safety check.
@@ -209,14 +219,20 @@ void R_add_refl (float Z, float distance)
 	for (; i < g_num_refl; i++)
 	{
 		// if this is a duplicate entry then we don't want to add anything
-		if (fabs(g_refl_Z[i] - Z) < 4.0f)
+		if (fabs(g_refl_Z[i] - z) < 4.0f)
 			return;
 	}
+
+	VectorSet(v, x, y, z);
+	VectorSubtract(v, r_newrefdef.vieworg, v2);
+	distance = VectorLength(v2);
 
 	// make sure we have room to add
 	if (g_num_refl < maxReflections)
 	{
-		g_refl_Z[g_num_refl]			= Z;
+		g_refl_X[g_num_refl]			= x;
+		g_refl_Y[g_num_refl]			= y;
+		g_refl_Z[g_num_refl]			= z;
 		g_waterDistance[g_num_refl ]	= distance;
 		g_num_refl++;
 	}
@@ -225,11 +241,13 @@ void R_add_refl (float Z, float distance)
 		// we want to use the closest surface
 		// not just any random surface
 		// good for when 1 reflection enabled.
-		for (i=0; i < g_num_refl; i++)
+		for (i = 0; i < g_num_refl; i++)
 		{
 			if (distance < g_waterDistance[i])
 			{
-				g_refl_Z[i]			= Z;
+				g_refl_X[i]			= x;
+				g_refl_Y[i]			= y;
+				g_refl_Z[i]			= z;
 				g_waterDistance[i]	= distance;
 				return;	//lets go
 			}
@@ -310,6 +328,7 @@ static int txm_genTexObject(unsigned char *texData, int w, int h,
 	return texNum;
 }
 
+#if 0
 // based off of R_RecursiveWorldNode,
 // this locates all reflective surfaces and their associated height
 // old method - delete this if you want
@@ -408,7 +427,7 @@ void R_RecursiveFindRefl (mnode_t *node)
 		{
 			// and if it is flat on the Z plane ...
 			if (plane->type == PLANE_Z)
-				R_add_refl(surf->polys->verts[0][2], 0);
+				R_add_refl(surf->polys->verts[0][0], surf->polys->verts[0][1], surf->polys->verts[0][2]);
 		}
 		// stop MPO
 	}
@@ -416,6 +435,7 @@ void R_RecursiveFindRefl (mnode_t *node)
 	// recurse down the back side
 	R_RecursiveFindRefl(node->children[!side]);
 }
+#endif
 
 /*
 ================

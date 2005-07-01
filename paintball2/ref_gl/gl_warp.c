@@ -407,7 +407,8 @@ void EmitWaterPolys (msurface_t *fa)
 		v = p->verts[0];
 		VectorSubtract(v, r_newrefdef.vieworg, distanceVector);
 		distance = VectorLength(distanceVector);
-		R_add_refl(zValue, distance);
+		//R_add_refl(zValue, distance);
+		R_add_refl(v[0], v[1], zValue);
 		g_refl_enabled = true;
 	}
 
