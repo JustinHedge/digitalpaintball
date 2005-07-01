@@ -61,7 +61,7 @@ void SV_New_f (void)
 	int			playernum;
 	edict_t		*ent;
 
-	Com_DPrintf ("New() from %s\n", sv_client->name);
+	Com_DPrintf("New() from %s\n", sv_client->name);
 
 	if (sv_client->state != cs_connected)
 	{
@@ -72,7 +72,7 @@ void SV_New_f (void)
 	// demo servers just dump the file message
 	if (sv.state == ss_demo)
 	{
-		SV_BeginDemoserver ();
+		SV_BeginDemoserver();
 		return;
 	}
 
@@ -93,6 +93,7 @@ void SV_New_f (void)
 		playernum = -1;
 	else
 		playernum = sv_client - svs.clients;
+
 	MSG_WriteShort (&sv_client->netchan.message, playernum);
 
 	// send full levelname
@@ -244,19 +245,18 @@ void SV_Begin_f (void)
 	Com_DPrintf ("Begin() from %s\n", sv_client->name);
 
 	// handle the case of a level changing while a client was connecting
-	if ( atoi(Cmd_Argv(1)) != svs.spawncount )
+	if (atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
-		Com_Printf ("SV_Begin_f from different level\n");
-		SV_New_f ();
+		Com_Printf("SV_Begin_f from different level\n");
+		SV_New_f();
 		return;
 	}
 
 	sv_client->state = cs_spawned;
 	
 	// call the game begin function
-	ge->ClientBegin (sv_player);
-
-	Cbuf_InsertFromDefer ();
+	ge->ClientBegin(sv_player);
+	Cbuf_InsertFromDefer();
 }
 
 //=============================================================================
