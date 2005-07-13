@@ -286,7 +286,7 @@ void Quat_FromEulerAngle (const vec3_t angle, quat_t q);
 //=============================================
 
 char *COM_SkipPath (char *pathname);
-void COM_StripExtension (char *in, char *out);
+void COM_StripExtension (const char *in, char *out);
 void COM_FileBase (char *in, char *out);
 void COM_FilePath (char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);
