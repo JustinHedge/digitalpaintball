@@ -2444,7 +2444,8 @@ void R_DrawBeam(entity_t *e)
 //===================================================================
 
 struct model_s	*R_RegisterModel(const char *name);
-struct image_s	*R_RegisterSkin(const char *name);
+//struct image_s	*R_RegisterSkin(const char *name);
+void	R_RegisterSkin (const char *name, struct model_s *model, struct image_s **skins); // jitskm
 struct image_s	*Draw_FindPic(const char *name);
 void	R_BeginRegistration(const char *map);
 void	R_SetSky(const char *name, float rotate, vec3_t axis);

@@ -318,15 +318,22 @@ void EmitWaterPolys (msurface_t *fa)
 	float		rdt = r_newrefdef.time;
 	float		zValue = 0.0;			// height of water
 	qboolean	waterNotFlat = false;
+	qboolean	flowing;
 	//==============================
 
 	if (g_drawing_refl)
 		return;	// we don't want any water drawn while we are doing our reflection
 
 	if (fa->texinfo->flags & SURF_FLOWING)
+	{
 		scroll = -64.0f * ((r_newrefdef.time * 0.5f) - (int)(r_newrefdef.time * 0.5f));
+		flowing = true;
+	}
 	else
+	{
 		scroll = 0.0f;
+		flowing = false;
+	}
 
 	// skip the water texture on transparent surfaces
 	if (r_reflectivewater->value && (fa->texinfo->flags & (SURF_TRANS33|SURF_TRANS66)))
@@ -343,7 +350,7 @@ void EmitWaterPolys (msurface_t *fa)
 
 				// Make sure polygons are on the same plane
 				// Fix for not perfectly flat water on base1 - strange ..
-				else if (fabs(zValue - v[2]) > 4.0f)
+				else if (fabs(zValue - v[2]) > 8.0f)
 					waterNotFlat = true;
 			}
 		}
@@ -416,14 +423,16 @@ void EmitWaterPolys (msurface_t *fa)
 	for (g_active_refl = 0; g_active_refl < g_num_refl; g_active_refl++)
 	{
 		// if we find which reflection to bind
-		if (fabs(g_refl_Z[g_active_refl] - zValue) < 4.0f)
+		if (fabs(g_refl_Z[g_active_refl] - zValue) < 8.0f)
 		{
 			if (1 && gl_state.fragment_program) // jitwater
 			{
 				qglEnable(GL_FRAGMENT_PROGRAM_ARB);
 				qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_program_id);
-				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, r_newrefdef.time * 0.2f, 1.0f, 1.0f, 1.0f);
-				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, r_newrefdef.time * -0.2f, 10.0f, 1.0f, 1.0f);
+				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
+					r_newrefdef.time * (flowing ? -0.3f : 0.2f), 1.0f, 1.0f, 1.0f);
+				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1,
+					r_newrefdef.time * -0.2f, 10.0f, 1.0f, 1.0f);
 				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2,
 					r_newrefdef.vieworg[0], r_newrefdef.vieworg[1], r_newrefdef.vieworg[2], 1.0f);
 			}

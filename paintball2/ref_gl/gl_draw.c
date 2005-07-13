@@ -64,13 +64,16 @@ void Draw_InitLocal (void)
 		Sys_Error("Invalid or missing char_colors.tga.");
 	}
 }
+
+
 void Draw_InitLocalOld (void) // jitest
 {
 	int width, height;
 	void LoadTGA (char *name, byte **pic, int *width, int *height);
+
 	// load console characters (don't bilerp characters)
-	draw_chars = GL_FindImage ("pics/conchars.pcx", it_pic);
-	GL_Bind( draw_chars->texnum );
+	draw_chars = GL_FindImage("pics/conchars.pcx", it_pic);
+	GL_Bind(draw_chars->texnum);
 	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	LoadTGA("pics/char_colors.tga", &char_colors, &width, &height); // jittext

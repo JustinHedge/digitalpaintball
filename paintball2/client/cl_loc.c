@@ -265,7 +265,8 @@ void CL_AddViewLocs (void)
 		ent.origin[1] = locations[i].origin[1] * 0.125f;
 		ent.origin[2] = locations[i].origin[2] * 0.125f;
 		ent.skinnum = 0;
-		ent.skin = NULL;
+//		ent.skin = NULL;
+		memset(ent.skins, 0, sizeof(ent.skins));
 		ent.model = NULL;
 
 		if (i == index)

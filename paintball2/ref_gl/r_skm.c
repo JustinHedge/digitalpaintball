@@ -39,6 +39,7 @@ SKM MODELS
 static float	shadelight[3]; // jitskm
 static vec3_t	inVertsArray[4096]; // jitskm
 static vec3_t	inNormalsArray[4096]; // jitskm
+static vec3_t	colorArray[4096]; // jitskm
 
 static void SKM_TransformBoneposes (mskmodel_t *model, bonepose_t *boneposes,
 									bonepose_t *sourceboneposes, vec3_t angle, vec3_t origin)
@@ -350,7 +351,7 @@ void Mod_LoadSkeletalModel (model_t *mod, model_t *parent, void *buffer)
 
 			ptr = (char *)buf;
 
-			while(ptr)
+			while (ptr)
 			{
 				token = COM_ParseExt(&ptr, true);
 
@@ -729,7 +730,7 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 	mskvertex_t		*skmverts;
 	mskbonevert_t	*boneverts;
 	int				numtris, numverts; // jit
-	float			light; // jit
+	register float	light; // jit
 	int				*indexes; // jit
 //	entity_t		*e = mb->entity;
 	mskmodel_t		*skmodel = mod->skmodel;
@@ -797,9 +798,9 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 
 		if (e->flags & RF_SHELL_HALF_DAM)
 		{
-				shadelight[0] = 0.56;
-				shadelight[1] = 0.59;
-				shadelight[2] = 0.45;
+			shadelight[0] = 0.56;
+			shadelight[1] = 0.59;
+			shadelight[2] = 0.45;
 		}
 
 		if (e->flags & RF_SHELL_DOUBLE)
@@ -861,9 +862,9 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 		float	scale;
 		float	min;
 
-		scale = 0.1 * sin(r_newrefdef.time*7);
+		scale = 0.1f * sin(r_newrefdef.time * 7.0f);
 
-		for (i=0; i<3; i++)
+		for (i = 0; i < 3; i++)
 		{
 			min = shadelight[i] * 0.8;
 			shadelight[i] += scale;
@@ -889,11 +890,6 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 	// translate vertexes.
 	for (j = 0, skmverts = mesh->vertexes; j < numverts; j++, skmverts++)
 	{
-		//VectorCopy(mesh->vertexes[j].verts->origin, inVertsArray[j]);
-		//VectorClear(inVertsArray[j]);
-		//VectorAdd(move, inVertsArray[j], inVertsArray[j]);
-		
-		//VectorCopy(move, inVertsArray[j]);
 		VectorClear(inVertsArray[j]);
 		VectorClear(inNormalsArray[j]);
 
@@ -928,10 +924,12 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 	qglShadeModel(GL_SMOOTH);
 	qglColor3fv(shadelight);
 
-	if (e->skin)
+	//if (e->skin)
+	if (e->skins[meshnum]) // jitskm
 	{
 		// multiplayer skin
-		GL_Bind(e->skin->texnum); // todo -- skin file loading
+		//GL_Bind(e->skin->texnum); // todo -- skin file loading
+		GL_Bind(e->skins[meshnum]->texnum); // todo -- skin file loading
 	}
 	else
 	{
@@ -943,6 +941,27 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 			GL_Bind(skin->texnum);
 	}
 
+#if 1
+	// Lighting done in software for now -- just vertex colors.  Simulates Q2 style lighting.
+	for (j = 0; j < numverts; j++)
+	{
+		light = (DotProduct(inNormalsArray[j], default_lightdir) + 1.0f) / 2.0f * 1.4f + 0.6f;
+		VectorScale(shadelight, light, colorArray[j]);
+	}
+
+	// Actually render the model
+	qglEnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
+	qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	qglEnableClientState(GL_VERTEX_ARRAY);
+	qglColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
+	qglVertexPointer(3, GL_FLOAT, 0, inVertsArray);
+	qglTexCoordPointer(2, GL_FLOAT, 0, mesh->stcoords);
+	qglDrawElements(GL_TRIANGLES, numtris*3, GL_UNSIGNED_INT, indexes);
+	qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	qglDisableClientState(GL_VERTEX_ARRAY);
+	qglDisableClientState(GL_COLOR_ARRAY);
+
+#else
 	// Good 'ol immediate mode, just to get it working...
 	qglBegin(GL_TRIANGLES);
 
@@ -954,10 +973,11 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 		qglColor3f(light * shadelight[0], light * shadelight[1], light * shadelight[2]);
 		qglTexCoord2fv(mesh->stcoords[indexes[j]]);
 		qglVertex3fv(inVertsArray[indexes[j]]);
-		
 	}
 
 	qglEnd();
+#endif
+
 //#define DRAW_NORMALS
 #ifdef DRAW_NORMALS
 	qglColor3f(1, 0, 0);

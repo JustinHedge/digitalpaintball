@@ -217,7 +217,8 @@ void V_TestEntities (void)
 			cl.v_right[j]*r;
 
 		ent->model = cl.baseclientinfo.model;
-		ent->skin = cl.baseclientinfo.skin;
+		//ent->skin = cl.baseclientinfo.skin;
+		memcpy(ent->skins, cl.baseclientinfo.skins, sizeof(image_t*) * MAX_MESHSKINS); // jitskm
 	}
 }
 
@@ -367,8 +368,10 @@ void CL_PrepRefresh (void)
 		//Sys_SendKeyEvents ();	// pump message loop 
 		// jitest
 	}
+
 	Sys_SendKeyEvents(); // jit, moved	
 	Com_Printf("                                     \r");
+
 	for (i=0; i<MAX_CLIENTS; i++)
 	{
 		if (!cl.configstrings[CS_PLAYERSKINS+i][0])
@@ -381,6 +384,7 @@ void CL_PrepRefresh (void)
 		CL_ParseClientinfo(i);
 		Com_Printf("                                     \r");
 	}
+
 	Sys_SendKeyEvents(); // jit, moved
 	CL_LoadClientinfo(&cl.baseclientinfo, "unnamed\\male/pb2y");
 

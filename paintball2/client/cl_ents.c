@@ -695,7 +695,7 @@ void CL_AddPacketEntities (frame_t *frame)
 
 	memset (&ent, 0, sizeof(ent));
 
-	for (pnum = 0 ; pnum<frame->num_entities ; pnum++)
+	for (pnum = 0; pnum < frame->num_entities; pnum++)
 	{
 		s1 = &cl_parse_entities[(frame->parse_entities+pnum)&(MAX_PARSE_ENTITIES-1)];
 
@@ -704,7 +704,7 @@ void CL_AddPacketEntities (frame_t *frame)
 		effects = s1->effects;
 		renderfx = s1->renderfx;
 
-			// set frame
+		// set frame
 		if (effects & EF_ANIM01)
 			ent.frame = autoanim & 1;
 		else if (effects & EF_ANIM23)
@@ -753,8 +753,8 @@ void CL_AddPacketEntities (frame_t *frame)
 		if (renderfx & (RF_FRAMELERP|RF_BEAM))
 		{	// step origin discretely, because the frames
 			// do the animation properly
-			VectorCopy (cent->current.origin, ent.origin);
-			VectorCopy (cent->current.old_origin, ent.oldorigin);
+			VectorCopy(cent->current.origin, ent.origin);
+			VectorCopy(cent->current.old_origin, ent.oldorigin);
 		}
 		else
 		{	// interpolate origin
@@ -768,7 +768,7 @@ void CL_AddPacketEntities (frame_t *frame)
 		// create a new entity
 	
 		// tweak the color of beams
-		if ( renderfx & RF_BEAM )
+		if (renderfx & RF_BEAM)
 		{	// the four beam colors are encoded in 32 bits of skinnum (hack)
 			ent.alpha = 0.30;
 			ent.skinnum = (s1->skinnum >> ((rand() % 4)*8)) & 0xff;
@@ -782,19 +782,22 @@ void CL_AddPacketEntities (frame_t *frame)
 				// use custom player skin
 				ent.skinnum = 0;
 				ci = &cl.clientinfo[s1->skinnum & 0xff];
-				ent.skin = ci->skin;
+//				ent.skin = ci->skin;
+				memcpy(ent.skins, ci->skins, sizeof(ent.skins)); // jitskm
 				ent.model = ci->model;
 
-				if (!ent.skin || !ent.model)
+				if (!ent.skins[0] || !ent.model)
 				{
-					ent.skin = cl.baseclientinfo.skin;
+					//ent.skin = cl.baseclientinfo.skin;
+					memcpy(ent.skins, cl.baseclientinfo.skins, sizeof(ent.skins));
 					ent.model = cl.baseclientinfo.model;
 				}
 			}
 			else
 			{
 				ent.skinnum = s1->skinnum;
-				ent.skin = NULL;
+				//ent.skin = NULL;
+				memset(ent.skins, 0, sizeof(ent.skins)); // jitskm
 				ent.model = cl.model_draw[s1->modelindex];
 			}
 		}
@@ -938,7 +941,8 @@ void CL_AddPacketEntities (frame_t *frame)
 			V_AddEntity (&ent);
 		}
 
-		ent.skin = NULL;		// never use a custom skin on others
+		//ent.skin = NULL;		// never use a custom skin on others
+		memset(ent.skins, 0, sizeof(ent.skins)); // jitskm
 		ent.skinnum = 0;
 		ent.flags = 0;
 		ent.alpha = 0;

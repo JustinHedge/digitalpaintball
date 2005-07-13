@@ -608,18 +608,17 @@ void SCR_Loading_f (void)
 SCR_TimeRefresh_f
 ================
 */
-int entitycmpfnc( const entity_t *a, const entity_t *b )
+int entitycmpfnc (const entity_t *a, const entity_t *b)
 {
-	/*
-	** all other models are sorted by model then skin
-	*/
-	if ( a->model == b->model )
+	// all other models are sorted by model then skin
+	if (a->model == b->model)
 	{
-		return ( ( int ) a->skin - ( int ) b->skin );
+		 // todo - for multi-skin meshes, this probably isn't going to buy us anything...
+		return ((int)a->skins[0] - (int)b->skins[0]);
 	}
 	else
 	{
-		return ( ( int ) a->model - ( int ) b->model );
+		return ((int)a->model - (int)b->model);
 	}
 }
 

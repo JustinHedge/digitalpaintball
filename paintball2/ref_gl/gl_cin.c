@@ -428,24 +428,22 @@ qboolean CIN_DrawCinematic (void)
 	unsigned		*out;
 
 	if (cin->time <= 0)
-	{
 		return false;
-	}
 
 	if (!cin->pic)
-	{
 		return true;
-	}
 
-	GL_Bind (cin->texnum);
+	GL_Bind(cin->texnum);
 
 	out = image;
-	fracstep = cin->width*0x10000/cin->p2_width;
-	for (i=0 ; i<cin->p2_height ; i++, out += cin->p2_width)
+	fracstep = cin->width * 0x10000 / cin->p2_width;
+
+	for (i = 0; i < cin->p2_height; i++, out += cin->p2_width)
 	{
 		inrow = cin->pic + cin->width*(i*cin->height/cin->p2_height);
 		frac = fracstep >> 1;
-		for (j=0 ; j<cin->p2_width ; j+=4)
+
+		for (j = 0; j < cin->p2_width; j += 4)
 		{
 			out[j] = cin->palette[inrow[frac>>16]];
 			frac += fracstep;
@@ -458,8 +456,8 @@ qboolean CIN_DrawCinematic (void)
 		}
 	}
 
-	qglTexImage2D (GL_TEXTURE_2D, 0, gl_tex_solid_format, cin->p2_width, cin->p2_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-
+	qglTexImage2D(GL_TEXTURE_2D, 0, gl_tex_solid_format, cin->p2_width,
+		cin->p2_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 

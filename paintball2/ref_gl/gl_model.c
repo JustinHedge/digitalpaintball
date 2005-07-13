@@ -652,9 +652,9 @@ void Mod_LoadFaces (lump_t *l)
 
 	currentmodel = loadmodel;
 
-	GL_BeginBuildingLightmaps (loadmodel);
+	GL_BeginBuildingLightmaps(loadmodel);
 
-	for ( surfnum=0 ; surfnum<count ; surfnum++, in++, out++)
+	for (surfnum = 0; surfnum < count; surfnum++, in++, out++)
 	{
 		out->firstedge = LittleLong(in->firstedge);
 		out->numedges = LittleShort(in->numedges);		
@@ -668,22 +668,27 @@ void Mod_LoadFaces (lump_t *l)
 
 		out->plane = loadmodel->planes + planenum;
 
-		ti = LittleShort (in->texinfo);
+		ti = LittleShort(in->texinfo);
+
 		if (ti < 0 || ti >= loadmodel->numtexinfo)
-			ri.Sys_Error (ERR_DROP, "MOD_LoadBmodel: bad texinfo number");
+			ri.Sys_Error(ERR_DROP, "MOD_LoadBmodel: bad texinfo number");
+
 		out->texinfo = loadmodel->texinfo + ti;
+		CalcSurfaceExtents(out);
 
-		CalcSurfaceExtents (out);
-
-	// lighting info
-
-		for (i=0 ; i<MAXLIGHTMAPS ; i++)
+		// lighting info
+		for (i = 0; i < MAXLIGHTMAPS; i++)
 			out->styles[i] = in->styles[i];
+
 		i = LittleLong(in->lightofs);
-		if (i == -1) {
+
+		if (i == -1)
+		{
 			out->samples = NULL;
 			out->stain_samples = NULL;
-		} else {
+		}
+		else
+		{
 			out->samples = loadmodel->lightdata + i;
 			out->stain_samples = loadmodel->staindata + i;
 		}
@@ -693,24 +698,27 @@ void Mod_LoadFaces (lump_t *l)
 		if (out->texinfo->flags & SURF_WARP)
 		{
 			out->flags |= SURF_DRAWTURB;
-			for (i=0 ; i<2 ; i++)
+
+			for (i = 0; i < 2; i++)
 			{
 				out->extents[i] = 16384;
 				out->texturemins[i] = -8192;
 			}
+
 			GL_SubdivideSurface (out);	// cut up polygon for warps
 		}
 
 		// create lightmaps and polygons
-		if ( !(out->texinfo->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP) ) )
-			GL_CreateSurfaceLightmap (out);
+		//if (!(out->texinfo->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP)))
+		if (!(out->texinfo->flags & (SURF_WARP|SURF_SKY))) // jitlightmap
+			GL_CreateSurfaceLightmap(out);
 
-//		if (!(out->texinfo->flags & SURF_WARP)) 
+//		if (!(out->texinfo->flags & SURF_WARP))
 //			GL_BuildPolygonFromSurface(out);
 
 
 // Heffo - Surface Subdivision
-		if (! (out->texinfo->flags & SURF_WARP) )
+		if (!(out->texinfo->flags & SURF_WARP))
 		{
 			if (!out->texinfo->script)
 			{
@@ -1404,7 +1412,6 @@ struct model_s *R_RegisterModel (const char *name) // jit -- should be const
 				// load the skin list for index skins if it exists
 				if (len > 0)
 				{
-
 					skinname2 = strtok(pSkinList, "\r\n");
 
 					for (j = 0; j < MAX_MD2SKINS && skinname2; j++)

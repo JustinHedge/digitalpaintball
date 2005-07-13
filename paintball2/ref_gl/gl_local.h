@@ -291,7 +291,7 @@ char	*va(char *format, ...);
 // does a varargs printf into a temp buffer
 #endif
 
-void COM_StripExtension (char *in, char *out);
+void COM_StripExtension (const char *in, char *out);
 
 void	Draw_GetPicSize (int *w, int *h, char *name);
 void	Draw_Pic (int x, int y, char *name);
@@ -310,7 +310,8 @@ int		Draw_GetPalette (void);
 
 void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight);
 
-struct image_s *R_RegisterSkin(const char *name);
+//struct image_s *R_RegisterSkin(const char *name);
+void R_RegisterSkin (const char *name, struct model_s *model, struct image_s **skins);
 
 void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int *height);
 image_t *GL_LoadPic (const char *name, byte *pic, int width, int height, imagetype_t type, int bits);

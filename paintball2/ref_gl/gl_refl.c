@@ -219,7 +219,7 @@ void R_add_refl (float x, float y, float z)
 	for (; i < g_num_refl; i++)
 	{
 		// if this is a duplicate entry then we don't want to add anything
-		if (fabs(g_refl_Z[i] - z) < 4.0f)
+		if (fabs(g_refl_Z[i] - z) < 8.0f)
 			return;
 	}
 

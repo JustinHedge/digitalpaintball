@@ -1834,9 +1834,75 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 R_RegisterSkin
 ===============
 */
-struct image_s *R_RegisterSkin (const char *name)
+void R_RegisterSkin (const char *name, struct model_s *model, struct image_s **skins) // jitskm
 {
-	return GL_FindImage (name, it_skin);
+	char skinname[MAX_QPATH];
+	int len;
+	char *skindata;
+	mskmodel_t *skmodel;
+	int i, max = MAX_MESHSKINS;
+
+//	return GL_FindImage(name, it_skin);
+	if (!skins)
+		return;
+
+	if (!model || !model->skmodel)
+	{
+		skins[0] = GL_FindImage(name, it_skin);
+		return;
+	}
+
+	skmodel = model->skmodel;
+	
+	if (skmodel->nummeshes < max)
+		max = skmodel->nummeshes;
+
+	COM_StripExtension(name, skinname);
+	strcat(skinname, ".skin");
+	len = ri.FS_LoadFileZ(skinname, &skindata);
+
+	if (len < 0)
+	{
+		skins[0] = GL_FindImage(name, it_skin);
+	}
+	else
+	{
+		char *pskindata = skindata;
+		char *line = COM_Parse(&pskindata);
+		char *s;
+
+		while (pskindata)
+		{
+			s = strchr(line, ',');
+
+			if (!s)
+			{
+				line = COM_Parse(&pskindata);
+				continue;
+			}
+
+			*s = 0;
+			s++;
+
+			for (i = 0; i < max; ++i)
+			{
+				if (Q_strcasecmp(skmodel->meshes[i].shadername, line) == 0)
+				{
+					skins[i] = GL_FindImage(s, it_skin);
+					break;
+				}
+			}
+
+			line = COM_Parse(&pskindata);
+		}
+
+		ri.FS_FreeFile(skindata);
+	}
+
+	// make sure there are no null skins
+	for (i = 0; i < max; ++i)
+		if (!skins[i])
+			skins[i] = r_notexture;
 }
 
 

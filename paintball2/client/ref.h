@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	MAX_PARTICLES	4096
 #define	MAX_LIGHTSTYLES	256
 
+#define MAX_MESHSKINS	32 // jitskm
+
 #define POWERSUIT_SCALE		4.0F
 
 #define SHELL_RED_COLOR		0xF2
@@ -74,7 +76,8 @@ typedef struct entity_s
 	int		lightstyle;				// for flashing entities
 	float	alpha;					// ignore if RF_TRANSLUCENT isn't set
 
-	struct	image_s	*skin;			// NULL for inline skin
+	//struct	image_s	*skin;			// NULL for inline skin
+	struct	image_s *skins[MAX_MESHSKINS]; // jitskm
 	int		flags;
 
 	// jit: for smoke:
@@ -217,7 +220,8 @@ typedef struct
 	// slash will not use the "pics/" prefix or the ".pcx" postfix)
 	void	(*BeginRegistration) (char *map);
 	struct model_s *(*RegisterModel) (char *name);
-	struct image_s *(*RegisterSkin) (char *name);
+	//struct image_s *(*RegisterSkin) (char *name);
+	void	(*RegisterSkin) (const char *name, struct model_s *model, struct image_s **skins); // jitskm
 	struct image_s *(*RegisterPic) (char *name);
 	void	(*SetSky) (char *name, float rotate, vec3_t axis);
 	void	(*EndRegistration) (void);

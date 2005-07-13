@@ -86,7 +86,8 @@ typedef struct
 {
 	char	name[MAX_QPATH];
 	char	cinfo[MAX_QPATH];
-	struct image_s	*skin;
+	//struct image_s	*skin;
+	struct image_s	*skins[MAX_MESHSKINS]; // jitskm
 	struct image_s	*icon;
 	char	iconname[MAX_QPATH];
 	struct model_s	*model;

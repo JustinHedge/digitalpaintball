@@ -1150,9 +1150,9 @@ void R_DrawAliasModel (entity_t *e)
 	e->angles[PITCH] = -e->angles[PITCH];	// sigh.
 
 	// select skin
-	if (currententity->skin)
+	if (currententity->skins[0])
 	{
-		skin = currententity->skin;	// custom player skin
+		skin = currententity->skins[0];	// custom player skin
 	}
 	else
 	{
