@@ -52,6 +52,7 @@ cvar_t	*hostname;
 cvar_t	*public_server;			// should heartbeats be sent
 
 cvar_t	*sv_reconnect_limit;	// minimum seconds between connect messages
+cvar_t	*sv_noextascii = NULL;	// jit
 
 void Master_Shutdown (void);
 
@@ -620,23 +621,26 @@ void SV_ReadPackets (void)
 
 		// read the qport out of the message so we can fix up
 		// stupid address translating routers
-		MSG_BeginReading (&net_message);
-		MSG_ReadLong (&net_message);		// sequence number
-		MSG_ReadLong (&net_message);		// sequence number
-		qport = MSG_ReadShort (&net_message) & 0xffff;
+		MSG_BeginReading(&net_message);
+		MSG_ReadLong(&net_message);		// sequence number
+		MSG_ReadLong(&net_message);		// sequence number
+		qport = MSG_ReadShort(&net_message) & 0xffff;
 
 		// check for packets from connected clients
-		for (i=0, cl=svs.clients ; i<maxclients->value ; i++,cl++)
+		for (i = 0, cl = svs.clients; i < maxclients->value; i++, cl++)
 		{
 			if (cl->state == cs_free)
 				continue;
+
 			if (!NET_CompareBaseAdr (net_from, cl->netchan.remote_address))
 				continue;
+
 			if (cl->netchan.qport != qport)
 				continue;
+
 			if (cl->netchan.remote_address.port != net_from.port)
 			{
-				Com_Printf ("SV_ReadPackets: fixing up a translated port\n");
+				Com_Printf("SV_ReadPackets: fixing up a translated port\n");
 				cl->netchan.remote_address.port = net_from.port;
 			}
 
@@ -645,7 +649,7 @@ void SV_ReadPackets (void)
 				if (cl->state != cs_zombie)
 				{
 					cl->lastmessage = svs.realtime;	// don't timeout
-					SV_ExecuteClientMessage (cl);
+					SV_ExecuteClientMessage(cl);
 				}
 			}
 			break;
@@ -974,7 +978,8 @@ void SV_Init (void)
 	sv_showclamp   = Cvar_Get("showclamp", "0", 0);
 	sv_paused      = Cvar_Get("paused", "0", 0);
 	sv_timedemo    = Cvar_Get("timedemo", "0", 0);
-	sv_enforcetime = Cvar_Get("sv_enforcetime", "1", 0); // jit -- default to 1 to prevent speed hacks.
+	sv_enforcetime = Cvar_Get("sv_enforcetime", "120", 0); // jitspeedhackcheck
+	sv_noextascii  = Cvar_Get("sv_noextascii", "1", 0); // jit
 //	allow_fastdownloads = Cvar_Get("allow_fast_downloads", "1", CVAR_ARCHIVE); // jitdownload (incomplete)
 	allow_download          = Cvar_Get("allow_download", "1", CVAR_ARCHIVE);
 	allow_download_players  = Cvar_Get("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1
@@ -984,9 +989,9 @@ void SV_Init (void)
 
 	sv_noreload = Cvar_Get("sv_noreload", "0", 0);
 	sv_airaccelerate = Cvar_Get("sv_airaccelerate", "0", CVAR_LATCH);
-	public_server = Cvar_Get("public", "0", 0);
+	public_server = Cvar_Get("public", "1", 0);
 	sv_reconnect_limit = Cvar_Get("sv_reconnect_limit", "3", CVAR_ARCHIVE);
-	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
+	SZ_Init(&net_message, net_message_buffer, sizeof(net_message_buffer));
 }
 
 /*

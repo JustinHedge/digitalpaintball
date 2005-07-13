@@ -197,6 +197,7 @@ extern	cvar_t		*sv_noreload;			// don't reload level state when reentering
 extern	cvar_t		*sv_airaccelerate;		// don't reload level state when reentering
 											// development tool
 extern	cvar_t		*sv_enforcetime;
+extern	cvar_t		*sv_noextascii;			// jit
 
 extern	client_t	*sv_client;
 extern	edict_t		*sv_player;
