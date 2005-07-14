@@ -721,10 +721,8 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 {
 	int				i/*, meshnum*/;
 	int				j, k, l;
-//	int				features;
 	quat_t			quaternion;
 	float			frontlerp = 1.0 - backlerp;
-	//vec3_t			move/*, delta*/;
 	mskmesh_t		*mesh;
 	bonepose_t		*bonepose, *oldbonepose, *bp, *oldbp;
 	mskvertex_t		*skmverts;
@@ -732,9 +730,10 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 	int				numtris, numverts; // jit
 	register float	light; // jit
 	int				*indexes; // jit
-//	entity_t		*e = mb->entity;
 	mskmodel_t		*skmodel = mod->skmodel;
 	struct { vec3_t axis[3], origin; } skmbonepose[SKM_MAX_BONES], *pose, *out;
+	rscript_t		*rs; // jitrscript
+	image_t			*skin_image;
 
 //	if (!shadow &&(e->flags & RF_VIEWERMODEL) && !r_mirrorview && !r_portalview)
 //		return;
@@ -924,24 +923,16 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 	qglShadeModel(GL_SMOOTH);
 	qglColor3fv(shadelight);
 
-	//if (e->skin)
-	if (e->skins[meshnum]) // jitskm
-	{
-		// multiplayer skin
-		//GL_Bind(e->skin->texnum); // todo -- skin file loading
-		GL_Bind(e->skins[meshnum]->texnum); // todo -- skin file loading
-	}
-	else
-	{
-		register image_t *skin = mesh->skins[e->skinnum];
+	skin_image = e->skins[meshnum];
 
-		if (!skin)
-			GL_Bind(r_notexture->texnum);
-		else
-			GL_Bind(skin->texnum);
-	}
+	if (!skin_image)
+		skin_image = mesh->skins[e->skinnum];
 
-#if 1
+	if (!skin_image)
+		skin_image = r_notexture;
+
+	rs = skin_image->rscript;
+
 	// Lighting done in software for now -- just vertex colors.  Simulates Q2 style lighting.
 	for (j = 0; j < numverts; j++)
 	{
@@ -949,34 +940,177 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 		VectorScale(shadelight, light, colorArray[j]);
 	}
 
-	// Actually render the model
-	qglEnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
-	qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	qglEnableClientState(GL_VERTEX_ARRAY);
-	qglColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
-	qglVertexPointer(3, GL_FLOAT, 0, inVertsArray);
-	qglTexCoordPointer(2, GL_FLOAT, 0, mesh->stcoords);
-	qglDrawElements(GL_TRIANGLES, numtris*3, GL_UNSIGNED_INT, indexes);
-	qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	qglDisableClientState(GL_VERTEX_ARRAY);
-	qglDisableClientState(GL_COLOR_ARRAY);
-
-#else
-	// Good 'ol immediate mode, just to get it working...
-	qglBegin(GL_TRIANGLES);
-
-	for (j = 0; j < numtris*3; j++)
+	if (rs) // jitskm / jitrscript
 	{
-		// try to mimick q2's lighting as closely as possible
-		light = (DotProduct(inNormalsArray[indexes[j]], default_lightdir) + 1.0f) / 2.0f * 1.4f + 0.6f; // todo - optimize (should only be doing this once per vertex).
+		rs_stage_t *stage = rs->stage;
+		vec2_t *texcoords;
+		float txm, tym, alpha;
+		qboolean neednormals;
 
-		qglColor3f(light * shadelight[0], light * shadelight[1], light * shadelight[2]);
-		qglTexCoord2fv(mesh->stcoords[indexes[j]]);
-		qglVertex3fv(inVertsArray[indexes[j]]);
+		if (!rs->ready)
+			RS_ReadyScript(rs);
+
+		while (stage)
+		{
+			neednormals = false;
+
+			if (stage->anim_count)
+				GL_Bind(RS_Animate(stage));
+			else
+				GL_Bind(stage->texture->texnum);
+
+			if (stage->scroll.speedX)
+			{
+				switch (stage->scroll.typeX)
+				{
+				case 0:	// static
+					txm = rs_realtime*stage->scroll.speedX;
+					break;
+				case 1:	// sine
+					txm = sin(rs_realtime*stage->scroll.speedX);
+					break;
+				case 2:	// cosine
+					txm = cos(rs_realtime*stage->scroll.speedX);
+					break;
+				}
+			}
+			else
+			{
+				txm = 0;
+			}
+
+			if (stage->scroll.speedY)
+			{
+				switch (stage->scroll.typeY)
+				{
+				case 0:	// static
+					tym = rs_realtime*stage->scroll.speedY;
+					break;
+				case 1:	// sine
+					tym = sin(rs_realtime*stage->scroll.speedY);
+					break;
+				case 2:	// cosine
+					tym = cos(rs_realtime*stage->scroll.speedY);
+					break;
+				}
+			}
+			else
+			{
+				tym = 0;
+			}
+
+			if (stage->blendfunc.blend)
+			{
+				qglBlendFunc(stage->blendfunc.source, stage->blendfunc.dest);
+				GLSTATE_ENABLE_BLEND
+			}
+			else
+			{
+				GLSTATE_DISABLE_BLEND
+			}
+
+			if (stage->alphashift.min || stage->alphashift.speed)
+			{
+				if (!stage->alphashift.speed && stage->alphashift.min > 0) 
+				{
+					alpha = stage->alphashift.min;
+				} 
+				else if (stage->alphashift.speed) 
+				{
+					alpha = sin(rs_realtime * stage->alphashift.speed);
+
+					if (alpha < 0) 
+						alpha = -alpha;
+
+					if (alpha > stage->alphashift.max) 
+						alpha = stage->alphashift.max;
+
+					if (alpha < stage->alphashift.min) 
+						alpha = stage->alphashift.min;
+				}
+			}
+			else
+			{
+				alpha = 1.0f;
+			}
+
+			if (stage->tcGen == TC_GEN_ENVIRONMENT)
+			{
+				qglTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+				qglTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+				GLSTATE_ENABLE_TEXGEN
+				neednormals = true;
+			}
+
+			if (stage->alphamask)
+			{
+				GLSTATE_ENABLE_ALPHATEST
+			}
+			else
+			{
+				GLSTATE_DISABLE_ALPHATEST
+			}
+
+			if (txm || tym)
+			{
+				// jitodo - create another array with these offsetted.
+				// todo;
+				texcoords = mesh->stcoords;
+			}
+			else
+			{
+				texcoords = mesh->stcoords;
+			}
+			
+			// render the model
+			qglEnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
+			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			qglEnableClientState(GL_VERTEX_ARRAY);
+			qglColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
+			qglVertexPointer(3, GL_FLOAT, 0, inVertsArray);
+			qglTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+
+			if (neednormals)
+			{
+				qglEnableClientState(GL_NORMAL_ARRAY);
+				qglNormalPointer(GL_FLOAT, 0, inNormalsArray);
+			}
+
+			// doesn't work: qglColor4f(1.0f, 1.0f, 1.0f, alpha);
+			qglDrawElements(GL_TRIANGLES, numtris * 3, GL_UNSIGNED_INT, indexes);
+			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			qglDisableClientState(GL_VERTEX_ARRAY);
+			qglDisableClientState(GL_COLOR_ARRAY);
+
+			if (neednormals)
+				qglDisableClientState(GL_NORMAL_ARRAY);
+
+			// disable anything set in this stage
+			GLSTATE_DISABLE_ALPHATEST;
+			GLSTATE_DISABLE_BLEND;
+			qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			GLSTATE_DISABLE_TEXGEN;
+
+			stage=stage->next;
+		}
+		// todo;
 	}
-
-	qglEnd();
-#endif
+	else
+	{
+		// render the model with no script
+		GL_Bind(skin_image->texnum);
+		qglEnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
+		qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		qglEnableClientState(GL_VERTEX_ARRAY);
+		qglColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
+		qglVertexPointer(3, GL_FLOAT, 0, inVertsArray);
+		qglTexCoordPointer(2, GL_FLOAT, 0, mesh->stcoords);
+		qglDrawElements(GL_TRIANGLES, numtris*3, GL_UNSIGNED_INT, indexes);
+		qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		qglDisableClientState(GL_VERTEX_ARRAY);
+		qglDisableClientState(GL_COLOR_ARRAY);
+	}
 
 //#define DRAW_NORMALS
 #ifdef DRAW_NORMALS
