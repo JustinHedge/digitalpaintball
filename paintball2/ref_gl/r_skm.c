@@ -710,51 +710,24 @@ qboolean R_CullSkeletalModel (entity_t *e)
 #endif
 }
 
+
+static struct { vec3_t axis[3], origin; } skmbonepose[SKM_MAX_BONES];
+
 /*
 ================
-R_DrawBonesFrameLerp
+R_PositionBonesLerp
+Position the and lerp the skeleton.
 ================
 */
-
-//void R_DrawBonesFrameLerp (const meshbuffer_t *mb, model_t *mod, float backlerp, qboolean shadow)
-void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backlerp)
+void R_PositionBonesLerp (entity_t *e, model_t *mod, float backlerp) // jitskm
 {
-	int				i/*, meshnum*/;
-	int				j, k, l;
-	quat_t			quaternion;
-	float			frontlerp = 1.0 - backlerp;
-	mskmesh_t		*mesh;
-	bonepose_t		*bonepose, *oldbonepose, *bp, *oldbp;
-	mskvertex_t		*skmverts;
-	mskbonevert_t	*boneverts;
-	int				numtris, numverts; // jit
-	register float	light; // jit
-	int				*indexes; // jit
 	mskmodel_t		*skmodel = mod->skmodel;
-	struct { vec3_t axis[3], origin; } skmbonepose[SKM_MAX_BONES], *pose, *out;
-	rscript_t		*rs; // jitrscript
-	image_t			*skin_image;
-
-//	if (!shadow &&(e->flags & RF_VIEWERMODEL) && !r_mirrorview && !r_portalview)
-//		return;
-
-//	meshnum = -(mb->infokey + 1);
-	if (meshnum < 0 || meshnum >= skmodel->nummeshes)
-		return;
-
-	mesh = skmodel->meshes + meshnum;
-
-#if SHADOW_VOLUMES
-	if (shadow && !mesh->trneighbors)
-		return;
-#endif
-
-	// move should be the delta back to the previous frame * backlerp
-/*	VectorSubtract(e->oldorigin, e->origin, delta);
-	Matrix_TransformVector(e->axis, delta, move);
-	VectorScale(move, e->scale * backlerp, move);*/
-	//VectorCopy(e->origin, move); // jitest
-
+	float			frontlerp = 1.0 - backlerp;
+	register int	i, total;
+	bonepose_t		*bonepose, *oldbonepose, *bp, *oldbp;
+	struct { vec3_t axis[3], origin; } *out;
+	quat_t			quaternion;
+	
 	// todo - check if e->frame > max frames
 
 /*	if (e->boneposes)
@@ -762,33 +735,58 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 	else*/
 		bp = skmodel->frames[e->frame].boneposes;
 
-	SKM_TransformBoneposes(skmodel, curboneposescache, bp, e->angles, e->origin); // jit
+	SKM_TransformBoneposes(skmodel, curboneposescache, bp, e->angles, e->origin);
 
 /*	if (e->oldboneposes)
 		oldbp = e->oldboneposes;
 	else*/
 		oldbp = skmodel->frames[e->oldframe].boneposes;
 
-	SKM_TransformBoneposes(skmodel, oldboneposescache, oldbp, e->angles, e->oldorigin); // jit
+	SKM_TransformBoneposes(skmodel, oldboneposescache, oldbp, e->angles, e->oldorigin);
+	total = skmodel->numbones;
 
-	for (i = 0; i < mesh->numreferences; i++)
+	for (i = 0; i < total; i++)
 	{
-		out = skmbonepose + mesh->references[i];
-		//bonepose = bp + mesh->references[i];
-		bonepose = curboneposescache + mesh->references[i]; // jit
-		//oldbonepose = oldbp + mesh->references[i];
-		oldbonepose = oldboneposescache + mesh->references[i]; // jit
+		out = skmbonepose + i;
+		bonepose = curboneposescache + i;
+		oldbonepose = oldboneposescache + i;
 
 		// interpolate quaternions and origins
 		Quat_Lerp(oldbonepose->quat, bonepose->quat, frontlerp, quaternion);
 		Quat_Matrix(quaternion, out->axis);
-/*		out->axis[0][0] *= e->scale; out->axis[0][1] *= e->scale; out->axis[0][2] *= e->scale;
-		out->axis[1][0] *= e->scale; out->axis[1][1] *= e->scale; out->axis[1][2] *= e->scale;
-		out->axis[2][0] *= e->scale; out->axis[2][1] *= e->scale; out->axis[2][2] *= e->scale;*/
 		out->origin[0] = oldbonepose->origin[0] + (bonepose->origin[0] - oldbonepose->origin[0]) * frontlerp;
 		out->origin[1] = oldbonepose->origin[1] + (bonepose->origin[1] - oldbonepose->origin[1]) * frontlerp;
 		out->origin[2] = oldbonepose->origin[2] + (bonepose->origin[2] - oldbonepose->origin[2]) * frontlerp;
 	}
+}
+
+/*
+================
+R_DrawSkeletalMesh
+Call R_PositionBonesLerp to position bones before calling this.
+================
+*/
+
+//void R_DrawBonesFrameLerp (const meshbuffer_t *mb, model_t *mod, float backlerp, qboolean shadow)
+void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
+{
+	int				i/*, meshnum*/;
+	int				j, k, l;
+	mskmesh_t		*mesh;
+	mskvertex_t		*skmverts;
+	mskbonevert_t	*boneverts;
+	int				numtris, numverts; // jit
+	register float	light; // jit
+	int				*indexes; // jit
+	mskmodel_t		*skmodel = mod->skmodel;
+	rscript_t		*rs; // jitrscript
+	image_t			*skin_image;
+	struct { vec3_t axis[3], origin; } *pose;
+
+	if (meshnum < 0 || meshnum >= skmodel->nummeshes)
+		return;
+
+	mesh = skmodel->meshes + meshnum;
 
 	// --- quake2 md2 style drawing code -- jitskm, just to get it working.
 	if (e->flags & (RF_SHELL_HALF_DAM|RF_SHELL_GREEN|RF_SHELL_RED|RF_SHELL_BLUE|RF_SHELL_DOUBLE))
@@ -819,7 +817,7 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 	}
 	else if (e->flags & RF_FULLBRIGHT)
 	{
-		for (i=0; i<3; i++)
+		for (i = 0; i < 3; i++)
 			shadelight[i] = 1.0;
 	}
 	else
@@ -844,7 +842,7 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 
 	if (e->flags & RF_MINLIGHT)
 	{
-		for (i=0; i<3; i++)
+		for (i = 0; i < 3; i++)
 			if (shadelight[i] > 0.1)
 				break;
 
@@ -1160,104 +1158,33 @@ void R_DrawBonesFrameLerp (entity_t *e, model_t *mod, int meshnum, float backler
 	qglEnable(GL_DEPTH_TEST);
 	//todo;
 #endif
-/*	// --- qfusion's render code ---
+}
 
-	features = MF_NONBATCHED | mb->shader->features;
+void R_HackDrawWeaponModel (entity_t *player_e, model_t *model, model_t *weaponmodel) // jitskm -- quick hack to put the weapon in the player's hand
+{
+	mskmodel_t *skm = model->skmodel;
+	register int i, total = skm->numbones;
+	mskbone_t *bone = skm->bones;
 
-	if (r_shownormals->integer && !shadow)
-		features |= MF_NORMALS;
-
-	if (mb->shader->flags & SHADER_AUTOSPRITE)
-		features |= MF_NOCULL;
-
-	if (shadow)
-		features |= MF_DEFORMVS;
-
-	if ((features & MF_NORMALS) && !shadow)
+	// find the right hand and position the weapon there.
+	for (i = 0; i < total; i++, bone++)
 	{
-		for (j = 0, skmverts = mesh->vertexes; j < mesh->numverts; j++, skmverts++)
+		if (Q_streq(bone->name, "bip01 r hand"))
 		{
-			VectorCopy(move, inVertsArray[j]);
-			VectorClear(inNormalsArray[j]);
+			register int nummeshes = weaponmodel->skmodel->nummeshes;
+			entity_t e; // only the angles and origin are used from this
 
-			for (l = 0, boneverts = skmverts->verts; l < skmverts->numbones; l++, boneverts++)
-			{
-				pose = skmbonepose + boneverts->bonenum;
+			memset(&e, 0, sizeof(e)); // make sure all the flags and such are cleared so it doesn't do anything crazy
+			VectorCopy(skmbonepose[i].origin, e.origin);
+			Matrix_EulerAngles2(skmbonepose[i].axis, e.angles);
+			R_PositionBonesLerp(&e, weaponmodel, 0);
 
-				for (k = 0; k < 3; k++)
-				{
-					inVertsArray[j][k] +=
-						boneverts->origin[0] * pose->axis[k][0] +
-						boneverts->origin[1] * pose->axis[k][1] +
-						boneverts->origin[2] * pose->axis[k][2] +
-						boneverts->influence * pose->origin[k];
-					inNormalsArray[j][k] +=
-						boneverts->normal[0] * pose->axis[k][0] +
-						boneverts->normal[1] * pose->axis[k][1] +
-						boneverts->normal[2] * pose->axis[k][2];
-				}
-			}
+			for (i = 0; i < nummeshes; i++)
+				R_DrawSkeletalMesh(&e, weaponmodel, i);
 
-			VectorNormalizeFast(inNormalsArray[j]);
+			return;
 		}
 	}
-	else
-	{
-		for (j = 0, skmverts = mesh->vertexes; j < mesh->numverts; j++, skmverts++)
-		{
-			VectorCopy(move, inVertsArray[j]);
-
-			for (l = 0, boneverts = skmverts->verts; l < skmverts->numbones; l++, boneverts++)
-			{
-				pose = skmbonepose + boneverts->bonenum;
-
-				for (k = 0; k < 3; k++)
-				{
-					inVertsArray[j][k] += boneverts->origin[0] * pose->axis[k][0] +
-						boneverts->origin[1] * pose->axis[k][1] +
-						boneverts->origin[2] * pose->axis[k][2] +
-						boneverts->influence * pose->origin[k];
-				}
-			}
-		}
-	}
-
-	if ((features & MF_STVECTORS) && !shadow)
-		R_BuildTangentVectors(mesh->numverts, inVertsArray, mesh->stcoords, mesh->numtris, mesh->indexes, inSVectorsArray, inTVectorsArray);
-
-	skm_mesh.indexes = mesh->indexes;
-	skm_mesh.numIndexes = mesh->numtris * 3;
-	skm_mesh.numVertexes = mesh->numverts;
-	skm_mesh.xyzArray = inVertsArray;
-	skm_mesh.stArray = mesh->stcoords;
-	skm_mesh.normalsArray = inNormalsArray;
-	skm_mesh.sVectorsArray = inSVectorsArray;
-	skm_mesh.tVectorsArray = inTVectorsArray;
-#if SHADOW_VOLUMES
-	skm_mesh.trneighbors = mesh->trneighbors;
-	skm_mesh.trnormals = NULL;
-#endif
-
-	R_RotateForEntity(e);
-
-	R_PushMesh(&skm_mesh, features);
-	R_RenderMeshBuffer(mb, shadow);
-
-	if (shadow)
-	{
-		if (r_shadows->integer == 1)
-		{
-			R_Draw_SimpleShadow(e);
-		}
-		else
-		{
-#if SHADOW_VOLUMES
-			R_SkeletalModelBBox(e, mod);
-			R_DrawShadowVolumes(&skm_mesh, e->lightingOrigin, skm_mins, skm_maxs, skm_radius);
-#endif
-		}
-	}
-	*/
 }
 
 /*
@@ -1268,7 +1195,6 @@ R_DrawSkeletalModel
 //void R_DrawSkeletalModel (const meshbuffer_t *mb, qboolean shadow)
 void R_DrawSkeletalModel (entity_t *e)
 {
-//	entity_t *e = mb->entity;
 	int i, nummeshes;
 	model_t *skm;
 
@@ -1296,10 +1222,13 @@ void R_DrawSkeletalModel (entity_t *e)
 	if (!r_lerpmodels->value)
 		e->backlerp = 0;
 
-	//R_DrawBonesFrameLerp(mb, R_SkeletalModelLODForDistance(e), e->backlerp, shadow);
+	R_PositionBonesLerp(e, skm, e->backlerp); // jitskm
 
-	for (i = 0; i < nummeshes; i++) // jit - just to get it functional -- could probably be optimized
-		R_DrawBonesFrameLerp(e, skm, i, e->backlerp);
+	for (i = 0; i < nummeshes; i++) // jitskm
+		R_DrawSkeletalMesh(e, skm, i);
+
+	if (e->weapon_model) // quick hack for vweaps
+		R_HackDrawWeaponModel(e, e->model, e->weapon_model);
 
 	if (e->flags & RF_WEAPONMODEL)
 		qglDepthRange(gldepthmin, gldepthmax);
@@ -1307,42 +1236,3 @@ void R_DrawSkeletalModel (entity_t *e)
 	//if (e->flags & RF_CULLHACK)
 	//	qglFrontFace(GL_CCW);
 }
-
-/*
-=================
-R_AddSkeletalModelToList
-=================
-*
-void R_AddSkeletalModelToList (entity_t *e)
-{
-	int				i;
-	mfog_t			*fog;
-	model_t			*mod;
-	shader_t		*shader;
-	mskmesh_t		*mesh;
-	mskmodel_t		*skmodel;
-
-	mod = R_SkeletalModelLODForDistance(e);
-	if (!(skmodel = mod->skmodel))
-		return;
-
-	R_SkeletalModelBBox(e, mod);
-	if (!r_shadows->integer && R_CullSkeletalModel(e))
-		return;
-
-	mesh = skmodel->meshes;
-	fog = R_FogForSphere(e->origin, skm_radius);
-
-	for (i = 0; i < skmodel->nummeshes; i++, mesh++) {
-		if (e->customSkin) {
-			shader = R_FindShaderForSkinFile(e->customSkin, mesh->name);
-			if (shader)
-				R_AddMeshToList(MB_MODEL, fog, shader, -(i+1));
-		} else if(e->customShader) {
-			R_AddMeshToList(MB_MODEL, fog, e->customShader, -(i+1));
-		} else {
-			R_AddMeshToList(MB_MODEL, fog, mesh->skin.shader, -(i+1));
-		}
-	}
-}
-*/

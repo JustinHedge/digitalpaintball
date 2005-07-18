@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <math.h> // jitskm
 
 #define DEG2RAD( a ) ( (float)a * (float)M_PI ) / 180.0F
+#define RAD2DEG( a ) ( a * 180.0F ) / M_PI
 
 vec3_t vec3_origin = {0,0,0};
 
@@ -866,7 +867,7 @@ qboolean Quat_Compare (const quat_t q1, const quat_t q2)
 
 	return true;
 }
-/*
+
 void Quat_Conjugate (const quat_t q1, quat_t q2)
 {
 	q2[0] = -q1[0];
@@ -874,7 +875,7 @@ void Quat_Conjugate (const quat_t q1, quat_t q2)
 	q2[2] = -q1[2];
 	q2[3] = q1[3];
 }
-*/
+
 vec_t Quat_Normalize (quat_t q)
 {
 	vec_t length = q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3];
@@ -897,7 +898,7 @@ vec_t Quat_Inverse (const quat_t q1, quat_t q2)
 
 	return Quat_Normalize(q2);
 }
-
+*/
 void Matrix_Quat (vec3_t m[3], quat_t q)
 {
 	vec_t tr, s;
@@ -937,7 +938,7 @@ void Matrix_Quat (vec3_t m[3], quat_t q)
 
 	Quat_Normalize(q);
 }
-*/
+
 void Quat_Multiply (const quat_t q1, const quat_t q2, quat_t out)
 {
 	// jitodo - optimize
@@ -1069,6 +1070,19 @@ void Quat_FromEulerAngle (const vec3_t angle, quat_t q) // jitskm
 	q[0] = cr*cp*sy + sr*sp*cy;
 }
 
+void Quat_ToEulerAngle (const quat_t q, vec3_t angle) // jitskm
+{
+	// http://www.mathworks.com/access/helpdesk/help/toolbox/aeroblks/quaternionstoeulerangles.html#770931
+	register float q0, q1, q2, q3, q02, q12, q22, q32;
+	
+	q0 = q[0]; q1 = q[1]; q2 = q[2]; q3 = q[3];
+	q02 = q0*q0; q12 = q1*q1; q22 = q2*q2; q32 = q3*q3;
+
+	angle[YAW]  = RAD2DEG(atan2(2.0f * (q2*q3 + q0*q1), (q02-q12-q22+q32))); // phi
+	angle[ROLL] = RAD2DEG(asin(-2.0f * (q1*q3 - q0*q2))); // theta
+	angle[PITCH]   = RAD2DEG(atan2(2.0f * (q1*q2 + q0*q3), (q02+q12-q22-q32))); // psi
+}
+
 void Matrix3_Transpose (mat3_t in, mat3_t out)
 {
 	out[0][0] = in[0][0];
@@ -1088,6 +1102,48 @@ void Matrix_TransformVector (vec3_t m[3], vec3_t v, vec3_t out)
 	out[0] = m[0][0]*v[0] + m[0][1]*v[1] + m[0][2]*v[2];
 	out[1] = m[1][0]*v[0] + m[1][1]*v[1] + m[1][2]*v[2];
 	out[2] = m[2][0]*v[0] + m[2][1]*v[1] + m[2][2]*v[2];
+}
+
+/*
+void Matrix_EulerAngles (vec3_t m[3], vec3_t angles)
+{
+	vec_t	c;
+	vec_t	pitch, yaw, roll;
+
+	pitch = -asin(m[0][2]);
+	c = cos(pitch);
+	pitch = RAD2DEG(pitch);
+
+	if (fabs(c) > 0.005)             // Gimball lock?
+	{
+		c = 1.0f / c;
+		yaw = RAD2DEG(atan2(m[0][1] * c, m[0][0] * c));
+		roll = RAD2DEG(atan2(-m[1][2] * c, m[2][2] * c));
+	}
+	else
+	{
+		if (m[0][2] > 0)
+			pitch = -90;
+		else
+			pitch = 90;
+
+		yaw = RAD2DEG(atan2(m[1][0], -m[1][1]));
+		roll = 0;
+	}
+
+	angles[PITCH] = anglemod(pitch);
+	angles[YAW]   = anglemod(yaw);
+	angles[ROLL]  = anglemod(roll);
+}
+*/
+
+void Matrix_EulerAngles2 (vec3_t m[3], vec3_t angles) // jitskm, modified to work the way I think it should.
+{
+	vec_t	c;
+
+	c = 1.0f / fabs(cos(angles[PITCH] = RAD2DEG((-asin(m[2][0])))));
+	angles[YAW] = RAD2DEG(atan2(m[1][0] * c, m[0][0] * c));
+	angles[ROLL] = -RAD2DEG(atan2(-m[2][1] * c, m[2][2] * c));
 }
 
 // jitskm

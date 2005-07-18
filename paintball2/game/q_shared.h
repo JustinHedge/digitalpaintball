@@ -264,6 +264,7 @@ void Matrix_Multiply (vec3_t m1[3], vec3_t m2[3], vec3_t out[3]);
 void Matrix_TransformVector (vec3_t m[3], vec3_t v, vec3_t out);
 void Matrix_Transpose (vec3_t in[3], vec3_t out[3]);
 void Matrix_EulerAngles (vec3_t m[3], vec3_t angles);
+void Matrix_EulerAngles2 (vec3_t m[3], vec3_t angles); // jitskm
 void Matrix_Rotate (vec3_t m[3], vec_t angle, vec_t x, vec_t y, vec_t z);
 void Matrix_FromPoints (const vec3_t v1, const vec3_t v2, const vec3_t v3, vec3_t m[3]);
 
@@ -281,6 +282,7 @@ void Matrix_Quat (vec3_t m[3], quat_t q);
 void Quat_TransformVector (const quat_t q, const vec3_t v, vec3_t out);
 void Quat_ConcatTransforms (const quat_t q1, const vec3_t v1, const quat_t q2, const vec3_t v2, quat_t q, vec3_t v);
 void Quat_FromEulerAngle (const vec3_t angle, quat_t q);
+void Quat_ToEulerAngle (const quat_t q, vec3_t angle);
 // jitskm ===
 
 //=============================================
