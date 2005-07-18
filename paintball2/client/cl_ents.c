@@ -51,20 +51,20 @@ int CL_ParseEntityBits (unsigned *bits)
 	int			i;
 	int			number;
 
-	total = MSG_ReadByte (&net_message);
+	total = MSG_ReadByte(&net_message);
 	if (total & U_MOREBITS1)
 	{
-		b = MSG_ReadByte (&net_message);
+		b = MSG_ReadByte(&net_message);
 		total |= b<<8;
 	}
 	if (total & U_MOREBITS2)
 	{
-		b = MSG_ReadByte (&net_message);
+		b = MSG_ReadByte(&net_message);
 		total |= b<<16;
 	}
 	if (total & U_MOREBITS3)
 	{
-		b = MSG_ReadByte (&net_message);
+		b = MSG_ReadByte(&net_message);
 		total |= b<<24;
 	}
 
@@ -76,7 +76,7 @@ int CL_ParseEntityBits (unsigned *bits)
 	if (total & U_NUMBER16)
 		number = MSG_ReadShort (&net_message);
 	else
-		number = MSG_ReadByte (&net_message);
+		number = MSG_ReadByte(&net_message);
 
 	*bits = total;
 
@@ -99,16 +99,16 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 	to->number = number;
 
 	if (bits & U_MODEL)
-		to->modelindex = MSG_ReadByte (&net_message);
+		to->modelindex = MSG_ReadByte(&net_message);
 	if (bits & U_MODEL2)
-		to->modelindex2 = MSG_ReadByte (&net_message);
+		to->modelindex2 = MSG_ReadByte(&net_message);
 	if (bits & U_MODEL3)
-		to->modelindex3 = MSG_ReadByte (&net_message);
+		to->modelindex3 = MSG_ReadByte(&net_message);
 	if (bits & U_MODEL4)
-		to->modelindex4 = MSG_ReadByte (&net_message);
+		to->modelindex4 = MSG_ReadByte(&net_message);
 		
 	if (bits & U_FRAME8)
-		to->frame = MSG_ReadByte (&net_message);
+		to->frame = MSG_ReadByte(&net_message);
 	if (bits & U_FRAME16)
 		to->frame = MSG_ReadShort (&net_message);
 
@@ -151,10 +151,10 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 		MSG_ReadPos (&net_message, to->old_origin);
 
 	if (bits & U_SOUND)
-		to->sound = MSG_ReadByte (&net_message);
+		to->sound = MSG_ReadByte(&net_message);
 
 	if (bits & U_EVENT)
-		to->event = MSG_ReadByte (&net_message);
+		to->event = MSG_ReadByte(&net_message);
 	else
 		to->event = 0;
 
@@ -379,7 +379,7 @@ void CL_ParsePlayerstate (frame_t *oldframe, frame_t *newframe)
 	// parse the pmove_state_t
 	//
 	if (flags & PS_M_TYPE)
-		state->pmove.pm_type = MSG_ReadByte (&net_message);
+		state->pmove.pm_type = MSG_ReadByte(&net_message);
 
 	if (flags & PS_M_ORIGIN)
 	{
@@ -396,10 +396,10 @@ void CL_ParsePlayerstate (frame_t *oldframe, frame_t *newframe)
 	}
 
 	if (flags & PS_M_TIME)
-		state->pmove.pm_time = MSG_ReadByte (&net_message);
+		state->pmove.pm_time = MSG_ReadByte(&net_message);
 
 	if (flags & PS_M_FLAGS)
-		state->pmove.pm_flags = MSG_ReadByte (&net_message);
+		state->pmove.pm_flags = MSG_ReadByte(&net_message);
 
 	if (flags & PS_M_GRAVITY)
 		state->pmove.gravity = MSG_ReadShort (&net_message);
@@ -419,54 +419,54 @@ void CL_ParsePlayerstate (frame_t *oldframe, frame_t *newframe)
 	//
 	if (flags & PS_VIEWOFFSET)
 	{
-		state->viewoffset[0] = MSG_ReadChar (&net_message) * 0.25;
-		state->viewoffset[1] = MSG_ReadChar (&net_message) * 0.25;
-		state->viewoffset[2] = MSG_ReadChar (&net_message) * 0.25;
+		state->viewoffset[0] = MSG_ReadChar(&net_message) * 0.25;
+		state->viewoffset[1] = MSG_ReadChar(&net_message) * 0.25;
+		state->viewoffset[2] = MSG_ReadChar(&net_message) * 0.25;
 	}
 
 	if (flags & PS_VIEWANGLES)
 	{
-		state->viewangles[0] = MSG_ReadAngle16 (&net_message);
-		state->viewangles[1] = MSG_ReadAngle16 (&net_message);
-		state->viewangles[2] = MSG_ReadAngle16 (&net_message);
+		state->viewangles[0] = MSG_ReadAngle16(&net_message);
+		state->viewangles[1] = MSG_ReadAngle16(&net_message);
+		state->viewangles[2] = MSG_ReadAngle16(&net_message);
 	}
 
 	if (flags & PS_KICKANGLES)
 	{
-		state->kick_angles[0] = MSG_ReadChar (&net_message) * 0.25;
-		state->kick_angles[1] = MSG_ReadChar (&net_message) * 0.25;
-		state->kick_angles[2] = MSG_ReadChar (&net_message) * 0.25;
+		state->kick_angles[0] = MSG_ReadChar(&net_message) * 0.25;
+		state->kick_angles[1] = MSG_ReadChar(&net_message) * 0.25;
+		state->kick_angles[2] = MSG_ReadChar(&net_message) * 0.25;
 	}
 
 	if (flags & PS_WEAPONINDEX)
 	{
-		state->gunindex = MSG_ReadByte (&net_message);
+		state->gunindex = MSG_ReadByte(&net_message);
 	}
 
 	if (flags & PS_WEAPONFRAME)
 	{
-		state->gunframe = MSG_ReadByte (&net_message);
-		state->gunoffset[0] = MSG_ReadChar (&net_message)*0.25;
-		state->gunoffset[1] = MSG_ReadChar (&net_message)*0.25;
-		state->gunoffset[2] = MSG_ReadChar (&net_message)*0.25;
-		state->gunangles[0] = MSG_ReadChar (&net_message)*0.25;
-		state->gunangles[1] = MSG_ReadChar (&net_message)*0.25;
-		state->gunangles[2] = MSG_ReadChar (&net_message)*0.25;
+		state->gunframe = MSG_ReadByte(&net_message);
+		state->gunoffset[0] = MSG_ReadChar(&net_message)*0.25;
+		state->gunoffset[1] = MSG_ReadChar(&net_message)*0.25;
+		state->gunoffset[2] = MSG_ReadChar(&net_message)*0.25;
+		state->gunangles[0] = MSG_ReadChar(&net_message)*0.25;
+		state->gunangles[1] = MSG_ReadChar(&net_message)*0.25;
+		state->gunangles[2] = MSG_ReadChar(&net_message)*0.25;
 	}
 
 	if (flags & PS_BLEND)
 	{
-		state->blend[0] = MSG_ReadByte (&net_message)*0.003921568627450980392156862745098;
-		state->blend[1] = MSG_ReadByte (&net_message)*0.003921568627450980392156862745098;
-		state->blend[2] = MSG_ReadByte (&net_message)*0.003921568627450980392156862745098;
-		state->blend[3] = MSG_ReadByte (&net_message)*0.003921568627450980392156862745098;
+		state->blend[0] = MSG_ReadByte(&net_message)*0.003921568627450980392156862745098;
+		state->blend[1] = MSG_ReadByte(&net_message)*0.003921568627450980392156862745098;
+		state->blend[2] = MSG_ReadByte(&net_message)*0.003921568627450980392156862745098;
+		state->blend[3] = MSG_ReadByte(&net_message)*0.003921568627450980392156862745098;
 	}
 
 	if (flags & PS_FOV)
-		state->fov = MSG_ReadByte (&net_message);
+		state->fov = MSG_ReadByte(&net_message);
 
 	if (flags & PS_RDFLAGS)
-		state->rdflags = MSG_ReadByte (&net_message);
+		state->rdflags = MSG_ReadByte(&net_message);
 
 	// parse stats
 	statbits = MSG_ReadLong (&net_message);
@@ -520,7 +520,7 @@ void CL_ParseFrame (void)
 
 	// BIG HACK to let old demos continue to work
 	if (cls.serverProtocol != 26)
-		cl.surpressCount = MSG_ReadByte (&net_message);
+		cl.surpressCount = MSG_ReadByte(&net_message);
 
 	if (cl_shownet->value == 3)
 		Com_Printf ("   frame:%i  delta:%i\n", cl.frame.serverframe,
@@ -563,18 +563,18 @@ void CL_ParseFrame (void)
 		cl.time = cl.frame.servertime - 100;
 
 	// read areabits
-	len = MSG_ReadByte (&net_message);
+	len = MSG_ReadByte(&net_message);
 	MSG_ReadData (&net_message, &cl.frame.areabits, len);
 
 	// read playerinfo
-	cmd = MSG_ReadByte (&net_message);
+	cmd = MSG_ReadByte(&net_message);
 	SHOWNET(svc_strings[cmd]);
 	if (cmd != svc_playerinfo)
 		Com_Error (ERR_DROP, "CL_ParseFrame: not playerinfo");
 	CL_ParsePlayerstate (old, &cl.frame);
 
 	// read packet entities
-	cmd = MSG_ReadByte (&net_message);
+	cmd = MSG_ReadByte(&net_message);
 	SHOWNET(svc_strings[cmd]);
 	if (cmd != svc_packetentities)
 		Com_Error (ERR_DROP, "CL_ParseFrame: not packetentities");
@@ -610,62 +610,6 @@ void CL_ParseFrame (void)
 	}
 }
 
-/*
-==========================================================================
-
-INTERPOLATE BETWEEN FRAMES TO GET RENDERING PARMS
-
-==========================================================================
-*/
-
-struct model_s *S_RegisterSexedModel (entity_state_t *ent, char *base)
-{
-	int				n;
-	char			*p;
-	struct model_s	*mdl;
-	char			model[MAX_QPATH];
-	char			buffer[MAX_QPATH];
-
-	// determine what model the client is using
-	model[0] = 0;
-	n = CS_PLAYERSKINS + ent->number - 1;
-	if (cl.configstrings[n][0])
-	{
-		p = strchr(cl.configstrings[n], '\\');
-		if (p)
-		{
-			p += 1;
-			strcpy(model, p);
-			p = strchr(model, '/');
-			if (p)
-				*p = 0;
-		}
-	}
-	// if we can't figure it out, they're male
-	if (!model[0])
-		strcpy(model, "male");
-
-	Com_sprintf (buffer, sizeof(buffer), "players/%s/%s", model, base+1);
-	mdl = re.RegisterModel(buffer);
-	if (!mdl) {
-		// not found, try default weapon model
-		Com_sprintf (buffer, sizeof(buffer), "players/%s/weapon.md2", model);
-		mdl = re.RegisterModel(buffer);
-		if (!mdl) {
-			// no, revert to the male model
-			Com_sprintf (buffer, sizeof(buffer), "players/%s/%s", "male", base+1);
-			mdl = re.RegisterModel(buffer);
-			if (!mdl) {
-				// last try, default male weapon.md2
-				Com_sprintf (buffer, sizeof(buffer), "players/male/weapon.md2");
-				mdl = re.RegisterModel(buffer);
-			}
-		} 
-	}
-
-	return mdl;
-}
-
 // PMM - used in shell code 
 extern int Developer_searchpath (int who);
 // pmm
@@ -693,7 +637,7 @@ void CL_AddPacketEntities (frame_t *frame)
 	// brush models can auto animate their frames
 	autoanim = 2*cl.time/1000;
 
-	memset (&ent, 0, sizeof(ent));
+	memset(&ent, 0, sizeof(ent));
 
 	for (pnum = 0; pnum < frame->num_entities; pnum++)
 	{
@@ -852,13 +796,13 @@ void CL_AddPacketEntities (frame_t *frame)
 			// FIXME: still pass to refresh
 
 			if (effects & EF_FLAG1)
-				V_AddLight (ent.origin, 225, 1.0, 0.1, 0.1);
+				V_AddLight(ent.origin, 225, 1.0, 0.1, 0.1);
 			else if (effects & EF_FLAG2)
-				V_AddLight (ent.origin, 225, 0.1, 0.1, 1.0);
+				V_AddLight(ent.origin, 225, 0.1, 0.1, 1.0);
 			else if (effects & EF_TAGTRAIL)						//PGM
-				V_AddLight (ent.origin, 225, 1.0, 1.0, 0.0);	//PGM
+				V_AddLight(ent.origin, 225, 1.0, 1.0, 0.0);	//PGM
 			else if (effects & EF_TRACKERTRAIL)					//PGM
-				V_AddLight (ent.origin, 225, -1.0, -1.0, -1.0);	//PGM
+				V_AddLight(ent.origin, 225, -1.0, -1.0, -1.0);	//PGM
 
 			continue;
 		}
@@ -890,9 +834,35 @@ void CL_AddPacketEntities (frame_t *frame)
 				ent.alpha = 0.3;
 		}
 //pmm
+		if (s1->modelindex2) // jitskm -- weapon model gets attached to player hand (temporary hack)
+		{
+			if (s1->modelindex2 == 255)
+			{	// custom weapon
+				ci = &cl.clientinfo[s1->skinnum & 0xff];
+				i = (s1->skinnum >> 8); // 0 is default weapon model
+
+				if (!cl_vwep->value || i > MAX_CLIENTWEAPONMODELS - 1)
+					i = 0;
+
+				ent.weapon_model = ci->weaponmodel[i];
+
+				if (!ent.weapon_model)
+				{
+					if (i != 0)
+						ent.weapon_model = ci->weaponmodel[0];
+
+					if (!ent.weapon_model)
+						ent.weapon_model = cl.baseclientinfo.weaponmodel[0];
+				}
+			}
+			else
+			{
+				ent.weapon_model = cl.model_draw[s1->modelindex2];
+			}
+		}
 
 		// add to refresh list
-		V_AddEntity (&ent);
+		V_AddEntity(&ent);
 
 
 		// color shells generate a seperate entity for the main model
@@ -938,7 +908,7 @@ void CL_AddPacketEntities (frame_t *frame)
 			// pmm
 			ent.flags = renderfx | RF_TRANSLUCENT;
 			ent.alpha = 0.30;
-			V_AddEntity (&ent);
+			V_AddEntity(&ent);
 		}
 
 		//ent.skin = NULL;		// never use a custom skin on others
@@ -946,7 +916,7 @@ void CL_AddPacketEntities (frame_t *frame)
 		ent.skinnum = 0;
 		ent.flags = 0;
 		ent.alpha = 0;
-
+#if 0 // jitskm
 		// duplicate for linked models
 		if (s1->modelindex2)
 		{
@@ -954,22 +924,29 @@ void CL_AddPacketEntities (frame_t *frame)
 			{	// custom weapon
 				ci = &cl.clientinfo[s1->skinnum & 0xff];
 				i = (s1->skinnum >> 8); // 0 is default weapon model
+
 				if (!cl_vwep->value || i > MAX_CLIENTWEAPONMODELS - 1)
 					i = 0;
+
 				ent.model = ci->weaponmodel[i];
-				if (!ent.model) {
+
+				if (!ent.model)
+				{
 					if (i != 0)
 						ent.model = ci->weaponmodel[0];
+
 					if (!ent.model)
 						ent.model = cl.baseclientinfo.weaponmodel[0];
 				}
 			}
 			else
+			{
 				ent.model = cl.model_draw[s1->modelindex2];
+			}
 
 			// PMM - check for the defender sphere shell .. make it translucent
 			// replaces the previous version which used the high bit on modelindex2 to determine transparency
-			if (!Q_strcasecmp (cl.configstrings[CS_MODELS+(s1->modelindex2)], "models/items/shell/tris.md2"))
+			if (!Q_strcasecmp(cl.configstrings[CS_MODELS+(s1->modelindex2)], "models/items/shell/tris.md2"))
 			{
 				ent.alpha = 0.32;
 				ent.flags = RF_TRANSLUCENT;
@@ -983,18 +960,20 @@ void CL_AddPacketEntities (frame_t *frame)
 			ent.alpha = 0;
 			//PGM
 		}
+#endif
 		if (s1->modelindex3)
 		{
 			ent.model = cl.model_draw[s1->modelindex3];
 			V_AddEntity(&ent);
 		}
+
 		if (s1->modelindex4)
 		{
 			ent.model = cl.model_draw[s1->modelindex4];
 			V_AddEntity(&ent);
 		}
 
-		if ( effects & EF_POWERSCREEN )
+		if (effects & EF_POWERSCREEN)
 		{
 			ent.oldframe = 0;
 			ent.frame = 0;
@@ -1015,38 +994,37 @@ void CL_AddPacketEntities (frame_t *frame)
 			// EF_BLASTER | EF_TRACKER is a special case for EF_BLASTER2... Cheese!
 			else if (effects & EF_BLASTER)
 			{
-//				CL_BlasterTrail (cent->lerp_origin, ent.origin);
 //PGM
 				if (effects & EF_TRACKER)	// lame... problematic?
 				{
-					CL_BlasterTrail2 (cent->lerp_origin, ent.origin);
-					V_AddLight (ent.origin, 200, 0, 1, 0);		
+					CL_BlasterTrail2(cent->lerp_origin, ent.origin);
+					V_AddLight(ent.origin, 200, 0, 1, 0);		
 				}
 				else
 				{
-					CL_BlasterTrail (cent->lerp_origin, ent.origin);
-					V_AddLight (ent.origin, 200, 1, 1, 0);
+					CL_BlasterTrail(cent->lerp_origin, ent.origin);
+					V_AddLight(ent.origin, 200, 1, 1, 0);
 				}
 //PGM
 			}
 			else if (effects & EF_HYPERBLASTER)
 			{
 				if (effects & EF_TRACKER)						// PGM	overloaded for blaster2.
-					V_AddLight (ent.origin, 200, 0, 1, 0);		// PGM
+					V_AddLight(ent.origin, 200, 0, 1, 0);		// PGM
 				else											// PGM
-					V_AddLight (ent.origin, 200, 1, 1, 0);
+					V_AddLight(ent.origin, 200, 1, 1, 0);
 			}
 			else if (effects & EF_GIB)
 			{
-				CL_DiminishingTrail (cent->lerp_origin, ent.origin, cent, effects);
+				CL_DiminishingTrail(cent->lerp_origin, ent.origin, cent, effects);
 			}
 			else if (effects & EF_GRENADE)
 			{
-				CL_DiminishingTrail (cent->lerp_origin, ent.origin, cent, effects);
+				CL_DiminishingTrail(cent->lerp_origin, ent.origin, cent, effects);
 			}
 			else if (effects & EF_FLIES)
 			{
-				CL_FlyEffect (cent, ent.origin);
+				CL_FlyEffect(cent, ent.origin);
 			}
 			else if (effects & EF_BFG)
 			{
@@ -1054,7 +1032,7 @@ void CL_AddPacketEntities (frame_t *frame)
 
 				if (effects & EF_ANIM_ALLFAST)
 				{
-					CL_BfgParticles (&ent);
+					CL_BfgParticles(&ent);
 					i = 200;
 				}
 				else
@@ -1169,17 +1147,18 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 	if (ps->fov > 90)
 		return;
 
-	memset (&gun, 0, sizeof(gun));
+	memset(&gun, 0, sizeof(gun));
 
 	if (gun_model)
 		gun.model = gun_model;	// development tool
 	else
 		gun.model = cl.model_draw[ps->gunindex];
+
 	if (!gun.model)
 		return;
 
 	// set up gun position
-	for (i=0 ; i<3 ; i++)
+	for (i = 0; i < 3; i++)
 	{
 		gun.origin[i] = cl.refdef.vieworg[i] + ops->gunoffset[i]
 			+ cl.lerpfrac * (ps->gunoffset[i] - ops->gunoffset[i]);
@@ -1195,6 +1174,7 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 	else
 	{
 		gun.frame = ps->gunframe;
+
 		if (gun.frame == 0)
 			gun.oldframe = 0;	// just changed weapons, don't lerp from old
 		else
@@ -1279,11 +1259,11 @@ void CL_CalcViewValues (void)
 	}
 	else
 	{	// just use interpolated values
-		for (i=0; i<3; i++)
+		for (i = 0; i < 3; i++)
 			cl.refdef.viewangles[i] = LerpAngle(ops->viewangles[i], ps->viewangles[i], lerp);
 	}
 
-	for (i=0; i<3; i++)
+	for (i = 0; i < 3; i++)
 		cl.refdef.viewangles[i] += LerpAngle(ops->kick_angles[i], ps->kick_angles[i], lerp);
 
 	AngleVectors(cl.refdef.viewangles, cl.v_forward, cl.v_right, cl.v_up);
@@ -1292,11 +1272,11 @@ void CL_CalcViewValues (void)
 	cl.refdef.fov_x = ops->fov + lerp * (ps->fov - ops->fov);
 
 	// don't interpolate blend color
-	for (i=0 ; i<4 ; i++)
+	for (i = 0; i < 4; i++)
 		cl.refdef.blend[i] = ps->blend[i];
 
 	// add the weapon
-	CL_AddViewWeapon (ps, ops);
+	CL_AddViewWeapon(ps, ops);
 }
 
 /*

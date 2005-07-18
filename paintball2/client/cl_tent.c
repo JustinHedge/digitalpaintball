@@ -220,9 +220,9 @@ void CL_ParseParticles (void)
 	MSG_ReadPos (&net_message, pos);
 	MSG_ReadDir (&net_message, dir);
 
-	color = MSG_ReadByte (&net_message);
+	color = MSG_ReadByte(&net_message);
 
-	count = MSG_ReadByte (&net_message);
+	count = MSG_ReadByte(&net_message);
 
 	CL_ParticleEffect (pos, dir, color, count);
 }
@@ -506,10 +506,10 @@ void CL_ParseSteam (void)
 		if (free_sustain)
 		{
 			s->id = id;
-			s->count = MSG_ReadByte (&net_message);
+			s->count = MSG_ReadByte(&net_message);
 			MSG_ReadPos (&net_message, s->org);
 			MSG_ReadDir (&net_message, s->dir);
-			r = MSG_ReadByte (&net_message);
+			r = MSG_ReadByte(&net_message);
 			s->color = r & 0xff;
 			s->magnitude = MSG_ReadShort (&net_message);
 			s->endtime = cl.time + MSG_ReadLong (&net_message);
@@ -521,20 +521,20 @@ void CL_ParseSteam (void)
 		{
 //				Com_Printf ("No free sustains!\n");
 			// FIXME - read the stuff anyway
-			cnt = MSG_ReadByte (&net_message);
+			cnt = MSG_ReadByte(&net_message);
 			MSG_ReadPos (&net_message, pos);
 			MSG_ReadDir (&net_message, dir);
-			r = MSG_ReadByte (&net_message);
+			r = MSG_ReadByte(&net_message);
 			magnitude = MSG_ReadShort (&net_message);
 			magnitude = MSG_ReadLong (&net_message); // really interval
 		}
 	}
 	else // instant
 	{
-		cnt = MSG_ReadByte (&net_message);
+		cnt = MSG_ReadByte(&net_message);
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
-		r = MSG_ReadByte (&net_message);
+		r = MSG_ReadByte(&net_message);
 		magnitude = MSG_ReadShort (&net_message);
 		color = r & 0xff;
 		CL_ParticleSteamEffect (pos, dir, color, cnt, magnitude);
@@ -630,15 +630,15 @@ void CL_ParseTEnt (void)
 	vec3_t	rgbcolour;
 	int		texnum; // splat texture index
 
-	type = MSG_ReadByte (&net_message);
+	type = MSG_ReadByte(&net_message);
 
 	switch (type)
 	{
 	case TE_LASER_SPARKS: // jit - Paintball 2 paint splatters!
-		cnt = MSG_ReadByte (&net_message);
+		cnt = MSG_ReadByte(&net_message);
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
-		color = MSG_ReadByte (&net_message);
+		color = MSG_ReadByte(&net_message);
 		CL_ParticleEffect2 (pos, dir, color, cnt);
 
 		// ===
@@ -808,10 +808,10 @@ void CL_ParseTEnt (void)
 		break;
 
 	case TE_SPLASH:			// bullet hitting water
-		cnt = MSG_ReadByte (&net_message);
+		cnt = MSG_ReadByte(&net_message);
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
-		r = MSG_ReadByte (&net_message);
+		r = MSG_ReadByte(&net_message);
 		if (r > 6)
 			color = 0x00;
 		else
@@ -956,10 +956,10 @@ void CL_ParseTEnt (void)
 
 	// RAFAEL
 	case TE_WELDING_SPARKS:
-		cnt = MSG_ReadByte (&net_message);
+		cnt = MSG_ReadByte(&net_message);
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
-		color = MSG_ReadByte (&net_message);
+		color = MSG_ReadByte(&net_message);
 		CL_ParticleEffect2 (pos, dir, color, cnt);
 
 		ex = CL_AllocExplosion ();
@@ -979,10 +979,10 @@ void CL_ParseTEnt (void)
 
 	// RAFAEL
 	case TE_TUNNEL_SPARKS:
-		cnt = MSG_ReadByte (&net_message);
+		cnt = MSG_ReadByte(&net_message);
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
-		color = MSG_ReadByte (&net_message);
+		color = MSG_ReadByte(&net_message);
 		CL_ParticleEffect3 (pos, dir, color, cnt);
 		break;
 
@@ -1076,7 +1076,7 @@ void CL_ParseTEnt (void)
 	case TE_FORCEWALL:
 		MSG_ReadPos(&net_message, pos);
 		MSG_ReadPos(&net_message, pos2);
-		color = MSG_ReadByte (&net_message);
+		color = MSG_ReadByte(&net_message);
 		CL_ForceWall(pos, pos2, color);
 		break;
 

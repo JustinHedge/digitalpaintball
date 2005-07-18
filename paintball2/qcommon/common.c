@@ -472,7 +472,7 @@ void MSG_ReadDir (sizebuf_t *sb, vec3_t dir)
 {
 	int		b;
 
-	b = MSG_ReadByte (sb);
+	b = MSG_ReadByte(sb);
 	if (b >= NUMVERTEXNORMALS)
 		Com_Error (ERR_DROP, "MSF_ReadDir: out of range");
 	VectorCopy (bytedirs[b], dir);
@@ -786,7 +786,7 @@ char *MSG_ReadString (sizebuf_t *msg_read)
 	do
 	{
 		//c = MSG_ReadChar (msg_read);
-		c = MSG_ReadByte (msg_read); // jitsecurity, fix by [SkulleR]
+		c = MSG_ReadByte(msg_read); // jitsecurity, fix by [SkulleR]
 		if (c == -1 || c == 0)
 			break;
 		string[l] = c;
@@ -846,7 +846,7 @@ void MSG_ReadDeltaUsercmd (sizebuf_t *msg_read, usercmd_t *from, usercmd_t *move
 
 	memcpy (move, from, sizeof(*move));
 
-	bits = MSG_ReadByte (msg_read);
+	bits = MSG_ReadByte(msg_read);
 		
 // read current angles
 	if (bits & CM_ANGLE1)
@@ -866,16 +866,16 @@ void MSG_ReadDeltaUsercmd (sizebuf_t *msg_read, usercmd_t *from, usercmd_t *move
 	
 // read buttons
 	if (bits & CM_BUTTONS)
-		move->buttons = MSG_ReadByte (msg_read);
+		move->buttons = MSG_ReadByte(msg_read);
 
 	if (bits & CM_IMPULSE)
-		move->impulse = MSG_ReadByte (msg_read);
+		move->impulse = MSG_ReadByte(msg_read);
 
 // read time to run command
-	move->msec = MSG_ReadByte (msg_read);
+	move->msec = MSG_ReadByte(msg_read);
 
 // read the light level
-	move->lightlevel = MSG_ReadByte (msg_read);
+	move->lightlevel = MSG_ReadByte(msg_read);
 }
 
 
@@ -884,7 +884,7 @@ void MSG_ReadData (sizebuf_t *msg_read, void *data, int len)
 	int		i;
 
 	for (i=0 ; i<len ; i++)
-		((byte *)data)[i] = MSG_ReadByte (msg_read);
+		((byte *)data)[i] = MSG_ReadByte(msg_read);
 }
 
 

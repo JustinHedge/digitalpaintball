@@ -249,7 +249,7 @@ void CL_ParseMuzzleFlash (void)
 	if (i < 1 || i >= MAX_EDICTS)
 		Com_Error (ERR_DROP, "CL_ParseMuzzleFlash: bad entity");
 
-	weapon = MSG_ReadByte (&net_message);
+	weapon = MSG_ReadByte(&net_message);
 	silenced = weapon & MZ_SILENCED;
 	weapon &= ~MZ_SILENCED;
 
@@ -439,7 +439,7 @@ void CL_ParseMuzzleFlash2 (void)
 	if (ent < 1 || ent >= MAX_EDICTS)
 		Com_Error (ERR_DROP, "CL_ParseMuzzleFlash2: bad entity");
 
-	flash_number = MSG_ReadByte (&net_message);
+	flash_number = MSG_ReadByte(&net_message);
 
 	// locate the origin
 	AngleVectors (cl_entities[ent].current.angles, forward, right, NULL);

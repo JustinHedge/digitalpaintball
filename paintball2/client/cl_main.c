@@ -1339,10 +1339,13 @@ void CL_RequestNextDownload (void)
 				} else
 					*skin = 0;
 
-				switch (n) {
+				switch (n)
+				{
 				case 0: // model
 					Com_sprintf(fn, sizeof(fn), "players/%s/tris.md2", model);
-					if (!CL_CheckOrDownloadFile(fn)) {
+
+					if (!CL_CheckOrDownloadFile(fn))
+					{
 						precache_check = CS_PLAYERSKINS + i * PLAYER_MULT + 1;
 						return; // started a download
 					}
@@ -1351,7 +1354,9 @@ void CL_RequestNextDownload (void)
 
 				case 1: // weapon model
 					Com_sprintf(fn, sizeof(fn), "players/%s/weapon.md2", model);
-					if (!CL_CheckOrDownloadFile(fn)) {
+
+					if (!CL_CheckOrDownloadFile(fn))
+					{
 						precache_check = CS_PLAYERSKINS + i * PLAYER_MULT + 2;
 						return; // started a download
 					}
@@ -1360,7 +1365,9 @@ void CL_RequestNextDownload (void)
 
 				case 2: // weapon skin
 					Com_sprintf(fn, sizeof(fn), "players/%s/weapon.jpg", model); // jitdownload
-					if (!CL_CheckOrDownloadFile(fn)) {
+
+					if (!CL_CheckOrDownloadFile(fn))
+					{
 						precache_check = CS_PLAYERSKINS + i * PLAYER_MULT + 3;
 						return; // started a download
 					}
@@ -1369,7 +1376,9 @@ void CL_RequestNextDownload (void)
 
 				case 3: // skin
 					Com_sprintf(fn, sizeof(fn), "players/%s/%s.jpg", model, skin); // jitdownload
-					if (!CL_CheckOrDownloadFile(fn)) {
+
+					if (!CL_CheckOrDownloadFile(fn))
+					{
 						precache_check = CS_PLAYERSKINS + i * PLAYER_MULT + 4;
 						return; // started a download
 					}
@@ -1378,7 +1387,9 @@ void CL_RequestNextDownload (void)
 
 				case 4: // skin_i
 					Com_sprintf(fn, sizeof(fn), "players/%s/%s_i.pcx", model, skin);
-					if (!CL_CheckOrDownloadFile(fn)) {
+
+					if (!CL_CheckOrDownloadFile(fn))
+					{
 						precache_check = CS_PLAYERSKINS + i * PLAYER_MULT + 5;
 						return; // started a download
 					}
@@ -1401,6 +1412,8 @@ void CL_RequestNextDownload (void)
 		{
 			Com_Error (ERR_DROP, "Local map version differs from server: %i != '%s'\n",
 				map_checksum, cl.configstrings[CS_MAPCHECKSUM]);
+			// todo - archive the wrong version and redownload the map if an archive
+			// with the same checksum isn't found.
 
 			return;
 		}

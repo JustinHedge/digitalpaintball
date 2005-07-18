@@ -291,7 +291,7 @@ void CL_ParseDownload (void)
 
 	// read the data
 	size = MSG_ReadShort (&net_message);
-	percent = MSG_ReadByte (&net_message);
+	percent = MSG_ReadByte(&net_message);
 	if (size == -1)
 	{
 		Com_Printf ("Server does not have this file.\n");
@@ -751,7 +751,7 @@ void CL_ParseServerData (void)
 		Com_Error (ERR_DROP,"Server returned version %i, not %i", i, PROTOCOL_VERSION);
 
 	cl.servercount = MSG_ReadLong (&net_message);
-	cl.attractloop = MSG_ReadByte (&net_message);
+	cl.attractloop = MSG_ReadByte(&net_message);
 
 	// game directory
 	str = MSG_ReadString (&net_message);
@@ -1073,21 +1073,21 @@ void CL_ParseStartSoundPacket(void)
 	int		flags;
 	float	ofs;
 
-	flags = MSG_ReadByte (&net_message);
-	sound_num = MSG_ReadByte (&net_message);
+	flags = MSG_ReadByte(&net_message);
+	sound_num = MSG_ReadByte(&net_message);
 
     if (flags & SND_VOLUME)
-		volume = MSG_ReadByte (&net_message) / 255.0;
+		volume = MSG_ReadByte(&net_message) / 255.0;
 	else
 		volume = DEFAULT_SOUND_PACKET_VOLUME;
 	
     if (flags & SND_ATTENUATION)
-		attenuation = MSG_ReadByte (&net_message) / 64.0;
+		attenuation = MSG_ReadByte(&net_message) / 64.0;
 	else
 		attenuation = DEFAULT_SOUND_PACKET_ATTENUATION;	
 
     if (flags & SND_OFFSET)
-		ofs = MSG_ReadByte (&net_message) / 1000.0;
+		ofs = MSG_ReadByte(&net_message) / 1000.0;
 	else
 		ofs = 0;
 
@@ -1208,7 +1208,7 @@ void CL_ParseServerMessage (void)
 			break;
 		}
 
-		cmd = MSG_ReadByte (&net_message);
+		cmd = MSG_ReadByte(&net_message);
 
 		if (cmd == -1)
 		{

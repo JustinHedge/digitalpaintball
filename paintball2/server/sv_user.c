@@ -716,7 +716,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 			return;
 		}	
 
-		c = MSG_ReadByte (&net_message);
+		c = MSG_ReadByte(&net_message);
 		if (c == -1)
 			break;
 				
@@ -741,7 +741,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 
 			move_issued = true;
 			checksumIndex = net_message.readcount;
-			checksum = MSG_ReadByte (&net_message);
+			checksum = MSG_ReadByte(&net_message);
 			lastframe = MSG_ReadLong (&net_message);
 			if (lastframe != cl->lastframe) {
 				cl->lastframe = lastframe;
