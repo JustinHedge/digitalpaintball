@@ -56,6 +56,7 @@ PFNGLPROGRAMLOCALPARAMETER4FARBPROC qglProgramLocalParameter4fARB = NULL;
 
 cvar_t	*gl_debug; // jit
 cvar_t	*gl_sgis_generate_mipmap;
+cvar_t	*gl_arb_fragment_program; // jit
 
 void R_Clear(void);
 
@@ -1693,6 +1694,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 
 	gl_debug = ri.Cvar_Get("gl_debug", "0", CVAR_ARCHIVE); // jit
 	gl_sgis_generate_mipmap = ri.Cvar_Get("gl_sgis_generate_mipmap", "0", CVAR_ARCHIVE); // jit
+	gl_arb_fragment_program = ri.Cvar_Get("gl_arb_fragment_program", "1", CVAR_ARCHIVE); // jit
 
 	for (j = 0; j < 256; j++)
 	{
@@ -2094,7 +2096,14 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	// jitbright ===
 
 	// === jitwater
-	if (strstr(gl_config.extensions_string, "GL_ARB_fragment_program"))
+	if (!gl_arb_fragment_program->value)
+	{
+		gl_state.fragment_program = false;
+
+		if (gl_debug->value)
+			ri.Con_Printf(PRINT_ALL, "...GL_ARB_fragment_program disabled\n");
+	}
+	else if (strstr(gl_config.extensions_string, "GL_ARB_fragment_program"))
 	{
 		gl_state.fragment_program = true;
 
@@ -2109,6 +2118,15 @@ qboolean R_Init (void *hinstance, void *hWnd)
 			(PFNGLPROGRAMENVPARAMETER4FARBPROC)qwglGetProcAddress("glProgramEnvParameter4fARB");
 		qglProgramLocalParameter4fARB =
 			(PFNGLPROGRAMLOCALPARAMETER4FARBPROC)qwglGetProcAddress("glProgramLocalParameter4fARB");
+
+		if (!(qglGenProgramsARB && qglDeleteProgramsARB && qglBindProgramARB &&
+			qglProgramStringARB && qglProgramEnvParameter4fARB && qglProgramLocalParameter4fARB))
+		{
+			gl_state.fragment_program = false;
+			
+			if (gl_debug->value)
+				ri.Con_Printf(PRINT_ALL, "... Failed!  Fragment programs disabled\n");
+		}
 	}
 	else
 	{

@@ -743,20 +743,24 @@ void SV_ExecuteClientMessage (client_t *cl)
 			checksumIndex = net_message.readcount;
 			checksum = MSG_ReadByte(&net_message);
 			lastframe = MSG_ReadLong (&net_message);
-			if (lastframe != cl->lastframe) {
+
+			if (lastframe != cl->lastframe)
+			{
 				cl->lastframe = lastframe;
-				if (cl->lastframe > 0) {
+
+				if (cl->lastframe > 0)
+				{
 					cl->frame_latency[cl->lastframe&(LATENCY_COUNTS-1)] = 
 						svs.realtime - cl->frames[cl->lastframe & UPDATE_MASK].senttime;
 				}
 			}
 
-			memset (&nullcmd, 0, sizeof(nullcmd));
-			MSG_ReadDeltaUsercmd (&net_message, &nullcmd, &oldest);
-			MSG_ReadDeltaUsercmd (&net_message, &oldest, &oldcmd);
-			MSG_ReadDeltaUsercmd (&net_message, &oldcmd, &newcmd);
+			memset(&nullcmd, 0, sizeof(nullcmd));
+			MSG_ReadDeltaUsercmd(&net_message, &nullcmd, &oldest);
+			MSG_ReadDeltaUsercmd(&net_message, &oldest, &oldcmd);
+			MSG_ReadDeltaUsercmd(&net_message, &oldcmd, &newcmd);
 
-			if ( cl->state != cs_spawned )
+			if (cl->state != cs_spawned)
 			{
 				cl->lastframe = -1;
 				break;
@@ -770,7 +774,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 
 			if (calculatedChecksum != checksum)
 			{
-				Com_DPrintf ("Failed command checksum for %s (%d != %d)/%d\n", 
+				Com_DPrintf("Failed command checksum for %s (%d != %d)/%d\n", 
 					cl->name, calculatedChecksum, checksum, 
 					cl->netchan.incoming_sequence);
 				return;

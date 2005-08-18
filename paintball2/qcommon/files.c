@@ -126,7 +126,7 @@ FS_CreatePath
 Creates any directories needed to store the given filename
 ============
 */
-void	FS_CreatePath (char *path)
+void FS_CreatePath (char *path)
 {
 	char	*ofs;
 	

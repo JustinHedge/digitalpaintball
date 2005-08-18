@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qgl.h"
 
-#define	REF_VERSION	"PB2GL 0.14" // jitversion / jitbuild
+#define	REF_VERSION	"PB2GL 0.15" // jitversion / jitbuild
 
 // up / down
 #define	PITCH	0
@@ -210,6 +210,7 @@ extern	cvar_t	*vid_fullscreen;
 extern	cvar_t	*vid_gamma;
 extern	cvar_t	*vid_lighten; // jitgamma
 extern	cvar_t	*gl_debug; // jit
+extern	cvar_t	*gl_arb_fragment_program; // jit
 //extern	cvar_t	*intensity;
 extern	cvar_t	*r_caustics; // jitcaustics
 extern	cvar_t	*r_reflectivewater; // jitwater

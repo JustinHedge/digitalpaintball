@@ -87,7 +87,8 @@ void SV_EmitProjectileUpdate (sizebuf_t *msg)
 
 		if (ent->s.old_origin[0] != ent->s.origin[0] ||
 			ent->s.old_origin[1] != ent->s.origin[1] ||
-			ent->s.old_origin[2] != ent->s.origin[2]) {
+			ent->s.old_origin[2] != ent->s.origin[2])
+		{
 			bits[len-1] |= 128;
 			x = (int)(ent->s.old_origin[0]+4096)>>1;
 			y = (int)(ent->s.old_origin[1]+4096)>>1;

@@ -1410,7 +1410,7 @@ test error shutdown procedures
 */
 void Com_Error_f (void)
 {
-	Com_Error (ERR_FATAL, "%s", Cmd_Argv(1));
+	Com_Error(ERR_FATAL, "%s", Cmd_Argv(1));
 }
 
 
@@ -1457,27 +1457,27 @@ void Qcommon_Init (int argc, char **argv)
 	//
 	// init commands and vars
 	//
-    Cmd_AddCommand ("z_stats", Z_Stats_f);
-    Cmd_AddCommand ("error", Com_Error_f);
+    Cmd_AddCommand("z_stats", Z_Stats_f);
+    Cmd_AddCommand("error", Com_Error_f);
 
-	host_speeds = Cvar_Get ("host_speeds", "0", 0);
-	log_stats = Cvar_Get ("log_stats", "0", 0);
-	developer = Cvar_Get ("developer", "0", 0);
-	timescale = Cvar_Get ("timescale", "1", 0);
-	fixedtime = Cvar_Get ("fixedtime", "0", 0);
-	splattime = Cvar_Get ("splattime", "4", CVAR_ARCHIVE); // jit
-	logfile_active = Cvar_Get ("logfile", "0", 0);
-	showtrace = Cvar_Get ("showtrace", "0", 0);
+	host_speeds = Cvar_Get("host_speeds", "0", 0);
+	log_stats = Cvar_Get("log_stats", "0", 0);
+	developer = Cvar_Get("developer", "0", 0);
+	timescale = Cvar_Get("timescale", "1", 0);
+	fixedtime = Cvar_Get("fixedtime", "0", 0);
+	splattime = Cvar_Get("splattime", "4", CVAR_ARCHIVE); // jit
+	logfile_active = Cvar_Get("logfile", "0", 0);
+	showtrace = Cvar_Get("showtrace", "0", 0);
 	
 #ifdef DEDICATED_ONLY
-	dedicated = Cvar_Get ("dedicated", "1", CVAR_NOSET);
+	dedicated = Cvar_Get("dedicated", "1", CVAR_NOSET);
 #else
-	dedicated = Cvar_Get ("dedicated", "0", CVAR_NOSET);
+	dedicated = Cvar_Get("dedicated", "0", CVAR_NOSET);
 #endif
 	deathmatch = Cvar_Get("deathmatch", "0", 0); // jit
 
 	s = va("%4.2f %s %s %s", VERSION, CPUSTRING, __DATE__, BUILDSTRING);
-	Cvar_Get ("version", s, CVAR_SERVERINFO|CVAR_NOSET);
+	Cvar_Get("version", s, CVAR_SERVERINFO|CVAR_NOSET);
 
 	if (dedicated->value)
 	{
@@ -1485,13 +1485,11 @@ void Qcommon_Init (int argc, char **argv)
 		Cmd_AddCommand("exit", Com_Quit); // jit
 	}
 
-	Sys_Init ();
-
-	NET_Init ();
-	Netchan_Init ();
-
-	SV_Init ();
-	CL_Init ();
+	Sys_Init();
+	NET_Init();
+	Netchan_Init();
+	SV_Init();
+	CL_Init();
 
 	// add + commands from command line
 	if (!Cbuf_AddLateCommands ())

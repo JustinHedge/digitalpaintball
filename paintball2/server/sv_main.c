@@ -860,7 +860,7 @@ void Master_Heartbeat (void)
 	string = SV_StatusString();
 
 	// send to group master
-	for (i=0; i<MAX_MASTERS; i++)
+	for (i = 0; i < MAX_MASTERS; i++)
 	{
 		if (master_adr[i].port)
 		{
@@ -890,13 +890,16 @@ void Master_Shutdown (void)
 		return;		// a private dedicated game
 
 	// send to group master
-	for (i=0 ; i<MAX_MASTERS ; i++)
+	for (i = 0; i < MAX_MASTERS; i++)
+	{
 		if (master_adr[i].port)
 		{
 			if (i > 0)
-				Com_Printf ("Sending heartbeat to %s\n", NET_AdrToString (master_adr[i]));
+				Com_Printf("Sending heartbeat to %s\n", NET_AdrToString(master_adr[i]));
+
 			Netchan_OutOfBandPrint (NS_SERVER, master_adr[i], "shutdown");
 		}
+	}
 }
 
 //============================================================================

@@ -725,28 +725,28 @@ char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR] - jitcvar
    count = 0;
 
    for( i=0 ; i<len ; i++ ) {
-      if( !scan[i] ) {
+      if ( !scan[i] ) {
          break;
       }
-      if( scan[i] == '"' ) {
+      if ( scan[i] == '"' ) {
          inquote ^= 1;
       }
-      if( inquote ) {
+      if ( inquote ) {
          continue;   // don't expand inside quotes
       }
-      if( scan[i] != '$' ) {
+      if ( scan[i] != '$' ) {
          continue;
       }
       
       // scan out the complete macro
       start = scan + i + 1;
 
-      if( !*start ) {
+      if ( !*start ) {
          break;
       }
 
       // convert $$text to $text and skip
-      if( *start == '$' ) {
+      if ( *start == '$' ) {
          strncpy( temporary, scan, i );
          strcpy( temporary + i, start );
 
@@ -763,20 +763,20 @@ char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR] - jitcvar
       token = temporary;
       while( *start > 32 ) {
          *token++ = *start++;
-         if( *start == '$' ) {
+         if ( *start == '$' ) {
             start++;
             break;
          }
       }
       *token = 0;
 
-      if( token == temporary ) {
+      if ( token == temporary ) {
          continue;
       }
 
 	  // check for macros first
       /*macro = Cmd_MacroFind( temporary );
-      if( macro ) {
+      if ( macro ) {
          macro->function( buffer, sizeof( buffer ) );
          token = buffer;
       } else {*/
@@ -791,7 +791,7 @@ char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR] - jitcvar
 
       j = strlen( token );
       len += j;
-      if( len >= MAX_STRING_CHARS ) {
+      if ( len >= MAX_STRING_CHARS ) {
          Com_Printf( "Expanded line exceeded %i chars, discarded.\n", MAX_STRING_CHARS );
          return NULL;
       }
@@ -804,7 +804,7 @@ char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR] - jitcvar
       scan = expanded;
       i--;
 
-      if( ++count == 100 ) {
+      if ( ++count == 100 ) {
          Com_Printf( "Macro expansion loop, discarded.\n" );
          return NULL;
       }

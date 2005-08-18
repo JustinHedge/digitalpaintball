@@ -120,33 +120,37 @@ void R_init_refl (int maxNoReflections)
 	}
 
 	// === jitwater - fragment program initializiation
-	qglGenProgramsARB(1, &g_water_program_id);
-    qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_program_id);
-	qglProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2, 1.0f, 0.1f, 0.6f, 0.5f); // jitest
-	len = ri.FS_LoadFileZ("scripts/water1.arbf", &fragment_program_text);
-
-	if (len > 0)
-		qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, len, fragment_program_text);
-	else
-		ri.Con_Printf(PRINT_ALL, "Unable to find scripts/water1.arbf\n");
-
-	ri.FS_FreeFile(fragment_program_text);
-	
-	// Make sure the program loaded correctly
+	if (gl_state.fragment_program)
 	{
-		int err;
-		assert((err = qglGetError()) == GL_NO_ERROR);
-		err = err; // for debugging only -- todo, remove
-	}
+		qglGenProgramsARB(1, &g_water_program_id);
+		qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_program_id);
+		qglProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2, 1.0f, 0.1f, 0.6f, 0.5f); // jitest
+		len = ri.FS_LoadFileZ("scripts/water1.arbf", &fragment_program_text);
 
-	distort_tex = Draw_FindPic("/textures/sfx/water/distort3.tga");
-	water_normal_tex = Draw_FindPic("/textures/sfx/water/normal1.tga");
+		if (len > 0)
+			qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, len, fragment_program_text);
+		else
+			ri.Con_Printf(PRINT_ALL, "Unable to find scripts/water1.arbf\n");
+
+		ri.FS_FreeFile(fragment_program_text);
+		
+		// Make sure the program loaded correctly
+		{
+			int err;
+			assert((err = qglGetError()) == GL_NO_ERROR);
+			err = err; // for debugging only -- todo, remove
+		}
+
+		distort_tex = Draw_FindPic("/textures/sfx/water/distort1.tga");
+		water_normal_tex = Draw_FindPic("/textures/sfx/water/normal1.tga");
+	}
 	// jitwater ===
 }
 
 void R_shutdown_refl (void) // jitodo - call this.
 {
-	qglDeleteProgramsARB(1, &g_water_program_id);
+	if (gl_state.fragment_program)
+		qglDeleteProgramsARB(1, &g_water_program_id);
 }
 
 /*

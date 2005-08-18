@@ -710,8 +710,12 @@ qboolean R_CullSkeletalModel (entity_t *e)
 #endif
 }
 
+typedef struct {
+	vec3_t axis[3];
+	vec3_t origin;
+} axis_origin_t;
 
-static struct { vec3_t axis[3], origin; } skmbonepose[SKM_MAX_BONES];
+axis_origin_t skmbonepose[SKM_MAX_BONES];
 
 /*
 ================
@@ -725,7 +729,7 @@ void R_PositionBonesLerp (entity_t *e, model_t *mod, float backlerp) // jitskm
 	float			frontlerp = 1.0 - backlerp;
 	register int	i, total;
 	bonepose_t		*bonepose, *oldbonepose, *bp, *oldbp;
-	struct { vec3_t axis[3], origin; } *out;
+	axis_origin_t	*out;
 	quat_t			quaternion;
 	
 	// todo - check if e->frame > max frames
@@ -781,7 +785,7 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	mskmodel_t		*skmodel = mod->skmodel;
 	rscript_t		*rs; // jitrscript
 	image_t			*skin_image;
-	struct { vec3_t axis[3], origin; } *pose;
+	axis_origin_t	*pose;
 
 	if (meshnum < 0 || meshnum >= skmodel->nummeshes)
 		return;

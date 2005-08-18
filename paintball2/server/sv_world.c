@@ -341,7 +341,6 @@ void SV_LinkEdict (edict_t *ent)
 		InsertLinkBefore (&ent->area, &node->trigger_edicts);
 	else
 		InsertLinkBefore (&ent->area, &node->solid_edicts);
-
 }
 
 
@@ -530,16 +529,21 @@ void SV_ClipMoveToEntities ( moveclip_t *clip )
 	for (i=0 ; i<num ; i++)
 	{
 		touch = touchlist[i];
+
 		if (touch->solid == SOLID_NOT)
 			continue;
+
 		if (touch == clip->passedict)
 			continue;
+
 		if (clip->trace.allsolid)
 			return;
+
 		if (clip->passedict)
 		{
 		 	if (touch->owner == clip->passedict)
 				continue;	// don't clip against own missiles
+
 			if (clip->passedict->owner == touch)
 				continue;	// don't clip against owner
 		}

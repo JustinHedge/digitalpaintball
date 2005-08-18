@@ -546,6 +546,11 @@ void CMod_LoadEntityString (lump_t *l)
 }
 
 
+void CM_ClearMapName (void) // jitmaphash
+{
+	map_name[0] = 0;
+}
+
 
 /*
 ==================
@@ -606,7 +611,7 @@ cmodel_t *CM_LoadMap (char *name, qboolean clientload, unsigned *checksum)
 	*checksum = last_checksum;
 	header = *(dheader_t *)buf;
 
-	for (i=0; i<sizeof(dheader_t)/4; i++)
+	for (i = 0; i < sizeof(dheader_t) / 4; i++)
 		((int *)&header)[i] = LittleLong(((int *)&header)[i]);
 
 	if (header.version != BSPVERSION)

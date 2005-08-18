@@ -860,6 +860,10 @@ void CL_AddPacketEntities (frame_t *frame)
 				ent.weapon_model = cl.model_draw[s1->modelindex2];
 			}
 		}
+		else
+		{
+			ent.weapon_model = NULL;
+		}
 
 		// add to refresh list
 		V_AddEntity(&ent);

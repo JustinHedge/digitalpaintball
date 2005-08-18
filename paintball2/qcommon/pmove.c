@@ -247,6 +247,7 @@ void PM_StepSlideMove (void)
 	up[2] += STEPSIZE;
 
 	trace = pm->trace(up, pm->mins, pm->maxs, up);
+
 	if (trace.allsolid)
 		return;		// can't step up
 
@@ -260,6 +261,7 @@ void PM_StepSlideMove (void)
 	VectorCopy(pml.origin, down);
 	down[2] -= STEPSIZE;
 	trace = pm->trace(pml.origin, pm->mins, pm->maxs, down);
+
 	if (!trace.allsolid)
 	{
 		VectorCopy(trace.endpos, pml.origin);
@@ -325,10 +327,10 @@ void PM_Friction (void)
 
 // scale the velocity
 	newspeed = speed - drop;
+	
 	if (newspeed < 0)
-	{
 		newspeed = 0;
-	}
+
 	newspeed /= speed;
 
 	vel[0] = vel[0] * newspeed;
@@ -351,33 +353,40 @@ void PM_Accelerate (vec3_t wishdir, float wishspeed, float accel)
 
 	currentspeed = DotProduct (pml.velocity, wishdir);
 	addspeed = wishspeed - currentspeed;
+
 	if (addspeed <= 0)
 		return;
-	accelspeed = accel*pml.frametime*wishspeed;
+
+	accelspeed = accel * pml.frametime * wishspeed;
+
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
-	for (i=0 ; i<3 ; i++)
-		pml.velocity[i] += accelspeed*wishdir[i];	
+	for (i = 0; i < 3; i++)
+		pml.velocity[i] += accelspeed*  wishdir[i];	
 }
 
 void PM_AirAccelerate (vec3_t wishdir, float wishspeed, float accel)
 {
 	int			i;
 	float		addspeed, accelspeed, currentspeed, wishspd = wishspeed;
-		
+
 	if (wishspd > 30)
 		wishspd = 30;
-	currentspeed = DotProduct (pml.velocity, wishdir);
+
+	currentspeed = DotProduct(pml.velocity, wishdir);
 	addspeed = wishspd - currentspeed;
+
 	if (addspeed <= 0)
 		return;
+
 	accelspeed = accel * wishspeed * pml.frametime;
+
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
-	for (i=0 ; i<3 ; i++)
-		pml.velocity[i] += accelspeed*wishdir[i];	
+	for (i = 0; i < 3; i++)
+		pml.velocity[i] += accelspeed * wishdir[i];	
 }
 
 /*
@@ -512,7 +521,7 @@ void PM_WaterMove (void)
 
 	PM_Accelerate (wishdir, wishspeed, pm_wateraccelerate);
 
-	PM_StepSlideMove ();
+	PM_StepSlideMove();
 }
 
 
@@ -580,7 +589,7 @@ void PM_AirMove (void)
 					pml.velocity[2]  = 0;
 			}
 		}
-		PM_StepSlideMove ();
+		PM_StepSlideMove();
 	}
 	else if (pm->groundentity)
 	{	// walking on ground
@@ -597,14 +606,14 @@ void PM_AirMove (void)
 
 		if (!pml.velocity[0] && !pml.velocity[1])
 			return;
-		PM_StepSlideMove ();
+		PM_StepSlideMove();
 	}
 	else
 	{	// not on ground, so little effect on velocity
 		if (pm_airaccelerate)
-			PM_AirAccelerate (wishdir, wishspeed, pm_accelerate);
+			PM_AirAccelerate(wishdir, wishspeed, pm_accelerate);
 		else
-			PM_Accelerate (wishdir, wishspeed, 1);
+			PM_Accelerate(wishdir, wishspeed, 1);
 		// add gravity
 		pml.velocity[2] -= pm->s.gravity * pml.frametime;
 		PM_StepSlideMove();
@@ -640,12 +649,36 @@ void PM_CatagorizePosition (void)
 	}
 	else
 	{
-		trace = pm->trace (pml.origin, pm->mins, pm->maxs, point);
+		trace = pm->trace(pml.origin, pm->mins, pm->maxs, point);
 		pml.groundplane = trace.plane;
 		pml.groundsurface = trace.surface;
 		pml.groundcontents = trace.contents;
 
-		if (!trace.ent || (trace.plane.normal[2] < 0.7 && !trace.startsolid) )
+		if (trace.plane.normal[2] < 0.7f && !trace.startsolid) // jitclipbug
+		{
+			trace_t		trace2;
+			vec3_t		mins, maxs;
+
+			// try a slightly smaller bounding box -- this is to fix getting stuck up
+			// on angled walls and not being able to move (like you're stuck in the air)
+			mins[0] = pm->mins[0] ? pm->mins[0] + 1 : 0;
+			mins[1] = pm->mins[1] ? pm->mins[1] + 1 : 0;
+			mins[2] = pm->mins[2];
+			maxs[0] = pm->maxs[0] ? pm->maxs[0] - 1 : 0;
+			maxs[1] = pm->maxs[1] ? pm->maxs[1] - 1 : 0;
+			maxs[2] = pm->maxs[2];
+			trace2 = pm->trace(pml.origin, mins, maxs, point);
+			
+			if (!(trace2.plane.normal[2] < 0.7f && !trace2.startsolid))
+			{
+				memcpy(&trace, &trace2, sizeof(trace));
+				pml.groundplane = trace.plane;
+				pml.groundsurface = trace.surface;
+				pml.groundcontents = trace.contents;
+				pm->groundentity = trace.ent;
+			}
+		}
+		else if (!trace.ent)
 		{
 			pm->groundentity = NULL;
 			pm->s.pm_flags &= ~PMF_ON_GROUND;
@@ -676,11 +709,6 @@ void PM_CatagorizePosition (void)
 				}
 			}
 		}
-
-#if 0
-		if (trace.fraction < 1.0 && trace.ent && pml.velocity[2] < 0)
-			pml.velocity[2] = 0;
-#endif
 
 		if (pm->numtouch < MAXTOUCH && trace.ent)
 		{
@@ -785,7 +813,7 @@ PM_CheckSpecialMovement
 void PM_CheckSpecialMovement (void)
 {
 	vec3_t	spot;
-	int		cont;
+	int		cont, cont2;
 	vec3_t	flatforward;
 	trace_t	trace;
 
@@ -798,10 +826,10 @@ void PM_CheckSpecialMovement (void)
 	flatforward[0] = pml.forward[0];
 	flatforward[1] = pml.forward[1];
 	flatforward[2] = 0;
-	VectorNormalize (flatforward);
-
-	VectorMA (pml.origin, 1, flatforward, spot);
-	trace = pm->trace (pml.origin, pm->mins, pm->maxs, spot);
+	VectorNormalize(flatforward);
+	VectorMA(pml.origin, 1, flatforward, spot);
+	trace = pm->trace(pml.origin, pm->mins, pm->maxs, spot);
+	
 	if ((trace.fraction < 1) && (trace.contents & CONTENTS_LADDER))
 		pml.ladder = true;
 
@@ -809,20 +837,36 @@ void PM_CheckSpecialMovement (void)
 	if (pm->waterlevel != 2)
 		return;
 
-	VectorMA (pml.origin, 30, flatforward, spot);
+	// === jitwaterjump
+	/*flatforward[0] += pml.velocity[0];
+	flatforward[1] += pml.velocity[1];
+	VectorNormalize(flatforward);*/
+	Com_DPrintf("Forward: %3g %3g\n", flatforward[0], flatforward[1]);
+	// ===
+
+	VectorMA(pml.origin, 30, flatforward, spot);
 	spot[2] += 4;
-	cont = pm->pointcontents (spot);
-	if (!(cont & CONTENTS_SOLID))
+	cont = pm->pointcontents(spot);
+	// === jitwaterjump
+	VectorMA(pml.origin, 38, flatforward, spot);
+	spot[2] -= 1;
+	//spot[2] -= 5;
+	cont2 = pm->pointcontents(spot);
+	Com_DPrintf("Conts: %d %d\n", cont, cont2);
+
+	if (!(cont & CONTENTS_SOLID) && !(cont2 & CONTENTS_SOLID)) // jitwaterjump
 		return;
+	// ===
 
 	spot[2] += 16;
-	cont = pm->pointcontents (spot);
+	cont = pm->pointcontents(spot);
+
 	if (cont)
 		return;
-	// jump out of water
-	VectorScale (flatforward, 50, pml.velocity);
-	pml.velocity[2] = 350;
 
+	// jump out of water
+	VectorScale(flatforward, 50, pml.velocity);
+	pml.velocity[2] = 350;
 	pm->s.pm_flags |= PMF_TIME_WATERJUMP;
 	pm->s.pm_time = 255;
 }
@@ -1297,13 +1341,14 @@ void Pmove (pmove_t *pmove)
 	else if (pm->s.pm_flags & PMF_TIME_WATERJUMP)
 	{	// waterjump has no control, but falls
 		pml.velocity[2] -= pm->s.gravity * pml.frametime;
+
 		if (pml.velocity[2] < 0)
 		{	// cancel as soon as we are falling down again
 			pm->s.pm_flags &= ~(PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT);
 			pm->s.pm_time = 0;
 		}
 
-		PM_StepSlideMove ();
+		PM_StepSlideMove();
 	}
 	else
 	{

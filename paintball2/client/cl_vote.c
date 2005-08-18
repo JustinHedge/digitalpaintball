@@ -61,6 +61,7 @@ static unsigned int temp_array[MAX_DECODE_ARRAY];
 #define GAMEMODE_SIEGE			8
 #define GAMEMODE_KOTH			16
 #define GAMEMODE_ELIM			32
+#define GAMEMODE_PONG			64
 
 
 void CL_UpdateMaplistModes (void)
@@ -85,6 +86,8 @@ void CL_UpdateMaplistModes (void)
 				cl_maplist_modes[i++] = "Siege";
 			if (finger->gamemode_flags & GAMEMODE_KOTH)
 				cl_maplist_modes[i++] = "KOTH";
+			if (finger->gamemode_flags & GAMEMODE_PONG)
+				cl_maplist_modes[i++] = "Pong";
 
 			cl_maplist_modes_count = i;
 			return;

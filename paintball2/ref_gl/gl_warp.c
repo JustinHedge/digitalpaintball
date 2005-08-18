@@ -206,7 +206,7 @@ float	r_turbsin[] =
 	#include "warpsin.h"
 };
 #define TURBSCALE (256.0f / (2.0f * (float)M_PI))
-#define TURBOSCALE (256.0f / ((float)M_PI / 2.5f)) // jitwater / dukey
+#define TURBOSCALE (256.0f / ((float)M_PI / 4.0f)) // jitwater / dukey
 
 
 // MrG - texture shader stuffs
@@ -295,8 +295,8 @@ void EmitWaterPolys_original (msurface_t *fa) // jitwater - old code
 
 float CalcWave (float x, float y) // jitwater / MPO
 {
-	return (r_turbsin[(int)((x*3+r_newrefdef.time) * TURBOSCALE) & 255] / 4.0f) + 
-		(r_turbsin[(int)((y*5+r_newrefdef.time) * TURBOSCALE) & 255] / 4.0f);
+	return (r_turbsin[(int)((x*3+r_newrefdef.time) * TURBOSCALE) & 255] / 2.0f) + 
+		(r_turbsin[(int)((y*5+r_newrefdef.time) * TURBOSCALE) & 255] / 2.0f);
 }
 
 // === jitwater
@@ -425,24 +425,24 @@ void EmitWaterPolys (msurface_t *fa)
 		// if we find which reflection to bind
 		if (fabs(g_refl_Z[g_active_refl] - zValue) < 8.0f)
 		{
-			if (1 && gl_state.fragment_program) // jitwater
+			// === jitwater
+			if (gl_state.fragment_program)
 			{
 				qglEnable(GL_FRAGMENT_PROGRAM_ARB);
 				qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_program_id);
 				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
-					r_newrefdef.time * (flowing ? -0.3f : 0.2f), 1.0f, 1.0f, 1.0f);
+					rs_realtime * (flowing ? -0.3f : 0.2f), 1.0f, 1.0f, 1.0f);
 				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1,
-					r_newrefdef.time * -0.2f, 10.0f, 1.0f, 1.0f);
+					rs_realtime * -0.2f, 10.0f, 1.0f, 1.0f);
 				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2,
 					r_newrefdef.vieworg[0], r_newrefdef.vieworg[1], r_newrefdef.vieworg[2], 1.0f);
+				GL_MBind(QGL_TEXTURE1, distort_tex->texnum);      // Distortion texture
+				GL_MBind(QGL_TEXTURE2, water_normal_tex->texnum); // Normal texture
 			}
 
-			// === jitwater -- jitodo, check for feature availability
 			GL_MBind(QGL_TEXTURE0, g_tex_num[g_active_refl]); // Reflection texture
-			GL_MBind(QGL_TEXTURE1, distort_tex->texnum);      // Distortion texture
-			GL_MBind(QGL_TEXTURE2, water_normal_tex->texnum); // Normal texture
-			GL_SelectTexture(QGL_TEXTURE0);
 			// jitwater ===
+
 			break;
 		}
 	}

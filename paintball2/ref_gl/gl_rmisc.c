@@ -173,31 +173,35 @@ void GL_ScreenShot_JPG (void)
 	int								i, offset;
 
 	// Create the scrnshots directory if it doesn't exist
-	Com_sprintf (checkname, sizeof(checkname), "%s/scrnshot", ri.FS_Gamedir());
-	Sys_Mkdir (checkname);
+	Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot", ri.FS_Gamedir());
+	Sys_Mkdir(checkname);
 
 	// Find a file name to save it to 
 	strcpy(picname,"sshot000.jpg"); // jit
 
-	for (i=0 ; i<=999 ; i++) 
+	for (i = 0; i <= 999; i++) 
 	{ 
 		picname[5] = i/100 + '0'; 
 		picname[6] = (i%100)/10 + '0'; 
 		picname[7] = i%10 + '0';
-		Com_sprintf (checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
-		file = fopen (checkname, "rb");
+		Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
+		file = fopen(checkname, "rb");
+
 		if (!file)
 			break;	// file doesn't exist
+
 		fclose (file);
-	} 
-	if (i==1000) 
+	}
+
+	if (i == 1000) 
 	{
-		ri.Con_Printf (PRINT_ALL, "SCR_JPGScreenShot_f: Couldn't create a file\n"); 
+		ri.Con_Printf (PRINT_ALL, "SCR_JPGScreenShot_f: Too many files\n"); 
 		return;
  	}
 
 	// Open the file for Binary Output
 	file = fopen(checkname, "wb");
+
 	if (!file)
 	{
 		ri.Con_Printf (PRINT_ALL, "SCR_JPGScreenShot_f: Couldn't create a file\n"); 
@@ -206,6 +210,7 @@ void GL_ScreenShot_JPG (void)
 
 	// Allocate room for a copy of the framebuffer
 	rgbdata = malloc(vid.width * vid.height * 3);
+
 	if (!rgbdata)
 	{
 		fclose(file);
