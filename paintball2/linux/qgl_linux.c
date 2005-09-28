@@ -377,11 +377,14 @@ void ( APIENTRY * qglPointParameterfEXT)( GLenum param, GLfloat value );
 void ( APIENTRY * qglPointParameterfvEXT)( GLenum param, const GLfloat *value );
 void ( APIENTRY * qglColorTableEXT)( GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid * );
 
-void ( APIENTRY * qgl3DfxSetPaletteEXT)( GLuint * );
-void ( APIENTRY * qglSelectTextureSGIS)( GLenum );
-void ( APIENTRY * qglMTexCoord2fSGIS)( GLenum, GLfloat, GLfloat );
-void ( APIENTRY * qglActiveTextureARB) ( GLenum );
-void ( APIENTRY * qglClientActiveTextureARB) ( GLenum );
+void (APIENTRY * qgl3DfxSetPaletteEXT) (GLuint *);
+void (APIENTRY * qglSelectTextureSGIS) (GLenum);
+void (APIENTRY * qglMTexCoord2fSGIS) (GLenum, GLfloat, GLfloat);
+void (APIENTRY * qglMultiTexCoord2fARB) (GLenum, GLfloat, GLfloat);
+void (APIENTRY * qglMultiTexCoord3fARB) (GLenum, GLfloat, GLfloat, GLfloat);
+void (APIENTRY * qglMultiTexCoord3fvARB) (GLenum, GLfloat *);
+void (APIENTRY * qglActiveTextureARB) (GLenum);
+void (APIENTRY * qglClientActiveTextureARB) (GLenum);
 
 static void ( APIENTRY * dllAccum )(GLenum op, GLfloat value);
 static void ( APIENTRY * dllAlphaFunc )(GLenum func, GLclampf ref);
@@ -3376,17 +3379,20 @@ qboolean QGL_Init( const char *dllname )
 	qgl3DfxSetPaletteEXT = 0;
 	qglSelectTextureSGIS = 0;
 	qglMTexCoord2fSGIS = 0;
+	qglMultiTexCoord2fARB = 0;
+	qglMultiTexCoord3fARB = 0;
+	qglMultiTexCoord3fvARB = 0;
 	qglActiveTextureARB = 0;
 	qglClientActiveTextureARB = 0;
 
 	return true;
 }
 
-void GLimp_EnableLogging( qboolean enable )
+void GLimp_EnableLogging (qboolean enable)
 {
-	if ( enable )
+	if (enable)
 	{
-		if ( !glw_state.log_fp )
+		if (!glw_state.log_fp)
 		{
 			struct tm *newtime;
 			time_t aclock;

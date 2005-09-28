@@ -52,34 +52,51 @@ qboolean stdin_active = true;
 // General routines
 // =======================================================================
 
-void Sys_ConsoleOutput(char *string)
+void Sys_ConsoleOutput (char *string)
 {
-	if(nostdout && nostdout->value)
+	if (nostdout && nostdout->value)
 		return;
 
-	fputs(string, stdout);
+	if (strlen(string) < 1024)
+	{
+		char text[1024];
+
+		strip_garbage(text, string); // jit - remove extended codes
+		fputs(text, stdout);
+	}
+	else
+	{
+		fputs(string, stdout);
+	}
 }
 
-void Sys_Printf(char *fmt, ...)
+void Sys_Printf (char *fmt, ...)
 {
 	va_list		argptr;
 	char		text[1024];
+	char		text_clean[1024];
 	unsigned char	*p;
 
-	va_start(argptr,fmt);
-	vsnprintf(text,1024,fmt,argptr);
+	va_start(argptr, fmt);
+	vsnprintf(text, 1024, fmt, argptr);
 	va_end(argptr);
 
-	if(nostdout && nostdout->value)
+	if (nostdout && nostdout->value)
 		return;
 
-	for(p = (unsigned char *)text; *p; p++) {
+	strip_garbage(text_clean, text); // jit
+	fputs(text_clean, stdout);
+/*
+	for (p = (unsigned char *)text; *p; p++)
+	{
 		*p &= 0x7f;
-		if((*p > 128 || *p < 32) && *p != 10 && *p != 13 && *p != 9)
+
+		if ((*p > 128 || *p < 32) && *p != 10 && *p != 13 && *p != 9)
 			printf("[%02x]", *p);
 		else
 			putc(*p, stdout);
 	}
+	*/
 }
 
 void Sys_Quit(void)
