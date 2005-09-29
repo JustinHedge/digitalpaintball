@@ -340,7 +340,7 @@ char	*va(char *format, ...);
 #define	MAX_INFO_STRING		512
 
 char *Info_ValueForKey (char *s, char *key);
-void Info_RemoveKey (char *s, char *key);
+void Info_RemoveKey (char *s, const char *key);
 void Info_SetValueForKey (char *s, char *key, char *value);
 qboolean Info_Validate (char *s);
 
@@ -1394,3 +1394,4 @@ qboolean FileExists (const char *filename); // jit
 float RadiusFromBounds (const vec3_t mins, const vec3_t maxs); // jitskm
 void Q_snprintfz (char *dest, size_t size, const char *fmt, ...); // jitskm
 void Q_strncpyz (char *dest, const char *src, size_t size); // jitskm
+void strip_garbage (char *out, const char *in); // jit

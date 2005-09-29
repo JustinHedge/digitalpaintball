@@ -52,52 +52,55 @@ qboolean	reflib_active = 0;
 
 HWND        cl_hwnd;            // Main window handle for life of program
 
-#define VID_NUM_MODES ( sizeof( vid_modes ) / sizeof( vid_modes[0] ) )
+#define VID_NUM_MODES (sizeof(vid_modes) / sizeof(vid_modes[0]))
 
-LONG WINAPI MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
+LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 static qboolean s_alttab_disabled;
 
 extern	unsigned	sys_msg_time;
+
+extern byte keyshift[256];		// jitkeys - from keys.c
 
 /*
 ** WIN32 helper functions
 */
 extern qboolean s_win95;
 
-static void WIN_DisableAltTab( void )
+static void WIN_DisableAltTab (void)
 {
-	if ( s_alttab_disabled )
+	if (s_alttab_disabled)
 		return;
 
-	if ( s_win95 )
+	if (s_win95)
 	{
 		BOOL old;
 
-		SystemParametersInfo( SPI_SCREENSAVERRUNNING, 1, &old, 0 );
+		SystemParametersInfo(SPI_SCREENSAVERRUNNING, 1, &old, 0);
 	}
 	else
 	{
-		RegisterHotKey( 0, 0, MOD_ALT, VK_TAB );
-		RegisterHotKey( 0, 1, MOD_ALT, VK_RETURN );
+		RegisterHotKey(0, 0, MOD_ALT, VK_TAB);
+		RegisterHotKey(0, 1, MOD_ALT, VK_RETURN);
 	}
+
 	s_alttab_disabled = true;
 }
 
-static void WIN_EnableAltTab( void )
+static void WIN_EnableAltTab (void)
 {
-	if ( s_alttab_disabled )
+	if (s_alttab_disabled)
 	{
-		if ( s_win95 )
+		if (s_win95)
 		{
 			BOOL old;
 
-			SystemParametersInfo( SPI_SCREENSAVERRUNNING, 0, &old, 0 );
+			SystemParametersInfo(SPI_SCREENSAVERRUNNING, 0, &old, 0);
 		}
 		else
 		{
-			UnregisterHotKey( 0, 0 );
-			UnregisterHotKey( 0, 1 );
+			UnregisterHotKey(0, 0);
+			UnregisterHotKey(0, 1);
 		}
 
 		s_alttab_disabled = false;
@@ -113,6 +116,7 @@ DLL GLUE
 */
 
 #define	MAXPRINTMSG	4096
+
 void VID_Printf (int print_level, char *fmt, ...)
 {
 	va_list		argptr;
@@ -295,16 +299,22 @@ main window procedure
 #define MK_XBUTTON2		0x0040
 #endif
 
-// jitkey - Thanks to Discoloda
+// jitkey - Thanks to Discoloda - international keyboard support
 int Sys_MapKeyModified (int vk, int key)
 {
-	int scancode;
+	int scancode = (key >> 16) & 0xFF;
 	qboolean is_extended = false;
+	qboolean alt_key = false;
 	byte result[4];
+	byte alt_result[4];
 	static byte State[256];
+	static byte AltState[256];
 
 	if (key & (1 << 24))
 		is_extended = true;
+
+	if (scantokey[scancode] == '`' && !is_extended)
+		return '`'; // console key is hardcoded.
 
 	// handle these beforehand as they can be problematic
 	switch (vk)
@@ -326,8 +336,6 @@ int Sys_MapKeyModified (int vk, int key)
 	case VK_LCONTROL:
 		return K_CTRL;
 	}
-
-	scancode = (key >> 16) & 255;
 	
 	// Special check for kepad keys - TODO - add a cvar for this.
 	if (scancode < 128)
@@ -382,13 +390,33 @@ int Sys_MapKeyModified (int vk, int key)
 		}
 	}
 
-	if (!(keydown[K_SHIFT] || keydown[K_CTRL] || keydown[K_ALT]))
+	if ((keydown[K_SHIFT] || keydown[K_CTRL] || keydown[K_ALT]))
+	{
+		// Save all the alternate key values for console use
+		GetKeyboardState(AltState);
+		alt_key = true;
+	}
+	else
+	{
 		if (!GetKeyboardState(State))
 			return MapKey(key); // probably won't happen, but revert to old Q2 style keymapping
+	}
 
 	if (ToAscii(vk, scancode, State, (unsigned short*)result, 0))
 	{
-		return tolower(result[0]);
+		key = tolower(result[0]); // because caps lock sucks
+
+		// here we make keyshift handle basically any kind of alternate key value,
+		// so people can use various alternate characters on foreign keyboards.
+		if (alt_key)
+		{
+			if (ToAscii(vk, scancode, AltState, (unsigned short*)alt_result, 0))
+				keyshift[key & 0xFF] = alt_result[0];
+			else
+				keyshift[key & 0xFF] = 0;
+		}
+
+		return key;
 	}
 	else
 	{
@@ -579,9 +607,7 @@ LONG WINAPI MainWndProc (
 	case WM_XBUTTONDOWN: // jitmouse
 	case WM_XBUTTONUP: // jitmouse
 		{
-			int	temp;
-
-			temp = 0;
+			int	temp = 0;
 
 			if (wParam & MK_LBUTTON)
 				temp |= 1;
@@ -592,13 +618,13 @@ LONG WINAPI MainWndProc (
 			if (wParam & MK_MBUTTON)
 				temp |= 4;
 
-			// ==[ jitmouse
+			// === jitmouse
 			if (wParam & MK_XBUTTON1)
 				temp |= 8;
 
 			if (wParam & MK_XBUTTON2)
 				temp |= 16;
-			// ]===
+			// ===
 
 			IN_MouseEvent (temp);
 
@@ -615,26 +641,24 @@ LONG WINAPI MainWndProc (
         return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 	case WM_SYSKEYDOWN:
-		if (wParam == 13)
+
+		if (wParam == 13) // alt-enter toggles fullscreen
 		{
 			if (vid_fullscreen)
 				Cvar_SetValue("vid_fullscreen", !vid_fullscreen->value);
 
 			return 0;
 		}
+
 		// fall through
+
 	case WM_KEYDOWN:
-		//Com_Printf("WM_KEYDOWN: %d\n", wParam);
-		//Key_Event(MapKey(lParam), true, sys_msg_time);
 		Key_Event(Sys_MapKeyModified(wParam, lParam), true, sys_msg_time);
-		//jittodo;
 		break;
 
 	case WM_SYSKEYUP:
 	case WM_KEYUP:
 		Key_Event(Sys_MapKeyModified(wParam, lParam), false, sys_msg_time);
-		//Key_Event(MapKey(lParam), false, sys_msg_time);
-		//jittodo;
 		break;
 
 	case MM_MCINOTIFY:

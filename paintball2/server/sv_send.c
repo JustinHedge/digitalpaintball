@@ -80,54 +80,6 @@ void SV_ClientPrintf (client_t *cl, int level, char *fmt, ...)
 	MSG_WriteString(&cl->netchan.message, string);
 }
 
-
-// Remap for extended codes so they don't mess up the console.
-static char char_remap[256] = {
-	'\0','-', '-', '-', '_', '*', 't', '.', 'N', '-', '\n','#', '.', '>', '*', '*',
-	'[', ']', '@', '@', '@', '@', '@', '@', '<', '>', '.', '-', '*', '-', '-', '-',
-	' ', '!', '\"','#', '$', '%', '&', '\'','(', ')', '*', '+', ',', '-', '.', '/',
-	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?',
-	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\\',']', '^', '_',
-	'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-	'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~', '<',
-	'(', '=', ')', '^', '!', 'O', 'U', 'I', 'C', 'C', 'R', '#', '?', '>', '*', '*',
-	'[', ']', '@', '@', '@', '@', '@', '@', '<', '>', '*', 'X', '*', '-', '-', '-',
-	' ', '!', '\"','#', '$', '%', '&', '\'','(', ')', '*', '+', ',', '-', '.', '/',
-	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?',
-	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\\',']', '^', '_',
-	'`', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '{', '|', '}', '~', '<'
-};
-
-// strip out the garbage characters such as color codes
-// and map extendegggd ascii to something readable...
-static void strip_garbage (char *out, const char *in) // jit
-{
-	register const unsigned char *s;
-	register unsigned char *sbuf;
-
-	for (sbuf = out, s = in; *s; s++)
-	{
-		switch (*s)
-		{
-		case CHAR_COLOR:
-			if (*(s+1))
-				s++;
-			break;
-		case CHAR_ITALICS:
-		case CHAR_UNDERLINE:
-			break;
-		default:
-			*sbuf = char_remap[*s];
-			sbuf++;
-		}
-	}
-
-	*sbuf = 0;
-}
-
 /*
 =================
 SV_BroadcastPrintf

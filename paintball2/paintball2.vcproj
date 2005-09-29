@@ -318,6 +318,9 @@
 				RelativePath=".\qcommon\net_chan.c">
 			</File>
 			<File
+				RelativePath="qcommon\net_common.c">
+			</File>
+			<File
 				RelativePath=".\win32\net_wins.c">
 			</File>
 			<File
@@ -479,6 +482,9 @@
 			</File>
 			<File
 				RelativePath="client\menu.h">
+			</File>
+			<File
+				RelativePath="qcommon\net_common.h">
 			</File>
 			<File
 				RelativePath="win32\pthread.h">

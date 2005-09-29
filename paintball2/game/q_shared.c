@@ -33,12 +33,6 @@ vec3_t vec3_origin = {0,0,0};
 
 //============================================================================
 
-/* jittest
-#ifdef _WIN32
-#pragma optimize( "", off )
-#endif
-*/
-
 void RotatePointAroundVector (vec3_t dst, const vec3_t dir, const vec3_t point, float degrees)
 {
 	float	m[3][3];
@@ -46,7 +40,7 @@ void RotatePointAroundVector (vec3_t dst, const vec3_t dir, const vec3_t point, 
 	float	zrot[3][3];
 	float	tmpmat[3][3];
 	float	rot[3][3];
-	int	i;
+
 	vec3_t vr, vup, vf;
 
 	vf[0] = dir[0];
@@ -68,33 +62,40 @@ void RotatePointAroundVector (vec3_t dst, const vec3_t dir, const vec3_t point, 
 	m[1][2] = vf[1];
 	m[2][2] = vf[2];
 
-	memcpy(im, m, sizeof(im));
+	//r1: copies a bunch of stuff we overwrite, better to do individually
+	//memcpy( im, m, sizeof( im ) );
 
+	im[0][0] = m[0][0]; //r1
 	im[0][1] = m[1][0];
 	im[0][2] = m[2][0];
+
 	im[1][0] = m[0][1];
+	im[1][1] = m[1][1]; //r1
 	im[1][2] = m[2][1];
+
 	im[2][0] = m[0][2];
 	im[2][1] = m[1][2];
+	im[2][2] = m[2][2]; //r1
 
-	memset(zrot, 0, sizeof(zrot));
-	zrot[0][0] = zrot[1][1] = zrot[2][2] = 1.0f;
+	zrot[0][0] = (float)cos(DEG2RAD(degrees));
+	zrot[0][1] = (float)sin(DEG2RAD(degrees));
+	zrot[0][2] = 0;
 
-	zrot[0][0] = cos(DEG2RAD(degrees));
-	zrot[0][1] = sin(DEG2RAD(degrees));
-	zrot[1][0] = -sin(DEG2RAD(degrees));
-	zrot[1][1] = cos(DEG2RAD(degrees));
+	zrot[1][0] = (float)-sin(DEG2RAD(degrees));
+	zrot[1][1] = (float)cos(DEG2RAD(degrees));
+	zrot[1][2] = 0;
+
+	zrot[2][0] = 0.0f;
+	zrot[2][1] = 0.0f;
+	zrot[2][2] = 1.0f;
 
 	R_ConcatRotations(m, zrot, tmpmat);
 	R_ConcatRotations(tmpmat, im, rot);
 
-	for (i = 0; i < 3; i++)
-		dst[i] = rot[i][0] * point[0] + rot[i][1] * point[1] + rot[i][2] * point[2];
+	dst[0] = rot[0][0] * point[0] + rot[0][1] * point[1] + rot[0][2] * point[2];
+	dst[1] = rot[1][0] * point[0] + rot[1][1] * point[1] + rot[1][2] * point[2];
+	dst[2] = rot[2][0] * point[0] + rot[2][1] * point[1] + rot[2][2] * point[2];
 }
-
-#ifdef _WIN32
-#pragma optimize("", on)
-#endif
 
 void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 {
@@ -1781,20 +1782,20 @@ char *Info_ValueForKey (char *s, char *key)
 	}
 }
 
-void Info_RemoveKey (char *s, char *key)
+void Info_RemoveKey (char *s, const char *key)
 {
 	char	*start;
 	char	pkey[512];
 	char	value[512];
 	char	*o;
 
-	if (strstr (key, "\\"))
+	if (strchr(key, '\\'))
 	{
-//		Com_Printf ("Can't use a key with a \\\n");
+		//Com_Printf("Info_RemoveKey: Tried to remove illegal key '%s'\n", LOG_WARNING|LOG_GENERAL, key);
 		return;
 	}
 
-	while (1)
+	for (;;)
 	{
 		start = s;
 
@@ -1807,33 +1808,40 @@ void Info_RemoveKey (char *s, char *key)
 		{
 			if (!*s)
 				return;
+
 			*o++ = *s++;
 		}
 
 		*o = 0;
 		s++;
-
 		o = value;
+
 		while (*s != '\\' && *s)
 		{
 			if (!*s)
 				return;
+
 			*o++ = *s++;
 		}
+
 		*o = 0;
 
-		if (Q_streq (key, pkey) )
+		if (!strcmp (key, pkey) )
 		{
-			strcpy (start, s);	// remove this part
+			//r1: overlapping src+dst with strcpy = no
+			//strcpy (start, s);	// remove this part
+			size_t memlen;
+
+			memlen = strlen(s);
+			memmove(start, s, memlen);
+			*(start+memlen) = 0;
 			return;
 		}
 
 		if (!*s)
 			return;
 	}
-
 }
-
 
 /*
 ==================
@@ -2163,4 +2171,54 @@ void Q_strncpyz (char *dest, const char *src, size_t size)
 	}
 #endif
 }
+
+
+
+// Remap for extended codes so they don't mess up the console.
+static char char_remap[256] = {
+	'\0','-', '-', '-', '_', '*', 't', '.', 'N', '-', '\n','#', '.', '>', '*', '*',
+	'[', ']', '@', '@', '@', '@', '@', '@', '<', '>', '.', '-', '*', '-', '-', '-',
+	' ', '!', '\"','#', '$', '%', '&', '\'','(', ')', '*', '+', ',', '-', '.', '/',
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?',
+	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\\',']', '^', '_',
+	'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+	'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~', '<',
+	'(', '=', ')', '^', '!', 'O', 'U', 'I', 'C', 'C', 'R', '#', '?', '>', '*', '*',
+	'[', ']', '@', '@', '@', '@', '@', '@', '<', '>', '*', 'X', '*', '-', '-', '-',
+	' ', '!', '\"','#', '$', '%', '&', '\'','(', ')', '*', '+', ',', '-', '.', '/',
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?',
+	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\\',']', '^', '_',
+	'`', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '{', '|', '}', '~', '<'
+};
+
+// strip out the garbage characters such as color codes
+// and map extendegggd ascii to something readable...
+void strip_garbage (char *out, const char *in) // jit
+{
+	register const unsigned char *s;
+	register unsigned char *sbuf;
+
+	for (sbuf = out, s = in; *s; s++)
+	{
+		switch (*s)
+		{
+		case CHAR_COLOR:
+			if (*(s+1))
+				s++;
+			break;
+		case CHAR_ITALICS:
+		case CHAR_UNDERLINE:
+			break;
+		default:
+			*sbuf = char_remap[*s];
+			sbuf++;
+		}
+	}
+
+	*sbuf = 0;
+}
+
 

@@ -993,7 +993,7 @@ void CL_ConnectionlessPacket (void)
 
 	c = Cmd_Argv(0);
 
-	Com_Printf("%s: %s\n", NET_AdrToString (net_from), c);
+	Com_Printf("%s: %s\n", NET_AdrToString(net_from), c);
 
 	// server connection
 	if (Q_streq(c, "client_connect"))
@@ -1154,8 +1154,8 @@ CL_Userinfo_f
 */
 void CL_Userinfo_f (void)
 {
-	Com_Printf ("User info settings:\n");
-	Info_Print (Cvar_Userinfo());
+	Com_Printf("User info settings:\n");
+	Info_Print(Cvar_Userinfo());
 }
 
 /*
@@ -1168,9 +1168,9 @@ new parameters and flush all sounds
 */
 void CL_Snd_Restart_f (void)
 {
-	S_Shutdown ();
-	S_Init ();
-	CL_RegisterSounds ();
+	S_Shutdown();
+	S_Init();
+	CL_RegisterSounds();
 }
 
 int precache_check; // for autodownload of precache items
@@ -2169,7 +2169,8 @@ void CL_Frame (int msec)
 
 
 //============================================================================
-// jitkeyboard <!--
+// NOTE: No longer used -- layout retrieved from Windows now.
+// jitkeyboard
 #ifdef _WIN32
 extern byte *scantokey[128];
 void KB_Init (void)
@@ -2178,17 +2179,19 @@ void KB_Init (void)
 	FILE	*f;
 	cvar_t	*keyboard;
 
-	keyboard = Cvar_Get ("keyboard","qwerty",CVAR_ARCHIVE);
-	Com_sprintf (path, sizeof(path),"%s/configs/%s.kbd",FS_Gamedir(),keyboard->string);
-	f = fopen (path, "rb");
+	keyboard = Cvar_Get("keyboard", "qwerty", CVAR_ARCHIVE);
+	Com_sprintf(path, sizeof(path), "%s/configs/%s.kbd", FS_Gamedir(), keyboard->string);
+	f = fopen(path, "rb");
+
 	if (f)
 	{
-		fread(scantokey,1,128,f);
+		fread(scantokey, 1, 128, f);
 		fclose(f);
 	}
 }
 #endif
-// jit -->
+// jit ===
+
 /*
 ====================
 CL_Init

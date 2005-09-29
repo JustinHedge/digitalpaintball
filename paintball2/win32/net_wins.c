@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winsock.h"
 #include "wsipx.h"
 #include "../qcommon/qcommon.h"
+#include "../qcommon/net_common.h"
 
 #define	MAX_LOOPBACK	4
 
@@ -43,7 +44,6 @@ static cvar_t	*noudp;
 static cvar_t	*noipx;
 
 loopback_t	loopbacks[2];
-int			ip_sockets[2];
 int			ipx_sockets[2];
 
 char *NET_ErrorString (void);
@@ -593,59 +593,6 @@ int NET_IPSocket (char *net_interface, int port)
 	}
 
 	return newsocket;
-}
-
-
-/*
-====================
-NET_OpenIP
-====================
-*/
-void NET_OpenIP (void)
-{
-	cvar_t	*ip;
-	int		port;
-	int		dedicated;
-
-	ip = Cvar_Get ("ip", "localhost", CVAR_NOSET);
-
-	dedicated = Cvar_VariableValue ("dedicated");
-
-	if (!ip_sockets[NS_SERVER])
-	{
-		port = Cvar_Get("ip_hostport", "0", CVAR_NOSET)->value;
-		if (!port)
-		{
-			port = Cvar_Get("hostport", "0", CVAR_NOSET)->value;
-			if (!port)
-			{
-				port = Cvar_Get("port", va("%i", PORT_SERVER), CVAR_NOSET)->value;
-			}
-		}
-		ip_sockets[NS_SERVER] = NET_IPSocket (ip->string, port);
-		if (!ip_sockets[NS_SERVER] && dedicated)
-			Com_Error (ERR_FATAL, "Couldn't allocate dedicated server IP port");
-	}
-
-
-	// dedicated servers don't need client ports
-	if (dedicated)
-		return;
-
-	if (!ip_sockets[NS_CLIENT])
-	{
-		port = Cvar_Get("ip_clientport", "0", CVAR_NOSET)->value;
-		if (!port)
-		{
-			srand(Sys_Milliseconds());
-			port = Cvar_Get("clientport", va("%i", PORT_CLIENT), CVAR_NOSET)->value;
-			if (!port)
-				port = PORT_ANY;
-		}
-		ip_sockets[NS_CLIENT] = NET_IPSocket (ip->string, port);
-		if (!ip_sockets[NS_CLIENT])
-			ip_sockets[NS_CLIENT] = NET_IPSocket (ip->string, PORT_ANY);
-	}
 }
 
 

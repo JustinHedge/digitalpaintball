@@ -192,11 +192,13 @@ static void update_serverlist_server (m_serverlist_server_t *server, char *info,
 	if (!server->servername)
 	{
 		server->servername = text_copy(info);
+		strip_garbage(server->servername, info);
 	}
 	else if (!Q_streq(server->servername, info))
 	{
 		Z_Free(server->servername);
 		server->servername = text_copy(info);
+		strip_garbage(server->servername, info);
 	}
 
 	// and the ping

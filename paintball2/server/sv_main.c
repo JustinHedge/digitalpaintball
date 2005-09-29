@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "server.h"
+#include "../qcommon/net_common.h"
 
 netadr_t	master_adr[MAX_MASTERS];	// address of group servers
 
@@ -72,18 +73,18 @@ or crashing.
 void SV_DropClient (client_t *drop)
 {
 	// add the disconnect
-	MSG_WriteByte (&drop->netchan.message, svc_disconnect);
+	MSG_WriteByte(&drop->netchan.message, svc_disconnect);
 
 	if (drop->state == cs_spawned)
 	{
 		// call the prog function for removing a client
 		// this will remove the body, among other things
-		ge->ClientDisconnect (drop->edict);
+		ge->ClientDisconnect(drop->edict);
 	}
 
 	if (drop->download)
 	{
-		FS_FreeFile (drop->download);
+		FS_FreeFile(drop->download);
 		drop->download = NULL;
 	}
 
@@ -179,7 +180,10 @@ void SVC_Info (void)
 	if (maxclients->value == 1)
 		return;		// ignore in single player
 
-	version = atoi (Cmd_Argv(1));
+	version = atoi(Cmd_Argv(1));
+
+	if (!version)
+		return; // jitsecurity
 
 	if (version != PROTOCOL_VERSION)
 	{
@@ -492,6 +496,14 @@ void SV_ConnectionlessPacket (void)
 		return;
 	}
 
+	//r1: make sure we never talk to ourselves
+	//if (NET_IsLocalAddress(&net_from) && !NET_IsLocalHost(&net_from) && ShortSwap(net_from.port) == server_port)
+	if (net_from.ip[0] == 127 && !(net_from.type == NA_LOOPBACK) && BigShort(net_from.port) == server_port) // jitsecurity
+	{
+		Com_Printf("Dropped %d byte connectionless packet from self! (spoofing attack?)\n", net_message.cursize);
+		return;
+	}
+
 	MSG_BeginReading(&net_message);
 	MSG_ReadLong(&net_message);		// skip the -1 marker
 	s = MSG_ReadStringLine(&net_message);
@@ -514,8 +526,7 @@ void SV_ConnectionlessPacket (void)
 	else if (Q_streq(c, "rcon"))
 		SVC_RemoteCommand();
 	else
-		Com_Printf("bad connectionless packet from %s:\n%s\n",
-			NET_AdrToString(net_from), s);
+		Com_Printf("bad connectionless packet from %s:\n%s\n", NET_AdrToString(net_from), s);
 }
 
 
@@ -680,26 +691,27 @@ void SV_CheckTimeouts (void)
 	int			droppoint;
 	int			zombiepoint;
 
-	droppoint = svs.realtime - 1000*timeout->value;
-	zombiepoint = svs.realtime - 1000*zombietime->value;
+	droppoint = svs.realtime - 1000 * timeout->value;
+	zombiepoint = svs.realtime - 1000 * zombietime->value;
 
-	for (i=0,cl=svs.clients ; i<maxclients->value ; i++,cl++)
+	for (i = 0, cl = svs.clients; i < maxclients->value; i++, cl++)
 	{
 		// message times may be wrong across a changelevel
 		if (cl->lastmessage > svs.realtime)
 			cl->lastmessage = svs.realtime;
 
 		if (cl->state == cs_zombie
-		&& cl->lastmessage < zombiepoint)
+			&& cl->lastmessage < zombiepoint)
 		{
 			cl->state = cs_free;	// can now be reused
 			continue;
 		}
-		if ( (cl->state == cs_connected || cl->state == cs_spawned) 
+
+		if ((cl->state == cs_connected || cl->state == cs_spawned) 
 			&& cl->lastmessage < droppoint)
 		{
-			SV_BroadcastPrintf (PRINT_HIGH, "%s timed out\n", cl->name);
-			SV_DropClient (cl); 
+			SV_BroadcastPrintf(PRINT_HIGH, "%s timed out\n", cl->name);
+			SV_DropClient(cl); 
 			cl->state = cs_free;	// don't bother with zombie state
 		}
 	}

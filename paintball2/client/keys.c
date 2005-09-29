@@ -31,6 +31,7 @@ unsigned char	key_lines[32][MAXCMDLINE]; // jittext
 int			key_linepos;
 int			shift_down = false;
 int			ctrl_down = false; // jitkeyboard
+int			alt_down = false; // jitkeyboard
 int			anykeydown;
 
 int			edit_line=0;
@@ -39,7 +40,7 @@ int			history_line=0;
 int			key_waiting;
 unsigned char	*keybindings[256]; // jittext
 qboolean	consolekeys[256];	// if true, can't be rebound while in console
-int			keyshift[256];		// key to map to if shift held down in console
+byte		keyshift[256];		// key to map to if shift held down in console
 int			key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
 qboolean	gamekeydown[256]; // jitmenu
@@ -758,18 +759,17 @@ void Key_Init (void)
 {
 	int		i;
 
-	for (i=0 ; i<32 ; i++)
+	for (i = 0; i < 32; i++)
 	{
 		key_lines[i][0] = ']';
 		key_lines[i][1] = 0;
 	}
 
 	key_linepos = 1;
-	
-//
-// init ascii characters in console mode
-//
-	for (i=32 ; i<128 ; i++)
+
+	/*
+	// init ascii characters in console mode
+	for (i = 32; i < 128; i++)
 		consolekeys[i] = true;
 
 	consolekeys[K_ENTER] = true;
@@ -803,14 +803,18 @@ void Key_Init (void)
 	consolekeys[K_MWHEELUP] = true; // jitscroll
 	consolekeys[K_MWHEELDOWN] = true; // jitscroll
 	consolekeys[K_DEL] = true; // pooy / jit
+	*/
+
+	for (i = 1; i < 256; i++) // jitkey - support lots of keys for foreign layouts.
+		consolekeys[i] = true;
 
 	consolekeys['`'] = false;
 	consolekeys['~'] = false;
 
-	for (i=0 ; i<256 ; i++)
+	for (i = 0; i < 256; i++)
 		keyshift[i] = i;
 
-	for (i='a' ; i<='z' ; i++)
+	for (i = 'a'; i <= 'z'; i++)
 		keyshift[i] = i - 'a' + 'A';
 
 	keyshift['1'] = '!';
@@ -835,17 +839,10 @@ void Key_Init (void)
 	keyshift['`'] = '~';
 	keyshift['\\'] = '|';
 
-//	menubound[K_ESCAPE] = true;
-//	for (i=0 ; i<12 ; i++)
-//		menubound[K_F1+i] = true;
-
-//
-// register our functions
-//
-	Cmd_AddCommand ("bind",Key_Bind_f);
-	Cmd_AddCommand ("unbind",Key_Unbind_f);
-	Cmd_AddCommand ("unbindall",Key_Unbindall_f);
-	Cmd_AddCommand ("bindlist",Key_Bindlist_f);
+	Cmd_AddCommand("bind", Key_Bind_f);
+	Cmd_AddCommand("unbind", Key_Unbind_f);
+	Cmd_AddCommand("unbindall", Key_Unbindall_f);
+	Cmd_AddCommand("bindlist", Key_Bindlist_f);
 }
 
 
@@ -931,18 +928,24 @@ void Key_Event (int key, qboolean down, unsigned time)
 			&& key != K_LEFTARROW && key != K_RIGHTARROW // pooy
 			&& key_repeats[key] > 1)
 			return;	// ignore most autorepeats
-		
-		// jitscroll -- disabled, man that mousewheel message is annoying!
-		//if (key >= 200 && !keybindings[key])
-		//	Com_Printf ("%s is unbound, hit F4 to set.\n", Key_KeynumToString (key) );
 	}
 	else
 	{
 		key_repeats[key] = 0;
 	}
 
-	if (key == K_SHIFT)
+	switch (key) // jitkey
+	{
+	case K_SHIFT:
 		shift_down = down;
+		break;
+	case K_CTRL:
+		ctrl_down =  down;
+		break;
+	case K_ALT:
+		alt_down = down;
+		break;
+	}
 
 	// console key is hardcoded, so the user can never unbind it
 	if (key == '`' || key == '~')
@@ -975,6 +978,7 @@ void Key_Event (int key, qboolean down, unsigned time)
 		default:
 			Com_Error(ERR_FATAL, "Bad cls.key_dest");
 		}
+
 		return;
 	}
 
@@ -993,14 +997,42 @@ void Key_Event (int key, qboolean down, unsigned time)
 			anykeydown = 0;
 	}
 
-//
-// key up events only generate commands if the game key binding is
-// a button command (leading + sign).  These will occur even in console mode,
-// to keep the character from continuing an action started before a console
-// switch.  Button commands include the kenum as a parameter, so multiple
-// downs can be matched with ups
-//
-	if (!down)
+	if (down)
+	{
+		int unmodified_key = key;
+
+		// if not a consolekey, send to the interpreter no matter what mode is
+		if ((cls.key_dest == key_console && !consolekeys[key]) || // jitmenu
+			(cls.key_dest == key_game && (cls.state == ca_active || !consolekeys[key])))
+		{
+			GameKeyDown(key); // jitmenu
+			return;
+		}
+
+		// jitkey -- handle upper case and whacky stuff for international keyboards.
+		// Note that this is done AFTER checking if it's a game key because we don't
+		// want capital letters and whatnot to be bound differently.
+		if (shift_down || ctrl_down || alt_down)
+			key = keyshift[key];
+
+		switch (cls.key_dest)
+		{
+		case key_message:
+			Key_Message(key);
+			break;
+		case key_menu:
+			if (!M_Keydown(key))
+				GameKeyDown(unmodified_key);
+			break;
+		case key_game:
+		case key_console:
+			Key_Console(key);
+			break;
+		default:
+			Com_Error (ERR_FATAL, "Bad cls.key_dest");
+		}
+	}
+	else
 	{
 		switch (cls.key_dest) // jitmenu -- we want to activate things when the key goes UP!
 		{
@@ -1013,56 +1045,8 @@ void Key_Event (int key, qboolean down, unsigned time)
 				break; // jitbind -- fix calls of keyup binds while typing in console!
 		case key_game:
 		default:
-			//kb = keybindings[key];
-			//if (kb && kb[0] == '+')
-			//{
-			//	Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
-			//	Cbuf_AddText (cmd);
-			//}
-			//if (keyshift[key] != key)
-			//{
-			//	kb = keybindings[keyshift[key]];
-			//	if (kb && kb[0] == '+')
-			//	{
-			//		Com_sprintf (cmd, sizeof(cmd), "-%s %i %i\n", kb+1, key, time);
-			//		Cbuf_AddText (cmd);
-			//	}
-			//}
 			GameKeyup(key);
 			break;
-		}
-	}
-	else
-	{
-		//
-		// if not a consolekey, send to the interpreter no matter what mode is
-		//
-		if ( /*jitmenu (cls.key_dest == key_menu && menubound[key])
-			|| */(cls.key_dest == key_console && !consolekeys[key])
-			|| (cls.key_dest == key_game && (cls.state == ca_active || !consolekeys[key])))
-		{
-			GameKeyDown(key); // jitmenu
-			return;
-		}
-
-		if (shift_down)
-			key = keyshift[key];
-
-		switch (cls.key_dest)
-		{
-		case key_message:
-			Key_Message(key);
-			break;
-		case key_menu:
-			if (!M_Keydown(key))
-				GameKeyDown(key);;
-			break;
-		case key_game:
-		case key_console:
-			Key_Console(key);
-			break;
-		default:
-			Com_Error (ERR_FATAL, "Bad cls.key_dest");
 		}
 	}
 }

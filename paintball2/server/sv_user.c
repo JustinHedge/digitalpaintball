@@ -41,10 +41,11 @@ void SV_BeginDemoserver (void)
 {
 	char		name[MAX_OSPATH];
 
-	Com_sprintf (name, sizeof(name), "demos/%s", sv.name);
-	FS_FOpenFile (name, &sv.demofile);
+	Com_sprintf(name, sizeof(name), "demos/%s", sv.name);
+	FS_FOpenFile(name, &sv.demofile);
+
 	if (!sv.demofile)
-		Com_Error (ERR_DROP, "Couldn't open %s\n", name);
+		Com_Error(ERR_DROP, "Couldn't open %s\n", name);
 }
 
 /*
@@ -76,10 +77,8 @@ void SV_New_f (void)
 		return;
 	}
 
-	//
 	// serverdata needs to go over for all types of servers
 	// to make sure the protocol is right, and to set the gamedir
-	//
 	gamedir = Cvar_VariableString("gamedir");
 
 	// send the serverdata
@@ -99,9 +98,7 @@ void SV_New_f (void)
 	// send full levelname
 	MSG_WriteString(&sv_client->netchan.message, sv.configstrings[CS_NAME]);
 
-	//
 	// game server
-	// 
 	if (sv.state == ss_game)
 	{
 		// set up the entity for the client
@@ -193,10 +190,10 @@ void SV_Baselines_f (void)
 	}
 	
 	// handle the case of a level changing while a client was connecting
-	if ( atoi(Cmd_Argv(1)) != svs.spawncount )
+	if (atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
-		Com_Printf ("SV_Baselines_f from different level\n");
-		SV_New_f ();
+		Com_Printf("SV_Baselines_f from different level\n");
+		SV_New_f();
 		return;
 	}
 	
@@ -205,19 +202,19 @@ void SV_Baselines_f (void)
 	if (start < 0) // jitsecurity, fix by [SkulleR]
 		start = 0;
 
-	memset (&nullstate, 0, sizeof(nullstate));
+	memset(&nullstate, 0, sizeof(nullstate));
 
 	// write a packet full of data
-
-	while ( sv_client->netchan.message.cursize <  MAX_MSGLEN*0.5
-		&& start < MAX_EDICTS)
+	while ((sv_client->netchan.message.cursize <  MAX_MSGLEN*0.5) && (start < MAX_EDICTS))
 	{
 		base = &sv.baselines[start];
+
 		if (base->modelindex || base->sound || base->effects)
 		{
-			MSG_WriteByte (&sv_client->netchan.message, svc_spawnbaseline);
-			MSG_WriteDeltaEntity (&nullstate, base, &sv_client->netchan.message, true, true);
+			MSG_WriteByte(&sv_client->netchan.message, svc_spawnbaseline);
+			MSG_WriteDeltaEntity(&nullstate, base, &sv_client->netchan.message, true, true);
 		}
+
 		start++;
 	}
 
@@ -242,7 +239,7 @@ SV_Begin_f
 */
 void SV_Begin_f (void)
 {
-	Com_DPrintf ("Begin() from %s\n", sv_client->name);
+	Com_DPrintf("Begin() from %s\n", sv_client->name);
 
 	// handle the case of a level changing while a client was connecting
 	if (atoi(Cmd_Argv(1)) != svs.spawncount)
@@ -378,11 +375,14 @@ static qboolean CheckDownloadFilename (const char *name) // jitsecurity
 	extern	cvar_t *allow_download_sounds;
 	extern	cvar_t *allow_download_maps;
 
-	if (strstr(name, "..") || !allow_download->value
+	if (strstr(name, "..")
+		|| !allow_download->value
 		// leading dot is no good
 		|| *name == '.' 
 		// leading slash bad as well, must be in subdir
 		|| *name == '/'
+		// jitsecurity, leading backslash is bad on WIN32
+		|| *name == '\\'
 		// next up, skin check
 		|| (strncmp(name, "players/", 8) == 0 && !allow_download_players->value)
 		// now models
@@ -392,7 +392,7 @@ static qboolean CheckDownloadFilename (const char *name) // jitsecurity
 		// now maps (note special case for maps, must not be in pak)
 		|| (strncmp(name, "maps/", 5) == 0 && !allow_download_maps->value)
 		// MUST be in a subdirectory	
-		|| !strstr(name, "/") 
+		|| !strstr(name, "/")
 		// **** NiceAss: Ends in a backslash. Linux server crash protection--Start ****
 		|| name[strlen(name) - 1] == '/'
 		// **** NiceAss: Ends in a backslash. Linux server crash protection--End ****
@@ -532,7 +532,6 @@ void SV_Disconnect_f (void)
 	SV_DropClient(sv_client);	
 }
 
-
 /*
 ==================
 SV_ShowServerinfo_f
@@ -540,11 +539,42 @@ SV_ShowServerinfo_f
 Dumps the serverinfo info string
 ==================
 */
-void SV_ShowServerinfo_f (void)
+/*void SV_ShowServerinfo_f (void)
 {
 	Info_Print(Cvar_Serverinfo());
-}
+}*/
 
+static void SV_ShowServerinfo_f (void) // jit - from R1CH
+{
+	char	*s;
+	char	*p;
+	int		flip;
+
+	s = Cvar_Serverinfo();
+
+	//skip beginning \\ char
+	s++;
+	flip = 0;
+	p = s;
+
+	//make it more readable
+	while (*p)
+	{
+		if (*p == '\\')
+		{
+			if (flip)
+				*p = '\n';
+			else
+				*p = '=';
+
+			flip ^= 1;
+		}
+
+		p++;
+	}
+
+	SV_ClientPrintf(sv_client, PRINT_HIGH, "%s\n", s);
+}
 
 void SV_Nextserver (void)
 {
@@ -634,12 +664,14 @@ void SV_ExecuteUserCommand (char *s)
 	Cmd_TokenizeString(s, false); // jitspoe -- bug fix from Redix
 	sv_player = sv_client->edict;
 
-	for (u=ucmds; u->name; u++)
+	for (u = ucmds; u->name; u++)
+	{
 		if (Q_streq(Cmd_Argv(0), u->name))
 		{
 			u->func();
 			break;
 		}
+	}
 
 	if (!u->name && sv.state == ss_game)
 		ge->ClientCommand(sv_player);
@@ -809,11 +841,11 @@ void SV_ExecuteClientMessage (client_t *cl)
 			break;
 
 		case clc_stringcmd:	
-			s = MSG_ReadString (&net_message);
+			s = MSG_ReadString(&net_message);
 
 			// malicious users may try using too many string commands
 			if (++stringCmdCount < MAX_STRINGCMDS)
-				SV_ExecuteUserCommand (s);
+				SV_ExecuteUserCommand(s);
 
 			if (cl->state == cs_zombie)
 				return;	// disconnect command

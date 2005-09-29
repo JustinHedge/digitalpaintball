@@ -549,6 +549,7 @@ void SV_GameMap_f (void)
 		SV_CopySaveGame ("current", "save0");
 	}
 }
+//*/
 
 /*
 ==================
@@ -856,8 +857,8 @@ SV_Serverinfo_f
 */
 void SV_Serverinfo_f (void)
 {
-	Com_Printf ("Server info settings:\n");
-	Info_Print (Cvar_Serverinfo());
+	Com_Printf("Server info settings:\n");
+	Info_Print(Cvar_Serverinfo());
 }
 
 
@@ -1022,7 +1023,7 @@ void SV_ServerCommand_f (void)
 {
 	if (!ge)
 	{
-		Com_Printf ("No game loaded.\n");
+		Com_Printf("No game loaded.\n");
 		return;
 	}
 
@@ -1038,29 +1039,24 @@ SV_InitOperatorCommands
 */
 void SV_InitOperatorCommands (void)
 {
-	Cmd_AddCommand ("heartbeat", SV_Heartbeat_f);
-	Cmd_AddCommand ("kick", SV_Kick_f);
-	Cmd_AddCommand ("status", SV_Status_f);
-	Cmd_AddCommand ("serverinfo", SV_Serverinfo_f);
-	Cmd_AddCommand ("dumpuser", SV_DumpUser_f);
-
-	Cmd_AddCommand ("map", SV_Map_f);
-	Cmd_AddCommand ("demomap", SV_DemoMap_f);
-	Cmd_AddCommand ("playdemo", SV_DemoMap_f); // jit
-	Cmd_AddCommand ("gamemap", SV_GameMap_f);
-	Cmd_AddCommand ("setmaster", SV_SetMaster_f);
-
-	if ( dedicated->value )
-		Cmd_AddCommand ("say", SV_ConSay_f);
-
-	Cmd_AddCommand ("serverrecord", SV_ServerRecord_f);
-	Cmd_AddCommand ("serverstop", SV_ServerStop_f);
-
-	Cmd_AddCommand ("save", SV_Savegame_f);
-	Cmd_AddCommand ("load", SV_Loadgame_f);
-
-	Cmd_AddCommand ("killserver", SV_KillServer_f);
-
-	Cmd_AddCommand ("sv", SV_ServerCommand_f);
+	Cmd_AddCommand("heartbeat", SV_Heartbeat_f);
+	Cmd_AddCommand("kick", SV_Kick_f);
+	Cmd_AddCommand("status", SV_Status_f);
+	Cmd_AddCommand("serverinfo", SV_Serverinfo_f);
+	Cmd_AddCommand("dumpuser", SV_DumpUser_f);
+	Cmd_AddCommand("map", SV_Map_f);
+	Cmd_AddCommand("demomap", SV_DemoMap_f);
+	Cmd_AddCommand("playdemo", SV_DemoMap_f); // jit
+	Cmd_AddCommand("gamemap", SV_GameMap_f);
+	Cmd_AddCommand("setmaster", SV_SetMaster_f);
+	Cmd_AddCommand("serverrecord", SV_ServerRecord_f);
+	Cmd_AddCommand("serverstop", SV_ServerStop_f);
+	Cmd_AddCommand("save", SV_Savegame_f);
+	Cmd_AddCommand("load", SV_Loadgame_f);
+	Cmd_AddCommand("killserver", SV_KillServer_f);
+	Cmd_AddCommand("sv", SV_ServerCommand_f);
+	
+	if (dedicated->value)
+		Cmd_AddCommand("say", SV_ConSay_f);
 }
 
