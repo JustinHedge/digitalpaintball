@@ -119,8 +119,8 @@ void RS_ReadyScript(rscript_t *rs);
 void RS_ScanPathForScripts(char *dir);
 int RS_Animate(rs_stage_t *stage);
 void RS_UpdateRegistration(void);
-void RS_DrawSurface(msurface_t *surf, qboolean lightmap, rscript_t *rs); // jitrscript
-void RS_SetTexcoords(rs_stage_t *stage, float *os, float *ot, msurface_t *fa);
+void RS_DrawSurface(struct msurface_s *surf, qboolean lightmap, rscript_t *rs); // jitrscript
+//void RS_SetTexcoords(rs_stage_t *stage, float *os, float *ot, msurface_t *fa);
 
 #define RS_DrawPoly(surf)	RS_DrawSurface((surf), true, NULL) // jitrscript
 #define RS_DrawPolyNoLightMap(surf)	RS_DrawSurface((surf), false, NULL) // jitrscript

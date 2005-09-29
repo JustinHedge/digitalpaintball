@@ -218,7 +218,7 @@ model_t *Mod_ForName (const char *name, qboolean crash) // jit - added const
 				{
 					strcpy(rs, mod->skins[i]->name);
 					rs[strlen(rs)-4]=0;
-					(struct rscript_s *)mod->script[i] = RS_FindScript(rs);
+					mod->script[i] = RS_FindScript(rs);
 
 					if (mod->script[i])
 						RS_ReadyScript((rscript_t *)mod->script[i]);
@@ -248,7 +248,7 @@ model_t *Mod_ForName (const char *name, qboolean crash) // jit - added const
 	strcpy(mod->name, name);
 	
 	// load the file
-	modfilelen = ri.FS_LoadFile(mod->name, &buf);
+	modfilelen = ri.FS_LoadFile(mod->name, (void**)&buf);
 
 	if (!buf)
 	{
@@ -535,7 +535,7 @@ void Mod_LoadTexinfo (lump_t *l)
 
 		Com_sprintf(name, sizeof(name), "textures/%s", in->texture);
 
-		(struct rscript_s *)out->script = RS_FindScript(name);
+		out->script = RS_FindScript(name);
 
 		if (out->script)
 			RS_ReadyScript((rscript_t *)out->script);
@@ -1187,7 +1187,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 		mod->skins[i] = GL_FindImage((char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME, it_skin);
 		strcpy(rs, (char *)pheader + pheader->ofs_skins + i*MAX_SKINNAME);
 		rs[strlen(rs)-4] = 0;
-		(struct rscript_s *)mod->script[i] = RS_FindScript(rs);
+		mod->script[i] = RS_FindScript(rs);
 
 		if (mod->script[i])
 			RS_ReadyScript((rscript_t *)mod->script[i]);

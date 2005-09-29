@@ -244,12 +244,15 @@ void Cbuf_Execute (void)
 		text = (char *)cmd_text.data;
 
 		quotes = 0;
-		for (i=0 ; i< cmd_text.cursize ; i++)
+
+		for (i = 0; i< cmd_text.cursize; i++)
 		{
 			if (text[i] == '"')
 				quotes++;
-			if ( !(quotes&1) &&  text[i] == ';')
+
+			if (!(quotes&1) &&  text[i] == ';')
 				break;	// don't break if inside a quoted string
+
 			if (text[i] == '\n')
 				break;
 		}
@@ -257,7 +260,7 @@ void Cbuf_Execute (void)
 		if (i > sizeof(line) - 1) // jitsecurity - buffer overflow fix by [SkulleR]
 			i =  sizeof(line) - 1;
 
-		memcpy (line, text, i);
+		memcpy(line, text, i);
 		line[i] = 0;
 		
 // delete the text from the command buffer and move remaining commands down
@@ -265,16 +268,18 @@ void Cbuf_Execute (void)
 // beginning of the text buffer
 
 		if (i == cmd_text.cursize)
+		{
 			cmd_text.cursize = 0;
+		}
 		else
 		{
 			i++;
 			cmd_text.cursize -= i;
-			memmove (text, text+i, cmd_text.cursize);
+			memmove(text, text+i, cmd_text.cursize);
 		}
 
 // execute the command line
-		Cmd_ExecuteString (line);
+		Cmd_ExecuteString(line);
 		
 		if (cmd_wait)
 		{
@@ -940,8 +945,9 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 		{
 			int l;
 
-			strcpy(cmd_args, text);
-			//strncpy(cmd_args, text, sizeof(cmd_args)-1); // jitsecurity.  buffer overflow protection by [SkulleR] (removed, see Echon's fix).
+			//strcpy(cmd_args, text);
+			// Note: the following shouldn't really be necessary with Echon's fix, but I decided to leave it in.
+			strncpy(cmd_args, text, sizeof(cmd_args)-1); // jitsecurity.  buffer overflow protection by [SkulleR]
 			cmd_args[sizeof(cmd_args)-1] = 0; 
 
 			// strip off any trailing whitespace
@@ -1183,7 +1189,7 @@ void	Cmd_ExecuteString (char *text)
 	cmd_function_t	*cmd;
 	cmdalias_t		*a;
 
-	Cmd_TokenizeString (text, true);
+	Cmd_TokenizeString(text, true);
 			
 	// execute the command line
 	if (!Cmd_Argc())

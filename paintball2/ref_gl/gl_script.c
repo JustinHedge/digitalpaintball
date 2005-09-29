@@ -149,8 +149,9 @@ rscript_t *RS_NewScript (char *name)
 		rs = rs->next;
 	}
 
+	memset(rs, 0, sizeof(rscript_t)); // jitrscript
 	strncpy (rs->name, name, sizeof(rs->name));
-
+/*
 	rs->stage = NULL;
 	rs->next = NULL;
 	rs->dontflush = false;
@@ -160,7 +161,8 @@ rscript_t *RS_NewScript (char *name)
 	rs->ready = false;
 	rs->mirror = false;
 	rs->img_ptr = NULL; // jitrscript
-
+	rs->width = rs->height = 0; // jitrscript
+*/
 	return rs;
 }
 
@@ -278,18 +280,22 @@ void RS_ReadyScript (rscript_t *rs)
 	mode = (rs->dontflush) ? it_pic : it_wall;
 	stage = rs->stage;
 
-	while (stage != NULL) {
+	while (stage != NULL)
+	{
 		anim = stage->anim_stage;
 
-		while (anim != NULL) {
+		while (anim != NULL)
+		{
 			anim->texture = GL_FindImage (anim->name, mode);
+
 			if (!anim->texture)
 				anim->texture = r_notexture;
 
 			anim = anim->next;
 		}
 
-		if (stage->name[0]) {
+		if (stage->name[0])
+		{
 			stage->texture = GL_FindImage (stage->name, mode);
 
 			if (!stage->texture)
@@ -309,21 +315,27 @@ void RS_UpdateRegistration (void)
 	anim_stage_t	*anim;
 	int				mode;
 
-	while (rs != NULL) {
+	while (rs != NULL)
+	{
 		mode = (rs->dontflush) ? it_pic : it_wall;
 		stage = rs->stage;
 
-		while (stage != NULL) {
+		while (stage != NULL)
+		{
 			anim = stage->anim_stage;
 
-			while (anim != NULL) {
+			while (anim != NULL)
+			{
 				anim->texture = GL_FindImage(anim->name,mode);
+
 				if (!anim->texture)
 					anim->texture = r_notexture;
+
 				anim = anim->next;
 			}
 
-			if (stage->texture) {
+			if (stage->texture)
+			{
 				stage->texture = GL_FindImage(stage->name,mode);
 
 				if (!stage->texture)
@@ -750,7 +762,7 @@ static int num_scriptkeys = sizeof (rs_scriptkeys) / sizeof(rs_scriptkeys[0]) - 
 
 // =====================================================
 
-void RS_LoadScript(char *script)
+void RS_LoadScript (char *script)
 {
 	qboolean		inscript = false, instage = false;
 	char			ignored = 0;
@@ -786,7 +798,7 @@ void RS_LoadScript(char *script)
 		//else if (!Q_strcasecmp(token, "*/") || !Q_strcasecmp(token, "]"))
 		//{
 		//	ignored--;
-		//	token = strtok (NULL, TOK_DELIMINATORS); // jitrscript (don't make rscripts named "*/")
+		//	token = strtok(NULL, TOK_DELIMINATORS); // jitrscript (don't make rscripts named "*/")
 		//}
 
 		if (!inscript && !ignored) 
@@ -850,7 +862,7 @@ void RS_LoadScript(char *script)
 					{
 						if (!Q_strcasecmp(rs_stagekeys[i].stage, token))
 						{
-							rs_stagekeys[i].func (stage, &token);
+							rs_stagekeys[i].func(stage, &token);
 							break;
 						}
 					}
@@ -861,7 +873,7 @@ void RS_LoadScript(char *script)
 					{
 						if (!Q_strcasecmp(rs_scriptkeys[i].script, token))
 						{
-							rs_scriptkeys[i].func (rs, &token);
+							rs_scriptkeys[i].func(rs, &token);
 							break;
 						}
 					}
@@ -1330,7 +1342,6 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 	float		*v;
 	int			i, nv = surf->polys->numverts;
 	vec3_t		wv;
-	//rscript_t	*rs = (rscript_t *)surf->texinfo->script;
 	rs_stage_t	*stage;// = rs->stage;
 	float		os, ot, alpha;
 	float		scale, time, txm=0, tym=0;
@@ -1399,8 +1410,10 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 			}
 		}
 		else
-			txm=0;
-	
+		{
+			txm = 0;
+		}
+
 		if (stage->scroll.speedY)
 		{
 			switch (stage->scroll.typeY)
@@ -1417,7 +1430,9 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 			}
 		}
 		else
-			tym=0;
+		{
+			tym = 0;
+		}
 
 		qglColor4f (1, 1, 1, alpha);
 
@@ -1441,27 +1456,10 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 			for (bp = surf->polys; bp; bp = bp->next)
 			{
 				p = bp;
-
-				//if (stage->envmap)
-				//{
-				//	qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-				//	qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-				//	GLSTATE_ENABLE_TEXGEN
-				//}
 				qglBegin(GL_TRIANGLE_FAN);
+
 				for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
 				{
-					//if (stage->envmap)
-					//{
-					//	RS_SetEnvmap(v, &os, &ot, surf->plane->normal);
-					//}
-					//else
-					//{
-					//	os = v[3];
-					//	ot = v[4];
-
-					//	RS_SetTexcoords(stage, &os, &ot, surf);
-					//}
 					switch (stage->tcGen) // jitrscript
 					{
 					case TC_GEN_BASE:
@@ -1499,8 +1497,9 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 					}
 					else
 					{
-						scale = rs->warpdist * sin(v[0]*rs->warpsmooth+time)*sin(v[1]*rs->warpsmooth+time)*sin(v[2]*rs->warpsmooth+time);
-						VectorMA (v, scale, surf->plane->normal, wv);
+						scale = rs->warpdist * sin(v[0]*rs->warpsmooth+time) *
+							sin(v[1]*rs->warpsmooth+time) * sin(v[2]*rs->warpsmooth+time);
+						VectorMA(v, scale, surf->plane->normal, wv);
 						qglVertex3fv (wv);
 					}
 				}
@@ -1512,14 +1511,7 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 		{
 			for (p = surf->polys; p; p = p->chain)
 			{
-//				if (stage->envmap)
-//				{
-//					qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-//					qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-//					GLSTATE_ENABLE_TEXGEN
-//				}
-
-				qglBegin (GL_TRIANGLE_FAN);
+				qglBegin(GL_TRIANGLE_FAN);
 
 				for (i = 0, v = p->verts[0]; i < nv; i++, v += VERTEXSIZE)
 				{
@@ -1528,34 +1520,21 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 					case TC_GEN_BASE:
 						os = v[3];
 						ot = v[4];
-
 						break;
 					case TC_GEN_ENVIRONMENT:
 						RS_SetEnvmap(v, &os, &ot, surf->plane->normal);
-
 						break;
 					case TC_GEN_VECTOR:
-						os = DotProduct(stage->tcGenVec[0], v) + stage->tcGenVec[0][3];
-						ot = DotProduct(stage->tcGenVec[1], v) + stage->tcGenVec[1][3];
-
+						// Note: unless we add support for a 4th value, stage->tcGenVec[x][3] == 0.
+						// Commented out to (maybe) improve speed.
+						os = DotProduct(stage->tcGenVec[0], v);// always 0: + stage->tcGenVec[0][3];
+						ot = DotProduct(stage->tcGenVec[1], v);// always 0: + stage->tcGenVec[1][3];
 						break;
 					case TC_GEN_LIGHTMAP:
 						break;
 					}
 
 					RS_SetTexcoords(stage, &os, &ot, surf);
-
-					//if (stage->envmap)
-					//{
-					//	RS_SetEnvmap(v, &os, &ot, surf->plane->normal);
-					//}
-					//else
-					//{
-					//	os = v[3];
-					//	ot = v[4];
-
-					//	RS_SetTexcoords(stage, &os, &ot, surf);
-					//}
 
 					if (lightmap)
 					{

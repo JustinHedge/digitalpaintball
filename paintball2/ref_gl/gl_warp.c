@@ -844,9 +844,9 @@ void R_DrawSkyBox (void)
 			return;		// nothing visible
 	}
 
-	qglPushMatrix ();
-	qglTranslatef (r_origin[0], r_origin[1], r_origin[2]);
-	qglRotatef (r_newrefdef.time * skyrotate, skyaxis[0], skyaxis[1], skyaxis[2]);
+	qglPushMatrix();
+	qglTranslatef(r_origin[0], r_origin[1], r_origin[2]);
+	qglRotatef(r_newrefdef.time * skyrotate, skyaxis[0], skyaxis[1], skyaxis[2]);
 
 	if (fogenabled && sky_images[0] == r_whitetexture) // jitfog
 	{
@@ -871,14 +871,15 @@ void R_DrawSkyBox (void)
 
 		GL_Bind (sky_images[skytexorder[i]]->texnum);
 
-		qglBegin (GL_QUADS);
-		MakeSkyVec (skymins[0][i], skymins[1][i], i);
-		MakeSkyVec (skymins[0][i], skymaxs[1][i], i);
-		MakeSkyVec (skymaxs[0][i], skymaxs[1][i], i);
-		MakeSkyVec (skymaxs[0][i], skymins[1][i], i);
-		qglEnd ();
+		qglBegin(GL_QUADS);
+		MakeSkyVec(skymins[0][i], skymins[1][i], i);
+		MakeSkyVec(skymins[0][i], skymaxs[1][i], i);
+		MakeSkyVec(skymaxs[0][i], skymaxs[1][i], i);
+		MakeSkyVec(skymaxs[0][i], skymins[1][i], i);
+		qglEnd();
 	}
-	qglPopMatrix ();
+
+	qglPopMatrix();
 	
 	if (fogenabled) // jitfog
 	{
@@ -954,7 +955,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 				sky_images[i] = r_notexture;
 		}
 
-		if (gl_skymip->value)// || skyrotate)
+		/*if (gl_skymip->value)// || skyrotate)
 		{	// take less memory
 			gl_picmip->value--;
 			sky_min = 0.00390625f;
@@ -964,7 +965,9 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 		{
 			sky_min = 0.001953125f;
 			sky_max = 0.998046875f;
-		}
+		}*/
+		sky_min = 0;
+		sky_max = 1;
 	}
 
 	if (s) // jitfog -- reenable fog code.

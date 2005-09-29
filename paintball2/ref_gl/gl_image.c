@@ -37,8 +37,8 @@ cvar_t		*intensity;
 unsigned	d_8to24table[256];
 float		d_8to24tablef[256][3];
 
-qboolean GL_Upload8 (byte *data, int width, int height,  qboolean mipmap, qboolean is_sky, qboolean sharp);
-qboolean GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, qboolean sharp);
+qboolean GL_Upload8 (byte *data, int width, int height, imagetype_t imagetype, qboolean sharp); // jitsky
+qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagetype, qboolean sharp); // jitsky
 
 
 int		gl_solid_format = 3;
@@ -412,7 +412,7 @@ void Scrap_Upload (void)
 {
 	scrap_uploads++;
 	GL_Bind(TEXNUM_SCRAPS);
-	GL_Upload8 (scrap_texels[0], BLOCK_WIDTH, BLOCK_HEIGHT, false, false, true); // (sharp) false);
+	GL_Upload8(scrap_texels[0], BLOCK_WIDTH, BLOCK_HEIGHT, it_pic, true); // (sharp) false);
 	scrap_dirty = false;
 }
 
@@ -1130,29 +1130,19 @@ void GL_MipMap (byte *in, int width, int height)
 	}
 }
 
-/*
-===============
-GL_Upload32
-
-Returns has_alpha
-===============
-*/
 void GL_BuildPalettedTexture( unsigned char *paletted_texture, unsigned char *scaled, int scaled_width, int scaled_height )
 {
 	int i;
 
-	for ( i = 0; i < scaled_width * scaled_height; i++ )
+	for (i = 0; i < scaled_width * scaled_height; i++)
 	{
 		unsigned int r, g, b, c;
 
-		r = ( scaled[0] >> 3 ) & 31;
-		g = ( scaled[1] >> 2 ) & 63;
-		b = ( scaled[2] >> 3 ) & 31;
-
-		c = r | ( g << 5 ) | ( b << 11 );
-
+		r = (scaled[0] >> 3) & 31;
+		g = (scaled[1] >> 2) & 63;
+		b = (scaled[2] >> 3) & 31;
+		c = r | (g << 5) | (b << 11);
 		paletted_texture[i] = gl_state.d_16to8table[c];
-
 		scaled += 4;
 	}
 }
@@ -1217,7 +1207,14 @@ void desaturate_texture(unsigned *udata, int width, int height) // jitsaturation
 #define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
 
 
-qboolean GL_Upload32 (unsigned *data, int width, int height, qboolean mipmap, qboolean sharp)
+/*
+===============
+GL_Upload32
+
+Returns has_alpha
+===============
+*/
+qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagetype, qboolean sharp)
 {
 	int			samples;
 	unsigned	*scaled;
@@ -1226,6 +1223,7 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, qboolean mipmap, qb
 	byte		*scan;
 	int			comp;
 	GLint		max_size;
+	qboolean	mipmap = (imagetype != it_pic && imagetype != it_sky);
 
 	uploaded_paletted = false;
 
@@ -1344,8 +1342,19 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, qboolean mipmap, qb
 			qglTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
 
 		qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sharp ? GL_NEAREST : gl_filter_max);
-		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sharp ? GL_NEAREST : gl_filter_max);
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sharp ? GL_NEAREST : gl_filter_max);
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sharp ? GL_NEAREST : gl_filter_max);
+	}
+
+	if (imagetype == it_sky) // jitsky
+	{
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+	else
+	{
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	}
 
 	if (upload_width != width || upload_height != height)
@@ -1363,44 +1372,44 @@ Returns has_alpha
 ===============
 */
 
-qboolean GL_Upload8 (byte *data, int width, int height,  qboolean mipmap, qboolean is_sky, qboolean sharp )
+qboolean GL_Upload8 (byte *data, int width, int height, imagetype_t imagetype, qboolean sharp )
 {
 	unsigned	trans[512*256];
 	int			i, s;
 	int			p;
 
-	s = width*height;
+	s = width * height;
 
 	if (s > sizeof(trans)/4)
-		ri.Sys_Error (ERR_DROP, "GL_Upload8: too large");
+		ri.Sys_Error(ERR_DROP, "GL_Upload8: too large");
 
-		for (i=0; i<s; i++)
-		{
-			p = data[i];
-			trans[i] = d_8to24table[p];
+	for (i = 0; i < s; i++)
+	{
+		p = data[i];
+		trans[i] = d_8to24table[p];
 
-			if (p == 255)
-			{	// transparent, so scan around for another color
-				// to avoid alpha fringes
-				// FIXME: do a full flood fill so mips work...
-				if (i > width && data[i-width] != 255)
-					p = data[i-width];
-				else if (i < s-width && data[i+width] != 255)
-					p = data[i+width];
-				else if (i > 0 && data[i-1] != 255)
-					p = data[i-1];
-				else if (i < s-1 && data[i+1] != 255)
-					p = data[i+1];
-				else
-					p = 0;
-				// copy rgb components
-				((byte *)&trans[i])[0] = ((byte *)&d_8to24table[p])[0];
-				((byte *)&trans[i])[1] = ((byte *)&d_8to24table[p])[1];
-				((byte *)&trans[i])[2] = ((byte *)&d_8to24table[p])[2];
-			}
+		if (p == 255)
+		{	// transparent, so scan around for another color
+			// to avoid alpha fringes
+			if (i > width && data[i-width] != 255)
+				p = data[i-width];
+			else if (i < s-width && data[i+width] != 255)
+				p = data[i+width];
+			else if (i > 0 && data[i-1] != 255)
+				p = data[i-1];
+			else if (i < s-1 && data[i+1] != 255)
+				p = data[i+1];
+			else
+				p = 0;
+
+			// copy rgb components
+			((byte *)&trans[i])[0] = ((byte *)&d_8to24table[p])[0];
+			((byte *)&trans[i])[1] = ((byte *)&d_8to24table[p])[1];
+			((byte *)&trans[i])[2] = ((byte *)&d_8to24table[p])[2];
 		}
+	}
 
-		return GL_Upload32(trans, width, height, mipmap, sharp);
+	return GL_Upload32(trans, width, height, imagetype, sharp);
 }
 
 
@@ -1544,10 +1553,10 @@ nonscrap:
 
 		if (bits == 8)
 			image->has_alpha = GL_Upload8(pic, width, height,
-				(image->type != it_pic && image->type != it_sky), image->type == it_sky, sharp);
+				image->type, sharp); // jitsky, image->type
 		else
 			image->has_alpha = GL_Upload32((unsigned *)pic, width, height,
-				(image->type != it_pic && image->type != it_sky), sharp);
+				image->type, sharp); // jitsky, image->type
 
 		image->upload_width = upload_width;		// after power of 2 and scales
 		image->upload_height = upload_height;

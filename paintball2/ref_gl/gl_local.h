@@ -35,6 +35,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #endif
 
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
+
 #include "../client/ref.h"
 
 #include "qgl.h"
@@ -80,6 +88,8 @@ typedef enum
 
 	rserr_unknown
 } rserr_t;
+
+#include "gl_script.h"
 
 #include "gl_model.h"
 
@@ -458,8 +468,6 @@ extern byte *char_colors; // jittext
 extern float	tex_array[MAX_ARRAY][2];
 extern float	vert_array[MAX_ARRAY][3];
 extern float	col_array[MAX_ARRAY][4];
-
-#include "gl_script.h"
 
 //#define SHADOW_VOLUMES
 

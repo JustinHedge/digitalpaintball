@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // net_wins.c
 
 #include "../qcommon/qcommon.h"
+#include "../qcommon/net_common.h"
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -55,10 +56,10 @@ typedef struct
 } loopback_t;
 
 loopback_t	loopbacks[2];
-int			ip_sockets[2];
+//int			ip_sockets[2];
 int			ipx_sockets[2];
 
-int NET_Socket (char *net_interface, int port);
+int NET_IPSocket (char *net_interface, int port);
 char *NET_ErrorString (void);
 
 //=============================================================================
@@ -392,7 +393,7 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 ====================
 NET_OpenIP
 ====================
-*/
+*
 void NET_OpenIP (void)
 {
 	cvar_t	*port, *ip;
@@ -401,9 +402,9 @@ void NET_OpenIP (void)
 	ip = Cvar_Get ("ip", "localhost", CVAR_NOSET);
 
 	if (!ip_sockets[NS_SERVER])
-		ip_sockets[NS_SERVER] = NET_Socket (ip->string, port->value);
+		ip_sockets[NS_SERVER] = NET_IPSocket(ip->string, port->value);
 	if (!ip_sockets[NS_CLIENT])
-		ip_sockets[NS_CLIENT] = NET_Socket (ip->string, PORT_ANY);
+		ip_sockets[NS_CLIENT] = NET_IPSocket(ip->string, PORT_ANY);
 }
 
 /*
@@ -466,10 +467,10 @@ void NET_Init (void)
 
 /*
 ====================
-NET_Socket
+NET_IPSocket
 ====================
 */
-int NET_Socket (char *net_interface, int port)
+int NET_IPSocket (char *net_interface, int port)
 {
 	int newsocket;
 	struct sockaddr_in address;

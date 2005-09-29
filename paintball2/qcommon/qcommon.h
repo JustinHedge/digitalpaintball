@@ -567,6 +567,26 @@ void		NET_Config (qboolean multiplayer);
 qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_message);
 void		NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
 
+// === jit - from R1CH
+/*
+WTF WHY WON'T THIS COMPILE?!!
+#define NET_IsLocalAddress(x) ((x)->ip[0] == 127)
+
+#define NET_IsLANAddress(x) \
+	(((x)->ip[0] == 127) || ((x)->ip[0] == 10) || (*(uint16 *)(x)->ip == 0xA8C0) || (*(uint16 *)(x)->ip == 0x10AC))
+//		127.x.x.x				10.x.x.x					192.168.x.x									172.16.x.x
+
+#define NET_IsLocalHost(x) \
+	((x)->type == NA_LOOPBACK)
+
+#define NET_CompareAdr(a,b) \
+	((*(uint32 *)(a)->ip == *(uint32 *)(b)->ip) && (a)->port == (b)->port)
+
+#define NET_CompareBaseAdr(a,b) \
+	(*(uint32 *)(a)->ip == *(uint32 *)(b)->ip)
+*/
+// jit ===
+
 qboolean	NET_CompareAdr (netadr_t a, netadr_t b);
 qboolean	NET_CompareBaseAdr (netadr_t a, netadr_t b);
 qboolean	NET_IsLocalAddress (netadr_t adr);

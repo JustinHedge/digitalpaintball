@@ -989,7 +989,7 @@ FS_InitFilesystem
 void FS_InitFilesystem (void)
 {
 	Cmd_AddCommand("path", FS_Path_f);
-	Cmd_AddCommand("link", FS_Link_f);
+// jitsecurity -- disabled:	Cmd_AddCommand("link", FS_Link_f);
 	Cmd_AddCommand("dir", FS_Dir_f);
 
 	//

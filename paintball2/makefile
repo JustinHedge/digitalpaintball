@@ -436,6 +436,7 @@ QUAKE2_OBJS = \
 	$(BUILDDIR)/client/sys_linux.o \
 	$(BUILDDIR)/client/glob.o \
 	$(BUILDDIR)/client/$(NET_UDP).o \
+	$(BUILDDIR)/client/net_common.o \
 	$(BUILDDIR)/client/net_tcp.o \
 	\
 	$(BUILDDIR)/client/q_shared.o \
@@ -620,22 +621,25 @@ $(BUILDDIR)/client/sys_linux.o :  $(LINUX_DIR)/sys_linux.c
 $(BUILDDIR)/client/glob.o :       $(LINUX_DIR)/glob.c
 	$(DO_CC)
 
+$(BUILDDIR)/client/net_common.o : $(COMMON_DIR)/net_common.c
+	$(DO_CC)
+
 $(BUILDDIR)/client/net_udp.o :    $(LINUX_DIR)/net_udp.c
 	$(DO_CC)
 
 $(BUILDDIR)/client/net_tcp.o :    $(LINUX_DIR)/net_tcp.c
 	$(DO_CC)
 
-$(BUILDDIR)/client/net_udp6.o :    $(LINUX_DIR)/net_udp6.c
+$(BUILDDIR)/client/net_udp6.o :   $(LINUX_DIR)/net_udp6.c
 	$(DO_CC)
 
 $(BUILDDIR)/client/cd_linux.o :   $(LINUX_DIR)/cd_linux.c
 	$(DO_CC)
 
-$(BUILDDIR)/client/snd_arts.o :  $(LINUX_DIR)/snd_arts.c
+$(BUILDDIR)/client/snd_arts.o :   $(LINUX_DIR)/snd_arts.c
 	$(DO_CC)
 
-$(BUILDDIR)/client/snd_alsa.o :  $(LINUX_DIR)/snd_alsa.c
+$(BUILDDIR)/client/snd_alsa.o :   $(LINUX_DIR)/snd_alsa.c
 	$(DO_CC)
 
 $(BUILDDIR)/client/snd_linux.o :  $(LINUX_DIR)/snd_linux.c
@@ -644,7 +648,7 @@ $(BUILDDIR)/client/snd_linux.o :  $(LINUX_DIR)/snd_linux.c
 $(BUILDDIR)/client/cd_sdl.o :     $(LINUX_DIR)/cd_sdl.c
 	$(DO_CC) $(SDLCFLAGS)
 
-$(BUILDDIR)/client/snd_sdl.o :     $(LINUX_DIR)/snd_sdl.c
+$(BUILDDIR)/client/snd_sdl.o :    $(LINUX_DIR)/snd_sdl.c
 	$(DO_CC) $(SDLCFLAGS)
 
 #############################################################################
@@ -659,6 +663,7 @@ Q2DED_OBJS = \
        $(BUILDDIR)/ded/cvar.o \
        $(BUILDDIR)/ded/files.o \
        $(BUILDDIR)/ded/md4.o \
+       $(BUILDDIR)/ded/net_common.o \
        $(BUILDDIR)/ded/net_chan.o \
        $(BUILDDIR)/ded/sv_ccmds.o \
        $(BUILDDIR)/ded/sv_ents.o \
@@ -691,6 +696,9 @@ $(BUILDDIR)/ded/common.o :     $(COMMON_DIR)/common.c
 	$(DO_DED_CC)
 
 $(BUILDDIR)/ded/crc.o :	 $(COMMON_DIR)/crc.c
+	$(DO_DED_CC)
+
+$(BUILDDIR)/ded/net_common.o :	$(COMMON_DIR)/net_common.c
 	$(DO_DED_CC)
 
 $(BUILDDIR)/ded/cvar.o :	$(COMMON_DIR)/cvar.c
@@ -764,6 +772,8 @@ REF_GL_OBJS = \
 	$(BUILDDIR)/ref_gl/gl_image.o \
 	$(BUILDDIR)/ref_gl/gl_light.o \
 	$(BUILDDIR)/ref_gl/gl_mesh.o \
+	$(BUILDDIR)/ref_gl/r_skm.o \
+	$(BUILDDIR)/ref_gl/gl_refl.o \
 	$(BUILDDIR)/ref_gl/gl_model.o \
 	$(BUILDDIR)/ref_gl/gl_rmain.o \
 	$(BUILDDIR)/ref_gl/gl_rmisc.o \
@@ -819,6 +829,12 @@ $(BUILDDIR)/ref_gl/gl_image.o :       $(REF_GL_DIR)/gl_image.c
 	$(DO_GL_SHLIB_CC)
 
 $(BUILDDIR)/ref_gl/gl_light.o :       $(REF_GL_DIR)/gl_light.c
+	$(DO_GL_SHLIB_CC)
+
+$(BUILDDIR)/ref_gl/gl_refl.o :        $(REF_GL_DIR)/gl_refl.c
+	$(DO_GL_SHLIB_CC)
+
+$(BUILDDIR)/ref_gl/r_skm.o :        $(REF_GL_DIR)/r_skm.c
 	$(DO_GL_SHLIB_CC)
 
 $(BUILDDIR)/ref_gl/gl_mesh.o :        $(REF_GL_DIR)/gl_mesh.c

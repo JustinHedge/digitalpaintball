@@ -490,12 +490,14 @@ void R_ApplyStains (void)
 	int i;
 	stain_t *st;
 
-	for(i=0, st = r_newrefdef.newstains; i<r_newrefdef.num_newstains ; i++, st++)
+	for (i=0, st = r_newrefdef.newstains; i < r_newrefdef.num_newstains; i++, st++)
 		R_StainNode(st, r_worldmodel->nodes);
 }
 
 
-static float s_blocklights[34*34*3];
+//static float s_blocklights[34*34*3];
+static float s_blocklights[128*128*3]; // jitlightmap
+
 /*
 ===============
 R_AddDynamicLights

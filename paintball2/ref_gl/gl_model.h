@@ -79,7 +79,7 @@ typedef struct mtexinfo_s
 	int			numframes;
 	struct mtexinfo_s	*next;		// animation chain
 	image_t		*image;
-	struct rscript_t	*script;
+	rscript_t	*script;
 } mtexinfo_t;
 
 #define	VERTEXSIZE	7
@@ -338,7 +338,7 @@ typedef struct model_s
 
 	// for alias models and skins
 	image_t		*skins[MAX_MD2SKINS];
-	struct rscript_t	*script[MAX_MD2SKINS];
+	rscript_t	*script[MAX_MD2SKINS];
 
 	int			extradatasize;
 	void		*extradata;
@@ -369,3 +369,7 @@ void	R_DrawSkeletalModel (entity_t *e);
 #define Mod_Malloc(mod,size) ((mod)->extradata = Hunk_Alloc(size))
 //#define Mod_Free(data) free(data)
 // jitskm ===
+
+
+
+

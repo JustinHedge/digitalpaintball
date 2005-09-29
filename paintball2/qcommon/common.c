@@ -783,12 +783,14 @@ char *MSG_ReadString (sizebuf_t *msg_read)
 	int		l,c;
 	
 	l = 0;
+
 	do
 	{
 		//c = MSG_ReadChar (msg_read);
 		c = MSG_ReadByte(msg_read); // jitsecurity, fix by [SkulleR]
 		if (c == -1 || c == 0)
 			break;
+
 		string[l] = c;
 		l++;
 	} while (l < sizeof(string)-1);
@@ -892,7 +894,7 @@ void MSG_ReadData (sizebuf_t *msg_read, void *data, int len)
 
 void SZ_Init (sizebuf_t *buf, byte *data, int length)
 {
-	memset (buf, 0, sizeof(*buf));
+	memset(buf, 0, sizeof(*buf));
 	buf->data = data;
 	buf->maxsize = length;
 }
@@ -910,13 +912,12 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 	if (buf->cursize + length > buf->maxsize)
 	{
 		if (!buf->allowoverflow)
-		//	Com_Error (ERR_FATAL, "SZ_GetSpace: overflow without allowoverflow set"); jit - don't crash the server with this
+		//	Com_Error(ERR_FATAL, "SZ_GetSpace: overflow without allowoverflow set"); jit - don't crash the server with this
 			Com_Printf("SZ_GetSpace: overflow without allowoverflow set\n");
 		
 		else if (length > buf->maxsize)
-		//	Com_Error (ERR_FATAL, "SZ_GetSpace: %i is > full buffer size", length); jit -- don't crash the server with this
-			Com_Printf("SZ_GetSpace: %i is > full buffer size\n", length);
-			
+		//	Com_Error(ERR_FATAL, "SZ_GetSpace: %i is > full buffer size", length); jit -- don't crash the server with this
+			Com_Printf("SZ_GetSpace: %i is > full buffer size (%i)\n", length, buf->maxsize);
 		else
 			Com_Printf("SZ_GetSpace: overflow\n");
 
@@ -1067,37 +1068,46 @@ void Info_Print (char *s)
 
 	if (*s == '\\')
 		s++;
+
 	while (*s)
 	{
 		o = key;
+
 		while (*s && *s != '\\')
 			*o++ = *s++;
 
 		l = o - key;
+
 		if (l < 20)
 		{
-			memset (o, ' ', 20-l);
+			memset(o, ' ', 20-l);
 			key[20] = 0;
 		}
 		else
+		{
 			*o = 0;
-		Com_Printf ("%s", key);
+		}
+
+		Com_Printf("%s", key);
 
 		if (!*s)
 		{
-			Com_Printf ("MISSING VALUE\n");
+			Com_Printf("MISSING VALUE\n");
 			return;
 		}
 
 		o = value;
 		s++;
+
 		while (*s && *s != '\\')
 			*o++ = *s++;
+
 		*o = 0;
 
 		if (*s)
 			s++;
-		Com_Printf ("%s\n", value);
+
+		Com_Printf("%s\n", value);
 	}
 }
 
