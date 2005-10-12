@@ -366,7 +366,7 @@ void	Mod_Free (model_t *mod);
 void	Mod_StripLODSuffix (char *name);
 void	Mod_LoadSkeletalModel (model_t *mod, model_t *parent, void *buffer);
 void	R_DrawSkeletalModel (entity_t *e);
-#define Mod_Malloc(mod,size) ((mod)->extradata = Hunk_Alloc(size))
+#define Mod_Malloc(mod,size) Hunk_Alloc(size)
 //#define Mod_Free(data) free(data)
 // jitskm ===
 
