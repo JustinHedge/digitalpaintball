@@ -70,7 +70,7 @@ ifeq ($(ARCH),i386)
 #RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops -falign-loops=2 \
 #	-falign-jumps=2 -falign-functions=2 -fno-strict-aliasing
 #RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx -fomit-frame-pointer -ffast-math -ffloat-store -funroll-loops
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx -ffast-math -ffloat-store -funroll-loops
+RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx -msse -mfpmath=sse -ffast-math -ffloat-store -funroll-loops
 # compiler bugs with gcc 2.96 and 3.0.1 can cause bad builds with heavy opts.
 #RELEASE_CFLAGS=$(BASE_CFLAGS) -O6 -m486 -ffast-math -funroll-loops \
 #	-fomit-frame-pointer -fexpensive-optimizations -malign-loops=2 \
