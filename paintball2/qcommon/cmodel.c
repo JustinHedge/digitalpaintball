@@ -909,7 +909,7 @@ int	CM_BoxLeafnums_headnode (vec3_t mins, vec3_t maxs, int *list, int listsize, 
 
 	leaf_topnode = -1;
 
-	CM_BoxLeafnums_r (headnode);
+	CM_BoxLeafnums_r(headnode);
 
 	if (topnode)
 		*topnode = leaf_topnode;
@@ -988,7 +988,7 @@ BOX TRACING
 */
 
 // 1/32 epsilon to keep floating point happy
-#define	DIST_EPSILON	(0.03125)
+#define	DIST_EPSILON	(0.03125f)
 
 vec3_t	trace_start, trace_end;
 vec3_t	trace_mins, trace_maxs;
@@ -1118,7 +1118,7 @@ CM_TestBoxInBrush
 ================
 */
 void CM_TestBoxInBrush (vec3_t mins, vec3_t maxs, vec3_t p1,
-					  trace_t *trace, cbrush_t *brush)
+                        trace_t *trace, cbrush_t *brush)
 {
 	int			i, j;
 	cplane_t	*plane;
@@ -1130,7 +1130,7 @@ void CM_TestBoxInBrush (vec3_t mins, vec3_t maxs, vec3_t p1,
 	if (!brush->numsides)
 		return;
 
-	for (i=0 ; i<brush->numsides ; i++)
+	for (i = 0; i < brush->numsides; i++)
 	{
 		side = &map_brushsides[brush->firstbrushside+i];
 		plane = side->plane;
@@ -1142,27 +1142,26 @@ void CM_TestBoxInBrush (vec3_t mins, vec3_t maxs, vec3_t p1,
 		// push the plane out apropriately for mins/maxs
 
 		// FIXME: use signbits into 8 way lookup for each mins/maxs
-		for (j=0 ; j<3 ; j++)
+		for (j = 0; j < 3; j++)
 		{
-			if (plane->normal[j] < 0)
+			if (plane->normal[j] < 0.0f)
 				ofs[j] = maxs[j];
 			else
 				ofs[j] = mins[j];
 		}
-		dist = DotProduct (ofs, plane->normal);
-		dist = plane->dist - dist;
 
-		d1 = DotProduct (p1, plane->normal) - dist;
+		dist = DotProduct(ofs, plane->normal);
+		dist = plane->dist - dist;
+		d1 = DotProduct(p1, plane->normal) - dist;
 
 		// if completely in front of face, no intersection
-		if (d1 > 0)
+		if (d1 > 0.0f)
 			return;
-
 	}
 
 	// inside this brush
 	trace->startsolid = trace->allsolid = true;
-	trace->fraction = 0;
+	trace->fraction = 0.0f;
 	trace->contents = brush->contents;
 }
 
@@ -1214,24 +1213,29 @@ void CM_TestInLeaf (int leafnum)
 	cbrush_t	*b;
 
 	leaf = &map_leafs[leafnum];
-	if ( !(leaf->contents & trace_contents))
+
+	if (!(leaf->contents & trace_contents))
 		return;
+
 	// trace line against all brushes in the leaf
-	for (k=0 ; k<leaf->numleafbrushes ; k++)
+	for (k = 0; k < leaf->numleafbrushes; k++)
 	{
 		brushnum = map_leafbrushes[leaf->firstleafbrush+k];
 		b = &map_brushes[brushnum];
+
 		if (b->checkcount == checkcount)
 			continue;	// already checked this brush in another leaf
+
 		b->checkcount = checkcount;
 
-		if ( !(b->contents & trace_contents))
+		if (!(b->contents & trace_contents))
 			continue;
-		CM_TestBoxInBrush (trace_mins, trace_maxs, trace_start, &trace_trace, b);
+
+		CM_TestBoxInBrush(trace_mins, trace_maxs, trace_start, &trace_trace, b);
+
 		if (!trace_trace.fraction)
 			return;
 	}
-
 }
 
 
@@ -1254,19 +1258,17 @@ void CM_RecursiveHullCheck (int num, float p1f, float p2f, vec3_t p1, vec3_t p2)
 	float		midf;
 
 	if (trace_trace.fraction <= p1f)
-		return;		// already hit something nearer
+		return; // already hit something nearer
 
 	// if < 0, we are in a leaf node
 	if (num < 0)
 	{
-		CM_TraceToLeaf (-1-num);
+		CM_TraceToLeaf(-1 - num);
 		return;
 	}
 
-	//
 	// find the point distances to the seperating plane
 	// and the offset for the size of the box
-	//
 	node = map_nodes + num;
 	plane = node->plane;
 
@@ -1278,81 +1280,79 @@ void CM_RecursiveHullCheck (int num, float p1f, float p2f, vec3_t p1, vec3_t p2)
 	}
 	else
 	{
-		t1 = DotProduct (plane->normal, p1) - plane->dist;
-		t2 = DotProduct (plane->normal, p2) - plane->dist;
+		t1 = DotProduct(plane->normal, p1) - plane->dist;
+		t2 = DotProduct(plane->normal, p2) - plane->dist;
+
 		if (trace_ispoint)
 			offset = 0;
 		else
-			offset = fabs(trace_extents[0]*plane->normal[0]) +
-				fabs(trace_extents[1]*plane->normal[1]) +
-				fabs(trace_extents[2]*plane->normal[2]);
+			offset = (float)fabs(trace_extents[0] * plane->normal[0]) +
+				(float)fabs(trace_extents[1] * plane->normal[1]) +
+				(float)fabs(trace_extents[2] * plane->normal[2]);
 	}
-
-
-#if 0
-CM_RecursiveHullCheck (node->children[0], p1f, p2f, p1, p2);
-CM_RecursiveHullCheck (node->children[1], p1f, p2f, p1, p2);
-return;
-#endif
 
 	// see which sides we need to consider
 	if (t1 >= offset && t2 >= offset)
 	{
-		CM_RecursiveHullCheck (node->children[0], p1f, p2f, p1, p2);
+		CM_RecursiveHullCheck(node->children[0], p1f, p2f, p1, p2);
 		return;
 	}
+
 	if (t1 < -offset && t2 < -offset)
 	{
-		CM_RecursiveHullCheck (node->children[1], p1f, p2f, p1, p2);
+		CM_RecursiveHullCheck(node->children[1], p1f, p2f, p1, p2);
 		return;
 	}
 
 	// put the crosspoint DIST_EPSILON pixels on the near side
 	if (t1 < t2)
 	{
-		idist = 1.0/(t1-t2);
+		idist = 1.0f / (t1 - t2);
 		side = 1;
-		frac2 = (t1 + offset + DIST_EPSILON)*idist;
-		frac = (t1 - offset + DIST_EPSILON)*idist;
+		frac2 = (t1 + offset + DIST_EPSILON) * idist;
+		frac  = (t1 - offset + DIST_EPSILON) * idist;
 	}
 	else if (t1 > t2)
 	{
-		idist = 1.0/(t1-t2);
+		idist = 1.0f / (t1 - t2);
 		side = 0;
-		frac2 = (t1 - offset - DIST_EPSILON)*idist;
-		frac = (t1 + offset + DIST_EPSILON)*idist;
+		frac2 = (t1 - offset - DIST_EPSILON) * idist;
+		frac  = (t1 + offset + DIST_EPSILON) * idist;
 	}
 	else
 	{
 		side = 0;
-		frac = 1;
-		frac2 = 0;
+		frac2 = 0.0f;
+		frac  = 1.0f;
 	}
 
 	// move up to the node
-	if (frac < 0)
-		frac = 0;
-	if (frac > 1)
-		frac = 1;
+	if (frac < 0.0f)
+		frac = 0.0f;
+
+	if (frac > 1.0f)
+		frac = 1.0f;
 		
-	midf = p1f + (p2f - p1f)*frac;
-	for (i=0 ; i<3 ; i++)
-		mid[i] = p1[i] + frac*(p2[i] - p1[i]);
+	midf = p1f + (p2f - p1f) * frac;
 
-	CM_RecursiveHullCheck (node->children[side], p1f, midf, p1, mid);
+	for (i = 0; i < 3; i++)
+		mid[i] = p1[i] + frac * (p2[i] - p1[i]);
 
+	CM_RecursiveHullCheck(node->children[side], p1f, midf, p1, mid);
 
 	// go past the node
-	if (frac2 < 0)
-		frac2 = 0;
-	if (frac2 > 1)
-		frac2 = 1;
-		
-	midf = p1f + (p2f - p1f)*frac2;
-	for (i=0 ; i<3 ; i++)
-		mid[i] = p1[i] + frac2*(p2[i] - p1[i]);
+	if (frac2 < 0.0f)
+		frac2 = 0.0f;
 
-	CM_RecursiveHullCheck (node->children[side^1], midf, p2f, mid, p2);
+	if (frac2 > 1.0f)
+		frac2 = 1.0f;
+		
+	midf = p1f + (p2f - p1f) * frac2;
+
+	for (i = 0; i < 3; i++)
+		mid[i] = p1[i] + frac2 * (p2[i] - p1[i]);
+
+	CM_RecursiveHullCheck(node->children[side^1], midf, p2f, mid, p2);
 }
 
 
@@ -1364,33 +1364,30 @@ return;
 CM_BoxTrace
 ==================
 */
-trace_t		CM_BoxTrace (vec3_t start, vec3_t end,
-						  vec3_t mins, vec3_t maxs,
-						  int headnode, int brushmask)
+trace_t CM_BoxTrace (vec3_t start, vec3_t end,
+                     vec3_t mins, vec3_t maxs,
+                     int headnode, int brushmask)
 {
-	int		i;
+	int i;
 
 	checkcount++;		// for multi-check avoidance
-
 	c_traces++;			// for statistics, may be zeroed
 
 	// fill in a default trace
-	memset (&trace_trace, 0, sizeof(trace_trace));
-	trace_trace.fraction = 1;
+	memset(&trace_trace, 0, sizeof(trace_trace));
+	trace_trace.fraction = 1.0f;
 	trace_trace.surface = &(nullsurface.c);
 
 	if (!numnodes)	// map not loaded
 		return trace_trace;
 
 	trace_contents = brushmask;
-	VectorCopy (start, trace_start);
-	VectorCopy (end, trace_end);
-	VectorCopy (mins, trace_mins);
-	VectorCopy (maxs, trace_maxs);
+	VectorCopy(start, trace_start);
+	VectorCopy(end, trace_end);
+	VectorCopy(mins, trace_mins);
+	VectorCopy(maxs, trace_maxs);
 
-	//
 	// check for position test special case
-	//
 	if (start[0] == end[0] && start[1] == end[1] && start[2] == end[2])
 	{
 		int		leafs[1024];
@@ -1398,33 +1395,36 @@ trace_t		CM_BoxTrace (vec3_t start, vec3_t end,
 		vec3_t	c1, c2;
 		int		topnode;
 
-		VectorAdd (start, mins, c1);
-		VectorAdd (start, maxs, c2);
-		for (i=0 ; i<3 ; i++)
+		VectorAdd(start, mins, c1);
+		VectorAdd(start, maxs, c2);
+
+		for (i = 0; i < 3; i++)
 		{
-			c1[i] -= 1;
-			c2[i] += 1;
+			c1[i] -= 1.0f;
+			c2[i] += 1.0f;
 		}
 
-		numleafs = CM_BoxLeafnums_headnode (c1, c2, leafs, 1024, headnode, &topnode);
-		for (i=0 ; i<numleafs ; i++)
+		numleafs = CM_BoxLeafnums_headnode(c1, c2, leafs, 1024, headnode, &topnode);
+
+		for (i = 0; i < numleafs; i++)
 		{
-			CM_TestInLeaf (leafs[i]);
+			CM_TestInLeaf(leafs[i]);
+
 			if (trace_trace.allsolid)
 				break;
 		}
-		VectorCopy (start, trace_trace.endpos);
+
+		VectorCopy(start, trace_trace.endpos);
+
 		return trace_trace;
 	}
 
-	//
 	// check for point special case
-	//
-	if (mins[0] == 0 && mins[1] == 0 && mins[2] == 0
-		&& maxs[0] == 0 && maxs[1] == 0 && maxs[2] == 0)
+	if (mins[0] == 0.0f && mins[1] == 0.0f && mins[2] == 0.0f &&
+		maxs[0] == 0.0f && maxs[1] == 0.0f && maxs[2] == 0.0f)
 	{
 		trace_ispoint = true;
-		VectorClear (trace_extents);
+		VectorClear(trace_extents);
 	}
 	else
 	{
@@ -1434,20 +1434,19 @@ trace_t		CM_BoxTrace (vec3_t start, vec3_t end,
 		trace_extents[2] = -mins[2] > maxs[2] ? -mins[2] : maxs[2];
 	}
 
-	//
 	// general sweeping through world
-	//
-	CM_RecursiveHullCheck (headnode, 0, 1, start, end);
+	CM_RecursiveHullCheck(headnode, 0, 1, start, end);
 
-	if (trace_trace.fraction == 1)
+	if (trace_trace.fraction == 1.0f)
 	{
-		VectorCopy (end, trace_trace.endpos);
+		VectorCopy(end, trace_trace.endpos);
 	}
 	else
 	{
-		for (i=0 ; i<3 ; i++)
+		for (i = 0; i < 3; i++)
 			trace_trace.endpos[i] = start[i] + trace_trace.fraction * (end[i] - start[i]);
 	}
+
 	return trace_trace;
 }
 

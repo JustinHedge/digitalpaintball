@@ -192,7 +192,7 @@ extern long Q_ftol( float f );
 #define	SnapVector(v)			((v)[0]=((int)((v)[0])),(v)[1]=((int)((v)[1])),(v)[2]=((int)((v)[2])))
 #define VectorCopy(i,o)			((o)[0]=(i)[0],(o)[1]=(i)[1],(o)[2]=(i)[2])
 #define VectorSet(v,x,y,z)		((v)[0]=(x),(v)[1]=(y),(v)[2]=(z))
-#define VectorClear(v)			((v)[0]=(v)[1]=(v)[2]=0)
+#define VectorClear(v)			((v)[0]=(v)[1]=(v)[2]=0.0f)
 #define VectorCompare(a,b)		((a)[0]==(b)[0]&&(a)[1]==(b)[1]&&(a)[2]==(b)[2])
 #define VectorAdd(a,b,o)		((o)[0]=(a)[0]+(b)[0],(o)[1]=(a)[1]+(b)[1],(o)[2]=(a)[2]+(b)[2])
 #define VectorSubtract(a,b,o)	((o)[0]=(a)[0]-(b)[0],(o)[1]=(a)[1]-(b)[1],(o)[2]=(a)[2]-(b)[2])
@@ -1381,7 +1381,9 @@ typedef enum {
 	EVENT_RESPAWN = 13,
 	EVENT_DROPFLAG = 14,
 	EVENT_DISCONNECT = 15,
-	EVENT_OVERTIME = 16
+	EVENT_OVERTIME = 16,
+	EVENT_PONG_SCORE = 17, // not actually used
+	EVENT_JAILESCAPE = 18
 } game_event_t;
 
 qboolean FileExists (const char *filename); // jit

@@ -694,13 +694,15 @@ void PM_CatagorizePosition (void)
 				pm->s.pm_time = 0;
 			}
 
-			if (! (pm->s.pm_flags & PMF_ON_GROUND) )
+			if (!(pm->s.pm_flags & PMF_ON_GROUND))
 			{	// just hit the ground
 				pm->s.pm_flags |= PMF_ON_GROUND;
+
 				// don't do landing time if we were just going down a slope
-				if (pml.velocity[2] < -200)
+				if (pml.velocity[2] < -200) // jit -  this crap doesn't work, velocity[2] is almost never < 0.
 				{
 					pm->s.pm_flags |= PMF_TIME_LAND;
+
 					// don't allow another jump for a little while
 					if (pml.velocity[2] < -400)
 						pm->s.pm_time = 25;	
@@ -755,21 +757,23 @@ PM_CheckJump
 */
 void PM_CheckJump (void)
 {
+	/* === jitjumphack -- don't kill people's strafe jumps
 	if (pm->s.pm_flags & PMF_TIME_LAND)
 	{	// hasn't been long enough since landing to jump again
 		return;
 	}
+	=== */
 
 	if (pm->cmd.upmove < 10)
 	{	// not holding jump
 		pm->s.pm_flags &= ~PMF_JUMP_HELD;
 		return;
 	}
-
+///*jitest
 	// must wait for jump to be released
 	if (pm->s.pm_flags & PMF_JUMP_HELD)
 		return;
-
+//*/
 	if (pm->s.pm_type == PM_DEAD)
 		return;
 
@@ -813,6 +817,7 @@ PM_CheckSpecialMovement
 void PM_CheckSpecialMovement (void)
 {
 	vec3_t	spot;
+	vec3_t	spot2;
 	int		cont, cont2;
 	vec3_t	flatforward;
 	trace_t	trace;
@@ -841,25 +846,41 @@ void PM_CheckSpecialMovement (void)
 	/*flatforward[0] += pml.velocity[0];
 	flatforward[1] += pml.velocity[1];
 	VectorNormalize(flatforward);*/
+#ifdef _DEBUG
 	Com_DPrintf("Forward: %3g %3g\n", flatforward[0], flatforward[1]);
-	// ===
+#endif
+	// jitwaterjump ===
 
 	VectorMA(pml.origin, 30, flatforward, spot);
 	spot[2] += 4;
 	cont = pm->pointcontents(spot);
+
 	// === jitwaterjump
-	VectorMA(pml.origin, 38, flatforward, spot);
-	spot[2] -= 1;
+	VectorMA(pml.origin, 38, flatforward, spot2);
+	spot2[2] -= 1;
 	//spot[2] -= 5;
-	cont2 = pm->pointcontents(spot);
+	cont2 = pm->pointcontents(spot2);
+#ifdef _DEBUG
 	Com_DPrintf("Conts: %d %d\n", cont, cont2);
+#endif
 
-	if (!(cont & CONTENTS_SOLID) && !(cont2 & CONTENTS_SOLID)) // jitwaterjump
+//	if (!(cont & CONTENTS_SOLID) && !(cont2 & CONTENTS_SOLID)) // jitwaterjump
+//		return;
+	if (cont & CONTENTS_SOLID)
+	{
+		spot[2] += 16;
+		cont = pm->pointcontents(spot);
+	}
+	else if (cont2 & CONTENTS_SOLID)
+	{
+		spot2[2] += 21;
+		cont = pm->pointcontents(spot2);
+	}
+	else
+	{
 		return;
-	// ===
-
-	spot[2] += 16;
-	cont = pm->pointcontents(spot);
+	}
+	// jitwaterjump ===
 
 	if (cont)
 		return;
@@ -1052,7 +1073,7 @@ void PM_DeadMove (void)
 }
 
 
-qboolean	PM_GoodPosition (void)
+qboolean PM_GoodPosition (void)
 {
 	trace_t	trace;
 	vec3_t	origin, end;
@@ -1061,9 +1082,10 @@ qboolean	PM_GoodPosition (void)
 	if (pm->s.pm_type == PM_SPECTATOR)
 		return true;
 
-	for (i=0 ; i<3 ; i++)
-		origin[i] = end[i] = pm->s.origin[i]*0.125;
-	trace = pm->trace (origin, pm->mins, pm->maxs, end);
+	for (i = 0; i < 3; i++)
+		origin[i] = end[i] = (float)pm->s.origin[i] * 0.125f;
+
+	trace = pm->trace(origin, pm->mins, pm->maxs, end);
 
 	return !trace.allsolid;
 }
@@ -1085,8 +1107,8 @@ void PM_SnapPosition/*_old*/ (void)
 	static int jitterbits[8] = {0,4,1,2,3,5,6,7};
 
 	// snap velocity to eigths
-	for (i=0; i<3; i++)
-		pm->s.velocity[i] = (int)(pml.velocity[i]*8);
+	for (i = 0; i < 3; i++)
+		pm->s.velocity[i] = (short)(pml.velocity[i] * 8.0f);
 
 	for (i=0; i<3; i++)
 	{
@@ -1095,22 +1117,21 @@ void PM_SnapPosition/*_old*/ (void)
 		else 
 			sign[i] = -1;
 
-		pm->s.origin[i] = (int)(pml.origin[i]*8);
+		pm->s.origin[i] = (short)(pml.origin[i] * 8.0f);
 		
-		if (pm->s.origin[i]*0.125 == pml.origin[i])
+		if ((short)((float)pm->s.origin[i] * 0.125f) == pml.origin[i])
 			sign[i] = 0;
 	}
 
-	VectorCopy (pm->s.origin, base);
+	VectorCopy(pm->s.origin, base);
 
 	// try all combinations
-	for (j=0; j<8; j++)
+	for (j = 0; j < 8; j++)
 	{
 		bits = jitterbits[j];
-
 		VectorCopy(base, pm->s.origin);
 
-		for (i=0; i<3; i++)
+		for (i = 0; i < 3; i++)
 			if (bits & (1<<i))
 				pm->s.origin[i] += sign[i];
 
@@ -1119,7 +1140,7 @@ void PM_SnapPosition/*_old*/ (void)
 	}
 
 	// go back to the last position
-	VectorCopy (pml.previous_origin, pm->s.origin);
+	VectorCopy(pml.previous_origin, pm->s.origin);
 //	Com_DPrintf ("using previous_origin\n");
 }
 
@@ -1185,32 +1206,39 @@ PM_InitialSnapPosition
 
 ================
 */
-void PM_InitialSnapPosition(void)
+void PM_InitialSnapPosition (void)
 {
 	int        x, y, z;
 	short      base[3];
 	static int offset[3] = { 0, -1, 1 };
 
-	VectorCopy (pm->s.origin, base);
+	VectorCopy(pm->s.origin, base);
 
-	for ( z = 0; z < 3; z++ ) {
-		pm->s.origin[2] = base[2] + offset[ z ];
-		for ( y = 0; y < 3; y++ ) {
-			pm->s.origin[1] = base[1] + offset[ y ];
-			for ( x = 0; x < 3; x++ ) {
-				pm->s.origin[0] = base[0] + offset[ x ];
-				if (PM_GoodPosition ()) {
-					pml.origin[0] = pm->s.origin[0]*0.125;
-					pml.origin[1] = pm->s.origin[1]*0.125;
-					pml.origin[2] = pm->s.origin[2]*0.125;
-					VectorCopy (pm->s.origin, pml.previous_origin);
+	for (z = 0; z < 3; z++)
+	{
+		pm->s.origin[2] = base[2] + offset[z];
+
+		for (y = 0; y < 3; y++)
+		{
+			pm->s.origin[1] = base[1] + offset[y];
+
+			for (x = 0; x < 3; x++)
+			{
+				pm->s.origin[0] = base[0] + offset[x];
+
+				if (PM_GoodPosition())
+				{
+					pml.origin[0] = (float)pm->s.origin[0] * 0.125f;
+					pml.origin[1] = (float)pm->s.origin[1] * 0.125f;
+					pml.origin[2] = (float)pm->s.origin[2] * 0.125f;
+					VectorCopy(pm->s.origin, pml.previous_origin);
 					return;
 				}
 			}
 		}
 	}
 
-	Com_DPrintf ("Bad InitialSnapPosition\n");
+	Com_DPrintf("Bad InitialSnapPosition\n");
 }
 
 
@@ -1234,19 +1262,20 @@ void PM_ClampAngles (void)
 	else
 	{
 		// circularly clamp the angles with deltas
-		for (i=0 ; i<3 ; i++)
+		for (i = 0; i < 3; i++)
 		{
 			temp = pm->cmd.angles[i] + pm->s.delta_angles[i];
 			pm->viewangles[i] = SHORT2ANGLE(temp);
 		}
 
 		// don't let the player look up or down more than 90 degrees
-		if (pm->viewangles[PITCH] > 89 && pm->viewangles[PITCH] < 180)
-			pm->viewangles[PITCH] = 89;
-		else if (pm->viewangles[PITCH] < 271 && pm->viewangles[PITCH] >= 180)
-			pm->viewangles[PITCH] = 271;
+		if (pm->viewangles[PITCH] > 89.0f && pm->viewangles[PITCH] < 180.0f)
+			pm->viewangles[PITCH] = 89.0f;
+		else if (pm->viewangles[PITCH] < 271.0f && pm->viewangles[PITCH] >= 180.0f)
+			pm->viewangles[PITCH] = 271.0f;
 	}
-	AngleVectors (pm->viewangles, pml.forward, pml.right, pml.up);
+
+	AngleVectors(pm->viewangles, pml.forward, pml.right, pml.up);
 }
 
 /*
@@ -1262,35 +1291,35 @@ void Pmove (pmove_t *pmove)
 
 	// clear results
 	pm->numtouch = 0;
-	VectorClear (pm->viewangles);
+	VectorClear(pm->viewangles);
 	pm->viewheight = 0;
 	pm->groundentity = 0;
 	pm->watertype = 0;
 	pm->waterlevel = 0;
 
 	// clear all pmove local vars
-	memset (&pml, 0, sizeof(pml));
+	memset(&pml, 0, sizeof(pml));
 
 	// convert origin and velocity to float values
-	pml.origin[0] = pm->s.origin[0]*0.125;
-	pml.origin[1] = pm->s.origin[1]*0.125;
-	pml.origin[2] = pm->s.origin[2]*0.125;
+	pml.origin[0] = pm->s.origin[0] * 0.125f;
+	pml.origin[1] = pm->s.origin[1] * 0.125f;
+	pml.origin[2] = pm->s.origin[2] * 0.125f;
 
-	pml.velocity[0] = pm->s.velocity[0]*0.125;
-	pml.velocity[1] = pm->s.velocity[1]*0.125;
-	pml.velocity[2] = pm->s.velocity[2]*0.125;
+	pml.velocity[0] = pm->s.velocity[0] * 0.125f;
+	pml.velocity[1] = pm->s.velocity[1] * 0.125f;
+	pml.velocity[2] = pm->s.velocity[2] * 0.125f;
 
 	// save old org in case we get stuck
-	VectorCopy (pm->s.origin, pml.previous_origin);
+	VectorCopy(pm->s.origin, pml.previous_origin);
 
-	pml.frametime = pm->cmd.msec * 0.001;
+	pml.frametime = (float)pm->cmd.msec * 0.001f;
 
-	PM_ClampAngles ();
+	PM_ClampAngles();
 
 	if (pm->s.pm_type == PM_SPECTATOR)
 	{
-		PM_FlyMove (false);
-		PM_SnapPosition ();
+		PM_FlyMove(false);
+		PM_SnapPosition();
 		return;
 	}
 
@@ -1305,18 +1334,18 @@ void Pmove (pmove_t *pmove)
 		return;		// no movement at all
 
 	// set mins, maxs, and viewheight
-	PM_CheckDuck ();
+	PM_CheckDuck();
 
 	if (pm->snapinitial)
-		PM_InitialSnapPosition ();
+		PM_InitialSnapPosition();
 
 	// set groundentity, watertype, and waterlevel
-	PM_CatagorizePosition ();
+	PM_CatagorizePosition();
 
 	if (pm->s.pm_type == PM_DEAD)
-		PM_DeadMove ();
+		PM_DeadMove();
 
-	PM_CheckSpecialMovement ();
+	PM_CheckSpecialMovement();
 
 	// drop timing counter
 	if (pm->s.pm_time)
@@ -1324,15 +1353,19 @@ void Pmove (pmove_t *pmove)
 		int		msec;
 
 		msec = pm->cmd.msec >> 3;
+
 		if (!msec)
 			msec = 1;
-		if ( msec >= pm->s.pm_time) 
+
+		if (msec >= pm->s.pm_time) 
 		{
 			pm->s.pm_flags &= ~(PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT);
 			pm->s.pm_time = 0;
 		}
 		else
+		{
 			pm->s.pm_time -= msec;
+		}
 	}
 
 	if (pm->s.pm_flags & PMF_TIME_TELEPORT)
@@ -1352,38 +1385,31 @@ void Pmove (pmove_t *pmove)
 	}
 	else
 	{
-		PM_CheckJump ();
-
-		PM_Friction ();
+		PM_CheckJump();
+		PM_Friction();
 
 		if (pm->waterlevel >= 2)
-			PM_WaterMove ();
+		{
+			PM_WaterMove();
+		}
 		else
 		{
 			vec3_t	angles;
 
 			VectorCopy(pm->viewangles, angles);
-			if (angles[PITCH] > 180)
-				angles[PITCH] = angles[PITCH] - 360;
-			angles[PITCH] /= 3;
+			
+			if (angles[PITCH] > 180.0f)
+				angles[PITCH] = angles[PITCH] - 360.0f;
 
-			AngleVectors (angles, pml.forward, pml.right, pml.up);
-
-			PM_AirMove ();
+			angles[PITCH] /= 3.0f;
+			AngleVectors(angles, pml.forward, pml.right, pml.up);
+			PM_AirMove();
 		}
 	}
 
 	// set groundentity, watertype, and waterlevel for final spot
-	PM_CatagorizePosition ();
-
-	PM_SnapPosition ();
-	
-	//{ // jitest === 
-	//	int temp;
-	//	//temp = pm->s.origin[2] - 193;
-	//	temp = pm->s.origin[2] - 193+1056+2016;
-	//	if (temp)
-	//		Com_Printf("%d\n", temp);//,	pm->s.velocity[2]); // jitest
-	//}
+	PM_CatagorizePosition();
+	PM_SnapPosition();
 }
+
 

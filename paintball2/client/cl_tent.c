@@ -636,44 +636,47 @@ void CL_ParseTEnt (void)
 	{
 	case TE_LASER_SPARKS: // jit - Paintball 2 paint splatters!
 		cnt = MSG_ReadByte(&net_message);
-		MSG_ReadPos (&net_message, pos);
-		MSG_ReadDir (&net_message, dir);
+		MSG_ReadPos(&net_message, pos);
+		MSG_ReadDir(&net_message, dir);
 		color = MSG_ReadByte(&net_message);
-		CL_ParticleEffect2 (pos, dir, color, cnt);
+		CL_ParticleEffect2(pos, dir, color, cnt);
 
 		// ===
 		// jit -- paint stains / paint gren splats
-		if (color>63 && color<80) {
-			// red
+		if (color > 63 && color < 80)
+		{	// red
 			texnum = 0;
 			rgbcolour[0] = 1.0f;
 			rgbcolour[1] = 0.68f;
 			rgbcolour[2] = 0.65f;
-		} else if (color>143 && color<160) {
-			// purple
+		}
+		else if (color > 143 && color < 160)
+		{	// purple
 			texnum = 2;
 			rgbcolour[0] = 0.94f;
 			rgbcolour[1] = 0.71f;
 			rgbcolour[2] = 1.0f;
-		} else if (color>191 && color<208) {
-			// yellow
+		}
+		else if (color > 191 && color < 208)
+		{	// yellow
 			texnum = 3;
 			rgbcolour[0] = 1.0f;
 			rgbcolour[1] = 1.0f;
 			rgbcolour[2] = 0.21f;
-		} else {
-			// blue
+		}
+		else
+		{	// blue
 			texnum = 1;
 			rgbcolour[0] = 0.75f;
 			rgbcolour[1] = 0.78f;
 			rgbcolour[2] = 1.00f;
 		}
 		
-		V_AddStain(pos, rgbcolour, cnt/3); // stain size depends on cnt
+		V_AddStain(pos, rgbcolour, cnt / 3); // stain size depends on cnt
 		
 		if (cnt != 16) // grenade splatter
 		{
-			cnt = rand()&7; // don't do it for every splatter!
+			cnt = rand() & 7; // don't do it for every splatter!
 
 			if (cnt == 0)
 				S_StartSound (pos, 0, 0, cl_sfx_grensplat1, 1, ATTN_IDLE, 0);
@@ -685,36 +688,36 @@ void CL_ParseTEnt (void)
 		else
 		{
 			// randomly choose 1 of 2 splat sounds:
-			cnt = rand()&1;
+			cnt = rand() & 1;
+
 			if (cnt == 0)
-				S_StartSound (pos, 0, 0, cl_sfx_splat1, 1, ATTN_NORM, 0);
+				S_StartSound(pos, 0, 0, cl_sfx_splat1, 1, ATTN_NORM, 0);
 			else if (cnt == 1)
-				S_StartSound (pos, 0, 0, cl_sfx_splat2, 1, ATTN_NORM, 0);
-			
+				S_StartSound(pos, 0, 0, cl_sfx_splat2, 1, ATTN_NORM, 0);
 
 			// generate a splat model:
-			ex = CL_AllocExplosion ();
+			ex = CL_AllocExplosion();
 			VectorCopy(pos, ex->ent.origin);
 			VectorCopy(pos, ex->ent.startorigin);
 
-			ex->ent.angles[0] = acos(dir[2])/M_PI*180;
+			ex->ent.angles[0] = (float)acos(dir[2]) / (float)M_PI * 180.0f;
 
 			if (dir[0]) // jitodo, check the closest wall for an exact angle, if necessary
-				ex->ent.angles[1] = atan2(dir[1], dir[0])/M_PI*180;
+				ex->ent.angles[1] = atan2(dir[1], dir[0]) / (float)M_PI * 180.0f;
 			else if (dir[1] > 0)
-				ex->ent.angles[1] = 90;
+				ex->ent.angles[1] = 90.0f;
 			else if (dir[1] < 0)
-				ex->ent.angles[1] = 270;
+				ex->ent.angles[1] = 270.0f;
 			else
-				ex->ent.angles[1] = 0;
+				ex->ent.angles[1] = 0.0f;
 
 			ex->type = ex_misc;
 			ex->ent.flags = RF_TRANSLUCENT;
-			ex->ent.alpha = 1.0;
+			ex->ent.alpha = 1.0f;
 			ex->ent.alphavel = -1.0f / (splattime->value + frand()*.5);
-			ex->start = cl.frame.servertime - 100;
+			ex->start = (float)cl.frame.servertime - 100.0f;
 			ex->ent.skinnum = texnum;
-			ex->ent.scale = ex->ent.startscale = (0.7 + frand()*0.6);
+			ex->ent.scale = ex->ent.startscale = (0.7f + frand() * 0.6f);
 			ex->frames = 1; // doesn't matter
 			ex->ent.model = cl_mod_splat;
 		}

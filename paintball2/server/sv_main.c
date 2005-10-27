@@ -762,13 +762,14 @@ void SV_RunGameFrame (void)
 	//if (!sv.attractloop && (!sv_paused->value || maxclients->value > 1)) // jitdemo - don't run server frames while playing a demo!
 	if ((!sv_paused->value || maxclients->value > 1)) // jitdemo - jitest
 	{
-		ge->RunFrame ();
+		ge->RunFrame();
 
 		// never get more than one tic behind
 		if (sv.time < svs.realtime)
 		{
 			if (sv_showclamp->value)
-				Com_Printf ("sv highclamp\n");
+				Com_Printf("sv highclamp\n");
+
 			svs.realtime = sv.time;
 		}
 	}

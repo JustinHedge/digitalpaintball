@@ -938,45 +938,42 @@ void CL_ParticleEffect2 (vec3_t org, vec3_t dir, int color, int count)
 	static int bleh = 0;
 	bleh = !bleh;
 
-	for (i=0 ; i<count ; i++)
+	for (i = 0; i < count; i++)
 	{
 		if (!free_particles)
 			return;
+
 		p = free_particles;
 		free_particles = p->next;
 		p->next = active_particles;
 		active_particles = p;
-
 		p->time = cl.time;
+
 		// ===
 		// jit -- randomize color of each particle slightly
-		if (color>63 && color<80) {
-			// red
-			color = 0x00000047 + (rand()&3) + bleh; 
-		} else if (color>143 && color<160) {
-			// purple
-			color = 0x00000092 + (rand()&3) + bleh;
-		} else if (color>191 && color<208) {
-			// yellow
-			color = 0x000000c2 + (rand()&3) + bleh;
-		} else {
-			// blue
-			color = 0x000000d4 + (rand()&3) + bleh;		
-		}
+		if (color > 63 && color < 80)
+			color = 0x00000047 + (rand() & 3) + bleh; // red
+		else if (color > 143 && color < 160)
+			color = 0x00000092 + (rand() & 3) + bleh; // purple
+		else if (color > 191 && color < 208)
+			color = 0x000000c2 + (rand() & 3) + bleh; // yellow
+		else
+			color = 0x000000d4 + (rand() & 3) + bleh; // blue
 		// jit
 		// ===
-		p->color = color;
 
-		d = rand()&7;
-		for (j=0 ; j<3 ; j++)
+		p->color = color;
+		d = rand() & 7;
+
+		for (j = 0; j < 3; j++)
 		{
-			p->org[j] = org[j] + ((rand()&7)-4) + d*dir[j];
+			p->org[j] = org[j] + (float)((rand() & 7) - 4) + d * dir[j];
 			// ===
 			// jit
-			if (100==count) // paint grenade
-				p->vel[j] = crand()*900 + 300*dir[j];
+			if (100 == count) // paint grenade
+				p->vel[j] = crand() * 700.0f + 300.0f * dir[j];
 			else
-				p->vel[j] = crand()*20;
+				p->vel[j] = crand() * 20.0f;
 			// jit
 			// ===
 		}

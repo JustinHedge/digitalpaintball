@@ -143,34 +143,54 @@ void CL_Increase_f (void)
 {
 	cvar_t *var;
 	float val;
+	int argc = Cmd_Argc();
 
-	if (Cmd_Argc() != 3) {
-		Com_Printf ("cvar_inc <cvar> <value>\n");
+	if (argc < 3)
+	{
+		Com_Printf("cvar_inc <cvar> <value> [min] [max]\n");
 		return;
 	}
 
 	var = Cvar_FindVar(Cmd_Argv(1));
-	if (!var) {
-		Com_Printf ("Unknown cvar '%s'\n", Cmd_Argv(1));
+
+	if (!var)
+	{
+		Com_Printf("Unknown cvar '%s'\n", Cmd_Argv(1));
 		return;
 	}
 
-	val=atof(Cmd_Argv(2));
-	Cvar_SetValue(Cmd_Argv(1), var->value+val);
+	val = atof(Cmd_Argv(2)) + var->value;
+
+	if (argc >= 5)
+	{
+		float min = atof(Cmd_Argv(3));
+		float max = atof(Cmd_Argv(4));
+
+		if (val < min)
+			val = max;
+
+		if (val > max)
+			val = min;
+	}
+
+	Cvar_SetValue(Cmd_Argv(1), val);
 }
 
 void CL_CatCvar_f (void) // jitconfig
 {
 		cvar_t *var;
 
-	if (Cmd_Argc() < 2) {
-		Com_Printf ("cvar_cat <cvar> <string>\n");
+	if (Cmd_Argc() < 2)
+	{
+		Com_Printf("cvar_cat <cvar> <string>\n");
 		return;
 	}
 
 	var = Cvar_FindVar(Cmd_Argv(1));
-	if (!var) {
-		Com_Printf ("Unknown cvar '%s'\n", Cmd_Argv(1));
+
+	if (!var)
+	{
+		Com_Printf("Unknown cvar '%s'\n", Cmd_Argv(1));
 		return;
 	}
 
@@ -1608,7 +1628,9 @@ retry_mapload:
 				return; // started download
 		}
 		else
+		{
 			precache_check++; // nothing to see here, move along.
+		}
 	}
 	// -- jit end --
 
