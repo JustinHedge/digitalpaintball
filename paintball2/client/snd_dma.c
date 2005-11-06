@@ -909,33 +909,77 @@ void S_AddLoopSounds (void)
 		// find the total contribution of all sounds of this type
 		S_SpatializeOrigin (ent->origin, 255.0, SOUND_LOOPATTENUATE,
 			&left_total, &right_total);
-		for (j=i+1 ; j<cl.frame.num_entities ; j++)
+
+		// Knightmare- find correct origin for bmodels without origin brushes 
+		if (ent->solid == 31) // special value for bmodels
 		{
-			if (sounds[j] != sounds[i])
-				continue;
-			sounds[j] = 0;	// don't check this again later
+			cmodel_t   *cmodel;
+			vec3_t      origin_v;
+			int         k;
 
-			num = (cl.frame.parse_entities + j)&(MAX_PARSE_ENTITIES-1);
-			ent = &cl_parse_entities[num];
+			cmodel = cl.model_clip[ent->modelindex];
 
-			S_SpatializeOrigin (ent->origin, 255.0, SOUND_LOOPATTENUATE, 
-				&left, &right);
-			left_total += left;
-			right_total += right;
+			if (cmodel) // find bbox here
+			{
+				for (k = 0; k < 3; k++)
+					origin_v[k] = ent->origin[k]+0.5*(cmodel->mins[k]+cmodel->maxs[k]);
+			}
+			else
+			{
+				VectorCopy(ent->origin, origin_v);
+			}
+
+			// find the total contribution of all sounds of this type
+			S_SpatializeOrigin (origin_v, 255.0, SOUND_LOOPATTENUATE, &left_total, &right_total);
+
+			for (j = i + 1; j < cl.frame.num_entities; j++)
+			{
+				if (sounds[j] != sounds[i])
+					continue;
+
+				sounds[j] = 0; // don't check this again later
+				num = (cl.frame.parse_entities + j) & (MAX_PARSE_ENTITIES-1);
+				ent = &cl_parse_entities[num];
+				S_SpatializeOrigin (origin_v, 255.0, SOUND_LOOPATTENUATE, &left, &right);
+				left_total += left;
+				right_total += right;
+			}
+		} 
+		else 
+		{ 
+			// find the total contribution of all sounds of this type 
+			S_SpatializeOrigin (ent->origin, 255.0, SOUND_LOOPATTENUATE, &left_total, &right_total);
+
+			for (j=i+1 ; j<cl.frame.num_entities ; j++) 
+			{ 
+				if (sounds[j] != sounds[i])
+					continue;
+
+				sounds[j] = 0; // don't check this again later
+				num = (cl.frame.parse_entities + j) & (MAX_PARSE_ENTITIES-1);
+				ent = &cl_parse_entities[num];
+				S_SpatializeOrigin(ent->origin, 255.0, SOUND_LOOPATTENUATE, &left, &right);
+				left_total += left;
+				right_total += right;
+			}
 		}
+		// end Knightmare
 
 		if (left_total == 0 && right_total == 0)
 			continue;		// not audible
 
 		// allocate a channel
 		ch = S_PickChannel(0, 0);
+
 		if (!ch)
 			return;
 
 		if (left_total > 255)
 			left_total = 255;
+
 		if (right_total > 255)
 			right_total = 255;
+
 		ch->leftvol = left_total;
 		ch->rightvol = right_total;
 		ch->autosound = true;	// remove next frame
@@ -1112,7 +1156,7 @@ void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 	}
 
 	// add loopsounds
-	S_AddLoopSounds ();
+	S_AddLoopSounds();
 
 	//
 	// debugging output
