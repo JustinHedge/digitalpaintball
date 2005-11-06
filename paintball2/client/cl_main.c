@@ -2053,6 +2053,9 @@ void CL_Frame (int msec)
 	if (dedicated->value)
 		return;
 
+	if (cl_sleep->value) // jitsleep - allow users to reduce CPU usage.
+		Sleep(cl_sleep->value);
+
 	extratime += msec;
 	sendtime += msec; // jitnetfps
 
@@ -2072,12 +2075,6 @@ void CL_Frame (int msec)
 		{
 			if (extratime < 1000/cl_cmdrate->value)
 			{
-				if (cl_sleep->value) // jit/pooy
-				{
-					//temptime = 1000/cl_cmdrate->value-extratime;
-					//if (temptime>1)
-						Sleep(1);
-				} 
 				return;			// framerate is too high
 			}
 		}

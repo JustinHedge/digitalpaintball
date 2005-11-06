@@ -442,21 +442,44 @@ static void HandleEvents(void)
       }
       break;
     case MotionNotify:
-      if (mouse_active) {
-	if (dgamouse) {
+      if (mouse_active)
+      {
+	if (dgamouse)
+	{
 	  mx += (event.xmotion.x + win_x) * 2;
 	  my += (event.xmotion.y + win_y) * 2;
 	}
 	else 
-	  {
+	{
+#if 1
 	    mx += ((int)event.xmotion.x - mwx) * 2;
 	    my += ((int)event.xmotion.y - mwy) * 2;
 	    mwx = event.xmotion.x;
 	    mwy = event.xmotion.y;
+
 	    
 	    if (mx || my)
 	      dowarp = true;
-	  }
+#else
+	    mx += event.xmotion.x - mwx;
+	    my += event.xmotion.y - mwy;
+            mwx = event.xmotion.x;
+	    mwy = event.xmotion.y;
+
+	    if (mx || my)
+	    {
+		    printf("%d %d\n", mx, mwx);
+	    }
+	    
+	    if (mwx && mwy && (mwx > vid.width - 20 ||
+		mwy > vid.height - 20 ||
+		mwx < 20 || mwy < 20))
+	    {
+		    printf("Warp: %d %d\n", mwx, mwy);
+		XWarpPointer(dpy,None,win,0,0,0,0, vid.width/2,vid.height/2);
+	    }
+#endif
+	}
       }
       break;
       
