@@ -46,14 +46,20 @@ qboolean SNDDMA_Init(void)
 
 	dma.samplebits=(Cvar_Get("sndbits", "16", CVAR_ARCHIVE))->value;
 
-	dma.speed=(Cvar_Get("s_khz", "0", CVAR_ARCHIVE))->value;
+	// === jitlinux (is this even used?)
+	Com_Printf("Initializing aRts\n");
 
-	if (dma.speed == 44)
+	dma.speed=(Cvar_Get("s_khz", "44", CVAR_ARCHIVE))->value;
+
+	if (dma.speed >= 48)
+		dma.speed = 48000;
+	else if (dma.speed >= 44)
 		dma.speed = 44100;
-	else if (dma.speed == 22)
+	else if (dma.speed >= 22)
 		dma.speed = 22050;
 	else
 		dma.speed = 11025;
+	// jitlinux ===
 
 	dma.channels=(Cvar_Get("sndchannels", "2", CVAR_ARCHIVE))->value;
 

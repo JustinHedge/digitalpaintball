@@ -217,6 +217,8 @@ void Sys_UnloadGame(void)
 	game_library = NULL;
 }
 
+void (*geClientPacket)(void *ent, void *sizebuf); // jitclpacket
+
 /*
 =================
 Sys_GetGameAPI
@@ -293,6 +295,7 @@ void *Sys_GetGameAPI(void *parms)
 	}
 
 	GetGameAPI = (void *)dlsym(game_library, "GetGameAPI");
+	geClientPacket = (void *)dlsym(game_library, "ClientPacket"); // jitclpacket
 
 	if(!GetGameAPI)
 	{

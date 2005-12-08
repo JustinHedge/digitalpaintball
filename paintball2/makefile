@@ -444,7 +444,7 @@ QUAKE2_OBJS = \
 
 QUAKE2_LNX_OBJS = \
 	$(BUILDDIR)/client/cd_linux.o 
-ifeq ($(BUILD_ARTS),YES)
+ifeq ($(strip $(BUILD_ARTS)),YES)
 QUAKE2_LNX_OBJS += $(BUILDDIR)/client/snd_arts.o
 else
 ifeq ($(strip $(BUILD_ALSA)),YES)

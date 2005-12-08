@@ -57,10 +57,11 @@ qboolean SNDDMA_Init(void)
 	int caps;
 	extern uid_t saved_euid;
 
-	if (snd_inited)
-		return 1;
+	//if (snd_inited)
+	//	return 1;
 
 	snd_inited = 0;
+	Com_Printf("Initializing Linux sound.\n");
 	
 	if (!snddevice)
 	{
