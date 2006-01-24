@@ -96,6 +96,7 @@ cvar_t	*cl_drawpps; // jitnetfps
 cvar_t	*cl_timestamp; // jit
 cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_drawhud; // jithud
+cvar_t	*cl_language; // jittrans
 
 cvar_t	*serverlist_source; // jitserverlist / jitmenu
 cvar_t	*serverlist_source2; // jitserverlist / jitmenu
@@ -318,7 +319,7 @@ void CL_Record_f (void)
 	MSG_WriteString(&buf, cl.configstrings[CS_NAME]);
 
 	// configstrings
-	for (i=0; i<MAX_CONFIGSTRINGS; i++)
+	for (i = 0; i < MAX_CONFIGSTRINGS; i++)
 	{
 		if (cl.configstrings[i][0])
 		{
@@ -339,7 +340,7 @@ void CL_Record_f (void)
 	// baselines
 	memset(&nullstate, 0, sizeof(nullstate));
 
-	for (i=0; i<MAX_EDICTS; i++)
+	for (i = 0; i < MAX_EDICTS; i++)
 	{
 		ent = &cl_entities[i].baseline;
 
@@ -1747,6 +1748,7 @@ void CL_InitLocal (void)
 	cl_drawhud =		Cvar_Get("cl_drawhud", "1", 0); // jithud
 	cl_timestamp =		Cvar_Get("cl_timestamp", "0", CVAR_ARCHIVE); // jit
 	cl_hudscale =		Cvar_Get("cl_hudscale", "1", CVAR_ARCHIVE); // jithudscale
+	cl_language =		Cvar_Get("cl_language", "English", CVAR_ARCHIVE); // jittrans
 	
 	if (cl_hudscale->value < 1.0)
 		Cvar_Set("cl_hudscale", "1");

@@ -977,6 +977,50 @@ void CL_ParseClientinfo (int player)
 }
 
 
+static void translate_config_string (char *config_string) // jittrans
+{
+	extern cvar_t			*cl_language;
+	static qboolean			loaded = false;
+	static hash_table_t		string_trans_hash;
+	char					*s;
+
+	// Store the translation into a hash table for quick reference
+	if (!loaded || cl_language->modified)
+	{
+		char lang_file[MAX_QPATH];
+		char *buff;
+
+		if (loaded)
+			hash_table_free(&string_trans_hash); // wipe out the old hash table
+        
+		hash_table_init(&string_trans_hash, 0xFF, Z_Free);
+		loaded = true;
+		cl_language->modified = false;
+		Com_sprintf(lang_file, sizeof(lang_file), "configs/%s.lang", cl_language->string);
+		
+		if (FS_LoadFileZ(lang_file, &buff) > 0)
+		{
+			char *key, *val;
+			
+			key = strtok(buff, "\r\n");
+			val = strtok(NULL, "\r\n");
+
+			while (key && val)
+			{
+				hash_add(&string_trans_hash, key, CopyString(val));
+				key = strtok(NULL, "\r\n");
+				val = strtok(NULL, "\r\n");
+			}
+
+			FS_FreeFile(buff);
+		}
+	}
+
+	// If the string is in the translation table, copy it over the original
+	if (s = hash_get(&string_trans_hash, config_string))
+		strcpy(config_string, s);
+}
+
 /*
 ================
 CL_ParseConfigString
@@ -991,17 +1035,15 @@ void CL_ParseConfigString (void)
 	i = MSG_ReadShort(&net_message);
 
 	if (i < 0 || i >= MAX_CONFIGSTRINGS)
-		Com_Error (ERR_DROP, "configstring > MAX_CONFIGSTRINGS");
+		Com_Error(ERR_DROP, "configstring > MAX_CONFIGSTRINGS");
 
 	s = MSG_ReadString(&net_message);
 
 	strncpy(olds, cl.configstrings[i], sizeof(olds));
 	olds[sizeof(olds) - 1] = 0;
-
 	strcpy(cl.configstrings[i], s);
 
 	// do something apropriate 
-
 	if (i >= CS_LIGHTS && i < CS_LIGHTS+MAX_LIGHTSTYLES)
 	{
 		CL_SetLightstyle (i - CS_LIGHTS);
@@ -1016,6 +1058,7 @@ void CL_ParseConfigString (void)
 		if (cl.refresh_prepped)
 		{
 			cl.model_draw[i-CS_MODELS] = re.RegisterModel (cl.configstrings[i]);
+
 			if (cl.configstrings[i][0] == '*')
 				cl.model_clip[i-CS_MODELS] = CM_InlineModel (cl.configstrings[i]);
 			else
@@ -1045,6 +1088,10 @@ void CL_ParseConfigString (void)
 			cls.server_gamebuild = atoi(s+10);
 		else
 			cls.server_gamebuild = 0;
+	}
+	else
+	{
+		translate_config_string(cl.configstrings[i]); // jittrans
 	}
 }
 
