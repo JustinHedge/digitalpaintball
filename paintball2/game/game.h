@@ -232,4 +232,4 @@ typedef struct
 	int			max_edicts;
 } game_export_t;
 
-game_export_t *GetGameApi (game_import_t *import);
+extern void (*geClientPacket)(void *ent, void *sizebuf); // jitclpacket

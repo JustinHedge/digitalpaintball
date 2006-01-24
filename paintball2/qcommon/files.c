@@ -670,12 +670,15 @@ void FS_ExecAutoexec (void)
 	char name [MAX_QPATH];
 
 	dir = Cvar_VariableString("gamedir");
+
 	if (*dir)
 		Com_sprintf(name, sizeof(name), "%s/%s/configs/autoexec.cfg", fs_basedir->string, dir); // jit
 	else
 		Com_sprintf(name, sizeof(name), "%s/%s/configs/autoexec.cfg", fs_basedir->string, BASEDIRNAME); // jit
+
 	if (Sys_FindFirst(name, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM))
 		Cbuf_AddText("exec autoexec.cfg\n"); // jit
+
 	Sys_FindClose();
 }
 

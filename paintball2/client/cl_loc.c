@@ -206,7 +206,7 @@ void CL_LocWrite(char *filename)
 	Com_Printf("locs/%s.loc was successfully saved\n", mapname);
 }
 
-void CL_LocPlace(void)
+void CL_LocPlace (void)
 {
 	trace_t tr;
 	vec3_t end;

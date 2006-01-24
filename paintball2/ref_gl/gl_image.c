@@ -2075,17 +2075,17 @@ void	GL_InitImages (void)
 GL_ShutdownImages
 ===============
 */
-void	GL_ShutdownImage (void *data) // jithash -- called from hash free function
+void GL_ShutdownImage (void *data) // jithash -- called from hash free function
 {
 	// guess we don't need this since the image is deleted using the below function:
 }
 
-void	GL_ShutdownImages (void)
+void GL_ShutdownImages (void)
 {
 	int		i;
 	image_t	*image;
 
-	for (i=0, image=gltextures; i<numgltextures; i++, image++)
+	for (i = 0, image = gltextures; i < numgltextures; i++, image++)
 	{
 		if (!image->registration_sequence)
 			continue;		// free image_t slot
@@ -2103,10 +2103,10 @@ void	GL_ShutdownImages (void)
 		memset(image, 0, sizeof(*image));
 	}
 
-	hash_table_clear(&gltextures_hash); // jithash
+	hash_table_free(&gltextures_hash); // jithash
 }
 
-void init_image_hash_tables() // jithash
+void init_image_hash_tables (void) // jithash
 {
 	hash_table_init(&gltextures_hash, 0x1FF, GL_ShutdownImage);
 }

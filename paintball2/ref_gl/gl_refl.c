@@ -136,7 +136,7 @@ void R_init_refl (int maxNoReflections)
 		
 		// Make sure the program loaded correctly
 		{
-			int err;
+			int err = 0;
 			assert((err = qglGetError()) == GL_NO_ERROR);
 			err = err; // for debugging only -- todo, remove
 		}

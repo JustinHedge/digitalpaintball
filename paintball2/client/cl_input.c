@@ -338,15 +338,15 @@ void CL_FinishMove (usercmd_t *cmd)
 	int		ms;
 	int		i;
 
-//
-// figure button bits
-//	
-	if ( in_attack.state & 3 )
+	// figure button bits
+	if (in_attack.state & 3)
 		cmd->buttons |= BUTTON_ATTACK;
+
 	in_attack.state &= ~2;
 	
 	if (in_use.state & 3)
 		cmd->buttons |= BUTTON_USE;
+
 	in_use.state &= ~2;
 
 	if (anykeydown && cls.key_dest == key_game)
@@ -354,18 +354,20 @@ void CL_FinishMove (usercmd_t *cmd)
 
 	// send milliseconds of time to apply the move
 	ms = cls.frametime * 1000;
+
 	if (ms > 250)
 		ms = 100;		// time was unreasonable
-	cmd->msec = ms;
 
-	CL_ClampPitch ();
-	for (i=0 ; i<3 ; i++)
+	cmd->msec = ms;
+	CL_ClampPitch();
+
+	for (i = 0; i < 3; i++)
 		cmd->angles[i] = ANGLE2SHORT(cl.viewangles[i]);
 
 	cmd->impulse = in_impulse;
 	in_impulse = 0;
 
-// send the ambient light level at the player's current position
+	// send the ambient light level at the player's current position
 	cmd->lightlevel = (byte)cl_lightlevel->value;
 }
 

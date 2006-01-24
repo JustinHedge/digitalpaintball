@@ -430,10 +430,13 @@ Sys_UnloadGame
 */
 void Sys_UnloadGame (void)
 {
-	if (!FreeLibrary (game_library))
-		Com_Error (ERR_FATAL, "FreeLibrary failed for game library");
+	if (!FreeLibrary(game_library))
+		Com_Error(ERR_FATAL, "FreeLibrary failed for game library");
+
 	game_library = NULL;
 }
+
+void (*geClientPacket)(void *ent, void *sizebuf); // jitclpacket
 
 /*
 =================
@@ -469,7 +472,7 @@ void *Sys_GetGameAPI (void *parms)
 #endif
 
 	if (game_library)
-		Com_Error (ERR_FATAL, "Sys_GetGameAPI without Sys_UnloadingGame");
+		Com_Error(ERR_FATAL, "Sys_GetGameAPI without Sys_UnloadingGame");
 
 	// check the current debug directory first for development purposes
 	_getcwd(cwd, sizeof(cwd));
@@ -516,6 +519,7 @@ void *Sys_GetGameAPI (void *parms)
 	}
 
 	GetGameAPI = (void *)GetProcAddress(game_library, "GetGameAPI");
+	geClientPacket = (void *)GetProcAddress(game_library, "ClientPacket"); // jitclpacket
 
 	if (!GetGameAPI)
 	{

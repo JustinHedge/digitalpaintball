@@ -1356,7 +1356,7 @@ typedef struct hash_table_s {
 } hash_table_t;
 
 void hash_table_init (hash_table_t *table, unsigned int size, void *free_func);
-void hash_table_clear (hash_table_t *table);
+void hash_table_free (hash_table_t *table);
 void hash_add (hash_table_t *table, const unsigned char *key, void *data);
 void *hash_get (hash_table_t *table, const unsigned char *key);
 void hash_delete (hash_table_t *table, const unsigned char *key);

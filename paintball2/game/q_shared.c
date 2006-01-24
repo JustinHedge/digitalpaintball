@@ -1919,7 +1919,7 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 //====================================================================
 // Hash Functions (c) 2004 Nathan Wulf
 // jithash:
-void hash_table_init(hash_table_t *table, unsigned int sizemask, void *free_func)
+void hash_table_init (hash_table_t *table, unsigned int sizemask, void *free_func)
 {
 	table->sizemask = sizemask;
 	table->free_func = free_func;
@@ -1928,7 +1928,7 @@ void hash_table_init(hash_table_t *table, unsigned int sizemask, void *free_func
 	memset(table->table, 0, sizeof(hash_node_t)*sizemask);
 }
 
-static void hash_node_free(hash_node_t *node, hash_table_t *table)
+static void hash_node_free (hash_node_t *node, hash_table_t *table)
 {
 	if (table->free_func)
 		table->free_func(node->data);
@@ -1939,7 +1939,7 @@ static void hash_node_free(hash_node_t *node, hash_table_t *table)
 	free(node);
 }
 
-static void hash_node_free_recursive(hash_node_t *node, hash_table_t *table)
+static void hash_node_free_recursive (hash_node_t *node, hash_table_t *table)
 {
 	if (node)
 	{
@@ -1948,11 +1948,11 @@ static void hash_node_free_recursive(hash_node_t *node, hash_table_t *table)
 	}
 }
 
-void hash_table_clear(hash_table_t *table)
+void hash_table_free (hash_table_t *table)
 {
 	int i;
 	
-	for(i=0; i<table->sizemask; i++)
+	for (i = 0; i < table->sizemask; i++)
 	{
 		hash_node_free_recursive(table->table[i], table);
 		table->table[i] = NULL;
@@ -1960,24 +1960,27 @@ void hash_table_clear(hash_table_t *table)
 
 	//Z_Free(table->table);
 	free(table->table);
+	table->table = 0;
+	table->free_func = NULL;
 	table->sizemask = 0;
 }
 
-void hash_print(hash_table_t *table)
+void hash_print (hash_table_t *table)
 {
 	int i, j;
 	hash_node_t *node;
 
-	for (i=0; i<table->sizemask; i++)
+	for (i = 0; i < table->sizemask; i++)
 	{
 		j = 0;
-		
 		node = table->table[i];
+
 		while(node)
 		{
 			j++;
 			node = node->next;
 		}
+
 		Com_Printf("%d: %d\n", i, j);
 	}
 }
@@ -2037,7 +2040,7 @@ static unsigned short crctable[256] =
 		hashval += *s++ ^ crctable[hashval & 0xFF];
 #endif
 
-void hash_add(hash_table_t *table, const unsigned char *key, void *data)
+void hash_add (hash_table_t *table, const unsigned char *key, void *data)
 {
 	unsigned int hashval = 0;
 	register unsigned char c;
@@ -2046,11 +2049,8 @@ void hash_add(hash_table_t *table, const unsigned char *key, void *data)
 
 	newnode = malloc(sizeof(hash_node_t));
 	newnode->key = strdup(key);
-	
 	HASHALG;
-
 	hashval &= table->sizemask;
-	
 	newnode->data = data;
 
 #if 0 // jittest
@@ -2070,7 +2070,7 @@ void hash_add(hash_table_t *table, const unsigned char *key, void *data)
 	table->table[hashval] = newnode;
 }
 			
-void *hash_get(hash_table_t *table, const unsigned char *key)
+void *hash_get (hash_table_t *table, const unsigned char *key)
 {
 	register unsigned char c;
 	register unsigned int hashval = 0;
@@ -2078,11 +2078,10 @@ void *hash_get(hash_table_t *table, const unsigned char *key)
 	const unsigned char *s;
 
 	HASHALG;
-
 	hashval &= table->sizemask;
-
 	node = table->table[hashval];
-	while(node)
+
+	while (node)
 	{
 		if (Q_streq(node->key, key))
 			return node->data;
@@ -2093,7 +2092,7 @@ void *hash_get(hash_table_t *table, const unsigned char *key)
 	return NULL; // not found;
 }
 
-void hash_delete(hash_table_t *table, const unsigned char *key)
+void hash_delete (hash_table_t *table, const unsigned char *key)
 {
 	register unsigned char c;
 	unsigned int hashval = 0;
@@ -2102,10 +2101,9 @@ void hash_delete(hash_table_t *table, const unsigned char *key)
 	const unsigned char *s;
 
 	HASHALG;
-
 	hashval &= table->sizemask;
-
 	prevnode = node = table->table[hashval];
+
 	while(node)
 	{
 		if (Q_streq(node->key, key))

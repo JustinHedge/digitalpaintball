@@ -762,7 +762,8 @@ void GLimp_EndFrame (void)
 
 	if (stricmp(gl_drawbuffer->string, "GL_BACK") == 0)
 		if (!qwglSwapBuffers(glw_state.hDC))
-			ri.Sys_Error(ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n");
+			//ri.Sys_Error(ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n");
+			ri.Con_Printf(PRINT_ALL, "GLimp_EndFrame() - SwapBuffers() failed!\n"); // jitest
 
 	// rscript - MrG
 	rs_realtime = Sys_Milliseconds() * 0.001f;
@@ -770,16 +771,19 @@ void GLimp_EndFrame (void)
 
 void UpdateGammaRamp (void)
 {
-	int i,o;
+	int i, o;
 	//int test;
 
 	// jitgamma -- don't let them go to extreme values:
 	if (vid_gamma->value < 0.7f)
 		ri.Cvar_SetValue("vid_gamma", 0.7f);
+
 	if (vid_gamma->value > 2.0f)
 		ri.Cvar_SetValue("vid_gamma", 2.0f);
+
 	if (vid_lighten->value > 0.5f)
 		ri.Cvar_SetValue("vid_lighten", 0.5f);
+
 	if (vid_lighten->value < 0.0f)
 		ri.Cvar_SetValue("vid_lighten", 0.0f);
 
@@ -787,17 +791,20 @@ void UpdateGammaRamp (void)
 	{
 		float v, i_f;
 
-		for (o=0; o<3; o++) // jitgamma
+		for (o = 0; o < 3; o++) // jitgamma
 		{
-			for(i=0; i<256; i++)
+			for(i = 0; i < 256; i++)
 			{
 				i_f = (float)i/255.0f;
 				v = pow(i_f, vid_gamma->value);
 				v += vid_lighten->value * (1.0f - v);
+
 				if (v < 0.0f)
 					v = 0.0f;
+
 				else if (v > 1.0f)
 					v = 1.0f;
+
 				gamma_ramp[o][i] = (WORD)(v * 65535.0f + 0.5f);
 			}
 		}

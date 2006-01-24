@@ -366,7 +366,7 @@ int Draw_GetStates (void)
 	qglDisable(GL_ALPHA_TEST);
 	qglEnable(GL_DEPTH_TEST);
 	qglEnable(GL_FOG);
-	qglBegin(GL_TRIANGLES);
+	qglBegin(GL_TRIANGLE_STRIP);
 	qglEnd();
 	states |= qglIsEnabled(GL_FOG) ? 1 : 0;
 	states <<= 1;

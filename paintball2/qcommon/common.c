@@ -350,14 +350,14 @@ void MSG_WriteFloat (sizebuf_t *sb, float f)
 	union
 	{
 		float	f;
-		int	l;
+		int		l;
 	} dat;
 	
 	
 	dat.f = f;
-	dat.l = LittleLong (dat.l);
+	dat.l = LittleLong(dat.l);
 	
-	SZ_Write (sb, &dat.l, 4);
+	SZ_Write(sb, &dat.l, 4);
 }
 
 void MSG_WriteString (sizebuf_t *sb, char *s)
@@ -370,14 +370,14 @@ void MSG_WriteString (sizebuf_t *sb, char *s)
 
 void MSG_WriteCoord (sizebuf_t *sb, float f)
 {
-	MSG_WriteShort (sb, (int)(f*8));
+	MSG_WriteShort(sb, (int)(f*8));
 }
 
 void MSG_WritePos (sizebuf_t *sb, vec3_t pos)
 {
-	MSG_WriteShort (sb, (int)(pos[0]*8));
-	MSG_WriteShort (sb, (int)(pos[1]*8));
-	MSG_WriteShort (sb, (int)(pos[2]*8));
+	MSG_WriteShort(sb, (int)(pos[0]*8));
+	MSG_WriteShort(sb, (int)(pos[1]*8));
+	MSG_WriteShort(sb, (int)(pos[2]*8));
 }
 
 void MSG_WriteAngle (sizebuf_t *sb, float f)
@@ -1041,14 +1041,15 @@ int	memsearch (byte *start, int count, int search)
 {
 	int		i;
 	
-	for (i=0 ; i<count ; i++)
+	for (i = 0; i < count; i++)
 		if (start[i] == search)
 			return i;
+
 	return -1;
 }
 
 
-char *CopyString (char *in)
+char *CopyString (char *in) // same as strdup, only with Z_Malloc
 {
 	char	*out;
 	
@@ -1056,7 +1057,6 @@ char *CopyString (char *in)
 	strcpy(out, in);
 	return out;
 }
-
 
 
 void Info_Print (char *s)

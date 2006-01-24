@@ -423,9 +423,16 @@ void Cvar_Seta_f (void) // jitconfig
 	}
 }
 
+
 void Cvar_Unset_f (void)
 {
 	Cvar_FullSet(Cmd_Argv(1), "", 0, false);
+}
+
+
+void Cvar_Clear_f (void)
+{
+	Cvar_Set(Cmd_Argv(1), "");
 }
 
 
@@ -444,6 +451,7 @@ void Cvar_WriteVariables (char *path)
 	FILE	*f;
 
 	f = fopen (path, "a");
+
 	for (var = cvar_vars ; var ; var = var->next)
 	{
 		if (var->flags & CVAR_ARCHIVE)
@@ -452,6 +460,7 @@ void Cvar_WriteVariables (char *path)
 			fprintf (f, "%s", buffer);
 		}
 	}
+
 	fclose (f);
 }
 
@@ -466,37 +475,41 @@ void Cvar_List_f (void)
 	cvar_t	*var;
 	int		i;
 
-	i = 0;
-	for (var = cvar_vars ; var ; var = var->next, i++)
+	for (i = 0, var = cvar_vars; var; var = var->next, i++)
 	{
 		if (var->flags & CVAR_ARCHIVE)
-			Com_Printf ("*");
+			Com_Printf("*");
 		else
-			Com_Printf (" ");
+			Com_Printf(" ");
+
 		if (var->flags & CVAR_USERINFO)
-			Com_Printf ("U");
+			Com_Printf("U");
 		else
-			Com_Printf (" ");
+			Com_Printf(" ");
+
 		if (var->flags & CVAR_SERVERINFO)
-			Com_Printf ("S");
+			Com_Printf("S");
 		else
-			Com_Printf (" ");
+			Com_Printf(" ");
+
 		if (var->flags & CVAR_NOSET)
-			Com_Printf ("-");
+			Com_Printf("-");
 		else if (var->flags & CVAR_LATCH)
-			Com_Printf ("L");
+			Com_Printf("L");
 		else
-			Com_Printf (" ");
-		Com_Printf (" %s \"%s\"\n", var->name, var->string);
+			Com_Printf(" ");
+
+		Com_Printf(" %s \"%s\"\n", var->name, var->string);
 	}
-	Com_Printf ("%i cvars\n", i);
+
+	Com_Printf("%i cvars\n", i);
 }
 
 
 qboolean userinfo_modified;
 
 
-char	*Cvar_BitInfo (int bit)
+char *Cvar_BitInfo (int bit)
 {
 	static char	info[MAX_INFO_STRING];
 	cvar_t	*var;
@@ -536,5 +549,6 @@ void Cvar_Init (void)
 	Cmd_AddCommand("set", Cvar_Set_f);
 	Cmd_AddCommand("seta", Cvar_Seta_f); // jitconfig
 	Cmd_AddCommand("unset", Cvar_Unset_f);
+	Cmd_AddCommand("cvar_clear", Cvar_Clear_f);
 	Cmd_AddCommand("cvarlist", Cvar_List_f);
 }

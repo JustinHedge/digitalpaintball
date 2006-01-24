@@ -50,7 +50,7 @@ extern m_serverlist_t	m_serverlist;
 
 
 // same thing as strdup, only uses Z_Malloc
-char *text_copy(const char *in)
+char *text_copy (const char *in)
 {
 	char *out;
 
@@ -2154,9 +2154,11 @@ static void menu_from_file (menu_screen_t *menu)
 
 		// check for header: "pb2menu 1"
 		token = COM_Parse(&buf); // "pb2menu"
+
 		if (Q_streq(token, "pb2menu"))
 		{
 			token = COM_Parse(&buf); // "1"
+
 			if (atoi(token) == 1)
 			{
 				menu_widget_t *widget=NULL;
@@ -2170,11 +2172,13 @@ static void menu_from_file (menu_screen_t *menu)
 					if (Q_streq(token, "background") && !widget)
 					{
 						token = COM_Parse(&buf);
+
 						if (Q_streq(token, "none"))
 							menu->background = NULL;
 						else
 							menu->background = re.DrawFindPic(token);
 					}
+
 					// new widget:
 					if (Q_streq(token, "widget"))
 					{
