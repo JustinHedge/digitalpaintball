@@ -958,13 +958,15 @@ void SV_ServerRecord_f (void)
 	// send full levelname
 	MSG_WriteString(&buf, sv.configstrings[CS_NAME]);
 
-	for (i=0; i<MAX_CONFIGSTRINGS; i++)
+	for (i = 0; i < MAX_CONFIGSTRINGS; i++)
+	{
 		if (sv.configstrings[i][0])
 		{
 			MSG_WriteByte(&buf, svc_configstring);
 			MSG_WriteShort(&buf, i);
 			MSG_WriteString(&buf, sv.configstrings[i]);
 		}
+	}
 
 	// write it to the demo file
 	Com_DPrintf("signon message length: %i\n", buf.cursize);

@@ -185,32 +185,28 @@ void PF_setmodel (edict_t *ent, char *name)
 /*
 ===============
 PF_Configstring
-
 ===============
 */
 void PF_Configstring (int index, char *val)
 {
 	if (index < 0 || index >= MAX_CONFIGSTRINGS)
-		Com_Error (ERR_DROP, "configstring: bad index %i\n", index);
+		Com_Error(ERR_DROP, "configstring: bad index %i\n", index);
 
 	if (!val)
 		val = "";
 
 	// change the string in sv
-	strcpy (sv.configstrings[index], val);
+	strcpy(sv.configstrings[index], val);
 
-	
 	if (sv.state != ss_loading)
 	{	// send the update to everyone
-		SZ_Clear (&sv.multicast);
-		MSG_WriteChar (&sv.multicast, svc_configstring);
-		MSG_WriteShort (&sv.multicast, index);
-		MSG_WriteString (&sv.multicast, val);
-
-		SV_Multicast (vec3_origin, MULTICAST_ALL_R);
+		SZ_Clear(&sv.multicast);
+		MSG_WriteChar(&sv.multicast, svc_configstring);
+		MSG_WriteShort(&sv.multicast, index);
+		MSG_WriteString(&sv.multicast, val);
+		SV_Multicast(vec3_origin, MULTICAST_ALL_R);
 	}
 }
-
 
 
 void PF_WriteChar (int c) {MSG_WriteChar (&sv.multicast, c);}
@@ -326,7 +322,7 @@ void SV_InitGameProgs (void)
 
 	// unload anything we have now
 	if (ge)
-		SV_ShutdownGameProgs ();
+		SV_ShutdownGameProgs();
 
 
 	// load a new game dll
@@ -383,13 +379,13 @@ void SV_InitGameProgs (void)
 	import.SetAreaPortalState = CM_SetAreaPortalState;
 	import.AreasConnected = CM_AreasConnected;
 
-	ge = (game_export_t *)Sys_GetGameAPI (&import);
+	ge = (game_export_t *)Sys_GetGameAPI(&import);
 
 	if (!ge)
-		Com_Error (ERR_DROP, "failed to load game DLL");
+		Com_Error(ERR_DROP, "failed to load game DLL");
 
 	if (ge->apiversion != GAME_API_VERSION)
-		Com_Error (ERR_DROP, "game is version %i, not %i", ge->apiversion,
+		Com_Error(ERR_DROP, "game is version %i, not %i", ge->apiversion,
 		GAME_API_VERSION);
 
 	ge->Init();

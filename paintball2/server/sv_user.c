@@ -689,21 +689,30 @@ void SV_ClientThink (client_t *cl, usercmd_t *cmd)
 {
 	cl->commandMsec -= cmd->msec;
 
+	// === jitspeedhackcheck
+	if (cl->commandMsec2) // wait 'til this value gets initialized before subtracting
+	{
+		cl->commandMsec2 -= cmd->msec;
+
+		if (!cl->commandMsec2) // rare case where it's exactly 0 after subtraction.
+			cl->commandMsec2--; // they're already below the threshold, so go ahead and kick 'em.
+	}
+
+	if (sv_enforcetime->value > 1.0f && cl->commandMsec2 < 0)
+	{
+		SV_BroadcastPrintf(PRINT_HIGH, "%s kicked for time discrepancy.\n", cl->name);
+		SV_DropClient(cl);
+	}
+	// jitspeedhackcheck ===
+
+	//SV_BroadcastPrintf(PRINT_HIGH, "%s discrepancy: %d\n", cl->name, cl->commandMsec2); // testing
+
 	if (cl->commandMsec < 0)
 	{
-		cl->timediff -= cl->commandMsec; // jitspeedhackcheck
 		Com_DPrintf("commandMsec underflow from %s\n", cl->name);
-		//SV_BroadcastPrintf(PRINT_HIGH, "%s discrepancy: %d\n", cl->name, cl->timediff); // testing
 
 		if (sv_enforcetime->value == 1.0f)
-		{
 			return; // old-style sv_enforcetime
-		}
-		else if (sv_enforcetime->value && cl->timediff / 1000 > sv_enforcetime->value) // jitspeedhackcheck
-		{
-			SV_BroadcastPrintf(PRINT_HIGH, "%s kicked for time discrepancy.\n", cl->name);
-			SV_DropClient(cl);
-		}
 	}
 
 	ge->ClientThink(cl->edict, cmd);
@@ -739,6 +748,10 @@ void SV_ExecuteClientMessage (client_t *cl)
 	move_issued = false;
 	stringCmdCount = 0;
 
+	// allow game dll to access client packets directly (could come in handy)
+	if (geClientPacket)
+		geClientPacket(cl->edict, &net_message); // jitclpacket
+
 	while (1)
 	{
 		if (net_message.readcount > net_message.cursize)
@@ -749,6 +762,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 		}	
 
 		c = MSG_ReadByte(&net_message);
+
 		if (c == -1)
 			break;
 				
@@ -774,7 +788,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 			move_issued = true;
 			checksumIndex = net_message.readcount;
 			checksum = MSG_ReadByte(&net_message);
-			lastframe = MSG_ReadLong (&net_message);
+			lastframe = MSG_ReadLong(&net_message);
 
 			if (lastframe != cl->lastframe)
 			{
@@ -799,7 +813,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 			}
 
 			// if the checksum fails, ignore the rest of the packet
-			calculatedChecksum = COM_BlockSequenceCRCByte (
+			calculatedChecksum = COM_BlockSequenceCRCByte(
 				net_message.data + checksumIndex + 1,
 				net_message.readcount - checksumIndex - 1,
 				cl->netchan.incoming_sequence);
@@ -818,23 +832,20 @@ void SV_ExecuteClientMessage (client_t *cl)
 
 				if (net_drop < 20)
 				{
-					//if (net_drop > 2)
-					//	Com_Printf ("drop %i\n", net_drop);
-
 					while (net_drop > 2)
 					{
-						SV_ClientThink (cl, &cl->lastcmd);
+						SV_ClientThink(cl, &cl->lastcmd);
 						net_drop--;
 					}
 
 					if (net_drop > 1)
-						SV_ClientThink (cl, &oldest);
+						SV_ClientThink(cl, &oldest);
 
 					if (net_drop > 0)
-						SV_ClientThink (cl, &oldcmd);
+						SV_ClientThink(cl, &oldcmd);
 				}
 
-				SV_ClientThink (cl, &newcmd);
+				SV_ClientThink(cl, &newcmd);
 			}
 
 			cl->lastcmd = newcmd;

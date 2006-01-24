@@ -599,13 +599,17 @@ void SV_GiveMsec (void)
 	if (sv.framenum & 15)
 		return;
 
-	for (i=0 ; i<maxclients->value ; i++)
+	for (i = 0; i < maxclients->value; i++)
 	{
 		cl = &svs.clients[i];
-		if (cl->state == cs_free )
+
+		if (cl->state == cs_free)
 			continue;
 		
 		cl->commandMsec = 1800;		// 1600 + some slop
+
+		if (!(sv.framenum & 255)) // jitspeedhackcheck: about 25 seconds
+			cl->commandMsec2 = 25600 + ((int)sv_enforcetime->value) * 10;
 	}
 }
 
