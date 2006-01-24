@@ -258,6 +258,14 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 {
 	key = KeyPadKey(key); // jit
 
+	// Now that we've added support for foreign keyboards, holding down
+	// ctrl+key gives the key a different value.  For the old code below
+	// to work, we need to translate that value back to what it originally
+	// was.  For example, ctrl+c makes the key 'c' appear as 3 an 'a' as 1.
+	// It looks like simply adding 'a' - 1 should fix it.
+	if (keydown[K_CTRL] && key <= 26)
+		key += 'a' - 1;
+
 	if ((toupper(key) == 'V' && keydown[K_CTRL]) ||
 		 (((key == K_INS) || (key == K_KP_INS)) && keydown[K_SHIFT]))
 	{
@@ -318,7 +326,6 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 
 	if (key == K_TAB)
 	{	// command completion
-
 		CompleteCommand();
 		return;
 	}
@@ -326,14 +333,17 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 	if ((key == K_LEFTARROW) || (key == K_KP_LEFTARROW) || ((key == 'h') && (keydown[K_CTRL])))
 	{
 		int charcount;
+
 		// jump over invisible color sequences
 		charcount = key_linepos;
+
 		if (charcount > 1)
 			key_linepos = CharOffset (key_lines[edit_line], charcount - 1);
+
 		return;
 	}
 
-	if ( ( key == K_BACKSPACE ) )
+	if (key == K_BACKSPACE)
 	{
 		if (key_linepos > 1)
 		{
@@ -346,20 +356,20 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 		return;
 	}
 	
-	if ( key == K_DEL )
+	if (key == K_DEL)
 	{
 		if (key_linepos < strlen(key_lines[edit_line]))
 			strcpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + 1);
 		return;
 	}
 	
-	if ( key == K_INS )
+	if (key == K_INS)
 	{ // toggle insert mode
 		key_insert = !key_insert;
 		return;
 	}
 
-	if ( key == K_RIGHTARROW )
+	if (key == K_RIGHTARROW)
 	{
 		if (strlen(key_lines[edit_line]) == key_linepos)
 		{
@@ -430,8 +440,10 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 	if (key == K_PGDN || key == K_KP_PGDN || key == K_MWHEELDOWN) // jitscroll 
 	{
 		con.display += 2;
+
 		if (con.display > con.current)
 			con.display = con.current;
+
 		return;
 	}
 
@@ -441,6 +453,7 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 			con.display = con.current - con.totallines + 10;
 		else
 			key_linepos = 1;
+
 		return;
 	}
 
@@ -450,6 +463,7 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 			con.display = con.current;
 		else
 			key_linepos = strlen(key_lines[edit_line]);
+
 		return;
 	}
 	
@@ -1062,10 +1076,11 @@ void Key_ClearStates (void)
 
 	anykeydown = false;
 
-	for (i=0 ; i<256 ; i++)
+	for (i = 0; i < 256; i++)
 	{
-		if ( keydown[i] || key_repeats[i] )
-			Key_Event( i, false, 0 );
+		if (keydown[i] || key_repeats[i])
+			Key_Event(i, false, 0);
+
 		keydown[i] = 0;
 		key_repeats[i] = 0;
 	}
@@ -1082,7 +1097,7 @@ int Key_GetKey (void)
 	key_waiting = -1;
 
 	while (key_waiting == -1)
-		Sys_SendKeyEvents ();
+		Sys_SendKeyEvents();
 
 	return key_waiting;
 }
