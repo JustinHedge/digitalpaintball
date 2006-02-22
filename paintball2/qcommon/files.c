@@ -222,13 +222,15 @@ int FS_FOpenFile (const char *filename, FILE **file)
 	{
 		if (!strncmp(filename, link->from, link->fromlength))
 		{
-			Com_sprintf(netpath, sizeof(netpath), "%s%s",link->to, filename+link->fromlength);
+			Com_sprintf(netpath, sizeof(netpath), "%s%s", link->to, filename+link->fromlength);
 			*file = fopen(netpath, "rb");
+
 			if (*file)
 			{		
 				Com_DPrintf("link file: %s\n",netpath);
 				return FS_filelength (*file);
 			}
+
 			return -1;
 		}
 	}
@@ -243,40 +245,40 @@ int FS_FOpenFile (const char *filename, FILE **file)
 		{
 		// look through all the pak file elements
 			pak = search->pack;
-			for (i=0; i<pak->numfiles; i++)
+
+			for (i = 0; i < pak->numfiles; i++)
 			{
 				if (!Q_strcasecmp(pak->files[i].name, filename))
 				{	// found it!
 					file_from_pak = 1;
-					Com_DPrintf("PackFile: %s : %s\n",pak->filename, filename);
+					Com_DPrintf("PackFile: %s : %s\n", pak->filename, filename);
 				// open a new file on the pakfile
 					*file = fopen(pak->filename, "rb");
+
 					if (!*file)
 						Com_Error(ERR_FATAL, "Couldn't reopen %s", pak->filename);	
+
 					fseek(*file, pak->files[i].filepos, SEEK_SET);
 					return pak->files[i].filelen;
 				}
 			}
 		}
 		else
-		{		
-	// check a file in the directory tree
-			
+		{
+			// check a file in the directory tree
 			Com_sprintf(netpath, sizeof(netpath), "%s/%s",search->filename, filename);
-			
 			*file = fopen(netpath, "rb");
+
 			if (!*file)
 				continue;
 			
 			Com_DPrintf("FindFile: %s\n",netpath);
-
-			return FS_filelength (*file);
+			return FS_filelength(*file);
 		}
 		
 	}
 	
 	Com_DPrintf("FindFile: can't find %s\n", filename);
-	
 	*file = NULL;
 	return -1;
 }
@@ -450,9 +452,9 @@ int FS_LoadFile (const char *path, void **buffer)
 	int		len;
 
 	buf = NULL;	// quiet compiler warning
-
 // look for it in the filesystem or pack files
 	len = FS_FOpenFile(path, &h);
+
 	if (!h)
 	{
 		if (buffer)
@@ -468,9 +470,7 @@ int FS_LoadFile (const char *path, void **buffer)
 
 	buf = Z_Malloc(len);
 	*buffer = buf;
-
 	FS_Read(buf, len, h);
-
 	fclose(h);
 
 	return len;

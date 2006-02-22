@@ -67,6 +67,7 @@ cbrushside_t map_brushsides[MAX_MAP_BRUSHSIDES];
 
 int			numtexinfo;
 mapsurface_t	map_surfaces[MAX_MAP_TEXINFO];
+mapsurface_t	map_surface_blank; // jit
 
 int			numplanes;
 cplane_t	map_planes[MAX_MAP_PLANES+6];		// extra for box hull
@@ -422,8 +423,10 @@ void CMod_LoadBrushSides (lump_t *l)
 	int			num;
 
 	in = (void *)(cmod_base + l->fileofs);
+	
 	if (l->filelen % sizeof(*in))
 		Com_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size");
+
 	count = l->filelen / sizeof(*in);
 
 	// need to save space for box planes
@@ -433,14 +436,21 @@ void CMod_LoadBrushSides (lump_t *l)
 	out = map_brushsides;	
 	numbrushsides = count;
 
-	for (i=0; i<count; i++, in++, out++)
+	for (i = 0; i < count; i++, in++, out++)
 	{
 		num = LittleShort(in->planenum);
 		out->plane = &map_planes[num];
 		j = LittleShort(in->texinfo);
+		
 		if (j >= numtexinfo)
 			Com_Error(ERR_DROP, "Bad brushside texinfo");
-		out->surface = &map_surfaces[j];
+
+		assert(j >= -1 && j < MAX_MAP_TEXINFO); // jit
+
+		if (j < 0 || j >= MAX_MAP_TEXINFO)
+			out->surface = &map_surface_blank;
+		else
+			out->surface = &map_surfaces[j];
 	}
 }
 
@@ -619,7 +629,7 @@ cmodel_t *CM_LoadMap (char *name, qboolean clientload, unsigned *checksum)
 
 	cmod_base = (byte *)buf;
 
-	strcpy(map_name, name); // jitnodraw
+	Q_strncpyz(map_name, name, sizeof(map_name)); // jitnodraw
 
 	// load into heap
 	CMod_LoadSurfaces(&header.lumps[LUMP_TEXINFO]);

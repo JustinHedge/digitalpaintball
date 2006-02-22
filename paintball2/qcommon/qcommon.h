@@ -801,6 +801,7 @@ extern	cvar_t	*dedicated;
 extern	cvar_t	*deathmatch; // jit
 extern	cvar_t	*host_speeds;
 extern	cvar_t	*log_stats;
+extern	cvar_t	*public_server;
 
 extern	FILE *log_stats_file;
 
