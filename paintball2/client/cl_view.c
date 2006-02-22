@@ -278,12 +278,14 @@ void CL_PrepRefresh (void)
 
 	// jitversion:
 	s = strstr(cl.configstrings[CS_SERVEREVERSION], "Enginebuild:");
+
 	if (s)
 		cls.server_enginebuild = atoi(s+12);
 	else
 		cls.server_enginebuild = 0;
 
 	s = strstr(cl.configstrings[CS_SERVERGVERSION], "Gamebuild:");
+
 	if (s)
 		cls.server_gamebuild = atoi(s+10);
 	else
@@ -291,6 +293,7 @@ void CL_PrepRefresh (void)
 
 	// jitscores:
 	s = strstr(cl.configstrings[CS_GAMETYPE], "Gametype:");
+
 	if (s)
 		cls.gametype = atoi(s+9);
 	else
@@ -300,8 +303,8 @@ void CL_PrepRefresh (void)
 	SCR_AddDirtyPoint(viddef.width-1, viddef.height-1);
 
 	// let the render dll load the map
-	strcpy(mapname, cl.configstrings[CS_MODELS+1] + 5);	// skip "maps/"
-	mapname[strlen(mapname)-4] = 0;		// cut off ".bsp"
+	Q_strncpyz(mapname, cl.configstrings[CS_MODELS+1] + 5, sizeof(mapname));	// skip "maps/"
+	COM_StripExtension(mapname, mapname);
 
 	// register models, pics, and skins
 	Com_Printf("Map: %s\r", mapname); 

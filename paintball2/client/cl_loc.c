@@ -48,13 +48,13 @@ int CL_FreeLoc(void)
 
 void CL_LoadLoc(void)
 {
-	char mapname[32];
+	char mapname[MAX_PATH];
 	FILE *f;
 
 	memset(locations, 0, sizeof(loc_t) * MAX_LOCATIONS);
 
 	// format map pathname
-	strcpy(mapname, cl.configstrings[CS_MODELS + 1] + 5);
+	Q_strncpyz(mapname, cl.configstrings[CS_MODELS + 1] + 5, sizeof(mapname));
 	mapname[strlen(mapname) - 4] = 0;
 
 	if (!(f = fopen(va("locs/%s.loc", mapname), "r")))
@@ -158,21 +158,20 @@ void CL_LocDelete(void)
 	}
 }
 
-void CL_LocAdd(char *name)
+void CL_LocAdd (char *name)
 {
 	int index = CL_FreeLoc();
 
 	locations[index].origin[0] = cl.frame.playerstate.pmove.origin[0];
 	locations[index].origin[1] = cl.frame.playerstate.pmove.origin[1];
 	locations[index].origin[2] = cl.frame.playerstate.pmove.origin[2];
-
-	strcpy(locations[index].name, name);
+	Q_strncpyz(locations[index].name, name, sizeof(locations[index].name));
 	locations[index].used = true;
 
-	Com_Printf("Location ' %s ' added at (%d %d %d) %d\n", name, 
-		cl.frame.playerstate.pmove.origin[0],
-		cl.frame.playerstate.pmove.origin[1],
-		cl.frame.playerstate.pmove.origin[2] );
+	Com_Printf("Location ' %s ' added at (%d %d %d) %d\n", locations[index].name, 
+		locations[index].origin[0],
+		locations[index].origin[1],
+		locations[index].origin[2]);
 }
 
 void CL_LocWrite(char *filename)

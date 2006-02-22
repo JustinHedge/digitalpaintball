@@ -220,11 +220,9 @@ void GL_TextureMode(const char *string )
 	int		i;
 	image_t	*glt;
 
-	for (i=0; i< NUM_GL_MODES; i++)
-	{
+	for (i = 0; i < NUM_GL_MODES; i++)
 		if (!Q_strcasecmp(modes[i].name, string))
 			break;
-	}
 
 	if (i == NUM_GL_MODES)
 	{
@@ -256,11 +254,9 @@ void GL_TextureAlphaMode( char *string )
 {
 	int		i;
 
-	for (i=0; i< NUM_GL_ALPHA_MODES; i++)
-	{
-		if (!Q_strcasecmp( gl_alpha_modes[i].name, string))
+	for (i = 0; i < NUM_GL_ALPHA_MODES; i++)
+		if (!Q_strcasecmp(gl_alpha_modes[i].name, string))
 			break;
-	}
 
 	if (i == NUM_GL_ALPHA_MODES)
 	{

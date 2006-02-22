@@ -86,8 +86,7 @@ typedef struct rs_stagekey_s
 
 // Base script
 typedef struct rscript_s {
-	char					name[48];	// name of script
-	
+	char					name[64];	// name of script
 	unsigned char			subdivide;	// Heffo - chop the surface up this much for vertex warping
 	float					warpdist;	// Heffo - vertex warping distance;
 	float					warpsmooth;	// Heffo - vertex warping smoothness;
@@ -95,12 +94,10 @@ typedef struct rscript_s {
 	qboolean				mirror;		// mirror
 	int						width;		// jitrscript
 	int						height;		// jitrscript
-
 	qboolean				dontflush;	// dont flush from memory on map change
 	qboolean				ready;		// readied by the engine?
 	rs_stage_t				*stage;		// first rendering stage
 	struct rscript_s		*next;		// next script in linked list
-
 	image_t					*img_ptr;	// jitrscript -- pointer back to the image using the script
 } rscript_t;
 

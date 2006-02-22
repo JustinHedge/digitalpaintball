@@ -150,7 +150,7 @@ rscript_t *RS_NewScript (char *name)
 	}
 
 	memset(rs, 0, sizeof(rscript_t)); // jitrscript
-	strncpy (rs->name, name, sizeof(rs->name));
+	Q_strncpyz(rs->name, name, sizeof(rs->name));
 /*
 	rs->stage = NULL;
 	rs->next = NULL;
@@ -191,8 +191,7 @@ rs_stage_t *RS_NewStage (rscript_t *rs)
 	// jitrscript:
 	memset(stage, 0, sizeof(rs_stage_t)); // clear EVERYTHING
 	stage->lightmap = true;
-	//strncpy (stage->name, "pics/noimage.tga", sizeof(stage->name));
-	strncpy (stage->name, "pics/noimage", sizeof(stage->name));
+	Q_strncpyz(stage->name, "pics/noimage", sizeof(stage->name));
 
 	return stage;
 }
@@ -296,7 +295,7 @@ void RS_ReadyScript (rscript_t *rs)
 
 		if (stage->name[0])
 		{
-			stage->texture = GL_FindImage (stage->name, mode);
+			stage->texture = GL_FindImage(stage->name, mode);
 
 			if (!stage->texture)
 				stage->texture = r_notexture;
@@ -499,7 +498,7 @@ static void rs_stage_map (rs_stage_t *stage, char **token)
 {
 	*token = strtok (NULL, TOK_DELIMINATORS);
 
-	strncpy (stage->name, *token, sizeof(stage->name));
+	Q_strncpyz(stage->name, *token, sizeof(stage->name));
 }
 
 static void rs_stage_scroll (rs_stage_t *stage, char **token)
@@ -572,11 +571,8 @@ static void rs_stage_anim (rs_stage_t *stage, char **token)
 	while (Q_strcasecmp(*token, "end"))
 	{
 		stage->anim_count++;
-
-		strncpy (anim->name, *token, sizeof(anim->name));
-
+		Q_strncpyz(anim->name, *token, sizeof(anim->name));
 		anim->texture = NULL;
-
 		*token = strtok(NULL, TOK_DELIMINATORS);
 
 		if (!Q_strcasecmp(*token, "end"))
