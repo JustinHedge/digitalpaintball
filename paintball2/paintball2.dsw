@@ -3,7 +3,19 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "paintball2"=".\paintball2.dsp" - Package Owner=<4>
+Project: "paintball"=..\pball\src\paintball.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "paintball2"=.\paintball2.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -14,11 +26,14 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name ref_gl
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name paintball
+    End Project Dependency
 }}}
 
 ###############################################################################
 
-Project: "ref_gl"=".\ref_gl\ref_gl.dsp" - Package Owner=<4>
+Project: "ref_gl"=.\ref_gl\ref_gl.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

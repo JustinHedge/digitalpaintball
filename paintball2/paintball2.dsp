@@ -1804,6 +1804,21 @@ DEP_CPP_NET_C=\
 # End Source File
 # Begin Source File
 
+SOURCE=.\qcommon\net_common.c
+
+!IF  "$(CFG)" == "paintball2 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\win32\net_wins.c
 
 !IF  "$(CFG)" == "paintball2 - Win32 Release"
@@ -2041,6 +2056,10 @@ SOURCE=.\client\anorms.h
 # End Source File
 # Begin Source File
 
+SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Include\BASETSD.H"
+# End Source File
+# Begin Source File
+
 SOURCE=.\qcommon\bspfile.h
 # End Source File
 # Begin Source File
@@ -2074,6 +2093,10 @@ SOURCE=.\client\keys.h
 # Begin Source File
 
 SOURCE=.\client\menu.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\qcommon\net_common.h
 # End Source File
 # Begin Source File
 
