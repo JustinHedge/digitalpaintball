@@ -407,7 +407,7 @@ void CL_PrepRefresh (void)
 	// the renderer can now free unneeded stuff
 	re.EndRegistration();
 
-    CL_LoadLoc(); // Xile/NiceAss LOC
+	CL_LoadLoc(); // Xile/NiceAss LOC
 
 	// clear any lines of console text
 	Con_ClearNotify();

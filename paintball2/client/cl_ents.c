@@ -513,9 +513,8 @@ void CL_ParseFrame (void)
 	frame_t		*old;
 
 	memset (&cl.frame, 0, sizeof(cl.frame));
-
-	cl.frame.serverframe = MSG_ReadLong (&net_message);
-	cl.frame.deltaframe = MSG_ReadLong (&net_message);
+	cl.frame.serverframe = MSG_ReadLong(&net_message);
+	cl.frame.deltaframe = MSG_ReadLong(&net_message);
 	cl.frame.servertime = cl.frame.serverframe*100;
 
 	// BIG HACK to let old demos continue to work
@@ -523,8 +522,7 @@ void CL_ParseFrame (void)
 		cl.surpressCount = MSG_ReadByte(&net_message);
 
 	if (cl_shownet->value == 3)
-		Com_Printf ("   frame:%i  delta:%i\n", cl.frame.serverframe,
-		cl.frame.deltaframe);
+		Com_Printf ("   frame:%i  delta:%i\n", cl.frame.serverframe, cl.frame.deltaframe);
 
 	// If the frame is delta compressed from data that we
 	// no longer have available, we must suck up the rest of
@@ -539,6 +537,7 @@ void CL_ParseFrame (void)
 	else
 	{
 		old = &cl.frames[cl.frame.deltaframe & UPDATE_MASK];
+
 		if (!old->valid)
 		{	// should never happen
 			Com_Printf ("Delta from invalid frame (not supposed to happen!).\n");
@@ -553,7 +552,9 @@ void CL_ParseFrame (void)
 			Com_Printf ("Delta parse_entities too old.\n");
 		}
 		else
+		{
 			cl.frame.valid = true;	// valid delta parse
+		}
 	}
 
 	// clamp time 
@@ -564,21 +565,25 @@ void CL_ParseFrame (void)
 
 	// read areabits
 	len = MSG_ReadByte(&net_message);
-	MSG_ReadData (&net_message, &cl.frame.areabits, len);
+	MSG_ReadData(&net_message, &cl.frame.areabits, len);
 
 	// read playerinfo
 	cmd = MSG_ReadByte(&net_message);
 	SHOWNET(svc_strings[cmd]);
+
 	if (cmd != svc_playerinfo)
-		Com_Error (ERR_DROP, "CL_ParseFrame: not playerinfo");
-	CL_ParsePlayerstate (old, &cl.frame);
+		Com_Error(ERR_DROP, "CL_ParseFrame: not playerinfo");
+
+	CL_ParsePlayerstate(old, &cl.frame);
 
 	// read packet entities
 	cmd = MSG_ReadByte(&net_message);
 	SHOWNET(svc_strings[cmd]);
+
 	if (cmd != svc_packetentities)
-		Com_Error (ERR_DROP, "CL_ParseFrame: not packetentities");
-	CL_ParsePacketEntities (old, &cl.frame);
+		Com_Error(ERR_DROP, "CL_ParseFrame: not packetentities");
+
+	CL_ParsePacketEntities(old, &cl.frame);
 
 
 	// save the frame off in the backup array for later delta comparisons
@@ -920,51 +925,45 @@ void CL_AddPacketEntities (frame_t *frame)
 		ent.skinnum = 0;
 		ent.flags = 0;
 		ent.alpha = 0;
-#if 0 // jitskm
-		// duplicate for linked models
-		if (s1->modelindex2)
+
+		if (r_oldmodels->value) // jitskm
 		{
-			if (s1->modelindex2 == 255)
-			{	// custom weapon
-				ci = &cl.clientinfo[s1->skinnum & 0xff];
-				i = (s1->skinnum >> 8); // 0 is default weapon model
+			// duplicate for linked models
+			if (s1->modelindex2)
+			{
+				if (s1->modelindex2 == 255)
+				{	// custom weapon
+					ci = &cl.clientinfo[s1->skinnum & 0xff];
+					i = (s1->skinnum >> 8); // 0 is default weapon model
 
-				if (!cl_vwep->value || i > MAX_CLIENTWEAPONMODELS - 1)
-					i = 0;
+					if (!cl_vwep->value || i > MAX_CLIENTWEAPONMODELS - 1)
+						i = 0;
 
-				ent.model = ci->weaponmodel[i];
-
-				if (!ent.model)
-				{
-					if (i != 0)
-						ent.model = ci->weaponmodel[0];
+					ent.model = ci->weaponmodel[i];
 
 					if (!ent.model)
-						ent.model = cl.baseclientinfo.weaponmodel[0];
+					{
+						if (i != 0)
+							ent.model = ci->weaponmodel[0];
+
+						if (!ent.model)
+							ent.model = cl.baseclientinfo.weaponmodel[0];
+					}
 				}
-			}
-			else
-			{
-				ent.model = cl.model_draw[s1->modelindex2];
-			}
+				else
+				{
+					ent.model = cl.model_draw[s1->modelindex2];
+				}
 
-			// PMM - check for the defender sphere shell .. make it translucent
-			// replaces the previous version which used the high bit on modelindex2 to determine transparency
-			if (!Q_strcasecmp(cl.configstrings[CS_MODELS+(s1->modelindex2)], "models/items/shell/tris.md2"))
-			{
-				ent.alpha = 0.32;
-				ent.flags = RF_TRANSLUCENT;
+				V_AddEntity(&ent);
+
+				//PGM - make sure these get reset.
+				ent.flags = 0;
+				ent.alpha = 0;
+				//PGM
 			}
-			// pmm
-
-			V_AddEntity(&ent);
-
-			//PGM - make sure these get reset.
-			ent.flags = 0;
-			ent.alpha = 0;
-			//PGM
 		}
-#endif
+
 		if (s1->modelindex3)
 		{
 			ent.model = cl.model_draw[s1->modelindex3];

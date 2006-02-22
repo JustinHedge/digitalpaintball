@@ -59,6 +59,7 @@ kbutton_t	in_left, in_right, in_forward, in_back;
 kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed, in_use, in_attack;
 kbutton_t	in_up, in_down;
+kbutton_t	in_button[8]; // jitbutton
 
 int			in_impulse;
 
@@ -139,41 +140,47 @@ void KeyUp (kbutton_t *b)
 	b->state |= 4; 		// impulse up
 }
 
-void IN_KLookDown (void) {KeyDown(&in_klook);}
-void IN_KLookUp (void) {KeyUp(&in_klook);}
-void IN_UpDown(void) {KeyDown(&in_up);}
-void IN_UpUp(void) {KeyUp(&in_up);}
-void IN_DownDown(void) {KeyDown(&in_down);}
-void IN_DownUp(void) {KeyUp(&in_down);}
-void IN_LeftDown(void) {KeyDown(&in_left);}
-void IN_LeftUp(void) {KeyUp(&in_left);}
-void IN_RightDown(void) {KeyDown(&in_right);}
-void IN_RightUp(void) {KeyUp(&in_right);}
-void IN_ForwardDown(void) {KeyDown(&in_forward);}
-void IN_ForwardUp(void) {KeyUp(&in_forward);}
-void IN_BackDown(void) {KeyDown(&in_back);}
-void IN_BackUp(void) {KeyUp(&in_back);}
-void IN_LookupDown(void) {KeyDown(&in_lookup);}
-void IN_LookupUp(void) {KeyUp(&in_lookup);}
-void IN_LookdownDown(void) {KeyDown(&in_lookdown);}
-void IN_LookdownUp(void) {KeyUp(&in_lookdown);}
-void IN_MoveleftDown(void) {KeyDown(&in_moveleft);}
-void IN_MoveleftUp(void) {KeyUp(&in_moveleft);}
-void IN_MoverightDown(void) {KeyDown(&in_moveright);}
-void IN_MoverightUp(void) {KeyUp(&in_moveright);}
-
-void IN_SpeedDown(void) {KeyDown(&in_speed);}
-void IN_SpeedUp(void) {KeyUp(&in_speed);}
-void IN_StrafeDown(void) {KeyDown(&in_strafe);}
-void IN_StrafeUp(void) {KeyUp(&in_strafe);}
-
-void IN_AttackDown(void) {KeyDown(&in_attack);}
-void IN_AttackUp(void) {KeyUp(&in_attack);}
-
-void IN_UseDown (void) {KeyDown(&in_use);}
-void IN_UseUp (void) {KeyUp(&in_use);}
-
-void IN_Impulse (void) {in_impulse=atoi(Cmd_Argv(1));}
+void IN_KLookDown (void) { KeyDown(&in_klook); }
+void IN_KLookUp (void) { KeyUp(&in_klook); }
+void IN_UpDown (void) { KeyDown(&in_up); }
+void IN_UpUp (void) { KeyUp(&in_up); }
+void IN_DownDown (void) { KeyDown(&in_down); }
+void IN_DownUp (void) { KeyUp(&in_down); }
+void IN_LeftDown (void) { KeyDown(&in_left); }
+void IN_LeftUp (void) { KeyUp(&in_left); }
+void IN_RightDown (void) { KeyDown(&in_right); }
+void IN_RightUp (void) { KeyUp(&in_right); }
+void IN_ForwardDown (void) { KeyDown(&in_forward); }
+void IN_ForwardUp (void) { KeyUp(&in_forward); }
+void IN_BackDown (void) { KeyDown(&in_back); }
+void IN_BackUp (void) { KeyUp(&in_back); }
+void IN_LookupDown (void) { KeyDown(&in_lookup); }
+void IN_LookupUp (void) { KeyUp(&in_lookup); }
+void IN_LookdownDown (void) { KeyDown(&in_lookdown); }
+void IN_LookdownUp (void) { KeyUp(&in_lookdown); }
+void IN_MoveleftDown (void) { KeyDown(&in_moveleft); }
+void IN_MoveleftUp (void) { KeyUp(&in_moveleft); }
+void IN_MoverightDown (void) { KeyDown(&in_moveright); }
+void IN_MoverightUp (void) { KeyUp(&in_moveright); }
+void IN_SpeedDown (void) { KeyDown(&in_speed); }
+void IN_SpeedUp (void) { KeyUp(&in_speed); }
+void IN_StrafeDown (void) { KeyDown(&in_strafe); }
+void IN_StrafeUp (void) { KeyUp(&in_strafe); }
+void IN_AttackDown (void) { KeyDown(&in_attack); }
+void IN_AttackUp (void) { KeyUp(&in_attack); }
+void IN_UseDown (void) { KeyDown(&in_use); }
+void IN_UseUp (void) { KeyUp(&in_use); }
+void IN_Button3Down (void) { KeyDown(&in_button[2]); } // === jitbutton
+void IN_Button4Down (void) { KeyDown(&in_button[3]); }
+void IN_Button5Down (void) { KeyDown(&in_button[4]); }
+void IN_Button6Down (void) { KeyDown(&in_button[5]); }
+void IN_Button7Down (void) { KeyDown(&in_button[6]); }
+void IN_Button3Up (void) { KeyUp(&in_button[2]); }
+void IN_Button4Up (void) { KeyUp(&in_button[3]); }
+void IN_Button5Up (void) { KeyUp(&in_button[4]); }
+void IN_Button6Up (void) { KeyUp(&in_button[5]); }
+void IN_Button7Up (void) { KeyUp(&in_button[6]); } // jitbutton ===
+void IN_Impulse (void) { in_impulse = atoi(Cmd_Argv(1)); }
 
 /*
 ===============
@@ -349,6 +356,16 @@ void CL_FinishMove (usercmd_t *cmd)
 
 	in_use.state &= ~2;
 
+	// === jitbutton
+	for (i = 2; i < 7; ++i)
+	{
+		if (in_button[i].state & 3)
+			cmd->buttons |= (1 << i);
+
+		in_button[i].state &= ~2;
+	}
+	// jitbutton ===
+
 	if (anykeydown && cls.key_dest == key_game)
 		cmd->buttons |= BUTTON_ANY;
 
@@ -381,6 +398,7 @@ usercmd_t CL_CreateCmd (void)
 	usercmd_t	cmd;
 
 	frame_msec = sys_frame_time - old_sys_frame_time;
+
 	if (frame_msec < 1)
 		frame_msec = 1;
 	if (frame_msec > 200)
@@ -407,40 +425,48 @@ CL_InitInput
 */
 void CL_InitInput (void)
 {
-	Cmd_AddCommand ("centerview",IN_CenterView);
-
-	Cmd_AddCommand ("+moveup",IN_UpDown);
-	Cmd_AddCommand ("-moveup",IN_UpUp);
-	Cmd_AddCommand ("+movedown",IN_DownDown);
-	Cmd_AddCommand ("-movedown",IN_DownUp);
-	Cmd_AddCommand ("+left",IN_LeftDown);
-	Cmd_AddCommand ("-left",IN_LeftUp);
-	Cmd_AddCommand ("+right",IN_RightDown);
-	Cmd_AddCommand ("-right",IN_RightUp);
-	Cmd_AddCommand ("+forward",IN_ForwardDown);
-	Cmd_AddCommand ("-forward",IN_ForwardUp);
-	Cmd_AddCommand ("+back",IN_BackDown);
-	Cmd_AddCommand ("-back",IN_BackUp);
-	Cmd_AddCommand ("+lookup", IN_LookupDown);
-	Cmd_AddCommand ("-lookup", IN_LookupUp);
-	Cmd_AddCommand ("+lookdown", IN_LookdownDown);
-	Cmd_AddCommand ("-lookdown", IN_LookdownUp);
-	Cmd_AddCommand ("+strafe", IN_StrafeDown);
-	Cmd_AddCommand ("-strafe", IN_StrafeUp);
-	Cmd_AddCommand ("+moveleft", IN_MoveleftDown);
-	Cmd_AddCommand ("-moveleft", IN_MoveleftUp);
-	Cmd_AddCommand ("+moveright", IN_MoverightDown);
-	Cmd_AddCommand ("-moveright", IN_MoverightUp);
-	Cmd_AddCommand ("+speed", IN_SpeedDown);
-	Cmd_AddCommand ("-speed", IN_SpeedUp);
-	Cmd_AddCommand ("+attack", IN_AttackDown);
-	Cmd_AddCommand ("-attack", IN_AttackUp);
-	Cmd_AddCommand ("+use", IN_UseDown);
-	Cmd_AddCommand ("-use", IN_UseUp);
-	Cmd_AddCommand ("impulse", IN_Impulse);
-	Cmd_AddCommand ("+klook", IN_KLookDown);
-	Cmd_AddCommand ("-klook", IN_KLookUp);
-
+	Cmd_AddCommand("centerview",IN_CenterView);
+	Cmd_AddCommand("+moveup", IN_UpDown);
+	Cmd_AddCommand("-moveup", IN_UpUp);
+	Cmd_AddCommand("+movedown", IN_DownDown);
+	Cmd_AddCommand("-movedown", IN_DownUp);
+	Cmd_AddCommand("+left", IN_LeftDown);
+	Cmd_AddCommand("-left", IN_LeftUp);
+	Cmd_AddCommand("+right", IN_RightDown);
+	Cmd_AddCommand("-right", IN_RightUp);
+	Cmd_AddCommand("+forward", IN_ForwardDown);
+	Cmd_AddCommand("-forward", IN_ForwardUp);
+	Cmd_AddCommand("+back", IN_BackDown);
+	Cmd_AddCommand("-back", IN_BackUp);
+	Cmd_AddCommand("+lookup", IN_LookupDown);
+	Cmd_AddCommand("-lookup", IN_LookupUp);
+	Cmd_AddCommand("+lookdown", IN_LookdownDown);
+	Cmd_AddCommand("-lookdown", IN_LookdownUp);
+	Cmd_AddCommand("+strafe", IN_StrafeDown);
+	Cmd_AddCommand("-strafe", IN_StrafeUp);
+	Cmd_AddCommand("+moveleft", IN_MoveleftDown);
+	Cmd_AddCommand("-moveleft", IN_MoveleftUp);
+	Cmd_AddCommand("+moveright", IN_MoverightDown);
+	Cmd_AddCommand("-moveright", IN_MoverightUp);
+	Cmd_AddCommand("+speed", IN_SpeedDown);
+	Cmd_AddCommand("-speed", IN_SpeedUp);
+	Cmd_AddCommand("+attack", IN_AttackDown);
+	Cmd_AddCommand("-attack", IN_AttackUp);
+	Cmd_AddCommand("+use", IN_UseDown);
+	Cmd_AddCommand("-use", IN_UseUp);
+	Cmd_AddCommand("+button3", IN_Button3Down); // === jitbutton
+	Cmd_AddCommand("-button3", IN_Button3Up);
+	Cmd_AddCommand("+tossgren", IN_Button3Down);
+	Cmd_AddCommand("-tossgren", IN_Button3Up);
+	Cmd_AddCommand("+button4", IN_Button4Down);
+	Cmd_AddCommand("-button4", IN_Button4Up);
+	Cmd_AddCommand("+button5", IN_Button5Down);
+	Cmd_AddCommand("-button5", IN_Button5Up);
+	Cmd_AddCommand("+button6", IN_Button6Down);
+	Cmd_AddCommand("-button6", IN_Button6Up); // jitbutton ===
+	Cmd_AddCommand("impulse", IN_Impulse);
+	Cmd_AddCommand("+klook", IN_KLookDown);
+	Cmd_AddCommand("-klook", IN_KLookUp);
 	cl_nodelta = Cvar_Get ("cl_nodelta", "0", 0);
 }
 

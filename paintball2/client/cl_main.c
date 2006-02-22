@@ -93,14 +93,17 @@ cvar_t	*cl_vwep;
 
 cvar_t	*cl_drawfps; // drawfps - MrG
 cvar_t	*cl_drawpps; // jitnetfps
+cvar_t	*cl_centerprintkills;
 cvar_t	*cl_timestamp; // jit
 cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_drawhud; // jithud
 cvar_t	*cl_language; // jittrans
+cvar_t	*r_oldmodels;
 
 cvar_t	*serverlist_source; // jitserverlist / jitmenu
 cvar_t	*serverlist_source2; // jitserverlist / jitmenu
 cvar_t	*serverlist_source3; // jitserverlist / jitmenu
+cvar_t	*serverlist_blacklist;
 
 client_static_t	cls;
 client_state_t	cl;
@@ -1748,18 +1751,30 @@ void CL_InitLocal (void)
 	cl_drawhud =		Cvar_Get("cl_drawhud", "1", 0); // jithud
 	cl_timestamp =		Cvar_Get("cl_timestamp", "0", CVAR_ARCHIVE); // jit
 	cl_hudscale =		Cvar_Get("cl_hudscale", "1", CVAR_ARCHIVE); // jithudscale
-	cl_language =		Cvar_Get("cl_language", "English", CVAR_ARCHIVE); // jittrans
+	cl_language =		Cvar_Get("cl_language", "english", CVAR_ARCHIVE); // jittrans
+	cl_centerprintkills = Cvar_Get("cl_centerprintkills", "1", CVAR_ARCHIVE); // jit
+	r_oldmodels =		Cvar_Get("r_oldmodels", "0", CVAR_ARCHIVE); // jit
 	
 	if (cl_hudscale->value < 1.0)
 		Cvar_Set("cl_hudscale", "1");
 
 	hudscale = cl_hudscale->value;
 	serverlist_source =		Cvar_Get("serverlist_source", 
-		"http://www.planetquake.com/digitalpaint/servers.txt", CVAR_ARCHIVE); // jitserverlist / jitmenu
+		"http://digitalpaint.planetquake.gamespy.com/servers.txt", 0); // jitserverlist / jitmenu
 	serverlist_source2 =	Cvar_Get("serverlist_source2", 
-		"http://dynamic.gamespy.com/~digitalpaint/serverlist.php", CVAR_ARCHIVE); // jitserverlist / jitmenu
+		"http://digitalpaint.planetquake.gamespy.com/serverlist.php", 0); // jitserverlist / jitmenu
 	serverlist_source3 =	Cvar_Get("serverlist_source3",
-		"http://dpball.com/serverlist.php", CVAR_ARCHIVE); // jitserverlist / jitmenu
+		"http://dpball.com/serverlist.php", 0); // jitserverlist / jitmenu
+	serverlist_blacklist =	Cvar_Get("serverlist_blacklist",
+		"http://dpball.com/blacklist.php", 0);
+
+	// fix up old serverlist settings now that the server has moved:
+	if (Q_streq(serverlist_source->string, "http://www.planetquake.com/digitalpaint/servers.txt"))
+		Cvar_Set("serverlist_source", "http://digitalpaint.planetquake.gamespy.com/servers.txt");
+
+	if (Q_streq(serverlist_source2->string, "http://dynamic5.gamespy.com/~digitalpaint/serverlist.php") ||
+		Q_streq(serverlist_source2->string, "http://dynamic.gamespy.com/~digitalpaint/serverlist.php"))
+		Cvar_Set("serverlist_source2", "http://digitalpaint.planetquake.gamespy.com/serverlist.php");
 	// ===
 
 	cl_run =			Cvar_Get("cl_run", "1", CVAR_ARCHIVE); // jit, default to 1
@@ -1957,7 +1972,6 @@ cheatvar_t	cheatvars[] = {
 	{"r_fullbright", "0"},
 	{"r_drawflat", "0"},
 	{"paused", "0"},
-	{"fixedtime", "0"},
 	{"sw_draworder", "0"},
 	{"gl_lightmap", "0"},
 	{"gl_saturatelighting", "0"},
@@ -2189,30 +2203,6 @@ void CL_Frame (int msec)
 }
 
 
-//============================================================================
-// NOTE: No longer used -- layout retrieved from Windows now.
-// jitkeyboard
-#ifdef _WIN32
-extern byte *scantokey[128];
-void KB_Init (void)
-{
-	char	path[MAX_QPATH];
-	FILE	*f;
-	cvar_t	*keyboard;
-
-	keyboard = Cvar_Get("keyboard", "qwerty", CVAR_ARCHIVE);
-	Com_sprintf(path, sizeof(path), "%s/configs/%s.kbd", FS_Gamedir(), keyboard->string);
-	f = fopen(path, "rb");
-
-	if (f)
-	{
-		fread(scantokey, 1, 128, f);
-		fclose(f);
-	}
-}
-#endif
-// jit ===
-
 /*
 ====================
 CL_Init
@@ -2250,10 +2240,6 @@ void CL_Init (void)
 	CDAudio_Init();
 	CL_InitLocal();
 	IN_Init();
-	
-#ifdef _WIN32
-	KB_Init(); // jitkeyboard -- init keyboard layout
-#endif
 
 	FS_ExecAutoexec();
 	Con_ToggleConsole_f(); // jitspoe -- start with console down

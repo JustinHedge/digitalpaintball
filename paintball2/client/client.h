@@ -301,7 +301,7 @@ extern	cvar_t	*cl_anglespeedkey;
 
 extern	cvar_t	*cl_drawfps; // jit
 extern	cvar_t	*cl_drawpps; // jitnetfps
-
+extern	cvar_t	*cl_centerprintkills; // jit
 extern	cvar_t	*cl_shownet;
 extern	cvar_t	*cl_showmiss;
 extern	cvar_t	*cl_showclamp;
@@ -325,6 +325,7 @@ extern	cvar_t	*cl_paused;
 extern	cvar_t	*cl_timedemo;
 
 extern	cvar_t	*cl_vwep;
+extern	cvar_t	*r_oldmodels;
 
 // Xile/NiceAss LOC
 extern cvar_t *cl_drawlocs;

@@ -379,6 +379,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		// Update scoreboard:
 		if (current_element < num_elements)
 			cl_scores_setkills(index_array[2], index_array[current_element++]);
+
 		if (current_element < num_elements)
 		{
 			cl_scores_setdeaths(index_array[4], index_array[current_element++]);
@@ -397,7 +398,9 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		else
 			break;
 
-		event_print(event_text);
+		if (cl_centerprintkills->value)
+			event_print(event_text);
+
 		break;
 	case EVENT_SUICIDE: // jitodo - fix all these offsets
 		if (num_elements < 3)
@@ -412,7 +415,9 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		if (index_array[2] == cl.playernum)
 		{
 			sprintf(event_text, "You eliminated yourself!");
-			event_print(event_text);
+
+			if (cl_centerprintkills->value)
+				event_print(event_text);
 		}
 
 		break;

@@ -357,7 +357,7 @@ qboolean cl_scores_prep_select_widget (void)
 
 	SortScores();
 
-	for (i=0; i<cl_scores_count; i++)
+	for (i = 0; i < cl_scores_count; i++)
 	{
 		j = cl_sorted_scorelist[i];
 		Com_sprintf(cl_scores_nums[i], 4, "%d", j);

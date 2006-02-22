@@ -27,7 +27,7 @@ static void ping_broadcast (void)
 	NET_Config(true);		// allow remote
 	Com_Printf("pinging broadcast...\n");
 	noudp = Cvar_Get("noudp", "0", CVAR_NOSET);
-	noipx = Cvar_Get("noipx", "0", CVAR_NOSET);
+	noipx = Cvar_Get("noipx", "1", CVAR_NOSET);
 
 	m_serverPingSartTime = Sys_Milliseconds();
 
@@ -60,7 +60,7 @@ void *CL_PingServers_multithreaded (void *ptr) // jitmultithreading
 
 	ping_broadcast();
 	
-	for (i=0; i<m_serverlist.numservers; i++)
+	for (i = 0; i < m_serverlist.numservers; i++)
 	{
 		sprintf(buff, "info %i", PROTOCOL_VERSION);
 		Netchan_OutOfBandPrint(NS_CLIENT, m_serverlist.server[i].adr, buff);
@@ -493,6 +493,7 @@ static void M_ServerlistUpdate (char *sServerSource)
 	if (!*sServerSource)
 		return;
 
+	Com_Printf("Retrieving serverlist from %s\n", sServerSource);
 	serverListSocket = NET_TCPSocket(0);	// Create the socket descriptor
 
 	if (serverListSocket == 0)
@@ -572,7 +573,7 @@ static void M_ServerlistUpdate (char *sServerSource)
 		current = buffer;
 
 		// Check for a forward:
-		if (strstr(buffer, "302 Found"))
+		if (memcmp(buffer + 9, "301", 3) == 0 || memcmp(buffer + 9, "302", 3) == 0)
 		{
 			char *newaddress, *s, *s1;
 
@@ -597,7 +598,7 @@ static void M_ServerlistUpdate (char *sServerSource)
 			else
 			{
 				// Should never happen
-				Com_Printf("WARNING: 302 redirect with no new location\n");
+				Com_Printf("WARNING: 301 redirect with no new location\n");
 				free(buffer);
 				return;
 			}
@@ -699,21 +700,25 @@ done:
 	}
 }
 
+void ServerlistBlacklistUpdate (const char *sURL)
+{
+	if (!sURL || !*sURL)
+		return;
+
+//	todo;
+}
+
 void *M_ServerlistUpdate_multithreaded (void *ptr)
 {
 	grey_serverlist();
 	ping_broadcast();
-
-	// hack to fix bug in build 7/8 that truncated serverlist_source
-	if (memcmp(serverlist_source->string, "http://", 7) != 0)
-		Cvar_Set("serverlist_source", "http://www.planetquake.com/digitalpaint/servers.txt");
-
+	ServerlistBlacklistUpdate(serverlist_blacklist->string);
 	M_ServerlistUpdate(serverlist_source->string);
 	M_ServerlistUpdate(serverlist_source2->string);
 	M_ServerlistUpdate(serverlist_source3->string);
 	refreshing = false;
-
 	pthread_exit(0);
+
 	return NULL;
 }
 

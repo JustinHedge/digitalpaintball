@@ -156,7 +156,7 @@ void M_Menu_Main_f (void)
    strlen_noformat
    Returns the length of strings ignoring formatting (underlines, colors, etc)
 */
-int strlen_noformat(const unsigned char *s)
+int strlen_noformat (const unsigned char *s)
 {
 	int count = 0;
 
@@ -2132,11 +2132,18 @@ static void menu_from_file (menu_screen_t *menu)
 	char menu_filename[MAX_QPATH];
 	char *buf;
 	int file_len;
+	extern cvar_t *cl_language;
 
 	scale = cl_hudscale->value;
 
-	sprintf(menu_filename, "menus/%s.txt", menu->name);
+	sprintf(menu_filename, "menus/%s/%s.txt", cl_language->string, menu->name);
 	file_len = FS_LoadFile(menu_filename, (void **)&buf);
+
+	if (file_len < 0)
+	{
+		sprintf(menu_filename, "menus/%s.txt", menu->name);
+		file_len = FS_LoadFile(menu_filename, (void **)&buf);
+	}
 
 	menu->background = re.DrawFindPic("conback"); // jitodo - customizebale backgrounds
 	
