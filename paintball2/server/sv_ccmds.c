@@ -41,38 +41,37 @@ void SV_SetMaster_f (void)
 	int		i, slot;
 
 	// only dedicated servers send heartbeats
-	if (!dedicated->value)
+	if (!dedicated->value || !public_server->value) // jit
 	{
-		Com_Printf ("Only dedicated servers use masters.\n");
+		Com_Printf("Only public dedicated servers use masters.\n");
 		return;
 	}
 
 	// make sure the server is listed public
 	Cvar_Set("public", "1");
 
-	for (i=1 ; i<MAX_MASTERS ; i++)
-		memset (&master_adr[i], 0, sizeof(master_adr[i]));
+	for (i = 1; i < MAX_MASTERS; i++)
+		memset(&master_adr[i], 0, sizeof(master_adr[i]));
 
 	slot = 1;		// slot 0 will always contain the id master
-	for (i=1 ; i<Cmd_Argc() ; i++)
+
+	for (i = 1; i < Cmd_Argc(); i++)
 	{
 		if (slot == MAX_MASTERS)
 			break;
 
 		if (!NET_StringToAdr (Cmd_Argv(i), &master_adr[i]))
 		{
-			Com_Printf ("Bad address: %s\n", Cmd_Argv(i));
+			Com_Printf("Bad address: %s\n", Cmd_Argv(i));
 			continue;
 		}
+
 		if (master_adr[slot].port == 0)
 			master_adr[slot].port = BigShort (PORT_MASTER);
 
-		Com_Printf ("Master server at %s\n", NET_AdrToString (master_adr[slot]));
-
-		Com_Printf ("Sending a ping.\n");
-
-		Netchan_OutOfBandPrint (NS_SERVER, master_adr[slot], "ping");
-
+		Com_Printf("Master server at %s\n", NET_AdrToString (master_adr[slot]));
+		Com_Printf("Sending a ping.\n");
+		Netchan_OutOfBandPrint(NS_SERVER, master_adr[slot], "ping");
 		slot++;
 	}
 
