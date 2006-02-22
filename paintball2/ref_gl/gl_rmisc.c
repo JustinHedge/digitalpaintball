@@ -70,12 +70,10 @@ void R_InitNoTexture (void) /// jit, renamed
 	byte	data[8][8][4];
 	byte	white[8][8][4]; // jitfog
 
-	//
 	// particle texture
-	//
-	for (x=0 ; x<8 ; x++)
+	for (x = 0; x < 8; x++)
 	{
-		for (y=0 ; y<8 ; y++)
+		for (y = 0; y < 8; y++)
 		{
 			data[y][x][0] = 255;
 			data[y][x][1] = 255;
@@ -83,17 +81,13 @@ void R_InitNoTexture (void) /// jit, renamed
 			data[y][x][3] = dottexture[x][y]*255;
 		}
 	}
-	r_particletexture = GL_LoadPic ("***particle***", (byte *)data, 8, 8, it_sprite, 32);
 
-//	r_particletexture = GL_FindImage("pics/particle.tga",it_sprite); jit, removed (mrg's old particles
-	for (x=0 ; x<16 ; x++)
+	r_particletexture = GL_LoadPic("***particle***", (byte *)data, 8, 8, it_sprite, 32);
+
+	for (x = 0; x < 16; x++)
 	{
-		for (y=0 ; y<16 ; y++)
+		for (y = 0; y < 16; y++)
 		{
-			/*notex[y][x][0] = missing_texture[x][y]*16; // jit
-			notex[y][x][1] = missing_texture[x][y]*255;
-			notex[y][x][2] = missing_texture[x][y]*8;  // jit
-			notex[y][x][3] = 255;*/
 			// jit: tweaked to look like quake3's missing textures
 			notex[y][x][0] = (1+missing_texture[x][y]*2)*85;
 			notex[y][x][1] = (1+missing_texture[x][y]*2)*85;
@@ -101,21 +95,20 @@ void R_InitNoTexture (void) /// jit, renamed
 			notex[y][x][3] = 255;
 		}
 	}
-	r_notexture = GL_LoadPic ("***r_notexture***", (byte *)notex, 16, 16, it_wall, 32);
-/*	if (!r_particletexture) jit, removed
-		r_particletexture = r_notexture;*/
+
+	r_notexture = GL_LoadPic("***r_notexture***", (byte *)notex, 16, 16, it_wall, 32);
 
 	// jitfog (solid white texture)
-	for (x=0; x<8; x++)
-		for(y=0; y<8; y++)
-			for(i=0; i<4; i++)
+	for (x = 0; x < 8; x++)
+		for (y = 0; y < 8; y++)
+			for (i = 0; i < 4; i++)
 				white[x][y][i] = 255;
 
 	r_whitetexture = GL_LoadPic("***r_whitetexture***", (byte*)white, 8, 8, it_sky, 32);
 
 	if (r_caustics->value > 1.0f)
 		r_caustictexture = GL_FindImage("textures/sfx/caustics/caustics1_02.tga", it_wall); // jitcaustics
-	else if(r_caustics->value)
+	else if (r_caustics->value)
 		r_caustictexture = GL_FindImage("textures/sfx/caustics/caustics1_01.tga", it_wall); // jitcaustics
 }
 

@@ -66,7 +66,7 @@ typedef enum {false, true}	qboolean;
 #define	ROLL				2		// fall over
 
 #define	MAX_STRING_CHARS	1024	// max length of a string passed to Cmd_TokenizeString
-#define	MAX_STRING_TOKENS	80		// max tokens resulting from Cmd_TokenizeString
+#define	MAX_STRING_TOKENS	512		// max tokens resulting from Cmd_TokenizeString - jit, increased from 80
 #define	MAX_TOKEN_CHARS		1024	// max length of an individual token - jit, increased from 128
 
 #define	MAX_QPATH			64		// max length of a quake game pathname
@@ -586,12 +586,15 @@ typedef struct
 } pmove_state_t;
 
 
-//
 // button bits
-//
 #define	BUTTON_ATTACK		1
 #define	BUTTON_USE			2
-#define	BUTTON_ANY			128			// any key whatsoever
+#define	BUTTON_TOSSGREN		4	// === jitbutton
+#define	BUTTON_4			8
+#define	BUTTON_5			16
+#define	BUTTON_6			32
+#define	BUTTON_CHAT			64	// jitbutton ===
+#define	BUTTON_ANY			128	// any key whatsoever
 
 
 // usercmd_t is sent to the server each client frame

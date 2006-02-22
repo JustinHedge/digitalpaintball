@@ -211,6 +211,8 @@ cvar_t	*r_reflectivewater; // jitwater
 cvar_t	*r_reflectivewater_debug; // jitwater
 cvar_t	*r_reflectivewater_max; // jitwater
 
+cvar_t	*r_oldmodels; // jit
+
 /*
 =================
 R_CullBox
@@ -910,10 +912,11 @@ void R_SetupFrame(void)
 			temp[0] = g_refl_X[g_active_refl];
 			temp[1] = g_refl_Y[g_active_refl];
 
-			if (r_newrefdef.rdflags & RDF_UNDERWATER)
-				temp[2] = g_refl_Z[g_active_refl] - 1; // just above water level
+			//if (r_newrefdef.rdflags & RDF_UNDERWATER) todo
+			if (r_newrefdef.vieworg[2] < g_refl_Z[g_active_refl])
+				temp[2] = g_refl_Z[g_active_refl] - 1;
 			else
-				temp[2] = g_refl_Z[g_active_refl] + 1; // just below water level
+				temp[2] = g_refl_Z[g_active_refl] + 1;
 
 			leaf = Mod_PointInLeaf(temp, r_worldmodel);
 
@@ -1207,7 +1210,8 @@ void R_RenderView(refdef_t *fd)
 	{
 		double clipPlane[] = { 0.0, 0.0, 0.0, 0.0 }; // this must be double, glClipPlane requires double
 
-		if (r_newrefdef.rdflags & RDF_UNDERWATER)
+		//if (r_newrefdef.rdflags & RDF_UNDERWATER)
+		if (r_newrefdef.vieworg[2] < g_refl_Z[g_active_refl])
 		{
 			clipPlane[2] = -1.0;
 			clipPlane[3] = g_refl_Z[g_active_refl];
@@ -1562,9 +1566,11 @@ void R_Register(void)
 	vid_ref = ri.Cvar_Get("vid_ref", "pbgl", CVAR_ARCHIVE);
 
 	r_caustics = ri.Cvar_Get("r_caustics", "2", CVAR_ARCHIVE); // jitcaustics
-	r_reflectivewater = ri.Cvar_Get("r_reflectivewater", "0", 0); // jitwater
+	r_reflectivewater = ri.Cvar_Get("r_reflectivewater", "1", CVAR_ARCHIVE); // jitwater
 	r_reflectivewater_debug = ri.Cvar_Get("r_reflectivewater_debug", "0", 0); // jitwater
 	r_reflectivewater_max = ri.Cvar_Get("r_reflectivewater_max", "2", CVAR_ARCHIVE); // jitwater
+
+	r_oldmodels = ri.Cvar_Get("r_oldmodels", "0", CVAR_ARCHIVE); // jit
 
 	ri.Cmd_AddCommand("imagelist", GL_ImageList_f);
 	ri.Cmd_AddCommand("screenshot", GL_ScreenShot_f);
@@ -2310,7 +2316,7 @@ void R_BeginFrame (float camera_separation)
 	qglDisable(GL_CULL_FACE);
 	GLSTATE_DISABLE_BLEND
 	GLSTATE_ENABLE_ALPHATEST
-	qglColor4f(1,1,1,1);
+	qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// draw buffer stuff
 	if (gl_drawbuffer->modified)

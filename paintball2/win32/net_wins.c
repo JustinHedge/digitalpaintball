@@ -714,26 +714,28 @@ void	NET_Config (qboolean multiplayer)
 
 	if (!multiplayer)
 	{	// shut down any existing sockets
-		for (i=0 ; i<2 ; i++)
+		for (i = 0; i < 2; i++)
 		{
 			if (ip_sockets[i])
 			{
-				closesocket (ip_sockets[i]);
+				closesocket(ip_sockets[i]);
 				ip_sockets[i] = 0;
 			}
+
 			if (ipx_sockets[i])
 			{
-				closesocket (ipx_sockets[i]);
+				closesocket(ipx_sockets[i]);
 				ipx_sockets[i] = 0;
 			}
 		}
 	}
 	else
 	{	// open sockets
-		if (! noudp->value)
-			NET_OpenIP ();
-		if (! noipx->value)
-			NET_OpenIPX ();
+		if (!noudp->value)
+			NET_OpenIP();
+
+		if (!noipx->value)
+			NET_OpenIPX();
 	}
 }
 
@@ -780,18 +782,15 @@ void NET_Init (void)
 	int		r;
 
 	wVersionRequested = MAKEWORD(1, 1); 
-
 	r = WSAStartup (MAKEWORD(1, 1), &winsockdata);
 
 	if (r)
 		Com_Error (ERR_FATAL,"Winsock initialization failed.");
 
 	Com_Printf("Winsock Initialized\n");
-
-	noudp = Cvar_Get ("noudp", "0", CVAR_NOSET);
-	noipx = Cvar_Get ("noipx", "0", CVAR_NOSET);
-
-	net_shownet = Cvar_Get ("net_shownet", "0", 0);
+	noudp = Cvar_Get("noudp", "0", CVAR_NOSET);
+	noipx = Cvar_Get("noipx", "1", CVAR_NOSET);
+	net_shownet = Cvar_Get("net_shownet", "0", 0);
 }
 
 

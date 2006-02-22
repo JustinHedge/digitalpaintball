@@ -1098,7 +1098,7 @@ On exit, the origin will have a value that is pre-quantized to the 0.125
 precision of the network channel and in a valid position.
 ================
 */
-void PM_SnapPosition/*_old*/ (void)
+void PM_SnapPosition_old (void)
 {
 	int		sign[3];
 	int		i, j, bits;
@@ -1110,7 +1110,7 @@ void PM_SnapPosition/*_old*/ (void)
 	for (i = 0; i < 3; i++)
 		pm->s.velocity[i] = (short)(pml.velocity[i] * 8.0f);
 
-	for (i=0; i<3; i++)
+	for (i = 0; i < 3; i++)
 	{
 		if (pml.origin[i] >= 0)
 			sign[i] = 1;
@@ -1144,60 +1144,54 @@ void PM_SnapPosition/*_old*/ (void)
 //	Com_DPrintf ("using previous_origin\n");
 }
 
-//void PM_SnapPosition_jitest (void)
-//{
-//	int		sign[3];
-//	int		i, j, bits;
-//	short	base[3];
-//	// try all single bits first
-//	static int jitterbits[8] = {0,4,1,2,3,5,6,7};
-//
-//	// snap velocity to eigths
-//	for (i=0; i<3; i++)
-//	{
-//		if (pm->s.velocity[i] < 0) // jitnetwork -- round properly
-//			pm->s.velocity[i] = (int)((pml.velocity[i]-.0625)*8);
-//		else
-//			pm->s.velocity[i] = (int)((pml.velocity[i]+.0625)*8);
-//	}
-//
-//	for (i=0; i<3; i++)
-//	{
-//		if (pml.origin[i] >= 0)
-//		{
-//			sign[i] = 1;
-//			pm->s.origin[i] = (int)((pml.origin[i]+.0625)*8); // jitnetwork -- round properly
-//		}
-//		else
-//		{
-//			sign[i] = -1;
-//			pm->s.origin[i] = (int)((pml.origin[i]-.0625)*8); // jitnetwork -- round properly
-//		}
-//		
-//		
-//		if (pm->s.origin[i]*0.125 == pml.origin[i])
-//			sign[i] = 0;
-//	}
-//
-//	VectorCopy(pm->s.origin, base);
-//
-//	// try all combinations
-//	for (j=0; j<8; j++)
-//	{
-//		bits = jitterbits[j];
-//		VectorCopy (base, pm->s.origin);
-//		for (i=0 ; i<3 ; i++)
-//			if (bits & (1<<i))
-//				pm->s.origin[i] += sign[i];
-//
-//		if (PM_GoodPosition ())
-//			return;
-//	}
-//
-//	// go back to the last position
-//	VectorCopy (pml.previous_origin, pm->s.origin);
-////	Com_DPrintf ("using previous_origin\n");
-//}
+void PM_SnapPosition (void) // testing
+{
+	int		sign[3];
+	int		i, j, bits;
+	short	base[3];
+	// try all single bits first
+	static int jitterbits[8] = {0,4,1,2,3,5,6,7};
+
+	// snap velocity to eigths
+	for (i = 0; i < 3; i++)
+		pm->s.velocity[i] = (short)(pml.velocity[i] * 8.0f);
+
+	for (i = 0; i < 3; i++)
+	{
+		if (pml.origin[i] >= 0 || i == 2)
+			sign[i] = 1;
+		else 
+			sign[i] = -1;
+
+		if (i == 2 && pml.origin[i] < 0) // z-axis
+			pm->s.origin[i] = (short)((int)(pml.origin[i] * 8.0f + 32768.0f) - 32768);
+		else
+			pm->s.origin[i] = (short)(pml.origin[i] * 8.0f);
+
+		if ((short)((float)pm->s.origin[i] * 0.125f) == pml.origin[i])
+			sign[i] = 0;
+	}
+
+	VectorCopy(pm->s.origin, base);
+
+	// try all combinations
+	for (j = 0; j < 8; j++)
+	{
+		bits = jitterbits[j];
+		VectorCopy(base, pm->s.origin);
+
+		for (i = 0; i < 3; i++)
+			if (bits & (1<<i))
+				pm->s.origin[i] += sign[i];
+
+		if (PM_GoodPosition())
+			return;
+	}
+
+	// go back to the last position
+	VectorCopy(pml.previous_origin, pm->s.origin);
+//	Com_DPrintf ("using previous_origin\n");
+}
 
 
 /*

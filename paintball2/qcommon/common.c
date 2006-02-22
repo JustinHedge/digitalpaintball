@@ -40,7 +40,6 @@ cvar_t	*host_speeds;
 cvar_t	*log_stats;
 cvar_t	*developer;
 cvar_t	*timescale;
-cvar_t	*fixedtime;
 cvar_t	*logfile_active;	// 1 = buffer log, 2 = flush after each print
 cvar_t	*showtrace;
 cvar_t	*dedicated;
@@ -1134,7 +1133,7 @@ typedef struct zhead_s
 } zhead_t;
 
 zhead_t		z_chain;
-int		z_count, z_bytes;
+int			z_count, z_bytes;
 
 /*
 ========================
@@ -1146,19 +1145,19 @@ void Z_Free (void *ptr)
 	zhead_t	*z;
 
 	if (!ptr)
-		Com_Error (ERR_FATAL, "Z_Free: null pointer"); // jitmalloc
+		Com_Error(ERR_FATAL, "Z_Free: null pointer"); // jitmalloc
 
 	z = ((zhead_t *)ptr) - 1;
 
 	if (z->magic != Z_MAGIC)
-		Com_Error (ERR_FATAL, "Z_Free: bad magic");
+		Com_Error(ERR_FATAL, "Z_Free: bad magic");
 
 	z->prev->next = z->next;
 	z->next->prev = z->prev;
 
 	z_count--;
 	z_bytes -= z->size;
-	free (z);
+	free(z);
 }
 
 
@@ -1169,7 +1168,7 @@ Z_Stats_f
 */
 void Z_Stats_f (void)
 {
-	Com_Printf ("%i bytes in %i blocks\n", z_bytes, z_count);
+	Com_Printf("%i bytes in %i blocks\n", z_bytes, z_count);
 }
 
 /*
@@ -1474,7 +1473,6 @@ void Qcommon_Init (int argc, char **argv)
 	log_stats = Cvar_Get("log_stats", "0", 0);
 	developer = Cvar_Get("developer", "0", 0);
 	timescale = Cvar_Get("timescale", "1", 0);
-	fixedtime = Cvar_Get("fixedtime", "0", 0);
 	splattime = Cvar_Get("splattime", "4", CVAR_ARCHIVE); // jit
 	logfile_active = Cvar_Get("logfile", "0", 0);
 	showtrace = Cvar_Get("showtrace", "0", 0);
@@ -1531,10 +1529,10 @@ void Qcommon_Frame (int msec)
 	char	*s;
 	int		time_before, time_between, time_after;
 
-	if (setjmp (abortframe) )
+	if (setjmp(abortframe))
 		return;			// an ERR_DROP was thrown
 
-	if ( log_stats->modified )
+	if (log_stats->modified)
 	{
 		log_stats->modified = false;
 		if ( log_stats->value )
@@ -1557,16 +1555,7 @@ void Qcommon_Frame (int msec)
 			}
 		}
 	}
-/* jit -- 
-	if (fixedtime->value)
-		msec = fixedtime->value;
-	else if (timescale->value)
-	{
-		msec *= timescale->value;
-		if (msec < 1)
-			msec = 1;
-	}
-*/
+
 	if (showtrace->value)
 	{
 		extern	int c_traces, c_brush_traces;

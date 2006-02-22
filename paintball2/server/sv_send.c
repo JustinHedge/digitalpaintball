@@ -343,9 +343,10 @@ void SV_StartSound (vec3_t origin, edict_t *entity, int channel,
 	if (!origin)
 	{
 		origin = origin_v;
+
 		if (entity->solid == SOLID_BSP)
 		{
-			for (i=0 ; i<3 ; i++)
+			for (i = 0; i < 3; i++)
 				origin_v[i] = entity->s.origin[i]+0.5*(entity->mins[i]+entity->maxs[i]);
 		}
 		else
@@ -354,22 +355,24 @@ void SV_StartSound (vec3_t origin, edict_t *entity, int channel,
 		}
 	}
 
-	MSG_WriteByte (&sv.multicast, svc_sound);
-	MSG_WriteByte (&sv.multicast, flags);
-	MSG_WriteByte (&sv.multicast, soundindex);
+	MSG_WriteByte(&sv.multicast, svc_sound);
+	MSG_WriteByte(&sv.multicast, flags);
+	MSG_WriteByte(&sv.multicast, soundindex);
 
 	if (flags & SND_VOLUME)
-		MSG_WriteByte (&sv.multicast, volume*255);
+		MSG_WriteByte(&sv.multicast, volume * 255);
+
 	if (flags & SND_ATTENUATION)
-		MSG_WriteByte (&sv.multicast, attenuation*64);
+		MSG_WriteByte(&sv.multicast, attenuation * 64);
+
 	if (flags & SND_OFFSET)
-		MSG_WriteByte (&sv.multicast, timeofs*1000);
+		MSG_WriteByte(&sv.multicast, timeofs * 1000);
 
 	if (flags & SND_ENT)
-		MSG_WriteShort (&sv.multicast, sendchan);
+		MSG_WriteShort(&sv.multicast, sendchan);
 
 	if (flags & SND_POS)
-		MSG_WritePos (&sv.multicast, origin);
+		MSG_WritePos(&sv.multicast, origin);
 
 	// if the sound doesn't attenuate,send it to everyone
 	// (global radio chatter, voiceovers, etc)

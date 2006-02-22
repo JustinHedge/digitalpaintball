@@ -150,7 +150,8 @@ void SV_UnlinkEdict (edict_t *ent)
 {
 	if (!ent->area.prev)
 		return;		// not linked in anywhere
-	RemoveLink (&ent->area);
+
+	RemoveLink(&ent->area);
 	ent->area.prev = ent->area.next = NULL;
 }
 
@@ -173,38 +174,44 @@ void SV_LinkEdict (edict_t *ent)
 	int			topnode;
 
 	if (ent->area.prev)
-		SV_UnlinkEdict (ent);	// unlink from old position
+		SV_UnlinkEdict(ent);	// unlink from old position
 		
 	if (ent == ge->edicts)
 		return;		// don't add the world
 
 	if (!ent->inuse)
-		return;
+		return; 
 
 	// set the size
-	VectorSubtract (ent->maxs, ent->mins, ent->size);
+	VectorSubtract(ent->maxs, ent->mins, ent->size);
 	
 	// encode the size into the entity_state for client prediction
 	if (ent->solid == SOLID_BBOX && !(ent->svflags & SVF_DEADMONSTER))
 	{	// assume that x/y are equal and symetric
-		i = ent->maxs[0]*0.125;
-		if (i<1)
+		i = ent->maxs[0] * 0.125f;
+
+		if (i < 1)
 			i = 1;
-		if (i>31)
+
+		if (i > 31)
 			i = 31;
 
 		// z is not symetric
-		j = (-ent->mins[2])*0.125;
-		if (j<1)
+		j = (-ent->mins[2]) * 0.125f;
+
+		if (j < 1)
 			j = 1;
-		if (j>31)
+
+		if (j > 31)
 			j = 31;
 
 		// and z maxs can be negative...
-		k = (ent->maxs[2]+32)*0.125;
-		if (k<1)
+		k = (ent->maxs[2] + 32.0f) * 0.125f;
+
+		if (k < 1)
 			k = 1;
-		if (k>63)
+
+		if (k > 63)
 			k = 63;
 
 		ent->s.solid = (k<<10) | (j<<5) | i;
@@ -214,11 +221,13 @@ void SV_LinkEdict (edict_t *ent)
 		ent->s.solid = 31;		// a solid_bbox will never create this value
 	}
 	else
+	{
 		ent->s.solid = 0;
+	}
 
 	// set the abs box
 	if (ent->solid == SOLID_BSP && 
-	(ent->s.angles[0] || ent->s.angles[1] || ent->s.angles[2]) )
+		(ent->s.angles[0] || ent->s.angles[1] || ent->s.angles[2]) )
 	{	// expand for rotation
 		float		max, v;
 		int			i;
@@ -264,10 +273,11 @@ void SV_LinkEdict (edict_t *ent)
 		leafs, MAX_TOTAL_ENT_LEAFS, &topnode);
 
 	// set areas
-	for (i=0 ; i<num_leafs ; i++)
+	for (i = 0; i < num_leafs; i++)
 	{
-		clusters[i] = CM_LeafCluster (leafs[i]);
-		area = CM_LeafArea (leafs[i]);
+		clusters[i] = CM_LeafCluster(leafs[i]);
+		area = CM_LeafArea(leafs[i]);
+
 		if (area)
 		{	// doors may legally straggle two areas,
 			// but nothing should evern need more than that
@@ -275,11 +285,14 @@ void SV_LinkEdict (edict_t *ent)
 			{
 				if (ent->areanum2 && ent->areanum2 != area && sv.state == ss_loading)
 					Com_DPrintf ("Object touching 3 areas at %f %f %f\n",
-					ent->absmin[0], ent->absmin[1], ent->absmin[2]);
+						ent->absmin[0], ent->absmin[1], ent->absmin[2]);
+
 				ent->areanum2 = area;
 			}
 			else
+			{
 				ent->areanum = area;
+			}
 		}
 	}
 
@@ -291,13 +304,16 @@ void SV_LinkEdict (edict_t *ent)
 	else
 	{
 		ent->num_clusters = 0;
-		for (i=0 ; i<num_leafs ; i++)
+
+		for (i = 0; i < num_leafs; i++)
 		{
 			if (clusters[i] == -1)
 				continue;		// not a visible leaf
-			for (j=0 ; j<i ; j++)
+
+			for (j = 0; j < i; j++)
 				if (clusters[j] == clusters[i])
 					break;
+
 			if (j == i)
 			{
 				if (ent->num_clusters == MAX_ENT_CLUSTERS)
@@ -317,6 +333,7 @@ void SV_LinkEdict (edict_t *ent)
 	{
 		VectorCopy (ent->s.origin, ent->s.old_origin);
 	}
+
 	ent->linkcount++;
 
 	if (ent->solid == SOLID_NOT)
@@ -324,10 +341,12 @@ void SV_LinkEdict (edict_t *ent)
 
 // find the first node that the ent's box crosses
 	node = sv_areanodes;
+
 	while (1)
 	{
 		if (node->axis == -1)
 			break;
+
 		if (ent->absmin[node->axis] > node->dist)
 			node = node->children[0];
 		else if (ent->absmax[node->axis] < node->dist)
@@ -338,9 +357,9 @@ void SV_LinkEdict (edict_t *ent)
 	
 	// link it in	
 	if (ent->solid == SOLID_TRIGGER)
-		InsertLinkBefore (&ent->area, &node->trigger_edicts);
+		InsertLinkBefore(&ent->area, &node->trigger_edicts);
 	else
-		InsertLinkBefore (&ent->area, &node->solid_edicts);
+		InsertLinkBefore(&ent->area, &node->solid_edicts);
 }
 
 

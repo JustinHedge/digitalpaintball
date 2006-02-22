@@ -212,18 +212,18 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 	strcpy(sv.name, server);
 
 	// leave slots at start for clients only
-	for (i=0 ; i<maxclients->value ; i++)
+	for (i = 0; i < maxclients->value; i++)
 	{
 		// needs to reconnect
 		if (svs.clients[i].state > cs_connected)
 			svs.clients[i].state = cs_connected;
+
 		svs.clients[i].lastframe = -1;
 	}
 
 	sv.time = 1000;
-	
-	strcpy (sv.name, server);
-	strcpy (sv.configstrings[CS_NAME], server);
+	strcpy(sv.name, server);
+	strcpy(sv.configstrings[CS_NAME], server);
 
 	if (serverstate != ss_game)
 	{
@@ -235,7 +235,8 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 			"maps/%s.bsp", server);
 		sv.models[1] = CM_LoadMap (sv.configstrings[CS_MODELS+1], false, &checksum);
 	}
-	Com_sprintf (sv.configstrings[CS_MAPCHECKSUM],sizeof(sv.configstrings[CS_MAPCHECKSUM]),
+
+	Com_sprintf(sv.configstrings[CS_MAPCHECKSUM],sizeof(sv.configstrings[CS_MAPCHECKSUM]),
 		"%i", checksum);
 
 	//

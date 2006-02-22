@@ -1335,10 +1335,13 @@ struct model_s *R_RegisterModel (const char *name) // jit -- should be const
 
 	if (s && Q_strcasecmp(s, ".md2") == 0)
 	{
-		strcpy(s, ".skm");
+		if (!r_oldmodels->value || ri.FS_LoadFile(skmname, NULL) == -1)
+		{
+			strcpy(s, ".skm");
 
-		if (ri.FS_LoadFile(skmname, NULL) == -1)
-			strcpy(s, ".md2");
+			if (ri.FS_LoadFile(skmname, NULL) == -1)
+				strcpy(s, ".md2");
+		}
 	}
 
 	mod = Mod_ForName(skmname, false);

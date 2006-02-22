@@ -1851,7 +1851,6 @@ void R_RegisterSkin (const char *name, struct model_s *model, struct image_s **s
 	mskmodel_t *skmodel;
 	int i, max = MAX_MESHSKINS;
 
-//	return GL_FindImage(name, it_skin);
 	if (!skins)
 		return;
 

@@ -530,7 +530,7 @@ void Cmd_Alias_f (void)
 		cmd_alias = a;
 	}
 
-	strcpy(a->name, s);	
+	Q_strncpyz(a->name, s, sizeof(a->name));
 
 	// copy the rest of the command line
 	cmd[0] = 0;		// start out with a null string
@@ -1197,12 +1197,12 @@ void	Cmd_ExecuteString (char *text)
 		return;		// no tokens
 
 	// check functions
-	for (cmd=cmd_functions; cmd; cmd=cmd->next)
+	for (cmd = cmd_functions; cmd; cmd = cmd->next)
 	{
 		if (!Q_strcasecmp(cmd_argv[0], cmd->name))
 		{
 			if (!cmd->function)
-				Cmd_ExecuteString (va("cmd %s", text)); // forward to server command
+				Cmd_ExecuteString(va("cmd %s", text)); // forward to server command
 			else
 				cmd->function();
 
@@ -1211,7 +1211,7 @@ void	Cmd_ExecuteString (char *text)
 	}
 
 	// check alias
-	for (a=cmd_alias; a; a=a->next)
+	for (a = cmd_alias; a; a = a->next)
 	{
 		if (!Q_strcasecmp(cmd_argv[0], a->name))
 		{

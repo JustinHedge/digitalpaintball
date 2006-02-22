@@ -749,8 +749,8 @@ void SV_ExecuteClientMessage (client_t *cl)
 	stringCmdCount = 0;
 
 	// allow game dll to access client packets directly (could come in handy)
-	if (geClientPacket)
-		geClientPacket(cl->edict, &net_message); // jitclpacket
+	if (geClientPacket && !sv.attractloop) // jitclpacket
+		geClientPacket(cl->edict, &net_message);
 
 	while (1)
 	{

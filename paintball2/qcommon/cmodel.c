@@ -174,9 +174,9 @@ CMod_LoadSurfaces
 */
 void CMod_LoadSurfaces (lump_t *l)
 {
-	texinfo_t	*in;
-	mapsurface_t	*out;
-	int			i, count;
+	texinfo_t *in;
+	mapsurface_t *out;
+	int i, count;
 
 	in = (void *)(cmod_base + l->fileofs);
 
@@ -196,8 +196,8 @@ void CMod_LoadSurfaces (lump_t *l)
 
 	for (i = 0; i < count; i++, in++, out++)
 	{
-		strncpy(out->c.name, in->texture, sizeof(out->c.name)-1);
-		strncpy(out->rname, in->texture, sizeof(out->rname)-1);
+		Q_strncpyz(out->c.name, in->texture, sizeof(out->c.name));
+		Q_strncpyz(out->rname, in->texture, sizeof(out->rname));
 		out->c.flags = LittleLong(in->flags);
 		out->c.value = LittleLong(in->value);
 	}
@@ -207,7 +207,6 @@ void CMod_LoadSurfaces (lump_t *l)
 /*
 =================
 CMod_LoadNodes
-
 =================
 */
 void CMod_LoadNodes (lump_t *l)

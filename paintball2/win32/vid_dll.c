@@ -867,20 +867,17 @@ void VID_CheckChanges (void)
 {
 	char name[100];
 
-	if ( win_noalttab->modified )
+	if (win_noalttab->modified)
 	{
-		if ( win_noalttab->value )
-		{
+		if (win_noalttab->value)
 			WIN_DisableAltTab();
-		}
 		else
-		{
 			WIN_EnableAltTab();
-		}
+
 		win_noalttab->modified = false;
 	}
 
-	if ( vid_ref->modified )
+	if (vid_ref->modified)
 	{
 		cl.force_refdef = true;		// can't use a paused refdef
 		S_StopAllSounds();
@@ -893,6 +890,7 @@ void VID_CheckChanges (void)
 
 		gl_driver = Cvar_Get("gl_driver", "opengl32", CVAR_ARCHIVE); // jit
 		Com_sprintf(driverstring, sizeof(driverstring), "%s", gl_driver->string);
+		Cvar_Get("gl_swapinterval", "0", CVAR_ARCHIVE)->modified = true; // jit
 
 		/*
 		** refresh has changed, jitodo, cheatcheck!

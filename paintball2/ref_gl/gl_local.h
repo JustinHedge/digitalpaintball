@@ -47,7 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qgl.h"
 
-#define	REF_VERSION	"PB2GL 0.15" // jitversion / jitbuild
+#define	REF_VERSION	"PB2GL 0.16" // jitversion / jitbuild
 
 // up / down
 #define	PITCH	0
@@ -95,9 +95,8 @@ typedef enum
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
-
-void GL_SetDefaultState( void );
-void GL_UpdateSwapInterval( void );
+void GL_SetDefaultState (void);
+void GL_UpdateSwapInterval (void);
 
 extern	float	gldepthmin, gldepthmax;
 
@@ -226,6 +225,7 @@ extern	cvar_t	*r_caustics; // jitcaustics
 extern	cvar_t	*r_reflectivewater; // jitwater
 extern	cvar_t	*r_reflectivewater_debug; // jitwater
 extern	cvar_t	*r_reflectivewater_max; // jitwater
+extern	cvar_t	*r_oldmodels; // jit
 
 
 extern	int		gl_lightmap_format;
