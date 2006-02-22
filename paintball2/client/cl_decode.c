@@ -184,8 +184,11 @@ static int index_array[MAX_DECODE_ARRAY];
 static int num_elements;
 static int current_element;
 
-static void translate_string (char *out_str, const char *in_str)
+static int translate_string (char *out_str, int max_len, const char *in_str)
 {
+	char *out_str_start = out_str;
+	int temp_len;
+
 	// Translate string...
 	// %s = index to event string
 	// %i = index to item string
@@ -194,13 +197,14 @@ static void translate_string (char *out_str, const char *in_str)
 	// %% = %
 	// %c = single charcter (like in printf)
 	// %d = decimal number
-	while(*in_str)
+	while (*in_str)
 	{
-		while(*in_str && *in_str != '%')
+		while (*in_str && *in_str != '%' && max_len > 1)
 		{
 			*out_str = *in_str;
 			in_str++;
 			out_str++;
+			max_len--;
 		}
 
 		if (*in_str)
@@ -212,34 +216,44 @@ static void translate_string (char *out_str, const char *in_str)
 				switch(*in_str)
 				{
 				case 's': // event string
-					translate_string(out_str, cl.configstrings[CS_EVENTS+index_array[current_element++]]);
+					max_len -= translate_string(out_str, max_len, cl.configstrings[CS_EVENTS+index_array[current_element++]]);
 					break;
 				case 'i': // item
-					strcpy(out_str, item_from_index(index_array[current_element++]));
-					out_str += strlen(out_str);
+					Q_strncpyz(out_str, item_from_index(index_array[current_element++]), max_len);
+					temp_len = strlen(out_str);
+					out_str += temp_len;
+					max_len -= temp_len;
 					break;
 				case 't': // team splat + name
 					*out_str++ = cl_scores_get_team_splat(index_array[current_element]);
+					max_len--;
 					// 'n' MUST follow this:
 				case 'n': // name
-					strcpy(out_str, name_from_index(index_array[current_element++]));
-					out_str += strlen(out_str);
+					Q_strncpyz(out_str, name_from_index(index_array[current_element++]), max_len);
+					temp_len = strlen(out_str);
+					out_str += temp_len;
+					max_len -= temp_len;
 					break;
 				case '%': // %
 					*out_str = '%';
 					out_str++;
+					max_len--;
 					break;
 				case 'c': // character
 					*out_str = index_array[current_element++];
 					out_str++;
+					max_len--;
 					break;
 				case 'd': // decimal
-					sprintf(out_str, "%d", index_array[current_element++]);
-					out_str += strlen(out_str);
+					Com_sprintf(out_str, max_len, "%d", index_array[current_element++]);
+					temp_len = strlen(out_str);
+					out_str += temp_len;
+					max_len -= temp_len;
 					break;
 				default: // unknown? (shouldn't happen)
 					*out_str = '?';
 					out_str++;
+					max_len--;
 					break;
 				}
 
@@ -249,6 +263,10 @@ static void translate_string (char *out_str, const char *in_str)
 	}
 
 	*out_str = 0; // terminate string
+	assert(max_len > 1);
+	temp_len = out_str - out_str_start;
+
+	return temp_len;
 }
 
 #define MAX_EVENT_STRINGS 8
@@ -318,7 +336,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 	if (num_elements > 1)
 	{
 		current_element = 2;
-		translate_string(event_text, cl.configstrings[CS_EVENTS+index_array[1]]);
+		translate_string(event_text, sizeof(event_text), cl.configstrings[CS_EVENTS+index_array[1]]);
 	}
 	else
 	{
