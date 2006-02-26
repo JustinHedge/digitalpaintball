@@ -48,7 +48,7 @@ int CL_FreeLoc(void)
 
 void CL_LoadLoc(void)
 {
-	char mapname[MAX_PATH];
+	char mapname[MAX_QPATH];
 	FILE *f;
 
 	memset(locations, 0, sizeof(loc_t) * MAX_LOCATIONS);

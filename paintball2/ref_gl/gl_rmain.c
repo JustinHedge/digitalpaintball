@@ -1497,7 +1497,7 @@ void R_Register(void)
 	gl_texture_saturation = ri.Cvar_Get("gl_texture_saturation", "1", CVAR_ARCHIVE); // jitsaturation
 	gl_highres_textures = ri.Cvar_Get("gl_highres_textures", "1", CVAR_ARCHIVE); // jithighres
 	gl_lightmap_saturation = ri.Cvar_Get("gl_lightmap_saturation", "1", CVAR_ARCHIVE); // jitsaturation / jitlight
-	gl_anisotropy = ri.Cvar_Get("gl_anisotropy", "0", CVAR_ARCHIVE); // jitanisotropy
+	gl_anisotropy = ri.Cvar_Get("gl_anisotropy", "8", CVAR_ARCHIVE); // jitanisotropy
 	gl_overbright = ri.Cvar_Get("gl_overbright", "1", CVAR_ARCHIVE); // jitbright
 	gl_brightness = ri.Cvar_Get("gl_brightness", "0", CVAR_ARCHIVE); // jit
 	gl_autobrightness = ri.Cvar_Get("gl_autobrightness", ".8", CVAR_ARCHIVE); // jit

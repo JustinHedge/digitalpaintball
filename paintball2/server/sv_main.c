@@ -314,7 +314,7 @@ void SVC_DirectConnect (void)
 	// see if the challenge is valid
 	if (!NET_IsLocalAddress(adr))
 	{
-		for (i=0; i<MAX_CHALLENGES; i++)
+		for (i = 0; i < MAX_CHALLENGES; i++)
 		{
 			if (NET_CompareBaseAdr(net_from, svs.challenges[i].adr))
 			{

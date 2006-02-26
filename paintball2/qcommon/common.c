@@ -177,6 +177,23 @@ void Com_DPrintf (char *fmt, ...)
 }
 
 
+qboolean strtolower (char *s) // jit - stupid Linux case sensitivity!
+{
+	qboolean changed = false;
+
+	for (; *s; s++)
+	{
+		if (*s >= 'A' && *s <= 'Z')
+		{
+			changed = true;
+			*s += ('a'-'A');
+		}
+	}
+
+	return changed;
+}
+
+
 /*
 =============
 Com_Error
