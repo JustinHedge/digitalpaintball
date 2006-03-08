@@ -78,34 +78,36 @@ char lastfaileddownload[NUM_FAIL_DLDS][MAX_OSPATH];
 void clearfaileddownloads() // jitdownload
 {
 	int i;
-	for(i=0; i<NUM_FAIL_DLDS; i++)
+	for (i = 0; i < NUM_FAIL_DLDS; i++)
 		*lastfaileddownload[i] = '\0';
 }
 
 qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jpg before
 {
-	FILE *fp;
+	FILE	*fp;
 	char	name[MAX_OSPATH];
-	int i;
+	int		i;
 
-	if (FS_LoadFile (filename, NULL) != -1)
+	if (FS_LoadFile(filename, NULL) != -1)
 	{	// it exists, no need to download
 		return true;
 	}
 
-	if (strstr (filename, "..")) // jitdownload, moved so this error doesn't come up with existing files.
+	if (strstr(filename, "..")) // jitdownload, moved so this error doesn't come up with existing files.
 	{
 		Com_Printf("Refusing to download a path with ..\n");
 		return true;
 	}
 
 	// (jitdownload) Knightmare- don't try again to download a file that just failed
-	for (i=0; i<NUM_FAIL_DLDS; i++)
+	for (i = 0; i < NUM_FAIL_DLDS; i++)
+	{
 		if (lastfaileddownload[i] && strlen(lastfaileddownload[i]) &&
-			Q_streq(filename,lastfaileddownload[i]))
+			Q_streq(filename, lastfaileddownload[i]))
 		{	// we already tried downlaoding this, server didn't have it
 			return true;
 		}
+	}
 
 	// ===
 	// jitdownload, check for jpgs and tga's if pcx's aren't there
@@ -115,34 +117,47 @@ qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jp
 		// look for jpg first:
 		COM_StripExtension(filename, name);
 		strcat(name, ".jpg");
+
 		if (FS_LoadFile(name, NULL) != -1)
 			return true; // jpg exists, don't try to download anything else
 
 		// couldn't find jpg, let's try tga;
 		COM_StripExtension(filename, name);
 		strcat(name, ".tga");
+
 		if (FS_LoadFile(name, NULL) != -1)
 			return true; // tga exists
 
 		// no tga, try wal/pcx:
 		COM_StripExtension(filename, name);
+
 		if (strstr(filename, "textures"))
 			strcat(name, ".wal");
 		else
 			strcat(name, ".pcx");
+
 		if (FS_LoadFile(name, NULL) != -1)
 			return true; // pcx/wal exists
+	}
+
+	if (strstr(filename, ".md2"))
+	{	// .md2 file not required if we have a .skm
+		COM_StripExtension(filename, name);
+		strcat(name, ".skm");
+
+		if (FS_LoadFile(name, NULL) != -1)
+			return true;
 	}
 	// jit
 	// ===
 
-	strcpy (cls.downloadname, filename);
+	Q_strncpyz(cls.downloadname, filename, sizeof(cls.downloadname));
 
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
-	COM_StripExtension (cls.downloadname, cls.downloadtempname);
-	strcat (cls.downloadtempname, ".tmp");
+	COM_StripExtension(cls.downloadname, cls.downloadtempname);
+	strcat(cls.downloadtempname, ".tmp");
 
 //ZOID
 	// check to see if we already have a tmp for this file, if so, try to resume
@@ -971,9 +986,10 @@ void CL_ParseClientinfo (int player)
 	char			*s;
 	clientinfo_t	*ci;
 
-	s = cl.configstrings[player+CS_PLAYERSKINS];
+	s = cl.configstrings[player + CS_PLAYERSKINS];
 	ci = &cl.clientinfo[player];
 	CL_LoadClientinfo(ci, s);
+	cl_scores_refresh(); // jitmenu - refresh scoreboard on name change.
 }
 
 
