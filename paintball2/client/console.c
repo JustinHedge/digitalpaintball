@@ -216,18 +216,18 @@ void Con_Dump_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("usage: condump <filename>\n");
+		Com_Printf("usage: condump <filename>\n");
 		return;
 	}
 
-	Com_sprintf (name, sizeof(name), "%s/%s.txt", FS_Gamedir(), Cmd_Argv(1));
+	Com_sprintf(name, sizeof(name), "%s/%s.txt", FS_Gamedir(), Cmd_Argv(1));
+	Com_Printf("Dumped console text to %s.\n", name);
+	FS_CreatePath(name);
+	f = fopen(name, "w");
 
-	Com_Printf ("Dumped console text to %s.\n", name);
-	FS_CreatePath (name);
-	f = fopen (name, "w");
 	if (!f)
 	{
-		Com_Printf ("ERROR: couldn't open.\n");
+		Com_Printf("ERROR: couldn't open.\n");
 		return;
 	}
 
@@ -235,33 +235,36 @@ void Con_Dump_f (void)
 	for (l = con.current - con.totallines + 1 ; l <= con.current ; l++)
 	{
 		line = con.text + (l%con.totallines)*con.linewidth;
-		for (x=0 ; x<con.linewidth ; x++)
+
+		for (x = 0; x < con.linewidth; x++)
 			if (line[x] != ' ')
 				break;
+
 		if (x != con.linewidth)
 			break;
 	}
 
 	// write the remaining lines
 	buffer[con.linewidth] = 0;
-	for ( ; l <= con.current ; l++)
+
+	for ( ; l <= con.current; l++)
 	{
-		line = con.text + (l%con.totallines)*con.linewidth;
-		strncpy (buffer, line, con.linewidth);
-		for (x=con.linewidth-1 ; x>=0 ; x--)
+		line = con.text + (l % con.totallines) * con.linewidth;
+		Q_strncpyz(buffer, line, con.linewidth < sizeof(buffer) ? con.linewidth : sizeof(buffer));
+
+		for (x = con.linewidth - 1; x >= 0; x--)
 		{
 			if (buffer[x] == ' ')
 				buffer[x] = 0;
 			else
 				break;
 		}
-		for (x=0; buffer[x]; x++)
-			buffer[x] &= 0x7f;
 
-		fprintf (f, "%s\n", buffer);
+		strip_garbage(buffer, buffer);
+		fprintf(f, "%s\n", buffer);
 	}
 
-	fclose (f);
+	fclose(f);
 }
 
 						
@@ -384,23 +387,16 @@ Con_Init
 void Con_Init (void)
 {
 	con.linewidth = -1;
-
-	Con_CheckResize ();
-	
-	Com_Printf ("Console initialized.\n");
-
-//
-// register our commands
-//
-	con_notifytime = Cvar_Get ("con_notifytime", "3", CVAR_ARCHIVE); // jittext (was 3, and no archive)
-
-	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
-	Cmd_AddCommand ("togglechat", Con_ToggleChat_f);
-	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
-	Cmd_AddCommand ("messagemode2", Con_MessageMode2_f);
-	Cmd_AddCommand ("messagemodelogin", Con_MessageModeLogin_f);
-	Cmd_AddCommand ("clear", Con_Clear_f);
-	Cmd_AddCommand ("condump", Con_Dump_f);
+	Con_CheckResize();
+	Com_Printf("Console initialized.\n");
+	con_notifytime = Cvar_Get("con_notifytime", "3", CVAR_ARCHIVE); // jittext (was 3, and no archive)
+	Cmd_AddCommand("toggleconsole", Con_ToggleConsole_f);
+	Cmd_AddCommand("togglechat", Con_ToggleChat_f);
+	Cmd_AddCommand("messagemode", Con_MessageMode_f);
+	Cmd_AddCommand("messagemode2", Con_MessageMode2_f);
+	Cmd_AddCommand("messagemodelogin", Con_MessageModeLogin_f);
+	Cmd_AddCommand("clear", Con_Clear_f);
+	Cmd_AddCommand("condump", Con_Dump_f);
 	con.initialized = true;
 }
 
