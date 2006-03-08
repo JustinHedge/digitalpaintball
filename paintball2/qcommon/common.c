@@ -177,7 +177,7 @@ void Com_DPrintf (char *fmt, ...)
 }
 
 
-qboolean strtolower (char *s) // jit - stupid Linux case sensitivity!
+qboolean strtolower (char *s) // jitlinux - stupid Linux case sensitivity!
 {
 	qboolean changed = false;
 

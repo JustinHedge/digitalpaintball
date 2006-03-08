@@ -22,18 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef WIN32
 #include <windows.h>
 #endif
-//#include <io.h>
-
-// define this to dissalow any data but the demo pak file
-//#define	NO_ADDONS
-
-// if a packfile directory differs from this, it is assumed to be hacked
-// Full version
-#define	PAK0_CHECKSUM	0x40e614e0
-// Demo
-//#define	PAK0_CHECKSUM	0xb2c6d7ea
-// OEM
-//#define	PAK0_CHECKSUM	0x78e135c
 
 /*
 =============================================================================
@@ -195,6 +183,36 @@ int	Developer_searchpath (int who)
 }
 
 
+int FS_FOpenFileLCase (const char *filename, FILE **file) // jitlinux
+{
+	qboolean bRetry = false;
+	char filename_lcase[MAX_QPATH];
+	char *s;
+
+	Q_strncpyz(filename_lcase, filename, sizeof(filename_lcase));
+
+	// Replace backslashes with forward slashes for linux compatibility
+	while (s = strchr(filename_lcase, '\\'))
+	{
+		*s = '/';
+		bRetry = true;
+	}
+
+	// Try again with fixed slashes
+	if (bRetry)
+		return FS_FOpenFile(filename_lcase, file);
+
+	// Try again with an all-lowercase filename
+	if (strtolower(filename_lcase))
+		return FS_FOpenFile(filename_lcase, file);
+
+	// Give up.  It really doesn't exist.
+	Com_DPrintf("FindFile: can't find %s\n", filename);
+	*file = NULL;
+	return -1;
+}
+
+
 /*
 ===========
 FS_FOpenFile
@@ -206,7 +224,7 @@ a seperate file.
 ===========
 */
 int file_from_pak = 0;
-#ifndef NO_ADDONS
+
 int FS_FOpenFile (const char *filename, FILE **file)
 {
 	searchpath_t	*search;
@@ -235,15 +253,13 @@ int FS_FOpenFile (const char *filename, FILE **file)
 		}
 	}
 
-//
-// search through the path, one element at a time
-//
+	// search through the path, one element at a time
 	for (search = fs_searchpaths; search; search = search->next)
 	{
-	// is the element a pak file?
+		// is the element a pak file?
 		if (search->pack)
 		{
-		// look through all the pak file elements
+			// look through all the pak file elements
 			pak = search->pack;
 
 			for (i = 0; i < pak->numfiles; i++)
@@ -252,7 +268,7 @@ int FS_FOpenFile (const char *filename, FILE **file)
 				{	// found it!
 					file_from_pak = 1;
 					Com_DPrintf("PackFile: %s : %s\n", pak->filename, filename);
-				// open a new file on the pakfile
+					// open a new file on the pakfile
 					*file = fopen(pak->filename, "rb");
 
 					if (!*file)
@@ -266,7 +282,7 @@ int FS_FOpenFile (const char *filename, FILE **file)
 		else
 		{
 			// check a file in the directory tree
-			Com_sprintf(netpath, sizeof(netpath), "%s/%s",search->filename, filename);
+			Com_sprintf(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
 			*file = fopen(netpath, "rb");
 
 			if (!*file)
@@ -275,71 +291,10 @@ int FS_FOpenFile (const char *filename, FILE **file)
 			Com_DPrintf("FindFile: %s\n",netpath);
 			return FS_filelength(*file);
 		}
-		
 	}
-	
-	Com_DPrintf("FindFile: can't find %s\n", filename);
-	*file = NULL;
-	return -1;
+
+	return FS_FOpenFileLCase(filename, file); // jitlinux
 }
-
-#else
-
-// this is just for demos to prevent add on hacking
-
-int FS_FOpenFile (const char *filename, FILE **file)
-{
-	searchpath_t	*search;
-	char			netpath[MAX_OSPATH];
-	pack_t			*pak;
-	int				i;
-
-	file_from_pak = 0;
-
-	// get config from directory, everything else from pak
-	if (Q_streq(filename, "configs/config.cfg") || !strncmp(filename, "players/", 8)) // jit
-	{
-		Com_sprintf(netpath, sizeof(netpath), "%s/%s",FS_Gamedir(), filename);
-		
-		*file = fopen(netpath, "rb");
-		if (!*file)
-			return -1;
-		
-		Com_DPrintf("FindFile: %s\n",netpath);
-
-		return FS_filelength (*file);
-	}
-
-	for (search = fs_searchpaths; search; search = search->next)
-		if (search->pack)
-			break;
-	if (!search)
-	{
-		*file = NULL;
-		return -1;
-	}
-
-	pak = search->pack;
-	for (i=0; i<pak->numfiles; i++)
-		if (!Q_strcasecmp(pak->files[i].name, filename))
-		{	// found it!
-			file_from_pak = 1;
-			Com_DPrintf("PackFile: %s : %s\n",pak->filename, filename);
-		// open a new file on the pakfile
-			*file = fopen(pak->filename, "rb");
-			if (!*file)
-				Com_Error(ERR_FATAL, "Couldn't reopen %s", pak->filename);	
-			fseek(*file, pak->files[i].filepos, SEEK_SET);
-			return pak->files[i].filelen;
-		}
-	
-	Com_DPrintf("FindFile: can't find %s\n", filename);
-	
-	*file = NULL;
-	return -1;
-}
-
-#endif
 
 
 /*
@@ -562,22 +517,16 @@ pack_t *FS_LoadPackFile (char *packfile)
 	if (numpackfiles > MAX_FILES_IN_PACK)
 		Com_Error(ERR_FATAL, "%s has %i files", packfile, numpackfiles);
 
-	newfiles = Z_Malloc (numpackfiles * sizeof (packfile_t));
-
+	newfiles = Z_Malloc(numpackfiles * sizeof (packfile_t));
 	fseek(packhandle, header.dirofs, SEEK_SET);
 	fread(info, 1, header.dirlen, packhandle);
-
-// crc the directory to check for modifications
+	// crc the directory to check for modifications
 	checksum = Com_BlockChecksum((void *)info, header.dirlen);
 
-#ifdef NO_ADDONS
-	if (checksum != PAK0_CHECKSUM)
-		return NULL;
-#endif
-// parse the directory
-	for (i=0; i<numpackfiles; i++)
+	// parse the directory
+	for (i = 0; i < numpackfiles; i++)
 	{
-		strcpy(newfiles[i].name, info[i].name);
+		Q_strncpyz(newfiles[i].name, info[i].name, sizeof(newfiles[i].name));
 		newfiles[i].filepos = LittleLong(info[i].filepos);
 		newfiles[i].filelen = LittleLong(info[i].filelen);
 	}
@@ -587,8 +536,8 @@ pack_t *FS_LoadPackFile (char *packfile)
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;
-	
 	Com_Printf("Added packfile %s(%i files)\n", packfile, numpackfiles);
+
 	return pack;
 }
 
