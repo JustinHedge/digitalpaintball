@@ -131,72 +131,70 @@ void shutdown_cl_scores (void) // jitodo
 		Z_Free(cl_scores_info);
 }
 
+void cl_scores_refresh (void)
+{
+	cl_scores_modified = true;
+	M_RefreshWidget("scores", true);
+}
+
 void cl_scores_setping (int client, int ping)
 {
 	cl_scores[client].ping = ping;
 	cl_scores[client].inuse = true;
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_setstarttime (int client, int time)
 {
 	cl_scores[client].starttime = time;
 	cl_scores[client].inuse = true;
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_setkills (int client, int kills)
 {
 	cl_scores[client].kills = kills;
 	cl_scores[client].inuse = true;
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_setdeaths (int client, int deaths)
 {
 	cl_scores[client].deaths = deaths;
 	cl_scores[client].inuse = true;
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_setgrabs (int client, int grabs)
 {
 	cl_scores[client].grabs = grabs;
 	cl_scores[client].inuse = true;
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_setcaps (int client, int caps)
 {
 	cl_scores[client].caps = caps;
 	cl_scores[client].inuse = true;
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_setteam (int client, char team)
 {
 	cl_scores[client].team = team;
 	cl_scores[client].inuse = true;
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_setisalive (int client, qboolean alive)
 {
 	cl_scores[client].isalive = alive;
 	cl_scores[client].inuse = true;
-	cl_scores_modified = true;
 
 	if (!alive)
 		cl_scores_sethasflag(client, false);
 
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_setisalive_all (qboolean alive)
@@ -207,8 +205,7 @@ void cl_scores_setisalive_all (qboolean alive)
 		if (cl_scores[i].inuse)
 			cl_scores[i].isalive = alive;
 
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_sethasflag_all (qboolean hasflag)
@@ -219,22 +216,19 @@ void cl_scores_sethasflag_all (qboolean hasflag)
 		if (cl_scores[i].inuse)
 			cl_scores[i].hasflag = hasflag;
 
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_sethasflag (int client, qboolean hasflag)
 {
 	cl_scores[client].hasflag = hasflag;
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_setinuse (int client, qboolean inuse)
 {
 	cl_scores[client].inuse = inuse;
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_setinuse_all (qboolean inuse)
@@ -244,15 +238,13 @@ void cl_scores_setinuse_all (qboolean inuse)
 	for (i=0; i<MAX_CLIENTS; i++)
 		cl_scores[i].inuse = inuse;
 
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 void cl_scores_clear (int client)
 {
 	memset(&cl_scores[client], 0, sizeof(cl_score_t));
-	cl_scores_modified = true;
-	M_RefreshWidget("scores", true);
+	cl_scores_refresh();
 }
 
 
@@ -387,7 +379,7 @@ qboolean cl_scores_prep_select_widget (void)
 		{
 			// add spaces to compensate for format codes
 			memset(cl_scores_info[i]+len, ' ', MAX_NAME_WIDTH - len_noformat);
-			cl_scores_info[i][MAX_NAME_WIDTH+format_diff+1] = '\0';
+			cl_scores_info[i][MAX_NAME_WIDTH+format_diff] = '\0';
 		}
 
 		Com_sprintf(cl_scores_info[i], 64, "%-" MAX_NAME_WIDTH_S "s%4d%3d%3d%3d%2d%3d",

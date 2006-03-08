@@ -289,19 +289,19 @@ void IN_MouseEvent (int mstate)
 	if (!mouseinitialized)
 		return;
 
-// perform button actions
-	for (i=0 ; i<mouse_buttons ; i++)
+	// perform button actions
+	for (i = 0; i < mouse_buttons; i++)
 	{
-		if ( (mstate & (1<<i)) &&
-			!(mouse_oldbuttonstate & (1<<i)) )
+		if ((mstate & (1<<i)) &&
+			!(mouse_oldbuttonstate & (1<<i)))
 		{
-			Key_Event (K_MOUSE1 + i, true, sys_msg_time);
+			Key_Event(K_MOUSE1 + i, true, sys_msg_time);
 		}
 
-		if ( !(mstate & (1<<i)) &&
-			(mouse_oldbuttonstate & (1<<i)) )
+		if (!(mstate & (1<<i)) &&
+			(mouse_oldbuttonstate & (1<<i)))
 		{
-				Key_Event (K_MOUSE1 + i, false, sys_msg_time);
+			Key_Event(K_MOUSE1 + i, false, sys_msg_time);
 		}
 	}	
 		

@@ -1363,28 +1363,31 @@ static void field_activate (menu_widget_t *widget)
 	field_adjustCursor(widget);
 }
 
-static void widget_execute_doubleclick (menu_widget_t *widget, qboolean doubleclick)
+static void widget_execute (menu_widget_t *widget, qboolean doubleclick)
 {
 	if (widget->selected)
 	{
-		if (doubleclick && widget->doubleclick)
+		if (doubleclick)
 		{
-			Cbuf_AddText(widget->doubleclick);
-			Cbuf_AddText("\n");
-		}
-		else if (widget->command)
-		{
-			Cbuf_AddText(widget->command);
-			Cbuf_AddText("\n");
-		}
+			if (widget->callback_doubleclick)
+				widget->callback_doubleclick(widget);
 
-		if (doubleclick && widget->callback_doubleclick)
-		{
-			widget->callback_doubleclick(widget);
+			if (widget->doubleclick)
+			{
+				Cbuf_AddText(widget->doubleclick);
+				Cbuf_AddText("\n");
+			}
 		}
-		else if (widget->callback)
+		else
 		{
-			widget->callback(widget);
+			if (widget->callback)
+				widget->callback(widget);
+
+			if (widget->command)
+			{
+				Cbuf_AddText(widget->command);
+				Cbuf_AddText("\n");
+			}
 		}
 
 		switch (widget->type)
@@ -1409,10 +1412,6 @@ static void widget_execute_doubleclick (menu_widget_t *widget, qboolean doublecl
 	}
 }
 
-static void widget_execute (menu_widget_t *widget)
-{
-	widget_execute_doubleclick(widget, false);
-}
 
 static void M_KBAction (menu_screen_t *menu, MENU_ACTION action)
 {
@@ -1434,7 +1433,7 @@ static void M_KBAction (menu_screen_t *menu, MENU_ACTION action)
 			widget->selected = true;
 			break;
 		case M_ACTION_EXECUTE:
-			widget_execute(widget);
+			widget_execute(widget, false);
 			break;
 		default:
 			break;
@@ -1521,10 +1520,10 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 			newSelection->selected = true;
 			break;
 		case M_ACTION_EXECUTE:
-			widget_execute(newSelection);
+			widget_execute(newSelection, false);
 			break;
 		case M_ACTION_DOUBLECLICK:
-			widget_execute_doubleclick(newSelection, true);
+			widget_execute(newSelection, true);
 			break;
 		case M_ACTION_SCROLLUP:
 			if (widget_is_select(newSelection, &widget))

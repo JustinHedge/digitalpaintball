@@ -565,6 +565,7 @@ void CL_ScoreboardShow_f (void);
 void CL_ScoreboardHide_f (void);
 void CL_ParseScoreData (const unsigned char *data); 
 void CL_ParsePingData (const unsigned char *data);
+void cl_scores_refresh (void);
 void cl_scores_setping (int client, int ping);
 void cl_scores_setstarttime (int client, int time);
 void cl_scores_setkills (int client, int kills);
