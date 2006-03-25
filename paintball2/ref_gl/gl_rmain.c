@@ -964,8 +964,8 @@ void R_SetupFrame(void)
 	for (i=0 ; i<4 ; i++)
 		v_blend[i] = r_newrefdef.blend[i];
 
-	c_brush_polys = 0;
-	c_alias_polys = 0;
+	//c_brush_polys = 0;
+	//c_alias_polys = 0;
 
 	// clear out the portion of the screen that the NOWORLDMODEL defines
 	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL)
@@ -1083,12 +1083,12 @@ R_Clear
 */
 extern qboolean have_stencil;
 
-void R_Clear(void)
+void R_Clear (void)
 {
 	if (fogenabled)
 		qglClearColor(fogcolor[0], fogcolor[1], fogcolor[2], 0.5); // jitfog
 
-	if (gl_ztrick->value)
+	if (gl_ztrick->value && !r_reflectivewater->value) // jitwater -- ztrick makes the screen flicker
 	{
 		static int trickframe;
 		int clearbits = 0;
@@ -1103,7 +1103,6 @@ void R_Clear(void)
 		}
 
 		qglClear(clearbits);
-
 		trickframe++;
 
 		if (trickframe & 1)
@@ -1133,7 +1132,6 @@ void R_Clear(void)
 		}
 
 		qglClear(clearbits);
-
 		gldepthmin = 0;
 		gldepthmax = 1;
 		qglDepthFunc(GL_LEQUAL);
@@ -1152,7 +1150,7 @@ r_newrefdef must be set before the first call
 
 void R_ApplyStains(void);
 
-void R_RenderView(refdef_t *fd)
+void R_RenderView (refdef_t *fd)
 {
 	if (r_norefresh->value)
 		return;
@@ -1162,11 +1160,11 @@ void R_RenderView(refdef_t *fd)
 	if (!r_worldmodel && !(r_newrefdef.rdflags & RDF_NOWORLDMODEL))
 		ri.Sys_Error(ERR_DROP, "R_RenderView: NULL worldmodel");
 
-	if (r_speeds->value)
-	{
-		c_brush_polys = 0;
-		c_alias_polys = 0;
-	}
+	//if (!g_drawing_refl) // jitrspeeds r_speeds->value)
+	//{
+	//	c_brush_polys = 0;
+	//	c_alias_polys = 0;
+	//}
 
 	// === jitfog -- enable fog rendering
 	if (fogenabled)
@@ -1257,7 +1255,7 @@ void R_RenderView(refdef_t *fd)
 
 unsigned int blurtex = 0;
 
-void R_SetGL2D()
+void R_SetGL2D (void)
 {
 	int hudscale;
 
@@ -1418,7 +1416,7 @@ R_RenderFrame
 
 @@@@@@@@@@@@@@@@@@@@@
 */
-void R_RenderFrame(refdef_t *fd)
+void R_RenderFrame (refdef_t *fd)
 {
 #if 1
 	// === jitwater
@@ -1431,6 +1429,8 @@ void R_RenderFrame(refdef_t *fd)
 	R_RenderView(fd);
 	R_SetLightLevel();
 	R_SetGL2D();
+	c_brush_polys = 0; // jitrspeeds - relocated
+	c_alias_polys = 0;
 
 	// === jitwater
 	if (r_reflectivewater_debug->value && g_refl_enabled)
@@ -1461,7 +1461,7 @@ void R_RenderFrame(refdef_t *fd)
 	if ((gl_reflection_debug->value) && (g_refl_enabled))
 		R_DrawDebugReflTexture();
 
-	if(!g_refl_enabled)
+	if (!g_refl_enabled)
 		R_clear_refl();
 	// end MPO
 #endif
@@ -2285,7 +2285,7 @@ void R_BeginFrame (float camera_separation)
 			char envbuffer[1024];
 			float g;
 
-			g = 2.0 *(0.8 -(vid_gamma->value - 0.5)) + 1.0F;
+			g = 2.0f * (0.8f -(vid_gamma->value - 0.5f)) + 1.0F;
 			Com_sprintf(envbuffer, sizeof(envbuffer), "SSTV2_GAMMA=%f", g);
 			putenv(envbuffer);
 			Com_sprintf(envbuffer, sizeof(envbuffer), "SST_GAMMA=%f", g);
@@ -2458,8 +2458,8 @@ void R_DrawBeam(entity_t *e)
 		qglVertex3fv(start_points[(i+1)%NUM_BEAM_SEGS]);
 		qglVertex3fv(end_points[(i+1)%NUM_BEAM_SEGS]);
 	}
-	qglEnd();
 
+	qglEnd();
 	qglEnable(GL_TEXTURE_2D);
 	GLSTATE_DISABLE_BLEND
 	qglDepthMask(GL_TRUE);
@@ -2467,24 +2467,23 @@ void R_DrawBeam(entity_t *e)
 
 //===================================================================
 
-struct model_s	*R_RegisterModel(const char *name);
-//struct image_s	*R_RegisterSkin(const char *name);
+struct model_s	*R_RegisterModel (const char *name);
 void	R_RegisterSkin (const char *name, struct model_s *model, struct image_s **skins); // jitskm
-struct image_s	*Draw_FindPic(const char *name);
-void	R_BeginRegistration(const char *map);
-void	R_SetSky(const char *name, float rotate, vec3_t axis);
-void	R_EndRegistration(void);
-void	R_RenderFrame(refdef_t *fd);
-void	Draw_Pic(int x, int y, char *name);
-void	Draw_Char(int x, int y, int c);
-void	Draw_TileClear(int x, int y, int w, int h, char *name);
-void	Draw_Fill(int x, int y, int w, int h, int c);
-void	Draw_FadeScreen(void);
-void	Draw_TileClear2(int x, int y, int w, int h, image_t *image);
-void	Draw_StretchPic2(int x, int y, int w, int h, image_t *gl);
-void	Draw_Pic2(int x, int y, image_t *gl);
-void	Draw_String(int x, int y, const char *str); // jit, shush little warning
-void	Draw_StringAlpha(int x, int y, const char *str, float alhpa); // jit
+struct image_s	*Draw_FindPic (const char *name);
+void	R_BeginRegistration (const char *map);
+void	R_SetSky (const char *name, float rotate, vec3_t axis);
+void	R_EndRegistration (void);
+void	R_RenderFrame (refdef_t *fd);
+void	Draw_Pic (int x, int y, char *name);
+void	Draw_Char (int x, int y, int c);
+void	Draw_TileClear (int x, int y, int w, int h, char *name);
+void	Draw_Fill (int x, int y, int w, int h, int c);
+void	Draw_FadeScreen (void);
+void	Draw_TileClear2 (int x, int y, int w, int h, image_t *image);
+void	Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl);
+void	Draw_Pic2 (int x, int y, image_t *gl);
+void	Draw_String (int x, int y, const char *str); // jit, shush little warning
+void	Draw_StringAlpha (int x, int y, const char *str, float alhpa); // jit
 int		Draw_GetStates (void);
 
 /*

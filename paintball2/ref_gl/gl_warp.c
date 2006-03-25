@@ -342,7 +342,7 @@ void EmitWaterPolys (msurface_t *fa)
 		{
 			p = bp;
 
-			for (i=0, v=p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
+			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
 			{
 				// if it hasn't been initalized before
 				if (zValue == 0.0f)
@@ -362,25 +362,26 @@ void EmitWaterPolys (msurface_t *fa)
 		{
 			p = bp;
 			qglBegin(GL_TRIANGLE_FAN);
+			c_brush_polys += p->numverts / 3; // jitrspeeds
 
-			for (i=0, v=p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
+			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
 			{
 				os = v[3]; 
 				ot = v[4];
 
 				#if !id386
-				s = os + r_turbsin[(int)((ot*0.125+r_newrefdef.time) * TURBSCALE) & 255];
+				s = os + r_turbsin[(int)((ot * 0.125f + r_newrefdef.time) * TURBSCALE) & 255];
 				#else
-				s = os + r_turbsin[Q_ftol(((ot*0.125+rdt) * TURBSCALE)) & 255];
+				s = os + r_turbsin[Q_ftol(((ot * 0.125f + rdt) * TURBSCALE)) & 255];
 				#endif
 
 				s += scroll;
 				s *= (1.0/64);
 
 				#if !id386
-				t = ot + r_turbsin[(int)((os*0.125+rdt) * TURBSCALE) & 255];
+				t = ot + r_turbsin[(int)((os * 0.125f + rdt) * TURBSCALE) & 255];
 				#else
-				t = ot + r_turbsin[Q_ftol(((os*0.125+rdt) * TURBSCALE)) & 255];
+				t = ot + r_turbsin[Q_ftol(((os * 0.125f + rdt) * TURBSCALE)) & 255];
 				#endif
 				t *= (1.0f / 64.0f);
 
@@ -464,8 +465,9 @@ void EmitWaterPolys (msurface_t *fa)
   		{
 			p = bp;
 			qglBegin(GL_TRIANGLE_FAN);
+			c_brush_polys += p->numverts / 3; // jitrspeeds
 
-			for (i=0, v=p->verts[0]; i < p->numverts; i++, v+=VERTEXSIZE)
+			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v+=VERTEXSIZE)
 			{
 				if (gl_state.fragment_program)
 				{
@@ -504,7 +506,7 @@ void EmitWaterPolys (msurface_t *fa)
 				qglVertex3f(v[0], v[1], v[2]);
 			}
 
-			qglEnd (); 
+			qglEnd(); 
   		}
 
 		R_ClearReflMatrix();

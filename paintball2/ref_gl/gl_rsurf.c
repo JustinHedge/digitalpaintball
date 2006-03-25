@@ -869,7 +869,9 @@ void R_DrawAlphaSurfaces (void)
 	for (s = r_alpha_surfaces; s; s = s->texturechain)
 	{
 		GL_Bind(s->texinfo->image->texnum);
-		c_brush_polys++;
+
+		if (!(s->flags & SURF_DRAWTURB)) // jitrspeeds -- these get counted elsewhere
+			c_brush_polys++;
 
 		if (s->texinfo->script && !(s->flags & SURF_DRAWTURB)) // jitrscript
 		{

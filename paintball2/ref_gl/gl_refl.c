@@ -237,7 +237,7 @@ void R_add_refl (float x, float y, float z)
 		g_refl_X[g_num_refl]			= x;
 		g_refl_Y[g_num_refl]			= y;
 		g_refl_Z[g_num_refl]			= z;
-		g_waterDistance[g_num_refl ]	= distance;
+		g_waterDistance[g_num_refl]		= distance;
 		g_num_refl++;
 	}
 	else
@@ -471,29 +471,28 @@ we have to draw everything a 2nd time
 */
 void R_UpdateReflTex (refdef_t *fd)
 {
-	if(!g_num_refl)	return;	// nothing to do here
+	if (!g_num_refl)
+		return;	// nothing to do here
 
 	g_drawing_refl = true;	// begin drawing reflection
-
 	g_last_known_fov = fd->fov_y;
 	
 	// go through each reflection and render it
 	for (g_active_refl = 0; g_active_refl < g_num_refl; g_active_refl++)
 	{
 		//qglClearColor(0, 0, 0, 1);								//clear screen
-		qglClear(/*GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT);
-		
+		//qglClear(/*GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT); jitwater
 		R_RenderView(fd);	// draw the scene here!
-
 		qglBindTexture(GL_TEXTURE_2D, g_tex_num[g_active_refl]);
 		qglCopyTexSubImage2D(GL_TEXTURE_2D, 0,
 			(REFL_TEXW - g_reflTexW) >> 1,
 			(REFL_TEXH - g_reflTexH) >> 1,
 			0, 0, g_reflTexW, g_reflTexH);
+		R_Clear(); // jitwater
 	}
 
 	g_drawing_refl = false;	// done drawing refl
-	qglClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//clear stuff now cause we want to render scene
+	// jitwater qglClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//clear stuff now cause we want to render scene
 }															
 
 
