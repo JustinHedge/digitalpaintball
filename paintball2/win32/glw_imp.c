@@ -761,9 +761,19 @@ void GLimp_EndFrame (void)
 		CL_AnimDump();
 
 	if (stricmp(gl_drawbuffer->string, "GL_BACK") == 0)
+	{
 		if (!qwglSwapBuffers(glw_state.hDC))
-			//ri.Sys_Error(ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n");
-			ri.Con_Printf(PRINT_ALL, "GLimp_EndFrame() - SwapBuffers() failed!\n"); // jitest
+		{
+			static qboolean print = true;
+
+			// Don't spam the console with this error.
+			if (print)
+			{
+				ri.Con_Printf(PRINT_ALL, "GLimp_EndFrame() - SwapBuffers() failed!\n");
+				print = false;
+			}
+		}
+	}
 
 	// rscript - MrG
 	rs_realtime = Sys_Milliseconds() * 0.001f;
