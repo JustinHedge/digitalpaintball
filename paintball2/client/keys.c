@@ -825,6 +825,9 @@ void Key_Init (void)
 	consolekeys['`'] = false;
 	consolekeys['~'] = false;
 
+	for (i = K_F1; i <= K_F12; i++)
+		consolekeys[i] = false; // allow binds for F-keys
+
 	for (i = 0; i < 256; i++)
 		keyshift[i] = i;
 
@@ -852,7 +855,6 @@ void Key_Init (void)
 	keyshift[']'] = '}';
 	keyshift['`'] = '~';
 	keyshift['\\'] = '|';
-
 	Cmd_AddCommand("bind", Key_Bind_f);
 	Cmd_AddCommand("unbind", Key_Unbind_f);
 	Cmd_AddCommand("unbindall", Key_Unbindall_f);
