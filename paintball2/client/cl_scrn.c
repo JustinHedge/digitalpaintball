@@ -636,40 +636,42 @@ void SCR_TimeRefresh_f (void)
 	if (Cmd_Argc() == 3) // jitest
 	{
 		re.BeginFrame(0);
-		for (i=0; i<128; i++)
+
+		for (i = 0; i < 128; i++)
 		{
-			cl.refdef.viewangles[1] = i/128.0*360.0;
+			cl.refdef.viewangles[1] = (float)i / 128.0f * 360.0f;
 			re.RenderFrame(&cl.refdef);
-			
 			re.EndFrame();
 		}
+
 		re.EndFrame();
 	}
 	else if (Cmd_Argc() == 2)
 	{	// run without page flipping
 		re.BeginFrame(0);
-		for (i=0; i<128; i++)
+
+		for (i = 0; i < 128; i++)
 		{
-			cl.refdef.viewangles[1] = i/128.0*360.0;
+			cl.refdef.viewangles[1] = (float)i / 128.0f * 360.0f;
 			re.RenderFrame(&cl.refdef);
 		}
+
 		re.EndFrame();
 	}
 	else
 	{
-		for (i=0 ; i<128 ; i++)
+		for (i = 0; i < 128; i++)
 		{
-			cl.refdef.viewangles[1] = i/128.0*360.0;
-
-			re.BeginFrame( 0 );
-			re.RenderFrame (&cl.refdef);
+			cl.refdef.viewangles[1] = (float)i / 128.0f * 360.0f;
+			re.BeginFrame(0);
+			re.RenderFrame(&cl.refdef);
 			re.EndFrame();
 		}
 	}
 
-	stop = Sys_Milliseconds ();
-	time = (stop-start)/1000.0;
-	Com_Printf ("%f seconds (%f fps)\n", time, 128/time);
+	stop = Sys_Milliseconds();
+	time = (float)(stop - start) / 1000.0f;
+	Com_Printf("%f seconds (%f fps)\n", time, 128.0f / time);
 }
 
 /*

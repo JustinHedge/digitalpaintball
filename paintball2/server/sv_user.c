@@ -769,16 +769,16 @@ void SV_ExecuteClientMessage (client_t *cl)
 		switch (c)
 		{
 		default:
-			Com_Printf ("SV_ReadClientMessage: unknown command char\n");
-			SV_DropClient (cl);
+			Com_Printf("SV_ReadClientMessage: unknown command char\n");
+			SV_DropClient(cl);
 			return;
 						
 		case clc_nop:
 			break;
 
 		case clc_userinfo:
-			strncpy (cl->userinfo, MSG_ReadString (&net_message), sizeof(cl->userinfo)-1);
-			SV_UserinfoChanged (cl);
+			Q_strncpyz(cl->userinfo, MSG_ReadString(&net_message), sizeof(cl->userinfo)); // jit
+			SV_UserinfoChanged(cl);
 			break;
 
 		case clc_move:

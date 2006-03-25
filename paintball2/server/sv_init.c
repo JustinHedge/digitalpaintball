@@ -36,7 +36,7 @@ int SV_FindIndex (char *name, int start, int max, qboolean create)
 	if (!name || !name[0])
 		return 0;
 
-	for (i=1 ; i<max && sv.configstrings[start+i][0] ; i++)
+	for (i = 1; i < max && sv.configstrings[start+i][0]; i++)
 		if (Q_streq(sv.configstrings[start+i], name))
 			return i;
 
@@ -46,15 +46,15 @@ int SV_FindIndex (char *name, int start, int max, qboolean create)
 	if (i == max)
 		Com_Error (ERR_DROP, "*Index: overflow");
 
-	strncpy (sv.configstrings[start+i], name, sizeof(sv.configstrings[i]));
+	Q_strncpyz(sv.configstrings[start+i], name, sizeof(sv.configstrings[i]));
 
 	if (sv.state != ss_loading)
 	{	// send the update to everyone
-		SZ_Clear (&sv.multicast);
-		MSG_WriteChar (&sv.multicast, svc_configstring);
-		MSG_WriteShort (&sv.multicast, start+i);
-		MSG_WriteString (&sv.multicast, name);
-		SV_Multicast (vec3_origin, MULTICAST_ALL_R);
+		SZ_Clear(&sv.multicast);
+		MSG_WriteChar(&sv.multicast, svc_configstring);
+		MSG_WriteShort(&sv.multicast, start+i);
+		MSG_WriteString(&sv.multicast, name);
+		SV_Multicast(vec3_origin, MULTICAST_ALL_R);
 	}
 
 	return i;
@@ -63,7 +63,7 @@ int SV_FindIndex (char *name, int start, int max, qboolean create)
 
 int SV_ModelIndex (char *name)
 {
-	return SV_FindIndex (name, CS_MODELS, MAX_MODELS, true);
+	return SV_FindIndex(name, CS_MODELS, MAX_MODELS, true);
 }
 
 int SV_SoundIndex (char *name)

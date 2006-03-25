@@ -846,9 +846,9 @@ void PM_CheckSpecialMovement (void)
 	/*flatforward[0] += pml.velocity[0];
 	flatforward[1] += pml.velocity[1];
 	VectorNormalize(flatforward);*/
-#ifdef _DEBUG
-	Com_DPrintf("Forward: %3g %3g\n", flatforward[0], flatforward[1]);
-#endif
+//#ifdef _DEBUG
+//	Com_DPrintf("Forward: %3g %3g\n", flatforward[0], flatforward[1]);
+//#endif
 	// jitwaterjump ===
 
 	VectorMA(pml.origin, 30, flatforward, spot);
@@ -860,9 +860,9 @@ void PM_CheckSpecialMovement (void)
 	spot2[2] -= 1;
 	//spot[2] -= 5;
 	cont2 = pm->pointcontents(spot2);
-#ifdef _DEBUG
-	Com_DPrintf("Conts: %d %d\n", cont, cont2);
-#endif
+//#ifdef _DEBUG
+//	Com_DPrintf("Conts: %d %d\n", cont, cont2);
+//#endif
 
 //	if (!(cont & CONTENTS_SOLID) && !(cont2 & CONTENTS_SOLID)) // jitwaterjump
 //		return;
