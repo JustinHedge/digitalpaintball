@@ -14,6 +14,8 @@
 # paintball2 (uses OSS for sound, cdrom ioctls for cd audio) is automatically built.
 # game$(ARCH).so is automatically built.
 #
+USE_SSE=YES
+USE_SSE=NO
 BUILD_SDLQUAKE2=NO	# sdlpaintball2 executable (uses SDL for cdrom and sound)
 BUILD_SVGA=NO		# SVGAlib driver. Seems to work fine.
 BUILD_GLX=YES		# X11 GLX driver. Works somewhat ok.
@@ -67,14 +69,11 @@ endif
 CC=gcc
 
 ifeq ($(ARCH),i386)
-#RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops -falign-loops=2 \
-#	-falign-jumps=2 -falign-functions=2 -fno-strict-aliasing
-#RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx -fomit-frame-pointer -ffast-math -ffloat-store -funroll-loops
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx -msse -mfpmath=sse -ffast-math -ffloat-store -funroll-loops
-# compiler bugs with gcc 2.96 and 3.0.1 can cause bad builds with heavy opts.
-#RELEASE_CFLAGS=$(BASE_CFLAGS) -O6 -m486 -ffast-math -funroll-loops \
-#	-fomit-frame-pointer -fexpensive-optimizations -malign-loops=2 \
-#	-malign-jumps=2 -malign-functions=2
+RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx -msse -mfpmath=sse \
+	-ffast-math -ffloat-store -funroll-loops
+ifeq ($(USE_SSE),NO)
+RELEASE_CFLAGS=$(BASE_CFLAGS) -O3
+endif
 endif
 
 ifeq ($(ARCH),axp)
