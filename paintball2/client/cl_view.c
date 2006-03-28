@@ -573,9 +573,9 @@ void V_RenderView (float stereo_separation)
 		// never let it sit exactly on a node line, because a water plane can
 		// dissapear when viewed with the eye exactly on it.
 		// the server protocol only specifies to 1/8 pixel, so add 1/16 in each axis
-		cl.refdef.vieworg[0] += 1.0/16;
-		cl.refdef.vieworg[1] += 1.0/16;
-		cl.refdef.vieworg[2] += 1.0/16;
+		cl.refdef.vieworg[0] += 0.0625f; // 1.0f / 16.0f;
+		cl.refdef.vieworg[1] += 0.0625f; // 1.0f / 16.0f;
+		cl.refdef.vieworg[2] += 0.0625f; // 1.0f / 16.0f;
 
 		cl.refdef.x = scr_vrect.x;
 		cl.refdef.y = scr_vrect.y;
@@ -595,24 +595,16 @@ void V_RenderView (float stereo_separation)
 		if (!cl_add_lights->value)
 			r_numdlights = 0;
 
-		//if (!cl_add_blend->value) jit -- this should always be enabled
-		//{
-		//	VectorClear (cl.refdef.blend);
-		//}
-
 		cl.refdef.num_newstains = r_numstains;
 		cl.refdef.newstains = r_stains;
 		r_numstains = 0;
-		
 		cl.refdef.num_entities = r_numentities;
 		cl.refdef.entities = r_entities;
 		cl.refdef.num_particles = r_numparticles;
 		cl.refdef.particles = r_particles;
-
 		cl.refdef.num_dlights = r_numdlights;
 		cl.refdef.dlights = r_dlights;
 		cl.refdef.lightstyles = r_lightstyles;
-
 		cl.refdef.rdflags = cl.frame.playerstate.rdflags;
 
 		// sort entities for better cache locality
@@ -631,7 +623,6 @@ void V_RenderView (float stereo_separation)
 
 	SCR_AddDirtyPoint(scr_vrect.x, scr_vrect.y);
 	SCR_AddDirtyPoint(scr_vrect.x + scr_vrect.width - 1, scr_vrect.y + scr_vrect.height - 1);
-
 	SCR_DrawCrosshair();
 }
 

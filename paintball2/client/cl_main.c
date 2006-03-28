@@ -1729,7 +1729,7 @@ void CL_InitLocal (void)
 	cl_maxfps =			Cvar_Get("cl_maxfps", "0", CVAR_ARCHIVE); // jit, default to 0
 	cl_locknetfps =		Cvar_Get("cl_locknetfps", "0", CVAR_ARCHIVE); // jitnetfps
 	cl_cmdrate =		Cvar_Get("cl_cmdrate", "60", CVAR_ARCHIVE); // jitnetfps
-	cl_sleep =			Cvar_Get("cl_sleep", "1", CVAR_ARCHIVE); // jit/pooy
+	cl_sleep =			Cvar_Get("cl_sleep", "0", CVAR_ARCHIVE); // jit/pooy
 
 	cl_upspeed =		Cvar_Get("cl_upspeed", "200", 0);
 	cl_forwardspeed =	Cvar_Get("cl_forwardspeed", "200", 0);
@@ -1805,7 +1805,7 @@ void CL_InitLocal (void)
 	// userinfo
 	//
 	info_password =		Cvar_Get("password", "", CVAR_USERINFO);
-	build =				Cvar_Get("build", BUILD_S, CVAR_USERINFO|CVAR_NOSET); // jitversion
+	build =				Cvar_Get("build", BUILD_S, CVAR_USERINFO | CVAR_NOSET | CVAR_SERVERINFO); // jitversion
 	info_spectator =	Cvar_Get("spectator", "0", CVAR_USERINFO);
 	name =				Cvar_Get("name", "newbie", CVAR_USERINFO | CVAR_ARCHIVE); // jit :D
 	skin =				Cvar_Get("skin", "male/pb2b", CVAR_USERINFO | CVAR_ARCHIVE); // jit
@@ -2196,6 +2196,44 @@ void CL_Frame (int msec)
 	}
 }
 
+// === jit
+// Detect potential cheats and warn cheaters that they will be banned.
+static qboolean CL_VerifyFileSizes (const char *filename)
+{
+	char *data, *token, *p;
+	int size, filesize;
+
+	if (FS_LoadFileZ(filename, &data) > 0)
+	{
+		p = data;
+		
+		while ((token = COM_Parse(&p)) && *token)
+		{
+			size = atoi(token);
+			token = COM_Parse(&p);
+			filesize = FS_LoadFile(token, NULL);
+
+			if (filesize > 0 && filesize != size)
+			{
+				FS_FreeFile(data);
+				return false;
+			}
+		}
+
+		FS_FreeFile(data);
+	}
+
+	return true;
+}
+
+
+static void CL_VerifyContent (void)
+{
+	if (!CL_VerifyFileSizes("configs/filesizes1.txt"))
+		if (!CL_VerifyFileSizes("configs/filesizes2.txt"))
+			Cbuf_AddText("menu warning_bad_content\n");
+}
+// jit ===
 
 /*
 ====================
@@ -2239,6 +2277,7 @@ void CL_Init (void)
 	Con_ToggleConsole_f(); // jitspoe -- start with console down
 	Con_ToggleConsole_f(); // jitspoe -- lift it up again if in play
 	M_Menu_Main_f(); // jitmenu
+	CL_VerifyContent(); // jit
 	Cbuf_Execute();
 }
 
@@ -2251,7 +2290,7 @@ FIXME: this is a callback from Sys_Quit and Com_Error.  It would be better
 to run quit through here before the final handoff to the sys code.
 ===============
 */
-void CL_Shutdown(void)
+void CL_Shutdown (void)
 {
 	static qboolean isdown = false;
 	
