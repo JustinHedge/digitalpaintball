@@ -109,9 +109,9 @@ void S_Q2A3DInit (void)
 
 		Com_Printf("Error loading up q2a3d module.\n");
 		loadLibError = GetLastError();
-		FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK, NULL, loadLibError, 
-		               MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL );
-		Com_Printf("%s\n", lpMsgBuf );
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK, NULL, loadLibError, 
+		               MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
+		Com_Printf("%s\n", lpMsgBuf);
 
 #else
 		Com_Printf("Error loading up q2a3d module.\n");
@@ -120,10 +120,11 @@ void S_Q2A3DInit (void)
 		return;
 	}
 
-	if (a3d.Init_A3D()>1) //initialise A3D
+	if (a3d.Init_A3D() > 1) //initialise A3D
 		Com_Printf("\nEAX Extenstions Available\nA3D initialised\n");//engine returned EAX available
 	else
 		Com_Printf("\nA3D initialised\n");
+
 	a3dsound_started = 1;//set the enabled flag
 }//initialize the A3D engine
 
