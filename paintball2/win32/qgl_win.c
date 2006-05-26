@@ -3032,26 +3032,26 @@ void QGL_Shutdown( void )
 ** might be.
 ** 
 */
-qboolean QGL_Init( const char *dllname )
+qboolean QGL_Init (const char *dllname)
 {
 	// update 3Dfx gamma irrespective of underlying DLL
 	{
 		char envbuffer[1024];
 		float g;
 
-		g = 2.0 * ( 0.8 - ( vid_gamma->value - 0.5 ) ) + 1.0F;
-		Com_sprintf( envbuffer, sizeof(envbuffer), "SSTV2_GAMMA=%f", g );
-		putenv( envbuffer );
-		Com_sprintf( envbuffer, sizeof(envbuffer), "SST_GAMMA=%f", g );
-		putenv( envbuffer );
+		g = 2.0f * (0.8f - (vid_gamma->value - 0.5f)) + 1.0F;
+		Com_sprintf(envbuffer, sizeof(envbuffer), "SSTV2_GAMMA=%f", g);
+		putenv(envbuffer);
+		Com_sprintf(envbuffer, sizeof(envbuffer), "SST_GAMMA=%f", g);
+		putenv(envbuffer);
 	}
 
-	if ( ( glw_state.hinstOpenGL = LoadLibrary( dllname ) ) == 0 )
+	if ((glw_state.hinstOpenGL = LoadLibrary(dllname)) == 0)
 	{
 		char *buf = NULL;
 
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &buf, 0, NULL);
-		ri.Con_Printf( PRINT_ALL, "%s\n", buf );
+		ri.Con_Printf(PRINT_ALL, "%s\n", buf);
 		return false;
 	}
 

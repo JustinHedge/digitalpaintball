@@ -66,7 +66,8 @@ static qboolean VerifyDriver (void)
 /*
 ** VID_CreateWindow
 */
-#define	WINDOW_CLASS_NAME	"Paintball 2" // jit
+//#define	WINDOW_CLASS_NAME	"Paintball 2" // jit
+#define	WINDOW_CLASS_NAME	(ri.Cvar_Get("vid_windowclassname", "Paintball 2", 0)->string) // jit
 
 qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
 {
@@ -164,13 +165,13 @@ qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
 ** GLimp_SetMode
 */
 void GL_UpdateSwapInterval (void);
+
 rserr_t GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 {
 	int width, height;
 	const char *win_fs[] = { "W", "FS" };
 
 	ri.Con_Printf(PRINT_ALL, "Initializing OpenGL display\n");
-
 	ri.Con_Printf(PRINT_ALL, "...setting mode %d:", mode);
 
 	if (!ri.Vid_GetModeInfo(&width, &height, mode))
@@ -179,28 +180,24 @@ rserr_t GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 		return rserr_invalid_mode;
 	}
 
-	ri.Con_Printf( PRINT_ALL, " %d %d %s\n", width, height, win_fs[fullscreen] );
+	ri.Con_Printf(PRINT_ALL, " %d %d %s\n", width, height, win_fs[fullscreen]);
 
 	// destroy the existing window
 	if (glw_state.hWnd)
 	{
-		GLimp_Shutdown ();
+		GLimp_Shutdown();
 	}
 
 	// do a CDS if needed
-	if ( fullscreen )
+	if (fullscreen)
 	{
 		DEVMODE dm;
 		cvar_t *r_displayrefresh; // jitrefresh
 		
 		r_displayrefresh = ri.Cvar_Get("r_displayrefresh", "0", CVAR_ARCHIVE); // jitrefresh
-
-		ri.Con_Printf( PRINT_ALL, "...attempting fullscreen\n" );
-
-		memset( &dm, 0, sizeof( dm ) );
-
-		dm.dmSize = sizeof( dm );
-
+		ri.Con_Printf(PRINT_ALL, "...attempting fullscreen\n");
+		memset(&dm, 0, sizeof(dm));
+		dm.dmSize = sizeof(dm);
 		dm.dmPelsWidth  = width;
 		dm.dmPelsHeight = height;
 
@@ -208,32 +205,32 @@ rserr_t GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 		if (r_displayrefresh->value > 0)
 		{
 			dm.dmDisplayFrequency = r_displayrefresh->value;
-			dm.dmFields     = DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+			dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
 		}
 		else
 		{
-			dm.dmFields     = DM_PELSWIDTH | DM_PELSHEIGHT;
+			dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
 		}
 		//ep::windows xp refresh rate fix 
 
-		if ( gl_bitdepth->value != 0 )
+		if (gl_bitdepth->value != 0)
 		{
 			dm.dmBitsPerPel = gl_bitdepth->value;
 			dm.dmFields |= DM_BITSPERPEL;
-			ri.Con_Printf( PRINT_ALL, "...using gl_bitdepth of %d\n", ( int ) gl_bitdepth->value );
+			ri.Con_Printf(PRINT_ALL, "...using gl_bitdepth of %d\n", (int)gl_bitdepth->value);
 		}
 		else
 		{
-			HDC hdc = GetDC( NULL );
-			int bitspixel = GetDeviceCaps( hdc, BITSPIXEL );
+			HDC hdc = GetDC(NULL);
+			int bitspixel = GetDeviceCaps(hdc, BITSPIXEL);
 
-			ri.Con_Printf( PRINT_ALL, "...using desktop display depth of %d\n", bitspixel );
-
-			ReleaseDC( 0, hdc );
+			ri.Con_Printf(PRINT_ALL, "...using desktop display depth of %d\n", bitspixel);
+			ReleaseDC(0, hdc);
 		}
 
-		ri.Con_Printf( PRINT_ALL, "...calling CDS: " );
-		if ( ChangeDisplaySettings( &dm, CDS_FULLSCREEN ) == DISP_CHANGE_SUCCESSFUL )
+		ri.Con_Printf(PRINT_ALL, "...calling CDS: ");
+
+		if (ChangeDisplaySettings(&dm, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
 		{
 			*pwidth = width;
 			*pheight = height;
@@ -643,28 +640,30 @@ fail:
 
 void GLimp_BeginFrame( float camera_separation )
 {
-	if ( gl_bitdepth->modified )
+	if (gl_bitdepth->modified)
 	{
-		if ( gl_bitdepth->value != 0 && !glw_state.allowdisplaydepthchange )
+		if (gl_bitdepth->value != 0 && !glw_state.allowdisplaydepthchange)
 		{
-			ri.Cvar_SetValue( "gl_bitdepth", 0 );
-			ri.Con_Printf( PRINT_ALL, "gl_bitdepth requires Win95 OSR2.x or WinNT 4.x\n" );
+			ri.Cvar_SetValue("gl_bitdepth", 0);
+			ri.Con_Printf(PRINT_ALL, "gl_bitdepth requires Win95 OSR2.x or WinNT 4.x\n");
 		}
+
 		gl_bitdepth->modified = false;
 	}
 
-	if ( camera_separation < 0 && gl_state.stereo_enabled )
+	if (camera_separation < 0 && gl_state.stereo_enabled)
 	{
-		qglDrawBuffer( GL_BACK_LEFT );
+		qglDrawBuffer(GL_BACK_LEFT);
 	}
-	else if ( camera_separation > 0 && gl_state.stereo_enabled )
+	else if (camera_separation > 0 && gl_state.stereo_enabled)
 	{
-		qglDrawBuffer( GL_BACK_RIGHT );
+		qglDrawBuffer(GL_BACK_RIGHT);
 	}
 	else
 	{
-		qglDrawBuffer( GL_BACK );
+		qglDrawBuffer(GL_BACK);
 	}
+
 	//Heffo - CIN Texture Update
 	CIN_ProcessCins();
 }
@@ -760,7 +759,7 @@ void GLimp_EndFrame (void)
 	if (cl_animdump->value)
 		CL_AnimDump();
 
-	if (stricmp(gl_drawbuffer->string, "GL_BACK") == 0)
+	if (Q_streq(gl_drawbuffer->string, "GL_BACK"))
 	{
 		if (!qwglSwapBuffers(glw_state.hDC))
 		{
@@ -776,7 +775,7 @@ void GLimp_EndFrame (void)
 	}
 
 	// rscript - MrG
-	rs_realtime = Sys_Milliseconds() * 0.001f;
+	rs_realtime = (float)Sys_Milliseconds() * 0.001f;
 }
 
 void UpdateGammaRamp (void)

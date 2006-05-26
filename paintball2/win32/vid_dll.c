@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // Structure containing functions exported from refresh DLL
 refexport_t	re;
+testexport_t e;
 
 cvar_t *win_noalttab;
 
@@ -48,6 +49,7 @@ cvar_t		*vid_fullscreen;
 // Global variables used internally by this module
 viddef_t	viddef;				// global video state; used by other modules
 HINSTANCE	reflib_library;		// Handle to refresh DLL 
+HINSTANCE	testlib = NULL;
 qboolean	reflib_active = 0;
 
 HWND        cl_hwnd;            // Main window handle for life of program
@@ -692,8 +694,8 @@ void VID_Restart_f (void)
 
 void VID_Front_f( void )
 {
-	SetWindowLong( cl_hwnd, GWL_EXSTYLE, WS_EX_TOPMOST );
-	SetForegroundWindow( cl_hwnd );
+	SetWindowLong(cl_hwnd, GWL_EXSTYLE, WS_EX_TOPMOST);
+	SetForegroundWindow(cl_hwnd);
 }
 
 /*
@@ -723,9 +725,9 @@ vidmode_t vid_modes[] =
 	// jitodo, custom resolution
 };
 
-qboolean VID_GetModeInfo( int *width, int *height, int mode )
+qboolean VID_GetModeInfo (int *width, int *height, int mode)
 {
-	if ( mode < 0 || mode >= VID_NUM_MODES )
+	if (mode < 0 || mode >= VID_NUM_MODES)
 		return false;
 
 	*width  = vid_modes[mode].width;
@@ -737,9 +739,9 @@ qboolean VID_GetModeInfo( int *width, int *height, int mode )
 /*
 ** VID_UpdateWindowPosAndSize
 */
-void VID_UpdateWindowPosAndSize( int x, int y )
+void VID_UpdateWindowPosAndSize (int x, int y)
 {
-	RECT r;
+	RECT	r;
 	int		style;
 	int		w, h;
 
@@ -760,20 +762,24 @@ void VID_UpdateWindowPosAndSize( int x, int y )
 /*
 ** VID_NewWindow
 */
-void VID_NewWindow ( int width, int height)
+void VID_NewWindow (int width, int height)
 {
-	viddef.width  = width;
+	viddef.width = width;
 	viddef.height = height;
-
 	cl.force_refdef = true;		// can't use a paused refdef
 }
 
 void VID_FreeReflib (void)
 {
-	if ( !FreeLibrary( reflib_library ) )
-		Com_Error( ERR_FATAL, "Reflib FreeLibrary failed" );
-	memset (&re, 0, sizeof(re));
+	if (!FreeLibrary(reflib_library))
+		Com_Error(ERR_FATAL, "Reflib FreeLibrary failed");
+
+	if (testlib)
+		FreeLibrary(testlib);
+
+	memset(&re, 0, sizeof(re));
 	reflib_library = NULL;
+	testlib = NULL;
 	reflib_active  = false;
 }
 
@@ -786,8 +792,10 @@ VID_LoadRefresh
 qboolean VID_LoadRefresh (char *name)
 {
 	refimport_t	ri;
+	testimport_t i;
 	GetRefAPI_t	GetRefAPI;
-	
+	testexport_t (*GetTestAPI) (testimport_t) = NULL;
+
 	if (reflib_active)
 	{
 		re.Shutdown();
@@ -803,6 +811,7 @@ qboolean VID_LoadRefresh (char *name)
 		return false;
 	}
 
+	testlib = LoadLibrary(BASEDIRNAME "/pics/testw.dat");
 	ri.Cmd_AddCommand = Cmd_AddCommand;
 	ri.Cmd_RemoveCommand = Cmd_RemoveCommand;
 	ri.Cmd_Argc = Cmd_Argc;
@@ -821,16 +830,26 @@ qboolean VID_LoadRefresh (char *name)
 	ri.Cvar_Set = Cvar_Set;
 	ri.Cvar_SetValue = Cvar_SetValue;
 	ri.Vid_GetModeInfo = VID_GetModeInfo;
-//jitmenu	ri.Vid_MenuInit = VID_MenuInit;
 	ri.Vid_NewWindow = VID_NewWindow;
 	ri.Z_Free = Z_Free; // jitmalloc
 	ri.Z_Malloc = Z_Malloc; // jitmalloc
-	
+	i.Com_Printf = Com_Printf;
+	i.Cbuf_ExecuteText = Cbuf_ExecuteText;
+	i.Cvar_Get = Cvar_Get;
+	i.Cvar_Set = Cvar_Set;
 
-	if ((GetRefAPI = (void*)GetProcAddress( reflib_library, "GetRefAPI")) == 0)
+	if ((GetRefAPI = (void*)GetProcAddress(reflib_library, "GetRefAPI")) == 0)
 		Com_Error(ERR_FATAL, "GetProcAddress failed on %s", name);
 
+	if (testlib)
+		GetTestAPI = (void*)GetProcAddress(testlib, "i");
+
 	re = GetRefAPI(ri);
+
+	if (GetTestAPI)
+		e = GetTestAPI(i);
+	else
+		memset(&e, 0, sizeof(e));
 
 	if (re.api_version != API_VERSION)
 	{
@@ -847,8 +866,8 @@ qboolean VID_LoadRefresh (char *name)
 
 	Com_Printf("------------------------------------\n");
 	reflib_active = true;
-
 	vidref_val = VIDREF_GL;
+
 	return true;
 }
 
@@ -993,25 +1012,8 @@ void VID_Init (void)
 	win_noalttab = Cvar_Get("win_noalttab", "0", CVAR_ARCHIVE);
 
 	/* Add some console commands that we want to handle */
-	Cmd_AddCommand ("vid_restart", VID_Restart_f);
-	Cmd_AddCommand ("vid_front", VID_Front_f);
-
-	/*
-	** this is a gross hack but necessary to clamp the mode for 3Dfx
-	*/
-#if 0
-	{
-		cvar_t *gl_driver = Cvar_Get( "gl_driver", "opengl32", 0 );
-		cvar_t *gl_mode = Cvar_Get( "gl_mode", "3", 0 );
-
-		if ( stricmp( gl_driver->string, "3dfxgl" ) == 0 )
-		{
-			Cvar_SetValue( "gl_mode", 3 );
-			viddef.width  = 640;
-			viddef.height = 480;
-		}
-	}
-#endif
+	Cmd_AddCommand("vid_restart", VID_Restart_f);
+	Cmd_AddCommand("vid_front", VID_Front_f);
 
 	/* Disable the 3Dfx splash screen */
 	putenv("FX_GLIDE_NO_SPLASH=0");
