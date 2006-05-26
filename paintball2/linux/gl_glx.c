@@ -241,7 +241,7 @@ void doneMouse (void)
 
 void RW_IN_PlatformInit (void)
 {
-  in_dgamouse = ri.Cvar_Get("in_dgamouse", "1", CVAR_ARCHIVE);
+  in_dgamouse = ri.Cvar_Get("in_dgamouse", "0", CVAR_ARCHIVE);
 }
 
 void RW_IN_Activate (qboolean active)
@@ -258,133 +258,219 @@ void RW_IN_Activate (qboolean active)
 
 static int XLateKey(XKeyEvent *ev)
 {
-
-  int key;
-  char buf[64];
-  KeySym keysym;
-  
-  key = 0;
-  
-  XLookupString(ev, buf, sizeof buf, &keysym, 0);
-  
-  switch(keysym)
-    {
-    case XK_KP_Page_Up:	 key = K_KP_PGUP; break;
-    case XK_Page_Up:	 key = K_PGUP; break;
-      
-    case XK_KP_Page_Down: key = K_KP_PGDN; break;
-    case XK_Page_Down:	 key = K_PGDN; break;
-      
-    case XK_KP_Home: key = K_KP_HOME; break;
-    case XK_Home:	 key = K_HOME; break;
-      
-    case XK_KP_End:  key = K_KP_END; break;
-    case XK_End:	 key = K_END; break;
-      
-    case XK_KP_Left: key = K_KP_LEFTARROW; break;
-    case XK_Left:	 key = K_LEFTARROW; break;
-      
-    case XK_KP_Right: key = K_KP_RIGHTARROW; break;
-    case XK_Right:	key = K_RIGHTARROW;		break;
-      
-    case XK_KP_Down: key = K_KP_DOWNARROW; break;
-    case XK_Down:	 key = K_DOWNARROW; break;
-      
-    case XK_KP_Up:   key = K_KP_UPARROW; break;
-    case XK_Up:		 key = K_UPARROW;	 break;
-      
-    case XK_Escape: key = K_ESCAPE;		break;
-      
-    case XK_KP_Enter: key = K_KP_ENTER;	break;
-    case XK_Return: key = K_ENTER;		 break;
-      
-    case XK_Tab:		key = K_TAB;			 break;
-      
-    case XK_F1:		 key = K_F1;				break;
-      
-    case XK_F2:		 key = K_F2;				break;
-      
-    case XK_F3:		 key = K_F3;				break;
-      
-    case XK_F4:		 key = K_F4;				break;
-      
-    case XK_F5:		 key = K_F5;				break;
-      
-    case XK_F6:		 key = K_F6;				break;
-      
-    case XK_F7:		 key = K_F7;				break;
-      
-    case XK_F8:		 key = K_F8;				break;
-      
-    case XK_F9:		 key = K_F9;				break;
-      
-    case XK_F10:		key = K_F10;			 break;
-      
-    case XK_F11:		key = K_F11;			 break;
-      
-    case XK_F12:		key = K_F12;			 break;
-      
-    case XK_BackSpace: key = K_BACKSPACE; break;
-      
-    case XK_KP_Delete: key = K_KP_DEL; break;
-    case XK_Delete: key = K_DEL; break;
-      
-    case XK_Pause:	key = K_PAUSE;		 break;
-      
-    case XK_Shift_L:
-    case XK_Shift_R:	key = K_SHIFT;		break;
-      
-		case XK_Execute: 
-		case XK_Control_L: 
-		case XK_Control_R:	key = K_CTRL;		 break;
-
-		case XK_Alt_L:	
-		case XK_Meta_L: 
-		case XK_Alt_R:	
-		case XK_Meta_R: key = K_ALT;			break;
-
-		case XK_KP_Begin: key = K_KP_5;	break;
-
-		case XK_Insert:key = K_INS; break;
-		case XK_KP_Insert: key = K_KP_INS; break;
-
-		case XK_KP_Multiply: key = '*'; break;
-		case XK_KP_Add:  key = K_KP_PLUS; break;
-		case XK_KP_Subtract: key = K_KP_MINUS; break;
-		case XK_KP_Divide: key = K_KP_SLASH; break;
-
-#if 0
-		case 0x021: key = '1';break;/* [!] */
-		case 0x040: key = '2';break;/* [@] */
-		case 0x023: key = '3';break;/* [#] */
-		case 0x024: key = '4';break;/* [$] */
-		case 0x025: key = '5';break;/* [%] */
-		case 0x05e: key = '6';break;/* [^] */
-		case 0x026: key = '7';break;/* [&] */
-		case 0x02a: key = '8';break;/* [*] */
-		case 0x028: key = '9';;break;/* [(] */
-		case 0x029: key = '0';break;/* [)] */
-		case 0x05f: key = '-';break;/* [_] */
-		case 0x02b: key = '=';break;/* [+] */
-		case 0x07c: key = '\'';break;/* [|] */
-		case 0x07d: key = '[';break;/* [}] */
-		case 0x07b: key = ']';break;/* [{] */
-		case 0x022: key = '\'';break;/* ["] */
-		case 0x03a: key = ';';break;/* [:] */
-		case 0x03f: key = '/';break;/* [?] */
-		case 0x03e: key = '.';break;/* [>] */
-		case 0x03c: key = ',';break;/* [<] */
-#endif
-
+	int key;
+	char buf[64];
+	KeySym keysym;
+	
+	key = 0;
+	
+	XLookupString(ev, buf, sizeof buf, &keysym, 0);
+	
+	switch(keysym){
+		case XK_KP_Page_Up:
+			key = K_KP_PGUP;
+			break;
+		case XK_Page_Up:
+			key = K_PGUP;
+			break;
+			
+		case XK_KP_Page_Down:
+			key = K_KP_PGDN;
+			break;
+		case XK_Page_Down:
+			key = K_PGDN;
+			break;
+			
+		case XK_KP_Home:
+			key = K_KP_HOME;
+			break;
+		case XK_Home:
+			key = K_HOME;
+			break;
+			
+		case XK_KP_End:
+			key = K_KP_END;
+			break;
+		case XK_End:
+			key = K_END;
+			break;
+			
+		case XK_KP_Left:
+			key = K_KP_LEFTARROW;
+			break;
+		case XK_Left:
+			key = K_LEFTARROW;
+			break;
+			
+		case XK_KP_Right:
+			key = K_KP_RIGHTARROW;
+			break;
+		case XK_Right:
+			key = K_RIGHTARROW;
+			break;
+			
+		case XK_KP_Down:
+			key = K_KP_DOWNARROW;
+			break;
+		case XK_Down:
+			key = K_DOWNARROW;
+			break;
+			
+		case XK_KP_Up:
+			key = K_KP_UPARROW;
+			break;
+		case XK_Up:
+			key = K_UPARROW;
+			break;
+			
+		case XK_Escape:
+			key = K_ESCAPE;
+			break;
+			
+		case XK_KP_Enter:
+			key = K_KP_ENTER;
+			break;
+		case XK_Return:
+			key = K_ENTER;
+			break;
+			
+		case XK_Tab:
+			key = K_TAB;
+			break;
+			
+		case XK_F1:
+			key = K_F1;
+			break;
+			
+		case XK_F2:
+			key = K_F2;
+			break;
+			
+		case XK_F3:
+			key = K_F3;
+			break;
+			
+		case XK_F4:
+			key = K_F4;
+			break;
+			
+		case XK_F5:
+			key = K_F5;
+			break;
+			
+		case XK_F6:
+			key = K_F6;
+			break;
+			
+		case XK_F7:
+			key = K_F7;
+			break;
+			
+		case XK_F8:
+			key = K_F8;
+			break;
+			
+		case XK_F9:
+			key = K_F9;
+			break;
+			
+		case XK_F10:
+			/*if(ev->type == KeyPress){
+				if(vid_fullscreen->value){  //toggle fullscreen
+					ri.Cvar_SetValue("vid_fullscreen", 0);
+					ri.Cvar_SetValue("vid_width", vid.width / 2);
+					ri.Cvar_SetValue("vid_height", vid.height / 2);
+				}
+				else {
+					ri.Cvar_SetValue("vid_fullscreen", 1);
+					ri.Cvar_SetValue("vid_width", vid.width * 2);
+					ri.Cvar_SetValue("vid_height", vid.height * 2);
+				}
+				
+				ri.Cmd_ExecuteText(EXEC_NOW, "vid_restart");
+			}*/
+			key = K_F10;  //remove if adding quetoo vid_width, ..
+			break;
+			
+		case XK_F11:
+			/*if(ev->type == KeyPress){
+				if(_windowed_mouse->value)  //and windowed mouse
+					ri.Cvar_SetValue("_windowed_mouse", 0);
+				else 	ri.Cvar_SetValue("_windowed_mouse", 1);
+			}*/
+			key = K_F11;  //remove if adding _windowed_mouse back
+			break;
+			
+		case XK_F12:
+			key = K_F12;
+			break;
+			
+		case XK_BackSpace:
+			key = K_BACKSPACE;
+			break;
+			
+		case XK_KP_Delete:
+			key = K_KP_DEL;
+			break;
+		case XK_Delete:
+			key = K_DEL;
+			break;
+			
+		case XK_Pause:
+			key = K_PAUSE;
+			break;
+			
+		case XK_Shift_L:
+		case XK_Shift_R:
+			key = K_SHIFT;
+			break;
+			
+		case XK_Execute:
+		case XK_Control_L:
+		case XK_Control_R:
+			key = K_CTRL;
+			break;
+			
+		case XK_Alt_L:
+		case XK_Meta_L:
+		case XK_Alt_R:
+		case XK_Meta_R:
+			key = K_ALT;
+			break;
+			
+		case XK_KP_Begin:
+			key = K_KP_5;
+			break;
+			
+		case XK_Insert:
+			key = K_INS;
+			break;
+		case XK_KP_Insert:
+			key = K_KP_INS;
+			break;
+			
+		case XK_KP_Multiply:
+			key = '*';
+			break;
+		case XK_KP_Add:
+			key = K_KP_PLUS;
+			break;
+		case XK_KP_Subtract:
+			key = K_KP_MINUS;
+			break;
+		case XK_KP_Divide:
+			key = K_KP_SLASH;
+			break;
+		
 		default:
 			key = *(unsigned char*)buf;
-			if (key >= 'A' && key <= 'Z')
+			if(key >= 'A' && key <= 'Z')
 				key = key - 'A' + 'a';
-			if (key >= 1 && key <= 26) /* ctrl+alpha */
+			if(key >= 1 && key <= 26) /* ctrl+alpha */
 				key = key + 'a' - 1;
 			break;
-	} 
-
+	}
+	
 	return key;
 }
 
@@ -417,139 +503,134 @@ int X11_KeyRepeat(Display *display, XEvent *event)
 static void HandleEvents(void)
 {
   XEvent event;
-  int b;
-  qboolean dowarp = false;
-  int mwx = vid.width/2;
-  int mwy = vid.height/2;
-  in_state_t *in_state = getState();
-  if (!dpy)
-    return;
-  
-  while (XPending(dpy)) {
-    //ri.Con_Printf(PRINT_ALL,"Bar");
-    XNextEvent(dpy, &event);
-    mx = my = 0;
-    switch(event.type) {
-    case KeyPress:
-      myxtime = event.xkey.time;
-      if (in_state && in_state->Key_Event_fp)
-	in_state->Key_Event_fp(XLateKey(&event.xkey), true);
-      break;
-    case KeyRelease:
-      if (!X11_KeyRepeat(dpy, &event)) {
-	if (in_state && in_state->Key_Event_fp)
-	  in_state->Key_Event_fp(XLateKey(&event.xkey), false);
-      }
-      break;
-    case MotionNotify:
-      if (mouse_active)
-      {
-	if (dgamouse)
-	{
-	  mx += (event.xmotion.x + win_x) * 2;
-	  my += (event.xmotion.y + win_y) * 2;
+	int b;
+	qboolean dowarp = false;
+	int mwx = vid.width / 2;
+	int mwy = vid.height / 2;
+	in_state_t *in_state = getState();
+	
+	if(!dpy)
+		return;
+		
+	while(XPending(dpy)){
+	
+		XNextEvent(dpy, &event);
+		
+		switch(event.type){
+			case KeyPress:
+				myxtime = event.xkey.time;
+			case KeyRelease:
+				if(in_state && in_state->Key_Event_fp)
+					in_state->Key_Event_fp(XLateKey(&event.xkey), event.type == KeyPress);
+				break;
+				
+			case MotionNotify:
+				if(mouse_active){
+					if(true){//if(_windowed_mouse->value){
+						int xoffset = ((int)event.xmotion.x - mwx);
+						int yoffset = ((int)event.xmotion.y - mwy);
+						
+						if(xoffset != 0 || yoffset != 0){
+						
+							mx += xoffset;
+							my += yoffset;
+							
+							XSelectInput(dpy, win, X_MASK & ~PointerMotionMask);
+							XWarpPointer(dpy, None, win, 0, 0, 0, 0, mwx, mwy);
+							XSelectInput(dpy, win, X_MASK);
+						}
+					} else {
+						mx +=((int)event.xmotion.x - mwx) * 2;
+						my +=((int)event.xmotion.y - mwy) * 2;
+						mwx = event.xmotion.x;
+						mwy = event.xmotion.y;
+						
+						if(mx || my)
+							dowarp = true;
+					}
+				}
+				break;
+				
+			case ButtonPress:
+				myxtime = event.xbutton.time;
+				
+				b = -1;
+				if(event.xbutton.button == 1)
+					b = 0;
+				else if(event.xbutton.button == 2)
+					b = 2;
+				else if(event.xbutton.button == 3)
+					b = 1;
+				else if(event.xbutton.button == 4)
+					in_state->Key_Event_fp(K_MWHEELUP, 1);
+				else if(event.xbutton.button == 5)
+					in_state->Key_Event_fp(K_MWHEELDOWN, 1);
+				if(b >= 0 && in_state && in_state->Key_Event_fp)
+					in_state->Key_Event_fp(K_MOUSE1 + b, true);
+				break;
+				
+			case ButtonRelease:
+				b = -1;
+				if(event.xbutton.button == 1)
+					b = 0;
+				else if(event.xbutton.button == 2)
+					b = 2;
+				else if(event.xbutton.button == 3)
+					b = 1;
+				else if(event.xbutton.button == 4)
+					in_state->Key_Event_fp(K_MWHEELUP, 0);
+				else if(event.xbutton.button == 5)
+					in_state->Key_Event_fp(K_MWHEELDOWN, 0);
+				if(b >= 0 && in_state && in_state->Key_Event_fp)
+					in_state->Key_Event_fp(K_MOUSE1 + b, false);
+				break;
+				
+			case CreateNotify:
+				win_x = event.xcreatewindow.x;
+				win_y = event.xcreatewindow.y;
+				break;
+				
+			case ConfigureNotify:
+				win_x = event.xconfigure.x;
+				win_y = event.xconfigure.y;
+				break;
+				
+			case ClientMessage:
+				if(event.xclient.data.l[0] == wmDeleteWindow)
+					ri.Cmd_ExecuteText(EXEC_NOW, "quit");
+				break;
+				
+			case MapNotify:
+				if(true){//if(_windowed_mouse->value){
+					XGrabPointer(dpy, win, True, 0, GrabModeAsync,
+								  GrabModeAsync, win, None, CurrentTime);
+				}
+				break;
+				
+			case UnmapNotify:
+				if(true){//if(_windowed_mouse->value){
+					XUngrabPointer(dpy, CurrentTime);
+				}
+				break;
+		}
 	}
-	else 
-	{
-#if 1
-	    mx += ((int)event.xmotion.x - mwx) * 2;
-	    my += ((int)event.xmotion.y - mwy) * 2;
-	    mwx = event.xmotion.x;
-	    mwy = event.xmotion.y;
-
-	    
-	    if (mx || my)
-	      dowarp = true;
-#else
-	    mx += event.xmotion.x - mwx;
-	    my += event.xmotion.y - mwy;
-            mwx = event.xmotion.x;
-	    mwy = event.xmotion.y;
-
-	    if (mx || my)
-	    {
-		    printf("%d %d\n", mx, mwx);
-	    }
-	    
-	    if (mwx && mwy && (mwx > vid.width - 20 ||
-		mwy > vid.height - 20 ||
-		mwx < 20 || mwy < 20))
-	    {
-		    printf("Warp: %d %d\n", mwx, mwy);
-		XWarpPointer(dpy,None,win,0,0,0,0, vid.width/2,vid.height/2);
-	    }
-#endif
+	
+	/*if(old_windowed_mouse != _windowed_mouse->value){
+		old_windowed_mouse = _windowed_mouse->value;
+		
+		if(!_windowed_mouse->value){  //ungrab pointer
+			XUngrabPointer(dpy, CurrentTime);
+		} else {  //grab pointer
+			XGrabPointer(dpy, win, True, 0, GrabModeAsync,
+						  GrabModeAsync, win, None, CurrentTime);
+		}
+	}*/
+	
+	if(dowarp){  //move cursor to center
+		XWarpPointer(dpy, None, win, 
+				0, 0, 0, 0, vid.width / 2, vid.height / 2
+		);
 	}
-      }
-      break;
-      
-      
-    case ButtonPress:
-      myxtime = event.xbutton.time;
-      b=-1;
-
-      if (event.xbutton.button == 1)
-	b = 0;
-      else if (event.xbutton.button == 2)
-	b = 2;
-      else if (event.xbutton.button == 3)
-	b = 1;
-      else if (event.xbutton.button == 4)
-	in_state->Key_Event_fp(K_MWHEELUP, 1);
-      else if (event.xbutton.button == 5)
-	in_state->Key_Event_fp(K_MWHEELDOWN, 1);
-
-      //if (b>=0 && in_state && in_state->Key_Event_fp)
-	//in_state->Key_Event_fp(K_MOUSE1 + b, true);
-
-      if (b>=0)
-	mouse_buttonstate |= 1<<b;
-
-      break;
-      
-    case ButtonRelease:
-      b=-1;
-
-      if (event.xbutton.button == 1)
-	b = 0;
-      else if (event.xbutton.button == 2)
-	b = 2;
-      else if (event.xbutton.button == 3)
-	b = 1;
-      else if (event.xbutton.button == 4)
-	in_state->Key_Event_fp(K_MWHEELUP, 0);
-      else if (event.xbutton.button == 5)
-	in_state->Key_Event_fp(K_MWHEELDOWN, 0);
-
-      //if (b>=0 && in_state && in_state->Key_Event_fp)
-	//in_state->Key_Event_fp(K_MOUSE1 + b, false);
-      
-      if (b>=0)
-	mouse_buttonstate &= ~(1<<b);
-
-      break;
-      
-    case CreateNotify :
-      win_x = event.xcreatewindow.x;
-      win_y = event.xcreatewindow.y;
-      break;
-      
-    case ConfigureNotify :
-      win_x = event.xconfigure.x;
-      win_y = event.xconfigure.y;
-      break;
-      
-    case ClientMessage:
-      if (event.xclient.data.l[0] == wmDeleteWindow)
-	ri.Cmd_ExecuteText(EXEC_NOW, "quit");
-      break;
-    }
-  }
-  
-  if (dowarp) {
-    /* move the mouse to the window center again */
-    XWarpPointer(dpy,None,win,0,0,0,0, vid.width/2,vid.height/2);
-  }
 }
 
 Key_Event_fp_t Key_Event_fp;

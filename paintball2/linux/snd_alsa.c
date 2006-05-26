@@ -19,42 +19,47 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: snd_alsa.c,v 1.2 2005-12-08 08:23:04 jitspoe Exp $
+	$Id: snd_alsa.c,v 1.3 2006-05-26 05:53:40 jitspoe Exp $
 */
-
-#define BUFFER_SIZE 4096
 
 #include <alsa/asoundlib.h>
 
 #include "../client/client.h"
 #include "../client/snd_loc.h"
 
-#define snd_buf BUFFER_SIZE
-
 static int  snd_inited;
-static short *buffer;
 
 static snd_pcm_t *playback_handle;
 static snd_pcm_hw_params_t *hw_params;
+
+/*
+* These are reasonable default values for good latency.  If ALSA
+* playback stutters or plain does not work, try adjusting these.
+* Period must always be a multiple of 2.  Buffer must always be
+* a multiple of period.  See http://alsa-project.org.
+*/
+static snd_pcm_uframes_t period_size = 1024;
+static snd_pcm_uframes_t buffer_size = 4096;
+
+static int sample_bytes;
+static int buffer_bytes;
 
 cvar_t *sndbits;
 cvar_t *sndspeed;
 cvar_t *sndchannels;
 cvar_t *snddevice;
 
-static int tryrates[] = { 44100, 22051, 11025, 8000 };
+static int tryrates[] = { 44100, 22050, 11025, 8000 };
 
 qboolean SNDDMA_Init (void)
 {
   int i;
   int err;
-  int buffersize;
-  int framesize;
   int format;
 
-  //if (snd_inited) { return 1; }
-  if (snd_inited) // jitlinux
-	SNDDMA_Shutdown();
+  if (snd_inited){ // jitlinux
+	return 1;
+  }
 
   Com_Printf("Initializing ALSA.\n");
   
@@ -156,6 +161,20 @@ qboolean SNDDMA_Init (void)
     return 0;
   }
   
+  if((err = snd_pcm_hw_params_set_period_size_near(playback_handle, 
+			hw_params, &period_size, 0)) < 0){
+		Com_Printf("ALSA: cannot set period size near(%s)\n", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
+		return 0;
+	}
+	
+	if((err = snd_pcm_hw_params_set_buffer_size_near(playback_handle, 
+			hw_params, &buffer_size)) < 0){
+		Com_Printf("ALSA: cannot set buffer size near(%s)\n", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
+		return 0;
+	}
+  
   err = snd_pcm_hw_params(playback_handle, hw_params);
   if (err < 0) {
     Com_Printf("ALSA snd error couldn't set params (%s).\n",snd_strerror(err));
@@ -163,33 +182,20 @@ qboolean SNDDMA_Init (void)
     return 0;
   }
 
-  /*
-    buffer_size = snd_pcm_hw_params_get_buffer_size(hw_params);
-    frame_size = (snd_pcm_format_physical_width(format)*dma.channels)/8;
-    
-    snd_pcm_hw_params_free(hw_params);
-    hw_params = NULL;
-    
-    if ((err = snd_pcm_prepare(playback_handle)) < 0) {
-    Com_Printf("ALSA snd error preparing audio (%s)\n",snd_strerror(err));
-    return 0;
-    }
-    
-    snd_buf = buffer_size*frame_size;
-  */
-
-  //snd_buf = BUFFER_SIZE;
-
-  buffer=malloc(snd_buf);
-  memset(buffer, 0, snd_buf);
-
-  dma.samplepos = 0;
-  dma.samples = snd_buf / (dma.samplebits/8);
-  dma.submission_chunk = 1;
-  dma.buffer = (char *)buffer;
-
-  snd_inited = 1;
-  return 1;
+  	sample_bytes = dma.samplebits / 8;
+	buffer_bytes = buffer_size * dma.channels * sample_bytes;
+	
+	dma.buffer = malloc(buffer_bytes);  //allocate pcm frame buffer
+	memset(dma.buffer, 0, buffer_bytes);
+	
+	dma.samples = buffer_size * dma.channels;
+	dma.submission_chunk = period_size * dma.channels;
+	
+	dma.samplepos = 0;
+	
+	snd_pcm_prepare(playback_handle);
+	snd_inited = 1;
+	return 1;
 }
 
 int
@@ -221,13 +227,26 @@ Send sound to device if buffer isn't really the dma buffer
 void
 SNDDMA_Submit (void)
 {
-  int written;
-  
-  if ((written = snd_pcm_writei(playback_handle, dma.buffer, snd_buf)) < 0) {
-    snd_pcm_prepare(playback_handle);
-    Com_Printf("alsa: buffer underrun\n");
-  }
-  dma.samplepos += written/(dma.samplebits/8);
+  int s, w, frames;
+	void *start;
+	
+	if(!snd_inited)
+		return;
+		
+	s = dma.samplepos * sample_bytes;
+	start = (void *) &dma.buffer[s];
+	
+	frames = dma.submission_chunk / dma.channels;
+	
+	if((w = snd_pcm_writei(playback_handle, start, frames)) < 0){  //write to card
+		snd_pcm_prepare(playback_handle);  //xrun occured
+		return;
+	}
+	
+	dma.samplepos += w * dma.channels;  //mark progress
+	
+	if(dma.samplepos >= dma.samples)
+		dma.samplepos = 0;  //wrap buffer
 }
 
 
