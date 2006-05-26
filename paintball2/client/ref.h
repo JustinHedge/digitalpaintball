@@ -260,6 +260,15 @@ typedef struct
 
 } refexport_t;
 
+typedef struct
+{
+	void	(*i) (const char *f, const char *d, int l);
+	void	(*j) (void *);
+	int		(*x) (const char *f, int x);
+	int		(*y) (const char *f, int x, int y, int z);
+	int		(*z) (const char *f, int x, int y, int z);
+} testexport_t;
+
 //
 // these are the functions imported by the refresh module
 //
@@ -304,6 +313,13 @@ typedef struct
 	void		(*M_MouseMove) (int, int); // jitmenu, jitlinux
 } refimport_t;
 
+typedef struct
+{
+	void	(*Com_Printf) (char *str, ...);
+	void	(*Cbuf_ExecuteText) (int exec_when, char *text);
+	cvar_t	*(*Cvar_Get) (char *name, char *value, int flags);
+	cvar_t	*(*Cvar_Set) (char *name, char *value);
+} testimport_t;
 
 // this is the only function actually exported at the linker level
 typedef	refexport_t	(*GetRefAPI_t) (refimport_t);

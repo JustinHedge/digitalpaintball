@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "gl_cin.h"
 #ifdef WIN32
-#include "jpeglib.h"
+#include "jpeg/jpeglib.h"
 #else
 #include <jpeglib.h>
 #endif
@@ -1114,14 +1114,21 @@ void GL_MipMap (byte *in, int width, int height)
 	height >>= 1;
 	out = in;
 
-	for (i=0; i<height; i++, in+=width)
+	for (i = 0; i < height; i++, in += width)
 	{
-		for (j=0; j<width; j+=8, out+=4, in+=8)
+		for (j = 0; j < width; j += 8, out += 4, in += 8)
 		{
 			out[0] = (in[0] + in[4] + in[width+0] + in[width+4]) >> 2;
 			out[1] = (in[1] + in[5] + in[width+1] + in[width+5]) >> 2;
 			out[2] = (in[2] + in[6] + in[width+2] + in[width+6]) >> 2;
 			out[3] = (in[3] + in[7] + in[width+3] + in[width+7]) >> 2;
+
+			// jitmipmap -- a little hack to make alpha things like fences not disappear in the distance
+			if (in[7] > out[3])
+				out[3] = (in[7] + out[3]) >> 1;
+
+			if (in[width + 3] > out[3])
+				out[3] = (in[width + 3] + out[3]) >> 1;
 		}
 	}
 }

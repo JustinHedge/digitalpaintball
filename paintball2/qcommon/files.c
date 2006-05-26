@@ -308,22 +308,34 @@ void CDAudio_Stop (void);
 #define	MAX_READ	0x10000		// read in blocks of 64k
 void FS_Read (void *buffer, int len, FILE *f)
 {
+	int read;
+
+	read = fread(buffer, 1, len, f); // jit - optimized code a little.
+
+	if (read < len)
+		Com_Error(ERR_FATAL, "FS_Read: %d bytes read, should have been %d", read, len);
+
+#if 0 // old code
 	int		block, remaining;
 	int		read;
 	byte	*buf;
 	int		tries;
 
-	buf =(byte *)buffer;
+	buf = (byte *)buffer;
 
 	// read in chunks for progress bar
 	remaining = len;
 	tries = 0;
-	while(remaining)
+
+	while (remaining)
 	{
 		block = remaining;
+
 		if (block > MAX_READ)
 			block = MAX_READ;
+
 		read = fread(buf, 1, block, f);
+
 		if (read == 0)
 		{
 			// we might have been trying to read from a CD
@@ -333,17 +345,19 @@ void FS_Read (void *buffer, int len, FILE *f)
 				CDAudio_Stop();
 			}
 			else
+			{
 				Com_Error(ERR_FATAL, "FS_Read: 0 bytes read");
+			}
 		}
 
 		if (read == -1)
 			Com_Error(ERR_FATAL, "FS_Read: -1 bytes read");
 
 		// do some progress bar thing here...
-
 		remaining -= read;
 		buf += read;
 	}
+#endif
 }
 
 /*
@@ -401,7 +415,7 @@ int FS_LoadFile (const char *path, void **buffer)
 
 	return len;
 
-#else // linux lacks some of Windows' cooler features.;)
+#else
 	FILE	*h;
 	byte	*buf;
 	int		len;

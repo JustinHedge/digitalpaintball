@@ -58,7 +58,7 @@ cvar_t	*gl_debug; // jit
 cvar_t	*gl_sgis_generate_mipmap;
 cvar_t	*gl_arb_fragment_program; // jit
 
-void R_Clear(void);
+void R_Clear (void);
 
 viddef_t	vid;
 
@@ -1470,9 +1470,7 @@ void R_RenderFrame (refdef_t *fd)
 
 void R_Register(void)
 {
-	// frame dump - MrG
-	cl_animdump = ri.Cvar_Get("cl_animdump","0",0);
-
+	cl_animdump = ri.Cvar_Get("cl_animdump", "0", 0); // frame dump - MrG
 	r_lefthand = ri.Cvar_Get("hand", "0", CVAR_USERINFO | CVAR_ARCHIVE);
 	r_norefresh = ri.Cvar_Get("r_norefresh", "0", 0);
 	r_fullbright = ri.Cvar_Get("r_fullbright", "0", 0);
@@ -1482,12 +1480,9 @@ void R_Register(void)
 	r_nocull = ri.Cvar_Get("r_nocull", "0", 0);
 	r_lerpmodels = ri.Cvar_Get("r_lerpmodels", "1", 0);
 	r_speeds = ri.Cvar_Get("r_speeds", "0", 0);
-
 	r_lightlevel = ri.Cvar_Get("r_lightlevel", "0", 0);
-
 	gl_nosubimage = ri.Cvar_Get("gl_nosubimage", "0", 0);
 	gl_allow_software = ri.Cvar_Get("gl_allow_software", "0", CVAR_ARCHIVE); // jits - archive this now
-
 	gl_particle_min_size = ri.Cvar_Get("gl_particle_min_size", "2", CVAR_ARCHIVE);
 	gl_particle_max_size = ri.Cvar_Get("gl_particle_max_size", "40", CVAR_ARCHIVE);
 	gl_particle_size = ri.Cvar_Get("gl_particle_size", "40", CVAR_ARCHIVE);
@@ -1507,9 +1502,7 @@ void R_Register(void)
 	gl_textshadow = ri.Cvar_Get("gl_textshadow", "1", CVAR_ARCHIVE); // jittext
 	gl_hash_textures = ri.Cvar_Get("gl_hash_textures", "1", CVAR_ARCHIVE); // jithash
 	gl_free_unused_textures = ri.Cvar_Get("gl_free_unused_textures", "1", CVAR_ARCHIVE); // jitfreeunused
-	
 	cl_hudscale = ri.Cvar_Get("cl_hudscale", "2", CVAR_ARCHIVE); // jithudscale
-
 	gl_log = ri.Cvar_Get("gl_log", "0", 0);
 	gl_bitdepth = ri.Cvar_Get("gl_bitdepth", "0", 0);
 	gl_mode = ri.Cvar_Get("gl_mode", "3", CVAR_ARCHIVE);
@@ -1538,40 +1531,29 @@ void R_Register(void)
 	gl_texturealphamode = ri.Cvar_Get("gl_texturealphamode", "default", CVAR_ARCHIVE);
 	gl_texturesolidmode = ri.Cvar_Get("gl_texturesolidmode", "default", CVAR_ARCHIVE);
 	gl_lockpvs = ri.Cvar_Get("gl_lockpvs", "0", 0);
-
 	gl_vertex_arrays = ri.Cvar_Get("gl_vertex_arrays", "0", CVAR_ARCHIVE);
-
 	gl_ext_multitexture = ri.Cvar_Get("gl_ext_multitexture", "1", CVAR_ARCHIVE);
 	gl_ext_pointparameters = ri.Cvar_Get("gl_ext_pointparameters", "1", CVAR_ARCHIVE);
 	gl_ext_compiled_vertex_array = ri.Cvar_Get("gl_ext_compiled_vertex_array", "1", CVAR_ARCHIVE);
 	gl_ext_texture_compression = ri.Cvar_Get("gl_ext_texture_compression", "0", CVAR_ARCHIVE); // Heffo - ARB Texture Compression
-
 	gl_screenshot_jpeg = ri.Cvar_Get("gl_screenshot_jpeg", "1", CVAR_ARCHIVE);					// Heffo - JPEG Screenshots
 	gl_screenshot_jpeg_quality = ri.Cvar_Get("gl_screenshot_jpeg_quality", "85", CVAR_ARCHIVE);	// Heffo - JPEG Screenshots
-
 	gl_stainmaps = ri.Cvar_Get("gl_stainmaps", "1", CVAR_ARCHIVE);	// stainmaps
 	gl_motionblur = ri.Cvar_Get("gl_motionblur", "0", CVAR_ARCHIVE);	// motionblur
 	vid_gamma_hw = ri.Cvar_Get("vid_gamma_hw", "0", CVAR_ARCHIVE);		// hardware gamma
-
 	gl_drawbuffer = ri.Cvar_Get("gl_drawbuffer", "GL_BACK", 0);
 	gl_swapinterval = ri.Cvar_Get("gl_swapinterval", "1", CVAR_ARCHIVE);
-
 	gl_saturatelighting = ri.Cvar_Get("gl_saturatelighting", "0", 0);
-
 	gl_3dlabs_broken = ri.Cvar_Get("gl_3dlabs_broken", "1", CVAR_ARCHIVE);
-
 	vid_fullscreen = ri.Cvar_Get("vid_fullscreen", "0", CVAR_ARCHIVE);
 	vid_gamma = ri.Cvar_Get("vid_gamma", "1.0", CVAR_ARCHIVE);
 	vid_lighten = ri.Cvar_Get("vid_lighten", "0", CVAR_ARCHIVE); // jitgamma
 	vid_ref = ri.Cvar_Get("vid_ref", "pbgl", CVAR_ARCHIVE);
-
 	r_caustics = ri.Cvar_Get("r_caustics", "2", CVAR_ARCHIVE); // jitcaustics
 	r_reflectivewater = ri.Cvar_Get("r_reflectivewater", "1", CVAR_ARCHIVE); // jitwater
 	r_reflectivewater_debug = ri.Cvar_Get("r_reflectivewater_debug", "0", 0); // jitwater
 	r_reflectivewater_max = ri.Cvar_Get("r_reflectivewater_max", "2", CVAR_ARCHIVE); // jitwater
-
 	r_oldmodels = ri.Cvar_Get("r_oldmodels", "0", CVAR_ARCHIVE); // jit
-
 	ri.Cmd_AddCommand("imagelist", GL_ImageList_f);
 	ri.Cmd_AddCommand("screenshot", GL_ScreenShot_f);
 	ri.Cmd_AddCommand("modellist", Mod_Modellist_f);
@@ -1611,6 +1593,7 @@ qboolean R_SetMode (void)
 			ri.Cvar_SetValue("vid_fullscreen", 0);
 			vid_fullscreen->modified = false;
 			ri.Con_Printf(PRINT_ALL, "ref_gl::R_SetMode() - fullscreen unavailable in this mode\n");
+
 			if ((err = GLimp_SetMode(&vid.width, &vid.height, gl_mode->value, false)) == rserr_ok)
 				return true;
 		}
@@ -2489,7 +2472,6 @@ int		Draw_GetStates (void);
 /*
 @@@@@@@@@@@@@@@@@@@@@
 GetRefAPI
-
 @@@@@@@@@@@@@@@@@@@@@
 */
 
@@ -2498,18 +2480,14 @@ refexport_t GetRefAPI (refimport_t rimp)
 	refexport_t	re;
 
 	ri = rimp;
-
 	re.api_version = API_VERSION;
-
 	re.BeginRegistration = R_BeginRegistration;
 	re.RegisterModel = R_RegisterModel;
 	re.RegisterSkin = R_RegisterSkin;
 	re.RegisterPic = Draw_FindPic;
 	re.SetSky = R_SetSky;
 	re.EndRegistration = R_EndRegistration;
-
 	re.RenderFrame = R_RenderFrame;
-
 	re.DrawGetPicSize = Draw_GetPicSize;
 	re.DrawPic = Draw_Pic;
 	re.DrawStretchPic = Draw_StretchPic;
@@ -2517,9 +2495,7 @@ refexport_t GetRefAPI (refimport_t rimp)
 	re.DrawTileClear = Draw_TileClear;
 	re.DrawFill = Draw_Fill;
 	re.DrawFadeScreen= Draw_FadeScreen;
-
 	re.DrawStretchRaw = Draw_StretchRaw;
-
 	re.DrawFindPic = Draw_FindPic;
 	re.DrawPic2 = Draw_Pic2;
 	re.DrawStretchPic2 = Draw_StretchPic2;
@@ -2527,16 +2503,12 @@ refexport_t GetRefAPI (refimport_t rimp)
 	re.DrawString = Draw_String;
 	re.DrawStringAlpha = Draw_StringAlpha;
 	re.DrawGetStates = Draw_GetStates;
-
 	re.Init = R_Init;
 	re.Shutdown = R_Shutdown;
-
 	re.CinematicSetPalette = R_SetPalette;
 	re.BeginFrame = R_BeginFrame;
 	re.EndFrame = GLimp_EndFrame;
-
 	re.AppActivate = GLimp_AppActivate;
-
 	Swap_Init();
 
 	return re;

@@ -490,6 +490,7 @@ void CL_ParseLayout (void);
 // cl_main
 //
 extern	refexport_t	re;		// interface to refresh .dll
+extern	testexport_t e;
 
 void CL_Init (void);
 

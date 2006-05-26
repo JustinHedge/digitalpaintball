@@ -37,6 +37,7 @@ float	g_last_known_fov = 90.0f;	// jit - default to 90.
 void MYgluPerspective (GLdouble fovy, GLdouble aspect,
 		     GLdouble zNear, GLdouble zFar); // jit
 void GL_MipMap (byte *in, int width, int height); // jit
+void R_Clear (void); // jitwater
 
 
 /*

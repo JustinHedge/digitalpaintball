@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "gl_local.h"
 #ifdef WIN32
-#include "jpeglib.h" //Heffo - JPEG Screenshots
+#include "jpeg/jpeglib.h" //Heffo - JPEG Screenshots
 #else
 #include <jpeglib.h>
 #endif

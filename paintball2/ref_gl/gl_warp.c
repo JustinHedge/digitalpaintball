@@ -73,58 +73,66 @@ void SubdividePolygon (int numverts, float *verts)
 	float	total_s, total_t;
 
 	if (numverts > 60)
-		ri.Sys_Error (ERR_DROP, "numverts = %i", numverts);
+		ri.Sys_Error(ERR_DROP, "numverts = %i", numverts);
 
-	BoundPoly (numverts, verts, mins, maxs);
+	BoundPoly(numverts, verts, mins, maxs);
 
-	for (i=0; i<3; i++)
+	for (i = 0; i < 3; i++)
 	{
-		m = (mins[i] + maxs[i]) * 0.5;
-		m = SUBDIVIDE_SIZE * floor (m/SUBDIVIDE_SIZE + 0.5f);
+		m = (mins[i] + maxs[i]) * 0.5f;
+		m = SUBDIVIDE_SIZE * floor(m / SUBDIVIDE_SIZE + 0.5f);
+
 		if (maxs[i] - m < 8)
 			continue;
+
 		if (m - mins[i] < 8)
 			continue;
 
 		// cut it
 		v = verts + i;
-		for (j=0; j<numverts; j++, v+= 3)
+
+		for (j = 0; j < numverts; j++, v += 3)
 			dist[j] = *v - m;
 
 		// wrap cases
 		dist[j] = dist[0];
-		v-=i;
+		v -= i;
 		VectorCopy (verts, v);
 		f = b = 0;
 		v = verts;
 
-		for (j=0; j<numverts; j++, v+= 3)
+		for (j = 0; j < numverts; j++, v += 3)
 		{
 			if (dist[j] >= 0)
 			{
 				VectorCopy (v, front[f]);
 				f++;
 			}
+
 			if (dist[j] <= 0)
 			{
 				VectorCopy (v, back[b]);
 				b++;
 			}
+
 			if (dist[j] == 0 || dist[j+1] == 0)
 				continue;
+
 			if ((dist[j] > 0) != (dist[j+1] > 0))
 			{
 				// clip point
 				frac = dist[j] / (dist[j] - dist[j+1]);
-				for (k=0; k<3; k++)
+
+				for (k = 0; k < 3; k++)
 					front[f][k] = back[b][k] = v[k] + frac*(v[3+k] - v[k]);
+
 				f++;
 				b++;
 			}
 		}
 
-		SubdividePolygon (f, front[0]);
-		SubdividePolygon (b, back[0]);
+		SubdividePolygon(f, front[0]);
+		SubdividePolygon(b, back[0]);
 		return;
 	}
 

@@ -1216,15 +1216,16 @@ void *Z_TagMalloc (int size, int tag)
 	
 	size = size + sizeof(zhead_t);
 	z = malloc(size);
+
 	if (!z)
-		Com_Error (ERR_FATAL, "Z_Malloc: failed on allocation of %i bytes",size);
-	memset (z, 0, size);
+		Com_Error (ERR_FATAL, "Z_Malloc: failed on allocation of %i bytes", size);
+
+	memset(z, 0, size);
 	z_count++;
 	z_bytes += size;
 	z->magic = Z_MAGIC;
 	z->tag = tag;
 	z->size = size;
-
 	z->next = z_chain.next;
 	z->prev = &z_chain;
 	z_chain.next->prev = z;
@@ -1240,67 +1241,12 @@ Z_Malloc
 */
 void *Z_Malloc (int size)
 {
-	return Z_TagMalloc (size, 0);
+	return Z_TagMalloc(size, 0);
 }
 
 
 //============================================================================
 
-
-/*
-====================
-COM_BlockSequenceCheckByte
-
-For proxy protecting
-
-// THIS IS MASSIVELY BROKEN!  CHALLENGE MAY BE NEGATIVE
-// DON'T USE THIS FUNCTION!!!!!
-
-====================
-*/
-byte	COM_BlockSequenceCheckByte (byte *base, int length, int sequence, int challenge)
-{
-	Sys_Error("COM_BlockSequenceCheckByte called\n");
-
-#if 0
-	int		checksum;
-	byte	buf[68];
-	byte	*p;
-	float temp;
-	byte c;
-
-	temp = bytedirs[(sequence*0.33333333) % NUMVERTEXNORMALS][sequence % 3];
-	temp = LittleFloat(temp);
-	p = ((byte *)&temp);
-
-	if (length > 60)
-		length = 60;
-	memcpy (buf, base, length);
-
-	buf[length] = (sequence & 0xff) ^ p[0];
-	buf[length+1] = p[1];
-	buf[length+2] = ((sequence>>8) & 0xff) ^ p[2];
-	buf[length+3] = p[3];
-
-	temp = bytedirs[((sequence+challenge)*0.33333333) % NUMVERTEXNORMALS][(sequence+challenge) % 3];
-	temp = LittleFloat(temp);
-	p = ((byte *)&temp);
-
-	buf[length+4] = (sequence & 0xff) ^ p[3];
-	buf[length+5] = (challenge & 0xff) ^ p[2];
-	buf[length+6] = ((sequence>>8) & 0xff) ^ p[1];
-	buf[length+7] = ((challenge >> 7) & 0xff) ^ p[0];
-
-	length += 8;
-
-	checksum = LittleLong(Com_BlockChecksum (buf, length));
-
-	checksum &= 0xff;
-
-	return checksum;
-#endif
-	return 0;
-}
 
 static byte chktbl[1024] = {
 0x84, 0x47, 0x51, 0xc1, 0x93, 0x22, 0x21, 0x24, 0x2f, 0x66, 0x60, 0x4d, 0xb0, 0x7c, 0xda,
@@ -1384,7 +1330,6 @@ byte	COM_BlockSequenceCRCByte (byte *base, int length, int sequence)
 	byte chkb[60 + 4];
 	unsigned short crc;
 
-
 	if (sequence < 0)
 		Sys_Error("sequence < 0, this shouldn't happen\n");
 
@@ -1392,18 +1337,16 @@ byte	COM_BlockSequenceCRCByte (byte *base, int length, int sequence)
 
 	if (length > 60)
 		length = 60;
-	memcpy (chkb, base, length);
 
+	memcpy(chkb, base, length);
 	chkb[length] = p[0];
 	chkb[length+1] = p[1];
 	chkb[length+2] = p[2];
 	chkb[length+3] = p[3];
-
 	length += 4;
-
 	crc = CRC_Block(chkb, length);
 
-	for (x=0, n=0; n<length; n++)
+	for (x = 0, n = 0; n < length; n++)
 		x += chkb[n];
 
 	crc = (crc ^ x) & 0xff;

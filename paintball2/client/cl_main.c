@@ -74,9 +74,7 @@ cvar_t	*cl_drawlocs;
 cvar_t	*loc_here;
 cvar_t	*loc_there;
 
-//
 // userinfo
-//
 cvar_t	*build; // jitversion
 cvar_t	*info_password;
 cvar_t	*info_spectator;
@@ -87,10 +85,7 @@ cvar_t	*fov;
 cvar_t	*msg;
 cvar_t	*hand;
 cvar_t	*gender;
-cvar_t	*gender_auto;
-
 cvar_t	*cl_vwep;
-
 cvar_t	*cl_drawfps; // drawfps - MrG
 cvar_t	*cl_drawpps; // jitnetfps
 cvar_t	*cl_centerprintkills;
@@ -99,7 +94,6 @@ cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_drawhud; // jithud
 cvar_t	*cl_language; // jittrans
 cvar_t	*r_oldmodels;
-
 cvar_t	*serverlist_source; // jitserverlist / jitmenu
 cvar_t	*serverlist_source2; // jitserverlist / jitmenu
 cvar_t	*serverlist_source3; // jitserverlist / jitmenu
@@ -1814,7 +1808,6 @@ void CL_InitLocal (void)
 	hand =				Cvar_Get("hand", "0", CVAR_USERINFO | CVAR_ARCHIVE);
 	fov =				Cvar_Get("fov", "90", CVAR_USERINFO | CVAR_ARCHIVE);
 	gender =			Cvar_Get("gender", "male", CVAR_USERINFO | CVAR_ARCHIVE);
-	gender_auto =		Cvar_Get("gender_auto", "1", CVAR_ARCHIVE);
 	gender->modified =	false; // clear this so we know when user sets it manually
 	cl_vwep =			Cvar_Get("cl_vwep", "1", CVAR_ARCHIVE);
 
