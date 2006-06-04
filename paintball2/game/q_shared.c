@@ -1867,44 +1867,47 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 	unsigned char c; // jittext
 	int		maxsize = MAX_INFO_STRING;
 
-	if (strstr (key, "\\") || strstr (value, "\\") )
+	if (strstr(key, "\\") || strstr(value, "\\"))
 	{
-		Com_Printf ("Can't use keys or values with a \\\n");
+		Com_Printf("Can't use keys or values with a \\\n");
 		return;
 	}
 
-	if (strstr (key, ";") )
+	if (strstr(key, ";"))
 	{
-		Com_Printf ("Can't use keys or values with a semicolon\n");
+		Com_Printf("Can't use keys or values with a semicolon\n");
 		return;
 	}
 
-	if (strstr (key, "\"") || strstr (value, "\"") )
+	if (strstr(key, "\"") || strstr(value, "\""))
 	{
-		Com_Printf ("Can't use keys or values with a \"\n");
+		Com_Printf("Can't use keys or values with a \"\n");
 		return;
 	}
 
 	if (strlen(key) > MAX_INFO_KEY-1 || strlen(value) > MAX_INFO_KEY-1)
 	{
-		Com_Printf ("Keys and values must be < 64 characters.\n");
+		Com_Printf("Keys and values must be < 64 characters.\n");
 		return;
 	}
-	Info_RemoveKey (s, key);
+
+	Info_RemoveKey(s, key);
+
 	if (!value || !strlen(value))
 		return;
 
-	Com_sprintf (newi, sizeof(newi), "\\%s\\%s", key, value);
+	Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, value);
 
 	if (strlen(newi) + strlen(s) > maxsize)
 	{
-		Com_Printf ("Info string length exceeded\n");
+        Com_Printf("Info string length exceeded %s -- %s -- %s\n", s, key, value);
 		return;
 	}
 
 	// only copy ascii values
 	s += strlen(s);
 	v = newi;
+
 	while (*v)
 	{
 		c = *v++;
@@ -1913,6 +1916,7 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 		if (c >= 32) // jittext
 			*s++ = c;
 	}
+
 	*s = 0;
 }
 
