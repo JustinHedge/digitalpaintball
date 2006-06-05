@@ -2228,6 +2228,28 @@ static void CL_VerifyContent (void)
 }
 // jit ===
 
+// === jitkeyboard
+#ifdef _WIN32
+extern byte *scantokey[128];
+void KB_Init (void)
+{
+	char	path[MAX_QPATH];
+	FILE	*f;
+	cvar_t	*keyboard;
+
+	keyboard = Cvar_Get("cl_keyboard", "qwerty", CVAR_ARCHIVE);
+	Com_sprintf(path, sizeof(path), "%s/configs/%s.kbd", FS_Gamedir(), keyboard->string);
+	f = fopen(path, "rb");
+
+	if (f)
+	{
+		fread(scantokey, 1, 128, f);
+		fclose(f);
+	}
+}
+#endif
+// jit ===
+
 /*
 ====================
 CL_Init
@@ -2265,6 +2287,10 @@ void CL_Init (void)
 	CDAudio_Init();
 	CL_InitLocal();
 	IN_Init();
+	
+#ifdef _WIN32
+	KB_Init(); // jitkeyboard -- init keyboard layout
+#endif
 
 	FS_ExecAutoexec();
 	Con_ToggleConsole_f(); // jitspoe -- start with console down

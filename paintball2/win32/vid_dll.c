@@ -32,6 +32,7 @@ refexport_t	re;
 testexport_t e;
 
 cvar_t *win_noalttab;
+cvar_t *cl_customkeyboard; // jitkeyboard
 
 #ifndef WM_MOUSEWHEEL
 #define WM_MOUSEWHEEL (WM_MOUSELAST+1)  // message that will be supported by the OS 
@@ -202,7 +203,7 @@ int MapKey (int key)
 		is_extended = true;
 
 	result = scantokey[modified];
-//todo
+
 	if (!is_extended)
 	{
 		switch (result)
@@ -311,6 +312,9 @@ int Sys_MapKeyModified (int vk, int key)
 	byte alt_result[4];
 	static byte State[256];
 	static byte AltState[256];
+
+	if (cl_customkeyboard->value)
+		return MapKey(key);
 
 	if (key & (1 << 24))
 		is_extended = true;
@@ -845,11 +849,10 @@ qboolean VID_LoadRefresh (char *name)
 		GetTestAPI = (void*)GetProcAddress(testlib, "i");
 
 	re = GetRefAPI(ri);
+	memset(&e, 0, sizeof(e));
 
 	if (GetTestAPI)
 		e = GetTestAPI(i);
-	else
-		memset(&e, 0, sizeof(e));
 
 	if (re.api_version != API_VERSION)
 	{
@@ -1010,6 +1013,7 @@ void VID_Init (void)
 	Cvar_Get("vid_lighten", "0", CVAR_ARCHIVE); // jitgamma
 	Cvar_Get("gl_screenshot_applygamma", "1", CVAR_ARCHIVE); // jitgamma
 	win_noalttab = Cvar_Get("win_noalttab", "0", CVAR_ARCHIVE);
+	cl_customkeyboard = Cvar_Get("cl_customkeyboard", "0", CVAR_ARCHIVE); // jitkeyboard
 
 	/* Add some console commands that we want to handle */
 	Cmd_AddCommand("vid_restart", VID_Restart_f);
