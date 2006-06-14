@@ -182,7 +182,7 @@ char *Sys_FindFirst (char *path, unsigned musthave, unsigned canthave )
 		Sys_Error ("Sys_BeginFind without close");
 	findhandle = 0;
 
-	COM_FilePath (path, findbase);
+	COM_FilePath(path, findbase);
 	findhandle = _findfirst(path, &findinfo);
 
 	while ((findhandle != -1))

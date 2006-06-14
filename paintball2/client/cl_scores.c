@@ -113,8 +113,8 @@ void init_cl_scores (void)
 
 	for (i=0; i<MAX_CLIENTS; i++)
 	{
-		cl_scores_nums[i] = Z_Malloc(sizeof(char)*4);
-		cl_scores_info[i] = Z_Malloc(sizeof(char)*64);
+		cl_scores_nums[i] = Z_Malloc(sizeof(char) * 4);
+		cl_scores_info[i] = Z_Malloc(sizeof(char) * MAX_SCOREBOARD_STRING);
 	}
 
 	memset(cl_scores, 0, sizeof(cl_scores));
@@ -353,7 +353,7 @@ qboolean cl_scores_prep_select_widget (void)
 	{
 		j = cl_sorted_scorelist[i];
 		Com_sprintf(cl_scores_nums[i], 4, "%d", j);
-		Com_sprintf(cl_scores_info[i], 64, "%c%c%s",
+		Com_sprintf(cl_scores_info[i], MAX_SCOREBOARD_STRING, "%c%c%s",
 			cl_scores[j].hasflag ? 25 : cl_scores[j].isalive ? 26 : ' ',
 			splat(cl_scores[j].team), name_from_index(j));
 		len_noformat = strlen_noformat(cl_scores_info[i]);
@@ -382,10 +382,10 @@ qboolean cl_scores_prep_select_widget (void)
 			cl_scores_info[i][MAX_NAME_WIDTH+format_diff] = '\0';
 		}
 
-		Com_sprintf(cl_scores_info[i], 64, "%-" MAX_NAME_WIDTH_S "s%4d%3d%3d%3d%2d%3d",
+		Com_sprintf(cl_scores_info[i], MAX_SCOREBOARD_STRING, "%-" MAX_NAME_WIDTH_S "s%4d%3d%3d%3d%2d%3d",
 			cl_scores_info[i], cl_scores[j].ping, cl_scores[j].kills,
 			cl_scores[j].deaths, cl_scores[j].grabs, cl_scores[j].caps,
-			(cl.frame.servertime/1000 - cl_scores[j].starttime)/60);
+ 			(cl.frame.servertime/1000 - cl_scores[j].starttime)/60);
 	}
 
 	cl_scores_modified = false;

@@ -341,7 +341,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 	}
 	else
 	{
-		sprintf(event_text, "(null)");
+		strcpy(event_text, "(null)");
 	}
 
 	if (cl_timestamp->value)
@@ -387,9 +387,9 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		if (num_elements > 2 && index_array[2] == cl.playernum)
 		{
 			if (num_elements > 3)
-				sprintf(event_text, "Admin (%s) killed you.", name_from_index(index_array[3]));
+				Com_sprintf(event_text, sizeof(event_text), "Admin (%s) killed you.", name_from_index(index_array[3]));
 			else
-				sprintf(event_text, "Admin killed you.");
+				strcpy(event_text, "Admin killed you.");
 
 			event_print(event_text);
 		}
@@ -409,10 +409,10 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 			break;
 		
 		if (index_array[2] == cl.playernum)
-			sprintf(event_text, "You eliminated %s (%s).",
+			Com_sprintf(event_text, sizeof(event_text), "You eliminated %s (%s).",
 				name_from_index(index_array[4]), item_from_index(index_array[5]));
 		else if (index_array[4] == cl.playernum)
-			sprintf(event_text, "%s (%s) eliminated you.",
+			Com_sprintf(event_text, sizeof(event_text), "%s (%s) eliminated you.",
 				name_from_index(index_array[2]), item_from_index(index_array[3]));
 		else
 			break;
@@ -433,7 +433,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 
 		if (index_array[2] == cl.playernum)
 		{
-			sprintf(event_text, "You eliminated yourself!");
+			Com_sprintf(event_text, sizeof(event_text), "You eliminated yourself!");
 
 			if (cl_centerprintkills->value)
 				event_print(event_text);
@@ -447,9 +447,9 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		cl_scores_setisalive(index_array[3], false);
 
 		if (index_array[2] == cl.playernum)
-			sprintf(event_text, "%cYou eliminated your teammate!", CHAR_ITALICS);
+			Com_sprintf(event_text, sizeof(event_text), "%cYou eliminated your teammate!", CHAR_ITALICS);
 		else if (index_array[3] == cl.playernum)
-			sprintf(event_text, "Your teammate (%s) eliminated you.", name_from_index(index_array[2]));
+			Com_sprintf(event_text, sizeof(event_text), "Your teammate (%s) eliminated you.", name_from_index(index_array[2]));
 		else
 			break;
 

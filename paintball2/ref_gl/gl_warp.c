@@ -916,7 +916,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 	if (fogenabled) // so people can't shut fog off.
 		return;
 
-	strncpy (skyname, name, sizeof(skyname)-1);
+	Q_strncpyz(skyname, name, sizeof(skyname)-1);
 	skyrotate = rotate;
 	VectorCopy (axis, skyaxis);
 			

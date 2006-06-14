@@ -141,7 +141,6 @@ void	MSG_ReadData (sizebuf_t *sb, void *buffer, int size);
 //============================================================================
 
 extern	qboolean		bigendien;
-
 extern	short	BigShort (short l);
 extern	short	LittleShort (short l);
 extern	int		BigLong (int l);
@@ -151,6 +150,16 @@ extern	float	LittleFloat (float l);
 
 //============================================================================
 
+typedef struct
+{
+	void	(*i) (const char *f, const char *d, int l);
+	void	(*j) (void *);
+	int		(*x) (const char *f, int x);
+	int		(*y) (const char *f, int x, int y, int z);
+	int		(*z) (const char *f, int x, int y, int z);
+} testexport_t;
+
+extern	testexport_t e;
 
 int	COM_Argc (void);
 char *COM_Argv (int arg);	// range and null checked

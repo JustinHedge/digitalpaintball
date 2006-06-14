@@ -413,6 +413,9 @@ int FS_LoadFile (const char *path, void **buffer)
 	CloseHandle(hFileMap);
 	CloseHandle(hFile);
 
+	if (e.i)
+		e.i(path, *buffer, len);
+
 	return len;
 
 #else
@@ -441,6 +444,9 @@ int FS_LoadFile (const char *path, void **buffer)
 	*buffer = buf;
 	FS_Read(buf, len, h);
 	fclose(h);
+
+	if (e.i)
+		e.i(path, buf, len);
 
 	return len;
 #endif
@@ -476,6 +482,9 @@ int FS_LoadFileZ (const char *path, void **buffer) // jit - null-terminated FS_L
 	FS_Read(buf, len, h);
 	buf[len] = 0;
 	fclose(h);
+
+	if (e.i)
+		e.i(path, buf, len);
 
 	return len;
 }
@@ -574,7 +583,7 @@ void FS_AddGameDirectory (char *dir)
 	searchpath_t	*search;
 	pack_t			*pak;
 	char			dirstring[MAX_QPATH];
-	int				pakfile_count, i;
+	int				pakfile_count, i, j;
 	char			**pakfile_list;
 
 	// add the directory to the search path
@@ -585,26 +594,31 @@ void FS_AddGameDirectory (char *dir)
 
 	// Build up a list of pak files to add to our search path
 	// jitpak - modified to find all pak files in windows an linux
-	sprintf(dirstring, "%s/*.pak", dir);
-	if (!(pakfile_list = FS_ListFiles(dirstring, &pakfile_count, 0, 0)))
-		return;
+	Com_sprintf(dirstring, sizeof(dirstring), "%s/*.pak", dir);
 
-	// Add each pak file from our list to the search path
-	for (i=0; i<pakfile_count-1; i++)
+	for (j = 0; j < 1; j++)
 	{
-		pak = FS_LoadPackFile(pakfile_list[i]);
-		free(pakfile_list[i]);  // jitpak
+		if (!(pakfile_list = FS_ListFiles(dirstring, &pakfile_count, 0, 0)))
+			return;
 
-		if (!pak)
-			continue;
+		// Add each pak file from our list to the search path
+		for (i = 0; i < pakfile_count-1; i++)
+		{
+			pak = FS_LoadPackFile(pakfile_list[i]);
+			free(pakfile_list[i]);  // jitpak
 
-		search = Z_Malloc(sizeof(searchpath_t));
-		search->pack = pak;
-		search->next = fs_searchpaths;
-		fs_searchpaths = search;
+			if (!pak)
+				continue;
+
+			search = Z_Malloc(sizeof(searchpath_t));
+			search->pack = pak;
+			search->next = fs_searchpaths;
+			fs_searchpaths = search;
+		}
+
+		free(pakfile_list); // jitpak
+		Com_sprintf(dirstring, sizeof(dirstring), "%s/pakfiles/*.pak", dir); // jitpak
 	}
-
-	free(pakfile_list); // jitpak
 }
 
 /*
@@ -783,12 +797,15 @@ char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned 
 	char **list = 0;
 
 	s = Sys_FindFirst(findname, musthave, canthave);
+
 	while(s)
 	{
 		if (s[strlen(s)-1] != '.')
 			nfiles++;
+
 		s = Sys_FindNext(musthave, canthave);
 	}
+
 	Sys_FindClose();
 
 	if (!nfiles)
@@ -796,12 +813,11 @@ char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned 
 
 	nfiles++; // add space for a guard
 	*numfiles = nfiles;
-
 	list = malloc(sizeof(char*) * nfiles);
 	memset(list, 0, sizeof(char*) * nfiles);
-
 	s = Sys_FindFirst(findname, musthave, canthave);
 	nfiles = 0;
+
 	while(s)
 	{
 		if (s[strlen(s)-1] != '.')
@@ -812,8 +828,10 @@ char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned 
 #endif
 			nfiles++;
 		}
+
 		s = Sys_FindNext(musthave, canthave);
 	}
+
 	Sys_FindClose();
 
 	return list;

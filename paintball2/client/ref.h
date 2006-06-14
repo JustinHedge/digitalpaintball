@@ -260,15 +260,6 @@ typedef struct
 
 } refexport_t;
 
-typedef struct
-{
-	void	(*i) (const char *f, const char *d, int l);
-	void	(*j) (void *);
-	int		(*x) (const char *f, int x);
-	int		(*y) (const char *f, int x, int y, int z);
-	int		(*z) (const char *f, int x, int y, int z);
-} testexport_t;
-
 //
 // these are the functions imported by the refresh module
 //

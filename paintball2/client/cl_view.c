@@ -342,7 +342,7 @@ void CL_PrepRefresh (void)
 			// special player weapon model
 			if (num_cl_weaponmodels < MAX_CLIENTWEAPONMODELS)
 			{
-				strncpy(cl_weaponmodels[num_cl_weaponmodels], cl.configstrings[CS_MODELS+i]+1,
+				Q_strncpyz(cl_weaponmodels[num_cl_weaponmodels], cl.configstrings[CS_MODELS+i]+1,
 					sizeof(cl_weaponmodels[num_cl_weaponmodels]) - 1);
 				num_cl_weaponmodels++;
 			}
@@ -433,14 +433,12 @@ float CalcFov (float fov_x, float width, float height)
 	float	a;
 	float	x;
 
-	if (fov_x < 1 || fov_x > 179)
+	if (fov_x < 1.0f || fov_x > 179.0f)
 		Com_Error(ERR_DROP, "Bad fov: %f", fov_x);
 
-	x = width/tan(fov_x*(0.002777777777778*M_PI));
-
-	a = atan(height/x);
-
-	a = a*114.59165581759554875079179651068;
+	x = width / tan(fov_x * (0.002777777777778f * (float)M_PI));
+	a = atan(height / x);
+	a *= 114.59165581759554875079179651068f;
 
 	return a;
 }
@@ -581,7 +579,7 @@ void V_RenderView (float stereo_separation)
 		cl.refdef.y = scr_vrect.y;
 		cl.refdef.width = scr_vrect.width;
 		cl.refdef.height = scr_vrect.height;
-		cl.refdef.fov_y = CalcFov (cl.refdef.fov_x, cl.refdef.width, cl.refdef.height);
+		cl.refdef.fov_y = CalcFov(cl.refdef.fov_x, cl.refdef.width, cl.refdef.height);
 		cl.refdef.time = cl.time*0.001;
 
 		cl.refdef.areabits = cl.frame.areabits;

@@ -1993,11 +1993,9 @@ static void select_strip_from_list (menu_widget_t *widget, const char *striptext
 
 	len = strlen(striptext);
 
-	for(i=0; i<widget->select_totalitems; i++)
-	{
+	for (i = 0; i < widget->select_totalitems; i++)
 		if (textpos = strstr(widget->select_list[i], striptext))
 			strcpy(textpos, textpos+len);
-	}
 }
 
 static void select_begin_file_list (menu_widget_t *widget, char *findname)
@@ -2016,7 +2014,6 @@ static menu_screen_t* M_GetNewMenuScreen(const char *menu_name, const char *back
 	memset(menu, 0, sizeof(menu_screen_t));
 	menu->name = text_copy(menu_name);
 	menu->background = re.DrawFindPic(background);
-
 	menu->next = root_menu;
 	root_menu = menu;
 

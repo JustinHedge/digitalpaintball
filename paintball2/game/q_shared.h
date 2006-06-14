@@ -302,6 +302,7 @@ char *COM_Parse (char **data_p);
 char *COM_ParseExt (char **data_p, qboolean nl); // jitrscript - from qfusion
 // data is an in/out parm, returns a parsed out token
 
+// jitodo #define sprintf(a, b, c) BAD_PROGRAMMER_DO_NOT_USE(a, b, c)
 void Com_sprintf (char *dest, int size, char *fmt, ...);
 
 void Com_PageInMemory (byte *buffer, int size);

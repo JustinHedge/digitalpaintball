@@ -69,11 +69,12 @@ int CCheckParm (char *parm)
 {
 	int             i;
 	
-	for (i=1 ; i<ccom_argc ; i++)
+	for (i = 1; i < ccom_argc; i++)
 	{
 		if (!ccom_argv[i])
 			continue;
-		if (!strcmp(parm,ccom_argv[i]))
+
+		if (!strcmp(parm, ccom_argv[i]))
 			return i;
 	}
 		

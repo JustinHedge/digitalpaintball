@@ -426,16 +426,16 @@ void Cmd_Exec_f (void)
 		return;
 	}
 
-	sprintf(configfile, "configs/%s", Cmd_Argv(1)); // jit
+	Com_sprintf(configfile, sizeof(configfile), "configs/%s", Cmd_Argv(1)); // jit
 	len = FS_LoadFile(configfile, (void **)&f); // jit
 
 	if (!f)
 	{
-		Com_Printf("couldn't exec configs/%s\n",Cmd_Argv(1));
+		Com_Printf("couldn't exec %s\n", configfile);
 		return;
 	}
 
-	Com_Printf("execing configs/%s\n", Cmd_Argv(1));
+	Com_Printf("execing %s\n", configfile);
 	
 	// the file doesn't have a trailing 0, so we need to copy it off
 	f2 = Z_Malloc(len+2);
@@ -560,9 +560,9 @@ void WriteAliases (FILE *f)
 	cmdalias_t *a;
 	char buffer[512];
 
-	for (a=cmd_alias; a; a=a->next)
+	for (a = cmd_alias; a; a = a->next)
 	{
-		sprintf(buffer,"alias %s \"%s\n",a->name,a->value);
+		Com_sprintf(buffer, sizeof(buffer), "alias %s \"%s\n", a->name, a->value);
 		// a->name stores a \n, so replace that with ending quote
 		buffer[strlen(buffer)-2] = '\"'; 
 		fprintf (f, "%s", buffer);
@@ -714,110 +714,114 @@ char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR] - jitcvar
    char   *scan, *start;
    static   char   expanded[MAX_STRING_CHARS];
    char   temporary[MAX_STRING_CHARS];
-//   char   buffer[MAX_TOKEN_CHARS];
    char   *token;
-//   cmd_macro_t *macro;
    cvar_t   *var;
 
    inquote = false;
    scan = text;
+   len = strlen(scan);
 
-   len = strlen( scan );
-   if( len >= MAX_STRING_CHARS ) {
-      Com_Printf( "Line exceeded %i chars, discarded.\n", MAX_STRING_CHARS );
+   if (len >= MAX_STRING_CHARS)
+   {
+      Com_Printf("Line exceeded %i chars, discarded.\n", MAX_STRING_CHARS);
       return NULL;
    }
 
    count = 0;
 
-   for( i=0 ; i<len ; i++ ) {
-      if ( !scan[i] ) {
+   for (i = 0; i < len; i++)
+   {
+      if (!scan[i])
          break;
-      }
-      if ( scan[i] == '"' ) {
+
+      if (scan[i] == '"')
          inquote ^= 1;
-      }
-      if ( inquote ) {
+
+      if (inquote)
          continue;   // don't expand inside quotes
-      }
-      if ( scan[i] != '$' ) {
+
+      if (scan[i] != '$')
          continue;
-      }
       
       // scan out the complete macro
       start = scan + i + 1;
 
-      if ( !*start ) {
+      if (!*start)
          break;
-      }
 
       // convert $$text to $text and skip
-      if ( *start == '$' ) {
-         strncpy( temporary, scan, i );
-         strcpy( temporary + i, start );
-
-         strcpy( expanded, temporary );
+      if (*start == '$')
+	  {
+         strncpy(temporary, scan, i);
+         strcpy(temporary + i, start);
+         strcpy(expanded, temporary);
          scan = expanded;
          i++;
          continue;
       }
 
-	  while(*start == 32) // jitcvar - remove whitespace between $ and cvar name
+	  while (*start == 32) // jitcvar - remove whitespace between $ and cvar name
 		  start++;
 
       // allow $var$ scripting
       token = temporary;
-      while( *start > 32 ) {
+
+      while (*start > 32)
+	  {
          *token++ = *start++;
-         if ( *start == '$' ) {
+
+         if (*start == '$')
+		 {
             start++;
             break;
          }
       }
       *token = 0;
 
-      if ( token == temporary ) {
+      if (token == temporary)
          continue;
-      }
 
 	  // check for macros first
-      /*macro = Cmd_MacroFind( temporary );
-      if ( macro ) {
-         macro->function( buffer, sizeof( buffer ) );
-         token = buffer;
-      } else {*/
-         //var = Cvar_FindVar( temporary );
-		 var = Cvar_Get(temporary, 0, 0); // jit (don't have that func)
-		 if( var ) { //&& !(var->flags & CVAR_PRIVATE)) {
-            token = var->string;
-         } else {
-            token = "";
-         }
-      //}
+	  /*macro = Cmd_MacroFind( temporary );
+	  if ( macro ) {
+	  macro->function( buffer, sizeof( buffer ) );
+	  token = buffer;
+	  } else {*/
+	  //var = Cvar_FindVar( temporary );
+	  var = Cvar_Get(temporary, 0, 0); // jit (don't have that func)
 
-      j = strlen( token );
+	  if (var) //&& !(var->flags & CVAR_PRIVATE)) {
+		  token = var->string;
+	  else
+		  token = "";
+	  //}
+
+      j = strlen(token);
       len += j;
-      if ( len >= MAX_STRING_CHARS ) {
-         Com_Printf( "Expanded line exceeded %i chars, discarded.\n", MAX_STRING_CHARS );
+
+      if (len >= MAX_STRING_CHARS)
+	  {
+         Com_Printf("Expanded line exceeded %i chars, discarded.\n", MAX_STRING_CHARS );
          return NULL;
       }
 
-      strncpy( temporary, scan, i );
-      strcpy( temporary + i, token );
-      strcpy( temporary + i + j, start );
-
-      strcpy( expanded, temporary );
+      strncpy(temporary, scan, i);
+      strcpy(temporary + i, token);
+      strcpy(temporary + i + j, start);
+      strcpy(expanded, temporary);
       scan = expanded;
       i--;
 
-      if ( ++count == 100 ) {
-         Com_Printf( "Macro expansion loop, discarded.\n" );
+      if (++count == 100)
+	  {
+         Com_Printf("Macro expansion loop, discarded.\n");
          return NULL;
       }
    }
 
-   if( inquote ) {
-      Com_Printf( "Line has unmatched quote, discarded.\n" );
+   if (inquote)
+   {
+      Com_Printf("Line has unmatched quote, discarded.\n");
       return NULL;
    }
 
@@ -870,7 +874,7 @@ char *Cmd_MacroExpandString (char *text)
 			return NULL;
 		}
 
-		strncpy (temporary, scan, i);
+		Q_strncpyz(temporary, scan, i);
 		strcpy (temporary+i, token);
 		strcpy (temporary+i+j, start);
 
@@ -948,7 +952,7 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 
 			//strcpy(cmd_args, text);
 			// Note: the following shouldn't really be necessary with Echon's fix, but I decided to leave it in.
-			strncpy(cmd_args, text, sizeof(cmd_args)-1); // jitsecurity.  buffer overflow protection by [SkulleR]
+			Q_strncpyz(cmd_args, text, sizeof(cmd_args)-1); // jitsecurity.  buffer overflow protection by [SkulleR]
 			cmd_args[sizeof(cmd_args)-1] = 0; 
 
 			// strip off any trailing whitespace

@@ -490,7 +490,6 @@ void CL_ParseLayout (void);
 // cl_main
 //
 extern	refexport_t	re;		// interface to refresh .dll
-extern	testexport_t e;
 
 void CL_Init (void);
 
@@ -595,7 +594,7 @@ void shutdown_cl_scores (void);
 #define GAMETYPE_SIEGE	3	
 #define GAMETYPE_KOTH	4
 #define GAMETYPE_ELIM	5
-
+#define MAX_SCOREBOARD_STRING 128
 //
 // cl_decode.c
 //

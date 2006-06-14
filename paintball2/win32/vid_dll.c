@@ -726,6 +726,16 @@ vidmode_t vid_modes[] =
 	{ "Mode 9: 1280x1024",  1280, 1024, 9 }, // jit
 	{ "Mode 10: 1600x1200", 1600, 1200, 10 },
 	{ "Mode 11: 2048x1536", 2048, 1536, 11 },
+	 // jit
+	{ "blah", 720, 480,   12 },
+	{ "blah", 720, 576,   13 },
+	{ "blah", 848, 480,   14 },
+	{ "blah", 960, 600,   15 },
+	{ "blah", 1088, 612,  16 },
+	{ "blah", 1280, 720,  17 },
+	{ "blah", 1280, 768,  18 },
+	{ "blah", 1280, 800,  19 },
+	{ "blah", 1680, 1050, 20 },
 	// jitodo, custom resolution
 };
 
@@ -935,7 +945,7 @@ void VID_CheckChanges (void)
 			if (!Q_streq(gl_driver->string, driverstring)) 
 			{
 				vid_ref->modified = true;
-				strncpy(driverstring, gl_driver->string, sizeof(driverstring));
+				Q_strncpyz(driverstring, gl_driver->string, sizeof(driverstring));
 			}
 
 			if (!vid_ref->modified) // jit

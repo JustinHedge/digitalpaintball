@@ -294,7 +294,7 @@ void SVC_DirectConnect (void)
 
 	qport = atoi(Cmd_Argv(2));
 	challenge = atoi(Cmd_Argv(3));
-	strncpy(userinfo, Cmd_Argv(4), sizeof(userinfo)-1);
+	Q_strncpyz(userinfo, Cmd_Argv(4), sizeof(userinfo)-1);
 	userinfo[sizeof(userinfo) - 1] = 0;
 
 	// force the IP key/value pair so the game can filter based on ip
@@ -403,7 +403,7 @@ gotnewcl:
 		}
 
 		// parse some info from the info strings
-		strncpy(newcl->userinfo, userinfo, sizeof(newcl->userinfo)-1);
+		Q_strncpyz(newcl->userinfo, userinfo, sizeof(newcl->userinfo)-1);
 		SV_UserinfoChanged(newcl);
 	}
 
@@ -939,7 +939,7 @@ void SV_UserinfoChanged (client_t *cl)
 	ge->ClientUserinfoChanged (cl->edict, cl->userinfo);
 	
 	// name for C code
-	strncpy (cl->name, Info_ValueForKey (cl->userinfo, "name"), sizeof(cl->name)-1);
+	Q_strncpyz(cl->name, Info_ValueForKey(cl->userinfo, "name"), sizeof(cl->name)-1);
 	// mask off high bit
 	// jittext for (i=0 ; i<sizeof(cl->name) ; i++)
 	// jittext	cl->name[i] &= 127;

@@ -842,18 +842,17 @@ int SignbitsForPlane (cplane_t *out)
 	int	bits, j;
 
 	// for fast box on planeside test
-
 	bits = 0;
-	for (j=0 ; j<3 ; j++)
-	{
+
+	for (j = 0; j < 3; j++)
 		if (out->normal[j] < 0)
-			bits |= 1<<j;
-	}
+			bits |= 1 << j;
+
 	return bits;
 }
 
 
-void R_SetFrustum(void)
+void R_SetFrustum (void)
 {
 	int		i;
 
@@ -866,7 +865,7 @@ void R_SetFrustum(void)
 	// rotate VPN down by FOV_X/2 degrees
 	RotatePointAroundVector(frustum[3].normal, vright, vpn, -(90 - r_newrefdef.fov_y * 0.5));
 
-	for (i=0 ; i<4 ; i++)
+	for (i = 0; i < 4; i++)
 	{
 		frustum[i].type = PLANE_ANYZ;
 		frustum[i].dist = DotProduct(r_origin, frustum[i].normal);

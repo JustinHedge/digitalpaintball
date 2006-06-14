@@ -1224,7 +1224,7 @@ void COM_FileBase (char *in, char *out)
 	else
 	{
 		s--;
-		strncpy (out,s2+1, s-s2);
+		Q_strncpyz(out,s2+1, s-s2);
 		out[s-s2] = 0;
 	}
 }
@@ -1245,7 +1245,7 @@ void COM_FilePath (char *in, char *out)
 	while (s != in && *s != '/')
 		s--;
 
-	strncpy (out,in, s-in);
+	strncpy(out, in, s-in); // Do NOT replace with Q_strncpyz
 	out[s-in] = 0;
 }
 
@@ -1740,47 +1740,69 @@ Searches the string for the given
 key and returns the associated value, or an empty string.
 ===============
 */
+#define MAX_KEY_LEN 512 // jit
 char *Info_ValueForKey (char *s, char *key)
 {
-	char	pkey[512];
-	static	char value[2][512];	// use two buffers so compares
-								// work without stomping on each other
-	static	int	valueindex;
+	char	pkey[MAX_KEY_LEN];
+	static	char value[2][MAX_KEY_LEN];	// use two buffers so compares work without stomping on each other
+	static	int	valueindex = 0;
 	char	*o;
-	
+	int		n;
+
+	if (!s || !key) // jit
+		return "";
+
 	valueindex ^= 1;
+
 	if (*s == '\\')
 		s++;
+
 	while (1)
 	{
 		o = pkey;
+		n = 0; // jit
+
 		while (*s != '\\')
 		{
 			if (!*s)
 				return "";
-			*o++ = *s++;
+
+			if (n < MAX_KEY_LEN) // jit
+				*o++ = *s;
+
+			n++;
+			s++;
 		}
+
 		*o = 0;
 		s++;
-
 		o = value[valueindex];
+		n = 0; // jit
 
 		while (*s != '\\' && *s)
 		{
 			if (!*s)
 				return "";
-			*o++ = *s++;
+
+			if (n < MAX_KEY_LEN) // jit
+				*o++ = *s;
+
+			n++;
+			s++;
 		}
+
 		*o = 0;
 
-		if (Q_streq (key, pkey) )
+		if (Q_streq(key, pkey))
 			return value[valueindex];
 
 		if (!*s)
 			return "";
+
 		s++;
 	}
 }
+
 
 void Info_RemoveKey (char *s, const char *key)
 {
@@ -1826,7 +1848,7 @@ void Info_RemoveKey (char *s, const char *key)
 
 		*o = 0;
 
-		if (!strcmp (key, pkey) )
+		if (Q_streq(key, pkey))
 		{
 			//r1: overlapping src+dst with strcpy = no
 			//strcpy (start, s);	// remove this part
@@ -1835,6 +1857,7 @@ void Info_RemoveKey (char *s, const char *key)
 			memlen = strlen(s);
 			memmove(start, s, memlen);
 			*(start+memlen) = 0;
+			Info_RemoveKey(start, key); // jit - recursively remove all keys
 			return;
 		}
 

@@ -198,7 +198,7 @@ void CMod_LoadSurfaces (lump_t *l)
 	for (i = 0; i < count; i++, in++, out++)
 	{
 		// not using Q_strncpyz because assert fails too often.  Buffer too small in c.name:
-		strncpy(out->c.name, in->texture, sizeof(out->c.name));
+		Q_strncpyz(out->c.name, in->texture, sizeof(out->c.name));
 		out->c.name[sizeof(out->c.name) - 1] = 0;
 		Q_strncpyz(out->rname, in->texture, sizeof(out->rname));
 		strtolower(out->rname); // jit

@@ -762,7 +762,9 @@ void Con_DrawConsole (float frac)
 	// draw the download bar
 	// figure out width
 	if (cls.download)
-	{ 
+	{
+		int len;
+
 		if ((text = strrchr(cls.downloadname, '/')) != NULL)
 			text++;
 		else
@@ -775,7 +777,7 @@ void Con_DrawConsole (float frac)
 		if (strlen(text) > i)
 		{
 			y = x - i - 11;
-			strncpy(dlbar, text, i);
+			Q_strncpyz(dlbar, text, i);
 			dlbar[i] = 0;
 			strcat(dlbar, "...");
 		}
@@ -794,8 +796,7 @@ void Con_DrawConsole (float frac)
 		else
 			n = ((float)(y+2) * (float)(cls.downloadpercent) / 100.0f + 0.5f); // jit (round properly)
 			
-		// ===[
-		// jittext -- new download bar:
+		// === jittext -- new download bar:
 		dlbar_fill[0] = CHAR_COLOR;
 		dlbar_fill[1] = 'Q'; // jittext
 		for (j=2; j<=i; j++) // jittext
@@ -817,14 +818,14 @@ void Con_DrawConsole (float frac)
 
 		dlbar[i++] = '\x82';
 		dlbar[i] = 0;
-
-		sprintf(dlbar + strlen(dlbar), " %02d%%", cls.downloadpercent);
+		len = strlen(dlbar);
+		Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%%", cls.downloadpercent);
 
 		// draw it
 		y = con.vislines-12*hudscale;
 		re.DrawString(8*hudscale, y, dlbar_fill);  // jit
 		re.DrawString(8*hudscale, y, dlbar); // jit, draw whole line at once
-		// ]===
+		// jittext ===
 	}
 //ZOID
 

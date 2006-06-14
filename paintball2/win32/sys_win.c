@@ -131,62 +131,6 @@ void WinError (void)
 	LocalFree( lpMsgBuf );
 }
 
-//================================================================
-
-
-/*
-================
-Sys_ScanForCD
-
-================
-*
-char *Sys_ScanForCD (void)
-{
-	static char	cddir[MAX_OSPATH];
-	static qboolean	done;
-#ifndef DEMO
-	char		drive[4];
-	FILE		*f;
-	char		test[MAX_QPATH];
-
-	if (done)		// don't re-check
-		return cddir;
-
-	// no abort/retry/fail errors
-	SetErrorMode (SEM_FAILCRITICALERRORS);
-
-	drive[0] = 'c';
-	drive[1] = ':';
-	drive[2] = '\\';
-	drive[3] = 0;
-
-	done = true;
-
-	// scan the drives
-	for (drive[0] = 'c' ; drive[0] <= 'z' ; drive[0]++)
-	{
-		// where activision put the stuff...
-		sprintf (cddir, "%sinstall\\data", drive);
-		sprintf (test, "%sinstall\\data\\quake2.exe", drive);
-		f = fopen(test, "r");
-		if (f)
-		{
-			fclose (f);
-			if (GetDriveType (drive) == DRIVE_CDROM)
-				return cddir;
-		}
-	}
-#endif
-
-	cddir[0] = 0;
-	
-	return NULL;
-}
-*/
-
-
-//================================================================
-
 
 /*
 ================

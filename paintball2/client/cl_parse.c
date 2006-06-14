@@ -770,7 +770,7 @@ void CL_ParseServerData (void)
 
 	// game directory
 	str = MSG_ReadString (&net_message);
-	strncpy (cl.gamedir, str, sizeof(cl.gamedir)-1);
+	Q_strncpyz(cl.gamedir, str, sizeof(cl.gamedir)-1);
 
 	// set gamedir
 	if ((*str && (!fs_gamedirvar->string || !*fs_gamedirvar->string || !Q_streq(fs_gamedirvar->string, str))) || (!*str && (fs_gamedirvar->string || *fs_gamedirvar->string)))
@@ -835,11 +835,11 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 	char		skin_filename[MAX_QPATH];
 	char		weapon_filename[MAX_QPATH];
 
-	strncpy(ci->cinfo, s, sizeof(ci->cinfo));
+	Q_strncpyz(ci->cinfo, s, sizeof(ci->cinfo));
 	ci->cinfo[sizeof(ci->cinfo)-1] = 0;
 
 	// isolate the player's name
-	strncpy(ci->name, s, sizeof(ci->name));
+	Q_strncpyz(ci->name, s, sizeof(ci->name));
 	ci->name[sizeof(ci->name)-1] = 0;
 	t = strstr(s, "\\");
 
@@ -1055,7 +1055,7 @@ void CL_ParseConfigString (void)
 
 	s = MSG_ReadString(&net_message);
 
-	strncpy(olds, cl.configstrings[i], sizeof(olds));
+	Q_strncpyz(olds, cl.configstrings[i], sizeof(olds));
 	olds[sizeof(olds) - 1] = 0;
 	strcpy(cl.configstrings[i], s);
 
@@ -1425,7 +1425,7 @@ void CL_ParseServerMessage (void)
 
 		case svc_layout:
 			s = MSG_ReadString(&net_message);
-			strncpy(cl.layout, s, sizeof(cl.layout)-1);
+			Q_strncpyz(cl.layout, s, sizeof(cl.layout)-1);
 			break;
 
 		case svc_playerinfo:

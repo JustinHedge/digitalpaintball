@@ -1613,7 +1613,7 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 	image_t *image;
 
 	// Try TGA:
-	sprintf(tempname, "%s.tga", name);
+	Com_sprintf(tempname, sizeof(tempname), "%s.tga", name);
 	LoadTGA(tempname, &pic, &width, &height);
 
 	if (pic)
@@ -1623,7 +1623,7 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 	else
 	{
 		// Try JPG:
-		sprintf(tempname, "%s.jpg", name);
+		Com_sprintf(tempname, sizeof(tempname), "%s.jpg", name);
 		LoadJPG(tempname, &pic, &width, &height);
 
 		if (pic)
@@ -1652,7 +1652,7 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 			else*/
 			{
 				// Try PCX:
-				sprintf(tempname, "%s.pcx", name);
+				Com_sprintf(tempname, sizeof(tempname), "%s.pcx", name);
 				LoadPCX(tempname, &pic, &palette, &width, &height);
 
 				if (pic)
@@ -1794,7 +1794,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 			s --;
 
 		*s = 0; // temporarily terminate it at the '/'
-		sprintf(name_hr4_noext, "%s/hr4/%s", name_noext, s+1);
+		Com_sprintf(name_hr4_noext, sizeof(name_hr4_noext), "%s/hr4/%s", name_noext, s+1);
 		*s = '/'; // put the '/' back.
 
 		image = GL_LoadImage(name_hr4_noext, type);
