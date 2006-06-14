@@ -95,20 +95,24 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 	// set everything to the state we are delta'ing from
 	*to = *from;
 
-	VectorCopy (from->origin, to->old_origin);
+	VectorCopy(from->origin, to->old_origin);
 	to->number = number;
 
 	if (bits & U_MODEL)
 		to->modelindex = MSG_ReadByte(&net_message);
+
 	if (bits & U_MODEL2)
 		to->modelindex2 = MSG_ReadByte(&net_message);
+
 	if (bits & U_MODEL3)
 		to->modelindex3 = MSG_ReadByte(&net_message);
+
 	if (bits & U_MODEL4)
 		to->modelindex4 = MSG_ReadByte(&net_message);
 		
 	if (bits & U_FRAME8)
 		to->frame = MSG_ReadByte(&net_message);
+
 	if (bits & U_FRAME16)
 		to->frame = MSG_ReadShort (&net_message);
 
@@ -119,14 +123,14 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 	else if (bits & U_SKIN16)
 		to->skinnum = MSG_ReadShort(&net_message);
 
-	if ( (bits & (U_EFFECTS8|U_EFFECTS16)) == (U_EFFECTS8|U_EFFECTS16) )
+	if ((bits & (U_EFFECTS8|U_EFFECTS16)) == (U_EFFECTS8|U_EFFECTS16))
 		to->effects = MSG_ReadLong(&net_message);
 	else if (bits & U_EFFECTS8)
 		to->effects = MSG_ReadByte(&net_message);
 	else if (bits & U_EFFECTS16)
 		to->effects = MSG_ReadShort(&net_message);
 
-	if ( (bits & (U_RENDERFX8|U_RENDERFX16)) == (U_RENDERFX8|U_RENDERFX16) )
+	if ((bits & (U_RENDERFX8|U_RENDERFX16)) == (U_RENDERFX8|U_RENDERFX16))
 		to->renderfx = MSG_ReadLong(&net_message);
 	else if (bits & U_RENDERFX8)
 		to->renderfx = MSG_ReadByte(&net_message);
@@ -135,15 +139,19 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 
 	if (bits & U_ORIGIN1)
 		to->origin[0] = MSG_ReadCoord (&net_message);
+
 	if (bits & U_ORIGIN2)
 		to->origin[1] = MSG_ReadCoord (&net_message);
+
 	if (bits & U_ORIGIN3)
 		to->origin[2] = MSG_ReadCoord (&net_message);
 		
 	if (bits & U_ANGLE1)
 		to->angles[0] = MSG_ReadAngle(&net_message);
+
 	if (bits & U_ANGLE2)
 		to->angles[1] = MSG_ReadAngle(&net_message);
+
 	if (bits & U_ANGLE3)
 		to->angles[2] = MSG_ReadAngle(&net_message);
 
@@ -203,15 +211,16 @@ void CL_DeltaEntity (frame_t *frame, int newnum, entity_state_t *old, int bits)
 		ent->trailcount = 1024;		// for diminishing rocket / grenade trails
 		// duplicate the current state so lerping doesn't hurt anything
 		ent->prev = *state;
+
 		if (state->event == EV_OTHER_TELEPORT)
 		{
-			VectorCopy (state->origin, ent->prev.origin);
-			VectorCopy (state->origin, ent->lerp_origin);
+			VectorCopy(state->origin, ent->prev.origin);
+			VectorCopy(state->origin, ent->lerp_origin);
 		}
 		else
 		{
-			VectorCopy (state->old_origin, ent->prev.origin);
-			VectorCopy (state->old_origin, ent->lerp_origin);
+			VectorCopy(state->old_origin, ent->prev.origin);
+			VectorCopy(state->old_origin, ent->lerp_origin);
 		}
 	}
 	else
