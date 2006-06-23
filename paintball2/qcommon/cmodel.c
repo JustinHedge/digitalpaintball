@@ -197,8 +197,7 @@ void CMod_LoadSurfaces (lump_t *l)
 
 	for (i = 0; i < count; i++, in++, out++)
 	{
-		// not using Q_strncpyz because assert fails too often.  Buffer too small in c.name:
-		Q_strncpyz(out->c.name, in->texture, sizeof(out->c.name));
+		Q_strncpyzna(out->c.name, in->texture, sizeof(out->c.name));
 		out->c.name[sizeof(out->c.name) - 1] = 0;
 		Q_strncpyz(out->rname, in->texture, sizeof(out->rname));
 		strtolower(out->rname); // jit
@@ -552,10 +551,12 @@ CMod_LoadEntityString
 void CMod_LoadEntityString (lump_t *l)
 {
 	numentitychars = l->filelen;
-	if (l->filelen > MAX_MAP_ENTSTRING)
-		Com_Error (ERR_DROP, "Map has too large entity lump");
 
-	memcpy (map_entitystring, cmod_base + l->fileofs, l->filelen);
+	if (l->filelen + 1 > sizeof(map_entitystring)) // jit
+		Com_Error(ERR_DROP, "Map has too large entity lump");
+
+	memcpy(map_entitystring, cmod_base + l->fileofs, l->filelen);
+	map_entitystring[l->filelen] = 0; // jitentitybug - null terminate the entity string!
 }
 
 
