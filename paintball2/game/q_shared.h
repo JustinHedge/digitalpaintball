@@ -176,7 +176,7 @@ extern vec3_t vec3_origin;
 // jitopt -- it's faster with intrinsic function optimizations
 //float Q_fabs (float f);
 //#define	fabs(f) Q_fabs(f)
-#if !defined C_ONLY && !defined __linux__ && !defined __sgi
+#if !defined C_ONLY && !defined __unix__ && !defined __sgi
 extern long Q_ftol( float f );
 #else
 #define Q_ftol( f ) ( long ) (f)

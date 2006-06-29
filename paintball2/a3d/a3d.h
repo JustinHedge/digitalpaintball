@@ -23,7 +23,7 @@ You should have received a copy of the GNU Library General Public
 #ifndef A3D_H
 #define A3D_H
 
-#ifndef __linux__
+#ifndef __unix__
 #include <Windows.h>
 #endif
 
@@ -40,7 +40,7 @@ typedef struct {
 	int (*A3D_UpdateSound)(int id,char *name,float origin[3],float forward[3],float listener_origin[3],float attenuation);
 	void (*A3D_StopSound)(int id);
 	void (*A3D_SetEnv)(char *envname);
-#ifdef __linux__
+#ifdef __unix__
 	void *reflib;
 #else
 	HINSTANCE reflib;

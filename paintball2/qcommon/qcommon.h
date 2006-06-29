@@ -51,9 +51,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	CPUSTRING	"AXP"
 #endif
 
-#elif defined __linux__
-
-#define BUILDSTRING "Linux"
+#elif defined (__unix__)
+ #if defined (__FreeBSD__)
+  #define BUILDSTRING "FreeBSD"
+ #else
+  #define BUILDSTRING "Linux"
+#endif
 
 #ifdef __i386__
 #define CPUSTRING "i386"

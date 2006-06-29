@@ -14,8 +14,11 @@ n** as set forth in subdivision (c)(1)(ii) of the Rights in Technical Data
 ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished -
 ** rights reserved under the Copyright Laws of the United States.
 **
-** $Header: /home/classic/cvs/paintball2/paintball2/ref_gl/glidesys.h,v 1.2 2003-09-10 20:24:57 calrathan Exp $
+** $Header: /home/classic/cvs/paintball2/paintball2/ref_gl/glidesys.h,v 1.3 2006-06-29 19:06:29 qudos Exp $
 ** $Log: not supported by cvs2svn $
+** Revision 1.2  2003/09/10 20:24:57  calrathan
+** Current progress on alpha7 of Paintball2, up to the moment of creating this SVC account
+**
 */
 #ifndef __GLIDESYS_H__
 #define __GLIDESYS_H__
@@ -70,7 +73,7 @@ n** -----------------------------------------------------------------------
 #endif
 
 /* Check for OS */
-#if defined(__IRIX__) || defined(__sparc__) || defined(__linux__)
+#if defined(__IRIX__) || defined(__sparc__) || defined(__unix__)
 #  define GLIDE_OS        GLIDE_OS_UNIX
 #elif defined(__DOS__)
 #  define GLIDE_OS        GLIDE_OS_DOS32

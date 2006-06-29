@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <GL/gl.h>
 
-#ifdef __linux__
+#ifdef __unix__
 //#include <GL/fxmesa.h>
 #include <GL/glx.h>
 #endif
@@ -432,7 +432,7 @@ extern BOOL ( WINAPI * qwglSetDeviceGammaRampEXT ) ( const unsigned char *pRed, 
 
 #endif
 
-#ifdef __linux__
+#ifdef __unix__
 
 // local function in dll
 extern void *qwglGetProcAddress(char *symbol);
@@ -462,7 +462,7 @@ void Fake_glColorTableEXT( GLenum target, GLenum internalformat,
                              GLsizei width, GLenum format, GLenum type,
                              const GLvoid *table );
 
-#endif // linux
+#endif // unix
 
 /*
 ** extension constants

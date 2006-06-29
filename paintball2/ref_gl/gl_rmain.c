@@ -1830,7 +1830,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		ri.Cvar_Set("scr_drawall", "0");
 	}
 
-#ifdef __linux__
+#ifdef __unix__
 	ri.Cvar_SetValue("gl_finish", 1);
 #endif
 

@@ -15,7 +15,7 @@ void S_Q2A3DCloseLibrary(void)
 {
 	if (a3d.reflib) {
 		Com_Printf("Freeing q2a3d Module\n");
-#ifdef __linux__
+#ifdef __unix__
 		dlclose(a3d.reflib);
 #else
 		FreeLibrary(a3d.reflib);
@@ -66,7 +66,7 @@ void S_Q2A3DInit (void)
 	#endif
 	}
 	if (a3d.reflib) {
-#ifdef __linux__
+#ifdef __unix__
 		a3d.A3D_OggStreamStart = (void *) dlsym(a3d.reflib, "A3D_OggStreamStart");
 		a3d.A3D_OggStreamStop = (void *) dlsym(a3d.reflib, "A3D_OggStreamStop");
 		a3d.A3D_PCMStream = (void *) dlsym(a3d.reflib, "A3D_PCMStream");
