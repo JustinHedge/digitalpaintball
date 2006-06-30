@@ -54,7 +54,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 
+#ifdef USE_XF86_DGA
 #include <X11/extensions/xf86dga.h>
+#endif
 #include <X11/extensions/xf86vmode.h>
 #ifdef Joystick
 # if defined (__linux__)
@@ -104,7 +106,9 @@ static int (*qglXGetConfig) (Display *dpy, XVisualInfo *vis, int attrib, int *va
 int mx, my, mouse_buttonstate;
 int win_x, win_y;
 
+#ifdef USE_XF86_DGA
 static cvar_t	*in_dgamouse;
+#endif
 
 static cvar_t	*r_fakeFullscreen;
 
@@ -114,13 +118,16 @@ static qboolean vidmode_active = false;
 static XF86VidModeGamma oldgamma;
 
 static qboolean mouse_active = false;
+#ifdef USE_XF86_DGA
 static qboolean dgamouse = false;
+#endif
 static qboolean vidmode_ext = false;
 
 /* stencilbuffer shadows */
 qboolean have_stencil = false;
 
 static Time myxtime;
+extern cvar_t  *print_keymap;
 
 static Cursor CreateNullCursor(Display *display, Window root)
 {
@@ -158,6 +165,7 @@ static void install_grabs(void)
 	       None,
 	       CurrentTime);
   
+#ifdef USE_XF86_DGA
   if (in_dgamouse->value) {
     int MajorVersion, MinorVersion;
     
@@ -170,7 +178,9 @@ static void install_grabs(void)
       XF86DGADirectVideo(dpy, DefaultScreen(dpy), XF86DGADirectMouse);
       XWarpPointer(dpy, None, win, 0, 0, 0, 0, 0, 0);
     }
-  } else {
+  } else 
+#endif
+  {
     XWarpPointer(dpy, None, win,
 		 0, 0, 0, 0,
 		 vid.width / 2, vid.height / 2);
@@ -191,10 +201,12 @@ static void uninstall_grabs(void)
   if (!dpy || !win)
     return;
   
+#ifdef USE_XF86_DGA
   if (dgamouse) {
     dgamouse = false;
     XF86DGADirectVideo(dpy, DefaultScreen(dpy), 0);
   }
+#endif
   
   XUngrabPointer(dpy, CurrentTime);
   XUngrabKeyboard(dpy, CurrentTime);
@@ -241,7 +253,9 @@ void doneMouse (void)
 
 void RW_IN_PlatformInit (void)
 {
-  in_dgamouse = ri.Cvar_Get("in_dgamouse", "0", CVAR_ARCHIVE);
+#ifdef USE_XF86_DGA
+  in_dgamouse = ri.Cvar_Get("in_dgamouse", "1", CVAR_ARCHIVE);
+#endif
 }
 
 void RW_IN_Activate (qboolean active)
@@ -461,6 +475,18 @@ static int XLateKey(XKeyEvent *ev)
 		case XK_KP_Divide:
 			key = K_KP_SLASH;
 			break;
+        	case 92: /* Italy */
+			key = '~';
+			break;
+        	case 94: /* Deutschland */
+			key = '~';
+			break;
+        	case 178: /* France */
+			key = '~';
+			break;
+        	case 186: /* Spain */
+			key = '~';
+			break;
 		
 		default:
 			key = *(unsigned char*)buf;
@@ -469,6 +495,10 @@ static int XLateKey(XKeyEvent *ev)
 			if(key >= 1 && key <= 26) /* ctrl+alpha */
 				key = key + 'a' - 1;
 			break;
+	}
+        
+	if (print_keymap->value) {
+		printf( "Key '%c' (%d) -> '%c' (%d)\n", (int)keysym, (int)keysym, key, key );
 	}
 	
 	return key;
@@ -502,7 +532,7 @@ int X11_KeyRepeat(Display *display, XEvent *event)
 
 static void HandleEvents(void)
 {
-  XEvent event;
+	XEvent event;
 	int b;
 	qboolean dowarp = false;
 	int mwx = vid.width / 2;
@@ -686,7 +716,7 @@ char *RW_Sys_GetClipboardData()
 					   &type, &format, &len,
 					   &tmp, &data);
 			if (result == Success) {
-				ret = strdup(data);
+				ret = strdup((char *)data);
 			}
 			XFree(data);
 		}
@@ -702,7 +732,7 @@ static void signal_handler(int sig)
 {
 	printf("Received signal %d, exiting...\n", sig);
 	GLimp_Shutdown();
-	_exit(0);
+	exit(0);
 }
 
 static void InitSig(void)
@@ -727,11 +757,12 @@ int GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 	int attrib[] = {
 		GLX_RGBA,
 		GLX_DOUBLEBUFFER,
-		GLX_RED_SIZE, 1,
-		GLX_GREEN_SIZE, 1,
-		GLX_BLUE_SIZE, 1,
-		GLX_DEPTH_SIZE, 1,
-		GLX_STENCIL_SIZE, 1,
+		GLX_RED_SIZE, 8,
+		GLX_GREEN_SIZE, 8,
+		GLX_BLUE_SIZE, 8,
+		GLX_DEPTH_SIZE, 24,
+		GLX_ALPHA_SIZE, 8,
+		GLX_STENCIL_SIZE, 8,
 		None
 	};
 	int attrib_nostencil[] = {
@@ -816,11 +847,11 @@ int GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 		qglXGetConfig(dpy, visinfo, GLX_DEPTH_SIZE, &depth_bits);
 		qglXGetConfig(dpy, visinfo, GLX_ALPHA_SIZE, &alpha_bits);
 
-		ri.Con_Printf(PRINT_ALL, "I: got %d bits of red\n", red_bits);
-		ri.Con_Printf(PRINT_ALL, "I: got %d bits of blue\n", blue_bits);
-		ri.Con_Printf(PRINT_ALL, "I: got %d bits of green\n", green_bits);
-		ri.Con_Printf(PRINT_ALL, "I: got %d bits of depth\n", depth_bits);
-		ri.Con_Printf(PRINT_ALL, "I: got %d bits of alpha\n", alpha_bits);
+		ri.Con_Printf(PRINT_ALL, "I got %d bits of red\n", red_bits);
+		ri.Con_Printf(PRINT_ALL, "I got %d bits of blue\n", blue_bits);
+		ri.Con_Printf(PRINT_ALL, "I got %d bits of green\n", green_bits);
+		ri.Con_Printf(PRINT_ALL, "I got %d bits of depth\n", depth_bits);
+		ri.Con_Printf(PRINT_ALL, "I got %d bits of alpha\n", alpha_bits);
 	}
 
 	/* stencilbuffer shadows */
@@ -943,7 +974,7 @@ int GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 	if (wmhints)
 		XFree(wmhints);
 	
-	XStoreName(dpy, win, "Paintball 2.0");
+	XStoreName(dpy, win, WINDOW_CLASS_NAME);
 	
 	wmDeleteWindow = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 	XSetWMProtocols(dpy, win, &wmDeleteWindow, 1);
@@ -992,7 +1023,9 @@ void GLimp_Shutdown (void)
 {
 	uninstall_grabs();
 	mouse_active = false;
+#ifdef USE_XF86_DGA
 	dgamouse = false;
+#endif
 
 	if (dpy)
 	{
@@ -1059,7 +1092,7 @@ int GLimp_Init( void *hinstance, void *wndproc )
 /*
 ** GLimp_BeginFrame
 */
-void GLimp_BeginFrame( float camera_seperation )
+void GLimp_BeginFrame( float camera_separation )
 {
 }
 
@@ -1074,7 +1107,7 @@ void GLimp_EndFrame (void)
 {
 	qglFlush();
 	qglXSwapBuffers(dpy, win);
-	rs_realtime = Sys_Milliseconds() * 0.001f; // jitrscript
+	rs_realtime = (float)Sys_Milliseconds() * 0.001f; // jitrscript
 }
 
 /*
@@ -1086,7 +1119,7 @@ void GLimp_EndFrame (void)
 ** using the opposite approach, but it has no software renderer after
 ** all.
 */
-void UpdateHardwareGamma()
+void UpdateGammaRamp (void)
 {
 	XF86VidModeGamma gamma;
 	float g;
@@ -1121,13 +1154,6 @@ void Fake_glColorTableEXT( GLenum target, GLenum internalformat,
 		temptable[i][3] = 255;
 	}
 	qgl3DfxSetPaletteEXT((GLuint *)temptable);
-}
-
-void UpdateGammaRamp (void)
-{
-	// jitlinux -- not sure if there's a way to modify
-	// the gamma ramp in linux.  This is just a dummy
-	// function for now.
 }
 
 #ifdef Joystick
