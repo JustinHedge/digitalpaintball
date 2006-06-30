@@ -26,6 +26,8 @@ static qboolean	mouse_avail;
 static int mouse_buttonstate;
 static int mouse_oldbuttonstate;
 
+cvar_t         *print_keymap;
+
 in_state_t *getState() {
   return in_state;
 }
@@ -61,6 +63,7 @@ void RW_IN_Init(in_state_t *in_state_p)
   m_yaw = ri.Cvar_Get("m_yaw", "0.022", 0);
   m_forward = ri.Cvar_Get("m_forward", "1", 0);
   m_side = ri.Cvar_Get("m_side", "0.8", 0);
+  print_keymap = ri.Cvar_Get ("print_keymap", "0", 0);
   
   ri.Cmd_AddCommand ("+mlook", RW_IN_MLookDown);
   ri.Cmd_AddCommand ("-mlook", RW_IN_MLookUp);
@@ -71,10 +74,6 @@ void RW_IN_Init(in_state_t *in_state_p)
   mouse_avail = true;	
   
   RW_IN_PlatformInit();
-
-#ifdef OPENGL
-  use_stencil = ri.Cvar_Get("use_stencil", "1", CVAR_ARCHIVE);
-#endif
   
 #ifdef Joystick
   RW_IN_InitJoystick();

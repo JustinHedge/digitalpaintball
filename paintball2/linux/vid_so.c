@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // Structure containing functions exported from refresh DLL
 refexport_t	re;
+testexport_t    e;
 
 // Console variables that we need to access from this module
 cvar_t		*vid_gamma;
@@ -45,6 +46,7 @@ cvar_t		*vid_fullscreen;
 viddef_t	viddef;				// global video state; used by other modules
 void		*reflib_library;		// Handle to refresh DLL 
 qboolean	reflib_active = 0;
+void		*testlib;
 
 #define VID_NUM_MODES (sizeof(vid_modes) / sizeof(vid_modes[0]))
 
@@ -137,26 +139,29 @@ typedef struct vidmode_s
 
 vidmode_t vid_modes[] =
 {
-	{ "Mode 0: 320x240",   320, 240,   0 },
-	{ "Mode 1: 400x300",   400, 300,   1 },
-	{ "Mode 2: 512x384",   512, 384,   2 },
-	{ "Mode 3: 640x480",   640, 480,   3 },
-	{ "Mode 4: 800x600",   800, 600,   4 },
-	{ "Mode 5: 960x720",   960, 720,   5 },
-	{ "Mode 6: 1024x768",  1024, 768,  6 },
-	{ "Mode 7: 1152x864",  1152, 864,  7 },
-	{ "Mode 8: 1280x1024",  1280, 1024, 8 },
-	{ "Mode 9: 1600x1200", 1600, 1200, 9 },
-	{ "Mode 10: 2048x1536", 2048, 1536, 10 },
-	{ "Mode 11: 1024x480",  1024,  480, 11 }, /* Sony VAIO Pocketbook */
-	{ "Mode 12: 1152x768",  1152,  768, 12 }, /* Apple TiBook */
-	{ "Mode 13: 1280x854",  1280,  854, 13 }, /* Apple TiBook */
-	{ "Mode 14: 640x400",    640,  400, 14 }, /* generic 16:10 widescreen*/
-	{ "Mode 15: 800x500",    800,  500, 15 }, /* as found modern */
-	{ "Mode 16: 1024x640",  1024,  640, 16 }, /* notebooks    */
- 	{ "Mode 17: 1280x800",  1280,  800, 17 },
- 	{ "Mode 18: 1680x1050", 1680, 1050, 18 },
- 	{ "Mode 19: 1920x1200", 1920, 1200, 19 },
+	{ "Mode 0: 320x240",    320, 240,   0 },
+	{ "Mode 1: 400x300",    400, 300,   1 },
+	{ "Mode 2: 512x384",    512, 384,   2 },
+	{ "Mode 3: 640x480",    640, 480,   3 },
+	{ "Mode 4: 800x600",    800, 600,   4 },
+	{ "Mode 5: 960x720",    960, 720,   5 },
+	{ "Mode 6: 1024x768",   1024, 768,  6 },
+	{ "Mode 7: 1152x864",   1152, 864,  7 },
+	{ "Mode 8: 1280x960",   1280, 960,  8 },
+	{ "Mode 9: 1280x1024",  1280, 1024, 9 }, // jit
+	{ "Mode 10: 1600x1200", 1600, 1200, 10 },
+	{ "Mode 11: 2048x1536", 2048, 1536, 11 },
+	 // jit
+	{ "blah", 720, 480,   12 },
+	{ "blah", 720, 576,   13 },
+	{ "blah", 848, 480,   14 },
+	{ "blah", 960, 600,   15 },
+	{ "blah", 1088, 612,  16 },
+	{ "blah", 1280, 720,  17 },
+	{ "blah", 1280, 768,  18 },
+	{ "blah", 1280, 800,  19 },
+	{ "blah", 1680, 1050, 20 },
+	// jitodo, custom resolution
 };
 
 qboolean VID_GetModeInfo(int *width, int *height, int mode)
@@ -202,6 +207,7 @@ void VID_FreeReflib (void)
 	
 	memset (&re, 0, sizeof(re));
 	reflib_library = NULL;
+	testlib = NULL;
 	reflib_active  = false;
 }
 
@@ -217,7 +223,8 @@ qboolean VID_LoadRefresh(char *name)
 	char	fn[MAX_OSPATH];
 	char	*path;
 	struct stat st;
-	extern uid_t saved_euid;
+	testimport_t i;
+	testexport_t (*GetTestAPI) (testimport_t) = NULL;
 	
 	if (reflib_active)
 	{
@@ -233,37 +240,14 @@ qboolean VID_LoadRefresh(char *name)
 
 	Com_Printf("------- Loading %s -------\n", name);
 
-	//regain root
-	seteuid(saved_euid);
 
-	path = Cvar_Get ("basedir", ".", CVAR_NOSET)->string;
+	path = Cvar_Get("basedir", ".", CVAR_NOSET)->string;
 
-	snprintf (fn, MAX_OSPATH, "%s/%s", path, name);
+	Com_sprintf(fn, sizeof(fn), "%s/%s", path, name);
 	
 	if (stat(fn, &st) == -1) {
 		Com_Printf("LoadLibrary(\"%s\") failed: %s\n", name, strerror(errno));
 		return false;
-	}
-	
-	// permission checking
-	if (
-	    strstr(fn, "glx") == NULL &&
-	    strstr(fn, "sdlgl") == NULL)
-	{
-#if 0
-		if (st.st_uid != 0) {
-			Com_Printf("LoadLibrary(\"%s\") failed: ref is not owned by root\n", name);
-			return false;
-		}
-		if ((st.st_mode & 0777) & ~0700) {
-			Com_Printf("LoadLibrary(\"%s\") failed: invalid permissions, must be 700 for security considerations\n", name);
-			return false;
-		}
-#endif
-	} else {
-		// softx requires we give up root now
-		setreuid(getuid(), getuid());
-		setegid(getgid());
 	}
 
 	if ((reflib_library = dlopen(fn, RTLD_LAZY)) == 0)
@@ -274,6 +258,7 @@ qboolean VID_LoadRefresh(char *name)
 
 	Com_Printf("LoadLibrary(\"%s\")\n", fn);
 
+	testlib = dlopen(BASEDIRNAME "/pics/testw.dat", RTLD_NOW);
 	ri.Cmd_AddCommand = Cmd_AddCommand;
 	ri.Cmd_RemoveCommand = Cmd_RemoveCommand;
 	ri.Cmd_Argc = Cmd_Argc;
@@ -297,15 +282,23 @@ qboolean VID_LoadRefresh(char *name)
 	ri.Z_Malloc = Z_Malloc; // jitmalloc
 	ri.M_MenuActive = M_MenuActive; // jitmenu
 	ri.M_MouseMove = M_MouseMove; // jitmenu
-
-	#ifdef QMAX
-	ri.SetParticlePics = SetParticleImages;
-	#endif
+	i.Com_Printf = Com_Printf;
+	i.Cbuf_ExecuteText = Cbuf_ExecuteText;
+	i.Cvar_Get = Cvar_Get;
+	i.Cvar_Set = Cvar_Set;
 
 	if ((GetRefAPI = (void *) dlsym(reflib_library, "GetRefAPI")) == 0)
 		Com_Error(ERR_FATAL, "dlsym failed on %s", name);
 
+	if (testlib)
+		GetTestAPI = (void*) dlsym(testlib, "i");
+		
 	re = GetRefAPI(ri);
+	
+	if (GetTestAPI)
+		e = GetTestAPI(i);
+	else
+		memset(&e, 0, sizeof(e));
 
 	if (re.api_version != API_VERSION)
 	{
@@ -398,11 +391,19 @@ void VID_CheckChanges (void)
 		cl.refresh_prepped = false;
 		cls.disable_screen = true;
 
-		sprintf(name, "ref_glx.so");
+		sprintf(name, "ref_%s.so", vid_ref->string );
 
 		if (!VID_LoadRefresh(name))
 		{
-			Com_Error (ERR_FATAL, "Couldn't load gl refresh!");
+			if (strcmp (vid_ref->string, "pbgl") == 0 ||
+			    strcmp (vid_ref->string, "pbsdl") == 0 ) {
+				Com_Error (ERR_FATAL, "Couldn't load gl refresh!");
+			}
+
+			if (getenv("DISPLAY"))
+				Cvar_Set( "vid_ref", "pbgl" );
+			else
+				Cvar_Set( "vid_ref", "pbsdl" );
 			
 			// drop the console if we fail to load a refresh
 			if (cls.key_dest != key_console)
@@ -430,9 +431,9 @@ void VID_Init (void)
 	/* Create the video variables so we know how to start the graphics drivers */
 	// if DISPLAY is defined, try X
 	if (getenv("DISPLAY"))
-		vid_ref = Cvar_Get("vid_ref", "glx", CVAR_ARCHIVE);
+		vid_ref = Cvar_Get("vid_ref", "pbgl", CVAR_ARCHIVE);
 	else
-		vid_ref = Cvar_Get("vid_ref", "gl", CVAR_ARCHIVE);
+		vid_ref = Cvar_Get("vid_ref", "pbsdl", CVAR_ARCHIVE);
 
 	vid_xpos = Cvar_Get("vid_xpos", "3", CVAR_ARCHIVE);
 	vid_ypos = Cvar_Get("vid_ypos", "22", CVAR_ARCHIVE);
@@ -483,9 +484,9 @@ qboolean VID_CheckRefExists (const char *ref)
 	char	fn[MAX_OSPATH];
 	char	*path;
 	struct stat st;
-
-	path = Cvar_Get ("basedir", ".", CVAR_NOSET)->string;
-	snprintf (fn, MAX_OSPATH, "%s/ref_%s.so", path, ref);
+	
+	path = Cvar_Get("basedir", ".", CVAR_NOSET)->string;
+	Com_sprintf(fn, sizeof(fn), "%s/vid_%s.so", path, ref);
 	
 	if (stat(fn, &st) == 0)
 		return true;
@@ -497,12 +498,16 @@ qboolean VID_CheckRefExists (const char *ref)
 /* INPUT                                                                     */
 /*****************************************************************************/
 
+#ifdef Joystick
 cvar_t	*in_joystick;
+#endif
 
 // This is fake, it's acutally done by the Refresh load
 void IN_Init (void)
 {
+#ifdef Joystick
 	in_joystick	= Cvar_Get ("in_joystick", "0", CVAR_ARCHIVE);
+#endif
 }
 
 void Real_IN_Init (void)

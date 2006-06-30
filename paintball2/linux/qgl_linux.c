@@ -3017,9 +3017,9 @@ qboolean QGL_Init( const char *dllname )
 			ri.Con_Printf( PRINT_ALL, "%s\n", dlerror() );
 			return false;
 		}
-		Com_Printf ("Using %s for OpenGL...", fn); 
+		Com_Printf ("Using %s for OpenGL...\n", fn); 
 	} else {
-		Com_Printf ("Using %s for OpenGL...", dllname);
+		Com_Printf ("Using %s for OpenGL...\n", dllname);
 	}
 
 #ifdef USE_GLU
@@ -3028,7 +3028,7 @@ qboolean QGL_Init( const char *dllname )
 	  ri.Con_Printf( PRINT_ALL, "%s\n", dlerror() );
 	  return false;
 	} else {
-	  Com_Printf ("Opened GLU sucessfully OpenGLU...", dllname);
+	  Com_Printf ("Opened GLU sucessfully OpenGLU...\n", dllname);
 	}
 #endif
 

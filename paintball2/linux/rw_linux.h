@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 
+#define WINDOW_CLASS_NAME (ri.Cvar_Get("vid_windowclassname", "Paintball 2", 0)->string) // jit
+
 typedef void (*Key_Event_fp_t)(int key, qboolean down);
 
 extern void (*KBD_Update_fp)(void);

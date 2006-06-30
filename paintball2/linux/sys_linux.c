@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <errno.h>
+#include <mntent.h>
 #include <dlfcn.h>
 
 #include "../qcommon/qcommon.h"
@@ -104,7 +105,7 @@ void Sys_Quit(void)
 	CL_Shutdown();
 	Qcommon_Shutdown();
 	fcntl(0, F_SETFL, fcntl(0, F_GETFL, 0) & ~FNDELAY);
-	_exit(0);
+	exit(0);
 }
 
 void Sys_Init(void)
@@ -130,7 +131,7 @@ void Sys_Error(char *error, ...)
 	va_end(argptr);
 	fprintf(stderr, "Error: %s\n", string);
 
-	_exit(1);
+	exit(1);
 
 } 
 
@@ -234,20 +235,8 @@ void *Sys_GetGameAPI(void *parms)
 	char	name[MAX_OSPATH];
 	char	*path;
 	char	*str_p;
-#if defined __i386__
-	const char *gamename = "gamei386.so";
-#elif defined __x86_64__
-	const char *gamename = "gamex86_64.so";
-#elif defined __alpha__
-	const char *gamename = "gameaxp.so";
-#elif defined __powerpc__
-	const char *gamename = "gameppc.so";
-#elif defined __sparc__
-	const char *gamename = "gamesparc.so";
-#else
-#error Unknown arch
-#endif
-
+	const char	*gamename = GAME_NAME;
+	
 	setreuid(getuid(), getuid());
 	setegid(getgid());
 
@@ -330,10 +319,20 @@ int main(int argc, char **argv)
 	int 	time, oldtime, newtime;
 
 	// go back to real user for config loads
+#if 0	
 	saved_euid = geteuid();
 	seteuid(getuid());
+#else	
+	if (getuid() == 0 || geteuid() == 0) 
+		Sys_Error("Paintball 2 does not run as root for security reasons.");
+#endif
 	
-	printf("Paintball 2 -- Version %s\n", LINUX_VERSION);
+	printf("\n");
+#ifdef DEDICATED_ONLY
+	printf("Paintball 2 Dedicated -- Version %s\n", PAINTBALL2_VERSION);
+#else
+	printf("Paintball 2 -- Version %s\n", PAINTBALL2_VERSION);
+#endif
 
 	Qcommon_Init(argc, argv);
 
@@ -355,83 +354,3 @@ int main(int argc, char **argv)
 		oldtime = newtime;
 	}
 }
-
-#if 0
-void Sys_CopyProtect(void)
-{
-	FILE *mnt;
-	struct mntent *ent;
-	char path[MAX_OSPATH];
-	struct stat st;
-	qboolean found_cd = false;
-
-	static qboolean checked = false;
-
-	if(checked)
-		return;
-
-	if((mnt = setmntent("/etc/mtab", "r")) == NULL)
-		Com_Error(ERR_FATAL, "Can't read mount table to determine mounted cd location.");
-
-	while((ent = getmntent(mnt)) != NULL) {
-		if(strcmp(ent->mnt_type, "iso9660") == 0) {
-			// found a cd file system
-			found_cd = true;
-			sprintf(path, "%s/%s", ent->mnt_dir, "install/data/quake2.exe");
-			if(stat(path, &st) == 0) {
-				// found it
-				checked = true;
-				endmntent(mnt);
-				return;
-			}
-			sprintf(path, "%s/%s", ent->mnt_dir, "Install/Data/quake2.exe");
-			if(stat(path, &st) == 0) {
-				// found it
-				checked = true;
-				endmntent(mnt);
-				return;
-			}
-			sprintf(path, "%s/%s", ent->mnt_dir, "quake2.exe");
-			if(stat(path, &st) == 0) {
-				// found it
-				checked = true;
-				endmntent(mnt);
-				return;
-			}
-		}
-	}
-	endmntent(mnt);
-
-	if(found_cd)
-		Com_Error(ERR_FATAL, "Could not find a Quake2 CD in your CD drive.");
-	Com_Error(ERR_FATAL, "Unable to find a mounted iso9660 file system.\n"
-		"You must mount the Quake2 CD in a cdrom drive in order to play.");
-}
-#endif
-
-#if 0
-/*
-================
-Sys_MakeCodeWriteable
-================
-*/
-void Sys_MakeCodeWriteable(unsigned long startaddr, unsigned long length)
-{
-
-	int r;
-	unsigned long addr;
-	int psize = getpagesize();
-
-	addr = (startaddr & ~(psize-1)) - psize;
-
-//	fprintf(stderr, "writable code %lx(%lx)-%lx, length=%lx\n", startaddr,
-//			addr, startaddr+length, length);
-
-	r = mprotect((char*)addr, length + startaddr - addr + psize, 7);
-
-	if(r < 0)
-    		Sys_Error("Protection change failed\n");
-
-}
-
-#endif
