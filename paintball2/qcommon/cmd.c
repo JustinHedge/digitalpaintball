@@ -922,7 +922,9 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 	// macro expand the text
 	if (macroExpand)
 	{
+#ifndef DEDICATED_ONLY
 		CL_LocPlace(); // Xile/NiceAss LOC
+#endif
 		text = Cmd_MacroExpandString(text);
 	}
 

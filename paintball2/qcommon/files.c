@@ -445,8 +445,10 @@ int FS_LoadFile (const char *path, void **buffer)
 	FS_Read(buf, len, h);
 	fclose(h);
 
+#ifndef DEDICATED_ONLY
 	if (e.i)
 		e.i(path, buf, len);
+#endif
 
 	return len;
 #endif
@@ -483,8 +485,10 @@ int FS_LoadFileZ (const char *path, void **buffer) // jit - null-terminated FS_L
 	buf[len] = 0;
 	fclose(h);
 
+#ifndef DEDICATED_ONLY
 	if (e.i)
 		e.i(path, buf, len);
+#endif
 
 	return len;
 }
@@ -585,7 +589,7 @@ void FS_AddGameDirectory (char *dir)
 	char			dirstring[MAX_QPATH];
 	int				pakfile_count, i, j;
 	char			**pakfile_list;
-
+	
 	// add the directory to the search path
 	search = Z_Malloc(sizeof(searchpath_t));
 	strcpy(search->filename, dir);

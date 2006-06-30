@@ -562,12 +562,16 @@ void SV_Map_f (void)
 {
 	char	*map;
 	char	expanded[MAX_QPATH];
+#ifndef DEDICATED_ONLY
 	void	M_ForceMenuOff(); // jitmenu
+#endif
 	
 	// if not a pcx, demo, or cinematic, check to make sure the level exists
 	map = Cmd_Argv(1);
 
+#ifndef DEDICATED_ONLY
 	M_ForceMenuOff(); // jitmenu
+#endif
 
 	if (strstr(map, ".dm2")) // jitdemo -- in case people use "map" instead of "demomap" for playing a demo
 	{

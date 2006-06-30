@@ -197,7 +197,7 @@ void CMod_LoadSurfaces (lump_t *l)
 
 	for (i = 0; i < count; i++, in++, out++)
 	{
-		Q_strncpyzna(out->c.name, in->texture, sizeof(out->c.name));
+		/*Q_strncpyzna*/strncpy(out->c.name, in->texture, sizeof(out->c.name));
 		out->c.name[sizeof(out->c.name) - 1] = 0;
 		Q_strncpyz(out->rname, in->texture, sizeof(out->rname));
 		strtolower(out->rname); // jit

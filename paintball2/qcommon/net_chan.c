@@ -218,7 +218,9 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 	byte		send_buf[MAX_MSGLEN];
 	qboolean	send_reliable;
 	unsigned	w1, w2;
+#ifndef DEDICATED_ONLY
 	extern cvar_t *cl_drawpps; // jitnetfps
+#endif
 
 // check for message overflow
 	if (chan->message.overflowed)
@@ -289,6 +291,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 				, chan->incoming_reliable_sequence);
 	}
 
+#ifndef DEDICATED_ONLY
 	if (!dedicated->value && cl_drawpps->value) // jitnetfps
 	{
 		static int framecount = 0;
@@ -303,6 +306,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 
 		framecount ++;
 	}
+#endif
 }
 
 /*
