@@ -104,14 +104,16 @@ static int CDAudio_GetAudioDiskInfo(void)
 	if ( ioctl(cdfile, CDIOREADTOCHEADER, &tochdr) == -1 ) 
     {
       Com_DPrintf("ioctl cdioreadtocheader failed\n");
+	  return -1;
+    }
 #endif
 #ifdef __linux__
 	if ( ioctl(cdfile, CDROMREADTOCHDR, &tochdr) == -1 ) 
     {
       Com_DPrintf("ioctl cdromreadtochdr failed\n");
-#endif
 	  return -1;
     }
+#endif
 
 #if defined(__FreeBSD__)
 	if (tochdr.starting_track < 1)

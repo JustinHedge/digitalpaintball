@@ -7,6 +7,27 @@
 # ELF only
 #
 
+# Check OS type.
+OSTYPE := $(shell uname -s)
+
+# This nice line comes from the linux kernel makefile
+ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc/ -e s/sparc64/sparc/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
+
+ifneq ($(OSTYPE),Linux)
+ifneq ($(OSTYPE),FreeBSD)
+$(error OS $(OSTYPE) is currently not supported)
+endif
+endif
+
+ifneq ($(ARCH),x86_64)
+ifneq ($(ARCH),i386)
+ifneq ($(ARCH),ppc)
+$(error arch $(ARCH) is currently not supported)
+endif
+endif
+endif
+
+
 # start of configurable options
 
 # Here are your build options:
@@ -14,95 +35,83 @@
 # paintball2 (uses OSS for sound, cdrom ioctls for cd audio) is automatically built.
 # game$(ARCH).so is automatically built.
 #
-USE_SSE=YES
-USE_SSE=NO
-BUILD_SDLQUAKE2=NO	# sdlpaintball2 executable (uses SDL for cdrom and sound)
-BUILD_SVGA=NO		# SVGAlib driver. Seems to work fine.
-BUILD_GLX=YES		# X11 GLX driver. Works somewhat ok.
-BUILD_FXGL=NO		# FXMesa driver. Not tested. (used only for V1 and V2).
-BUILD_SDLGL=NO		# SDL OpenGL driver. Works fine for some people.
-BUILD_JOYSTICK=NO	# build in joystick support
-BUILD_ARTS=NO		# build in support for libaRts sound.
-BUILD_ALSA=NO		# build in support for ALSA (default sound on 2.6)
-BUILD_DEDICATED=NO	# build a dedicated paintball2 server
-BUILD_QMAX=NO		# build the fancier GL graphics
-BUILD_RETEXTURE=NO	# build a version supporting retextured graphics
-BUILD_REDBLUE=NO	# build a red-blue 3d glasses renderer...
-STATICSDL=NO
-SDLDIR=/usr/local/lib
 
-# Other compile-time options:
-# Compile with IPv6 (protocol independent API). Tested on FreeBSD
-HAVE_IPV6=NO
+#=============================#
+# Paintball2 Client           #
+#=============================#
+BUILD_PB2?=YES
+
+#=============================#
+# Paintball2 dedicated server #
+#=============================#
+BUILD_DEDICATED?=YES
+
+#=============================#
+# Compile with IPv6 (protocol #
+# independent API). Tested on #
+# FreeBSD.                    #
+#=============================#
+HAVE_IPV6?=NO 
+
+
+USE_SSE?=YES
+ENABLE_PROFILING?=NO
+USE_X86_ASM?=NO
+
+#===========================#
+# Sound Drivers             #            
+#===========================#
+ifeq ($(OSTYPE),Linux)
+BUILD_ALSA_SND?=YES      # Alsa sound driver
+endif
+BUILD_OSS_SND?=YES       # OSS sound driver
+BUILD_SDL_SND?=YES       # SDL sound driver
+
+
+#===========================#
+# GLX render.               #
+#===========================#
+BUILD_GLX?=YES
+
+#===========================#
+# Built in DGA mouse        #
+# support.                  #
+#===========================#
+USE_XF86_DGA?=NO
+
+#===========================#
+# SDL GL render.            #
+#===========================#
+BUILD_SDLGL?=YES
+
+
+#===========================#
+# Joystick support.         #
+#===========================#
+BUILD_JOYSTICK?=NO
 
 # (hopefully) end of configurable options
 
-# Check OS type.
-OSTYPE := $(shell uname -s)
-
-ifneq ($(OSTYPE),Linux)
-ifneq ($(OSTYPE),FreeBSD)
-ifeq ($(OSTYPE),SunOS)
-$(error OS $(OSTYPE) detected, use "Makefile.Solaris" instead.)
-else
-$(error OS $(OSTYPE) is currently not supported)
-endif
-endif
-endif
-
-
-# this nice line comes from the linux kernel makefile
-ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc/ -e s/sparc64/sparc/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
-
-ifneq ($(ARCH),x86_64)
-ifneq ($(ARCH),i386)
-ifneq ($(ARCH),axp)
-ifneq ($(ARCH),ppc)
-ifneq ($(ARCH),sparc)
-$(error arch $(ARCH) is currently not supported)
-endif
-endif
-endif
-endif
-endif
-
-CC=gcc
-
-ifeq ($(ARCH),i386)
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx -msse -mfpmath=sse \
-	-ffast-math -ffloat-store -funroll-loops
-ifeq ($(USE_SSE),NO)
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O3
-endif
-endif
-
-ifeq ($(ARCH),axp)
-RELEASE_CFLAGS=$(BASE_CFLAGS) -ffast-math -funroll-loops \
-	-fomit-frame-pointer -fexpensive-optimizations
-endif
-
-ifeq ($(ARCH),ppc)
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops \
-	-fomit-frame-pointer -fexpensive-optimizations
-endif
-
-ifeq ($(ARCH),sparc)
-RELEASE_CFLAGS=$(BASE_CFLAGS) -ffast-math -funroll-loops \
-	-fomit-frame-pointer -fexpensive-optimizations
-endif
-
-ifeq ($(ARCH),x86_64)
-_LIB := 64
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops \
-	-fomit-frame-pointer -fexpensive-optimizations -fno-strict-aliasing
-endif
-
-VERSION=3.21+r0.16
+VERSION=2.0
+BUILD=17
 
 MOUNT_DIR=.
+BINDIR=paintball2
 
-BUILD_DEBUG_DIR=debug$(ARCH)
-BUILD_RELEASE_DIR=release$(ARCH)
+BUILD_DEBUG_DIR=build_debug
+BUILD_RELEASE_DIR=build_release
+
+SHLIBEXT=so
+GAME_NAME=game.$(SHLIBEXT)
+SHLIBCFLAGS=-fPIC
+SHLIBLDFLAGS=-shared
+
+ifeq ($(OSTYPE),Linux)
+ifeq ($(ARCH),i386)
+GAME_NAME=game$(ARCH).$(SHLIBEXT)
+endif
+endif
+
 CLIENT_DIR=$(MOUNT_DIR)/client
 A3D_DIR=$(MOUNT_DIR)/a3d
 SERVER_DIR=$(MOUNT_DIR)/server
@@ -110,15 +119,24 @@ REF_GL_DIR=$(MOUNT_DIR)/ref_gl
 COMMON_DIR=$(MOUNT_DIR)/qcommon
 LINUX_DIR=$(MOUNT_DIR)/linux
 GAME_DIR=$(MOUNT_DIR)/game
-CTF_DIR=$(MOUNT_DIR)/ctf
-XATRIX_DIR=$(MOUNT_DIR)/xatrix
-ROGUE_DIR=$(MOUNT_DIR)/rogue
-NULL_DIR=$(MOUNT_DIR)/null
 
-BASE_CFLAGS=-Wall -pipe -Dstricmp=strcasecmp -D_inline= -DSleep=usleep
-# ifeq ($(ENABLE_PROFILING),YES)
+CC?=gcc
+
+
+BASE_CFLAGS=-Dstricmp=strcasecmp -D_inline= -DSleep=usleep \
+            -DGAME_NAME='\"$(GAME_NAME)\"'
+
+ifneq ($(strip $(USE_X86_ASM)),YES)
+BASE_CFLAGS+=-DC_ONLY
+endif
+
+ifeq ($(strip $(USE_XF86_DGA)),YES)
+BASE_CFLAGS+=-DUSE_XF86_DGA
+endif
+
+ifeq ($(ENABLE_PROFILING),YES)
 BASE_CFLAGS+= -pg
-# endif
+endif
 
 ifeq ($(HAVE_IPV6),YES)
 BASE_CFLAGS+= -DHAVE_IPV6
@@ -130,90 +148,65 @@ else
 NET_UDP=net_udp
 endif
 
-ifeq ($(strip $(BUILD_QMAX)),YES)
-	BASE_CFLAGS+=-DQMAX
-endif
-
-ifeq ($(strip $(BUILD_RETEXTURE)),YES)
-	BASE_CFLAGS+=-DRETEX
-endif
-
 ifeq ($(strip $(BUILD_JOYSTICK)),YES)
 BASE_CFLAGS+=-DJoystick
 endif
-ifeq ($(strip $(BUILD_ARTS)),YES)
-BASE_CFLAGS+=$(shell artsc-config --cflags)
-endif
 
 ifneq ($(ARCH),i386)
- BASE_CFLAGS+=-DC_ONLY
+BASE_CFLAGS+=-DC_ONLY
 endif
 
-DEBUG_CFLAGS=$(BASE_CFLAGS) -g
+ifeq ($(ARCH),i386)
+RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx \
+	-ffast-math -ffloat-store -funroll-loops -fno-strict-aliasing
+endif
 
-ifeq ($(OSTYPE),FreeBSD)
+ifeq ($(USE_SSE),YES)
+RELEASE_CFLAGS+=-msse -mfpmath=sse
+endif
+
+ifeq ($(ARCH),ppc)
+RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops \
+	-fomit-frame-pointer -fexpensive-optimizations
+endif
+
+ifeq ($(ARCH),x86_64)
+_LIB := 64
+RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops \
+	-fomit-frame-pointer -fexpensive-optimizations -fno-strict-aliasing
+endif
+
+DEBUG_CFLAGS=$(BASE_CFLAGS) -g -ggdb -Wall -pipe
+
 LDFLAGS=-lm
-endif
+
 ifeq ($(OSTYPE),Linux)
-LDFLAGS=-lm -ldl -lrt
+LDFLAGS+= -ldl -lrt
 endif
 
-ifeq ($(strip $(BUILD_ARTS)),YES)
-LDFLAGS+=$(shell artsc-config --libs)
+ifeq ($(strip $(BUILD_ALSA_SND)),YES)
+ALSALDFLAGS=-lasound
 endif
-
-ifeq ($(strip $(BUILD_ALSA)),YES)
-LDFLAGS+=-lasound
-endif
-
-
-SVGALDFLAGS=-lvga
 
 XCFLAGS=-I/usr/X11R6/include
-XLDFLAGS=-L/usr/X11R6/lib$(_LIB) -lX11 -lXext -lXxf86dga -lXxf86vm -ljpeg
-AALDFLAGS=-lm -laa
+GLXCFLAGS= $(XCFLAGS)
+GLXLDFLAGS=-L/usr/X11R6/lib$(_LIB) -lX11 -lXext -lXxf86vm -lGL
 
-SDLCFLAGS=$(shell sdl-config --cflags)
-ifeq ($(strip $(STATICSDL)),YES)
-	SDLLDFLAGS += -L/usr/X11R6/lib$(_LIB) -Wl,-Bstatic $(SDLDIR)/libSDL.a
-	SDLLDFLAGS += $(SDLDIR)/libesd.a $(SDLDIR)/libartsc.a -Wl,-Bdynamic
-	SDLLDFLAGS += -lpthread -lX11 -lXext -lXxf86dga -lXxf86vm -lXv \
-		-lXinerama
-else
-	SDLLDFLAGS=$(shell sdl-config --libs)
+ifeq ($(strip $(USE_XF86_DGA)),YES)
+GLXLDFLAGS+= -lXxf86dga
 endif
 
-ifeq ($(strip $(BUILD_JOYSTICK)),YES)
-SDLCFLAGS+=-DJoystick
-endif
-
-FXGLCFLAGS=-I/usr/X11R6/include
-FXGLLDFLAGS=-L/usr/local/glide/lib -L/usr/X11/lib -L/usr/local/lib \
-	-L/usr/X11R6/lib -lX11 -lXext -lGL -lvga
-
-GLXCFLAGS=-I/usr/X11R6/include -DOPENGL
-GLXLDFLAGS=-L/usr/X11R6/lib$(_LIB) -lX11 -lXext -lXxf86dga -lXxf86vm -ljpeg
-
-SDLGLCFLAGS=$(SDLCFLAGS) -DOPENGL
-SDLGLLDFLAGS=$(SDLLDFLAGS)
-
-ifeq ($(strip $(BUILD_QMAX)),YES)
+# Extra support
 GLXLDFLAGS+=-ljpeg
-SDLGLLDFLAGS+=-ljpeg
-REF_GL_DIR = $(MOUNT_DIR)/ref_candygl
-CL_FX = cl_fxmax.c
-else
-CL_FX = cl_fx.c
-endif
 
-SHLIBEXT=so
-
-SHLIBCFLAGS=-fPIC
-SHLIBLDFLAGS=-shared
+SDLCONFIG?= sdl-config
+SDLCFLAGS= $(shell $(SDLCONFIG) --cflags)
+SDLLDFLAGS= $(shell $(SDLCONFIG) --libs)
+SDLGLCFLAGS=$(SDLCFLAGS)
+SDLGLLDFLAGS=$(SDLLDFLAGS)
 
 DO_CC=$(CC) $(CFLAGS) -o $@ -c $<
 DO_DED_CC=$(CC) $(CFLAGS) -DDEDICATED_ONLY -o $@ -c $<
-DO_DED_DEBUG_CC=$(CC) $(DEBUG_CFLAGS) -DDEDICATED_ONLY -o $@ -c $<
 DO_SHLIB_CC=$(CC) $(CFLAGS) $(SHLIBCFLAGS) -o $@ -c $<
 DO_GL_SHLIB_CC=$(CC) $(CFLAGS) $(SHLIBCFLAGS) $(GLCFLAGS) -o $@ -c $<
 DO_AS=$(CC) $(CFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
@@ -225,157 +218,111 @@ DO_SHLIB_AS=$(CC) $(CFLAGS) $(SHLIBCFLAGS) -DELF -x assembler-with-cpp -o $@ -c 
 
 .PHONY : targets build_debug build_release clean clean-debug clean-release clean2
 
-TARGETS=$(BUILDDIR)/paintball2
+ifeq ($(strip $(BUILD_PB2)),YES)
+TARGETS += $(BINDIR)/paintball2
+endif
+
 ifeq ($(strip $(BUILD_DEDICATED)),YES)
- TARGETS += $(BUILDDIR)/q2ded
-endif
-ifeq ($(strip $(BUILD_CTFDLL)),YES)
- TARGETS += $(BUILDDIR)/ctf/game$(ARCH).$(SHLIBEXT)
+TARGETS += $(BINDIR)/pb2-ded
 endif
 
-ifeq ($(strip $(BUILD_XATRIX)),YES)
- TARGETS += $(BUILDDIR)/xatrix/game$(ARCH).$(SHLIBEXT)
+ifeq ($(strip $(BUILD_ALSA_SND)),YES)
+TARGETS += $(BINDIR)/snd_alsa.$(SHLIBEXT)
 endif
 
-ifeq ($(strip $(BUILD_ROGUE)),YES)
- TARGETS += $(BUILDDIR)/rogue/game$(ARCH).$(SHLIBEXT)
+ifeq ($(strip $(BUILD_OSS_SND)),YES)
+TARGETS += $(BINDIR)/snd_oss.$(SHLIBEXT)
 endif
 
-ifeq ($(ARCH),axp)
- ifeq ($(strip $(BUILD_SDLQUAKE2)),YES)
-  $(warning Warning: SDLQuake2 not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_SVGA)),YES)
-  $(warning Warning: SVGAlib support not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_X11)),YES)
-  $(warning Warning: X11 support not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_GLX)),YES)
-  $(warning Warning: support not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_FXGL)),YES)
-  $(warning Warning: FXGL support not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_SDL)),YES)
-  $(warning Warning: SDL support not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_SDLGL)),YES)
-  $(warning Warning: SDLGL support not supported for $(ARCH))
- endif
-endif # ARCH axp
+ifeq ($(strip $(BUILD_SDL_SND)),YES)
+TARGETS += $(BINDIR)/snd_sdl.$(SHLIBEXT)
+endif
 
 ifeq ($(ARCH),ppc)
- ifeq ($(strip $(BUILD_SDLQUAKE2)),YES)
-  TARGETS += $(BUILDDIR)/sdlpaintball2
- endif
- 
- ifeq ($(strip $(BUILD_SVGA)),YES)
-  $(warning Warning: SVGAlib support not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_GLX)),YES)
-  TARGETS += $(BUILDDIR)/ref_glx.$(SHLIBEXT)
- endif
-
- ifeq ($(strip $(BUILD_FXGL)),YES)
-  $(warning Warning: FXGL support not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_SDLGL)),YES)
-  TARGETS += $(BUILDDIR)/ref_sdlgl.$(SHLIBEXT)
- endif
+ifeq ($(strip $(BUILD_GLX)),YES)
+TARGETS += $(BINDIR)/ref_pbgl.$(SHLIBEXT)
+endif
+ifeq ($(strip $(BUILD_SDLGL)),YES)
+TARGETS += $(BINDIR)/ref_pbsdl.$(SHLIBEXT)
+endif
 endif # ARCH ppc
 
-ifeq ($(ARCH),sparc)
- ifeq ($(strip $(BUILD_SDLQUAKE2)),YES)
-  TARGETS += $(BUILDDIR)/sdlpaintball2
- endif
- 
- ifeq ($(strip $(BUILD_SVGA)),YES)
-  $(warning Warning: SVGAlib support not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_GLX)),YES)
-  $(warning Warning: GLX support not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_FXGL)),YES)
-  $(warning Warning: FXGL support not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_SDLGL)),YES)
-  $(warning Warning: SDLGL support not supported for $(ARCH))
- endif
-endif # ARCH sparc
-
 ifeq ($(ARCH),x86_64)
- ifeq ($(strip $(BUILD_SDLQUAKE2)),YES)
-  TARGETS += $(BUILDDIR)/sdlpaintball2
- endif
-
- ifeq ($(strip $(BUILD_SVGA)),YES)
-  $(warning Warning: SVGA not supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_GLX)),YES)
-  TARGETS += $(BUILDDIR)/ref_glx.$(SHLIBEXT)
- endif
-
- ifeq ($(strip $(BUILD_FXGL)),YES)
-  $(warning Warning: FXGL not currently supported for $(ARCH))
- endif
-
- ifeq ($(strip $(BUILD_SDLGL)),YES)
-  TARGETS += $(BUILDDIR)/ref_sdlgl.$(SHLIBEXT)
- endif
+ifeq ($(strip $(BUILD_GLX)),YES)
+TARGETS += $(BINDIR)/ref_pbgl.$(SHLIBEXT)
+endif
+ifeq ($(strip $(BUILD_SDLGL)),YES)
+TARGETS += $(BINDIR)/ref_pbsdl.$(SHLIBEXT)
+endif
 endif # ARCH x86_64
 
 ifeq ($(ARCH),i386)
- ifeq ($(strip $(BUILD_SDLQUAKE2)),YES)
-  TARGETS += $(BUILDDIR)/sdlpaintball2
- endif
-
- ifeq ($(strip $(BUILD_GLX)),YES)
-  TARGETS += $(BUILDDIR)/ref_glx.$(SHLIBEXT)
- endif
-
- ifeq ($(strip $(BUILD_FXGL)),YES)
-  TARGETS += $(BUILDDIR)/ref_gl.$(SHLIBEXT)
- endif
-
- ifeq ($(strip $(BUILD_SDLGL)),YES)
-  TARGETS += $(BUILDDIR)/ref_sdlgl.$(SHLIBEXT)
- endif
+ifeq ($(strip $(BUILD_GLX)),YES)
+TARGETS += $(BINDIR)/ref_pbgl.$(SHLIBEXT)
+endif
+ifeq ($(strip $(BUILD_SDLGL)),YES)
+TARGETS += $(BINDIR)/ref_pbsdl.$(SHLIBEXT)
+endif
 endif # ARCH i386
 
-ifeq ($(strip $(BUILD_REDBLUE)),YES)
-	BASE_CFLAGS += -DREDBLUE
+all:
+	@echo 
+	@echo Set to YES or NO at the top of this file the possible options to build by the makefile.
+	@echo By default, it will build paintball2 and glx renderer.
+	@echo 
+	@echo Possible targets:
+	@echo
+	@echo "   "">> make release"
+	@echo "   "">> make debug"
+	@echo "   "">> make install (paintball2 home dir)."
+	@echo
+	
+
+debug:
+	@-mkdir -p $(BUILD_DEBUG_DIR) \
+		$(BINDIR) \
+		$(BUILD_DEBUG_DIR)/a3d \
+		$(BUILD_DEBUG_DIR)/client
+		
+ifeq ($(strip $(BUILD_DEDICATED)),YES)
+	@-mkdir -p $(BUILD_DEBUG_DIR) \
+		$(BUILD_DEBUG_DIR)/ded 
+endif
+		
+ifeq ($(strip $(BUILD_GLX)),YES)
+	@-mkdir -p $(BUILD_DEBUG_DIR) \
+		$(BUILD_DEBUG_DIR)/ref_gl
+endif
+		
+ifeq ($(strip $(BUILD_SDLGL)),YES)
+	@-mkdir -p $(BUILD_DEBUG_DIR) \
+		$(BUILD_DEBUG_DIR)/ref_gl
 endif
 
-all: build_debug build_release
+	$(MAKE) targets BUILDDIR=$(BUILD_DEBUG_DIR) CFLAGS="$(DEBUG_CFLAGS) -DPAINTBALL2_VERSION='\"$(VERSION) -DBUILD_VERSION='\"$(BUILD)\"' Debug\"'"
 
-build_debug:
-	@-mkdir -p $(BUILD_DEBUG_DIR) \
-		$(BUILD_DEBUG_DIR)/client \
-		$(BUILD_DEBUG_DIR)/ded \
-		$(BUILD_DEBUG_DIR)/ref_gl \
-		$(BUILD_DEBUG_DIR)/game
-	$(MAKE) targets BUILDDIR=$(BUILD_DEBUG_DIR) CFLAGS="$(DEBUG_CFLAGS) -DLINUX_VERSION='\"$(VERSION) Debug\"'"
-
-build_release:
+release:
 	@-mkdir -p $(BUILD_RELEASE_DIR) \
-		$(BUILD_RELEASE_DIR)/client \
-		$(BUILD_RELEASE_DIR)/ded \
-		$(BUILD_RELEASE_DIR)/ref_gl \
-		$(BUILD_RELEASE_DIR)/game
-	$(MAKE) targets BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(RELEASE_CFLAGS) -DLINUX_VERSION='\"$(VERSION)\"'"
+		$(BINDIR) \
+		$(BUILD_RELEASE_DIR)/a3d \
+		$(BUILD_RELEASE_DIR)/client
+		
+ifeq ($(strip $(BUILD_DEDICATED)),YES)
+	@-mkdir -p $(BUILD_RELEASE_DIR) \
+		$(BUILD_RELEASE_DIR)/ded 
+endif
+		
+ifeq ($(strip $(BUILD_GLX)),YES)
+	@-mkdir -p $(BUILD_RELEASE_DIR) \
+		$(BUILD_RELEASE_DIR)/ref_gl 
+endif
+		
+ifeq ($(strip $(BUILD_SDLGL)),YES)
+	@-mkdir -p $(BUILD_RELEASE_DIR) \
+		$(BUILD_RELEASE_DIR)/ref_gl 
+endif
+
+	$(MAKE) targets BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(RELEASE_CFLAGS) -DPAINTBALL2_VERSION='\"$(VERSION)\"' -DBUILD_VERSION='\"$(BUILD)\"'"
 
 targets: $(TARGETS)
 
@@ -383,7 +330,7 @@ targets: $(TARGETS)
 # CLIENT/SERVER
 #############################################################################
 
-QUAKE2_OBJS = \
+PB2_OBJS = \
 	$(BUILDDIR)/a3d/q2a3d.o \
 	$(BUILDDIR)/client/cl_cin.o \
 	$(BUILDDIR)/client/cl_ents.o \
@@ -441,34 +388,45 @@ QUAKE2_OBJS = \
 	$(BUILDDIR)/client/q_shared.o \
 	$(BUILDDIR)/client/pmove.o
 
-QUAKE2_LNX_OBJS = \
+CD_OBJS = \
 	$(BUILDDIR)/client/cd_linux.o 
-ifeq ($(strip $(BUILD_ARTS)),YES)
-QUAKE2_LNX_OBJS += $(BUILDDIR)/client/snd_arts.o
-else
-ifeq ($(strip $(BUILD_ALSA)),YES)
-QUAKE2_LNX_OBJS += $(BUILDDIR)/client/snd_alsa.o
-else
-QUAKE2_LNX_OBJS += $(BUILDDIR)/client/snd_linux.o
+	
+ifeq ($(OSTYPE),Linux)
+ifeq ($(strip $(BUILD_ALSA_SND)),YES)
+ALSA_SND_OBJS= $(BUILDDIR)/client/snd_alsa.o
 endif
 endif
 
-QUAKE2_SDL_OBJS = \
-	$(BUILDDIR)/client/cd_sdl.o \
-	$(BUILDDIR)/client/snd_sdl.o
+ifeq ($(strip $(BUILD_OSS_SND)),YES)
+OSS_SND_OBJS= $(BUILDDIR)/client/snd_oss.o
+endif
+
+ifeq ($(strip $(BUILD_SDL_SND)),YES)
+SDL_SND_OBJS= $(BUILDDIR)/client/snd_sdl.o
+endif
 
 ifeq ($(ARCH),i386)
-QUAKE2_AS_OBJS = \
+ifeq ($(strip $(USE_X86_ASM)),YES)
+PB2_AS_OBJS = \
 	$(BUILDDIR)/client/snd_mixa.o
+endif
 else
-QUAKE2_AS_OBJS =  #blank
+PB2_AS_OBJS =  #blank
 endif
 
-$(BUILDDIR)/paintball2 : $(QUAKE2_OBJS) $(QUAKE2_LNX_OBJS) $(QUAKE2_AS_OBJS)
-	$(CC) $(CFLAGS) -o $@ $(QUAKE2_OBJS) $(QUAKE2_LNX_OBJS) $(QUAKE2_AS_OBJS) $(LDFLAGS)
+$(BINDIR)/paintball2 : $(PB2_OBJS) $(CD_OBJS) $(PB2_AS_OBJS)
+	$(CC) $(CFLAGS) -o $@ $(PB2_OBJS) $(CD_OBJS) $(PB2_AS_OBJS) $(LDFLAGS)
 
-$(BUILDDIR)/sdlpaintball2 : $(QUAKE2_OBJS) $(QUAKE2_SDL_OBJS) $(QUAKE2_AS_OBJS)
-	$(CC) $(CFLAGS) -o $@ $(QUAKE2_OBJS) $(QUAKE2_SDL_OBJS) $(QUAKE2_AS_OBJS) $(LDFLAGS) $(SDLLDFLAGS)
+ifeq ($(OSTYPE),Linux)
+$(BINDIR)/snd_alsa.$(SHLIBEXT) : $(ALSA_SND_OBJS)
+	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(ALSA_SND_OBJS) $(LDFLAGS) $(ALSALDFLAGS)
+endif
+	
+$(BINDIR)/snd_oss.$(SHLIBEXT) : $(OSS_SND_OBJS)
+	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(OSS_SND_OBJS) $(LDFLAGS)
+
+$(BINDIR)/snd_sdl.$(SHLIBEXT) : $(SDL_SND_OBJS)
+	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(SDL_SND_OBJS) $(LDFLAGS) $(SDLLDFLAGS)
 
 $(BUILDDIR)/a3d/q2a3d.o : $(A3D_DIR)/q2a3d.c
 	$(DO_CC)
@@ -479,7 +437,7 @@ $(BUILDDIR)/client/cl_cin.o :     $(CLIENT_DIR)/cl_cin.c
 $(BUILDDIR)/client/cl_ents.o :    $(CLIENT_DIR)/cl_ents.c
 	$(DO_CC)
 
-$(BUILDDIR)/client/cl_fx.o :      $(CLIENT_DIR)/$(CL_FX)
+$(BUILDDIR)/client/cl_fx.o :      $(CLIENT_DIR)/cl_fx.c
 	$(DO_CC)
 
 $(BUILDDIR)/client/cl_input.o :   $(CLIENT_DIR)/cl_input.c
@@ -514,7 +472,7 @@ $(BUILDDIR)/client/console.o :    $(CLIENT_DIR)/console.c
 
 $(BUILDDIR)/client/keys.o :       $(CLIENT_DIR)/keys.c
 	$(DO_CC)
-
+	
 $(BUILDDIR)/client/menu.o :       $(CLIENT_DIR)/menu.c
 	$(DO_CC)
 
@@ -578,6 +536,9 @@ $(BUILDDIR)/client/net_chan.o :   $(COMMON_DIR)/net_chan.c
 $(BUILDDIR)/client/q_shared.o :   $(GAME_DIR)/q_shared.c
 	$(DO_CC)
 
+$(BUILDDIR)/client/sound/q_shared.o :   $(GAME_DIR)/q_shared.c
+	$(DO_CC)
+
 $(BUILDDIR)/client/pmove.o :      $(COMMON_DIR)/pmove.c
 	$(DO_CC)
 
@@ -635,26 +596,23 @@ $(BUILDDIR)/client/net_udp6.o :   $(LINUX_DIR)/net_udp6.c
 $(BUILDDIR)/client/cd_linux.o :   $(LINUX_DIR)/cd_linux.c
 	$(DO_CC)
 
-$(BUILDDIR)/client/snd_arts.o :   $(LINUX_DIR)/snd_arts.c
-	$(DO_CC)
-
 $(BUILDDIR)/client/snd_alsa.o :   $(LINUX_DIR)/snd_alsa.c
-	$(DO_CC)
+	$(DO_SHLIB_CC)
 
-$(BUILDDIR)/client/snd_linux.o :  $(LINUX_DIR)/snd_linux.c
-	$(DO_CC)
+$(BUILDDIR)/client/snd_oss.o :  $(LINUX_DIR)/snd_oss.c
+	$(DO_SHLIB_CC)
 
 $(BUILDDIR)/client/cd_sdl.o :     $(LINUX_DIR)/cd_sdl.c
 	$(DO_CC) $(SDLCFLAGS)
 
 $(BUILDDIR)/client/snd_sdl.o :    $(LINUX_DIR)/snd_sdl.c
-	$(DO_CC) $(SDLCFLAGS)
+	$(DO_SHLIB_CC) $(SDLCFLAGS)
 
 #############################################################################
 # DEDICATED SERVER
 #############################################################################
 
-Q2DED_OBJS = \
+PB2DED_OBJS = \
        $(BUILDDIR)/ded/cmd.o \
        $(BUILDDIR)/ded/cmodel.o \
        $(BUILDDIR)/ded/common.o \
@@ -682,8 +640,8 @@ Q2DED_OBJS = \
        $(BUILDDIR)/ded/cl_null.o \
        $(BUILDDIR)/ded/cd_null.o
 
-$(BUILDDIR)/q2ded : $(Q2DED_OBJS)
-	$(CC) $(CFLAGS) -o $@ $(Q2DED_OBJS) $(LDFLAGS)
+$(BINDIR)/pb2-ded : $(PB2DED_OBJS)
+	$(CC) $(CFLAGS) -o $@ $(PB2DED_OBJS) $(LDFLAGS)
 
 $(BUILDDIR)/ded/cmd.o :        $(COMMON_DIR)/cmd.c
 	$(DO_DED_CC)
@@ -713,7 +671,7 @@ $(BUILDDIR)/ded/net_chan.o :   $(COMMON_DIR)/net_chan.c
 	$(DO_DED_CC)
 
 $(BUILDDIR)/ded/q_shared.o :   $(GAME_DIR)/q_shared.c
-	$(DO_DED_DEBUG_CC)
+	$(DO_DED_CC)
 
 $(BUILDDIR)/ded/pmove.o :      $(COMMON_DIR)/pmove.c
 	$(DO_DED_CC)
@@ -754,10 +712,13 @@ $(BUILDDIR)/ded/glob.o :	$(LINUX_DIR)/glob.c
 $(BUILDDIR)/ded/net_udp.o :    $(LINUX_DIR)/net_udp.c
 	$(DO_DED_CC)
 
-$(BUILDDIR)/ded/cd_null.o :    $(NULL_DIR)/cd_null.c
+$(BUILDDIR)/ded/net_tcp.o :    $(LINUX_DIR)/net_tcp.c
 	$(DO_DED_CC)
 
-$(BUILDDIR)/ded/cl_null.o :    $(NULL_DIR)/cl_null.c
+$(BUILDDIR)/ded/cd_null.o :    $(SERVER_DIR)/null/cd_null.c
+	$(DO_DED_CC)
+
+$(BUILDDIR)/ded/cl_null.o :    $(SERVER_DIR)/null/cl_null.c
 	$(DO_DED_CC)
 
 
@@ -788,35 +749,17 @@ REF_GLX_OBJS = \
 	$(BUILDDIR)/ref_gl/gl_glx.o \
 	$(BUILDDIR)/ref_gl/rw_linux.o \
 	$(BUILDDIR)/ref_gl/joystick.o
-#	$(BUILDDIR)/ref_gl/rw_x11.o
-
-REF_CANDY_GL_OBJS = $(REF_GL_OBJS)
-
-REF_CANDY_GLX_OBJS = $(REF_GLX_OBJS)
-
-REF_FXGL_OBJS = \
-	$(BUILDDIR)/ref_gl/rw_in_svgalib.o \
-	$(BUILDDIR)/ref_gl/gl_fxmesa.o
 
 REF_SDLGL_OBJS = \
-	$(BUILDDIR)/ref_gl/rw_sdl.o \
+	$(BUILDDIR)/ref_gl/gl_sdl.o \
 	$(BUILDDIR)/ref_gl/rw_linux.o \
 	$(BUILDDIR)/ref_gl/joystick.o
 
-$(BUILDDIR)/ref_glx.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_GLX_OBJS)
+$(BINDIR)/ref_pbgl.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_GLX_OBJS)
 	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_GL_OBJS) $(REF_GLX_OBJS) $(GLXLDFLAGS)
 
-$(BUILDDIR)/ref_gl.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_FXGL_OBJS)
-	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_GL_OBJS) $(REF_FXGL_OBJS) $(FXGLLDFLAGS)
-
-$(BUILDDIR)/ref_sdlgl.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_SDLGL_OBJS)
-	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_GL_OBJS) $(REF_SDLGL_OBJS) $(SDLGLLDFLAGS)
-
-$(BUILDDIR)/ref_candyglx.$(SHLIBEXT):$(REF_CANDY_GL_OBJS) $(REF_CANDY_GLX_OBJS)
-	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_CANDY_GL_OBJS) $(REF_CANDY_GLX_OBJS) $(GLXLDFLAGS)
-
-$(BUILDDIR)/ref_candysdlgl.$(SHLIBEXT) : $(REF_CANDY_GL_OBJS) $(REF_SDLGL_OBJS)
-	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_CANDY_GL_OBJS) $(REF_SDLGL_OBJS) $(SDLGLLDFLAGS)
+$(BINDIR)/ref_pbsdl.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_SDLGL_OBJS)
+	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_GL_OBJS) $(REF_SDLGL_OBJS) $(GLXLDFLAGS) $(SDLGLLDFLAGS)
 
 $(BUILDDIR)/ref_gl/gl_script.o :        $(REF_GL_DIR)/gl_script.c
 	$(DO_GL_SHLIB_CC)
@@ -875,40 +818,55 @@ $(BUILDDIR)/ref_gl/rw_linux.o :     $(LINUX_DIR)/rw_linux.c
 $(BUILDDIR)/ref_gl/joystick.o :     $(LINUX_DIR)/joystick.c
 	$(DO_GL_SHLIB_CC) $(XCFLAGS)
 
-$(BUILDDIR)/ref_gl/rw_x11.o :         $(LINUX_DIR)/rw_x11.c
-	$(DO_GL_SHLIB_CC) $(GLXCFLAGS)
-
-$(BUILDDIR)/ref_gl/gl_fxmesa.o :      $(LINUX_DIR)/gl_fxmesa.c
-	$(DO_GL_SHLIB_CC) $(FXGLCFLAGS)
-
-$(BUILDDIR)/ref_gl/rw_in_svgalib.o :  $(LINUX_DIR)/rw_in_svgalib.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/rw_sdl.o :         $(LINUX_DIR)/rw_sdl.c
+$(BUILDDIR)/ref_gl/gl_sdl.o :         $(LINUX_DIR)/gl_sdl.c
 	$(DO_GL_SHLIB_CC) $(SDLGLCFLAGS)
 
 #############################################################################
 # MISC
 #############################################################################
 
-clean: clean-debug clean-release
-
-clean-debug:
-	$(MAKE) clean2 BUILDDIR=$(BUILD_DEBUG_DIR) CFLAGS="$(DEBUG_CFLAGS)"
-
-clean-release:
-	$(MAKE) clean2 BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(DEBUG_CFLAGS)"
-
-clean2:
-	rm -f \
-	$(QUAKE2_OBJS) \
-	$(QUAKE2_AS_OBJS) \
-	$(QUAKE2_LNX_OBJS) \
-	$(QUAKE2_SDL_OBJS) \
-	$(REF_GL_OBJS) \
-	$(REF_GLX_OBJS)
+clean:
+	@echo Cleaning objects...
+	@rm -rf \
+	$(BUILD_DEBUG_DIR) \
+	$(BUILD_RELEASE_DIR)
+	@echo ...................
+	@echo .... Done
+	
+clean_bin:
+	@echo Cleaning binaries...
+	@-rm -rf $(BINDIR)
+	@echo ....................
+	@echo .... Done
 
 distclean:
-	@-rm -rf $(BUILD_DEBUG_DIR) $(BUILD_RELEASE_DIR)
+	@echo Cleaning objects and binaries...
+	@-rm -rf $(BUILD_DEBUG_DIR) $(BUILD_RELEASE_DIR) $(BINDIR)
 	@-rm -f `find . \( -not -type d \) -and \
 		\( -name '*~' \) -type f -print`
+	@echo ................................
+	@echo .... Done
+
+install:
+	@echo Copying files to your home dir
+	@echo ......
+	@cp -rv $(BINDIR) ~/
+	@cp -rv linux/paintball2.run ~/paintball2
+	@chmod +x ~/paintball2/paintball2.run
+ifeq ($(strip $(BUILD_DEDICATED)),YES)
+	@cp -rv linux/paintball2-dedicated.run ~/paintball2
+	@chmod +x ~/paintball2/paintball2-dedicated.run
+endif
+	@echo .....
+	@echo Done 
+	
+bz2:
+	@printf "Creating bzip2 compressed file ...\n"
+	@cp -r linux/paintball2.run linux/paintball2-dedicated.run paintball2/
+ifeq ($(strip $(USE_SSE)),YES)
+	@tar cjvf Paintball2-$(VERSION)-build$(BUILD)-SSE-$(OSTYPE).tar.bz2 paintball2/ 
+else
+	@tar cjvf Paintball2-$(VERSION)-build$(BUILD)-NOSSE-$(OSTYPE).tar.bz2 paintball2/ 
+endif
+	@printf ".... Done.\n"
+	
