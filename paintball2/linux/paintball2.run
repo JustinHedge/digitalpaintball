@@ -1,0 +1,32 @@
+#!/bin/sh
+
+#You must to do this file executable in order to run, type 'chmod +x pb2.run'
+#http://digitalpaint.planetquake.gamespy.com/news.php
+
+BIN="paintball2"
+DIR="."
+VIDREF="pbgl" # "pbgl" or "pbsdl"
+SNDDRV="oss" # "oss", "sdl" or "alsa" 
+CMDLINE="+set deathmatch 1"
+CFGEXEC=""
+MAP="midnight2"
+script=$0
+count=0
+
+while [ -L "$script" ]  
+do
+    script=`perl -e "print readlink(\"$script\"), \"\n\""`
+    count=`expr $count + 1`
+    if [ $count -gt 100 ]  
+    then
+        echo "Too many symbolic links"
+        exit 1
+    fi
+done
+
+GAME_DIR=`dirname $script`
+
+cd $GAME_DIR
+cd $DIR
+
+exec ./$BIN +set vid_ref $VIDREF +set snd_driver $SNDDRV $CMDLINE +exec $CFGEXEC +map $MAP "$@"
