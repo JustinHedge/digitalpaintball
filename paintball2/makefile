@@ -123,7 +123,7 @@ GAME_DIR=$(MOUNT_DIR)/game
 CC?=gcc
 
 
-BASE_CFLAGS=-Dstricmp=strcasecmp -D_inline= -DSleep=usleep \
+BASE_CFLAGS=-Dstricmp=strcasecmp -DQ_strncpyzna=strncpy -D_inline= -DSleep=usleep \
             -DGAME_NAME='\"$(GAME_NAME)\"'
 
 ifneq ($(strip $(USE_X86_ASM)),YES)
