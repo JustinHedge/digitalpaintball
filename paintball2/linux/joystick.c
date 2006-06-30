@@ -3,6 +3,7 @@
 
 #include "rw_linux.h"
 
+#ifdef Joystick
 // state struct passed in Init
 
 static cvar_t   *in_joystick;
@@ -71,7 +72,11 @@ void RW_IN_InitJoystick() {
   in_joystick = ri.Cvar_Get ("in_joystick", "1", CVAR_ARCHIVE);
   if (in_joystick->value) {
     joy_name = ri.Cvar_Get ("joy_name", "joystick", 0);
+#if defined (__FreeBSD__)
+    joy_dev = ri.Cvar_Get ("joy_dev","/dev/joy*",CVAR_ARCHIVE);
+#else
     joy_dev = ri.Cvar_Get ("joy_dev","/dev/js*",CVAR_ARCHIVE);
+#endif
     joy_advanced = ri.Cvar_Get ("joy_advanced","0",0);
     joy_advaxisx = ri.Cvar_Get ("joy_advaxisx","4",0);
     joy_advaxisy = ri.Cvar_Get ("joy_advaxisy","2",0);
@@ -198,3 +203,5 @@ void RW_IN_JoystickMove(usercmd_t *cmd, qboolean mlooking,
     // End
   }
 }
+#endif
+
