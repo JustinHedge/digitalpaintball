@@ -24,6 +24,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //A3D ADD
 #include "../a3d/q2a3d.h"
 
+#if defined (__unix__)
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <dlfcn.h>
+#endif
+
 void S_Play(void);
 void S_SoundList(void);
 void S_Update_();
@@ -86,6 +94,18 @@ cvar_t		*s_primary;
 int		s_rawend;
 portable_samplepair_t	s_rawsamples[MAX_RAW_SAMPLES];
 
+#if defined (__unix__)
+cvar_t		*snddriver;
+static void 	*snddriver_library = NULL;
+qboolean 	snddriver_active = 0;
+qboolean (*SNDDMA_Init)(struct sndinfo *);
+int (*SNDDMA_GetDMAPos)(void);
+void (*SNDDMA_Shutdown)(void);
+void (*SNDDMA_BeginPainting)(void);
+void (*SNDDMA_Submit)(void);
+struct sndinfo si;
+#endif
+
 
 // ====================================================================
 // User-setable variables
@@ -137,12 +157,79 @@ void S_Init (void)
 
 		//A3D ADD
 		s_a3d = Cvar_Get ("s_a3d", "0", CVAR_ARCHIVE); //sound engine
+		
+#if defined (__unix__)
+
+		{
+		    char fn[MAX_OSPATH];
+		    struct stat st;
+		    
+		    /* load sound driver */
+		    snddriver = Cvar_Get("snd_driver", "oss", CVAR_ARCHIVE);
+
+		    /* Com_Printf("Loading %s sound output driver", snddriver->string); */
+		    snprintf(fn, MAX_OSPATH, "./snd_%s.so", snddriver->string);
+		    
+		    if (stat(fn, &st) == -1) {
+			Com_Printf("\nload %s failed: %s\n", fn, strerror(errno));
+			return;
+		    }
+		    if ((snddriver_library = dlopen(fn, RTLD_LAZY)) == 0) {
+			Com_Printf("\nSound failed: %s not found\n", fn, dlerror());
+			return;
+		    }
+		    /* Com_Printf(", ok\n"); */
+
+		    if ((SNDDMA_Init = dlsym(snddriver_library, "SNDDMA_Init")) == 0)
+			Com_Error(ERR_FATAL, "dlsym failed loading SNDDMA_Init\n");
+
+		    if ((SNDDMA_Shutdown = dlsym(snddriver_library, "SNDDMA_Shutdown")) == 0)
+			Com_Error(ERR_FATAL, "dlsym failed loading SNDDMA_Shutdown\n");
+
+		    if ((SNDDMA_GetDMAPos = dlsym(snddriver_library, "SNDDMA_GetDMAPos")) == 0)
+			Com_Error(ERR_FATAL, "dlsym failed loading SNDDMA_GetDMAPos\n");
+
+		    if ((SNDDMA_BeginPainting = dlsym(snddriver_library, "SNDDMA_BeginPainting")) == 0)
+			Com_Error(ERR_FATAL, "dlsym failed loading SNDDMA_BeginPainting\n");
+
+		    if ((SNDDMA_Submit = dlsym(snddriver_library, "SNDDMA_Submit")) == 0)
+			Com_Error(ERR_FATAL, "dlsym failed loading SNDDMA_Submit\n");
+
+		    snddriver_active = true;
+		}
+
+		si.dma = &dma;
+		si.sndbits = Cvar_Get("sndbits", "16", CVAR_ARCHIVE);
+		si.sndspeed = Cvar_Get("sndspeed", "0", CVAR_ARCHIVE);
+		si.sndchannels = Cvar_Get("sndchannels", "2", CVAR_ARCHIVE);
+		si.snddevice = Cvar_Get("snddevice", "/dev/dsp", CVAR_ARCHIVE);
+		si.s_khz = Cvar_Get("s_khz", "0", CVAR_ARCHIVE);
+		si.Com_Printf = Com_Printf;
+		si.S_PaintChannels = S_PaintChannels;
+
+		//A3D CHANGE
+		if (s_a3d->value)
+		{
+			S_Q2A3DInit();
+		}
+		else
+		{
+			if (!SNDDMA_Init(&si))
+				return;
+
+			S_InitScaletable ();
+
+			sound_started = 1;
+				Com_Printf ("Sound sampling rate: %i\n", dma.speed);
+		}
+#endif
 
 		Cmd_AddCommand("play", S_Play);
 		Cmd_AddCommand("stopsound", S_StopAllSounds);
 		Cmd_AddCommand("soundlist", S_SoundList);
 		Cmd_AddCommand("soundinfo", S_SoundInfo_f);
 
+#ifdef _WIN32
 		//A3D CHANGE
 		if (s_a3d->value)
 		{
@@ -158,6 +245,7 @@ void S_Init (void)
 			sound_started = 1;
 				Com_Printf ("sound sampling rate: %i\n", dma.speed);
 		}
+#endif
 		num_sfx = 0;
 
 		soundtime = 0;
@@ -212,6 +300,20 @@ void S_Shutdown(void)
 	}
 
 	num_sfx = 0;
+#if defined (__unix__)
+	if (snddriver_library) {
+	    SNDDMA_Init = NULL;
+	    SNDDMA_Shutdown = NULL;
+	    SNDDMA_Submit = NULL;
+	    SNDDMA_GetDMAPos = NULL;
+	    SNDDMA_BeginPainting = NULL;
+	    dlclose(snddriver_library);
+	    memset(&si, 0, sizeof(struct sndinfo));
+	    snddriver_library = NULL;
+	    snddriver_active = false;
+	    memset(&dma, 0, sizeof(dma_t));
+	}
+#endif
 }
 
 

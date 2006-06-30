@@ -112,6 +112,7 @@ typedef struct
 ====================================================================
 */
 
+#ifdef _WIN32
 // initializes cycling through a DMA buffer and returns information on it
 qboolean SNDDMA_Init(void);
 
@@ -124,6 +125,24 @@ void	SNDDMA_Shutdown(void);
 void	SNDDMA_BeginPainting (void);
 
 void	SNDDMA_Submit(void);
+#endif
+
+#if defined (__unix__)
+/* struct for passing info to the sound driver dlls */
+struct sndinfo {
+
+	dma_t	*dma;
+	cvar_t	*sndbits;
+	cvar_t	*sndspeed;
+	cvar_t	*sndchannels;
+	cvar_t	*snddevice;
+	cvar_t	*s_khz;
+
+	void (*Com_Printf)(char * fmt, ...);
+	void (*S_PaintChannels)(int);
+};
+#endif
+
 
 //====================================================================
 
