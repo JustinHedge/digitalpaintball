@@ -1046,7 +1046,7 @@ void CL_ParseConfigString (void)
 {
 	int		i;
 	char	*s;
-	char	olds[MAX_QPATH];
+	char	olds[1024]; // jit
 
 	i = MSG_ReadShort(&net_message);
 
@@ -1054,10 +1054,8 @@ void CL_ParseConfigString (void)
 		Com_Error(ERR_DROP, "configstring > MAX_CONFIGSTRINGS");
 
 	s = MSG_ReadString(&net_message);
-
-	Q_strncpyz(olds, cl.configstrings[i], sizeof(olds));
-	olds[sizeof(olds) - 1] = 0;
-	strcpy(cl.configstrings[i], s);
+	Q_strncpyz(olds, cl.configstrings[i], sizeof(olds)); // jit
+	Q_strncpyz(cl.configstrings[i], s, (MAX_CONFIGSTRINGS - i) * MAX_QPATH); // jitsecurity
 
 	// do something apropriate 
 	if (i >= CS_LIGHTS && i < CS_LIGHTS+MAX_LIGHTSTYLES)
