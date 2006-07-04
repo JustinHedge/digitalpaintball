@@ -263,11 +263,11 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 	//if(!sv.attractloop) // jitdemo -- don't spawn game stuff while demo is playing!
 	{
 		// load and spawn all other entities
-		ge->SpawnEntities ( sv.name, CM_EntityString(), spawnpoint );
+		ge->SpawnEntities(sv.name, CM_EntityString(), spawnpoint);
 
 		// run two frames to allow everything to settle
-		ge->RunFrame ();
-		ge->RunFrame ();
+		ge->RunFrame();
+		ge->RunFrame();
 	}
 
 	// all precaches are complete

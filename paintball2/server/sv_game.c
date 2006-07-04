@@ -63,14 +63,16 @@ Debug print to server console
 */
 void PF_dprintf (char *fmt, ...)
 {
-	char		msg[1024];
+	char		msg[4096];
 	va_list		argptr;
+	int			len; // jit
 	
 	va_start(argptr,fmt);
-	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	len = _vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
 	va_end(argptr);
+	assert(len < sizeof(msg)); // jit
+	assert(len > 0);
 	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
-
 	Com_Printf("%s", msg);
 }
 

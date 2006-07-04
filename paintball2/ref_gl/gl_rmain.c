@@ -2520,25 +2520,27 @@ void Sys_Error(char *error, ...)
 {
 	va_list		argptr;
 	char		text[1024];
+	int			len;
 
 	va_start(argptr, error);
-	_vsnprintf(text, sizeof(text), error, argptr); // jitsecurity -- prevent buffer overruns
+	len = _vsnprintf(text, sizeof(text), error, argptr); // jitsecurity -- prevent buffer overruns
 	va_end(argptr);
 	NULLTERMINATE(text); // jitsecurity -- make sure string is null terminated.
-
+	assert(len < sizeof(text));
 	ri.Sys_Error(ERR_FATAL, "%s", text);
 }
 
-void Com_Printf(char *fmt, ...)
+void Com_Printf (char *fmt, ...)
 {
 	va_list		argptr;
 	char		text[1024];
+	int			len;
 
 	va_start(argptr, fmt);
-	_vsnprintf(text, sizeof(text), fmt, argptr); // jitsecurity -- prevent buffer overruns
+	len = _vsnprintf(text, sizeof(text), fmt, argptr); // jitsecurity -- prevent buffer overruns
 	va_end(argptr);
 	NULLTERMINATE(text); // jitsecurity -- make sure string is null terminated.
-
+	assert(len < sizeof(text));
 	ri.Con_Printf(PRINT_ALL, "%s", text);
 }
 
