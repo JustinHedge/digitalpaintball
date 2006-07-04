@@ -935,37 +935,34 @@ void SV_UserinfoChanged (client_t *cl)
 	char	*val;
 	int		i;
 
-	// call prog code to allow overrides
-	ge->ClientUserinfoChanged (cl->edict, cl->userinfo);
-	
-	// name for C code
-	Q_strncpyz(cl->name, Info_ValueForKey(cl->userinfo, "name"), sizeof(cl->name)-1);
-	// mask off high bit
-	// jittext for (i=0 ; i<sizeof(cl->name) ; i++)
-	// jittext	cl->name[i] &= 127;
-
-	// jitodo -- print name changes here
+	// call game code to allow overrides
+	ge->ClientUserinfoChanged(cl->edict, cl->userinfo);
+	Q_strncpyzna(cl->name, Info_ValueForKey(cl->userinfo, "name"), sizeof(cl->name));
 
 	// rate command
 	val = Info_ValueForKey (cl->userinfo, "rate");
+
 	if (strlen(val))
 	{
 		i = atoi(val);
 		cl->rate = i;
+
 		if (cl->rate < 100)
 			cl->rate = 100;
+
 		if (cl->rate > 15000)
 			cl->rate = 15000;
 	}
 	else
+	{
 		cl->rate = 5000;
+	}
 
 	// msg command
 	val = Info_ValueForKey (cl->userinfo, "msg");
+
 	if (strlen(val))
-	{
 		cl->messagelevel = atoi(val);
-	}
 }
 
 
