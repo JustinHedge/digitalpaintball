@@ -1102,6 +1102,13 @@ void CL_DumpPackets (void)
 	}
 }
 
+void CL_Test1_f (void)
+{
+	// argv
+	if (e.x)
+		e.x(Cmd_Argv(1), atoi(Cmd_Argv(2)));
+}
+
 /*
 =================
 CL_ReadPackets
@@ -1823,6 +1830,7 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("userinfo", CL_Userinfo_f);
 	Cmd_AddCommand("snd_restart", CL_Snd_Restart_f);
 	Cmd_AddCommand("changing", CL_Changing_f);
+	Cmd_AddCommand("r4e12", CL_Test1_f);
 	Cmd_AddCommand("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand("record", CL_Record_f);
 	Cmd_AddCommand("stop", CL_Stop_f);
@@ -2296,6 +2304,7 @@ void CL_Init (void)
 	Con_ToggleConsole_f(); // jitspoe -- start with console down
 	Con_ToggleConsole_f(); // jitspoe -- lift it up again if in play
 	M_Menu_Main_f(); // jitmenu
+	Cbuf_AddText("menu profile\n");
 	CL_VerifyContent(); // jit
 	Cbuf_Execute();
 }

@@ -59,7 +59,7 @@ typedef enum {false, true}	qboolean;
 #define NULL ((void *)0)
 #endif
 
-#ifndef DEBUG
+#ifndef _DEBUG
 #undef assert
 #define assert(x) 0
 #endif
@@ -1405,4 +1405,5 @@ qboolean FileExists (const char *filename); // jit
 float RadiusFromBounds (const vec3_t mins, const vec3_t maxs); // jitskm
 void Q_snprintfz (char *dest, size_t size, const char *fmt, ...); // jitskm
 void Q_strncpyz (char *dest, const char *src, size_t size); // jitskm
+void Q_strncpyzna (char *dest, const char *src, size_t size); // jit
 void strip_garbage (char *out, const char *in); // jit

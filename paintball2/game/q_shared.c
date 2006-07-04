@@ -1420,7 +1420,6 @@ Parse a token out of a string
 */
 char *COM_Parse (char **data_p)
 {
-	//int		c;
 	unsigned char c; // jittext
 	int		len;
 	char	*data;
@@ -1434,7 +1433,6 @@ char *COM_Parse (char **data_p)
 		*data_p = NULL;
 		return "";
 	}
-
 
 // skip whitespace
 skipwhite:
@@ -2186,7 +2184,6 @@ Q_strncpyz
 void Q_strncpyz (char *dest, const char *src, size_t size)
 {
 #ifdef HAVE_STRLCPY
-	// todo - #define Q_strncpyz as strlcpy in the header and #ifndef around this whole func.
 	strlcpy(dest, src, size);
 #else
 	if (size)
@@ -2198,6 +2195,19 @@ void Q_strncpyz (char *dest, const char *src, size_t size)
 #endif
 }
 
+// no-assert version, for buffers we know will overflow
+void Q_strncpyzna (char *dest, const char *src, size_t size)
+{
+#ifdef HAVE_STRLCPY
+	strlcpy(dest, src, size);
+#else
+	if (size)
+	{
+		while (--size && (*dest++ = *src++));
+		*dest = '\0';
+	}
+#endif
+}
 
 
 // Remap for extended codes so they don't mess up the console.
