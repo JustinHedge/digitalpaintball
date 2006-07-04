@@ -48,6 +48,7 @@ pthread_mutex_t			m_mut_widgets;
 
 extern m_serverlist_t	m_serverlist;
 
+static void M_UpdateDrawingInformation (menu_widget_t *widget);
 
 // same thing as strdup, only uses Z_Malloc
 char *text_copy (const char *in)
@@ -638,6 +639,8 @@ static void update_select_subwidgets (menu_widget_t *widget)
 	int width, x, y;
 	char *widget_text;
 
+	M_UpdateDrawingInformation(widget);
+
 	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 	if (widget->flags & WIDGET_FLAG_LISTSOURCE)
 	{
@@ -652,7 +655,7 @@ static void update_select_subwidgets (menu_widget_t *widget)
 
 		widget->select_pos = -1; // nothing selected;
 
-		for(i = 0; i < widget->select_totalitems; i++)
+		for (i = 0; i < widget->select_totalitems; i++)
 		{
 			if (widget->flags & WIDGET_FLAG_USEMAP)
 			{
@@ -676,8 +679,8 @@ static void update_select_subwidgets (menu_widget_t *widget)
 	if (widget->subwidget)
 		widget->subwidget = free_widgets(widget->subwidget);
 
-	x = (widget->widgetCorner.x - (viddef.width - 320*scale)/2)/scale; // jitodo -- adjust for y, too
-	y = (widget->widgetCorner.y - (viddef.height - 240*scale)/2)/scale;	
+	x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale;
+	y = (widget->widgetCorner.y - (viddef.height - 240 * scale) / 2) / scale;	
 
 	width = widget->select_width;
 
@@ -797,15 +800,11 @@ static void update_select_subwidgets (menu_widget_t *widget)
 		new_widget->valign = WIDGET_VALIGN_MIDDLE;
 		new_widget->y += SELECT_VSPACING_UNSCALED*2;
 		new_widget->picwidth = width * TEXT_WIDTH_UNSCALED;
-
 		new_widget->select_pos = i;
-
 		new_widget->parent = widget;
 		new_widget->callback = callback_select_item;
 		new_widget->callback_doubleclick = callback_doubleclick_item;
-
 		new_widget->flags = widget->flags; // inherit flags from parent
-
 		new_widget->next = widget->subwidget;
 		widget->subwidget = new_widget;
 	}
@@ -814,8 +813,8 @@ static void update_select_subwidgets (menu_widget_t *widget)
 	if (!(widget->flags & WIDGET_FLAG_NOBG))
 	{
 		widget->subwidget = create_background(x, y, 
-			widget->select_width * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED*2, 
-			widget->select_rows * (TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + 
+			widget->select_width * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED * 2, 
+			widget->select_rows * (TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED) + 
 			SELECT_VSPACING_UNSCALED, widget->subwidget);
 	}
 	//pthread_mutex_unlock(&m_mut_widgets);
@@ -1567,7 +1566,7 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 }
 
 
-static void M_PushMenuScreen(menu_screen_t *menu, qboolean samelevel)
+static void M_PushMenuScreen (menu_screen_t *menu, qboolean samelevel)
 {
 	MENU_SOUND_OPEN;
 
@@ -1589,12 +1588,29 @@ static void M_PushMenuScreen(menu_screen_t *menu, qboolean samelevel)
 
 static void M_PopMenu (void)
 {
+	menu_widget_t *widget;
+	menu_screen_t *menu;
+
 	MENU_SOUND_CLOSE;
 
 	if (m_menudepth < 1)
 		m_menudepth = 1;
 
 	m_menudepth--;
+
+	if (menu = m_menu_screens[m_menudepth])
+	{
+		widget = menu->widget;
+
+		while (widget)
+		{
+			if (widget->flags & WIDGET_FLAG_PASSWORD)
+				if (widget->cvar)
+					Cbuf_AddText(va("unset %s\n", widget->cvar));
+
+			widget = widget->next;
+		}
+	}
 
 	if (oldscale && (oldscale != cl_hudscale->value))
 		Cvar_SetValue("cl_hudscale", oldscale);
@@ -2032,7 +2048,7 @@ static void M_ErrorMenu(menu_screen_t* menu, const char *text)
 			NULL, "menu pop", 8, 224, true);
 }
 
-static int M_WidgetGetType(const char *s)
+static int M_WidgetGetType (const char *s)
 {
 	if (Q_streq(s, "text"))
 		return WIDGET_TYPE_TEXT;
@@ -2050,7 +2066,7 @@ static int M_WidgetGetType(const char *s)
 	return WIDGET_TYPE_UNKNOWN;
 }
 
-static MENU_TYPE M_MenuGetType(const char *s)
+static MENU_TYPE M_MenuGetType (const char *s)
 {
 	if (Q_streq(s, "dialog"))
 		return MENU_TYPE_DIALOG;
@@ -2058,7 +2074,7 @@ static MENU_TYPE M_MenuGetType(const char *s)
 		return MENU_TYPE_DEFAULT;
 }
 
-static int M_WidgetGetAlign(const char *s)
+static int M_WidgetGetAlign (const char *s)
 {
 	if (Q_streq(s, "left"))
 		return WIDGET_HALIGN_LEFT;
@@ -2208,6 +2224,8 @@ static void menu_from_file (menu_screen_t *menu)
 						else
 							menu->type = M_MenuGetType(COM_Parse(&buf));
 					}
+					else if (Q_streq(token, "password"))
+						widget->flags |= WIDGET_FLAG_PASSWORD;
 					else if (Q_streq(token, "text"))
 						widget->text = text_copy(COM_Parse(&buf));
 					else if (Q_streq(token, "hovertext"))
@@ -2613,7 +2631,7 @@ static float M_SliderGetPos(menu_widget_t *widget)
 	return retval;
 }
 
-static void M_DrawCheckbox(int x, int y, qboolean checked, qboolean hover, qboolean selected)
+static void M_DrawCheckbox (int x, int y, qboolean checked, qboolean hover, qboolean selected)
 {
 	if (checked)
 	{
@@ -2636,10 +2654,7 @@ static void M_DrawCheckbox(int x, int y, qboolean checked, qboolean hover, qbool
 }
 
 
-
-
-//void M_DrawField(int x, int y, int width, char *cvar_string, qboolean hover, qboolean selected)
-static void M_DrawField(menu_widget_t *widget)
+static void M_DrawField (menu_widget_t *widget)
 {
 	//M_DrawField(widget->widgetCorner.x, widget->widgetCorner.y,
 			//	widget->field_width, cvar_val, widget->hover, widget->selected);
@@ -2647,11 +2662,23 @@ static void M_DrawField(menu_widget_t *widget)
 	char *cvar_string;
 	char temp;
 	int nullpos;
+	char pass_str[64] = "***************************************************************";
 
 	if (widget->cvar)
 		cvar_string = Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->string;
 	else
 		cvar_string = "";
+
+	if (widget->flags & WIDGET_FLAG_PASSWORD)
+	{
+		int len = strlen(cvar_string);
+
+		if (len > 63)
+			len = 63;
+
+		pass_str[len] = 0;
+		cvar_string = pass_str;
+	}
 
 	width = widget->field_width;
 	x = widget->widgetCorner.x;
@@ -2680,7 +2707,6 @@ static void M_DrawField(menu_widget_t *widget)
 		re.DrawStretchPic2(x+FIELD_LWIDTH, y, TEXT_WIDTH*width, FIELD_HEIGHT, i_field1m);
 		re.DrawStretchPic2(x+FIELD_LWIDTH+TEXT_WIDTH*width, y, FIELD_LWIDTH, FIELD_HEIGHT, i_field1r);
 	}
-
 
 	// draw only the portion of the string that fits within the field:
 	if (strlen_noformat(cvar_string) > widget->field_start + widget->field_width)

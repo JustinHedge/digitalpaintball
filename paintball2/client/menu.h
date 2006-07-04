@@ -103,11 +103,10 @@ extern cvar_t *serverlist_blacklist;
 #define WIDGET_FLAG_FLOAT		64
 #define WIDGET_FLAG_INT			128
 #define WIDGET_FLAG_FILELIST	256
-//#define WIDGET_FLAG_SERVERLIST	512
 #define WIDGET_FLAG_LISTSOURCE	512
 #define WIDGET_FLAG_NOBG		1024 // no background for select widget
 #define WIDGET_FLAG_BIND		2048 // key binding
-//#define WIDGET_FLAG_ACTIVEBIND	4096 // next button pressed goes to the bind of this widget
+#define WIDGET_FLAG_PASSWORD	4096
 
 typedef enum {
 	WIDGET_TYPE_UNKNOWN	= 0,
