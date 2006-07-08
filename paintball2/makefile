@@ -59,6 +59,18 @@ ENABLE_PROFILING?=NO
 USE_X86_ASM?=NO
 
 #===========================#
+# Read from $(DATADIR) and  #
+# write to "~/.paintball2"  #
+#===========================#
+WITH_DATADIR?=YES
+
+#===========================#
+# Load renderers            #
+# from $(LIBDIR)            #
+#===========================#
+WITH_LIBDIR?=YES
+
+#===========================#
 # Sound Drivers             #            
 #===========================#
 ifeq ($(OSTYPE),Linux)
@@ -101,6 +113,17 @@ BINDIR=paintball2
 BUILD_DEBUG_DIR=build_debug
 BUILD_RELEASE_DIR=build_release
 
+LOCALBASE?= /usr/local
+SYSBINDIR?=$(LOCALBASE)/bin
+
+ifeq ($(OSTYPE),FreeBSD)
+ DATADIR?= $(LOCALBASE)/share/paintball2
+ LIBDIR?= $(LOCALBASE)/lib/paintball2
+else
+ DATADIR?= $(LOCALBASE)/games/paintball2
+ LIBDIR?= $(LOCALBASE)/games/paintball2
+endif
+
 SHLIBEXT=so
 GAME_NAME=game.$(SHLIBEXT)
 SHLIBCFLAGS=-fPIC
@@ -123,7 +146,7 @@ GAME_DIR=$(MOUNT_DIR)/game
 CC?=gcc
 
 
-BASE_CFLAGS=-Dstricmp=strcasecmp -DQ_strncpyzna=strncpy -D_inline= -DSleep=usleep \
+BASE_CFLAGS=-Dstricmp=strcasecmp -D_inline= -DSleep=usleep \
             -DGAME_NAME='\"$(GAME_NAME)\"'
 
 ifneq ($(strip $(USE_X86_ASM)),YES)
@@ -156,10 +179,18 @@ ifneq ($(ARCH),i386)
 BASE_CFLAGS+=-DC_ONLY
 endif
 
-ifeq ($(ARCH),i386)
+ifeq ($(strip $(WITH_DATADIR)),YES)
+ BASE_CFLAGS+=-DDATADIR='\"$(DATADIR)\"'
+endif
+
+ifeq ($(strip $(WITH_LIBDIR)),YES)
+ BASE_CFLAGS+=-DLIBDIR='\"$(LIBDIR)\"'
+endif
+
+#ifeq ($(ARCH),i386)
 RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx \
 	-ffast-math -ffloat-store -funroll-loops -fno-strict-aliasing
-endif
+#endif
 
 ifeq ($(USE_SSE),YES)
 RELEASE_CFLAGS+=-msse -mfpmath=sse
@@ -178,7 +209,7 @@ endif
 
 DEBUG_CFLAGS=$(BASE_CFLAGS) -g -ggdb -Wall -pipe
 
-LDFLAGS=-lm
+LDFLAGS=-L$(LOCALBASE)/lib -lm
 
 ifeq ($(OSTYPE),Linux)
 LDFLAGS+= -ldl -lrt
@@ -275,8 +306,13 @@ all:
 	@echo "   "">> make release"
 	@echo "   "">> make debug"
 	@echo "   "">> make install (paintball2 home dir)."
+	@echo "   "">> make install_root (required when was built with DATADIR/LIBDIR" 
+	@echo "   ""                      options enabled, you must gain root privileges)."
+	@echo "   "">> make clean (clean objects)."
+	@echo "   "">> make clean_bin (clean executables)."
+	@echo "   "">> make distclean (clean objects, executables and modified files)."
+	@echo "   "">> make bz2 (create a tar.bz2 package with the full release distribution)."
 	@echo
-	
 
 debug:
 	@-mkdir -p $(BUILD_DEBUG_DIR) \
@@ -331,62 +367,24 @@ targets: $(TARGETS)
 #############################################################################
 
 PB2_OBJS = \
-	$(BUILDDIR)/a3d/q2a3d.o \
-	$(BUILDDIR)/client/cl_cin.o \
-	$(BUILDDIR)/client/cl_ents.o \
-	$(BUILDDIR)/client/cl_fx.o \
-	$(BUILDDIR)/client/cl_input.o \
-	$(BUILDDIR)/client/cl_inv.o \
-	$(BUILDDIR)/client/cl_main.o \
-	$(BUILDDIR)/client/cl_parse.o \
-	$(BUILDDIR)/client/cl_pred.o \
-	$(BUILDDIR)/client/cl_tent.o \
-	$(BUILDDIR)/client/cl_scrn.o \
-	$(BUILDDIR)/client/cl_view.o \
-	$(BUILDDIR)/client/cl_newfx.o \
-	$(BUILDDIR)/client/console.o \
-	$(BUILDDIR)/client/keys.o \
-	$(BUILDDIR)/client/menu.o \
-	$(BUILDDIR)/client/cl_vote.o \
-	$(BUILDDIR)/client/cl_loc.o \
-	$(BUILDDIR)/client/cl_scores.o \
-	$(BUILDDIR)/client/cl_serverlist.o \
-	$(BUILDDIR)/client/cl_decode.o \
-	$(BUILDDIR)/client/cl_hud.o \
-	$(BUILDDIR)/client/cl_images.o \
-	$(BUILDDIR)/client/snd_dma.o \
-	$(BUILDDIR)/client/snd_mem.o \
-	$(BUILDDIR)/client/snd_mix.o \
-	$(BUILDDIR)/client/m_flash.o \
-	\
-	$(BUILDDIR)/client/cmd.o \
-	$(BUILDDIR)/client/cmodel.o \
-	$(BUILDDIR)/client/common.o \
-	$(BUILDDIR)/client/crc.o \
-	$(BUILDDIR)/client/cvar.o \
-	$(BUILDDIR)/client/files.o \
-	$(BUILDDIR)/client/md4.o \
-	$(BUILDDIR)/client/net_chan.o \
-	\
-	$(BUILDDIR)/client/sv_ccmds.o \
-	$(BUILDDIR)/client/sv_ents.o \
-	$(BUILDDIR)/client/sv_game.o \
-	$(BUILDDIR)/client/sv_init.o \
-	$(BUILDDIR)/client/sv_main.o \
-	$(BUILDDIR)/client/sv_send.o \
-	$(BUILDDIR)/client/sv_user.o \
-	$(BUILDDIR)/client/sv_world.o \
-	\
-	$(BUILDDIR)/client/q_shlinux.o \
-	$(BUILDDIR)/client/vid_so.o \
-	$(BUILDDIR)/client/sys_linux.o \
-	$(BUILDDIR)/client/glob.o \
-	$(BUILDDIR)/client/$(NET_UDP).o \
-	$(BUILDDIR)/client/net_common.o \
-	$(BUILDDIR)/client/net_tcp.o \
-	\
-	$(BUILDDIR)/client/q_shared.o \
-	$(BUILDDIR)/client/pmove.o
+	$(BUILDDIR)/a3d/q2a3d.o        $(BUILDDIR)/client/cl_cin.o        $(BUILDDIR)/client/cl_ents.o \
+	$(BUILDDIR)/client/cl_fx.o     $(BUILDDIR)/client/cl_input.o      $(BUILDDIR)/client/cl_inv.o \
+	$(BUILDDIR)/client/cl_main.o   $(BUILDDIR)/client/cl_parse.o      $(BUILDDIR)/client/cl_pred.o \
+	$(BUILDDIR)/client/cl_tent.o   $(BUILDDIR)/client/cl_scrn.o       $(BUILDDIR)/client/cl_view.o \
+	$(BUILDDIR)/client/cl_newfx.o  $(BUILDDIR)/client/console.o       $(BUILDDIR)/client/keys.o \
+	$(BUILDDIR)/client/menu.o      $(BUILDDIR)/client/cl_vote.o       $(BUILDDIR)/client/cl_loc.o \
+	$(BUILDDIR)/client/cl_scores.o $(BUILDDIR)/client/cl_serverlist.o $(BUILDDIR)/client/cl_decode.o \
+	$(BUILDDIR)/client/cl_hud.o    $(BUILDDIR)/client/cl_images.o     $(BUILDDIR)/client/snd_dma.o \
+	$(BUILDDIR)/client/snd_mem.o   $(BUILDDIR)/client/snd_mix.o       $(BUILDDIR)/client/m_flash.o \
+	$(BUILDDIR)/client/cmd.o       $(BUILDDIR)/client/cmodel.o        $(BUILDDIR)/client/common.o \
+	$(BUILDDIR)/client/crc.o       $(BUILDDIR)/client/cvar.o          $(BUILDDIR)/client/files.o \
+	$(BUILDDIR)/client/md4.o       $(BUILDDIR)/client/net_chan.o \
+	$(BUILDDIR)/client/sv_ccmds.o  $(BUILDDIR)/client/sv_ents.o       $(BUILDDIR)/client/sv_game.o \
+	$(BUILDDIR)/client/sv_init.o   $(BUILDDIR)/client/sv_main.o       $(BUILDDIR)/client/sv_send.o \
+	$(BUILDDIR)/client/sv_user.o   $(BUILDDIR)/client/sv_world.o \
+	$(BUILDDIR)/client/q_shlinux.o $(BUILDDIR)/client/vid_so.o        $(BUILDDIR)/client/sys_linux.o \
+	$(BUILDDIR)/client/glob.o      $(BUILDDIR)/client/$(NET_UDP).o    $(BUILDDIR)/client/net_common.o \
+	$(BUILDDIR)/client/net_tcp.o   $(BUILDDIR)/client/q_shared.o      $(BUILDDIR)/client/pmove.o
 
 CD_OBJS = \
 	$(BUILDDIR)/client/cd_linux.o 
@@ -407,8 +405,7 @@ endif
 
 ifeq ($(ARCH),i386)
 ifeq ($(strip $(USE_X86_ASM)),YES)
-PB2_AS_OBJS = \
-	$(BUILDDIR)/client/snd_mixa.o
+PB2_AS_OBJS = $(BUILDDIR)/client/snd_mixa.o
 endif
 else
 PB2_AS_OBJS =  #blank
@@ -428,332 +425,128 @@ $(BINDIR)/snd_oss.$(SHLIBEXT) : $(OSS_SND_OBJS)
 $(BINDIR)/snd_sdl.$(SHLIBEXT) : $(SDL_SND_OBJS)
 	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(SDL_SND_OBJS) $(LDFLAGS) $(SDLLDFLAGS)
 
-$(BUILDDIR)/a3d/q2a3d.o : $(A3D_DIR)/q2a3d.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_cin.o :     $(CLIENT_DIR)/cl_cin.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_ents.o :    $(CLIENT_DIR)/cl_ents.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_fx.o :      $(CLIENT_DIR)/cl_fx.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_input.o :   $(CLIENT_DIR)/cl_input.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_inv.o :     $(CLIENT_DIR)/cl_inv.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_main.o :    $(CLIENT_DIR)/cl_main.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_parse.o :   $(CLIENT_DIR)/cl_parse.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_pred.o :    $(CLIENT_DIR)/cl_pred.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_tent.o :    $(CLIENT_DIR)/cl_tent.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_scrn.o :    $(CLIENT_DIR)/cl_scrn.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_view.o :    $(CLIENT_DIR)/cl_view.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_newfx.o :	  $(CLIENT_DIR)/cl_newfx.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/console.o :    $(CLIENT_DIR)/console.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/keys.o :       $(CLIENT_DIR)/keys.c
-	$(DO_CC)
+$(BUILDDIR)/a3d/q2a3d.o :	     $(A3D_DIR)/q2a3d.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_cin.o :	     $(CLIENT_DIR)/cl_cin.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_ents.o :	     $(CLIENT_DIR)/cl_ents.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_fx.o :	     $(CLIENT_DIR)/cl_fx.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_input.o :      $(CLIENT_DIR)/cl_input.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_inv.o :	     $(CLIENT_DIR)/cl_inv.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_main.o :       $(CLIENT_DIR)/cl_main.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_parse.o :      $(CLIENT_DIR)/cl_parse.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_pred.o :       $(CLIENT_DIR)/cl_pred.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_tent.o :       $(CLIENT_DIR)/cl_tent.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_scrn.o :       $(CLIENT_DIR)/cl_scrn.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_view.o :       $(CLIENT_DIR)/cl_view.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_newfx.o :      $(CLIENT_DIR)/cl_newfx.c;		$(DO_CC)
+$(BUILDDIR)/client/console.o :       $(CLIENT_DIR)/console.c;		$(DO_CC)
+$(BUILDDIR)/client/keys.o :          $(CLIENT_DIR)/keys.c;		$(DO_CC)
+$(BUILDDIR)/client/menu.o :          $(CLIENT_DIR)/menu.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_loc.o :        $(CLIENT_DIR)/cl_loc.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_scores.o :     $(CLIENT_DIR)/cl_scores.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_hud.o :        $(CLIENT_DIR)/cl_hud.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_decode.o :     $(CLIENT_DIR)/cl_decode.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_vote.o :       $(CLIENT_DIR)/cl_vote.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_serverlist.o : $(CLIENT_DIR)/cl_serverlist.c;	$(DO_CC)
+$(BUILDDIR)/client/cl_images.o :     $(CLIENT_DIR)/cl_images.c;		$(DO_CC)
+$(BUILDDIR)/client/snd_dma.o :       $(CLIENT_DIR)/snd_dma.c;		$(DO_CC)
+$(BUILDDIR)/client/snd_mem.o :       $(CLIENT_DIR)/snd_mem.c;		$(DO_CC)
+$(BUILDDIR)/client/snd_mix.o :       $(CLIENT_DIR)/snd_mix.c;		$(DO_CC)
+$(BUILDDIR)/client/cmd.o :           $(COMMON_DIR)/cmd.c;		$(DO_CC)
+$(BUILDDIR)/client/cmodel.o :        $(COMMON_DIR)/cmodel.c;		$(DO_CC)
+$(BUILDDIR)/client/common.o :        $(COMMON_DIR)/common.c;		$(DO_CC)
+$(BUILDDIR)/client/crc.o :           $(COMMON_DIR)/crc.c;		$(DO_CC)
+$(BUILDDIR)/client/cvar.o :          $(COMMON_DIR)/cvar.c;		$(DO_CC)
+$(BUILDDIR)/client/files.o :         $(COMMON_DIR)/files.c;		$(DO_CC)
+$(BUILDDIR)/client/md4.o :           $(COMMON_DIR)/md4.c;		$(DO_CC)
+$(BUILDDIR)/client/net_chan.o :      $(COMMON_DIR)/net_chan.c;		$(DO_CC)
+$(BUILDDIR)/client/net_common.o :    $(COMMON_DIR)/net_common.c;	$(DO_CC)
+$(BUILDDIR)/client/pmove.o :         $(COMMON_DIR)/pmove.c;		$(DO_CC)
+$(BUILDDIR)/client/m_flash.o :       $(GAME_DIR)/m_flash.c;		$(DO_CC)
+$(BUILDDIR)/client/q_shared.o :      $(GAME_DIR)/q_shared.c;		$(DO_CC)
+$(BUILDDIR)/client/sv_ccmds.o :      $(SERVER_DIR)/sv_ccmds.c;		$(DO_CC)
+$(BUILDDIR)/client/sv_ents.o :       $(SERVER_DIR)/sv_ents.c;		$(DO_CC)
+$(BUILDDIR)/client/sv_game.o :       $(SERVER_DIR)/sv_game.c;		$(DO_CC)
+$(BUILDDIR)/client/sv_init.o :       $(SERVER_DIR)/sv_init.c;		$(DO_CC)
+$(BUILDDIR)/client/sv_main.o :       $(SERVER_DIR)/sv_main.c;		$(DO_CC)
+$(BUILDDIR)/client/sv_send.o :       $(SERVER_DIR)/sv_send.c;		$(DO_CC)
+$(BUILDDIR)/client/sv_user.o :       $(SERVER_DIR)/sv_user.c;		$(DO_CC)
+$(BUILDDIR)/client/sv_world.o :      $(SERVER_DIR)/sv_world.c;		$(DO_CC)
+$(BUILDDIR)/client/q_shlinux.o :     $(LINUX_DIR)/q_shlinux.c;		$(DO_CC)
+$(BUILDDIR)/client/vid_so.o :        $(LINUX_DIR)/vid_so.c;		$(DO_CC)
+$(BUILDDIR)/client/snd_mixa.o :      $(LINUX_DIR)/snd_mixa.s;		$(DO_AS)
+$(BUILDDIR)/client/sys_linux.o :     $(LINUX_DIR)/sys_linux.c;		$(DO_CC)
+$(BUILDDIR)/client/glob.o :          $(LINUX_DIR)/glob.c;		$(DO_CC)
+$(BUILDDIR)/client/net_udp.o :       $(LINUX_DIR)/net_udp.c;		$(DO_CC)
+$(BUILDDIR)/client/net_tcp.o :       $(LINUX_DIR)/net_tcp.c;		$(DO_CC)
+$(BUILDDIR)/client/net_udp6.o :      $(LINUX_DIR)/net_udp6.c;		$(DO_CC)
+$(BUILDDIR)/client/cd_linux.o :      $(LINUX_DIR)/cd_linux.c;		$(DO_CC)
+$(BUILDDIR)/client/snd_alsa.o :      $(LINUX_DIR)/snd_alsa.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/client/snd_oss.o :       $(LINUX_DIR)/snd_oss.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/client/cd_sdl.o :        $(LINUX_DIR)/cd_sdl.c;		$(DO_CC) $(SDLCFLAGS)
+$(BUILDDIR)/client/snd_sdl.o :       $(LINUX_DIR)/snd_sdl.c;		$(DO_SHLIB_CC) $(SDLCFLAGS)
 	
-$(BUILDDIR)/client/menu.o :       $(CLIENT_DIR)/menu.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_loc.o :       $(CLIENT_DIR)/cl_loc.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_scores.o :       $(CLIENT_DIR)/cl_scores.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_hud.o :       $(CLIENT_DIR)/cl_hud.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_decode.o :       $(CLIENT_DIR)/cl_decode.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_vote.o :       $(CLIENT_DIR)/cl_vote.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_serverlist.o :       $(CLIENT_DIR)/cl_serverlist.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cl_images.o :       $(CLIENT_DIR)/cl_images.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/snd_dma.o :    $(CLIENT_DIR)/snd_dma.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/snd_mem.o :    $(CLIENT_DIR)/snd_mem.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/snd_mix.o :    $(CLIENT_DIR)/snd_mix.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/m_flash.o :    $(GAME_DIR)/m_flash.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cmd.o :        $(COMMON_DIR)/cmd.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cmodel.o :     $(COMMON_DIR)/cmodel.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/common.o :     $(COMMON_DIR)/common.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/crc.o :        $(COMMON_DIR)/crc.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cvar.o :       $(COMMON_DIR)/cvar.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/files.o :      $(COMMON_DIR)/files.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/md4.o :        $(COMMON_DIR)/md4.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/net_chan.o :   $(COMMON_DIR)/net_chan.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/q_shared.o :   $(GAME_DIR)/q_shared.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/sound/q_shared.o :   $(GAME_DIR)/q_shared.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/pmove.o :      $(COMMON_DIR)/pmove.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/sv_ccmds.o :   $(SERVER_DIR)/sv_ccmds.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/sv_ents.o :    $(SERVER_DIR)/sv_ents.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/sv_game.o :    $(SERVER_DIR)/sv_game.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/sv_init.o :    $(SERVER_DIR)/sv_init.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/sv_main.o :    $(SERVER_DIR)/sv_main.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/sv_send.o :    $(SERVER_DIR)/sv_send.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/sv_user.o :    $(SERVER_DIR)/sv_user.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/sv_world.o :   $(SERVER_DIR)/sv_world.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/q_shlinux.o :  $(LINUX_DIR)/q_shlinux.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/vid_so.o :     $(LINUX_DIR)/vid_so.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/snd_mixa.o :   $(LINUX_DIR)/snd_mixa.s
-	$(DO_AS)
-
-$(BUILDDIR)/client/sys_linux.o :  $(LINUX_DIR)/sys_linux.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/glob.o :       $(LINUX_DIR)/glob.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/net_common.o : $(COMMON_DIR)/net_common.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/net_udp.o :    $(LINUX_DIR)/net_udp.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/net_tcp.o :    $(LINUX_DIR)/net_tcp.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/net_udp6.o :   $(LINUX_DIR)/net_udp6.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/cd_linux.o :   $(LINUX_DIR)/cd_linux.c
-	$(DO_CC)
-
-$(BUILDDIR)/client/snd_alsa.o :   $(LINUX_DIR)/snd_alsa.c
-	$(DO_SHLIB_CC)
-
-$(BUILDDIR)/client/snd_oss.o :  $(LINUX_DIR)/snd_oss.c
-	$(DO_SHLIB_CC)
-
-$(BUILDDIR)/client/cd_sdl.o :     $(LINUX_DIR)/cd_sdl.c
-	$(DO_CC) $(SDLCFLAGS)
-
-$(BUILDDIR)/client/snd_sdl.o :    $(LINUX_DIR)/snd_sdl.c
-	$(DO_SHLIB_CC) $(SDLCFLAGS)
-
 #############################################################################
 # DEDICATED SERVER
 #############################################################################
 
 PB2DED_OBJS = \
-       $(BUILDDIR)/ded/cmd.o \
-       $(BUILDDIR)/ded/cmodel.o \
-       $(BUILDDIR)/ded/common.o \
-       $(BUILDDIR)/ded/crc.o \
-       $(BUILDDIR)/ded/cvar.o \
-       $(BUILDDIR)/ded/files.o \
-       $(BUILDDIR)/ded/md4.o \
-       $(BUILDDIR)/ded/net_common.o \
-       $(BUILDDIR)/ded/net_chan.o \
-       $(BUILDDIR)/ded/sv_ccmds.o \
-       $(BUILDDIR)/ded/sv_ents.o \
-       $(BUILDDIR)/ded/sv_game.o \
-       $(BUILDDIR)/ded/sv_init.o \
-       $(BUILDDIR)/ded/sv_main.o \
-       $(BUILDDIR)/ded/sv_send.o \
-       $(BUILDDIR)/ded/sv_user.o \
-       $(BUILDDIR)/ded/sv_world.o \
-       $(BUILDDIR)/ded/q_shlinux.o \
-       $(BUILDDIR)/ded/sys_linux.o \
-       $(BUILDDIR)/ded/glob.o \
-       $(BUILDDIR)/ded/net_udp.o \
-       $(BUILDDIR)/ded/net_tcp.o \
-       $(BUILDDIR)/ded/q_shared.o \
-       $(BUILDDIR)/ded/pmove.o \
-       $(BUILDDIR)/ded/cl_null.o \
-       $(BUILDDIR)/ded/cd_null.o
+       $(BUILDDIR)/ded/cmd.o       $(BUILDDIR)/ded/cmodel.o     $(BUILDDIR)/ded/common.o \
+       $(BUILDDIR)/ded/crc.o       $(BUILDDIR)/ded/cvar.o       $(BUILDDIR)/ded/files.o \
+       $(BUILDDIR)/ded/md4.o       $(BUILDDIR)/ded/net_common.o $(BUILDDIR)/ded/net_chan.o \
+       $(BUILDDIR)/ded/sv_ccmds.o  $(BUILDDIR)/ded/sv_ents.o    $(BUILDDIR)/ded/sv_game.o \
+       $(BUILDDIR)/ded/sv_init.o   $(BUILDDIR)/ded/sv_main.o    $(BUILDDIR)/ded/sv_send.o \
+       $(BUILDDIR)/ded/sv_user.o   $(BUILDDIR)/ded/sv_world.o   $(BUILDDIR)/ded/q_shlinux.o \
+       $(BUILDDIR)/ded/sys_linux.o $(BUILDDIR)/ded/glob.o       $(BUILDDIR)/ded/net_udp.o \
+       $(BUILDDIR)/ded/net_tcp.o   $(BUILDDIR)/ded/q_shared.o   $(BUILDDIR)/ded/pmove.o \
+       $(BUILDDIR)/ded/cl_null.o   $(BUILDDIR)/ded/cd_null.o
 
 $(BINDIR)/pb2-ded : $(PB2DED_OBJS)
 	$(CC) $(CFLAGS) -o $@ $(PB2DED_OBJS) $(LDFLAGS)
 
-$(BUILDDIR)/ded/cmd.o :        $(COMMON_DIR)/cmd.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/cmodel.o :     $(COMMON_DIR)/cmodel.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/common.o :     $(COMMON_DIR)/common.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/crc.o :	 $(COMMON_DIR)/crc.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/net_common.o :	$(COMMON_DIR)/net_common.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/cvar.o :	$(COMMON_DIR)/cvar.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/files.o :      $(COMMON_DIR)/files.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/md4.o :	 $(COMMON_DIR)/md4.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/net_chan.o :   $(COMMON_DIR)/net_chan.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/q_shared.o :   $(GAME_DIR)/q_shared.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/pmove.o :      $(COMMON_DIR)/pmove.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/sv_ccmds.o :   $(SERVER_DIR)/sv_ccmds.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/sv_ents.o :    $(SERVER_DIR)/sv_ents.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/sv_game.o :    $(SERVER_DIR)/sv_game.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/sv_init.o :    $(SERVER_DIR)/sv_init.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/sv_main.o :    $(SERVER_DIR)/sv_main.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/sv_send.o :    $(SERVER_DIR)/sv_send.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/sv_user.o :    $(SERVER_DIR)/sv_user.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/sv_world.o :   $(SERVER_DIR)/sv_world.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/q_shlinux.o :  $(LINUX_DIR)/q_shlinux.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/sys_linux.o :  $(LINUX_DIR)/sys_linux.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/glob.o :	$(LINUX_DIR)/glob.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/net_udp.o :    $(LINUX_DIR)/net_udp.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/net_tcp.o :    $(LINUX_DIR)/net_tcp.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/cd_null.o :    $(SERVER_DIR)/null/cd_null.c
-	$(DO_DED_CC)
-
-$(BUILDDIR)/ded/cl_null.o :    $(SERVER_DIR)/null/cl_null.c
-	$(DO_DED_CC)
-
+$(BUILDDIR)/ded/cmd.o :         $(COMMON_DIR)/cmd.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/cmodel.o :      $(COMMON_DIR)/cmodel.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/common.o :      $(COMMON_DIR)/common.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/crc.o :	        $(COMMON_DIR)/crc.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/net_common.o :	$(COMMON_DIR)/net_common.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/cvar.o :	$(COMMON_DIR)/cvar.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/files.o :       $(COMMON_DIR)/files.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/md4.o :	 	$(COMMON_DIR)/md4.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/net_chan.o :    $(COMMON_DIR)/net_chan.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/pmove.o :       $(COMMON_DIR)/pmove.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/q_shared.o :    $(GAME_DIR)/q_shared.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/sv_ccmds.o :    $(SERVER_DIR)/sv_ccmds.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/sv_ents.o :     $(SERVER_DIR)/sv_ents.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/sv_game.o :     $(SERVER_DIR)/sv_game.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/sv_init.o :     $(SERVER_DIR)/sv_init.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/sv_main.o :     $(SERVER_DIR)/sv_main.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/sv_send.o :     $(SERVER_DIR)/sv_send.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/sv_user.o :     $(SERVER_DIR)/sv_user.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/sv_world.o :    $(SERVER_DIR)/sv_world.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/cd_null.o :     $(SERVER_DIR)/null/cd_null.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/cl_null.o :     $(SERVER_DIR)/null/cl_null.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/q_shlinux.o :   $(LINUX_DIR)/q_shlinux.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/sys_linux.o :   $(LINUX_DIR)/sys_linux.c;	$(DO_DED_CC)
+$(BUILDDIR)/ded/glob.o :	$(LINUX_DIR)/glob.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/net_udp.o :     $(LINUX_DIR)/net_udp.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/net_tcp.o :     $(LINUX_DIR)/net_tcp.c;		$(DO_DED_CC)
 
 #############################################################################
 # REF_GL
 #############################################################################
 
 REF_GL_OBJS = \
-	$(BUILDDIR)/ref_gl/gl_draw.o \
-	$(BUILDDIR)/ref_gl/gl_script.o \
-	$(BUILDDIR)/ref_gl/gl_image.o \
-	$(BUILDDIR)/ref_gl/gl_light.o \
-	$(BUILDDIR)/ref_gl/gl_mesh.o \
-	$(BUILDDIR)/ref_gl/r_skm.o \
-	$(BUILDDIR)/ref_gl/gl_refl.o \
-	$(BUILDDIR)/ref_gl/gl_model.o \
-	$(BUILDDIR)/ref_gl/gl_rmain.o \
-	$(BUILDDIR)/ref_gl/gl_rmisc.o \
-	$(BUILDDIR)/ref_gl/gl_rsurf.o \
-	$(BUILDDIR)/ref_gl/gl_warp.o \
-	\
-	$(BUILDDIR)/ref_gl/qgl_linux.o \
-	$(BUILDDIR)/ref_gl/q_shared.o \
-	$(BUILDDIR)/ref_gl/q_shlinux.o \
+	$(BUILDDIR)/ref_gl/gl_draw.o   $(BUILDDIR)/ref_gl/gl_script.o $(BUILDDIR)/ref_gl/gl_image.o \
+	$(BUILDDIR)/ref_gl/gl_light.o  $(BUILDDIR)/ref_gl/gl_mesh.o   $(BUILDDIR)/ref_gl/r_skm.o \
+	$(BUILDDIR)/ref_gl/gl_refl.o   $(BUILDDIR)/ref_gl/gl_model.o  $(BUILDDIR)/ref_gl/gl_rmain.o \
+	$(BUILDDIR)/ref_gl/gl_rmisc.o  $(BUILDDIR)/ref_gl/gl_rsurf.o  $(BUILDDIR)/ref_gl/gl_warp.o \
+	$(BUILDDIR)/ref_gl/qgl_linux.o $(BUILDDIR)/ref_gl/q_shared.o  $(BUILDDIR)/ref_gl/q_shlinux.o \
 	$(BUILDDIR)/ref_gl/glob.o
 
 REF_GLX_OBJS = \
-	$(BUILDDIR)/ref_gl/gl_glx.o \
-	$(BUILDDIR)/ref_gl/rw_linux.o \
-	$(BUILDDIR)/ref_gl/joystick.o
+	$(BUILDDIR)/ref_gl/gl_glx.o    $(BUILDDIR)/ref_gl/rw_linux.o  $(BUILDDIR)/ref_gl/joystick.o
 
 REF_SDLGL_OBJS = \
-	$(BUILDDIR)/ref_gl/gl_sdl.o \
-	$(BUILDDIR)/ref_gl/rw_linux.o \
-	$(BUILDDIR)/ref_gl/joystick.o
+	$(BUILDDIR)/ref_gl/gl_sdl.o    $(BUILDDIR)/ref_gl/rw_linux.o  $(BUILDDIR)/ref_gl/joystick.o
 
 $(BINDIR)/ref_pbgl.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_GLX_OBJS)
 	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_GL_OBJS) $(REF_GLX_OBJS) $(GLXLDFLAGS)
@@ -761,65 +554,26 @@ $(BINDIR)/ref_pbgl.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_GLX_OBJS)
 $(BINDIR)/ref_pbsdl.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_SDLGL_OBJS)
 	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_GL_OBJS) $(REF_SDLGL_OBJS) $(GLXLDFLAGS) $(SDLGLLDFLAGS)
 
-$(BUILDDIR)/ref_gl/gl_script.o :        $(REF_GL_DIR)/gl_script.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_draw.o :        $(REF_GL_DIR)/gl_draw.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_image.o :       $(REF_GL_DIR)/gl_image.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_light.o :       $(REF_GL_DIR)/gl_light.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_refl.o :        $(REF_GL_DIR)/gl_refl.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/r_skm.o :        $(REF_GL_DIR)/r_skm.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_mesh.o :        $(REF_GL_DIR)/gl_mesh.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_model.o :       $(REF_GL_DIR)/gl_model.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_rmain.o :       $(REF_GL_DIR)/gl_rmain.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_rmisc.o :       $(REF_GL_DIR)/gl_rmisc.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_rsurf.o :       $(REF_GL_DIR)/gl_rsurf.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_warp.o :        $(REF_GL_DIR)/gl_warp.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/qgl_linux.o :      $(LINUX_DIR)/qgl_linux.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/q_shared.o :       $(GAME_DIR)/q_shared.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/q_shlinux.o :      $(LINUX_DIR)/q_shlinux.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/glob.o :           $(LINUX_DIR)/glob.c
-	$(DO_GL_SHLIB_CC)
-
-$(BUILDDIR)/ref_gl/gl_glx.o :         $(LINUX_DIR)/gl_glx.c
-	$(DO_GL_SHLIB_CC) $(GLXCFLAGS)
-
-$(BUILDDIR)/ref_gl/rw_linux.o :     $(LINUX_DIR)/rw_linux.c
-	$(DO_GL_SHLIB_CC) $(XCFLAGS)
-
-$(BUILDDIR)/ref_gl/joystick.o :     $(LINUX_DIR)/joystick.c
-	$(DO_GL_SHLIB_CC) $(XCFLAGS)
-
-$(BUILDDIR)/ref_gl/gl_sdl.o :         $(LINUX_DIR)/gl_sdl.c
-	$(DO_GL_SHLIB_CC) $(SDLGLCFLAGS)
+$(BUILDDIR)/ref_gl/gl_script.o :  $(REF_GL_DIR)/gl_script.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_draw.o :    $(REF_GL_DIR)/gl_draw.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_image.o :   $(REF_GL_DIR)/gl_image.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_light.o :   $(REF_GL_DIR)/gl_light.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_refl.o :    $(REF_GL_DIR)/gl_refl.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/r_skm.o :      $(REF_GL_DIR)/r_skm.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_mesh.o :    $(REF_GL_DIR)/gl_mesh.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_model.o :   $(REF_GL_DIR)/gl_model.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_rmain.o :   $(REF_GL_DIR)/gl_rmain.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_rmisc.o :   $(REF_GL_DIR)/gl_rmisc.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_rsurf.o :   $(REF_GL_DIR)/gl_rsurf.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_warp.o :    $(REF_GL_DIR)/gl_warp.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/q_shared.o :   $(GAME_DIR)/q_shared.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/qgl_linux.o :  $(LINUX_DIR)/qgl_linux.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/q_shlinux.o :  $(LINUX_DIR)/q_shlinux.c;	$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/glob.o :       $(LINUX_DIR)/glob.c;		$(DO_GL_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_glx.o :     $(LINUX_DIR)/gl_glx.c;	$(DO_GL_SHLIB_CC) $(GLXCFLAGS)
+$(BUILDDIR)/ref_gl/rw_linux.o :   $(LINUX_DIR)/rw_linux.c;	$(DO_GL_SHLIB_CC) $(XCFLAGS)
+$(BUILDDIR)/ref_gl/joystick.o :   $(LINUX_DIR)/joystick.c;	$(DO_GL_SHLIB_CC) $(XCFLAGS)
+$(BUILDDIR)/ref_gl/gl_sdl.o :     $(LINUX_DIR)/gl_sdl.c;	$(DO_GL_SHLIB_CC) $(SDLGLCFLAGS)
 
 #############################################################################
 # MISC
@@ -859,6 +613,37 @@ ifeq ($(strip $(BUILD_DEDICATED)),YES)
 endif
 	@echo .....
 	@echo Done 
+
+install_root:
+	@mkdir -pv $(DATADIR)
+	@echo Copying files to $(DATADIR)
+ifeq ($(OSTYPE),FreeBSD)
+	@cp -rv $(BINDIR) $(LOCALBASE)/share
+	@rm -fv $(DATADIR)/ref_* $(DATADIR)/snd_*
+	@mkdir -pv $(LIBDIR)
+	@cp -rv $(BINDIR)/snd_* $(BINDIR)/ref_* $(LIBDIR)
+else
+	@cp -rv $(BINDIR) $(LOCALBASE)/games
+endif
+	@cp -rv linux/paintball2_datadir.run linux/paintball2.png $(DATADIR)
+	@chmod +x $(DATADIR)/paintball2_datadir.run
+	@cp -rv linux/paintball2.desktop /home/*/Desktop/Paintball2
+	@ln -sfv $(DATADIR)/paintball2_datadir.run $(SYSBINDIR)/paintball2
+	@printf "Symlinking executable to $(SYSBINDIR)\n"
+ifeq ($(strip $(BUILD_DEDICATED)),YES)
+	@cp -rv linux/paintball2-dedicated_datadir.run $(DATADIR)
+	@chmod +x $(DATADIR)/paintball2-dedicated_datadir.run
+	@ln -sfv $(DATADIR)/paintball2-dedicated_datadir.run $(SYSBINDIR)/paintball2-dedicated
+	@printf "Symlinking dedicated executable to $(SYSBINDIR)\n"
+endif
+	@echo 
+	@printf "Type paintball2 as user to start.\n"
+ifeq ($(strip $(BUILD_DEDICATED)),YES)
+	@printf "Type paintball2-dedicated as user to start a dedicated server.\n"
+endif
+	@echo 
+	@echo Done 
+	
 	
 bz2:
 	@printf "Creating bzip2 compressed file ...\n"

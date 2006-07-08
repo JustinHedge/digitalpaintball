@@ -168,7 +168,11 @@ void S_Init (void)
 		    snddriver = Cvar_Get("snd_driver", "oss", CVAR_ARCHIVE);
 
 		    /* Com_Printf("Loading %s sound output driver", snddriver->string); */
+#ifdef LIBDIR
+		    snprintf(fn, MAX_OSPATH, LIBDIR"/snd_%s.so", snddriver->string);
+#else	 
 		    snprintf(fn, MAX_OSPATH, "./snd_%s.so", snddriver->string);
+#endif
 		    
 		    if (stat(fn, &st) == -1) {
 			Com_Printf("\nload %s failed: %s\n", fn, strerror(errno));
@@ -178,8 +182,8 @@ void S_Init (void)
 			Com_Printf("\nSound failed: %s not found\n", fn, dlerror());
 			return;
 		    }
-		    /* Com_Printf(", ok\n"); */
-
+		    Com_Printf("LoadLibrary(\"%s\")\n", fn);
+		    
 		    if ((SNDDMA_Init = dlsym(snddriver_library, "SNDDMA_Init")) == 0)
 			Com_Error(ERR_FATAL, "dlsym failed loading SNDDMA_Init\n");
 

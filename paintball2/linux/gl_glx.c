@@ -860,7 +860,7 @@ int GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 		int stencil_bits;
 
 		if (!qglXGetConfig(dpy, visinfo, GLX_STENCIL_SIZE, &stencil_bits)) {
-			ri.Con_Printf(PRINT_ALL, "I: got %d bits of stencil\n", stencil_bits);
+			ri.Con_Printf(PRINT_ALL, "I got %d bits of stencil\n", stencil_bits);
 			if (stencil_bits >= 1) {
 				have_stencil = true;
 			}

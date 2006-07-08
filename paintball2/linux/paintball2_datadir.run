@@ -4,7 +4,7 @@
 #http://digitalpaint.planetquake.gamespy.com/news.php
 
 BIN="paintball2"
-DIR="."
+BASEDIR=~/.paintball2
 VIDDRV="pbgl" # "pbgl" or "pbsdl"
 SNDDRV="oss" # "oss", "sdl" or "alsa" 
 CMDLINE="+set deathmatch 1"
@@ -27,6 +27,5 @@ done
 GAME_DIR=`dirname $script`
 
 cd $GAME_DIR
-cd $DIR
 
-exec ./$BIN +set vid_ref $VIDDRV +set snd_driver $SNDDRV $CMDLINE +exec $CFGEXEC +map $MAP "$@"
+exec ./$BIN +set basedir $BASEDIR +set vid_ref $VIDDRV +set snd_driver $SNDDRV $CMDLINE +exec $CFGEXEC +map $MAP "$@"

@@ -1915,9 +1915,18 @@ void CL_WriteConfiguration (const char *filename) // jitconfig -- allow for writ
 {
 	FILE	*f;
 	char	path[MAX_QPATH];
+#if defined (__unix__)
+	char	configsdir[MAX_OSPATH];
+#endif
 
 	if (cls.state == ca_uninitialized)
 		return;
+		
+#if defined (__unix__)
+	// Create the configs directory if it does not exist
+	Com_sprintf (configsdir, sizeof(configsdir), "%s/configs",FS_Gamedir(), configsdir);
+	Sys_Mkdir (configsdir);
+#endif
 
 	Com_sprintf (path, sizeof(path),"%s/configs/%s",FS_Gamedir(),filename); // jitconfig
 	f = fopen (path, "w");

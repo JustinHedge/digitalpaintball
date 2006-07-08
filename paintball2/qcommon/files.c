@@ -590,6 +590,12 @@ void FS_AddGameDirectory (char *dir)
 	int				pakfile_count, i, j;
 	char			**pakfile_list;
 	
+#if defined (__unix__)
+	// Create directory if it does not exist
+	Sys_Mkdir(fs_gamedir);
+	strcpy(fs_gamedir, dir);
+#endif
+
 	// add the directory to the search path
 	search = Z_Malloc(sizeof(searchpath_t));
 	strcpy(search->filename, dir);
@@ -624,6 +630,36 @@ void FS_AddGameDirectory (char *dir)
 		Com_sprintf(dirstring, sizeof(dirstring), "%s/pakfiles/*.pak", dir); // jitpak
 	}
 }
+
+#if defined (__unix__)
+/*
+================
+FS_AddHomeAsGameDirectory
+
+Use ~/.paintball2/dir as fs_gamedir.
+================
+*/
+void FS_AddHomeAsGameDirectory(char *dir)
+{
+	char	gdir[MAX_OSPATH];
+	char   *homedir = getenv("HOME");
+
+	if (homedir) {
+		int len = snprintf(gdir, sizeof(gdir), "%s/.paintball2/%s/", homedir, dir);
+
+		Com_Printf("Using %s for writing\n",gdir);
+		FS_CreatePath (gdir);
+
+		if ((len > 0) && (len < sizeof(gdir)) && (gdir[len-1] == '/'))
+	    	gdir[len-1] = 0;
+
+		strncpy(fs_gamedir,gdir,sizeof(fs_gamedir)-1);
+		fs_gamedir[sizeof(fs_gamedir)-1] = 0;
+
+		FS_AddGameDirectory (gdir);
+	}
+}
+#endif
 
 /*
 ============
@@ -739,8 +775,14 @@ void FS_SetGamedir (char *dir)
 
 		if (fs_cddir->string[0])
 			FS_AddGameDirectory(va("%s/%s", fs_cddir->string, dir));
+#if defined (LIBDIR)
+		FS_AddGameDirectory(va("%s/%s", LIBDIR, dir));
+#endif
 
 		FS_AddGameDirectory(va("%s/%s", fs_basedir->string, dir));
+#if defined (DATADIR)
+		FS_AddHomeAsGameDirectory(dir);
+#endif
 	}
 }
 
@@ -984,7 +1026,11 @@ void FS_InitFilesystem (void)
 	// basedir <path>
 	// allows the game to run from outside the data tree
 	//
+#if defined (DATADIR)
+	fs_basedir = Cvar_Get("basedir", DATADIR, CVAR_NOSET);
+#else
 	fs_basedir = Cvar_Get("basedir", ".", CVAR_NOSET);
+#endif
 
 	//
 	// cddir <path>
@@ -998,7 +1044,13 @@ void FS_InitFilesystem (void)
 	//
 	// start up with baseq2 by default
 	//
+#if defined (LIBDIR)
+	FS_AddGameDirectory(va("%s/"BASEDIRNAME, LIBDIR));
+#endif
 	FS_AddGameDirectory(va("%s/"BASEDIRNAME, fs_basedir->string));
+#if defined (DATADIR)
+	FS_AddHomeAsGameDirectory(BASEDIRNAME);
+#endif
 
 	// any set gamedirs will be freed up to here
 	fs_base_searchpaths = fs_searchpaths;

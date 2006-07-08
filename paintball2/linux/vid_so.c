@@ -239,9 +239,14 @@ qboolean VID_LoadRefresh(char *name)
 	}
 
 	Com_Printf("------- Loading %s -------\n", name);
-
-
+	
+#if defined (LIBDIR)
+	path = LIBDIR;
+#elif defined (DATADIR)
+	path = Cvar_Get("basedir", DATADIR, CVAR_NOSET)->string;
+#else
 	path = Cvar_Get("basedir", ".", CVAR_NOSET)->string;
+#endif
 
 	Com_sprintf(fn, sizeof(fn), "%s/%s", path, name);
 	
@@ -485,7 +490,14 @@ qboolean VID_CheckRefExists (const char *ref)
 	char	*path;
 	struct stat st;
 	
+#if defined (LIBDIR)
+	path = LIBDIR;
+#elif defined (DATADIR)
+	path = Cvar_Get("basedir", DATADIR, CVAR_NOSET)->string;
+#else
 	path = Cvar_Get("basedir", ".", CVAR_NOSET)->string;
+#endif
+
 	Com_sprintf(fn, sizeof(fn), "%s/vid_%s.so", path, ref);
 	
 	if (stat(fn, &st) == 0)
