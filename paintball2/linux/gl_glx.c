@@ -874,6 +874,15 @@ int GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 		
 		XF86VidModeGetAllModeLines(dpy, scrnum, &num_vidmodes, &vidmodes);
 
+		if (XF86VidModeGetGamma(dpy, scrnum, &oldgamma)) {
+			gl_state.gammaramp = true;
+			/* We can not reliably detect hardware gamma
+			   changes across software gamma calls, which
+			   can reset the flag, so change it anyway */
+			vid_gamma->modified = true;
+			ri.Con_Printf( PRINT_ALL, "Using hardware gamma\n");
+		}
+
 		// Are we going fullscreen?  If so, let's change video mode
 		if (fullscreen && !r_fakeFullscreen->value) {
 			best_dist = 9999999;
@@ -900,15 +909,6 @@ int GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 				// change to the mode
 				XF86VidModeSwitchToMode(dpy, scrnum, vidmodes[best_fit]);
 				vidmode_active = true;
-
-				if (XF86VidModeGetGamma(dpy, scrnum, &oldgamma)) {
-					gl_state.gammaramp = true;
-					/* We can not reliably detect hardware gamma
-					   changes across software gamma calls, which
-					   can reset the flag, so change it anyway */
-					vid_gamma->modified = true;
-					ri.Con_Printf( PRINT_ALL, "Using hardware gamma\n");
-				}
 
 				// Move the viewport to top left
 				XF86VidModeSetViewPort(dpy, scrnum, 0, 0);
