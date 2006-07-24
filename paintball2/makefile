@@ -37,6 +37,12 @@ endif
 #
 
 #=============================#
+# Set to YES or NO for a      #
+# verbose compilation process.#
+#=============================#
+VERBOSE?=NO
+
+#=============================#
 # Paintball2 Client           #
 #=============================#
 BUILD_PB2?=YES
@@ -113,15 +119,17 @@ BINDIR=paintball2
 BUILD_DEBUG_DIR=build_debug
 BUILD_RELEASE_DIR=build_release
 
+X11BASE?= /usr/X11R6
 LOCALBASE?= /usr/local
+GAMEBASE?=/usr/local
 SYSBINDIR?=$(LOCALBASE)/bin
 
 ifeq ($(OSTYPE),FreeBSD)
- DATADIR?= $(LOCALBASE)/share/paintball2
- LIBDIR?= $(LOCALBASE)/lib/paintball2
+ DATADIR?= $(GAMEBASE)/share/paintball2
+ LIBDIR?= $(GAMEBASE)/lib/paintball2
 else
- DATADIR?= $(LOCALBASE)/games/paintball2
- LIBDIR?= $(LOCALBASE)/games/paintball2
+ DATADIR?= $(GAMEBASE)/games/paintball2
+ LIBDIR?= $(GAMEBASE)/games/paintball2
 endif
 
 SHLIBEXT=so
@@ -145,9 +153,11 @@ GAME_DIR=$(MOUNT_DIR)/game
 
 CC?=gcc
 
-
-BASE_CFLAGS=-Dstricmp=strcasecmp -D_inline= -DSleep=usleep \
-            -DGAME_NAME='\"$(GAME_NAME)\"'
+BASE_CFLAGS=-I$(LOCALBASE)/include \
+            -Dstricmp=strcasecmp -D_inline= -DSleep=usleep \
+            -DGAME_NAME='\"$(GAME_NAME)\"'\
+	    -DPAINTBALL2_VERSION='"$(VERSION)"' \
+	    -DBUILD_VERSION='"$(BUILD)"'
 
 ifneq ($(strip $(USE_X86_ASM)),YES)
 BASE_CFLAGS+=-DC_ONLY
@@ -188,7 +198,7 @@ ifeq ($(strip $(WITH_LIBDIR)),YES)
 endif
 
 #ifeq ($(ARCH),i386)
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O3 -mmmx \
+RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -mmmx \
 	-ffast-math -ffloat-store -funroll-loops -fno-strict-aliasing
 #endif
 
@@ -219,16 +229,12 @@ ifeq ($(strip $(BUILD_ALSA_SND)),YES)
 ALSALDFLAGS=-lasound
 endif
 
-XCFLAGS=-I/usr/X11R6/include
-GLXCFLAGS= $(XCFLAGS)
-GLXLDFLAGS=-L/usr/X11R6/lib$(_LIB) -lX11 -lXext -lXxf86vm -lGL
-
+XLDFLAGS=-L$(X11BASE)/lib$(_LIB) -lX11 -lXext -lXxf86vm
 ifeq ($(strip $(USE_XF86_DGA)),YES)
-GLXLDFLAGS+= -lXxf86dga
+XLDFLAGS+= -lXxf86dga
 endif
 
-# Extra support
-GLXLDFLAGS+=-ljpeg
+GLX_LDFLAGS= -lGL -ljpeg
 
 SDLCONFIG?= sdl-config
 SDLCFLAGS= $(shell $(SDLCONFIG) --cflags)
@@ -236,18 +242,18 @@ SDLLDFLAGS= $(shell $(SDLCONFIG) --libs)
 SDLGLCFLAGS=$(SDLCFLAGS)
 SDLGLLDFLAGS=$(SDLLDFLAGS)
 
-DO_CC=$(CC) $(CFLAGS) -o $@ -c $<
-DO_DED_CC=$(CC) $(CFLAGS) -DDEDICATED_ONLY -o $@ -c $<
-DO_SHLIB_CC=$(CC) $(CFLAGS) $(SHLIBCFLAGS) -o $@ -c $<
-DO_GL_SHLIB_CC=$(CC) $(CFLAGS) $(SHLIBCFLAGS) $(GLCFLAGS) -o $@ -c $<
-DO_AS=$(CC) $(CFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
-DO_SHLIB_AS=$(CC) $(CFLAGS) $(SHLIBCFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
+ifneq ($(VERBOSE),YES)
+CC_OUTPUT=echo "Compiling >> $<" &&
+endif
+
+DO_CC=$(CC_OUTPUT) $(CC) $(CFLAGS) -o $@ -c $<
+DO_DED_CC=$(CC_OUTPUT) $(CC) $(CFLAGS) -DDEDICATED_ONLY -o $@ -c $<
+DO_SHLIB_CC=$(CC_OUTPUT) $(CC) $(CFLAGS) $(SHLIBCFLAGS) -o $@ -c $<
+DO_AS=$(CC_OUTPUT) $(CC) $(CFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
 
 #############################################################################
 # SETUP AND BUILD
 #############################################################################
-
-.PHONY : targets build_debug build_release clean clean-debug clean-release clean2
 
 ifeq ($(strip $(BUILD_PB2)),YES)
 TARGETS += $(BINDIR)/paintball2
@@ -269,32 +275,13 @@ ifeq ($(strip $(BUILD_SDL_SND)),YES)
 TARGETS += $(BINDIR)/snd_sdl.$(SHLIBEXT)
 endif
 
-ifeq ($(ARCH),ppc)
 ifeq ($(strip $(BUILD_GLX)),YES)
 TARGETS += $(BINDIR)/ref_pbgl.$(SHLIBEXT)
 endif
-ifeq ($(strip $(BUILD_SDLGL)),YES)
-TARGETS += $(BINDIR)/ref_pbsdl.$(SHLIBEXT)
-endif
-endif # ARCH ppc
 
-ifeq ($(ARCH),x86_64)
-ifeq ($(strip $(BUILD_GLX)),YES)
-TARGETS += $(BINDIR)/ref_pbgl.$(SHLIBEXT)
-endif
 ifeq ($(strip $(BUILD_SDLGL)),YES)
 TARGETS += $(BINDIR)/ref_pbsdl.$(SHLIBEXT)
 endif
-endif # ARCH x86_64
-
-ifeq ($(ARCH),i386)
-ifeq ($(strip $(BUILD_GLX)),YES)
-TARGETS += $(BINDIR)/ref_pbgl.$(SHLIBEXT)
-endif
-ifeq ($(strip $(BUILD_SDLGL)),YES)
-TARGETS += $(BINDIR)/ref_pbsdl.$(SHLIBEXT)
-endif
-endif # ARCH i386
 
 all:
 	@echo 
@@ -303,6 +290,7 @@ all:
 	@echo 
 	@echo Possible targets:
 	@echo
+	@echo "   "">> Add VERBOSE=YES to a verbose compilation output, defaults to NO"
 	@echo "   "">> make release"
 	@echo "   "">> make debug"
 	@echo "   "">> make install (paintball2 home dir)."
@@ -335,7 +323,11 @@ ifeq ($(strip $(BUILD_SDLGL)),YES)
 		$(BUILD_DEBUG_DIR)/ref_gl
 endif
 
-	$(MAKE) targets BUILDDIR=$(BUILD_DEBUG_DIR) CFLAGS="$(DEBUG_CFLAGS) -DPAINTBALL2_VERSION='\"$(VERSION) -DBUILD_VERSION='\"$(BUILD)\"' Debug\"'"
+ifneq ($(VERBOSE),YES)
+	@-$(MAKE) --silent targets BUILDDIR=$(BUILD_DEBUG_DIR) CFLAGS="$(DEBUG_CFLAGS)"
+else
+	$(MAKE) targets BUILDDIR=$(BUILD_DEBUG_DIR) CFLAGS="$(DEBUG_CFLAGS)"
+endif
 
 release:
 	@-mkdir -p $(BUILD_RELEASE_DIR) \
@@ -358,9 +350,15 @@ ifeq ($(strip $(BUILD_SDLGL)),YES)
 		$(BUILD_RELEASE_DIR)/ref_gl 
 endif
 
-	$(MAKE) targets BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(RELEASE_CFLAGS) -DPAINTBALL2_VERSION='\"$(VERSION)\"' -DBUILD_VERSION='\"$(BUILD)\"'"
+ifneq ($(VERBOSE),YES)
+	@-$(MAKE) --silent targets BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(RELEASE_CFLAGS)"
+else
+	$(MAKE) targets BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(RELEASE_CFLAGS)"
+endif
+
 
 targets: $(TARGETS)
+	@echo "Paintball2 compilation finished succesfully =)"
 
 #############################################################################
 # CLIENT/SERVER
@@ -412,17 +410,45 @@ PB2_AS_OBJS =  #blank
 endif
 
 $(BINDIR)/paintball2 : $(PB2_OBJS) $(CD_OBJS) $(PB2_AS_OBJS)
+	@echo
+	@echo "**Built Paintball2 client with cflags:"
+	@echo "$(CFLAGS)";
+	@echo
+	@echo "**Now linking Paintball2 client with flags:"
+	@echo "$(LDFLAGS)";
+	@echo
 	$(CC) $(CFLAGS) -o $@ $(PB2_OBJS) $(CD_OBJS) $(PB2_AS_OBJS) $(LDFLAGS)
 
 ifeq ($(OSTYPE),Linux)
 $(BINDIR)/snd_alsa.$(SHLIBEXT) : $(ALSA_SND_OBJS)
+	@echo
+	@echo "**Built Alsa sound driver with cflags:"
+	@echo "$(CFLAGS)";
+	@echo
+	@echo "**Now linking Alsa sound driver with flags:"
+	@echo "$(LDFLAGS) $(SHLIBLDFLAGS) $(ALSALDFLAGS)";
+	@echo
 	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(ALSA_SND_OBJS) $(LDFLAGS) $(ALSALDFLAGS)
 endif
 	
 $(BINDIR)/snd_oss.$(SHLIBEXT) : $(OSS_SND_OBJS)
+	@echo
+	@echo "**Built OSS sound driver with cflags:"
+	@echo "$(CFLAGS)";
+	@echo
+	@echo "**Now linking OSS sound driver with flags:"
+	@echo "$(LDFLAGS) $(SHLIBLDFLAGS)";
+	@echo
 	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(OSS_SND_OBJS) $(LDFLAGS)
 
 $(BINDIR)/snd_sdl.$(SHLIBEXT) : $(SDL_SND_OBJS)
+	@echo
+	@echo "**Built SDL sound driver with cflags:"
+	@echo "$(CFLAGS)";
+	@echo
+	@echo "**Now linking SDL sound driver with flags:"
+	@echo "$(LDFLAGS) $(SHLIBLDFLAGS) $(SDLLDFLAGS)";
+	@echo
 	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(SDL_SND_OBJS) $(LDFLAGS) $(SDLLDFLAGS)
 
 $(BUILDDIR)/a3d/q2a3d.o :	     $(A3D_DIR)/q2a3d.c;		$(DO_CC)
@@ -501,6 +527,13 @@ PB2DED_OBJS = \
        $(BUILDDIR)/ded/cl_null.o   $(BUILDDIR)/ded/cd_null.o
 
 $(BINDIR)/pb2-ded : $(PB2DED_OBJS)
+	@echo
+	@echo "**Built Paintball2 dedicated client with cflags:"
+	@echo "$(CFLAGS)";
+	@echo
+	@echo "**Now linking Paintball2 dedicated client with flags:"
+	@echo "$(LDFLAGS)";
+	@echo
 	$(CC) $(CFLAGS) -o $@ $(PB2DED_OBJS) $(LDFLAGS)
 
 $(BUILDDIR)/ded/cmd.o :         $(COMMON_DIR)/cmd.c;		$(DO_DED_CC)
@@ -549,31 +582,45 @@ REF_SDLGL_OBJS = \
 	$(BUILDDIR)/ref_gl/gl_sdl.o    $(BUILDDIR)/ref_gl/rw_linux.o  $(BUILDDIR)/ref_gl/joystick.o
 
 $(BINDIR)/ref_pbgl.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_GLX_OBJS)
-	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_GL_OBJS) $(REF_GLX_OBJS) $(GLXLDFLAGS)
+	@echo
+	@echo "**Built GLX video driver with cflags:"
+	@echo "$(CFLAGS)";
+	@echo
+	@echo "**Now linking GLX video driver with flags:"
+	@echo "$(XLDFLAGS) $(GLX_LDFLAGS) $(SHLIBLDFLAGS)";
+	@echo
+	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_GL_OBJS) $(REF_GLX_OBJS) $(XLDFLAGS) $(GLX_LDFLAGS)
 
 $(BINDIR)/ref_pbsdl.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_SDLGL_OBJS)
-	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_GL_OBJS) $(REF_SDLGL_OBJS) $(GLXLDFLAGS) $(SDLGLLDFLAGS)
+	@echo
+	@echo "**Built SDL video driver with cflags:"
+	@echo "$(CFLAGS)";
+	@echo
+	@echo "**Now Linking SDL video driver with flags:"
+	@echo "$(SDLGLLDFLAGS) $(GLX_LDFLAGS) $(SHLIBLDFLAGS)";
+	@echo
+	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(REF_GL_OBJS) $(REF_SDLGL_OBJS) $(GLX_LDFLAGS) $(SDLGLLDFLAGS)
 
-$(BUILDDIR)/ref_gl/gl_script.o :  $(REF_GL_DIR)/gl_script.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_draw.o :    $(REF_GL_DIR)/gl_draw.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_image.o :   $(REF_GL_DIR)/gl_image.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_light.o :   $(REF_GL_DIR)/gl_light.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_refl.o :    $(REF_GL_DIR)/gl_refl.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/r_skm.o :      $(REF_GL_DIR)/r_skm.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_mesh.o :    $(REF_GL_DIR)/gl_mesh.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_model.o :   $(REF_GL_DIR)/gl_model.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_rmain.o :   $(REF_GL_DIR)/gl_rmain.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_rmisc.o :   $(REF_GL_DIR)/gl_rmisc.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_rsurf.o :   $(REF_GL_DIR)/gl_rsurf.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_warp.o :    $(REF_GL_DIR)/gl_warp.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/q_shared.o :   $(GAME_DIR)/q_shared.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/qgl_linux.o :  $(LINUX_DIR)/qgl_linux.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/q_shlinux.o :  $(LINUX_DIR)/q_shlinux.c;	$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/glob.o :       $(LINUX_DIR)/glob.c;		$(DO_GL_SHLIB_CC)
-$(BUILDDIR)/ref_gl/gl_glx.o :     $(LINUX_DIR)/gl_glx.c;	$(DO_GL_SHLIB_CC) $(GLXCFLAGS)
-$(BUILDDIR)/ref_gl/rw_linux.o :   $(LINUX_DIR)/rw_linux.c;	$(DO_GL_SHLIB_CC) $(XCFLAGS)
-$(BUILDDIR)/ref_gl/joystick.o :   $(LINUX_DIR)/joystick.c;	$(DO_GL_SHLIB_CC) $(XCFLAGS)
-$(BUILDDIR)/ref_gl/gl_sdl.o :     $(LINUX_DIR)/gl_sdl.c;	$(DO_GL_SHLIB_CC) $(SDLGLCFLAGS)
+$(BUILDDIR)/ref_gl/gl_script.o :  $(REF_GL_DIR)/gl_script.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_draw.o :    $(REF_GL_DIR)/gl_draw.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_image.o :   $(REF_GL_DIR)/gl_image.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_light.o :   $(REF_GL_DIR)/gl_light.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_refl.o :    $(REF_GL_DIR)/gl_refl.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/r_skm.o :      $(REF_GL_DIR)/r_skm.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_mesh.o :    $(REF_GL_DIR)/gl_mesh.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_model.o :   $(REF_GL_DIR)/gl_model.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_rmain.o :   $(REF_GL_DIR)/gl_rmain.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_rmisc.o :   $(REF_GL_DIR)/gl_rmisc.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_rsurf.o :   $(REF_GL_DIR)/gl_rsurf.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_warp.o :    $(REF_GL_DIR)/gl_warp.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/q_shared.o :   $(GAME_DIR)/q_shared.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/qgl_linux.o :  $(LINUX_DIR)/qgl_linux.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/q_shlinux.o :  $(LINUX_DIR)/q_shlinux.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/glob.o :       $(LINUX_DIR)/glob.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_glx.o :     $(LINUX_DIR)/gl_glx.c;	$(DO_SHLIB_CC) $(GLXCFLAGS)
+$(BUILDDIR)/ref_gl/rw_linux.o :   $(LINUX_DIR)/rw_linux.c;	$(DO_SHLIB_CC) $(GLXCFLAGS)
+$(BUILDDIR)/ref_gl/joystick.o :   $(LINUX_DIR)/joystick.c;	$(DO_SHLIB_CC) $(GLXCFLAGS)
+$(BUILDDIR)/ref_gl/gl_sdl.o :     $(LINUX_DIR)/gl_sdl.c;	$(DO_SHLIB_CC) $(SDLGLCFLAGS)
 
 #############################################################################
 # MISC
