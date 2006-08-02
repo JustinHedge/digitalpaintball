@@ -629,6 +629,198 @@ static char *string_for_bind(char *bind)
 	return str;
 }
 
+
+static void M_UpdateWidgetPosition (menu_widget_t *widget)
+{
+	int xcenteradj, ycenteradj;
+	char *text = NULL;
+	image_t *pic = NULL;
+
+	scale = cl_hudscale->value;
+	// we want the menu to be drawn in the center of the screen
+	// if it's too small to fill it.
+	xcenteradj = (viddef.width - 320 * scale) / 2;
+	ycenteradj = (viddef.height - 240 * scale) / 2;
+	widget->widgetCorner.x = widget->textCorner.x = widget->x * scale + xcenteradj;
+	widget->widgetCorner.y = widget->textCorner.y = widget->y * scale + ycenteradj;
+
+	if (widget->enabled)
+	{
+		if (widget->text)
+			text = widget->text;
+
+		if (widget->pic)
+			pic = widget->pic;
+
+		// Update text/pic for hovering/selection
+		if (widget->hover || widget->selected)
+		{
+			if (widget->hovertext)
+				text = widget->hovertext;
+			if (widget->hoverpic)
+				pic = widget->hoverpic;
+			else if (widget->pic)
+				pic = widget->pic;
+		}
+
+		// Calculate picture size
+		if (pic || (widget->picwidth && widget->picheight))
+		{
+			widget->widgetSize.x = (widget->picwidth) ? widget->picwidth : pic->width;
+			widget->widgetSize.y = (widget->picheight) ? widget->picheight : pic->height;
+
+			if (pic == widget->hoverpic)
+			{
+				if (widget->hoverpicwidth)
+					widget->widgetSize.x = widget->hoverpicwidth;
+
+				if (widget->hoverpicheight)
+					widget->widgetSize.y = widget->hoverpicheight;			
+			}
+
+			widget->widgetSize.x *= scale;
+			widget->widgetSize.y *= scale;
+		}
+
+		switch(widget->type)
+		{
+		case WIDGET_TYPE_SLIDER:
+			widget->widgetSize.x = SLIDER_TOTAL_WIDTH;
+			widget->widgetSize.y = SLIDER_TOTAL_HEIGHT;
+			break;
+		case WIDGET_TYPE_CHECKBOX:
+			widget->widgetSize.x = CHECKBOX_WIDTH;
+			widget->widgetSize.y = CHECKBOX_HEIGHT;
+			break;
+		case WIDGET_TYPE_FIELD:
+			{
+				int width;
+
+				width = widget->field_width - 2;
+
+				if (width < 1)
+					width = 1;
+
+				widget->widgetSize.x = FIELD_LWIDTH + TEXT_WIDTH*width + FIELD_RWIDTH;
+				widget->widgetSize.y = FIELD_HEIGHT;
+
+				if (widget->valign != WIDGET_VALIGN_MIDDLE) // center text by field vertically
+					widget->textCorner.y += (FIELD_HEIGHT-TEXT_HEIGHT)/2;
+			}
+			break;
+		case WIDGET_TYPE_SELECT:
+			if (widget->select_rows < 2) // jitodo -- allow for dropdowns later
+				widget->select_rows = 2;
+
+			if (widget->select_width < 2)
+				widget->select_width = 2;
+
+			widget->widgetSize.x = widget->select_width * TEXT_WIDTH + SELECT_HSPACING*2;
+			widget->widgetSize.y = widget->select_rows * 
+				(TEXT_HEIGHT+SELECT_VSPACING) + SELECT_VSPACING;
+			break;
+		}
+
+		switch(widget->halign)
+		{
+		case WIDGET_HALIGN_CENTER:
+			widget->widgetCorner.x -= widget->widgetSize.x/2;
+			widget->textCorner.x -= (strlen_noformat(text)*8*scale)/2;
+			break;
+		case WIDGET_HALIGN_RIGHT:
+			widget->widgetCorner.x -= widget->widgetSize.x;
+			widget->textCorner.x -= (strlen_noformat(text)*8*scale);
+			switch(widget->type)
+			{
+			case WIDGET_TYPE_SLIDER:
+			case WIDGET_TYPE_CHECKBOX:
+			case WIDGET_TYPE_FIELD:
+			case WIDGET_TYPE_SELECT:
+				widget->textCorner.x -= (8*scale + widget->widgetSize.x);
+				break;
+			default:
+				break;
+			}
+			break;
+		case WIDGET_HALIGN_LEFT:
+		default:
+			switch(widget->type)
+			{
+			case WIDGET_TYPE_SLIDER:
+			case WIDGET_TYPE_CHECKBOX:
+			case WIDGET_TYPE_FIELD:
+			case WIDGET_TYPE_SELECT:
+				widget->textCorner.x += (8*scale + widget->widgetSize.x);
+				break;
+			default:
+				break;
+			}
+			break;
+		}
+
+		switch(widget->valign)
+		{
+		case WIDGET_VALIGN_MIDDLE:
+			widget->widgetCorner.y -= (widget->widgetSize.y/2);
+			widget->textCorner.y -= TEXT_HEIGHT/2.0f;
+			break;
+		case WIDGET_VALIGN_BOTTOM:
+			widget->widgetCorner.y -= widget->widgetSize.y;
+			widget->textCorner.y -= TEXT_HEIGHT;
+			break;
+		default:
+			break;
+		}
+
+		widget->mouseBoundaries.bottom = -0x0FFFFFFF;
+		widget->mouseBoundaries.left = 0x0FFFFFFF;
+		widget->mouseBoundaries.right = -0x0FFFFFFF;
+		widget->mouseBoundaries.top = 0x0FFFFFFF;
+
+		if (pic || widget->type == WIDGET_TYPE_CHECKBOX || (widget->picwidth && widget->picheight))
+		{
+			widget->mouseBoundaries.left = widget->widgetCorner.x;
+			widget->mouseBoundaries.right = widget->widgetCorner.x + widget->widgetSize.x;
+			widget->mouseBoundaries.top = widget->widgetCorner.y;
+			widget->mouseBoundaries.bottom = widget->widgetCorner.y + widget->widgetSize.y;
+		}
+
+		if (text)
+		{
+			widget->textSize.x = (strlen_noformat(text)*TEXT_HEIGHT);
+			widget->textSize.y = TEXT_HEIGHT;
+
+			switch(widget->type)
+			{
+			case WIDGET_TYPE_CHECKBOX:
+				widget->textCorner.y = widget->widgetCorner.y + (CHECKBOX_HEIGHT - TEXT_HEIGHT)/2;
+				break;
+			case WIDGET_TYPE_SLIDER:
+				widget->textCorner.y = widget->widgetCorner.y + (SLIDER_TOTAL_HEIGHT - TEXT_HEIGHT)/2;
+				break;
+			}
+
+			if (widget->mouseBoundaries.left > widget->textCorner.x)
+				widget->mouseBoundaries.left = widget->textCorner.x;
+			if (widget->mouseBoundaries.right < widget->textCorner.x + widget->textSize.x)
+				widget->mouseBoundaries.right = widget->textCorner.x + widget->textSize.x;
+			if (widget->mouseBoundaries.top > widget->textCorner.y)
+				widget->mouseBoundaries.top = widget->textCorner.y;
+			if (widget->mouseBoundaries.bottom < widget->textCorner.y + widget->textSize.y)
+				widget->mouseBoundaries.bottom = widget->textCorner.y + widget->textSize.y;
+		}
+
+		if (widget->type == WIDGET_TYPE_SLIDER || widget->type == WIDGET_TYPE_FIELD)
+		{
+			widget->mouseBoundaries.left = widget->widgetCorner.x;
+			widget->mouseBoundaries.right = widget->widgetCorner.x + widget->widgetSize.x;
+			widget->mouseBoundaries.top = widget->widgetCorner.y;
+			widget->mouseBoundaries.bottom = widget->widgetCorner.y + widget->widgetSize.y;
+		}
+	}
+}
+
+
 static void update_select_subwidgets (menu_widget_t *widget)
 {
 	int i;
@@ -639,7 +831,7 @@ static void update_select_subwidgets (menu_widget_t *widget)
 	int width, x, y;
 	char *widget_text;
 
-	M_UpdateDrawingInformation(widget);
+	M_UpdateWidgetPosition(widget);
 
 	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 	if (widget->flags & WIDGET_FLAG_LISTSOURCE)
@@ -820,211 +1012,22 @@ static void update_select_subwidgets (menu_widget_t *widget)
 	//pthread_mutex_unlock(&m_mut_widgets);
 }
 
+
 // ++ ARTHUR [9/04/03]
 static void M_UpdateDrawingInformation (menu_widget_t *widget)
 {
-	int xcenteradj, ycenteradj;
-	char *text = NULL;
-	image_t *pic = NULL;
-
 	// only update if the widget or the hudscale has changed
 	if (!(widget->modified || cl_hudscale->modified))
 		return;
 
+	M_UpdateWidgetPosition(widget);
+
+	if (widget->select_list)
+		update_select_subwidgets(widget);
+
 	widget->modified = false;
-
-	scale = cl_hudscale->value;
-
-	// we want the menu to be drawn in the center of the screen
-	// if it's too small to fill it.
-	xcenteradj = (viddef.width - 320*scale)/2;
-	ycenteradj = (viddef.height - 240*scale)/2;
-	
-	widget->widgetCorner.x = widget->textCorner.x = widget->x * scale + xcenteradj;
-	widget->widgetCorner.y = widget->textCorner.y = widget->y * scale + ycenteradj;
-
-	if (widget->enabled)
-	{
-		if (widget->text)
-			text = widget->text;
-
-		if (widget->pic)
-			pic = widget->pic;
-
-		//
-		// Update text/pic for hovering/selection
-		//
-		if (widget->hover || widget->selected)
-		{
-			if (widget->hovertext)
-				text = widget->hovertext;
-			if (widget->hoverpic)
-				pic = widget->hoverpic;
-			else if (widget->pic)
-				pic = widget->pic;
-		}
-
-		//
-		// Calculate picture size
-		// 
-		if (pic || (widget->picwidth && widget->picheight))
-		{
-			widget->widgetSize.x = (widget->picwidth) ? widget->picwidth : pic->width;
-			widget->widgetSize.y = (widget->picheight) ? widget->picheight : pic->height;
-			
-			if (pic == widget->hoverpic)
-			{
-				if (widget->hoverpicwidth)
-					widget->widgetSize.x = widget->hoverpicwidth;
-
-				if (widget->hoverpicheight)
-					widget->widgetSize.y = widget->hoverpicheight;			
-			}
-
-			widget->widgetSize.x *= scale;
-			widget->widgetSize.y *= scale;
-		}
-
-		switch(widget->type)
-		{
-		case WIDGET_TYPE_SLIDER:
-			widget->widgetSize.x = SLIDER_TOTAL_WIDTH;
-			widget->widgetSize.y = SLIDER_TOTAL_HEIGHT;
-			break;
-		case WIDGET_TYPE_CHECKBOX:
-			widget->widgetSize.x = CHECKBOX_WIDTH;
-			widget->widgetSize.y = CHECKBOX_HEIGHT;
-			break;
-		case WIDGET_TYPE_FIELD:
-			{
-			int width;
-
-			width = widget->field_width - 2;
-			
-			if (width < 1)
-				width = 1;
-
-			widget->widgetSize.x = FIELD_LWIDTH + TEXT_WIDTH*width + FIELD_RWIDTH;
-			widget->widgetSize.y = FIELD_HEIGHT;
-
-			if (widget->valign != WIDGET_VALIGN_MIDDLE) // center text by field vertically
-				widget->textCorner.y += (FIELD_HEIGHT-TEXT_HEIGHT)/2;
-			}
-			break;
-		case WIDGET_TYPE_SELECT:
-			if (widget->select_rows < 2) // jitodo -- allow for dropdowns later
-				widget->select_rows = 2;
-
-			if (widget->select_width < 2)
-				widget->select_width = 2;
-
-			widget->widgetSize.x = widget->select_width * TEXT_WIDTH + SELECT_HSPACING*2;
-			widget->widgetSize.y = widget->select_rows * 
-				(TEXT_HEIGHT+SELECT_VSPACING) + SELECT_VSPACING;
-			break;
-		}
-
-		switch(widget->halign)
-		{
-		case WIDGET_HALIGN_CENTER:
-			widget->widgetCorner.x -= widget->widgetSize.x/2;
-			widget->textCorner.x -= (strlen_noformat(text)*8*scale)/2;
-			break;
-		case WIDGET_HALIGN_RIGHT:
-			widget->widgetCorner.x -= widget->widgetSize.x;
-			widget->textCorner.x -= (strlen_noformat(text)*8*scale);
-			switch(widget->type)
-			{
-			case WIDGET_TYPE_SLIDER:
-			case WIDGET_TYPE_CHECKBOX:
-			case WIDGET_TYPE_FIELD:
-			case WIDGET_TYPE_SELECT:
-				widget->textCorner.x -= (8*scale + widget->widgetSize.x);
-				break;
-			default:
-				break;
-			}
-			break;
-		case WIDGET_HALIGN_LEFT:
-		default:
-			switch(widget->type)
-			{
-			case WIDGET_TYPE_SLIDER:
-			case WIDGET_TYPE_CHECKBOX:
-			case WIDGET_TYPE_FIELD:
-			case WIDGET_TYPE_SELECT:
-				widget->textCorner.x += (8*scale + widget->widgetSize.x);
-				break;
-			default:
-				break;
-			}
-			break;
-		}
-
-		switch(widget->valign)
-		{
-		case WIDGET_VALIGN_MIDDLE:
-			widget->widgetCorner.y -= (widget->widgetSize.y/2);
-			widget->textCorner.y -= TEXT_HEIGHT/2.0f;
-			break;
-		case WIDGET_VALIGN_BOTTOM:
-			widget->widgetCorner.y -= widget->widgetSize.y;
-			widget->textCorner.y -= TEXT_HEIGHT;
-			break;
-		default:
-			break;
-		}
-
-		widget->mouseBoundaries.bottom = -0x0FFFFFFF;
-		widget->mouseBoundaries.left = 0x0FFFFFFF;
-		widget->mouseBoundaries.right = -0x0FFFFFFF;
-		widget->mouseBoundaries.top = 0x0FFFFFFF;
-
-		if (pic || widget->type == WIDGET_TYPE_CHECKBOX || (widget->picwidth && widget->picheight))
-		{
-			widget->mouseBoundaries.left = widget->widgetCorner.x;
-			widget->mouseBoundaries.right = widget->widgetCorner.x + widget->widgetSize.x;
-			widget->mouseBoundaries.top = widget->widgetCorner.y;
-			widget->mouseBoundaries.bottom = widget->widgetCorner.y + widget->widgetSize.y;
-		}
-
-		if (text)
-		{
-			widget->textSize.x = (strlen_noformat(text)*TEXT_HEIGHT);
-			widget->textSize.y = TEXT_HEIGHT;
-
-			switch(widget->type)
-			{
-			case WIDGET_TYPE_CHECKBOX:
-				widget->textCorner.y = widget->widgetCorner.y + (CHECKBOX_HEIGHT - TEXT_HEIGHT)/2;
-				break;
-			case WIDGET_TYPE_SLIDER:
-				widget->textCorner.y = widget->widgetCorner.y + (SLIDER_TOTAL_HEIGHT - TEXT_HEIGHT)/2;
-				break;
-			}
-
-			if (widget->mouseBoundaries.left > widget->textCorner.x)
-				widget->mouseBoundaries.left = widget->textCorner.x;
-			if (widget->mouseBoundaries.right < widget->textCorner.x + widget->textSize.x)
-				widget->mouseBoundaries.right = widget->textCorner.x + widget->textSize.x;
-			if (widget->mouseBoundaries.top > widget->textCorner.y)
-				widget->mouseBoundaries.top = widget->textCorner.y;
-			if (widget->mouseBoundaries.bottom < widget->textCorner.y + widget->textSize.y)
-				widget->mouseBoundaries.bottom = widget->textCorner.y + widget->textSize.y;
-		}
-
-		if (widget->type == WIDGET_TYPE_SLIDER || widget->type == WIDGET_TYPE_FIELD)
-		{
-			widget->mouseBoundaries.left = widget->widgetCorner.x;
-			widget->mouseBoundaries.right = widget->widgetCorner.x + widget->widgetSize.x;
-			widget->mouseBoundaries.top = widget->widgetCorner.y;
-			widget->mouseBoundaries.bottom = widget->widgetCorner.y + widget->widgetSize.y;
-		}
-
-		if (widget->select_list)
-			update_select_subwidgets(widget);
-	}
 }
+
 
 static void M_DeselectWidget(menu_widget_t *current)
 {
@@ -1034,6 +1037,7 @@ static void M_DeselectWidget(menu_widget_t *current)
 	current->selected = false;
 	current->hover = false;
 }
+
 
 static menu_widget_t *find_widget_under_cursor (menu_widget_t *widget)
 {
@@ -2224,17 +2228,17 @@ static void menu_from_file (menu_screen_t *menu)
 						else
 							menu->type = M_MenuGetType(COM_Parse(&buf));
 					}
-					else if (Q_streq(token, "password"))
+					else if (Q_streq(token, "password") && widget)
 						widget->flags |= WIDGET_FLAG_PASSWORD;
-					else if (Q_streq(token, "text"))
+					else if (Q_streq(token, "text") && widget)
 						widget->text = text_copy(COM_Parse(&buf));
-					else if (Q_streq(token, "hovertext"))
+					else if (Q_streq(token, "hovertext") && widget)
 						widget->hovertext = text_copy(COM_Parse(&buf));
-					else if (Q_streq(token, "selectedtext"))
+					else if (Q_streq(token, "selectedtext") && widget)
 						widget->selectedtext = text_copy(COM_Parse(&buf));
-					else if (Q_streq(token, "cvar"))
+					else if (Q_streq(token, "cvar") && widget)
 						widget->cvar = text_copy(COM_Parse(&buf));
-					else if (Q_streq(token, "cvar_default"))
+					else if (Q_streq(token, "cvar_default") && widget)
 						widget->cvar_default = text_copy(COM_Parse(&buf));
 					else if (Q_streq(token, "command") || Q_streq(token, "cmd"))
 					{
@@ -2243,9 +2247,9 @@ static void menu_from_file (menu_screen_t *menu)
 						else
 							menu->command = text_copy(COM_Parse(&buf));
 					}
-					else if (Q_streq(token, "doubleclick"))
+					else if (Q_streq(token, "doubleclick") && widget)
 						widget->doubleclick = text_copy(COM_Parse(&buf));
-					else if (Q_streq(token, "pic"))
+					else if (Q_streq(token, "pic") && widget)
 					{
 						widget->pic = re.DrawFindPic(COM_Parse(&buf));
 						// default to double resolution, since it's too blocky otherwise.
@@ -2254,11 +2258,11 @@ static void menu_from_file (menu_screen_t *menu)
 						if (!widget->picheight)
 							widget->picheight = widget->pic->height / 2.0f;
 					}
-					else if (Q_streq(token, "picwidth"))
+					else if (Q_streq(token, "picwidth") && widget)
 						widget->picwidth = atoi(COM_Parse(&buf));
-					else if (Q_streq(token, "picheight"))
+					else if (Q_streq(token, "picheight") && widget)
 						widget->picheight = atoi(COM_Parse(&buf));
-					else if (Q_streq(token, "hoverpic"))
+					else if (Q_streq(token, "hoverpic") && widget)
 					{
 						widget->hoverpic = re.DrawFindPic(COM_Parse(&buf));
 						// default to double resolution, since it's too blocky otherwise.
@@ -2267,71 +2271,71 @@ static void menu_from_file (menu_screen_t *menu)
 						if (!widget->hoverpicheight)
 							widget->hoverpicheight = widget->hoverpic->height / 2.0f;
 					}
-					else if (Q_streq(token, "hoverpicwidth"))
+					else if (Q_streq(token, "hoverpicwidth") && widget)
 						widget->hoverpicwidth = atoi(COM_Parse(&buf));
-					else if (Q_streq(token, "hoverpicheight"))
+					else if (Q_streq(token, "hoverpicheight") && widget)
 						widget->hoverpicheight = atoi(COM_Parse(&buf));
-					else if (Q_streq(token, "selectedpic"))
+					else if (Q_streq(token, "selectedpic") && widget)
 						widget->selectedpic = re.DrawFindPic(COM_Parse(&buf));
-					else if (Q_streq(token, "xabs") || Q_streq(token, "xleft") || Q_streq(token, "x"))
+					else if ((Q_streq(token, "xabs") || Q_streq(token, "xleft") || Q_streq(token, "x")) && widget)
 						x = widget->x = atoi(COM_Parse(&buf));
-					else if (Q_streq(token, "yabs") || Q_streq(token, "ytop") || Q_streq(token, "y"))
+					else if ((Q_streq(token, "yabs") || Q_streq(token, "ytop") || Q_streq(token, "y")) && widget)
 						y = widget->y = atoi(COM_Parse(&buf));
-					else if (strstr(token, "xcent"))
+					else if (strstr(token, "xcent") && widget)
 						x = widget->x = 160 + atoi(COM_Parse(&buf));
-					else if (strstr(token, "ycent"))
+					else if (strstr(token, "ycent") && widget)
 						y = widget->y = 120 + atoi(COM_Parse(&buf));
-					else if (Q_streq(token, "xright"))
+					else if (Q_streq(token, "xright") && widget)
 						x = widget->x = 320 + atoi(COM_Parse(&buf));
-					else if (strstr(token, "ybot"))
+					else if (strstr(token, "ybot") && widget)
 						y = widget->y = 240 + atoi(COM_Parse(&buf));
-					else if (strstr(token, "xrel"))
+					else if (strstr(token, "xrel") && widget)
 						x = widget->x += atoi(COM_Parse(&buf));
-					else if (strstr(token, "yrel"))
+					else if (strstr(token, "yrel") && widget)
 						y = widget->y += atoi(COM_Parse(&buf));
-					else if (Q_streq(token, "halign"))
+					else if (Q_streq(token, "halign") && widget)
 						widget->halign = M_WidgetGetAlign(COM_Parse(&buf));
-					else if (Q_streq(token, "valign"))
+					else if (Q_streq(token, "valign") && widget)
 						widget->valign = M_WidgetGetAlign(COM_Parse(&buf));
 					// slider cvar min, max, and increment
-					else if (strstr(token, "min"))
+					else if (strstr(token, "min") && widget)
 						widget->slider_min = atof(COM_Parse(&buf));
-					else if (strstr(token, "max"))
+					else if (strstr(token, "max") && widget)
 						widget->slider_max = atof(COM_Parse(&buf));
-					else if (strstr(token, "inc"))
+					else if (strstr(token, "inc") && widget)
 						widget->slider_inc = atof(COM_Parse(&buf));
 					// editbox/field options
-					else if (strstr(token, "width") || strstr(token, "cols"))
+					else if ((strstr(token, "width") || strstr(token, "cols")) && widget)
 						widget->field_width = atoi(COM_Parse(&buf));
-					else if (Q_streq(token, "int"))
+					else if (Q_streq(token, "int") && widget)
 						widget->flags |= WIDGET_FLAG_INT; // jitodo
-					else if (Q_streq(token, "float"))
+					else if (Q_streq(token, "float") && widget)
 						widget->flags |= WIDGET_FLAG_FLOAT; // jitodo
 					// select/dropdown options
-					else if (strstr(token, "size") || strstr(token, "rows") || strstr(token, "height"))
+					else if ((strstr(token, "size") || strstr(token, "rows") || strstr(token, "height")) && widget)
 						widget->select_rows = atoi(COM_Parse(&buf));
-					else if (strstr(token, "begin"))
+					else if (strstr(token, "begin") && widget)
 						select_begin_list(widget, buf);
-					else if (strstr(token, "file")) // "filedir"
+					else if (strstr(token, "file") && widget) // "filedir"
 						select_begin_file_list(widget, COM_Parse(&buf));
-					else if (Q_streq(token, "serverlist")) // for backwards compatibility
+					else if (Q_streq(token, "serverlist") && widget) // for backwards compatibility
 					{
 						widget->flags |= WIDGET_FLAG_LISTSOURCE;
 						widget->listsource = text_copy("serverlist");
 					}
-					else if (Q_streq(token, "listsource") || Q_streq(token, "listsrc"))
+					else if ((Q_streq(token, "listsource") || Q_streq(token, "listsrc")) && widget)
 					{
 						widget->flags |= WIDGET_FLAG_LISTSOURCE;
 						widget->listsource = text_copy(COM_Parse(&buf));
 					}
-					else if (Q_streq(token, "name") || Q_streq(token, "id"))
+					else if ((Q_streq(token, "name") || Q_streq(token, "id")) && widget)
 					{
 						widget->name = text_copy(COM_Parse(&buf));
 						add_named_widget(widget);
 					}
-					else if (strstr(token, "strip"))
+					else if (strstr(token, "strip") && widget)
 						select_strip_from_list(widget, COM_Parse(&buf));
-					else if (Q_streq(token, "nobg") || Q_streq(token, "nobackground"))
+					else if ((Q_streq(token, "nobg") || Q_streq(token, "nobackground")) && widget)
 						widget->flags |= WIDGET_FLAG_NOBG;
 
 					token = COM_Parse(&buf);
