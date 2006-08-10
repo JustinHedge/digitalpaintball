@@ -153,11 +153,11 @@ GAME_DIR=$(MOUNT_DIR)/game
 
 CC?=gcc
 
-BASE_CFLAGS=-I$(LOCALBASE)/include \
+BASE_CFLAGS=-I$(LOCALBASE)/include -I$(X11BASE)/include \
             -Dstricmp=strcasecmp -D_inline= -DSleep=usleep \
             -DGAME_NAME='\"$(GAME_NAME)\"'\
-	    -DPAINTBALL2_VERSION='"$(VERSION)"' \
-	    -DBUILD_VERSION='"$(BUILD)"'
+	    -DPAINTBALL2_VERSION='\"$(VERSION)\"' \
+	    -DBUILD_VERSION='\"$(BUILD)\"'
 
 ifneq ($(strip $(USE_X86_ASM)),YES)
 BASE_CFLAGS+=-DC_ONLY
@@ -225,8 +225,14 @@ ifeq ($(OSTYPE),Linux)
 LDFLAGS+= -ldl -lrt
 endif
 
+ifeq ($(OSTYPE),FreeBSD)
+LDFLAGS+= -pthread
+endif
+
+ifeq ($(OSTYPE),Linux)
 ifeq ($(strip $(BUILD_ALSA_SND)),YES)
 ALSALDFLAGS=-lasound
+endif
 endif
 
 XLDFLAGS=-L$(X11BASE)/lib$(_LIB) -lX11 -lXext -lXxf86vm
@@ -234,7 +240,7 @@ ifeq ($(strip $(USE_XF86_DGA)),YES)
 XLDFLAGS+= -lXxf86dga
 endif
 
-GLX_LDFLAGS= -lGL -ljpeg
+GLX_LDFLAGS=-L$(X11BASE)/lib$(_LIB) -L$(LOCALBASE)/lib$(_LIB) -lGL -ljpeg
 
 SDLCONFIG?= sdl-config
 SDLCFLAGS= $(shell $(SDLCONFIG) --cflags)
