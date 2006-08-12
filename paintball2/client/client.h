@@ -714,7 +714,6 @@ void CL_AddViewLocs (void);
 void CL_LocDelete (void);
 void CL_LocAdd (char *name);
 void CL_LocWrite (char *filename);
-void CL_LocPlace (void);
 void CL_LocHelp_f (void);
 
 extern image_t		*i_conback;

@@ -1686,22 +1686,32 @@ int Q_strcasecmp (const char *s1, const char *s2)
 	return 0;		// strings are equal
 }
 
-int Q_streq (const char *s1, const char *s2) // jitopt -- this is much faster than !strcmp
-{
-	register int	c1, c2;
-	
-	do
-	{
-		c1 = *s1++;
-		c2 = *s2++;
-		
-		if (c1 != c2)
-			return 0;		// strings not equal
-	} while (c1);
-	
-	return 1;		// strings are equal
-}
 
+int Q_streq (const char *s1, const char *s2) // 1.774 -- faster than !strcmp
+{
+	register int c1, c2;
+
+	if (s1 && s2) // 1.831
+	{
+		do
+		{
+			c1 = *s1++;
+			c2 = *s2++;
+			
+			if (c1 != c2)
+				return 0;		// strings not equal
+		} while (c1);
+		
+		return 1;		// strings are equal
+	}
+	else
+	{
+		if (s1 || s2)
+			return 0;
+		else
+			return 1;
+	}
+}
 
 
 void Com_sprintf (char *dest, int size, char *fmt, ...)
