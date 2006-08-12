@@ -79,6 +79,42 @@ void CL_BFGExplosionParticles (vec3_t org);
 // RAFAEL
 void CL_BlueBlasterParticles (vec3_t org, vec3_t dir);
 // jit <!--
+#ifdef QUAKE2
+struct sfx_s	*cl_sfx_ric1;
+struct sfx_s	*cl_sfx_ric2;
+struct sfx_s	*cl_sfx_ric3;
+struct sfx_s	*cl_sfx_lashit;
+struct sfx_s	*cl_sfx_spark5;
+struct sfx_s	*cl_sfx_spark6;
+struct sfx_s	*cl_sfx_spark7;
+struct sfx_s	*cl_sfx_railg;
+struct sfx_s	*cl_sfx_rockexp;
+struct sfx_s	*cl_sfx_grenexp;
+struct sfx_s	*cl_sfx_watrexp;
+// RAFAEL
+struct sfx_s	*cl_sfx_plasexp;
+struct sfx_s	*cl_sfx_footsteps[4];
+
+struct model_s	*cl_mod_explode;
+struct model_s	*cl_mod_smoke;
+struct model_s	*cl_mod_flash;
+struct model_s	*cl_mod_parasite_segment;
+struct model_s	*cl_mod_grapple_cable;
+struct model_s	*cl_mod_parasite_tip;
+struct model_s	*cl_mod_explo4;
+struct model_s	*cl_mod_bfg_explo;
+struct model_s	*cl_mod_powerscreen;
+// RAFAEL
+struct model_s	*cl_mod_plasmaexplo;
+
+//ROGUE
+struct sfx_s	*cl_sfx_lightning;
+struct sfx_s	*cl_sfx_disrexp;
+struct model_s	*cl_mod_lightning;
+struct model_s	*cl_mod_heatbeam;
+struct model_s	*cl_mod_monster_heatbeam;
+struct model_s	*cl_mod_explo4_big;
+#else
 struct sfx_s	*cl_sfx_splat1; 
 struct sfx_s	*cl_sfx_splat2;
 struct sfx_s	*cl_sfx_grensplat1;
@@ -89,6 +125,7 @@ struct sfx_s	*cl_sfx_footsteps[4];
 struct model_s	*cl_mod_smoke;
 struct model_s	*cl_mod_splat;
 struct model_s	*cl_mod_paintball;
+#endif
 
 /*
 =================
@@ -97,6 +134,8 @@ CL_RegisterTEntSounds
 */
 void CL_RegisterTEntSounds (void) // jit, cleaned up and adjusted for paintball
 {
+#ifdef QUAKE2
+#else
 	cl_sfx_splat1 = S_RegisterSound("splat/splat1.wav");
 	cl_sfx_splat2 = S_RegisterSound("splat/splat2.wav");
 	cl_sfx_grensplat1 = S_RegisterSound("splat/grensplat1.wav");
@@ -105,6 +144,7 @@ void CL_RegisterTEntSounds (void) // jit, cleaned up and adjusted for paintball
 	/*cl_sfx_paintfly[0] = S_RegisterSound("paint/whiz1.wav");
 	cl_sfx_paintfly[1] = S_RegisterSound("paint/whiz2.wav");
 	cl_sfx_paintfly[2] = S_RegisterSound("paint/whiz3.wav");*/
+#endif
 
 	S_RegisterSound("player/land1.wav");
 	cl_sfx_footsteps[0] = S_RegisterSound("player/step0.wav");
@@ -120,9 +160,42 @@ CL_RegisterTEntModels
 */
 void CL_RegisterTEntModels (void) // jit: changed to only load paintball stuff:
 {
+#ifdef QUAKE2
+	cl_mod_explode = re.RegisterModel("models/objects/explode/tris.md2");
+	cl_mod_smoke = re.RegisterModel("models/objects/smoke/tris.md2");
+	cl_mod_flash = re.RegisterModel("models/objects/flash/tris.md2");
+	cl_mod_parasite_segment = re.RegisterModel("models/monsters/parasite/segment/tris.md2");
+	cl_mod_grapple_cable = re.RegisterModel("models/ctf/segment/tris.md2");
+	cl_mod_parasite_tip = re.RegisterModel("models/monsters/parasite/tip/tris.md2");
+	cl_mod_explo4 = re.RegisterModel("models/objects/r_explode/tris.md2");
+	cl_mod_bfg_explo = re.RegisterModel("sprites/s_bfg2.sp2");
+	cl_mod_powerscreen = re.RegisterModel("models/items/armor/effect/tris.md2");
+
+	re.RegisterModel("models/objects/laser/tris.md2");
+	re.RegisterModel("models/objects/grenade2/tris.md2");
+	re.RegisterModel("models/weapons/v_machn/tris.md2");
+	re.RegisterModel("models/weapons/v_handgr/tris.md2");
+	re.RegisterModel("models/weapons/v_shotg2/tris.md2");
+	re.RegisterModel("models/objects/gibs/bone/tris.md2");
+	re.RegisterModel("models/objects/gibs/sm_meat/tris.md2");
+	re.RegisterModel("models/objects/gibs/bone2/tris.md2");
+
+	re.RegisterPic("w_machinegun");
+	re.RegisterPic("a_bullets");
+	re.RegisterPic("i_health");
+	re.RegisterPic("a_grenades");
+
+	//ROGUE
+	cl_mod_explo4_big = re.RegisterModel("models/objects/r_explode2/tris.md2");
+	cl_mod_lightning = re.RegisterModel("models/proj/lightning/tris.md2");
+	cl_mod_heatbeam = re.RegisterModel("models/proj/beam/tris.md2");
+	cl_mod_monster_heatbeam = re.RegisterModel("models/proj/widowbeam/tris.md2");
+	//ROGUE
+#else
 	cl_mod_smoke = re.RegisterModel("sprites/smoke.sp2");
 	cl_mod_splat = re.RegisterModel("models/paint/splat2.md2");
 	cl_mod_paintball = re.RegisterModel("models/paint/ball.md2");
+#endif
 }
 
 // jit -->
@@ -134,14 +207,11 @@ CL_ClearTEnts
 */
 void CL_ClearTEnts (void)
 {
-	memset (cl_beams, 0, sizeof(cl_beams));
-	memset (cl_explosions, 0, sizeof(cl_explosions));
-	memset (cl_lasers, 0, sizeof(cl_lasers));
-
-//ROGUE
-	memset (cl_playerbeams, 0, sizeof(cl_playerbeams));
-	memset (cl_sustains, 0, sizeof(cl_sustains));
-//ROGUE
+	memset(cl_beams, 0, sizeof(cl_beams));
+	memset(cl_explosions, 0, sizeof(cl_explosions));
+	memset(cl_lasers, 0, sizeof(cl_lasers));
+	memset(cl_playerbeams, 0, sizeof(cl_playerbeams));
+	memset(cl_sustains, 0, sizeof(cl_sustains));
 }
 
 /*
@@ -155,7 +225,7 @@ explosion_t *CL_AllocExplosion (void)
 	int		time;
 	int		index;
 	
-	for (i=0 ; i<MAX_EXPLOSIONS ; i++)
+	for (i = 0; i < MAX_EXPLOSIONS; i++)
 	{
 		if (cl_explosions[i].type == ex_free)
 		{
@@ -168,7 +238,7 @@ explosion_t *CL_AllocExplosion (void)
 	time = cl.time;
 	index = 0;
 
-	for (i=0 ; i<MAX_EXPLOSIONS ; i++)
+	for (i = 0; i < MAX_EXPLOSIONS; i++)
 	{
 		if (cl_explosions[i].start < time)
 		{
@@ -177,7 +247,7 @@ explosion_t *CL_AllocExplosion (void)
 		}
 	}
 
-	memset (&cl_explosions[index], 0, sizeof (cl_explosions[index]));
+	memset(&cl_explosions[index], 0, sizeof (cl_explosions[index]));
 	return &cl_explosions[index];
 }
 
@@ -639,6 +709,8 @@ void CL_ParseTEnt (void)
 		MSG_ReadPos(&net_message, pos);
 		MSG_ReadDir(&net_message, dir);
 		color = MSG_ReadByte(&net_message);
+#ifdef QUAKE2
+#else
 		CL_ParticleEffect2(pos, dir, color, cnt);
 
 		// ===
@@ -679,11 +751,11 @@ void CL_ParseTEnt (void)
 			cnt = rand() & 7; // don't do it for every splatter!
 
 			if (cnt == 0)
-				S_StartSound (pos, 0, 0, cl_sfx_grensplat1, 1, ATTN_IDLE, 0);
+				S_StartSound(pos, 0, 0, cl_sfx_grensplat1, 1, ATTN_IDLE, 0);
 			else if (cnt == 1)
-				S_StartSound (pos, 0, 0, cl_sfx_grensplat2, 1, ATTN_IDLE, 0);
+				S_StartSound(pos, 0, 0, cl_sfx_grensplat2, 1, ATTN_IDLE, 0);
 			else if (cnt == 2)
-				S_StartSound (pos, 0, 0, cl_sfx_grensplat3, 1, ATTN_IDLE, 0);
+				S_StartSound(pos, 0, 0, cl_sfx_grensplat3, 1, ATTN_IDLE, 0);
 		}
 		else
 		{
@@ -721,6 +793,7 @@ void CL_ParseTEnt (void)
 			ex->frames = 1; // doesn't matter
 			ex->ent.model = cl_mod_splat;
 		}
+#endif
 		// jit
 		// ===
 		break;
@@ -873,7 +946,7 @@ void CL_ParseTEnt (void)
 		V_AddStain(pos, rgbcolour, 35);
 
 		ex = CL_AllocExplosion();
-		VectorCopy (pos, ex->ent.origin);
+		VectorCopy(pos, ex->ent.origin);
 		ex->type = ex_poly;
 		ex->ent.flags = RF_FULLBRIGHT;
 		ex->start = cl.frame.servertime - 100;
@@ -885,7 +958,16 @@ void CL_ParseTEnt (void)
 		ex->frames = 19;
 		ex->baseframe = 30;
 		ex->ent.angles[1] = rand() % 360;
-		CL_ExplosionParticles (pos);
+		CL_ExplosionParticles(pos);
+
+#ifdef QUAKE2
+		ex->ent.angles[1] = rand() % 360;
+
+		if (type == TE_GRENADE_EXPLOSION_WATER)
+			S_StartSound(pos, 0, 0, cl_sfx_watrexp, 1, ATTN_NORM, 0);
+		else
+			S_StartSound(pos, 0, 0, cl_sfx_grenexp, 1, ATTN_NORM, 0);
+#endif
 		break;
 
 	// RAFAEL
@@ -897,12 +979,10 @@ void CL_ParseTEnt (void)
 	case TE_ROCKET_EXPLOSION_WATER:
 	case TE_EXPLOSION1_NP:						// PMM
 		MSG_ReadPos (&net_message, pos);
-
 		rgbcolour[0] = 0.8;
 		rgbcolour[1] = 0.8;
 		rgbcolour[2] = 0.8;
 		V_AddStain(pos, rgbcolour, 35);
-
 		ex = CL_AllocExplosion();
 		VectorCopy (pos, ex->ent.origin);
 		ex->type = ex_poly;
@@ -914,11 +994,26 @@ void CL_ParseTEnt (void)
 		ex->lightcolor[2] = 0.5;
 		ex->ent.angles[1] = rand() % 360;
 		ex->ent.model = cl_mod_smoke;
+
 		if (frand() < 0.5)
 			ex->baseframe = 15;
+
 		ex->frames = 15;
+
 		if ((type != TE_EXPLOSION1_BIG) && (type != TE_EXPLOSION1_NP))		// PMM
-			CL_ExplosionParticles (pos);									// PMM
+			CL_ExplosionParticles(pos);									// PMM
+
+#ifdef QUAKE2
+		if (type != TE_EXPLOSION1_BIG)				// PMM
+			ex->ent.model = cl_mod_explo4;			// PMM
+		else
+			ex->ent.model = cl_mod_explo4_big;
+
+		if (type == TE_ROCKET_EXPLOSION_WATER)
+			S_StartSound (pos, 0, 0, cl_sfx_watrexp, 1, ATTN_NORM, 0);
+		else
+			S_StartSound (pos, 0, 0, cl_sfx_rockexp, 1, ATTN_NORM, 0);
+#endif
 		break;
 
 	case TE_BFG_EXPLOSION:

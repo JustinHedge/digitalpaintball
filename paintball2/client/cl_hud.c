@@ -286,7 +286,11 @@ void SCR_DrawHUD (void)
 {
 	int hudstyle;
 
+#ifdef QUAKE2
+	hudstyle = Cvar_Get("cl_hudstyle", "0", CVAR_ARCHIVE)->value;
+#else
 	hudstyle = Cvar_Get("cl_hudstyle", "1", CVAR_ARCHIVE)->value;
+#endif
 
 	switch(hudstyle)
 	{

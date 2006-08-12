@@ -220,7 +220,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="winmm.lib libjpeg.lib glu32.lib"
+				AdditionalDependencies="winmm.lib"
 				OutputFile="..\..\ref_pbgl.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -272,6 +272,161 @@
 				Name="VCPreLinkEventTool"/>
 			<Tool
 				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+		</Configuration>
+		<Configuration
+			Name="Q2|Win32"
+			IntermediateDirectory="Q2"
+			ConfigurationType="1">
+			<Tool
+				Name="VCCLCompilerTool"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"/>
+			<Tool
+				Name="VCMIDLTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+		</Configuration>
+		<Configuration
+			Name="PB2Q2 - Release|Win32"
+			OutputDirectory="..\..\release\q2ref_gl"
+			IntermediateDirectory="..\..\release\q2ref_gl"
+			ConfigurationType="2"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/J /Op-"
+				Optimization="4"
+				GlobalOptimizations="TRUE"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="TRUE"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="TRUE"
+				EnableFiberSafeOptimizations="TRUE"
+				OptimizeForProcessor="2"
+				OptimizeForWindowsApplication="TRUE"
+				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;QUAKE2"
+				StringPooling="TRUE"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="TRUE"
+				DefaultCharIsUnsigned="FALSE"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderFile="..\..\release/ref_gl/ref_gl.pch"
+				AssemblerListingLocation="..\..\release/q2ref_gl/"
+				ObjectFile="..\..\release/q2ref_gl/"
+				ProgramDataBaseFileName="..\..\release/q2ref_gl/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="winmm.lib glu32.lib"
+				OutputFile="c:\games\quake2\ref_pbgl.dll"
+				LinkIncremental="1"
+				SuppressStartupBanner="TRUE"
+				ModuleDefinitionFile=".\ref_gl.def"
+				ProgramDatabaseFile="..\..\release/ref_gl/ref_pbgl.pdb"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				ImportLibrary="..\..\release/ref_gl/ref_pbgl.lib"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="TRUE"
+				SuppressStartupBanner="TRUE"
+				TargetEnvironment="1"
+				TypeLibraryName="..\..\release/ref_gl/ref_gl.tlb"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+		</Configuration>
+		<Configuration
+			Name="PB2Q2 - Debug|Win32"
+			OutputDirectory="..\..\debug\q2ref_gl\"
+			IntermediateDirectory="..\..\debug\q2ref_gl\"
+			ConfigurationType="2"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				OptimizeForProcessor="1"
+				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;QUAKE2"
+				RuntimeLibrary="1"
+				DefaultCharIsUnsigned="FALSE"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderFile="..\..\debug\ref_gl/ref_gl.pch"
+				AssemblerListingLocation="..\..\debug\q2ref_gl\"
+				ObjectFile="..\..\debug\q2ref_gl\"
+				ProgramDataBaseFileName="..\..\debug\q2ref_gl\"
+				BrowseInformation="1"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="3"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="winmm.lib"
+				OutputFile="c:\games\quake2\ref_pbgl.dll"
+				LinkIncremental="2"
+				SuppressStartupBanner="TRUE"
+				IgnoreDefaultLibraryNames="LIBCMT"
+				ModuleDefinitionFile=".\ref_gl.def"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="..\..\debug/ref_gl/ref_pbgl.pdb"
+				GenerateMapFile="TRUE"
+				MapFileName="..\..\debug/ref_gl/ref_pbgl.map"
+				SubSystem="2"
+				ImportLibrary="..\..\debug/ref_gl/ref_pbgl.lib"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="TRUE"
+				SuppressStartupBanner="TRUE"
+				TargetEnvironment="1"
+				TypeLibraryName="..\..\debug/ref_gl/ref_gl.tlb"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -484,10 +639,10 @@
 					RelativePath="jpeg\jpegint.h">
 				</File>
 				<File
-					RelativePath="jpeg\jpeglib.h">
+					RelativePath=".\jpeglib.h">
 				</File>
 				<File
-					RelativePath=".\jpeglib.h">
+					RelativePath="jpeg\jpeglib.h">
 				</File>
 				<File
 					RelativePath="jpeg\jquant1.c">

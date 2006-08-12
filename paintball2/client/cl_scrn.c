@@ -794,8 +794,13 @@ void SCR_TileClear (void)
 #define STAT_MINUS		10	// num frame for '-' stats digit
 char		*sb_nums[2][11] = 
 {
+#ifdef QUAKE2
+	{"num_0", "num_1", "num_2", "num_3", "num_4", "num_5",
+	"num_6", "num_7", "num_8", "num_9", "num_minus"},
+#else
 	{"anum_0", "anum_1", "anum_2", "anum_3", "anum_4", "anum_5", // jit -- used the wrong files, these were just "num" too lazy to fix the images :P
 	"anum_6", "anum_7", "anum_8", "anum_9", "anum_minus"},
+#endif
 	{"anum_0", "anum_1", "anum_2", "anum_3", "anum_4", "anum_5",
 	"anum_6", "anum_7", "anum_8", "anum_9", "anum_minus"}
 };
@@ -998,6 +1003,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 
 				width = 3;
 				value = cl.frame.playerstate.stats[STAT_AMMO];
+
 				if (value > 5)
 					color = 0;	// green
 				else if (value >= 0)

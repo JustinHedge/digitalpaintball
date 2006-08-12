@@ -67,7 +67,11 @@ static qboolean VerifyDriver (void)
 ** VID_CreateWindow
 */
 //#define	WINDOW_CLASS_NAME	"Paintball 2" // jit
+#ifdef QUAKE2
+#define	WINDOW_CLASS_NAME	(ri.Cvar_Get("vid_windowclassname", "Quake 2", 0)->string) // jit
+#else
 #define	WINDOW_CLASS_NAME	(ri.Cvar_Get("vid_windowclassname", "Paintball 2", 0)->string) // jit
+#endif
 
 qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
 {

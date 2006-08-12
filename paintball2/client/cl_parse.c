@@ -167,7 +167,8 @@ qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jp
 //	FS_CreatePath (name);
 
 	fp = fopen (name, "r+b");
-	if (fp) { // it exists
+	if (fp)
+	{ // it exists
 		int len;
 		fseek(fp, 0, SEEK_END);
 		len = ftell(fp);
@@ -175,14 +176,14 @@ qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jp
 		cls.download = fp;
 
 		// give the server an offset to start the download
-		Com_Printf ("Resuming %s\n", cls.downloadname);
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message,
+		Com_Printf("Resuming %s\n", cls.downloadname);
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString(&cls.netchan.message,
 			va("download %s %i", cls.downloadname, len));
 	} else {
-		Com_Printf ("Downloading %s\n", cls.downloadname);
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message,
+		Com_Printf("Downloading %s\n", cls.downloadname);
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString(&cls.netchan.message,
 			va("download %s", cls.downloadname));
 	}
 
@@ -854,6 +855,8 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 		Com_sprintf(model_filename, sizeof(model_filename), "players/male/tris.md2");
 		Com_sprintf(weapon_filename, sizeof(weapon_filename), "players/male/weapon.md2");
 
+#ifdef QUAKE2
+#else
 		//===
 		//jit
 		switch(s ? s[strlen(s)-1] : 0)
@@ -874,6 +877,7 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 		Com_sprintf(ci->iconname, sizeof(ci->iconname), "/players/male/pb2b_i.pcx");
 		//jit
 		//===
+#endif
 
 		ci->model = re.RegisterModel(model_filename);
 		memset(ci->weaponmodel, 0, sizeof(ci->weaponmodel));
