@@ -129,11 +129,14 @@ void R_init_refl (int maxNoReflections)
 		len = ri.FS_LoadFileZ("scripts/water1.arbf", &fragment_program_text);
 
 		if (len > 0)
+		{
 			qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, len, fragment_program_text);
+			ri.FS_FreeFile(fragment_program_text);
+		}
 		else
+		{
 			ri.Con_Printf(PRINT_ALL, "Unable to find scripts/water1.arbf\n");
-
-		ri.FS_FreeFile(fragment_program_text);
+		}
 		
 		// Make sure the program loaded correctly
 		{
