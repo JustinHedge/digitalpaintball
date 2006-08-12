@@ -115,7 +115,11 @@ void GL_TexEnv(GLenum mode)
 			if (gl_state.texture_combine && gl_overbright->value)
 			{
 				qglTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+#ifdef QUAKE2
+				qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 4);
+#else
 				qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
+#endif
 			}
 			else // failed to combine, default to modulate.
 			{
@@ -1375,7 +1379,7 @@ Returns has_alpha
 ===============
 */
 
-qboolean GL_Upload8 (byte *data, int width, int height, imagetype_t imagetype, qboolean sharp )
+qboolean GL_Upload8 (byte *data, int width, int height, imagetype_t imagetype, qboolean sharp)
 {
 	unsigned	trans[512*256];
 	int			i, s;
@@ -1597,9 +1601,7 @@ image_t *GL_LoadWal (char *name)
 	width = LittleLong(mt->width);
 	height = LittleLong(mt->height);
 	ofs = LittleLong(mt->offsets[0]);
-
 	image = GL_LoadPic(name, (byte *)mt + ofs, width, height, it_wall, 8);
-
 	ri.FS_FreeFile((void *)mt);
 
 	return image;
@@ -1671,6 +1673,7 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 
 	if (pic)
 		free(pic);
+
 	if (palette)
 		free(palette);
 
@@ -1979,19 +1982,19 @@ int Draw_GetPalette (void)
 	LoadPCX("pics/colormap.pcx", &pic, &pal, &width, &height);
 
 	if (!pal)
+	{
 		ri.Sys_Error(ERR_FATAL, "Couldn't load pics/colormap.pcx\nPlease make sure the game"
 			"is installed properly.\nView the documentation on digitalpaint.org for more details."); // jit
+	}
 
 
-	for (i=0; i<256; i++)
+	for (i = 0; i < 256; i++)
 	{
 		r = pal[i*3+0];
 		g = pal[i*3+1];
 		b = pal[i*3+2];
-		
 		v = (255<<24) + (r<<0) + (g<<8) + (b<<16);
 		d_8to24table[i] = LittleLong(v);
-
 		d_8to24tablef[i][0] = r*0.003921568627450980392156862745098f;
 		d_8to24tablef[i][1] = g*0.003921568627450980392156862745098f;
 		d_8to24tablef[i][2] = b*0.003921568627450980392156862745098f;
