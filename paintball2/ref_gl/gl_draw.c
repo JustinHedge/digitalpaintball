@@ -48,21 +48,19 @@ void Draw_InitLocal (void)
 	int width, height;
 	void LoadTGA (char *name, byte **pic, int *width, int *height);
 
-
 	//draw_chars = GL_FindImage("pics/conchars.pcx", it_pic);
 	if (ri.Cvar_Get("gl_overbright", "1", CVAR_ARCHIVE)->value && gl_state.texture_combine)
 		draw_chars = GL_FindImage("pics/conchars1ovb.tga", it_pic); // dark conchars (brightness doubled)
 	else
 		draw_chars = GL_FindImage("pics/conchars1.tga", it_pic); // jitconsole
+
 	GL_Bind(draw_chars->texnum);
 	//qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	//qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
 	LoadTGA("pics/char_colors.tga", &char_colors, &width, &height); // jittext
+
 	if (!char_colors || (width*height != 256))
-	{
 		Sys_Error("Invalid or missing char_colors.tga.");
-	}
 }
 
 

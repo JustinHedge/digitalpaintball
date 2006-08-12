@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // Structure containing functions exported from refresh DLL
 refexport_t	re;
-testexport_t    e;
+testexport_t	e;
 
 // Console variables that we need to access from this module
 cvar_t		*vid_gamma;
@@ -44,7 +44,7 @@ cvar_t		*vid_fullscreen;
 
 // Global variables used internally by this module
 viddef_t	viddef;				// global video state; used by other modules
-void		*reflib_library;		// Handle to refresh DLL 
+void		*reflib_library;		// Handle to refresh DLL
 qboolean	reflib_active = 0;
 void		*testlib;
 
@@ -88,7 +88,7 @@ void VID_Printf (int print_level, char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
-	
+
 	va_start(argptr,fmt);
 	vsnprintf(msg,MAXPRINTMSG,fmt,argptr);
 	va_end(argptr);
@@ -103,7 +103,7 @@ void VID_Error (int err_level, char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
-	
+
 	va_start (argptr,fmt);
 	vsnprintf (msg,MAXPRINTMSG,fmt,argptr);
 	va_end (argptr);
@@ -204,7 +204,7 @@ void VID_FreeReflib (void)
 	RW_IN_Move_fp = NULL;
 	RW_IN_Frame_fp = NULL;
 	RW_Sys_GetClipboardData_fp = NULL;
-	
+
 	memset (&re, 0, sizeof(re));
 	reflib_library = NULL;
 	testlib = NULL;
@@ -225,7 +225,7 @@ qboolean VID_LoadRefresh(char *name)
 	struct stat st;
 	testimport_t i;
 	testexport_t (*GetTestAPI) (testimport_t) = NULL;
-	
+
 	if (reflib_active)
 	{
 		if (KBD_Close_fp)
@@ -239,7 +239,7 @@ qboolean VID_LoadRefresh(char *name)
 	}
 
 	Com_Printf("------- Loading %s -------\n", name);
-	
+
 #if defined (LIBDIR)
 	path = LIBDIR;
 #elif defined (DATADIR)
@@ -249,7 +249,7 @@ qboolean VID_LoadRefresh(char *name)
 #endif
 
 	Com_sprintf(fn, sizeof(fn), "%s/%s", path, name);
-	
+
 	if (stat(fn, &st) == -1) {
 		Com_Printf("LoadLibrary(\"%s\") failed: %s\n", name, strerror(errno));
 		return false;
@@ -297,9 +297,9 @@ qboolean VID_LoadRefresh(char *name)
 
 	if (testlib)
 		GetTestAPI = (void*) dlsym(testlib, "i");
-		
+
 	re = GetRefAPI(ri);
-	
+
 	if (GetTestAPI)
 		e = GetTestAPI(i);
 	else
@@ -328,7 +328,7 @@ qboolean VID_LoadRefresh(char *name)
 
 	/* this one is optional */
 	RW_Sys_GetClipboardData_fp = dlsym(reflib_library, "RW_Sys_GetClipboardData");
-	
+
 	Real_IN_Init();
 
 	if (re.Init(0, 0) == -1)
@@ -358,7 +358,7 @@ qboolean VID_LoadRefresh(char *name)
 	KBD_Init_fp(Do_Key_Event);
 
 	Key_ClearStates();
-	
+
 	// give up root now
 	setreuid(getuid(), getuid());
 	setegid(getgid());
@@ -373,7 +373,7 @@ qboolean VID_LoadRefresh(char *name)
 VID_CheckChanges
 
 This function gets called once just before drawing each frame, and it's sole purpose in life
-is to check to see if any of the video mode parameters have changed, and if they have to 
+is to check to see if any of the video mode parameters have changed, and if they have to
 update the rendering DLL and/or video mode to match.
 ============
 */
@@ -409,7 +409,7 @@ void VID_CheckChanges (void)
 				Cvar_Set( "vid_ref", "pbgl" );
 			else
 				Cvar_Set( "vid_ref", "pbsdl" );
-			
+
 			// drop the console if we fail to load a refresh
 			if (cls.key_dest != key_console)
 			{
@@ -450,7 +450,7 @@ void VID_Init (void)
 
 	/* Disable the 3Dfx splash screen */
 	putenv("FX_GLIDE_NO_SPLASH=0");
-		
+
 	/* Start the graphics mode and load refresh DLL */
 	VID_CheckChanges();
 }
@@ -489,7 +489,7 @@ qboolean VID_CheckRefExists (const char *ref)
 	char	fn[MAX_OSPATH];
 	char	*path;
 	struct stat st;
-	
+
 #if defined (LIBDIR)
 	path = LIBDIR;
 #elif defined (DATADIR)
@@ -499,7 +499,7 @@ qboolean VID_CheckRefExists (const char *ref)
 #endif
 
 	Com_sprintf(fn, sizeof(fn), "%s/vid_%s.so", path, ref);
-	
+
 	if (stat(fn, &st) == 0)
 		return true;
 	else
@@ -548,7 +548,7 @@ void IN_Move (usercmd_t *cmd)
 
 void IN_Frame (void)
 {
-	if (RW_IN_Activate_fp) 
+	if (RW_IN_Activate_fp)
 	{
 		/*
 		if (!cl.refresh_prepped || cls.key_dest == key_console)

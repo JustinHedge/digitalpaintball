@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -303,7 +303,7 @@ void EmitWaterPolys_original (msurface_t *fa) // jitwater - old code
 
 float CalcWave (float x, float y) // jitwater / MPO
 {
-	return (r_turbsin[(int)((x*3+r_newrefdef.time) * TURBOSCALE) & 255] / 2.0f) + 
+	return (r_turbsin[(int)((x*3+r_newrefdef.time) * TURBOSCALE) & 255] / 2.0f) +
 		(r_turbsin[(int)((y*5+r_newrefdef.time) * TURBOSCALE) & 255] / 2.0f);
 }
 
@@ -318,9 +318,9 @@ void EmitWaterPolys (msurface_t *fa)
 	glpoly_t	*bp;
 	float		*v;
 	int			i;
-	float		s; 
-	float		t; 
-	float		os; 
+	float		s;
+	float		t;
+	float		os;
 	float		ot;
 	float		scroll;
 	float		rdt = r_newrefdef.time;
@@ -374,7 +374,7 @@ void EmitWaterPolys (msurface_t *fa)
 
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
 			{
-				os = v[3]; 
+				os = v[3];
 				ot = v[4];
 
 				#if !id386
@@ -407,7 +407,7 @@ void EmitWaterPolys (msurface_t *fa)
 			}
 
 			qglEnd();
-		} 
+		}
 	}
 
 	if (waterNotFlat)
@@ -428,7 +428,7 @@ void EmitWaterPolys (msurface_t *fa)
 		g_refl_enabled = true;
 	}
 
-	// find out which reflection we have that corresponds to the surface that we're drawing	
+	// find out which reflection we have that corresponds to the surface that we're drawing
 	for (g_active_refl = 0; g_active_refl < g_num_refl; g_active_refl++)
 	{
 		// if we find which reflection to bind
@@ -460,7 +460,7 @@ void EmitWaterPolys (msurface_t *fa)
 	if (g_active_refl != g_num_refl)
 	{
 		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		
+
 		if (!gl_state.blend)
 			qglEnable(GL_BLEND);
 
@@ -488,7 +488,7 @@ void EmitWaterPolys (msurface_t *fa)
 					vec3_t	vAngle;
 
 					qglTexCoord3f(v[0], v[1] + CalcWave(v[0], v[1]), v[2]);
-				
+
 					if (r_newrefdef.rdflags & RDF_UNDERWATER)
 					{
 						VectorSubtract(v, r_newrefdef.vieworg, vAngle);
@@ -514,7 +514,7 @@ void EmitWaterPolys (msurface_t *fa)
 				qglVertex3f(v[0], v[1], v[2]);
 			}
 
-			qglEnd(); 
+			qglEnd();
   		}
 
 		R_ClearReflMatrix();
@@ -537,7 +537,7 @@ vec3_t	skyclip[6] = {
 	{0,-1,1},
 	{0,1,1},
 	{1,0,1},
-	{-1,0,1} 
+	{-1,0,1}
 };
 int	c_sky;
 
@@ -890,11 +890,11 @@ void R_DrawSkyBox (void)
 	}
 
 	qglPopMatrix();
-	
+
 	if (fogenabled) // jitfog
 	{
 		qglColor3f(1, 1, 1);
-		GLSTATE_DISABLE_BLEND	
+		GLSTATE_DISABLE_BLEND
 		qglEnable(GL_FOG);
 	}
 }
@@ -919,13 +919,13 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 	Q_strncpyz(skyname, name, sizeof(skyname)-1);
 	skyrotate = rotate;
 	VectorCopy (axis, skyaxis);
-			
-	// == 
+
+	// ==
 	// jitfog -- parse fog code from sky name
 	if ((s = strstr(skyname, "fog "))) // jitodo
-	{	
-		sscanf(s+4, "%f %f %f %f", 
-			&fogcolor[0], &fogcolor[1], &fogcolor[2], 
+	{
+		sscanf(s+4, "%f %f %f %f",
+			&fogcolor[0], &fogcolor[1], &fogcolor[2],
 			&fogdistance);
 		//fogdensity = 8.0f/fogdistance;
 		fogdensity = 0.0f;
@@ -936,13 +936,13 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 	else if ((s = strstr(skyname, "fogd "))) // jitfog
 	{
 		sscanf(s+5, "%f %f %f %f",
-			&fogcolor[0], &fogcolor[1], &fogcolor[2], 
+			&fogcolor[0], &fogcolor[1], &fogcolor[2],
 			&fogdensity);
 		fogdistance = 0.0f;
 		fogenabled = true;
 	}
 
-	
+
 	// jitfog -- strip fog code from sky name:
 	if ((s = strchr(skyname, ' ')))
 		*s = 0;
@@ -956,7 +956,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 		Com_sprintf (pathname, sizeof(pathname), "env/%s%s.tga", skyname, suf[i]);
 
 		sky_images[i] = GL_FindImage (pathname, it_sky);
-		
+
 		if (!sky_images[i])
 		{
 			if (fogenabled) // jitfog
@@ -971,7 +971,7 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 			sky_min = 0.00390625f;
 			sky_max = 0.99609375f;
 		}
-		else	
+		else
 		{
 			sky_min = 0.001953125f;
 			sky_max = 0.998046875f;

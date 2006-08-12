@@ -1160,7 +1160,6 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	}
 	qglEnd();
 	qglEnable(GL_DEPTH_TEST);
-	//todo;
 #endif
 }
 

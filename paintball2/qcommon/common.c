@@ -208,11 +208,12 @@ void Com_Error (int code, char *fmt, ...)
 	static char msg[MAXPRINTMSG];
 	static qboolean recursive;
 
+//	assert(Q_streq(fmt, "Disconnected from server")); // jitdebug
+
 	if (recursive)
 		Sys_Error("recursive error after: %s", msg);
 
 	recursive = true;
-
 	va_start(argptr,fmt);
 	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
 	va_end(argptr);
