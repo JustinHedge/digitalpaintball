@@ -8,7 +8,7 @@ of the License, or(at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -286,7 +286,7 @@ qboolean R_CullBox(const vec3_t mins, const vec3_t maxs)
 void R_RotateForEntity (entity_t *e)
 {
 	register float scalebleh;
-    
+
 	qglTranslatef(e->origin[0],  e->origin[1],  e->origin[2]);
 
     qglRotatef(e->angles[1],  0, 0, 1);
@@ -319,7 +319,7 @@ void new_R_DrawSpriteModel(entity_t *ent)
 {
 	float alpha;
 	float scale;
-	
+
 	alpha = ent->alpha;
 	scale = ent->scale;
 
@@ -345,7 +345,7 @@ void new_R_DrawSpriteModel(entity_t *ent)
 			qglTexCoord2f(1, 1);
 			qglVertex3f(64, 0,64);
 		qglEnd();
-		
+
 	qglPopMatrix();
 	GL_TexEnv(GL_REPLACE);
 	GLSTATE_DISABLE_BLEND
@@ -392,7 +392,7 @@ void R_DrawSpriteModel(entity_t *e)
 		VectorMA(e->origin, -e->scale*frame->origin_y, up, point);
 		VectorMA(point, e->scale*frame->width - frame->origin_x, right, point);
 		qglVertex3fv(point);
-	
+
 	qglEnd();
 }
 
@@ -475,7 +475,7 @@ void old_R_DrawSpriteModel(entity_t *e)
 	VectorMA(e->origin, -frame->origin_y, up, point);
 	VectorMA(point, frame->width - frame->origin_x, right, point);
 	qglVertex3fv(point);
-	
+
 	qglEnd();
 
 	//GLSTATE_DISABLE_ALPHATEST
@@ -555,7 +555,7 @@ void R_DrawEntitiesOnList (void)
 		else
 		{
 			currentmodel = currententity->model;
-			
+
 			if (!currentmodel)
 			{
 				R_DrawNullModel();
@@ -674,7 +674,7 @@ void GL_DrawParticles(int num_particles, const particle_t particles[], const uns
 	for (p = particles, i=0 ; i < num_particles ; i++,p++)
 	{
 		// hack a scale up to keep particles from disapearing
-		scale =(p->origin[0] - r_origin[0]) * vpn[0] + 
+		scale =(p->origin[0] - r_origin[0]) * vpn[0] +
 			   (p->origin[1] - r_origin[1]) * vpn[1] +
 			   (p->origin[2] - r_origin[2]) * vpn[2];
 
@@ -692,13 +692,13 @@ void GL_DrawParticles(int num_particles, const particle_t particles[], const uns
 		qglVertex3fv(p->origin);
 
 		qglTexCoord2f(1.0625, 0.0625);
-		qglVertex3f(p->origin[0] + up[0]*scale, 
-			         p->origin[1] + up[1]*scale, 
+		qglVertex3f(p->origin[0] + up[0]*scale,
+			         p->origin[1] + up[1]*scale,
 					 p->origin[2] + up[2]*scale);
 
 		qglTexCoord2f(0.0625, 1.0625);
-		qglVertex3f(p->origin[0] + right[0]*scale, 
-			         p->origin[1] + right[1]*scale, 
+		qglVertex3f(p->origin[0] + right[0]*scale,
+			         p->origin[1] + right[1]*scale,
 					 p->origin[2] + right[2]*scale);
 	}
 
@@ -755,7 +755,7 @@ R_PolyBlend
 */
 void R_PolyBlend (void)
 {
-	// === 
+	// ===
 	// jit
 	static float autobright=0;
 	vec3_t shadelight;
@@ -906,7 +906,7 @@ void R_SetupFrame(void)
 		if (!(r_newrefdef.rdflags & RDF_NOWORLDMODEL))
 		{
 			vec3_t temp;
-			
+
 			leaf = Mod_PointInLeaf(r_origin, r_worldmodel);
 			temp[0] = g_refl_X[g_active_refl];
 			temp[1] = g_refl_Y[g_active_refl];
@@ -1025,7 +1025,7 @@ void R_SetupGL (void)
 	else
 		qglViewport(0, 0, g_reflTexW, g_reflTexH); // width/height of texture, not screen
 	// jitwater ===
-	
+
 	//
 	// set up projection matrix
 	//
@@ -1034,9 +1034,9 @@ void R_SetupGL (void)
     qglLoadIdentity();
 
 	if (fogenabled && fogdistance) // jitfog
-		MYgluPerspective(r_newrefdef.fov_y, screenaspect, 4, fogdistance+128);
+		MYgluPerspective(r_newrefdef.fov_y, screenaspect, 4 * 74 / r_newrefdef.fov_y, fogdistance + 128); // jitfov
 	else
-		MYgluPerspective(r_newrefdef.fov_y, screenaspect, 4, 15000/*4096*/);  //jit
+		MYgluPerspective(r_newrefdef.fov_y, screenaspect, 4 * 74 / r_newrefdef.fov_y, 15000/*4096*/);  //jitfov
 
 	qglCullFace(GL_FRONT); // todo
 	qglMatrixMode(GL_MODELVIEW);
@@ -1123,7 +1123,7 @@ void R_Clear (void)
 
 		if (gl_clear->value || fogenabled) // jitfog
 			clearbits |= GL_COLOR_BUFFER_BIT;
-	
+
 		if (have_stencil && gl_shadows->value == 2) // Stencil shadows - MrG
 		{
 			qglClearStencil(0);
@@ -1179,8 +1179,8 @@ void R_RenderView (refdef_t *fd)
 			qglFogf(GL_FOG_DENSITY, fogdensity);
 		}
 
-		qglFogfv(GL_FOG_COLOR, fogcolor);  
-		qglFogf(GL_FOG_START, 0.0f);		
+		qglFogfv(GL_FOG_COLOR, fogcolor);
+		qglFogf(GL_FOG_START, 0.0f);
 		qglEnable(GL_FOG);
 		//qglHint(GL_FOG_HINT, GL_NICEST);
 	}
@@ -1320,12 +1320,12 @@ void R_SetGL2D (void)
 	// === jit
 	if (r_speeds->value)
 	{
-		char s[256]; 
+		char s[256];
 
 		Com_sprintf(s, sizeof(s), "%4i wpoly %4i epoly %i tex %i lmaps\n",
-			c_brush_polys, 
-			c_alias_polys, 
-			c_visible_textures, 
+			c_brush_polys,
+			c_alias_polys,
+			c_visible_textures,
 			c_visible_lightmaps);
 		Draw_String(0, r_newrefdef.height - 32*hudscale, s);
 	}
@@ -1368,7 +1368,7 @@ static void GL_DrawStereoPattern (void)
 			GL_DrawColoredStereoLinePair(1, 1, 0, 12);
 			GL_DrawColoredStereoLinePair(0, 1, 0, 14);
 		qglEnd();
-		
+
 		GLimp_EndFrame();
 	}
 }
@@ -1631,7 +1631,7 @@ qboolean UsingGlideDriver () // jit3dfx
 	if (hmGlide)
 	{
 		// get query function
-		GLIDEFUN_grSstQueryBoards =(BOOL(__stdcall*)(GrHwConfiguration* hwconfig)) 
+		GLIDEFUN_grSstQueryBoards =(BOOL(__stdcall*)(GrHwConfiguration* hwconfig))
 			GetProcAddress(hmGlide, "_grSstQueryBoards@4");
 
 		if (GLIDEFUN_grSstQueryBoards)
@@ -1672,7 +1672,7 @@ R_Init
 ===============
 */
 qboolean R_Init (void *hinstance, void *hWnd)
-{	
+{
 	char renderer_buffer[1000];
 	char vendor_buffer[1000];
 	int err;
@@ -1728,7 +1728,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		}
 
 		QGL_Shutdown();
-        
+
 		return -1;
 	}
 
@@ -1809,7 +1809,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 			ri.Cvar_Set("gl_monolightmap", "A");
 			ri.Con_Printf(PRINT_ALL, "...using gl_monolightmap 'a'\n");
 		}
-		else if (gl_config.renderer & GL_RENDERER_POWERVR) 
+		else if (gl_config.renderer & GL_RENDERER_POWERVR)
 		{
 			ri.Cvar_Set("gl_monolightmap", "0");
 		}
@@ -1821,7 +1821,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 
 	// power vr can't have anything stay in the framebuffer, so
 	// the screen needs to redraw the tiled background every frame
-	if (gl_config.renderer & GL_RENDERER_POWERVR) 
+	if (gl_config.renderer & GL_RENDERER_POWERVR)
 	{
 		ri.Cvar_Set("scr_drawall", "1");
 	}
@@ -1863,7 +1863,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	/*
 	** grab extensions
 	*/
-	if (strstr(gl_config.extensions_string, "GL_EXT_compiled_vertex_array") || 
+	if (strstr(gl_config.extensions_string, "GL_EXT_compiled_vertex_array") ||
 		 strstr(gl_config.extensions_string, "GL_SGI_compiled_vertex_array"))
 	{
 		if (gl_debug->value)// jit
@@ -2014,14 +2014,14 @@ qboolean R_Init (void *hinstance, void *hWnd)
 			ri.Con_Printf(PRINT_ALL, "...using GL_NV_texture_rectangle\n");
 
 		gl_state.tex_rectangle = GL_TEXTURE_RECTANGLE_NV; // jitblur
-	} 
+	}
 	else if (strstr (gl_config.extensions_string, "GL_EXT_texture_rectangle"))
 	{
 		if (gl_debug->value)
 			ri.Con_Printf(PRINT_ALL, "...using GL_EXT_texture_rectangle\n");
 
 		gl_state.tex_rectangle = GL_TEXTURE_RECTANGLE_NV; // jitodo(jitblur)
-	} 
+	}
 	else
 	{
 		if (gl_debug->value)
@@ -2070,7 +2070,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		ri.Con_Printf(PRINT_ALL, "Max anisotropy level: %g\n", gl_state.max_anisotropy);
 
 	// === jitbright
-	if (strstr(gl_config.extensions_string, "texture_env_combine")) 
+	if (strstr(gl_config.extensions_string, "texture_env_combine"))
 	{
 		gl_state.texture_combine = true;
 
@@ -2111,7 +2111,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 			qglProgramStringARB && qglProgramEnvParameter4fARB && qglProgramLocalParameter4fARB))
 		{
 			gl_state.fragment_program = false;
-			
+
 			if (gl_debug->value)
 				ri.Con_Printf(PRINT_ALL, "... Failed!  Fragment programs disabled\n");
 		}
@@ -2197,7 +2197,7 @@ R_Shutdown
 ===============
 */
 void R_Shutdown(void)
-{	
+{
 	ri.Cmd_RemoveCommand("modellist");
 	ri.Cmd_RemoveCommand("screenshot");
 	ri.Cmd_RemoveCommand("imagelist");
@@ -2258,11 +2258,11 @@ void R_BeginFrame (float camera_separation)
 	{
 		vid_gamma->modified = false;
 
-		if (vid_gamma_hw->value && gl_state.gammaramp) 
+		if (vid_gamma_hw->value && gl_state.gammaramp)
 		{
 			UpdateGammaRamp();
-		} 
-		else if (gl_config.renderer & GL_RENDERER_VOODOO) 
+		}
+		else if (gl_config.renderer & GL_RENDERER_VOODOO)
 		{
 			char envbuffer[1024];
 			float g;
@@ -2279,10 +2279,10 @@ void R_BeginFrame (float camera_separation)
 	{
 		vid_lighten->modified = false;
 
-		if (vid_gamma_hw->value && gl_state.gammaramp) 
+		if (vid_gamma_hw->value && gl_state.gammaramp)
 		{
 			UpdateGammaRamp();
-		} 
+		}
 	}
 
 	GLimp_BeginFrame(camera_separation);
@@ -2375,7 +2375,7 @@ void R_SetPalette(const unsigned char *palette)
 	}
 	qglClearColor(0,0,0,0);
 	qglClear(GL_COLOR_BUFFER_BIT);
-	//qglClearColor(1,0, 0.5 , 0.5); jitclearcolor	
+	//qglClearColor(1,0, 0.5 , 0.5); jitclearcolor
 }
 
 /*
