@@ -670,7 +670,7 @@ Called to find where to write a file (demos, savegames, etc)
 */
 char *FS_Gamedir (void)
 {
-	if (*fs_gamedir)
+	if (*fs_gamedir && !Q_streq(fs_gamedir, "./")) // jit
 		return fs_gamedir;
 	else
 		return BASEDIRNAME;
@@ -707,6 +707,7 @@ void FS_ExecConfig (void)
 	char name [MAX_QPATH];
 
 	dir = Cvar_VariableString("gamedir");
+
 	if (*dir)
 		Com_sprintf(name, sizeof(name), "%s/%s/configs/config.cfg", 
 					fs_basedir->string, dir);
@@ -715,9 +716,17 @@ void FS_ExecConfig (void)
 					fs_basedir->string, BASEDIRNAME);
 
 	if (Sys_FindFirst(name, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM))
+	{
 		Cbuf_AddText("exec config.cfg\n");
+	}
 	else
+	{
 		Cbuf_AddText("exec default.cfg\n");
+#ifdef QUAKE2
+		Cbuf_AddText("exec ../config.cfg\n");
+#endif
+	}
+
 	Sys_FindClose();
 }
 // ===
@@ -764,10 +773,15 @@ void FS_SetGamedir (char *dir)
 
 	Com_sprintf(fs_gamedir, sizeof(fs_gamedir), "%s/%s", fs_basedir->string, dir);
 
-	if (Q_streq(dir, BASEDIRNAME) ||(*dir == 0))
+	if (Q_streq(dir, BASEDIRNAME) || (*dir == 0))
 	{
+#ifdef QUAKE2
+		Cvar_FullSet("gamedir", "baseq2", CVAR_SERVERINFO|CVAR_NOSET, true);
+		Cvar_FullSet("game", "baseq2", CVAR_LATCH|CVAR_SERVERINFO, true);
+#else
 		Cvar_FullSet("gamedir", "pball", CVAR_SERVERINFO|CVAR_NOSET, true); // jit, always display gamedir as "pball"
 		Cvar_FullSet("game", "pball", CVAR_LATCH|CVAR_SERVERINFO, true); // jit
+#endif
 	}
 	else
 	{
@@ -1056,7 +1070,12 @@ void FS_InitFilesystem (void)
 	fs_base_searchpaths = fs_searchpaths;
 
 	// check for game override
+#ifdef QUAKE2
+	fs_gamedirvar = Cvar_Get("game", "baseq2", CVAR_LATCH|CVAR_SERVERINFO); 
+#else
 	fs_gamedirvar = Cvar_Get("game", "pball", CVAR_LATCH|CVAR_SERVERINFO); // jit
+#endif
+
 	if (fs_gamedirvar->string[0])
 		FS_SetGamedir(fs_gamedirvar->string);
 }

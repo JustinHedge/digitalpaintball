@@ -30,12 +30,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../game/q_shared.h"
 
-
+#ifdef QUAKE2
+#define VERSION		0.17
+#define BASEDIRNAME "baseq2"
+#define BUILD 0
+#define BUILD_S "0"
+#else
 #define	VERSION		2.0 // jitversion (was 3.21)
 #define BUILD		16 // jitversion / jitbuild -- Paintball2 build number
 #define BUILD_S		"16" // jitversion, for strings.
-
 #define	BASEDIRNAME	"pball" // jit, was "baseq2"
+#endif
 
 #ifdef WIN32
 

@@ -757,12 +757,14 @@ PM_CheckJump
 */
 void PM_CheckJump (void)
 {
-	/* === jitjumphack -- don't kill people's strafe jumps
+	// === jitjumphack -- don't kill people's strafe jumps
+#ifdef QUAKE2
 	if (pm->s.pm_flags & PMF_TIME_LAND)
 	{	// hasn't been long enough since landing to jump again
 		return;
 	}
-	=== */
+#endif
+	// ===
 
 	if (pm->cmd.upmove < 10)
 	{	// not holding jump
@@ -804,6 +806,7 @@ void PM_CheckJump (void)
 #define JUMPHEIGHT 270
 
 	pml.velocity[2] += JUMPHEIGHT; // jitjump
+
 	if (pml.velocity[2] < JUMPHEIGHT)
 		pml.velocity[2] = JUMPHEIGHT;
 }
@@ -1163,9 +1166,12 @@ void PM_SnapPosition (void) // testing
 		else 
 			sign[i] = -1;
 
+#ifdef QUAKE2
+#else
 		if (i == 2 && pml.origin[i] < 0) // z-axis
 			pm->s.origin[i] = (short)((int)(pml.origin[i] * 8.0f + 32768.0f) - 32768);
 		else
+#endif
 			pm->s.origin[i] = (short)(pml.origin[i] * 8.0f);
 
 		if ((short)((float)pm->s.origin[i] * 0.125f) == pml.origin[i])
