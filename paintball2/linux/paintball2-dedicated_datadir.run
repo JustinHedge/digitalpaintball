@@ -1,7 +1,6 @@
 #!/bin/sh
 
-#You must to do this file executable in order to run, type 'chmod +x pb2-dedicated.run'
-#QuDos -- http://qudos.quakedev.com
+# You must make this file executable in order to run.  Type 'chmod +x pb2-dedicated.run'
 
 BIN="pb2-ded"
 DIR="."
