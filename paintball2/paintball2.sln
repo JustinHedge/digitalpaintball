@@ -9,9 +9,12 @@ Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		ConfigName.0 = Debug
 		ConfigName.1 = Debug Alpha
-		ConfigName.2 = Release
-		ConfigName.3 = Release Alpha
-		ConfigName.4 = Release No Opt
+		ConfigName.2 = PB2Q2 - Debug
+		ConfigName.3 = PB2Q2 - Release
+		ConfigName.4 = Q2
+		ConfigName.5 = Release
+		ConfigName.6 = Release Alpha
+		ConfigName.7 = Release No Opt
 	EndGlobalSection
 	GlobalSection(ProjectDependencies) = postSolution
 		{12D16965-BA3F-4E82-AE70-F354AF80B941}.0 = {370B8ED7-2016-4F3D-B829-18804879A927}
@@ -21,6 +24,12 @@ Global
 		{12D16965-BA3F-4E82-AE70-F354AF80B941}.Debug.Build.0 = Debug|Win32
 		{12D16965-BA3F-4E82-AE70-F354AF80B941}.Debug Alpha.ActiveCfg = Debug Alpha|Win32
 		{12D16965-BA3F-4E82-AE70-F354AF80B941}.Debug Alpha.Build.0 = Debug Alpha|Win32
+		{12D16965-BA3F-4E82-AE70-F354AF80B941}.PB2Q2 - Debug.ActiveCfg = PB2Q2 - Debug|Win32
+		{12D16965-BA3F-4E82-AE70-F354AF80B941}.PB2Q2 - Debug.Build.0 = PB2Q2 - Debug|Win32
+		{12D16965-BA3F-4E82-AE70-F354AF80B941}.PB2Q2 - Release.ActiveCfg = PB2Q2 - Release|Win32
+		{12D16965-BA3F-4E82-AE70-F354AF80B941}.PB2Q2 - Release.Build.0 = PB2Q2 - Release|Win32
+		{12D16965-BA3F-4E82-AE70-F354AF80B941}.Q2.ActiveCfg = Q2|Win32
+		{12D16965-BA3F-4E82-AE70-F354AF80B941}.Q2.Build.0 = Q2|Win32
 		{12D16965-BA3F-4E82-AE70-F354AF80B941}.Release.ActiveCfg = Release|Win32
 		{12D16965-BA3F-4E82-AE70-F354AF80B941}.Release.Build.0 = Release|Win32
 		{12D16965-BA3F-4E82-AE70-F354AF80B941}.Release Alpha.ActiveCfg = Release Alpha|Win32
@@ -31,6 +40,12 @@ Global
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Debug.Build.0 = Debug|Win32
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Debug Alpha.ActiveCfg = Debug Alpha|Win32
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Debug Alpha.Build.0 = Debug Alpha|Win32
+		{370B8ED7-2016-4F3D-B829-18804879A927}.PB2Q2 - Debug.ActiveCfg = PB2Q2 - Debug|Win32
+		{370B8ED7-2016-4F3D-B829-18804879A927}.PB2Q2 - Debug.Build.0 = PB2Q2 - Debug|Win32
+		{370B8ED7-2016-4F3D-B829-18804879A927}.PB2Q2 - Release.ActiveCfg = PB2Q2 - Release|Win32
+		{370B8ED7-2016-4F3D-B829-18804879A927}.PB2Q2 - Release.Build.0 = PB2Q2 - Release|Win32
+		{370B8ED7-2016-4F3D-B829-18804879A927}.Q2.ActiveCfg = Q2|Win32
+		{370B8ED7-2016-4F3D-B829-18804879A927}.Q2.Build.0 = Q2|Win32
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Release.ActiveCfg = Release|Win32
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Release.Build.0 = Release|Win32
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Release Alpha.ActiveCfg = Release Alpha|Win32
@@ -41,6 +56,12 @@ Global
 		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Debug.Build.0 = Debug|Win32
 		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Debug Alpha.ActiveCfg = Debug|Win32
 		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Debug Alpha.Build.0 = Debug|Win32
+		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.PB2Q2 - Debug.ActiveCfg = PB2Q2 - Debug|Win32
+		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.PB2Q2 - Debug.Build.0 = PB2Q2 - Debug|Win32
+		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.PB2Q2 - Release.ActiveCfg = PB2Q2 - Release|Win32
+		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.PB2Q2 - Release.Build.0 = PB2Q2 - Release|Win32
+		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Q2.ActiveCfg = Release|Win32
+		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Q2.Build.0 = Release|Win32
 		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Release.ActiveCfg = Release|Win32
 		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Release.Build.0 = Release|Win32
 		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Release Alpha.ActiveCfg = Release|Win32
