@@ -3,8 +3,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "paintball2", "paintball2.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ref_gl", "ref_gl\ref_gl.vcproj", "{370B8ED7-2016-4F3D-B829-18804879A927}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gamex86", "..\pball\src\paintball.vcproj", "{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}"
-EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		ConfigName.0 = Debug
@@ -52,22 +50,6 @@ Global
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Release Alpha.Build.0 = Release Alpha|Win32
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Release No Opt.ActiveCfg = Release|Win32
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Release No Opt.Build.0 = Release|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Debug.ActiveCfg = Debug|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Debug.Build.0 = Debug|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Debug Alpha.ActiveCfg = Debug|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Debug Alpha.Build.0 = Debug|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.PB2Q2 - Debug.ActiveCfg = PB2Q2 - Debug|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.PB2Q2 - Debug.Build.0 = PB2Q2 - Debug|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.PB2Q2 - Release.ActiveCfg = PB2Q2 - Release|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.PB2Q2 - Release.Build.0 = PB2Q2 - Release|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Q2.ActiveCfg = Release|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Q2.Build.0 = Release|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Release.ActiveCfg = Release|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Release.Build.0 = Release|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Release Alpha.ActiveCfg = Release|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Release Alpha.Build.0 = Release|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Release No Opt.ActiveCfg = Release No Opt|Win32
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}.Release No Opt.Build.0 = Release No Opt|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
