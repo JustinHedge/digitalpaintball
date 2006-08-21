@@ -101,19 +101,21 @@ void CL_AddNetgraph (void)
 	if (scr_debuggraph->value || scr_timegraph->value)
 		return;
 
-	for (i=0 ; i<cls.netchan.dropped ; i++)
-		SCR_DebugGraph (30, 0x40);
+	for (i = 0; i < cls.netchan.dropped; i++)
+		SCR_DebugGraph(30, 0x40);
 
-	for (i=0 ; i<cl.surpressCount ; i++)
-		SCR_DebugGraph (30, 0xdf);
+	for (i = 0; i < cl.surpressCount; i++)
+		SCR_DebugGraph(30, 0xdf);
 
 	// see what the latency was on this packet
 	in = cls.netchan.incoming_acknowledged & (CMD_BACKUP-1);
 	ping = cls.realtime - cl.cmd_time[in];
 	ping /= 30;
+
 	if (ping > 30)
 		ping = 30;
-	SCR_DebugGraph (ping, 0xd0);
+
+	SCR_DebugGraph(ping, 0xd0);
 }
 
 
@@ -133,8 +135,8 @@ SCR_DebugGraph
 */
 void SCR_DebugGraph (float value, int color)
 {
-	values[current&1023].value = value;
-	values[current&1023].color = color;
+	values[current & 1023].value = value;
+	values[current & 1023].color = color;
 	current++;
 }
 
@@ -149,27 +151,24 @@ void SCR_DrawDebugGraph (void)
 	float	v;
 	int		color;
 
-	//
-	// draw the graph
-	//
 	w = scr_vrect.width;
-
 	x = scr_vrect.x;
-	y = scr_vrect.y+scr_vrect.height;
-	re.DrawFill (x, y-scr_graphheight->value,
-		w, scr_graphheight->value, 8);
+	y = scr_vrect.y + scr_vrect.height;
+	//re.DrawFill(x, y - scr_graphheight->value,
+	//	w, scr_graphheight->value, 8);
 
-	for (a=0 ; a<w ; a++)
+	for (a = 0; a < w; a++)
 	{
-		i = (current-1-a+1024) & 1023;
+		i = (current - 1 - a + 1024) & 1023;
 		v = values[i].value;
 		color = values[i].color;
-		v = v*scr_graphscale->value + scr_graphshift->value;
+		v = v * scr_graphscale->value + scr_graphshift->value;
 		
 		if (v < 0)
 			v += scr_graphheight->value * (1+(int)(-v/scr_graphheight->value));
+
 		h = (int)v % (int)scr_graphheight->value;
-		re.DrawFill (x+w-1-a, y - h, 1,	h, color);
+		re.DrawFill(x + w-1-a, y - h, 1, h, color);
 	}
 }
 

@@ -1521,11 +1521,7 @@ void R_Register(void)
 	gl_flashblend = ri.Cvar_Get("gl_flashblend", "0", 0);
 	gl_playermip = ri.Cvar_Get("gl_playermip", "0", 0);
 	gl_monolightmap = ri.Cvar_Get("gl_monolightmap", "0", 0);
-#ifdef WIN32
-	gl_driver = ri.Cvar_Get("gl_driver", "opengl32", CVAR_ARCHIVE);
-#else
-	gl_driver = ri.Cvar_Get("gl_driver", "libGL.so", CVAR_ARCHIVE);
-#endif
+	gl_driver = ri.Cvar_Get("gl_driver", GL_DRIVER_LIB, CVAR_ARCHIVE);
 	gl_texturemode = ri.Cvar_Get("gl_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE); // jit
 	gl_texturealphamode = ri.Cvar_Get("gl_texturealphamode", "default", CVAR_ARCHIVE);
 	gl_texturesolidmode = ri.Cvar_Get("gl_texturesolidmode", "default", CVAR_ARCHIVE);
@@ -1666,6 +1662,20 @@ qboolean UsingGlideDriver () // jit3dfx
 #endif
 }
 
+void R_Init3dfxGamma (void)
+{
+	char envbuffer[1024];
+	float g;
+
+	// update 3Dfx gamma irrespective of underlying DLL
+	g = 2.0f * (0.8f - (vid_gamma->value - 0.5f)) + 1.0F;
+	Com_sprintf(envbuffer, sizeof(envbuffer), "SSTV2_GAMMA=%f", g);
+	putenv(envbuffer);
+	Com_sprintf(envbuffer, sizeof(envbuffer), "SST_GAMMA=%f", g);
+	putenv(envbuffer);
+}
+
+
 /*
 ===============
 R_Init
@@ -1685,14 +1695,10 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	gl_arb_fragment_program = ri.Cvar_Get("gl_arb_fragment_program", "1", CVAR_ARCHIVE); // jit
 
 	for (j = 0; j < 256; j++)
-	{
 		r_turbsin[j] *= 0.5;
-	}
 
 	ri.Con_Printf(PRINT_ALL, "ref_gl version: "REF_VERSION"\n");
-
 	Draw_GetPalette();
-
 	R_Register();
 
 	// initialize our QGL dynamic bindings
@@ -1713,12 +1719,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		// otherwise, if the driver was set improperly, change it back to
 		// opengl32(bastard might have finally upgraded), and put it in
 		// windowed 640x480, shutting off hardware gamma to be safe.
-#ifdef WIN32
-#define GL_DRIVER_LIB "opengl32"
-#else
-#define GL_DRIVER_LIB "libGL.so"
-#endif
-		else if (!Q_streq (gl_driver->string, GL_DRIVER_LIB))
+		else if (!Q_streq(gl_driver->string, GL_DRIVER_LIB))
 		{
 			ri.Cvar_Set("gl_driver", GL_DRIVER_LIB);
 			ri.Cvar_Set("vid_fullscreen", "0");

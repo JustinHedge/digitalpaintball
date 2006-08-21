@@ -19,20 +19,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #ifdef _WIN32
-#  include <windows.h>
+#include <windows.h>
 #endif
 
 #include <stdio.h>
-
 #include <GL/gl.h>
-//#include <GL/glu.h>
 #include "glext.h"
 #include <math.h>
 
-#ifndef __unix__
 #ifndef GL_COLOR_INDEX8_EXT
 #define GL_COLOR_INDEX8_EXT GL_COLOR_INDEX
 #endif
+
+#ifdef _WIN32
+#define GL_DRIVER_LIB "opengl32"
+#else
+#define GL_DRIVER_LIB "libGL.so"
+#define GL_DRIVER_LIB2 "libGL.so.1.2"
+#define GL_DRIVER_LIB3 "libGL.so.1"
 #endif
 
 #ifndef max
@@ -283,6 +287,7 @@ void GL_SubdivideLightmappedSurface (msurface_t *fa, float subdivide_size); //He
 qboolean R_CullBox (const vec3_t mins, const vec3_t maxs);
 void R_RotateForEntity (entity_t *e);
 void R_MarkLeaves (void);
+void R_Init3dfxGamma (void); // jit3dfx
 
 glpoly_t *WaterWarpPolyVerts (glpoly_t *p);
 float CalcWave (float x, float y); // jitwater

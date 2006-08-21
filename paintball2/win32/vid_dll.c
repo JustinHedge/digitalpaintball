@@ -736,6 +736,8 @@ vidmode_t vid_modes[] =
 	{ "blah", 1280, 768,  18 },
 	{ "blah", 1280, 800,  19 },
 	{ "blah", 1680, 1050, 20 },
+	{ "blah", 1440, 900, 21 },
+	{ "blah", 1920, 1200, 22 },
 	// jitodo, custom resolution
 };
 

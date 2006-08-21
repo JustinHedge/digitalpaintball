@@ -752,26 +752,22 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 		byte		v[4];
 	} color;
 
-	if ( (unsigned)c > 255)
-		ri.Sys_Error (ERR_FATAL, "Draw_Fill: bad color");
+	if ((unsigned)c > 255)
+		ri.Sys_Error(ERR_FATAL, "Draw_Fill: bad color");
 
-	qglDisable (GL_TEXTURE_2D);
-
+	qglDisable(GL_TEXTURE_2D);
 	color.c = d_8to24table[c];
-	qglColor3f (color.v[0]/255.0,
+	qglColor3f(color.v[0]/255.0,
 		color.v[1]/255.0,
 		color.v[2]/255.0);
-
-	qglBegin (GL_QUADS);
-
-	qglVertex2f (x,y);
-	qglVertex2f (x+w, y);
-	qglVertex2f (x+w, y+h);
-	qglVertex2f (x, y+h);
-
-	qglEnd ();
-	qglColor3f (1,1,1);
-	qglEnable (GL_TEXTURE_2D);
+	qglBegin(GL_QUADS);
+	qglVertex2f(x,y);
+	qglVertex2f(x+w, y);
+	qglVertex2f(x+w, y+h);
+	qglVertex2f(x, y+h);
+	qglEnd();
+	qglColor3f(1,1,1);
+	qglEnable(GL_TEXTURE_2D);
 }
 
 //=============================================================================
@@ -837,20 +833,23 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 	}
 	t = rows*hscale * 0.00390625;// / 256;
 
-	if ( !qglColorTableEXT )
+	if (!qglColorTableEXT)
 	{
 		unsigned *dest;
 
-		for (i=0 ; i<trows ; i++)
+		for (i = 0; i < trows; i++)
 		{
-			row = (int)(i*hscale);
+			row = (int)(i * hscale);
+
 			if (row > rows)
 				break;
+
 			source = data + cols*row;
 			dest = &image32[i*256];
-			fracstep = cols*0x10000 *0.00390625; // /256;
+			fracstep = cols * 0x10000 / 256;
 			frac = fracstep >> 1;
-			for (j=0 ; j<256 ; j++)
+
+			for (j = 0; j < 256; j++)
 			{
 				dest[j] = r_rawpalette[source[frac>>16]];
 				frac += fracstep;
@@ -864,33 +863,27 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 	{
 		unsigned char *dest;
 
-		for (i=0 ; i<trows ; i++)
+		for (i = 0; i < trows; i++)
 		{
-			row = (int)(i*hscale);
+			row = (int)(i * hscale);
 
 			if (row > rows)
 				break;
 
-			source = data + cols*row;
-			dest = &image8[i*256];
-			fracstep = cols*0x10000 *0.00390625; // /256;
+			source = data + cols * row;
+			dest = &image8[i * 256];
+			fracstep = cols * 0x10000 / 256;
 			frac = fracstep >> 1;
 
-			for (j=0 ; j<256 ; j++)
+			for (j = 0; j < 256; j++)
 			{
-				dest[j] = source[frac>>16];
+				dest[j] = source[frac >> 16];
 				frac += fracstep;
 			}
 		}
 
-		qglTexImage2D( GL_TEXTURE_2D, 
-			           0, 
-					   GL_COLOR_INDEX8_EXT, 
-					   256, 256, 
-					   0, 
-					   GL_COLOR_INDEX, 
-					   GL_UNSIGNED_BYTE, 
-					   image8 );
+		qglTexImage2D(GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, 256,
+			256, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, image8);
 	}
 
 	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

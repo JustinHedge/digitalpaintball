@@ -416,10 +416,9 @@ static qboolean CheckDownloadFilename (const char *name) // jitsecurity
 SV_BeginDownload_f
 ==================
 */
-void SV_BeginDownload_f(void)
+void SV_BeginDownload_f (void)
 {
 	char	*name;
-	extern	int		file_from_pak; // ZOID did file come from pak?
 	int offset = 0;
 
 	name = Cmd_Argv(1);
@@ -459,10 +458,9 @@ void SV_BeginDownload_f(void)
 }
 
 #ifdef USE_DOWNLOAD2
-void SV_BeginDownload2_f(void) // jitdownload
+void SV_BeginDownload2_f (void) // jitdownload
 {
 	char	*name;
-	extern	int		file_from_pak; // ZOID did file come from pak?
 	int offset = 0;
 
 	name = Cmd_Argv(1);
@@ -661,7 +659,7 @@ void SV_ExecuteUserCommand (char *s)
 {
 	ucmd_t	*u;
 	
-	Cmd_TokenizeString(s, false); // jitspoe -- bug fix from Redix
+	Cmd_TokenizeString((unsigned char *)s, false); // jitspoe -- bug fix from Redix
 	sv_player = sv_client->edict;
 
 	for (u = ucmds; u->name; u++)

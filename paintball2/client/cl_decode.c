@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define item_from_index(a) cl.configstrings[CS_ITEMS+(a)]
 
 static unsigned char *outpos;
-static const char *decode_ptr;
+static const unsigned char *decode_ptr;
 static unsigned int decode_char_unsigned (void);
 
 static void encode_addmarker (const unsigned char marker)

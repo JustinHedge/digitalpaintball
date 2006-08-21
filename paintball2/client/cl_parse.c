@@ -1253,18 +1253,13 @@ void CL_ParseServerMessage (void)
 	// ECHON / jit:
 	_strtime(timestamp);
 
-//
-// if recording demos, copy the message out
-//
+	// if recording demos, copy the message out
 	if (cl_shownet->value == 1)
-		Com_Printf ("%i ",net_message.cursize);
+		Com_Printf("%i ", net_message.cursize);
 	else if (cl_shownet->value >= 2)
-		Com_Printf ("------------------\n");
+		Com_Printf("------------------\n");
 
-
-//
-// parse the message
-//
+	// parse the message
 	while (1)
 	{
 		if (net_message.readcount > net_message.cursize)
@@ -1289,7 +1284,7 @@ void CL_ParseServerMessage (void)
 				SHOWNET(svc_strings[cmd]);
 		}
 	
-	// other commands
+		// other commands
 		switch (cmd)
 		{
 		default:
@@ -1297,7 +1292,6 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_nop:
-//			Com_Printf("svc_nop\n");
 			break;
 			
 		case svc_disconnect:
@@ -1321,7 +1315,7 @@ void CL_ParseServerMessage (void)
 		case svc_print:
 			i = MSG_ReadByte(&net_message);
 
-			switch(i) // jit
+			switch (i) // jit
 			{
 			case PRINT_CHAT:
 				S_StartLocalSound("misc/talk.wav");
@@ -1440,10 +1434,8 @@ void CL_ParseServerMessage (void)
 
 	CL_AddNetgraph();
 
-	//
 	// we don't know if it is ok to save a demo message until
 	// after we have parsed the frame
-	//
 	if (cls.demorecording && !cls.demowaiting)
 		CL_WriteDemoMessage();
 }
