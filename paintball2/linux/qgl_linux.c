@@ -3001,17 +3001,31 @@ qboolean QGL_Init (const char *dllname)
 
 		if ((glw_state.OpenGLLib = dlopen(fn, RTLD_LAZY)) == 0)
 		{
+			Com_Printf("Failed to load \"%s\", trying \"%s\"\n", dllname, GL_DRIVER_LIB2);
+
 			if ((glw_state.OpenGLLib = dlopen(GL_DRIVER_LIB2, RTLD_LAZY)) == 0) // jitlinux
 			{
-				if ((glw_state.OpenGLLib = dlopen(GL_DRIVER_LIB2, RTLD_LAZY)) == 0) // jitlinux
+				Com_Printf("Failed to load \"%s\", trying \"%s\"\n", GL_DRIVER_LIB2, GL_DRIVER_LIB3);
+
+				if ((glw_state.OpenGLLib = dlopen(GL_DRIVER_LIB3, RTLD_LAZY)) == 0) // jitlinux
 				{
 					ri.Con_Printf(PRINT_ALL, "%s\n", dlerror());
 					return false;
 				}
+				else
+				{
+					Com_Printf("Using %s for OpenGL...\n", GL_DRIVER_LIB3);
+				}
+			}
+			else
+			{
+				Com_Printf("Using %s for OpenGL...\n", GL_DRIVER_LIB2);
 			}
 		}
-
-		Com_Printf("Using %s for OpenGL...\n", fn);
+		else
+		{
+			Com_Printf("Using %s for OpenGL...\n", fn);
+		}
 	} else
 	{
 		Com_Printf ("Using %s for OpenGL...\n", dllname);
