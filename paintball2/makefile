@@ -40,7 +40,7 @@ endif
 # Set to YES or NO for a      #
 # verbose compilation process.#
 #=============================#
-VERBOSE?=NO
+VERBOSE?=YES
 
 #=============================#
 # Paintball2 Client           #
@@ -68,13 +68,13 @@ USE_X86_ASM?=NO
 # Read from $(DATADIR) and  #
 # write to "~/.paintball2"  #
 #===========================#
-WITH_DATADIR?=YES
+WITH_DATADIR?=NO
 
 #===========================#
 # Load renderers            #
 # from $(LIBDIR)            #
 #===========================#
-WITH_LIBDIR?=YES
+WITH_LIBDIR?=NO
 
 #===========================#
 # Sound Drivers             #            
@@ -83,7 +83,7 @@ ifeq ($(OSTYPE),Linux)
 BUILD_ALSA_SND?=YES      # Alsa sound driver
 endif
 BUILD_OSS_SND?=YES       # OSS sound driver
-BUILD_SDL_SND?=YES       # SDL sound driver
+BUILD_SDL_SND?=NO       # SDL sound driver
 
 
 #===========================#
@@ -100,7 +100,7 @@ USE_XF86_DGA?=NO
 #===========================#
 # SDL GL render.            #
 #===========================#
-BUILD_SDLGL?=YES
+BUILD_SDLGL?=NO
 
 
 #===========================#
