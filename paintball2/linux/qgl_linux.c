@@ -2983,42 +2983,37 @@ void *qwglGetProcAddress(char *symbol)
 ** 
 */
 
-qboolean QGL_Init( const char *dllname )
+qboolean QGL_Init (const char *dllname)
 {
-	// update 3Dfx gamma irrespective of underlying DLL
-	{
-		char envbuffer[1024];
-		float g;
+	R_Init3dfxGamma(); // jit3dfx
 
-		g = 2.00 * ( 0.8 - ( vid_gamma->value - 0.5 ) ) + 1.0F;
-		Com_sprintf( envbuffer, sizeof(envbuffer), "SSTV2_GAMMA=%f", g );
-		putenv( envbuffer );
-		Com_sprintf( envbuffer, sizeof(envbuffer), "SST_GAMMA=%f", g );
-		putenv( envbuffer );
-	}
-
-	if ( glw_state.OpenGLLib )
+	if (glw_state.OpenGLLib)
 		QGL_Shutdown();
 	
-	if ( ( glw_state.OpenGLLib = dlopen( dllname, RTLD_LAZY ) ) == 0 )
+	if ((glw_state.OpenGLLib = dlopen(dllname, RTLD_LAZY)) == 0)
 	{
 		char	fn[MAX_OSPATH];
 		char	*path;
 
-//		ri.Con_Printf(PRINT_ALL, "QGL_Init: Can't load %s from /etc/ld.so.conf: %s\n", 
-//				dllname, dlerror());
-
 		// try basedir next
-		path = ri.Cvar_Get ("basedir", ".", CVAR_NOSET)->string;
-		
-		snprintf (fn, MAX_OSPATH, "%s/%s", path, dllname );
+		path = ri.Cvar_Get("basedir", ".", CVAR_NOSET)->string;
+		snprintf(fn, MAX_OSPATH, "%s/%s", path, dllname);
 
-		if ( ( glw_state.OpenGLLib = dlopen( fn, RTLD_LAZY ) ) == 0 ) {
-			ri.Con_Printf( PRINT_ALL, "%s\n", dlerror() );
-			return false;
+		if ((glw_state.OpenGLLib = dlopen(fn, RTLD_LAZY)) == 0)
+		{
+			if ((glw_state.OpenGLLib = dlopen(GL_DRIVER_LIB2, RTLD_LAZY)) == 0) // jitlinux
+			{
+				if ((glw_state.OpenGLLib = dlopen(GL_DRIVER_LIB2, RTLD_LAZY)) == 0) // jitlinux
+				{
+					ri.Con_Printf(PRINT_ALL, "%s\n", dlerror());
+					return false;
+				}
+			}
 		}
-		Com_Printf ("Using %s for OpenGL...\n", fn); 
-	} else {
+
+		Com_Printf("Using %s for OpenGL...\n", fn);
+	} else
+	{
 		Com_Printf ("Using %s for OpenGL...\n", dllname);
 	}
 
