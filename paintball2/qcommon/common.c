@@ -41,6 +41,7 @@ cvar_t	*log_stats;
 cvar_t	*developer;
 cvar_t	*timescale;
 cvar_t	*logfile_active;	// 1 = buffer log, 2 = flush after each print
+cvar_t	*timestamp_console; // jittimestamp
 cvar_t	*showtrace;
 cvar_t	*dedicated;
 cvar_t	*deathmatch; // jit
@@ -91,6 +92,36 @@ void Com_EndRedirect (void)
 	rd_flush = NULL;
 }
 
+static void ConsoleOutput (const char *msg) // jittimestamp
+{
+	static qboolean printstamp = true;
+
+	if (printstamp && timestamp_console && timestamp_console->value)
+	{	// don't tag timestamps on if it's not a new line
+		time_t now;
+		char timestamp[256];
+		struct tm *nowtime;
+		static int lastday = -1;
+
+		time(&now);
+		nowtime = localtime(&now);
+		
+		if (nowtime->tm_mday != lastday)
+		{
+			Com_sprintf(timestamp, sizeof(timestamp), "[********] Date: %04d-%02d-%02d\n",
+				nowtime->tm_year + 1900, nowtime->tm_mon + 1, nowtime->tm_mday);
+			Sys_ConsoleOutput(timestamp);
+			lastday = nowtime->tm_mday;
+		}
+
+		strftime(timestamp, sizeof(timestamp), "[%H:%M:%S] ", nowtime);
+		Sys_ConsoleOutput(timestamp);
+	}
+	
+	Sys_ConsoleOutput((char *)msg);
+	printstamp = (strchr(msg, '\n') != NULL);
+}
+
 /*
 =============
 Com_Printf
@@ -124,7 +155,8 @@ void Com_Printf (char *fmt, ...)
 	Con_Print(msg);
 		
 	// also echo to debugging console
-	Sys_ConsoleOutput(msg);
+	ConsoleOutput(msg); // jittimestamp
+	//Sys_ConsoleOutput(msg);
 
 	// logfile
 	if (logfile_active && logfile_active->value)
@@ -1444,6 +1476,8 @@ void Qcommon_Init (int argc, char **argv)
 	dedicated = Cvar_Get("dedicated", "0", CVAR_NOSET);
 #endif
 	deathmatch = Cvar_Get("deathmatch", "0", 0); // jit
+
+	timestamp_console = Cvar_Get("timestamp_console", dedicated->value ? "1" : "0", 0); // jittimestamp
 
 	s = va("%4.2f %s %s %s", VERSION, CPUSTRING, __DATE__, BUILDSTRING);
 	Cvar_Get("version", s, CVAR_SERVERINFO|CVAR_NOSET);
