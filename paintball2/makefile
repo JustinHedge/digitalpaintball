@@ -217,7 +217,7 @@ RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops \
 	-fomit-frame-pointer -fexpensive-optimizations -fno-strict-aliasing
 endif
 
-DEBUG_CFLAGS=$(BASE_CFLAGS) -g -ggdb -Wall -pipe
+DEBUG_CFLAGS=$(BASE_CFLAGS) -g -ggdb -Wall -pipe -ffloat-store -ffast-math
 
 LDFLAGS=-L$(LOCALBASE)/lib -lm
 
