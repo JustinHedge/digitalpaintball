@@ -169,35 +169,43 @@ void GL_ScreenShot_JPG (void)
 	Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot", ri.FS_Gamedir());
 	Sys_Mkdir(checkname);
 
-	// Find a file name to save it to 
-	strcpy(picname,"sshot000.jpg"); // jit
-
-	for (i = 0; i <= 999; i++) 
-	{ 
-		picname[5] = i/100 + '0'; 
-		picname[6] = (i%100)/10 + '0'; 
-		picname[7] = i%10 + '0';
-		Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
-		file = fopen(checkname, "rb");
-
-		if (!file)
-			break;	// file doesn't exist
-
-		fclose (file);
-	}
-
-	if (i == 1000) 
+	// Find a file name to save it to
+	if (ri.Cmd_Argc() > 1 && ri.Cmd_Argv(1)[0]) // jitsshot -- named screenshots
 	{
-		ri.Con_Printf (PRINT_ALL, "SCR_JPGScreenShot_f: Too many files\n"); 
-		return;
- 	}
+		Com_sprintf(picname, sizeof(picname), "%s.jpg", ri.Cmd_Argv(1));
+		Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
+	}
+	else
+	{
+		strcpy(picname, "sshot000.jpg"); // jitsshot
+
+		for (i = 0; i <= 999; i++) 
+		{
+			picname[5] = i / 100 + '0'; // jitsshot
+			picname[6] = (i % 100) / 10 + '0';  // jitsshot
+			picname[7] = i % 10 + '0'; // jitsshot
+			Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
+			file = fopen(checkname, "rb");
+			
+			if (!file)
+				break;	// file doesn't exist
+
+			fclose(file);
+		}
+
+		if (i > 999) 
+		{
+			ri.Con_Printf(PRINT_ALL, "SCR_JPGScreenShot_f: Too many files\n"); 
+			return;
+ 		}
+	}
 
 	// Open the file for Binary Output
 	file = fopen(checkname, "wb");
 
 	if (!file)
 	{
-		ri.Con_Printf (PRINT_ALL, "SCR_JPGScreenShot_f: Couldn't create a file\n"); 
+		ri.Con_Printf(PRINT_ALL, "SCR_JPGScreenShot_f: Couldn't create a file\n"); 
 		return;
  	}
 
@@ -225,8 +233,10 @@ void GL_ScreenShot_JPG (void)
 	cinfo.in_color_space = JCS_RGB;
 	cinfo.input_components = 3;
 	jpeg_set_defaults(&cinfo);
+
 	if ((gl_screenshot_jpeg_quality->value >= 101) || (gl_screenshot_jpeg_quality->value <= 0))
 		ri.Cvar_Set("gl_screenshot_jpeg_quality", "85");
+
 	jpeg_set_quality(&cinfo, gl_screenshot_jpeg_quality->value, TRUE);
 
 	// Start Compression
@@ -234,7 +244,8 @@ void GL_ScreenShot_JPG (void)
 
 	// Feed Scanline data
 	offset = (cinfo.image_width * cinfo.image_height * 3) - (cinfo.image_width * 3);
-	while(cinfo.next_scanline < cinfo.image_height)
+
+	while (cinfo.next_scanline < cinfo.image_height)
 	{
 		s[0] = &rgbdata[offset - (cinfo.next_scanline * (cinfo.image_width * 3))];
 		jpeg_write_scanlines(&cinfo, s, 1);
@@ -253,7 +264,7 @@ void GL_ScreenShot_JPG (void)
 	free(rgbdata);
 
 	// Done!
-	ri.Con_Printf (PRINT_ALL, "Wrote %s\n", picname);
+	ri.Con_Printf(PRINT_ALL, "Wrote %s\n", picname);
 }
 
 /* 
@@ -277,61 +288,66 @@ void GL_ScreenShot_f (void)
 	}
 
 	// create the scrnshots directory if it doesn't exist
-	Com_sprintf (checkname, sizeof(checkname), "%s/scrnshot", ri.FS_Gamedir());
-	Sys_Mkdir (checkname);
-
-// 
-// find a file name to save it to 
-// 
-	strcpy(picname,"sshot000.tga"); // jitsshot
-
-	for (i=0 ; i<=99 ; i++) 
-	{ 
-//		picname[5] = i/10 + '0'; 
-//		picname[6] = i%10 + '0'; 
-		picname[5] = i/100 + '0'; // jitsshot
-		picname[6] = (i%100)/10 + '0';  // jitsshot
-		picname[7] = i%10 + '0'; // jitsshot
-		Com_sprintf (checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
-		f = fopen (checkname, "rb");
-		if (!f)
-			break;	// file doesn't exist
-		fclose (f);
-	} 
-	if (i==100) 
+	Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot", ri.FS_Gamedir());
+	Sys_Mkdir(checkname);
+ 
+	// find a file name to save it to
+	if (ri.Cmd_Argc() > 1 && ri.Cmd_Argv(1)[0]) // jitsshot -- named screenshots
 	{
-		ri.Con_Printf (PRINT_ALL, "SCR_ScreenShot_f: Couldn't create a file\n"); 
-		return;
- 	}
-
-
-	buffer = malloc(vid.width*vid.height*3 + 18);
-	memset (buffer, 0, 18);
-	buffer[2] = 2;		// uncompressed type
-	buffer[12] = vid.width&255;
-	buffer[13] = vid.width>>8;
-	buffer[14] = vid.height&255;
-	buffer[15] = vid.height>>8;
-	buffer[16] = 24;	// pixel size
-
-	qglReadPixels (0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer+18 ); 
-	apply_gamma(buffer+18, vid.width, vid.height); // jitgamma -- apply video gammaramp to screenshot
-
-	// swap rgb to bgr
-	c = 18+vid.width*vid.height*3;
-	for (i=18 ; i<c ; i+=3)
+		Com_sprintf(picname, sizeof(picname), "%s.tga", ri.Cmd_Argv(1));
+		Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
+	}
+	else
 	{
-		temp = buffer[i];
-		buffer[i] = buffer[i+2];
-		buffer[i+2] = temp;
+		strcpy(picname, "sshot000.tga"); // jitsshot
+
+		for (i = 0; i <= 999; i++) 
+		{
+			picname[5] = i / 100 + '0'; // jitsshot
+			picname[6] = (i % 100) / 10 + '0';  // jitsshot
+			picname[7] = i % 10 + '0'; // jitsshot
+			Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
+			f = fopen(checkname, "rb");
+			
+			if (!f)
+				break;	// file doesn't exist
+
+			fclose(f);
+		}
+
+		if (i > 999) 
+		{
+			ri.Con_Printf (PRINT_ALL, "SCR_ScreenShot_f: Couldn't create a file\n"); 
+			return;
+ 		}
 	}
 
-	f = fopen (checkname, "wb");
-	fwrite (buffer, 1, c, f);
-	fclose (f);
+	buffer = malloc(vid.width * vid.height * 3 + 18);
+	memset(buffer, 0, 18);
+	buffer[2] = 2;		// uncompressed type
+	buffer[12] = vid.width & 255;
+	buffer[13] = vid.width >> 8;
+	buffer[14] = vid.height & 255;
+	buffer[15] = vid.height >> 8;
+	buffer[16] = 24;	// pixel size
+	qglReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer + 18); 
+	apply_gamma(buffer + 18, vid.width, vid.height); // jitgamma -- apply video gammaramp to screenshot
 
-	free (buffer);
-	ri.Con_Printf (PRINT_ALL, "Wrote %s\n", picname);
+	// swap rgb to bgr
+	c = 18 + vid.width * vid.height * 3;
+
+	for (i = 18; i < c; i += 3)
+	{
+		temp = buffer[i];
+		buffer[i] = buffer[i + 2];
+		buffer[i + 2] = temp;
+	}
+
+	f = fopen(checkname, "wb");
+	fwrite(buffer, 1, c, f);
+	fclose(f);
+	free(buffer);
+	ri.Con_Printf(PRINT_ALL, "Wrote %s\n", picname);
 } 
 
 /*
