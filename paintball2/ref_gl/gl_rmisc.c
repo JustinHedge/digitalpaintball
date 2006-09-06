@@ -317,7 +317,7 @@ void GL_ScreenShot_f (void)
 
 		if (i > 999) 
 		{
-			ri.Con_Printf (PRINT_ALL, "SCR_ScreenShot_f: Couldn't create a file\n"); 
+			ri.Con_Printf(PRINT_ALL, "SCR_ScreenShot_f: Too many files.\n"); 
 			return;
  		}
 	}
@@ -344,6 +344,13 @@ void GL_ScreenShot_f (void)
 	}
 
 	f = fopen(checkname, "wb");
+
+	if (!f)
+	{
+		ri.Con_Printf(PRINT_ALL, "SCR_ScreenShot_f: Couldn't create a file\n"); 
+		return;
+	}
+
 	fwrite(buffer, 1, c, f);
 	fclose(f);
 	free(buffer);
