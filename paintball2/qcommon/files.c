@@ -704,7 +704,7 @@ void FS_ExecAutoexec (void)
 void FS_ExecConfig (void)
 {
 	char *dir;
-	char name [MAX_QPATH];
+	char name[MAX_QPATH];
 
 	dir = Cvar_VariableString("gamedir");
 
@@ -722,9 +722,6 @@ void FS_ExecConfig (void)
 	else
 	{
 		Cbuf_AddText("exec default.cfg\n");
-#ifdef QUAKE2
-		Cbuf_AddText("exec ../config.cfg\n");
-#endif
 	}
 
 	Sys_FindClose();

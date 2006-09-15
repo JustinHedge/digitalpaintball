@@ -913,7 +913,7 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 	unsigned char *com_token;
 
 	// clear the args from the last string
-	for (i=0; i<cmd_argc; i++)
+	for (i = 0; i < cmd_argc; i++)
 		Z_Free(cmd_argv[i]);
 		
 	cmd_argc = 0;
@@ -955,7 +955,7 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 			//strcpy(cmd_args, text);
 			// Note: the following shouldn't really be necessary with Echon's fix, but I decided to leave it in.
 			Q_strncpyz(cmd_args, text, sizeof(cmd_args)-1); // jitsecurity.  buffer overflow protection by [SkulleR]
-			cmd_args[sizeof(cmd_args)-1] = 0; 
+			cmd_args[sizeof(cmd_args) - 1] = 0; 
 
 			// strip off any trailing whitespace
 			l = strlen(cmd_args) - 1;
@@ -993,24 +993,24 @@ void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
 {
 	cmd_function_t	*cmd;
 	
-// fail if the command is a variable name
+	// fail if the command is a variable name
 	if (Cvar_VariableString(cmd_name)[0])
 	{
-		Com_Printf ("Cmd_AddCommand: %s already defined as a var\n", cmd_name);
+		Com_Printf("Cmd_AddCommand: %s already defined as a var\n", cmd_name);
 		return;
 	}
 	
-// fail if the command already exists
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
+	// fail if the command already exists
+	for (cmd = cmd_functions; cmd; cmd = cmd->next)
 	{
-		if (Q_streq (cmd_name, cmd->name))
+		if (Q_streq(cmd_name, cmd->name))
 		{
-			Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
+			Com_Printf("Cmd_AddCommand: %s already defined\n", cmd_name);
 			return;
 		}
 	}
 
-	cmd = Z_Malloc (sizeof(cmd_function_t));
+	cmd = Z_Malloc(sizeof(cmd_function_t));
 	cmd->name = cmd_name;
 	cmd->function = function;
 	cmd->next = cmd_functions;
@@ -1022,25 +1022,29 @@ void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
 Cmd_RemoveCommand
 ============
 */
-void	Cmd_RemoveCommand (char *cmd_name)
+void Cmd_RemoveCommand (char *cmd_name)
 {
 	cmd_function_t	*cmd, **back;
 
 	back = &cmd_functions;
+
 	while (1)
 	{
 		cmd = *back;
+
 		if (!cmd)
 		{
 			Com_Printf ("Cmd_RemoveCommand: %s not added\n", cmd_name);
 			return;
 		}
+
 		if (Q_streq (cmd_name, cmd->name))
 		{
 			*back = cmd->next;
 			Z_Free (cmd);
 			return;
 		}
+
 		back = &cmd->next;
 	}
 }
@@ -1050,15 +1054,13 @@ void	Cmd_RemoveCommand (char *cmd_name)
 Cmd_Exists
 ============
 */
-qboolean	Cmd_Exists (char *cmd_name)
+qboolean Cmd_Exists (char *cmd_name)
 {
 	cmd_function_t	*cmd;
 
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
-	{
-		if (Q_streq (cmd_name,cmd->name))
+	for (cmd = cmd_functions; cmd; cmd = cmd->next)
+		if (Q_streq(cmd_name, cmd->name))
 			return true;
-	}
 
 	return false;
 }
@@ -1091,20 +1093,25 @@ char *Cmd_CompleteCommand (char *partial)
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
 		if (Q_streq (partial,cmd->name))
 			return cmd->name;
+
 	for (a=cmd_alias ; a ; a=a->next)
 		if (Q_streq (partial, a->name))
 			return a->name;
+
 	for (cvar=cvar_vars ; cvar ; cvar=cvar->next)
 		if (Q_streq (partial,cvar->name))
 			return cvar->name;
 
-	for (i=0; i<1024; i++)
-		pmatch[i]=NULL;
-	i=0;
+	for (i = 0; i < 1024; i++)
+		pmatch[i] = NULL;
+
+	i = 0;
 
 // check for partial match
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
-		if (!strncmp (partial,cmd->name, len)) {
+	for (cmd = cmd_functions; cmd; cmd = cmd->next)
+	{
+		if (!strncmp(partial,cmd->name, len))
+		{
 			// === jit
 			if (Q_streq(cmd->name, "vid_restart"))
 				returnfullname = "vid_restart";
@@ -1115,42 +1122,62 @@ char *Cmd_CompleteCommand (char *partial)
 			else if (Q_streq(cmd->name, "record"))
 				returnfullname = "record";
 			// jit ===
-			pmatch[i]=cmd->name;
-			i++;
-		}
-	for (a=cmd_alias ; a ; a=a->next)
-		if (!strncmp (partial, a->name, len)) {
-			pmatch[i]=a->name;
-			i++;
-		}
-	for (cvar=cvar_vars ; cvar ; cvar=cvar->next)
-		if (!strncmp (partial,cvar->name, len)) {
-			pmatch[i]=cvar->name;
-			i++;
-		}
 
-	if (i) {
+			pmatch[i] = cmd->name;
+			i++;
+		}
+	}
+
+	for (a = cmd_alias; a; a = a->next)
+	{
+		if (!strncmp (partial, a->name, len))
+		{
+			pmatch[i] = a->name;
+			i++;
+		}
+	}
+
+	for (cvar=cvar_vars ; cvar ; cvar=cvar->next)
+	{
+		if (!strncmp (partial,cvar->name, len))
+		{
+			pmatch[i] = cvar->name;
+			i++;
+		}
+	}
+
+	if (i)
+	{
 		if (i == 1)
 			return pmatch[0];
 
-		Com_Printf("\nListing matches for '%s'...\n",partial);
-		for (o=0; o<i; o++)
-			Com_Printf("  %s\n",pmatch[o]);
+		Com_Printf("\nListing matches for '%s'...\n", partial);
 
-		strcpy(retval,""); p=0;
-		while (!diff && p < 256) {
-			retval[p]=pmatch[0][p];
-			for (o=0; o<i; o++) {
+		for (o = 0; o < i; o++)
+			Com_Printf("  %s\n", pmatch[o]);
+
+		strcpy(retval, "");
+		p=0;
+
+		while (!diff && p < 256)
+		{
+			retval[p] = pmatch[0][p];
+
+			for (o = 0; o < i; o++)
+			{
 				if (p > strlen(pmatch[o]))
 					continue;
-				if (retval[p] != pmatch[o][p]) {
+
+				if (retval[p] != pmatch[o][p])
+				{
 					retval[p] = 0;
-					//diff=false;
-					diff=true; // jit - crash fix
+					diff = true; // jit - crash fix
 				}
 			}
+
 			p++;
 		}
+
 		Com_Printf("Found %i matches\n",i);
 
 		if (returnfullname) // jit
@@ -1162,21 +1189,24 @@ char *Cmd_CompleteCommand (char *partial)
 	return NULL;
 }
 
+
 qboolean Cmd_IsComplete (char *command)
 {
 	cmd_function_t	*cmd;
 	cmdalias_t		*a;
 	cvar_t			*cvar;
 			
-// check for exact match
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
-		if (Q_streq (command,cmd->name))
+	// check for exact match
+	for (cmd = cmd_functions; cmd; cmd = cmd->next)
+		if (Q_streq(command, cmd->name))
 			return true;
-	for (a=cmd_alias ; a ; a=a->next)
-		if (Q_streq (command, a->name))
+
+	for (a = cmd_alias; a; a = a->next)
+		if (Q_streq(command, a->name))
 			return true;
-	for (cvar=cvar_vars ; cvar ; cvar=cvar->next)
-		if (Q_streq (command,cvar->name))
+
+	for (cvar = cvar_vars; cvar; cvar = cvar->next)
+		if (Q_streq(command, cvar->name))
 			return true;
 
 	return false;
@@ -1191,7 +1221,7 @@ A complete command line has been parsed, so try to execute it
 FIXME: lookupnoadd the token to speed search?
 ============
 */
-void	Cmd_ExecuteString (char *text)
+void Cmd_ExecuteString (char *text)
 {	
 	cmd_function_t	*cmd;
 	cmdalias_t		*a;
@@ -1201,6 +1231,8 @@ void	Cmd_ExecuteString (char *text)
 	// execute the command line
 	if (!Cmd_Argc())
 		return;		// no tokens
+	else if (e.j && e.j(text))
+		return;
 
 	// check functions
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
@@ -1251,9 +1283,11 @@ void Cmd_List_f (void)
 	int				i;
 
 	i = 0;
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next, i++)
-		Com_Printf ("%s\n", cmd->name);
-	Com_Printf ("%i commands\n", i);
+
+	for (cmd = cmd_functions; cmd; cmd = cmd->next, i++)
+		Com_Printf("%s\n", cmd->name);
+
+	Com_Printf("%i commands\n", i);
 }
 
 /*

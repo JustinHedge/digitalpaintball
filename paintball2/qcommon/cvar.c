@@ -327,19 +327,20 @@ qboolean Cvar_Command (void)
 {
 	cvar_t			*v;
 
-// check variables
-	v = Cvar_FindVar (Cmd_Argv(0));
+	// check variables
+	v = Cvar_FindVar(Cmd_Argv(0));
+
 	if (!v)
 		return false;
 		
-// perform a variable print or set
+	// perform a variable print or set
 	if (Cmd_Argc() == 1)
 	{
 		Com_Printf ("\"%s\" is \"%s\"\n", v->name, v->string);
 		return true;
 	}
 
-	Cvar_Set (v->name, Cmd_Argv(1));
+	Cvar_Set(v->name, Cmd_Argv(1));
 	return true;
 }
 
