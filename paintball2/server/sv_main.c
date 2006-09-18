@@ -995,7 +995,7 @@ void SV_Init (void)
 	sv_showclamp   = Cvar_Get("showclamp", "0", 0);
 	sv_paused      = Cvar_Get("paused", "0", 0);
 	sv_timedemo    = Cvar_Get("timedemo", "0", 0);
-	sv_enforcetime = Cvar_Get("sv_enforcetime", "240", 0); // jitspeedhackcheck
+	sv_enforcetime = Cvar_Get("sv_enforcetime", "0", 0); // 1.831 - disabled because of problems. "240", 0); // jitspeedhackcheck
 	sv_noextascii  = Cvar_Get("sv_noextascii", "1", 0); // jit
 //	allow_fastdownloads = Cvar_Get("allow_fast_downloads", "1", CVAR_ARCHIVE); // jitdownload (incomplete)
 	allow_download          = Cvar_Get("allow_download", "1", CVAR_ARCHIVE);
