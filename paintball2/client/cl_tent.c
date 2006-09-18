@@ -698,7 +698,9 @@ void CL_ParseTEnt (void)
 	int		ent;
 //	int		magnitude;
 	vec3_t	rgbcolour;
+#ifndef QUAKE2
 	int		texnum; // splat texture index
+#endif 
 
 	type = MSG_ReadByte(&net_message);
 

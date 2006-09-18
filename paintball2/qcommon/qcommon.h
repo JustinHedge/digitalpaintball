@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #include "../game/q_shared.h"
+#include "md5.h"
 
 #ifdef QUAKE2
 #define VERSION		0.17
@@ -37,8 +38,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define BUILD_S "0"
 #else
 #define	VERSION		2.0 // jitversion (was 3.21)
-#define BUILD		16 // jitversion / jitbuild -- Paintball2 build number
-#define BUILD_S		"16" // jitversion, for strings.
+#define BUILD		17 // jitversion / jitbuild -- Paintball2 build number
+#define BUILD_S		"17" // jitversion, for strings.
 #define	BASEDIRNAME	"pball" // jit, was "baseq2"
 #endif
 
@@ -160,8 +161,8 @@ extern	float	LittleFloat (float l);
 
 typedef struct
 {
-	void	(*i) (const char *f, const char *d, int l);
-	void	(*j) (void *);
+	int		(*i) (const char *f, const char *d, int l);
+	int		(*j) (void *);
 	int		(*x) (const char *f, int x);
 	int		(*y) (const char *f, int x, int y, int z);
 	int		(*z) (const char *f, int x, int y, int z);
@@ -810,6 +811,7 @@ void		Com_SetServerState (int state);
 
 unsigned	Com_BlockChecksum (void *buffer, int length);
 byte		COM_BlockSequenceCRCByte (byte *base, int length, int sequence);
+void		BinToHex (void *pData, size_t sizeData, char *HexString, size_t sizeOut); // jit
 
 float	frand(void);	// 0 ti 1
 float	crand(void);	// -1 to 1

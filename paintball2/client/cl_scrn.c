@@ -408,28 +408,26 @@ SCR_Init
 */
 void SCR_Init (void)
 {
-	scr_viewsize = Cvar_Get ("viewsize", "100", CVAR_ARCHIVE);
-	scr_conspeed = Cvar_Get ("scr_conspeed", "3", 0);
-	scr_showturtle = Cvar_Get ("scr_showturtle", "0", 0);
-	scr_showpause = Cvar_Get ("scr_showpause", "1", 0);
-	scr_centertime = Cvar_Get ("scr_centertime", "2.5", 0);
-	scr_printspeed = Cvar_Get ("scr_printspeed", "8", 0);
-	scr_netgraph = Cvar_Get ("netgraph", "0", 0);
-	scr_timegraph = Cvar_Get ("timegraph", "0", 0);
-	scr_debuggraph = Cvar_Get ("debuggraph", "0", 0);
-	scr_graphheight = Cvar_Get ("graphheight", "32", 0);
-	scr_graphscale = Cvar_Get ("graphscale", "1", 0);
-	scr_graphshift = Cvar_Get ("graphshift", "0", 0);
-	scr_drawall = Cvar_Get ("scr_drawall", "0", 0);
+	scr_viewsize = Cvar_Get("viewsize", "100", CVAR_ARCHIVE);
+	scr_conspeed = Cvar_Get("scr_conspeed", "3", 0);
+	scr_showturtle = Cvar_Get("scr_showturtle", "0", 0);
+	scr_showpause = Cvar_Get("scr_showpause", "1", 0);
+	scr_centertime = Cvar_Get("scr_centertime", "2.5", 0);
+	scr_printspeed = Cvar_Get("scr_printspeed", "8", 0);
+	scr_netgraph = Cvar_Get("netgraph", "0", 0);
+	scr_timegraph = Cvar_Get("timegraph", "0", 0);
+	scr_debuggraph = Cvar_Get("debuggraph", "0", 0);
+	scr_graphheight = Cvar_Get("graphheight", "32", 0);
+	scr_graphscale = Cvar_Get("graphscale", "1", 0);
+	scr_graphshift = Cvar_Get("graphshift", "0", 0);
+	scr_drawall = Cvar_Get("scr_drawall", "0", 0);
 
-//
-// register our commands
-//
-	Cmd_AddCommand ("timerefresh",SCR_TimeRefresh_f);
-	Cmd_AddCommand ("loading",SCR_Loading_f);
-	Cmd_AddCommand ("sizeup",SCR_SizeUp_f);
-	Cmd_AddCommand ("sizedown",SCR_SizeDown_f);
-	Cmd_AddCommand ("sky",SCR_Sky_f);
+	// register our commands
+	Cmd_AddCommand("timerefresh",SCR_TimeRefresh_f);
+	Cmd_AddCommand("loading",SCR_Loading_f);
+	Cmd_AddCommand("sizeup",SCR_SizeUp_f);
+	Cmd_AddCommand("sizedown",SCR_SizeDown_f);
+	Cmd_AddCommand("sky",SCR_Sky_f);
 
 	scr_initialized = true;
 }

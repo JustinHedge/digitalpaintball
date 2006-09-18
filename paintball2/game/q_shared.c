@@ -1436,7 +1436,7 @@ char *COM_Parse (char **data_p)
 
 // skip whitespace
 skipwhite:
-	while ( (c = *data) <= ' ')
+	while ((c = *data) <= ' ')
 	{
 		if (c == 0)
 		{
@@ -1447,10 +1447,11 @@ skipwhite:
 	}
 	
 // skip // comments
-	if (c=='/' && data[1] == '/')
+	if (c== '/' && data[1] == '/')
 	{
 		while (*data && *data != '\n')
 			data++;
+
 		goto skipwhite;
 	}
 
@@ -1489,7 +1490,7 @@ skipwhite:
 
 		data++;
 		c = *data;
-	} while (c>32);
+	} while (c > 32);
 
 	if (len == MAX_TOKEN_CHARS)
 	{
@@ -2195,16 +2196,12 @@ Q_strncpyz
 */
 void Q_strncpyz (char *dest, const char *src, size_t size)
 {
-#ifdef HAVE_STRLCPY
-	strlcpy(dest, src, size);
-#else
 	if (size)
 	{
 		while (--size && (*dest++ = *src++));
 		*dest = '\0';
 		assert(size > 0);
 	}
-#endif
 }
 
 // no-assert version, for buffers we know will overflow

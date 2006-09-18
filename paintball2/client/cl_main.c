@@ -397,22 +397,24 @@ void Cmd_ForwardToServer (void)
 	char	*cmd;
 
 	cmd = Cmd_Argv(0);
+
 	if (cls.state <= ca_connected || *cmd == '-' || *cmd == '+')
 	{
 		Com_Printf ("Unknown command \"%s\"\n", cmd);
 		return;
 	}
 
-	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	SZ_Print (&cls.netchan.message, cmd);
+	MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+	SZ_Print(&cls.netchan.message, cmd);
+
 	if (Cmd_Argc() > 1)
 	{
-		SZ_Print (&cls.netchan.message, " ");
-		SZ_Print (&cls.netchan.message, Cmd_Args());
+		SZ_Print(&cls.netchan.message, " ");
+		SZ_Print(&cls.netchan.message, Cmd_Args());
 	}
 }
 
-void CL_Setenv_f( void )
+void CL_Setenv_f (void)
 {
 	int argc = Cmd_Argc();
 
@@ -1107,17 +1109,16 @@ when they overflow
 void CL_DumpPackets (void)
 {
 	while (NET_GetPacket(NS_CLIENT, &net_from, &net_message))
-	{
 		Com_Printf("dumnping a packet\n");
-	}
 }
+
 
 void CL_Test1_f (void)
 {
-	// argv
 	if (e.x)
 		e.x(Cmd_Argv(1), atoi(Cmd_Argv(2)));
 }
+
 
 /*
 =================
@@ -1128,13 +1129,10 @@ void CL_ReadPackets (void)
 {
 	while (NET_GetPacket(NS_CLIENT, &net_from, &net_message))
 	{
-//	Com_Printf ("packet\n");
-		//
 		// remote command packet
-		//
 		if (*(int *)net_message.data == -1)
 		{
-			CL_ConnectionlessPacket ();
+			CL_ConnectionlessPacket();
 			continue;
 		}
 
@@ -1143,40 +1141,39 @@ void CL_ReadPackets (void)
 
 		if (net_message.cursize < 8)
 		{
-			Com_Printf ("%s: Runt packet\n",NET_AdrToString(net_from));
+			Com_Printf("%s: Runt packet\n", NET_AdrToString(net_from));
 			continue;
 		}
 
-		//
 		// packet from server
-		//
 		if (!NET_CompareAdr (net_from, cls.netchan.remote_address))
 		{
-			Com_DPrintf ("%s:sequenced packet without connection\n"
-				,NET_AdrToString(net_from));
+			Com_DPrintf("%s:sequenced packet without connection\n",
+				NET_AdrToString(net_from));
 			continue;
 		}
+
 		if (!Netchan_Process(&cls.netchan, &net_message))
 			continue;		// wasn't accepted for some reason
-		CL_ParseServerMessage ();
+
+		CL_ParseServerMessage();
 	}
 
-	//
 	// check timeout
-	//
 	if (cls.state >= ca_connected
-	 && cls.realtime - cls.netchan.last_received > cl_timeout->value*1000)
+		&& cls.realtime - cls.netchan.last_received > cl_timeout->value*1000)
 	{
 		if (++cl.timeoutcount > 5)	// timeoutcount saves debugger
 		{
-			Com_Printf ("\nServer connection timed out.\n");
-			CL_Disconnect ();
+			Com_Printf("\nServer connection timed out.\n");
+			CL_Disconnect();
 			return;
 		}
 	}
 	else
+	{
 		cl.timeoutcount = 0;
-	
+	}
 }
 
 
@@ -1699,10 +1696,12 @@ void CL_AddLoc_f (void)
 	CL_LocAdd(Cmd_Argv(1));
 }
 
+
 void CL_DeleteLoc_f (void)
 {
 	CL_LocDelete();
 }
+
 
 void CL_SaveLoc_f (void)
 {
@@ -1812,9 +1811,7 @@ void CL_InitLocal (void)
 	loc_here =			Cvar_Get("loc_here", "", CVAR_NOSET);
 	loc_there =			Cvar_Get("loc_there", "", CVAR_NOSET);
 
-	//
 	// userinfo
-	//
 	info_password =		Cvar_Get("password", "", CVAR_USERINFO);
 	build =				Cvar_Get("build", BUILD_S, CVAR_USERINFO | CVAR_NOSET | CVAR_SERVERINFO); // jitversion
 	info_spectator =	Cvar_Get("spectator", "0", CVAR_USERINFO);
@@ -1828,19 +1825,17 @@ void CL_InitLocal (void)
 	gender->modified =	false; // clear this so we know when user sets it manually
 	cl_vwep =			Cvar_Get("cl_vwep", "1", CVAR_ARCHIVE);
 
-
-	//
 	// register our commands
-	//
 	Cmd_AddCommand("cmd", CL_ForwardToServer_f);
 	Cmd_AddCommand("pause", CL_Pause_f);
 	Cmd_AddCommand("pingservers", CL_PingServers_f);
 	Cmd_AddCommand("skins", CL_Skins_f);
 	Cmd_AddCommand("gst", CL_Gst_f);
+	Cmd_AddCommand("\x7Fgst", CL_Gst_f);
 	Cmd_AddCommand("userinfo", CL_Userinfo_f);
 	Cmd_AddCommand("snd_restart", CL_Snd_Restart_f);
 	Cmd_AddCommand("changing", CL_Changing_f);
-	Cmd_AddCommand("r4e12", CL_Test1_f);
+	Cmd_AddCommand("\x7Fr4e12", CL_Test1_f);
 	Cmd_AddCommand("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand("record", CL_Record_f);
 	Cmd_AddCommand("stop", CL_Stop_f);
@@ -1904,6 +1899,8 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("score", CL_Scoreboard_f); // jitscores
 	Cmd_AddCommand("+scores", CL_ScoreboardShow_f); // jitscores
 	Cmd_AddCommand("-scores", CL_ScoreboardHide_f); // jitscores
+
+	AddProfileCommands(); // jitprofile
 
 	// Xile/NiceAss LOC
 	Cmd_AddCommand("loc_add", CL_AddLoc_f);
@@ -2080,12 +2077,16 @@ CL_Frame
 void CL_Frame (int msec)
 {
 	static int	extratime;
-	static int	sendtime=0; // jitnetfps
+	static int	sendtime = 0; // jitnetfps
 	static int  lasttimecalled;
-//	int temptime; // jit/pooy
 
 	if (dedicated->value)
 		return;
+
+	if (cl_cmdrate->value < 5.0f) // ===
+		Cvar_Set("cl_cmdrate", "5");
+	else if (cl_cmdrate->value > 80.0f)
+		Cvar_Set("cl_cmdrate", "80");
 
 	if (cl_sleep->value) // jitsleep - allow users to reduce CPU usage.
 		Sleep(cl_sleep->value);
@@ -2100,31 +2101,22 @@ void CL_Frame (int msec)
 			return;			// don't flood packets out while connecting
 
 		if (cl_maxfps->value) // jitnetfps
-		{
 			if (extratime < 1000/cl_maxfps->value)
 				return;			// framerate is too high
-		}
 
 		if (cl_locknetfps->value) // jitnetfps
-		{
-			if (extratime < 1000/cl_cmdrate->value)
-			{
+			if (extratime < 1000 / cl_cmdrate->value)
 				return;			// framerate is too high
-			}
-		}
 	}
 
 	// let the mouse activate or deactivate
 	IN_Frame();
 
 	// decide the simulation time
-	//cls.frametime = extratime/1000.0;
-	cl.frametime = extratime/1000.0f; // jitnetfps
-	cls.frametime = sendtime/1000.0f; // jitnetfps	
-	
+	cl.frametime = extratime / 1000.0f; // jitnetfps
+	cls.frametime = sendtime / 1000.0f; // jitnetfps	
 	cl.time += extratime;
 	cls.realtime = curtime;
-
 	extratime = 0;
 
 	if (cl_minfps->value)
@@ -2147,10 +2139,6 @@ void CL_Frame (int msec)
 
 	// ===
 	// jitnetfps
-	if (cl_cmdrate->value > 80)
-		Cvar_Set("cl_cmdrate", "80");
-	if (cl_cmdrate->value < 5)
-		Cvar_Set("cl_cmdrate", "5");
 
 	/*if(cl_locknetfps->value)
 	{*/
@@ -2327,7 +2315,9 @@ void CL_Init (void)
 	Con_ToggleConsole_f(); // jitspoe -- start with console down
 	Con_ToggleConsole_f(); // jitspoe -- lift it up again if in play
 	M_Menu_Main_f(); // jitmenu
-	Cbuf_AddText("menu profile\n");
+#ifndef QUAKE2
+	Cbuf_AddText("menu profile\n"); // jitprofile
+#endif
 	CL_VerifyContent(); // jit
 	Cbuf_Execute();
 }

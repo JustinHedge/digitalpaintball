@@ -777,7 +777,7 @@ void Con_DrawConsole (float frac)
 		if (strlen(text) > i)
 		{
 			y = x - i - 11;
-			Q_strncpyz(dlbar, text, i);
+			Q_strncpyzna(dlbar, text, i);
 			dlbar[i] = 0;
 			strcat(dlbar, "...");
 		}

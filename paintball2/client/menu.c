@@ -440,6 +440,12 @@ static void callback_select_item (menu_widget_t *widget)
 			}
 		}
 	}
+
+	if (widget->parent && widget->parent->command)
+	{
+		Cbuf_AddText(widget->parent->command);
+		Cbuf_AddText("\n");
+	}
 }
 
 static void callback_doubleclick_item (menu_widget_t *widget)
@@ -1114,7 +1120,8 @@ static void M_HilightSlider (menu_widget_t *widget, qboolean selected)
 static void M_UpdateSlider (menu_widget_t *widget)
 {
 	float value;
-	if ( widget->cvar)
+
+	if (widget->cvar)
 		value = Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->value;
 	else
 		return;
@@ -2040,7 +2047,7 @@ static menu_screen_t* M_GetNewMenuScreen(const char *menu_name, const char *back
 	return menu;
 }
 
-static void M_ErrorMenu(menu_screen_t* menu, const char *text)
+static void M_ErrorMenu (menu_screen_t* menu, const char *text)
 {
 	char err[16];
 	sprintf(err, "%c%c%cERROR:", CHAR_UNDERLINE, CHAR_COLOR, 'A');
@@ -2349,10 +2356,14 @@ static void menu_from_file (menu_screen_t *menu)
 				}
 			}
 			else
+			{
 				M_ErrorMenu(menu, "Invalid menu version.");
+			}
 		}
 		else
+		{
 			M_ErrorMenu(menu, "Invalid menu file.");
+		}
 
 		Z_Free(buf2);
 	}

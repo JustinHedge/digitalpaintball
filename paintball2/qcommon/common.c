@@ -1609,3 +1609,38 @@ Qcommon_Shutdown
 void Qcommon_Shutdown (void)
 {
 }
+
+
+void BinToHex (void *pData, size_t sizeData, char *HexString, size_t sizeOut) // jit
+{
+	int i, Length;
+	unsigned char LeftHalf, RightHalf;
+	const unsigned char *BinData = pData;
+
+	Length = sizeOut / 2 - 1; // make sure we don't have any buffer overruns
+
+	if (sizeData < Length)
+		Length = sizeData;
+
+	for (i = 0; i < Length; i++)
+	{
+		LeftHalf = BinData[i];
+		LeftHalf >>= 4;
+		RightHalf = BinData[i] & 0xF;
+
+		if (LeftHalf > 9)
+			LeftHalf += 'a' - 10;
+		else
+			LeftHalf += '0';
+
+		if (RightHalf > 9)
+			RightHalf += 'a' - 10;
+		else
+			RightHalf += '0';
+
+		*HexString++ = LeftHalf;
+		*HexString++ = RightHalf;
+	}
+
+	*HexString = '\0';
+}
