@@ -603,6 +603,15 @@ void encode_unsigned (unsigned int count, unsigned int *in, unsigned char *out);
 void CL_ParsePrintEvent (const char *str);
 void CL_DrawEventStrings (void);
 #define name_from_index(a) cl.clientinfo[(a)].name
+//
+// cl_profile.c
+//
+void CL_ProfileEdit_f (void);
+void CL_ProfileEdit2_f (void);
+void CL_ProfileAdd_f (void);
+void CL_ProfileSelect_f (void);
+void CL_WebLoad_f (void);
+void AddProfileCommands (void);
 // jit
 // ===
 
