@@ -654,7 +654,7 @@ void R_DrawSpritesOnList(void) // jit, draw sprites after water
 ** GL_DrawParticles
 **
 */
-void GL_DrawParticles(int num_particles, const particle_t particles[], const unsigned colortable[768])
+void GL_DrawParticles (int num_particles, const particle_t particles[], const unsigned colortable[768])
 {
 	const particle_t *p;
 	int				i;
@@ -757,10 +757,17 @@ void R_PolyBlend (void)
 {
 	// ===
 	// jit
-	static float autobright=0;
+	static float autobright = 0.0f;
 	vec3_t shadelight;
 	float shadeavg;
 	float b;
+	static int lasttime = 0;
+	float timediff;
+	int time;
+
+	time = Sys_Milliseconds();
+	timediff = min(0.9f, (time - lasttime) / 1000.0f);
+	lasttime = time;
 
 	if (gl_brightness->value || v_blend[3])
 	{
@@ -771,23 +778,23 @@ void R_PolyBlend (void)
 		qglLoadIdentity();
 
 		// FIXME: get rid of these
-		qglRotatef(-90,  1, 0, 0);	    // put Z going up
+		qglRotatef(-90, 1, 0, 0);	    // put Z going up
 		qglRotatef(90,  0, 0, 1);	    // put Z going up
 	}
 
 	if (gl_brightness->value)
 	{
-		if (gl_autobrightness->value > 1.0 || gl_autobrightness->value < 0.0)
-			ri.Cvar_SetValue("gl_autobrightness", 1);
+		if (gl_autobrightness->value > 1.0f || gl_autobrightness->value < 0.0f)
+			ri.Cvar_SetValue("gl_autobrightness", 1.0f);
 
 		R_LightPoint(r_newrefdef.vieworg, shadelight);
-		shadeavg = (shadelight[0]+shadelight[1]+shadelight[2]);
-		shadeavg /= 4.5;
-		autobright=0.985*autobright + 0.015*(0.5-sqrt(shadeavg)/2.0);
+		shadeavg = max(0.0f, min(1.0f, (shadelight[0] + shadelight[1] + shadelight[2]) / 1.5f - 0.2f));
+		autobright = (1.0f - timediff) * autobright + timediff * (1.0f - sqrt(shadeavg));
 		qglBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-		b = gl_brightness->value *(1.0-gl_autobrightness->value +
-			gl_autobrightness->value*autobright)/2.0+0.5;
-		qglColor4f(b,b,b,1);
+		b = gl_brightness->value * (1.0f - gl_autobrightness->value +
+			gl_autobrightness->value * autobright) / 2.0f + 0.5f; // value needs to be between 0.5 and 1.0
+		qglColor4f(b, b, b, 1);
+		ri.Con_Printf(PRINT_ALL, "%g  %g  %g\n", shadeavg, autobright, timediff);
 
 		qglBegin(GL_QUADS);
 			qglVertex3f(10, 100, 100);
@@ -1493,8 +1500,12 @@ void R_Register(void)
 	gl_lightmap_saturation = ri.Cvar_Get("gl_lightmap_saturation", "1", CVAR_ARCHIVE); // jitsaturation / jitlight
 	gl_anisotropy = ri.Cvar_Get("gl_anisotropy", "8", CVAR_ARCHIVE); // jitanisotropy
 	gl_overbright = ri.Cvar_Get("gl_overbright", "1", CVAR_ARCHIVE); // jitbright
+#ifdef QUAKE2
+	gl_brightness = ri.Cvar_Get("gl_brightness", "1", CVAR_ARCHIVE); // jit
+#else
 	gl_brightness = ri.Cvar_Get("gl_brightness", "0", CVAR_ARCHIVE); // jit
-	gl_autobrightness = ri.Cvar_Get("gl_autobrightness", ".8", CVAR_ARCHIVE); // jit
+#endif
+	gl_autobrightness = ri.Cvar_Get("gl_autobrightness", "1", CVAR_ARCHIVE); // jit
 	gl_showbbox = ri.Cvar_Get("gl_showbbox", "0", 0);  // jit / Guy
 //	gl_modulate = ri.Cvar_Get("gl_modulate", "1.6", CVAR_ARCHIVE); // jit, default to 1.6
 	gl_lightmapgamma = ri.Cvar_Get("gl_lightmapgamma", ".6", CVAR_ARCHIVE); // jitgamma
