@@ -1,5 +1,6 @@
 #pragma hdrstop
 #include <string.h>
+#include "qcommon.h"
 
 /*
 MD5 Message Digest Algorithm. (RFC1321)
@@ -264,7 +265,7 @@ static void MD5_Final (MD5_CTX *ctx, unsigned char digest[16])
 
 //===================================================================
 
-unsigned Com_BlockChecksum (void *buffer, int length)
+unsigned Com_MD5Checksum (void *buffer, int length)
 {
 	int             digest[4];
 	unsigned        val;
@@ -278,7 +279,22 @@ unsigned Com_BlockChecksum (void *buffer, int length)
 	return val;
 }
 
-unsigned Com_BlockChecksumKey (void *buffer, int length, int key)
+// jit - string version
+char *Com_MD5HashString (const void *buffer, int length, char *pMD5Out, size_t sizeMD5Out)
+{
+	int             digest[4];
+	MD5_CTX         ctx;
+	
+	MD5_Init(&ctx);
+	MD5_Update(&ctx, (unsigned char *)buffer, length);
+	MD5_Final(&ctx, (unsigned char *)digest);
+	// Will this work on a  big-endian system?
+	BinToHex(digest, sizeof(int) * 4, pMD5Out, sizeMD5Out);
+
+	return pMD5Out;
+}
+
+unsigned Com_MD5ChecksumKey (void *buffer, int length, int key)
 {
 	int             digest[4];
 	unsigned        val;
@@ -293,18 +309,18 @@ unsigned Com_BlockChecksumKey (void *buffer, int length, int key)
 	return val;
 }
 
-int md5_main ()
+
+/*
+void TestMD5 (void)
 {
-	unsigned test;
+	FILE *fp;
+	char szBuffer[101024];
+	char szMD5[256];
 
-	test = Com_BlockChecksum("Test buffer", sizeof("Test buffer")- 1);
-	test = Com_BlockChecksum("Test buffer", sizeof("Test buffer")- 1);
-	test = Com_BlockChecksumKey("Test buffer", sizeof("Test buffer")- 1, 0);
-	test = Com_BlockChecksumKey("Test buffer", sizeof("Test buffer")- 1, 0);
-	test = Com_BlockChecksumKey("Test buffer", sizeof("Test buffer")- 1, 1);
-	test = Com_BlockChecksumKey("Test buffer", 0, 0);
-	test = Com_BlockChecksumKey("Test buffer", 0, 0);
-	test = Com_BlockChecksumKey("Test buffer", 0, 1);
-
-	return 0;
-}
+	if (fp = fopen("pball/pics/colormap.pcx", "rb"))
+	{
+		int n = fread(szBuffer, 1, 101024, fp);
+		Com_MD5HashString(szBuffer, n, szMD5, sizeof(szMD5));
+		fclose(fp);
+	}
+}*/
