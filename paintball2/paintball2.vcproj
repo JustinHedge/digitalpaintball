@@ -470,6 +470,9 @@
 				RelativePath=".\qcommon\md4.c">
 			</File>
 			<File
+				RelativePath="qcommon\md5.c">
+			</File>
+			<File
 				RelativePath=".\qcommon\net_chan.c">
 			</File>
 			<File
@@ -537,6 +540,9 @@
 				</File>
 				<File
 					RelativePath=".\client\cl_pred.c">
+				</File>
+				<File
+					RelativePath="client\cl_profile.c">
 				</File>
 				<File
 					RelativePath="client\cl_scores.c">
@@ -636,6 +642,9 @@
 				RelativePath=".\client\keys.h">
 			</File>
 			<File
+				RelativePath="qcommon\md5.h">
+			</File>
+			<File
 				RelativePath="client\menu.h">
 			</File>
 			<File
@@ -667,6 +676,9 @@
 			</File>
 			<File
 				RelativePath=".\server\server.h">
+			</File>
+			<File
+				RelativePath="qcommon\simplecrypt.h">
 			</File>
 			<File
 				RelativePath=".\client\snd_loc.h">
@@ -748,6 +760,9 @@
 		</Filter>
 		<File
 			RelativePath="win32\pthreadVC.lib">
+		</File>
+		<File
+			RelativePath="win32\simplecrypt.lib">
 		</File>
 	</Files>
 	<Globals>
