@@ -56,7 +56,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 winmm.lib wsock32.lib kernel32.lib user32.lib gdi32.lib /nologo /subsystem:windows /machine:I386 /out:"c:\quake2\paintball2.exe"
+# ADD LINK32 winmm.lib wsock32.lib kernel32.lib user32.lib gdi32.lib shell32.lib /nologo /subsystem:windows /machine:I386 /out:"c:\quake2\paintball2.exe"
 # SUBTRACT LINK32 /incremental:yes /debug /nodefaultlib
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
@@ -86,7 +86,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386
-# ADD LINK32 winmm.lib wsock32.lib kernel32.lib user32.lib gdi32.lib /nologo /subsystem:windows /profile /map /debug /machine:I386 /out:"../paintball2.exe"
+# ADD LINK32 wsock32.lib kernel32.lib user32.lib gdi32.lib winmm.lib shell32.lib /nologo /subsystem:windows /profile /map /debug /machine:I386 /out:"../paintball2.exe"
 # SUBTRACT LINK32 /nodefaultlib
 
 !ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
@@ -651,6 +651,21 @@ DEP_CPP_CL_PR=\
 	".\qcommon\qcommon.h"\
 	".\qcommon\qfiles.h"\
 	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\client\cl_profile.c
+
+!IF  "$(CFG)" == "paintball2 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
 
 !ENDIF 
 
@@ -1726,6 +1741,21 @@ SOURCE=.\qcommon\md4.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\qcommon\md5.c
+
+!IF  "$(CFG)" == "paintball2 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Debug Alpha"
+
+!ELSEIF  "$(CFG)" == "paintball2 - Win32 Release Alpha"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\client\menu.c
 
 !IF  "$(CFG)" == "paintball2 - Win32 Release"
@@ -2060,6 +2090,10 @@ SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Include\BASETSD.H"
 # End Source File
 # Begin Source File
 
+SOURCE="F:\Program Files\Microsoft Visual Studio\VC98\Include\BASETSD.H"
+# End Source File
+# Begin Source File
+
 SOURCE=.\qcommon\bspfile.h
 # End Source File
 # Begin Source File
@@ -2089,6 +2123,10 @@ SOURCE=.\client\input.h
 # Begin Source File
 
 SOURCE=.\client\keys.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\qcommon\md5.h
 # End Source File
 # Begin Source File
 
@@ -2136,6 +2174,10 @@ SOURCE=.\server\server.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\qcommon\simplecrypt.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\client\snd_loc.h
 # End Source File
 # Begin Source File
@@ -2178,6 +2220,10 @@ SOURCE=.\win32\q2.rc
 # Begin Source File
 
 SOURCE=.\win32\pthreadVC.lib
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\simplecrypt.lib
 # End Source File
 # End Target
 # End Project
