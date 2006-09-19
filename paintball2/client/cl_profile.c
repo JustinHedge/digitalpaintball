@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PROFILE_PASSWORD_LEN 64
 
 cvar_t *menu_profile_pass;
+static char g_szPassHash[256];
+static char g_szRandomString[256];
 
 static const char *GetUniqueSystemString (void)
 {
@@ -245,14 +247,16 @@ void CL_ProfileSelect_f (void)
 		fclose(fp);
 
 		if (memcmp(szProfileData, "PB2PROFILE1.0", sizeof("PB2PROFILE1.0")) != 0)
+		{
+			Cvar_Set("menu_profile_pass", "");
+			Cvar_SetValue("menu_profile_remember_pass", 0.0f);
 			return;
+		}
 
 		// TODO: Decrypt this once encryption implemented.
 		s = szProfileData + sizeof("PB2PROFILE1.0") + PROFILE_LOGIN_NAME_LEN;
 		Cvar_Set("menu_profile_pass", s);
-
-		if (*s)
-			Cvar_SetValue("menu_profile_remember_pass", 1.0f);
+		Cvar_SetValue("menu_profile_remember_pass", *s ? 1.0f : 0.0f);
 	}
 
 	menu_profile_pass->modified = false;
@@ -318,7 +322,7 @@ int GetHTTP (const char *url, char *received, int received_max)
 	while (numread < received_max && 0 < (bytes_read = recv(socket, received + numread, received_max - numread, 0)))
 		numread += bytes_read;
 
-	received[received_max] = 0; // make sure it's null terminated.
+	received[numread] = 0; // make sure it's null terminated.
 	return numread;
 }
 
@@ -326,24 +330,20 @@ int GetHTTP (const char *url, char *received, int received_max)
 void CL_ProfileLogin_f (void)
 {
 	char szPassword[256];
-	char szPassHash[256];
 	char szPassHash2[256];
-	char szRSAKey[1024];
+	char szPassHash[256];
 	char szRequest[1024];
-	gcry_ac_key_t keyPublic, keySecret;
 	char szDataBack[4096];
 	char *sPassword;
 	char szUserName[64];
 	char *s;
-	char szDecrypted[256];
-	char szDecryptedHex[256];
-	int len;
+	int i;
 
 	if (Cmd_Argc() < 3)
 		return;
 
+	strip_garbage(szUserName, Cmd_Argv(1));
 	sPassword = Cmd_Argv(2);
-	StripNonAlphaNum(Cmd_Argv(1), szUserName, sizeof(szUserName));
 
 	if (!*szUserName || !*sPassword)
 		return; // blank value (shouldn't happen)
@@ -360,50 +360,85 @@ void CL_ProfileLogin_f (void)
 		Q_strncpyz(szPassHash, sPassword, sizeof(szPassword));
 	}
 
-	// Generate random 128bit RSA key pair and send to login server.
-	if (GenerateKeyRSA(&keyPublic, &keySecret, 128) < 0)
+	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=1&username=%s", szUserName);
+
+	if (GetHTTP(szRequest, szDataBack, sizeof(szDataBack)) < 1)
+		return;
+
+	// Obtain random string 
+	s = strstr(szDataBack, "randstr:");
+
+	if (!s)
 	{
-		Com_Printf("Failed to generate RSA key pair.\n");
+		if (s = strstr(szDataBack, "ERROR:"))
+			Com_Printf("%s\n", s);
+		else
+			Com_Printf("ERROR: Unknown response from login server.\n");
+
+		Cbuf_AddText("menu profile_loginfailed\n");
 		return;
 	}
 
-	KeyToHexStringRSA(keyPublic, szRSAKey, sizeof(szRSAKey));
-	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=1&%s&username=%s",
-		szRSAKey, szUserName);
+	s += sizeof("randstr:");
+	i = 0;
 
-	if (GetHTTP(szRequest, szDataBack, sizeof(szDataBack)) < 1)
-		return;
+	while (*s >= '0' && i < sizeof(g_szRandomString) - 1)
+		g_szRandomString[i++] = *s++;
 
-	// Decrypt random string key from server
-	s = strstr(szDataBack, "encrandstr:");
-
-	if (!s)
-		return;
-
-	s += sizeof("encrandstr:");
-	len = atoi(s);
-	s = strchr(s, '|');
-
-	if (!s)
-		return;
-
-	s++;
-	DecryptRSA(keySecret, s, len, szDecrypted, sizeof(szDecrypted), &len);
-	BinToHex(szDecrypted, len, szDecryptedHex, sizeof(szDecryptedHex));
+	g_szRandomString[i] = 0;
 
 	// re-hash password hash with random string and send to server for validation
-	Com_sprintf(szPassword, sizeof(szPassword), "%s%s", szDecryptedHex, szPassHash);
-	Com_MD5HashString(szPassword, strlen(szPassword), szPassHash, sizeof(szPassHash));
-	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?gamelogin.php?init=2&pwhash=%s&username=%s",
-		szPassHash, szUserName);
+	Com_sprintf(szPassword, sizeof(szPassword), "%s%s", g_szRandomString, szPassHash);
+	Com_MD5HashString(szPassword, strlen(szPassword), szPassHash2, sizeof(szPassHash2));
+	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=2&pwhash=%s&username=%s",
+		szPassHash2, szUserName);
 
 	if (GetHTTP(szRequest, szDataBack, sizeof(szDataBack)) < 1)
 		return;
 
-	if (Cvar_Get("menu_profile_remember_pass", "0", 0)->value)
+	s = strstr(szDataBack, "GameLoginStatus: PASSED");
+
+	if (!s)
 	{
+		if (s = strstr(szDataBack, "ERROR:"))
+			Com_Printf("%s\n", s);
+		else if (s = strstr(szDataBack, "GameLoginStatus: FAILED"))
+			Com_Printf("Invalid password for username %s\n", szUserName);
+		else
+			Com_Printf("ERROR: Unknown response from login server.\n");
+
+		Cbuf_AddText("menu profile_loginfailed\n");
+		return;
+	}
+
+	s = strstr(szDataBack, "randstr:");
+
+	if (!s)
+	{
+		if (s = strstr(szDataBack, "ERROR:"))
+			Com_Printf("%s\n", s);
+		else
+			Com_Printf("ERROR: Unknown response from login server.\n");
+
+		Cbuf_AddText("menu profile_loginfailed\n");
+		return;
+	}
+
+	s += sizeof("randstr:");
+	i = 0;
+
+	while (*s >= '0' && i < sizeof(g_szRandomString) - 1)
+		g_szRandomString[i++] = *s++;
+
+	g_szRandomString[i] = 0;
+
+	if (Cvar_Get("menu_profile_remember_pass", "0", 0)->value && menu_profile_pass->modified)
+	{
+		char szProfileOutPath[MAX_OSPATH];
+
 		// TODO:
-		//WriteProfileFile()
+		Com_sprintf(szProfileOutPath, sizeof(szProfileOutPath), "%s/profiles/%s.prf", FS_Gamedir(), Cvar_Get("menu_profile_file", "unnamed", 0)->string);
+		WriteProfileFile(szProfileOutPath, szUserName, szPassHash, false);
 	}
 
 	Cbuf_AddText("menu pop\n");
