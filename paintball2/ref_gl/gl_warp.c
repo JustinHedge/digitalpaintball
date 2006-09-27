@@ -907,41 +907,44 @@ R_SetSky
 */
 // 3dstudio environment map names
 char	*suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
+qboolean skycanchange = true;
+
 void R_SetSky (char *name, float rotate, vec3_t axis)
 {
 	int		i;
 	char	pathname[MAX_QPATH];
 	char	*s;
 
-	if (fogenabled) // so people can't shut fog off.
+	if (!skycanchange) // so people can't shut fog off.
 		return;
 
-	Q_strncpyz(skyname, name, sizeof(skyname)-1);
+	Q_strncpyz(skyname, name, sizeof(skyname) - 1);
 	skyrotate = rotate;
-	VectorCopy (axis, skyaxis);
+	VectorCopy(axis, skyaxis);
 
 	// ==
 	// jitfog -- parse fog code from sky name
 	if ((s = strstr(skyname, "fog "))) // jitodo
 	{
-		sscanf(s+4, "%f %f %f %f",
+		sscanf(s + 4, "%f %f %f %f",
 			&fogcolor[0], &fogcolor[1], &fogcolor[2],
 			&fogdistance);
-		//fogdensity = 8.0f/fogdistance;
 		fogdensity = 0.0f;
 		fogenabled = true;
-		// jitodo -- set clip plane.
-		//sky_images[i] = r_whitetexture;
+		skycanchange = false;
 	}
 	else if ((s = strstr(skyname, "fogd "))) // jitfog
 	{
-		sscanf(s+5, "%f %f %f %f",
+		sscanf(s + 5, "%f %f %f %f",
 			&fogcolor[0], &fogcolor[1], &fogcolor[2],
 			&fogdensity);
 		fogdistance = 0.0f;
-		fogenabled = true;
-	}
 
+		if (fogdensity)
+			fogenabled = true;
+
+		skycanchange = false;
+	}
 
 	// jitfog -- strip fog code from sky name:
 	if ((s = strchr(skyname, ' ')))

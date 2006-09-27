@@ -1284,6 +1284,7 @@ Specifies the model that will be used as the world
 extern cvar_t *gl_anisotropy; // jitansiotropy
 extern cvar_t *gl_texture_saturation; // jitsaturation
 extern qboolean fogenabled;
+extern qboolean skycanchange; // jitsky
 
 void R_BeginRegistration (char *model)
 {
@@ -1291,6 +1292,8 @@ void R_BeginRegistration (char *model)
 	cvar_t	*flushmap;
 
 	fogenabled = false; // jitfog
+	skycanchange = true; // jitsky
+
 	// ===
 	// jitanisotropy (make sure nobody goes out of bounds)
 	if (gl_anisotropy->value < 0)

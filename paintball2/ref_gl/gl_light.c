@@ -208,44 +208,44 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	if (node->contents != -1)
 		return -1;		// didn't hit anything
 	
-// calculate mid point
+	// calculate mid point
 
-// FIXME: optimize for axial
+	// FIXME: optimize for axial
 	plane = node->plane;
-	front = DotProduct (start, plane->normal) - plane->dist;
-	back = DotProduct (end, plane->normal) - plane->dist;
+	front = DotProduct(start, plane->normal) - plane->dist;
+	back = DotProduct(end, plane->normal) - plane->dist;
 	side = front < 0;
-	
-	if ( (back < 0) == side)
-		return RecursiveLightPoint (node->children[side], start, end);
-	
+
+	if ((back < 0) == side)
+		return RecursiveLightPoint(node->children[side], start, end);
+
 	frac = front / (front-back);
-	mid[0] = start[0] + (end[0] - start[0])*frac;
-	mid[1] = start[1] + (end[1] - start[1])*frac;
-	mid[2] = start[2] + (end[2] - start[2])*frac;
-	
-// go down front side	
-	r = RecursiveLightPoint (node->children[side], start, mid);
+	mid[0] = start[0] + (end[0] - start[0]) * frac;
+	mid[1] = start[1] + (end[1] - start[1]) * frac;
+	mid[2] = start[2] + (end[2] - start[2]) * frac;
+
+	// go down front side	
+	r = RecursiveLightPoint(node->children[side], start, mid);
+
 	if (r >= 0)
 		return r;		// hit something
-		
+
 	if ((back < 0) == side)
 		return -1;		// didn't hit anuthing
-		
-// check for impact on this node
-	VectorCopy (mid, lightspot);
-	lightplane = plane;
 
+	// check for impact on this node
+	VectorCopy(mid, lightspot);
+	lightplane = plane;
 	surf = r_worldmodel->surfaces + node->firstsurface;
+
 	for (i = 0; i < node->numsurfaces; i++, surf++)
 	{
 		if (surf->flags & (SURF_DRAWTURB|SURF_DRAWSKY)) 
 			continue;	// no lightmaps
 
 		tex = surf->texinfo;
-
-		s = DotProduct (mid, tex->vecs[0]) + tex->vecs[0][3];
-		t = DotProduct (mid, tex->vecs[1]) + tex->vecs[1][3];;
+		s = DotProduct(mid, tex->vecs[0]) + tex->vecs[0][3];
+		t = DotProduct(mid, tex->vecs[1]) + tex->vecs[1][3];;
 
 		if (s < surf->texturemins[0] || t < surf->texturemins[1])
 			continue;
@@ -261,39 +261,26 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 
 		ds >>= 4;
 		dt >>= 4;
-
 		lightmap = surf->stain_samples;
 		VectorCopy (vec3_origin, pointcolor);
 
 		if (lightmap)
 		{
-			//vec3_t scale;
+			lightmap += 3 * (dt * ((surf->extents[0] >> 4) + 1) + ds);
 
-			lightmap += 3*(dt * ((surf->extents[0]>>4)+1) + ds);
-
-			for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
-					maps++)
+			for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++)
 			{
-/*				for (i=0 ; i<3 ; i++)
-					scale[i] = gl_modulate->value*r_newrefdef.lightstyles[surf->styles[maps]].rgb[i];
-
-				pointcolor[0] += lightmap[0] * scale[0] * 0.003921568627450980392156862745098;
-				pointcolor[1] += lightmap[1] * scale[1] * 0.003921568627450980392156862745098;
-				pointcolor[2] += lightmap[2] * scale[2] * 0.003921568627450980392156862745098;
-				*/
-				pointcolor[0] += lightmap_gammatable[lightmap[0]]/255.0f; // jitgamma:
-				pointcolor[1] += lightmap_gammatable[lightmap[1]]/255.0f;
-				pointcolor[2] += lightmap_gammatable[lightmap[2]]/255.0f;
-
-				lightmap += 3*((surf->extents[0]>>4)+1) *
-						((surf->extents[1]>>4)+1);
+				pointcolor[0] += (float)lightmap_gammatable[max(lightmap[0] - 1, 0)] / 255.0f; // jitgamma:
+				pointcolor[1] += (float)lightmap_gammatable[max(lightmap[1] - 1, 0)] / 255.0f;
+				pointcolor[2] += (float)lightmap_gammatable[max(lightmap[2] - 1, 0)] / 255.0f;
+				lightmap += 3 * ((surf->extents[0] >> 4) + 1) * ((surf->extents[1] >> 4) + 1);
 			}
 		}
-		
+
 		return 1;
 	}
 
-// go down back side
+	// go down back side
 	return RecursiveLightPoint (node->children[!side], mid, end);
 }
 
@@ -321,40 +308,34 @@ void R_LightPoint (vec3_t p, vec3_t color) // jitodo -- light points on average 
 	end[0] = p[0];
 	end[1] = p[1];
 	end[2] = p[2] - 2048;
-	
-	r = RecursiveLightPoint (r_worldmodel->nodes, p, end);
-	
+	r = RecursiveLightPoint(r_worldmodel->nodes, p, end);
+
 	if (r == -1)
 	{
-		VectorCopy (vec3_origin, color);
+		VectorCopy(vec3_origin, color);
 	}
 	else
 	{
 		// ===[
 		// jitlight - adjust lightmap saturation for point entities
-		register float r,g,b,a,v;
-		
+		register float r, g, b, a, v;
 
 		r = pointcolor[0];
 		g = pointcolor[1];
 		b = pointcolor[2];
 		a = r * 0.33f + g * 0.34f + b * 0.33f; // greyscale value
 		v = gl_lightmap_saturation->value;
-
-		color[0] = r*v + a*(1.0f - v);
-		color[1] = g*v + a*(1.0f - v);
-		color[2] = b*v + a*(1.0f - v);
+		color[0] = r * v + a * (1.0f - v);
+		color[1] = g * v + a * (1.0f - v);
+		color[2] = b * v + a * (1.0f - v);
 		// ]===
-
-		//VectorCopy (pointcolor, color);
 	}
 
-	//
 	// add dynamic lights
-	//
 	light = 0;
 	dl = r_newrefdef.dlights;
-	for (lnum=0 ; lnum<r_newrefdef.num_dlights ; lnum++, dl++)
+
+	for (lnum = 0; lnum < r_newrefdef.num_dlights; lnum++, dl++)
 	{
 		VectorSubtract (currententity->origin,
 						dl->origin,
@@ -408,24 +389,28 @@ void R_StainNode (stain_t *st, mnode_t *node)
 		float		fsacc, ftacc;
 		long		col;
 
-		smax = (surf->extents[0]>>4)+1;
-		tmax = (surf->extents[1]>>4)+1;
+		smax = (surf->extents[0] >> 4) + 1;
+		tmax = (surf->extents[1] >> 4) + 1;
 		tex = surf->texinfo;
 
-		if ( (tex->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP) ) )
+		if ((tex->flags & (SURF_SKY|SURF_TRANS33|SURF_TRANS66|SURF_WARP)))
 			continue;
 
 		frad = st->size;
-		fdist = DotProduct (st->origin, surf->plane->normal) - surf->plane->dist;
-		if (surf->flags & SURF_PLANEBACK) fdist *= -1;
-		frad -= fabs(fdist);
+		fdist = DotProduct(st->origin, surf->plane->normal) - surf->plane->dist;
 
+		if (surf->flags & SURF_PLANEBACK)
+			fdist *= -1;
+
+		frad -= fabs(fdist);
 		fminlight = DLIGHT_CUTOFF;	// FIXME: make configurable?
+
 		if (frad < fminlight)
 			continue;
+
 		fminlight = frad - fminlight;
 
-		for (i=0 ; i<3 ; i++)
+		for (i = 0; i < 3 ; i++)
 			impact[i] = st->origin[i] - surf->plane->normal[i]*fdist;
 
 		local[0] = DotProduct (impact, tex->vecs[0]) + tex->vecs[0][3] - surf->texturemins[0];
@@ -676,9 +661,9 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 
 		for (i = 0; i < size; i++, bl += 3)
 		{
-			r = lightmap[i*3+0] * scale[0] - 1;
-			g = lightmap[i*3+1] * scale[1] - 1;
-			b = lightmap[i*3+2] * scale[2] - 1;
+			r = lightmap[i * 3 + 0] * scale[0] - 1;
+			g = lightmap[i * 3 + 1] * scale[1] - 1;
+			b = lightmap[i * 3 + 2] * scale[2] - 1;
 			r = r < 0 ? 0 : r;
 			g = g < 0 ? 0 : g;
 			b = b < 0 ? 0 : b;
