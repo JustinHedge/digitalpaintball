@@ -196,6 +196,7 @@ extern	cvar_t	*gl_nobind;
 extern	cvar_t	*gl_round_down;
 extern	cvar_t	*gl_picmip;
 extern	cvar_t	*gl_skymip;
+extern	cvar_t	*gl_skyedge; // jitsky
 extern	cvar_t	*gl_showtris;
 extern	cvar_t	*gl_finish;
 extern	cvar_t	*gl_ztrick;

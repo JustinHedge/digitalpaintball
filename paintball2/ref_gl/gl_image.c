@@ -1244,13 +1244,22 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 		scaled_height >>= 1;
 
 	// let people sample down the world textures for speed
-	if (gl_picmip->value > 4.0f)
-		gl_picmip->value = 4.0f; // jit
+	if (gl_picmip->value > 2.0f)
+		ri.Cvar_Set("gl_picmip", "2");
 
 	if (mipmap)
 	{
 		scaled_width >>= (int)gl_picmip->value;
 		scaled_height >>= (int)gl_picmip->value;
+	}
+
+	if (imagetype == it_sky) // jitsky
+	{
+		if (gl_skymip->value > 3.0f)
+			ri.Cvar_Set("gl_skymip", "3");
+
+		scaled_width >>= (int)gl_skymip->value;
+		scaled_height >>= (int)gl_skymip->value;
 	}
 
 	// find max size card can handle

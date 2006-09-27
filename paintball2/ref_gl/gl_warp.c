@@ -947,12 +947,11 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 	if ((s = strchr(skyname, ' ')))
 		*s = 0;
 
+	if (gl_skyedge->value > 0.01)
+		ri.Cvar_Set("gl_skyedge", "0.01");
+
 	for (i = 0; i < 6; i++)
 	{
-		// chop down rotating skies for less memory
-		if (gl_skymip->value)// || skyrotate)
-			gl_picmip->value++;
-
 		Com_sprintf(pathname, sizeof(pathname), "env/%s%s.tga", skyname, suf[i]);
 		sky_images[i] = GL_FindImage(pathname, it_sky);
 
@@ -963,21 +962,10 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 			else
 				sky_images[i] = r_notexture;
 		}
-
-		/*if (gl_skymip->value)// || skyrotate)
-		{	// take less memory
-			gl_picmip->value--;
-			sky_min = 0.00390625f;
-			sky_max = 0.99609375f;
-		}
-		else
-		{
-			sky_min = 0.001953125f;
-			sky_max = 0.998046875f;
-		}*/
-		sky_min = 0;
-		sky_max = 1;
 	}
+
+	sky_min = 0 + gl_skyedge->value;
+	sky_max = 1 - gl_skyedge->value;
 
 	if (s) // jitfog -- reenable fog code.
 		*s = ' ';
