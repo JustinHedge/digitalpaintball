@@ -652,12 +652,15 @@ void SV_BuildClientFrame (client_t *client)
 #endif
 
 		// add it to the circular client_entities array
-		state = &svs.client_entities[svs.next_client_entities%svs.num_client_entities];
+		//state = &svs.client_entities[svs.next_client_entities%svs.num_client_entities];
+		state = &svs.client_entities[svs.next_client_entities]; // jitbugfix
+
 		if (ent->s.number != e)
 		{
-			Com_DPrintf ("FIXING ENT->S.NUMBER!!!\n");
+			Com_DPrintf("FIXING ENT->S.NUMBER!!!\n");
 			ent->s.number = e;
 		}
+
 		*state = ent->s;
 
 		// don't mark players missiles as solid
@@ -665,6 +668,10 @@ void SV_BuildClientFrame (client_t *client)
 			state->solid = 0;
 
 		svs.next_client_entities++;
+
+		if (svs.next_client_entities >= svs.num_client_entities) // jitbugfix
+			svs.next_client_entities = 0;
+
 		frame->num_entities++;
 	}
 }
