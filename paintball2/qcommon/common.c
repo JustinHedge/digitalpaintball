@@ -291,16 +291,16 @@ do the apropriate things.
 */
 void Com_Quit (void)
 {
-	SV_Shutdown ("Server quit\n", false);
-	CL_Shutdown ();
+	SV_Shutdown("Server quit\n", false);
+	CL_Shutdown();
 
 	if (logfile)
 	{
-		fclose (logfile);
+		fclose(logfile);
 		logfile = NULL;
 	}
 
-	Sys_Quit ();
+	Sys_Quit();
 }
 
 
@@ -326,12 +326,11 @@ void Com_SetServerState (int state)
 
 
 /*
-==============================================================================
-
+=================================================
 			MESSAGE IO FUNCTIONS
 
 Handles byte ordering and avoids alignment errors
-==============================================================================
+=================================================
 */
 
 vec3_t	bytedirs[NUMVERTEXNORMALS] =
@@ -352,8 +351,8 @@ void MSG_WriteChar (sizebuf_t *sb, int c)
 		Com_Error (ERR_FATAL, "MSG_WriteChar: range error");
 #endif
 
-	buf = SZ_GetSpace (sb, 1);
-	buf[0] = c;
+	if (buf = SZ_GetSpace(sb, 1)) // jit
+		buf[0] = c;
 }
 
 void MSG_WriteByte (sizebuf_t *sb, int c)
@@ -362,11 +361,11 @@ void MSG_WriteByte (sizebuf_t *sb, int c)
 	
 #ifdef PARANOID
 	if (c < 0 || c > 255)
-		Com_Error (ERR_FATAL, "MSG_WriteByte: range error");
+		Com_Error(ERR_FATAL, "MSG_WriteByte: range error");
 #endif
 
-	buf = SZ_GetSpace (sb, 1);
-	buf[0] = c;
+	if (buf = SZ_GetSpace(sb, 1)) // jit
+		buf[0] = c;
 }
 
 void MSG_WriteShort (sizebuf_t *sb, int c)
@@ -378,20 +377,24 @@ void MSG_WriteShort (sizebuf_t *sb, int c)
 		Com_Error (ERR_FATAL, "MSG_WriteShort: range error");
 #endif
 
-	buf = SZ_GetSpace (sb, 2);
-	buf[0] = c&0xff;
-	buf[1] = c>>8;
+	if (buf = SZ_GetSpace(sb, 2)) // jit
+	{
+		buf[0] = c & 0xff;
+		buf[1] = c >> 8;
+	}
 }
 
 void MSG_WriteLong (sizebuf_t *sb, int c)
 {
 	byte	*buf;
-	
-	buf = SZ_GetSpace (sb, 4);
-	buf[0] = c&0xff;
-	buf[1] = (c>>8)&0xff;
-	buf[2] = (c>>16)&0xff;
-	buf[3] = c>>24;
+
+	if (buf = SZ_GetSpace(sb, 4)) // jit
+	{
+		buf[0] = c & 0xff;
+		buf[1] = (c >> 8) & 0xff;
+		buf[2] = (c >> 16) & 0xff;
+		buf[3] = c >> 24;
+	}
 }
 
 void MSG_WriteFloat (sizebuf_t *sb, float f)
@@ -401,11 +404,9 @@ void MSG_WriteFloat (sizebuf_t *sb, float f)
 		float	f;
 		int		l;
 	} dat;
-	
-	
+
 	dat.f = f;
-	dat.l = LittleLong(dat.l);
-	
+	dat.l = LittleLong(dat.l);	
 	SZ_Write(sb, &dat.l, 4);
 }
 
@@ -414,29 +415,29 @@ void MSG_WriteString (sizebuf_t *sb, char *s)
 	if (!s)
 		SZ_Write(sb, "", 1);
 	else
-		SZ_Write(sb, s, strlen(s)+1);
+		SZ_Write(sb, s, strlen(s) + 1);
 }
 
 void MSG_WriteCoord (sizebuf_t *sb, float f)
 {
-	MSG_WriteShort(sb, (int)(f*8));
+	MSG_WriteShort(sb, (int)(f * 8));
 }
 
 void MSG_WritePos (sizebuf_t *sb, vec3_t pos)
 {
-	MSG_WriteShort(sb, (int)(pos[0]*8));
-	MSG_WriteShort(sb, (int)(pos[1]*8));
-	MSG_WriteShort(sb, (int)(pos[2]*8));
+	MSG_WriteShort(sb, (int)(pos[0] * 8.0f));
+	MSG_WriteShort(sb, (int)(pos[1] * 8.0f));
+	MSG_WriteShort(sb, (int)(pos[2] * 8.0f));
 }
 
 void MSG_WriteAngle (sizebuf_t *sb, float f)
 {
-	MSG_WriteByte (sb, (int)(f*256/360) & 255);
+	MSG_WriteByte(sb, (int)(f * 256.0f / 360.0f) & 255);
 }
 
 void MSG_WriteAngle16 (sizebuf_t *sb, float f)
 {
-	MSG_WriteShort (sb, ANGLE2SHORT(f));
+	MSG_WriteShort(sb, ANGLE2SHORT(f));
 }
 
 
@@ -960,6 +961,8 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 	
 	if (buf->cursize + length > buf->maxsize)
 	{
+		assert(buf->allowoverflow);
+
 		if (!buf->allowoverflow)
 		//	Com_Error(ERR_FATAL, "SZ_GetSpace: overflow without allowoverflow set"); jit - don't crash the server with this
 			Com_Printf("SZ_GetSpace: overflow without allowoverflow set\n");
@@ -982,7 +985,10 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 
 void SZ_Write (sizebuf_t *buf, void *data, int length)
 {
-	memcpy(SZ_GetSpace(buf, length), data, length);		
+	char *bufout;
+
+	if (bufout = SZ_GetSpace(buf, length)) // jit
+		memcpy(bufout, data, length);
 }
 
 void SZ_Print (sizebuf_t *buf, char *data)
