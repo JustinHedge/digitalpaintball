@@ -983,10 +983,10 @@ void SV_Init (void)
 	Cvar_Get("skill", "1", 0);
 	Cvar_Get("deathmatch", "0", CVAR_LATCH);
 	Cvar_Get("coop", "0", CVAR_LATCH);
-	Cvar_Get("dmflags", va("%i", DF_INSTANT_ITEMS), CVAR_SERVERINFO);
+	Cvar_Get("dmflags", va("%i", DF_INSTANT_ITEMS), 0); // jit, removed serverinfo flag
 	Cvar_Get("fraglimit", "50", CVAR_SERVERINFO); // jit, was 0
 	Cvar_Get("timelimit", "20", CVAR_SERVERINFO); // jit, was 0
-	Cvar_Get("cheats", "0", CVAR_SERVERINFO|CVAR_LATCH);
+	Cvar_Get("cheats", "0", CVAR_LATCH); // jit, removed serverinfo flag
 	Cvar_Get("protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO|CVAR_NOSET);;
 	maxclients     = Cvar_Get("maxclients", "1", CVAR_SERVERINFO | CVAR_LATCH);
 	hostname       = Cvar_Get("hostname", "Paintball 2.0 (build " BUILD_S ")", CVAR_SERVERINFO | CVAR_ARCHIVE);

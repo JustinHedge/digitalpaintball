@@ -245,25 +245,26 @@ void CL_ParseMuzzleFlash (void)
 	float		volume;
 	char		soundname[64];
 
-	i = MSG_ReadShort (&net_message);
+	i = MSG_ReadShort(&net_message);
+
 	if (i < 1 || i >= MAX_EDICTS)
-		Com_Error (ERR_DROP, "CL_ParseMuzzleFlash: bad entity");
+		Com_Error(ERR_DROP, "CL_ParseMuzzleFlash: bad entity");
 
 	weapon = MSG_ReadByte(&net_message);
 	silenced = weapon & MZ_SILENCED;
 	weapon &= ~MZ_SILENCED;
-
 	pl = &cl_entities[i];
+	dl = CL_AllocDlight(i);
+	VectorCopy(pl->current.origin,  dl->origin);
+	AngleVectors(pl->current.angles, fv, rv, NULL);
+	VectorMA(dl->origin, 18, fv, dl->origin);
+	VectorMA(dl->origin, 16, rv, dl->origin);
 
-	dl = CL_AllocDlight (i);
-	VectorCopy (pl->current.origin,  dl->origin);
-	AngleVectors (pl->current.angles, fv, rv, NULL);
-	VectorMA (dl->origin, 18, fv, dl->origin);
-	VectorMA (dl->origin, 16, rv, dl->origin);
 	if (silenced)
-		dl->radius = 100 + (rand()&31);
+		dl->radius = 100 + (rand() & 31);
 	else
-		dl->radius = 200 + (rand()&31);
+		dl->radius = 200 + (rand() & 31);
+
 	dl->minlight = 32;
 	dl->die = cl.time; // + 0.1;
 

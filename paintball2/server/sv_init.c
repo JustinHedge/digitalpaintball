@@ -316,7 +316,7 @@ void SV_InitGame (void)
 
 	svs.initialized = true;
 
-	if (Cvar_VariableValue ("coop") && Cvar_VariableValue ("deathmatch"))
+	if (Cvar_VariableValue("coop") && Cvar_VariableValue("deathmatch"))
 	{
 		Com_Printf("Deathmatch and Coop both set, disabling Coop\n");
 		Cvar_FullSet("coop", "0",  CVAR_SERVERINFO | CVAR_LATCH, true);
@@ -325,10 +325,8 @@ void SV_InitGame (void)
 	// dedicated servers are can't be single player and are usually DM
 	// so unless they explicity set coop, force it to deathmatch
 	if (dedicated->value)
-	{
-		if (!Cvar_VariableValue ("coop"))
-			Cvar_FullSet("deathmatch", "1",  CVAR_SERVERINFO | CVAR_LATCH, true);
-	}
+		if (!Cvar_VariableValue("coop"))
+			Cvar_FullSet("deathmatch", "1", CVAR_LATCH, true); // jit, removed serverinfo flag
 
 	// init clients
 	if (Cvar_VariableValue ("deathmatch"))
