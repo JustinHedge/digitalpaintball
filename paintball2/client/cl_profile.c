@@ -263,67 +263,40 @@ void CL_ProfileSelect_f (void)
 }
 
 
-int GetHTTP (const char *url, char *received, int received_max)
+static void urlencode (char *out, int out_size, const char *in)
 {
-	char szRequest[1024];
-	char szDomain[1024];
-	const char *s, *s2;
-	int len, bytes_sent;
-	int bytes_read, numread;
-	int socket;
+	const char *p;
+	char *po = out;
+	char *poe = out + out_size - 4;
+	int c;
 
-	// TODO: check for redirects.  Put this in the net/tcp file?
-	received_max -= 1;
-	Com_sprintf(szRequest, sizeof(szRequest), "GET %s HTTP/1.0\n\n", url);
-		socket = NET_TCPSocket(0);	// Create the socket descriptor
-
-	if (socket == 0)
+	for (p = in, po = out; *p; p++)
 	{
-		Com_Printf("Unable to create socket.\n");
-		return -1; // No socket created
+		if (po >= poe)
+		{
+			*po = 0;
+			return;
+		}
+
+		c = *(unsigned char*)p;
+
+		if (c == ' ')
+		{
+			*po++ = '+';
+		}
+		else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+			(c >= '0' && c <= '9'))
+		{
+			*po++ = c;
+		}
+		else
+		{
+			Com_sprintf(po, out_size, "%%%02x", c);
+			po += 3;
+		}
 	}
 
-	s = strstr(url, "://");
-
-	if (s)
-		s += 3;
-	else
-		s = url;
-
-	s2 = strchr(s, '/');
-	
-	if (s2)
-		len = min(sizeof(szDomain) - 1, s2 - s);
-	else
-		len = strlen(s);
-
-	memcpy(szDomain, s, len);
-	szDomain[len] = 0;
-
-	if (!NET_TCPConnect(socket, szDomain, 80))
-	{
-		Com_Printf("Unable to connect to login server.\n");
-		closesocket(socket);
-		return -1;
-	}
-
-	len = strlen(szRequest);
-	bytes_sent = send(socket, szRequest, len, 0);
-
-	if (bytes_sent < len)
-	{
-		Com_Printf("HTTP Server did not accept request, aborting\n");
-		closesocket(socket);
-		return -1;
-	}
-
-	numread = 0;
-
-	while (numread < received_max && 0 < (bytes_read = recv(socket, received + numread, received_max - numread, 0)))
-		numread += bytes_read;
-
-	received[numread] = 0; // make sure it's null terminated.
-	return numread;
+	*po = 0;
 }
 
 
@@ -336,6 +309,7 @@ void CL_ProfileLogin_f (void)
 	char szDataBack[4096];
 	char *sPassword;
 	char szUserName[64];
+	char szUserNameURL[256];
 	char *s;
 	int i;
 
@@ -343,6 +317,7 @@ void CL_ProfileLogin_f (void)
 		return;
 
 	strip_garbage(szUserName, Cmd_Argv(1));
+	urlencode(szUserNameURL, sizeof(szUserNameURL), szUserName);
 	sPassword = Cmd_Argv(2);
 
 	if (!*szUserName || !*sPassword)
@@ -360,7 +335,7 @@ void CL_ProfileLogin_f (void)
 		Q_strncpyz(szPassHash, sPassword, sizeof(szPassword));
 	}
 
-	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=1&username=%s", szUserName);
+	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=1&username=%s", szUserNameURL);
 
 	if (GetHTTP(szRequest, szDataBack, sizeof(szDataBack)) < 1)
 		return;
@@ -391,7 +366,7 @@ void CL_ProfileLogin_f (void)
 	Com_sprintf(szPassword, sizeof(szPassword), "%s%s", g_szRandomString, szPassHash);
 	Com_MD5HashString(szPassword, strlen(szPassword), szPassHash2, sizeof(szPassHash2));
 	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=2&pwhash=%s&username=%s",
-		szPassHash2, szUserName);
+		szPassHash2, szUserNameURL);
 
 	if (GetHTTP(szRequest, szDataBack, sizeof(szDataBack)) < 1)
 		return;

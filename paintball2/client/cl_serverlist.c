@@ -1,4 +1,5 @@
 #include "menu.h"
+#include "../qcommon/net_common.h"
 #ifndef WIN32
 #include <unistd.h>
 #include <sys/types.h>
@@ -483,129 +484,36 @@ void M_ServerlistRefresh_f (void)
 
 // Download list of ip's from a remote location and
 // add them to the local serverlist
+#define BUFFER_SIZE 32767
 static void M_ServerlistUpdate (char *sServerSource)
 {
-	int serverListSocket;
-	char svlist_domain[256];
-	char *s;
-	int i;
+	char *buffer = NULL;
+	int numread = -1;
+	qboolean file = false;
+	char *current;
+	char *found = NULL;
+	netadr_t adr;
+	int bytes_read = 0;
+	char buff[256];
 
 	if (!*sServerSource)
 		return;
 
 	Com_Printf("Retrieving serverlist from %s\n", sServerSource);
-	serverListSocket = NET_TCPSocket(0);	// Create the socket descriptor
 
-	if (serverListSocket == 0)
+	if (strstr(sServerSource, "://"))
 	{
-		Com_Printf("Unable to create socket.\n");
-		return; // No socket created
-	}
-
-	s = sServerSource;
-
-	if (memcmp(sServerSource, "http://", 7) == 0)
-	{
-		s += 7; // skip past the "http://"
-		i = 0;
-
-		while (*s && *s != '/')
-		{
-			svlist_domain[i] = *s;
-			s++;
-			i++;
-		}
-
-		svlist_domain[i] = 0; // terminate string
-	}
-
-	if (!NET_TCPConnect(serverListSocket, svlist_domain, 80))
-	{
-		Com_Printf("Unable to connect to %s\n", svlist_domain);
-		return;	// Couldn't connect
-	}
-
-	// We're connected! Lets ask for the list
-	{
-		char msg[256];
-		int len, bytes_sent;
-
-		sprintf(msg, "GET %s HTTP/1.0\n\n", sServerSource);
-		len = strlen(msg);
-		bytes_sent = send(serverListSocket, msg, len, 0);
-
-		if  (bytes_sent < len)
-		{
-			Com_Printf("HTTP Server did not accept request, aborting\n");
-			closesocket(serverListSocket);
-			return;
-		}
-	}
-
-	// We've sent our request... Lets read in what they've got for us
-	{
-		char *buffer	= malloc(32767);	
-		char *current	= buffer;
-		char *found		= NULL;
-		int numread		= 0;
-		int bytes_read	= 0;
-		netadr_t adr;
-		char buff[256];
-
-		// Read in up to 32767 bytes
-		while (numread < 32760 && 0 < (bytes_read = recv(serverListSocket, buffer + numread, 32766 - numread, 0)))
-		{
-			numread += bytes_read;
-		};
-
-		if (bytes_read == -1)
-		{
-			Com_Printf("WARNING: recv(): %s\n", NET_ErrorString());
-			free(buffer);
-			closesocket(serverListSocket);
-			return;
-		}
-
-		closesocket(serverListSocket);
-
-		// Okay! We have our data... now lets parse it! =)
-		buffer[numread] = 0; // terminate data.
+		buffer = Z_Malloc(BUFFER_SIZE);
+		numread = GetHTTP(sServerSource, buffer, BUFFER_SIZE);
 		current = buffer;
 
-		// Check for a forward:
-		if (memcmp(buffer + 9, "301", 3) == 0 || memcmp(buffer + 9, "302", 3) == 0)
-		{
-			char *newaddress, *s, *s1;
+		if (numread < 0)
+			return;
 
-			if ((newaddress = strstr(buffer, "\nLocation: ")))
-			{
-				newaddress += sizeof("\nLocation: ") - 1;
-
-				// terminate string at LF or CRLF
-				s = strchr(newaddress, '\r');
-				s1 = strchr(newaddress, '\n');
-
-				if (s && s < s1)
-					*s = '\0';
-				else
-					*s1 = '\0';
-
-				Com_Printf("Redirect: %s to %s\n", sServerSource, newaddress);
-				M_ServerlistUpdate(newaddress);
-				free(buffer);
-				return;
-			}
-			else
-			{
-				// Should never happen
-				Com_Printf("WARNING: 301 redirect with no new location\n");
-				free(buffer);
-				return;
-			}
-		}
+		current = buffer;
 
 		// find \n\n, thats the end of header/beginning of the data
-		while (*current != '\n' || *(current+2) != '\n')
+		while (*current != '\n' || *(current + 2) != '\n')
 		{
 			if (current > buffer + numread)
 			{
@@ -625,58 +533,81 @@ static void M_ServerlistUpdate (char *sServerSource)
 			if (strstr(current, "Not Found") || strstr(current, "not found"))
 				Com_Printf("WARNING: %s returned 404 Not Found.\n", sServerSource);
 			else
-				Com_Printf("WARNING: Invalid serverlist %s\n", sServerSource);
+				Com_Printf("WARNING: Invalid serverlist: %s\n", sServerSource);
 
-			free(buffer);
+			Z_Free(buffer);
 			return;
 		}
+	}
+	else // Local file?
+	{
+		numread = FS_LoadFileZ(sServerSource, &buffer);
+		file = true;
+		current = buffer;
 
-		// Ping all of the servers on the list
-		while (current < buffer + numread)
+		if (numread < 0)
 		{
-			found = current;						// Mark the beginning of the line
+			Com_Printf("WARNING: Bad serverlist address: %s\n", sServerSource);
+			Com_Printf("Serverlist must be a file in the pball directory or http site.\n");
+			return;
+		}
+	}
 
-			while (*current && *current != 13)
-			{										// Find the end of the line
-				current++; 
-				
-				if (current > buffer + numread)
-				{
-					free(buffer);
-					return;	// Exit if we run out of room
-				}
+	// Ping all of the servers on the list
+	while (current < buffer + numread)
+	{
+		found = current;						// Mark the beginning of the line
 
-				if (!*current || (*(current-1) == 'X' && *(current) == 13))
-				{
-					goto done; // Exit if we find a X\n on a new line
-				}
-			}
-
-			*current = 0;								// NULL terminate the string
-
-			Com_Printf("pinging %s...\n", found);
-
-			if (!NET_StringToAdr(found, &adr))
+		while (*current && *current != '\r' && *current != '\n')
+		{										// Find the end of the line
+			current++; 
+			
+			if (current > buffer + numread)
 			{
-				Com_Printf("Bad address: %s\n", found);
-				continue;
+				if (file)
+					FS_FreeFile(buffer);
+				else
+					Z_Free(buffer);
+
+				return;	// Exit if we run out of room
 			}
+		}
 
-			if (!adr.port)
-				adr.port = BigShort(PORT_SERVER);
+		*current = 0; // NULL terminate the string
 
-			Sleep(16); // jitodo -- make a cvar for the time between pings
-			sprintf(buff, "info %i", PROTOCOL_VERSION);
-			Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
-			sprintf(buff, "%s --- 0/0", found);
-			// Add to listas being pinged
-			M_AddToServerList(adr, buff, true);
-			current += 2;								// Start at the next line
-		};
+		if (!*found || Q_streq(found, "X"))
+			goto done;
+
+		Com_Printf("pinging %s...\n", found);
+
+		if (!NET_StringToAdr(found, &adr))
+		{
+			Com_Printf("Bad address: %s\n", found);
+			continue;
+		}
+
+		if (!adr.port)
+			adr.port = BigShort(PORT_SERVER);
+
+		Sleep(16); // jitodo -- make a cvar for the time between pings
+		sprintf(buff, "info %i", PROTOCOL_VERSION);
+		Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
+		sprintf(buff, "%s --- 0/0", found);
+		// Add to listas being pinged
+		M_AddToServerList(adr, buff, true);
+
+		// Start at the next line:
+		current++;
+
+		while ((*current == '\r' || *current == '\n') && (current < buffer + numread))
+			current++;
+	};
 
 done:
+	if (current + 1 < buffer + numread)
+	{
 		// Check to make sure they're updated with the latest version.
-		if (found = strstr(current, "LatestClientBuild:"))
+		if (found = strstr(current + 1, "LatestClientBuild:"))
 		{
 			int latest_build;
 
@@ -694,10 +625,14 @@ done:
 				}
 			}
 		}
-
-		free(buffer);
-		return;
 	}
+
+	if (file)
+		FS_FreeFile(buffer);
+	else
+		Z_Free(buffer);
+
+	return;
 }
 
 void ServerlistBlacklistUpdate (const char *sURL)
