@@ -215,7 +215,7 @@ cvar_t *Cvar_FullSet (char *var_name, char *value, int flags, qboolean force) //
 				if (Q_streq(value, var->latched_string))
 					return var;
 
-				Z_Free (var->latched_string);
+				Z_Free(var->latched_string);
 			}
 			else
 			{
@@ -225,7 +225,7 @@ cvar_t *Cvar_FullSet (char *var_name, char *value, int flags, qboolean force) //
 
 			if (Com_ServerState())
 			{
-				Com_Printf ("%s will be changed for next game.\n", var_name);
+				Com_Printf("%s will be changed for next game.\n", var_name);
 				var->latched_string = CopyString(value);
 			}
 			else
@@ -263,7 +263,6 @@ cvar_t *Cvar_FullSet (char *var_name, char *value, int flags, qboolean force) //
 		userinfo_modified = true;	// transmit at next oportunity
 	
 	Z_Free(var->string);	// free the old value string
-	
 	var->string = CopyString(value);
 	var->value = atof(var->string);
 	var->flags = flags;
