@@ -84,3 +84,99 @@ void NET_OpenIP (void)
 	}
 }
 
+// ===
+// jithttp
+int GetHTTP (const char *url, char *received, int received_max)
+{
+	char szRequest[1024];
+	char szDomain[1024];
+	const char *s, *s2;
+	int len, bytes_sent;
+	int bytes_read, numread;
+	int socket;
+
+	// TODO: check for redirects.  Put this in the net/tcp file?
+	received_max -= 1;
+	Com_sprintf(szRequest, sizeof(szRequest), "GET %s HTTP/1.0\n\n", url);
+	socket = NET_TCPSocket(0);	// Create the socket descriptor
+
+	if (socket == 0)
+	{
+		Com_Printf("GetHTTP(): Unable to create socket.\n");
+		return -1; // No socket created
+	}
+
+	s = strstr(url, "://");
+
+	if (s)
+		s += 3;
+	else
+		s = url;
+
+	s2 = strchr(s, '/');
+	
+	if (s2)
+		len = min(sizeof(szDomain) - 1, s2 - s);
+	else
+		len = strlen(s);
+
+	memcpy(szDomain, s, len);
+	szDomain[len] = 0;
+
+	if (!NET_TCPConnect(socket, szDomain, 80))
+	{
+		Com_Printf("GetHTTP(): Unable to connect to %s.\n", szDomain);
+		closesocket(socket);
+		return -1;
+	}
+
+	len = strlen(szRequest);
+	bytes_sent = send(socket, szRequest, len, 0);
+
+	if (bytes_sent < len)
+	{
+		Com_Printf("GetHTTP(): HTTP Server did not accept request, aborting\n");
+		closesocket(socket);
+		return -1;
+	}
+
+	numread = 0;
+
+	while (numread < received_max && 0 < (bytes_read = recv(socket, received + numread, received_max - numread, 0)))
+		numread += bytes_read;
+
+	received[numread] = 0; // make sure it's null terminated.
+
+	// Check for a forward:
+	if (memcmp(received + 9, "301", 3) == 0 || memcmp(received + 9, "302", 3) == 0)
+	{
+		char *newaddress, *s, *s1;
+
+		if ((newaddress = strstr(received, "\nLocation: ")))
+		{
+			newaddress += sizeof("\nLocation: ") - 1;
+
+			// terminate string at LF or CRLF
+			s = strchr(newaddress, '\r');
+			s1 = strchr(newaddress, '\n');
+
+			if (s && s < s1)
+				*s = '\0';
+			else
+				*s1 = '\0';
+
+			Com_Printf("Redirect: %s to %s\n", url, newaddress);
+			return GetHTTP(newaddress, received, received_max);
+		}
+		else
+		{
+			// Should never happen
+			Com_Printf("GetHTTP(): 301 redirect with no new location\n");
+			return -1;
+		}
+	}
+
+	return numread;
+}
+// jit
+// ===

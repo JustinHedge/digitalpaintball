@@ -23,3 +23,4 @@ extern int server_port;
 
 void NET_OpenIP (void);
 int NET_IPSocket (char *net_interface, int port);
+int GetHTTP (const char *url, char *received, int received_max);
