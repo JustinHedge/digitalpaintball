@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "../qcommon/md5.h"
 #include "../qcommon/simplecrypt.h"
+#include "../qcommon/net_common.h"
 
 #define PROFILE_LOGIN_NAME_LEN 64
 #define PROFILE_PASSWORD_LEN 64
@@ -310,8 +311,10 @@ void CL_ProfileLogin_f (void)
 	char *sPassword;
 	char szUserName[64];
 	char szUserNameURL[256];
-	char *s;
+	char *s, *s2;
+	char szUserID[32];
 	int i;
+	qboolean bPassHashed = false;
 
 	if (Cmd_Argc() < 3)
 		return;
@@ -326,13 +329,14 @@ void CL_ProfileLogin_f (void)
 	if (menu_profile_pass->modified)
 	{
 		// Generate password hash (raw password is never sent or stored).
-		Com_sprintf(szPassword, sizeof(szPassword), "DPLogin001%s", sPassword);
+		Com_sprintf(szPassword, sizeof(szPassword), "%sDPLogin001", sPassword);
 		Com_MD5HashString(szPassword, strlen(szPassword), szPassHash, sizeof(szPassHash));
 	}
 	else
 	{
 		// Password was saved.  Already hashed.
 		Q_strncpyz(szPassHash, sPassword, sizeof(szPassword));
+		bPassHashed = true;
 	}
 
 	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=1&username=%s", szUserNameURL);
@@ -342,11 +346,14 @@ void CL_ProfileLogin_f (void)
 
 	// Obtain random string 
 	s = strstr(szDataBack, "randstr:");
+	s2 = strstr(szDataBack, "userid:");
 
-	if (!s)
+	if (!s || !s2)
 	{
 		if (s = strstr(szDataBack, "ERROR:"))
 			Com_Printf("%s\n", s);
+		else if (strstr(szDataBack, "Not Found") || strstr(szDataBack, "not found"))
+			Com_Printf("ERROR: Login server not found.\nYou may need to update.\nSee http://www.digitalpaint.org/\n");
 		else
 			Com_Printf("ERROR: Unknown response from login server.\n");
 
@@ -355,16 +362,30 @@ void CL_ProfileLogin_f (void)
 	}
 
 	s += sizeof("randstr:");
+	s2 += sizeof("userid:");
 	i = 0;
 
 	while (*s >= '0' && i < sizeof(g_szRandomString) - 1)
 		g_szRandomString[i++] = *s++;
 
 	g_szRandomString[i] = 0;
+	i = 0;
 
-	// re-hash password hash with random string and send to server for validation
-	Com_sprintf(szPassword, sizeof(szPassword), "%s%s", g_szRandomString, szPassHash);
-	Com_MD5HashString(szPassword, strlen(szPassword), szPassHash2, sizeof(szPassHash2));
+	while  (*s2 >= '0' && *s2 <= '9' && i < sizeof(szUserID) - 1)
+		szUserID[i++] = *s2++;
+
+	szUserID[i] = 0;
+
+	if (!bPassHashed)
+	{
+		// Salt with userid
+		Com_sprintf(szPassword, sizeof(szPassword), "%s%s", szPassHash, szUserID);
+		Com_MD5HashString(szPassword, strlen(szPassword), szPassHash, sizeof(szPassHash));
+	}
+
+	// Use HMAC with MD5 to authenticate message (random string) with login server.
+	Com_HMACMD5String(szPassHash, strlen(szPassHash), g_szRandomString,
+		strlen(g_szRandomString), szPassHash2, sizeof(szPassHash2));
 	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=2&pwhash=%s&username=%s",
 		szPassHash2, szUserNameURL);
 
@@ -378,7 +399,7 @@ void CL_ProfileLogin_f (void)
 		if (s = strstr(szDataBack, "ERROR:"))
 			Com_Printf("%s\n", s);
 		else if (s = strstr(szDataBack, "GameLoginStatus: FAILED"))
-			Com_Printf("Invalid password for username %s\n", szUserName);
+			Com_Printf("Incorrect password for username %s\n", szUserName);
 		else
 			Com_Printf("ERROR: Unknown response from login server.\n");
 
@@ -407,13 +428,13 @@ void CL_ProfileLogin_f (void)
 
 	g_szRandomString[i] = 0;
 
-	if (Cvar_Get("menu_profile_remember_pass", "0", 0)->value && menu_profile_pass->modified)
+	if (menu_profile_pass->modified)
 	{
 		char szProfileOutPath[MAX_OSPATH];
 
-		// TODO:
 		Com_sprintf(szProfileOutPath, sizeof(szProfileOutPath), "%s/profiles/%s.prf", FS_Gamedir(), Cvar_Get("menu_profile_file", "unnamed", 0)->string);
-		WriteProfileFile(szProfileOutPath, szUserName, szPassHash, false);
+		WriteProfileFile(szProfileOutPath, szUserName,
+			Cvar_Get("menu_profile_remember_pass", "0", 0)->value ? szPassHash : "", false);
 	}
 
 	Cbuf_AddText("menu pop\n");
@@ -453,7 +474,8 @@ void CL_WebLoad_f (void)
 
 void AddProfileCommands (void) // TODO: Change to InitProfile or something more appropriate.
 {
-	InitCrypt();
+	char szTest[64];
+
 	menu_profile_pass = Cvar_Get("menu_profile_pass", "", 0);
 	Cmd_AddCommand("webload", CL_WebLoad_f);
 	Cmd_AddCommand("profile_edit", CL_ProfileEdit_f);
