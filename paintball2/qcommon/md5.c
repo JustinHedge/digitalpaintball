@@ -279,6 +279,41 @@ unsigned Com_MD5Checksum (void *buffer, int length)
 	return val;
 }
 
+// hmac( key, m ) = h( (key ^ opad) + h( (key ^ ipad) + m ) )
+char *Com_HMACMD5String (const void *key, int keylen, const void *msg, int msglen, char *out, size_t outsize)
+{
+	unsigned char *pOPad;
+	unsigned char *pIPad;
+	const unsigned char *pKey = key;
+	const unsigned char *pMsg = msg;
+	unsigned char *pTemp;
+	int i, len;
+	char szMD5Str[40];
+
+	pOPad = Z_Malloc(keylen);
+	pIPad = Z_Malloc(keylen);
+	len = max(keylen + msglen, keylen + 32);
+	pTemp = Z_Malloc(len);
+
+	for (i = 0; i < keylen; ++i)
+	{
+		pOPad[i] = pKey[i] ^ 0x5C;
+		pIPad[i] = pKey[i] ^ 0x36;
+	}
+
+	memcpy(pTemp, pIPad, keylen);
+	memcpy(pTemp + keylen, msg, msglen);
+	Com_MD5HashString(pTemp, keylen + msglen, szMD5Str, sizeof(szMD5Str));
+	memcpy(pTemp, pOPad, keylen);
+	memcpy(pTemp + keylen, szMD5Str, strlen(szMD5Str));
+	Com_MD5HashString(pTemp, keylen + strlen(szMD5Str), out, outsize);
+	Z_Free(pTemp);
+	Z_Free(pOPad);
+	Z_Free(pIPad);
+
+	return out;
+}
+
 // jit - string version
 char *Com_MD5HashString (const void *buffer, int length, char *pMD5Out, size_t sizeMD5Out)
 {
