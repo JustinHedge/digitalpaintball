@@ -29,8 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PROFILE_PASSWORD_LEN 64
 
 cvar_t *menu_profile_pass;
-static char g_szPassHash[256];
-static char g_szRandomString[256];
+static char g_szPassHash[64] = "";
+static char g_szRandomString[64] = "";
 
 static const char *GetUniqueSystemString (void)
 {
@@ -342,7 +342,10 @@ void CL_ProfileLogin_f (void)
 	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=1&username=%s", szUserNameURL);
 
 	if (GetHTTP(szRequest, szDataBack, sizeof(szDataBack)) < 1)
+	{
+		Cbuf_AddText("menu profile_loginfailed\n");
 		return;
+	}
 
 	// Obtain random string 
 	s = strstr(szDataBack, "randstr:");
@@ -383,6 +386,9 @@ void CL_ProfileLogin_f (void)
 		Com_MD5HashString(szPassword, strlen(szPassword), szPassHash, sizeof(szPassHash));
 	}
 
+	// save global copy for verification later
+	Q_strncpyz(g_szPassHash, szPassHash, sizeof(g_szPassHash));
+
 	// Use HMAC with MD5 to authenticate message (random string) with login server.
 	Com_HMACMD5String(szPassHash, strlen(szPassHash), g_szRandomString,
 		strlen(g_szRandomString), szPassHash2, sizeof(szPassHash2));
@@ -390,7 +396,10 @@ void CL_ProfileLogin_f (void)
 		szPassHash2, szUserNameURL);
 
 	if (GetHTTP(szRequest, szDataBack, sizeof(szDataBack)) < 1)
+	{
+		Cbuf_AddText("menu profile_loginfailed\n");
 		return;
+	}
 
 	s = strstr(szDataBack, "GameLoginStatus: PASSED");
 
@@ -472,10 +481,28 @@ void CL_WebLoad_f (void)
 }
 
 
+void CL_GlobalLogin_f (void)
+{
+	char *randstr;
+	char szPassHash2[64];
+	char szCommand[128];
+
+	if (Cmd_Argc() != 3)
+	{
+		Com_Printf("Usage: global_login <userid> <randstr>\n");
+		return;
+	}
+
+	randstr = Cmd_Argv(2);
+	Com_HMACMD5String(g_szPassHash, strlen(g_szPassHash), randstr,
+		strlen(randstr), szPassHash2, sizeof(szPassHash2));
+	Com_sprintf(szCommand, sizeof(szCommand), "cmd global_login %s\n", szPassHash2);
+	Cbuf_AddText(szCommand);
+}
+
+
 void AddProfileCommands (void) // TODO: Change to InitProfile or something more appropriate.
 {
-	char szTest[64];
-
 	menu_profile_pass = Cvar_Get("menu_profile_pass", "", 0);
 	Cmd_AddCommand("webload", CL_WebLoad_f);
 	Cmd_AddCommand("profile_edit", CL_ProfileEdit_f);
@@ -483,5 +510,6 @@ void AddProfileCommands (void) // TODO: Change to InitProfile or something more 
 	Cmd_AddCommand("profile_add", CL_ProfileAdd_f);
 	Cmd_AddCommand("profile_select", CL_ProfileSelect_f);
 	Cmd_AddCommand("profile_login", CL_ProfileLogin_f);
+	Cmd_AddCommand("global_login", CL_GlobalLogin_f);
 }
 
