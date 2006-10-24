@@ -250,23 +250,26 @@ void Com_Error (int code, char *fmt, ...)
 	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
 	va_end(argptr);
 	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
-	
-	if (code == ERR_DISCONNECT)
+
+	switch (code) // jiterror
 	{
+	case ERR_BENIGN: // jiterror - don't close the app.  Just print the error to the console.
+		Com_Printf("********************\nERROR: %s\n********************\n", msg);
+		return;
+	case ERR_DISCONNECT:
 		CL_Drop();
 		recursive = false;
 		longjmp(abortframe, -1);
-	}
-	else if (code == ERR_DROP)
-	{
+		break;
+	case ERR_DROP:
 		Com_Printf("********************\nERROR: %s\n********************\n", msg);
 		SV_Shutdown(va("Server crashed: %s\n", msg), false);
 		CL_Drop();
 		recursive = false;
 		longjmp(abortframe, -1);
-	}
-	else
-	{
+		break;
+	case ERR_FATAL:
+	default:
 		SV_Shutdown(va("Server fatal crashed: %s\n", msg), false);
 		CL_Shutdown();
 	}

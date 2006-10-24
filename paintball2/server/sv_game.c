@@ -170,7 +170,11 @@ void PF_setmodel (edict_t *ent, char *name)
 	cmodel_t *mod;
 
 	if (!name)
-		Com_Error(ERR_DROP, "PF_setmodel: NULL");
+	{
+		assert(name != NULL);
+		Com_Error(ERR_BENIGN, "PF_setmodel: NULL");
+		return;
+	}
 
 	ent->s.modelindex = SV_ModelIndex(name);
 
