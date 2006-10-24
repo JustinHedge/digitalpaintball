@@ -50,7 +50,7 @@ BUILD_PB2?=YES
 #=============================#
 # Paintball2 dedicated server #
 #=============================#
-BUILD_DEDICATED?=YES
+BUILD_DEDICATED?=NO
 
 #=============================#
 # Compile with IPv6 (protocol #
@@ -382,10 +382,10 @@ PB2_OBJS = \
 	$(BUILDDIR)/client/snd_mem.o   $(BUILDDIR)/client/snd_mix.o       $(BUILDDIR)/client/m_flash.o \
 	$(BUILDDIR)/client/cmd.o       $(BUILDDIR)/client/cmodel.o        $(BUILDDIR)/client/common.o \
 	$(BUILDDIR)/client/crc.o       $(BUILDDIR)/client/cvar.o          $(BUILDDIR)/client/files.o \
-	$(BUILDDIR)/client/md4.o       $(BUILDDIR)/client/net_chan.o \
+	$(BUILDDIR)/client/md4.o       $(BUILDDIR)/client/net_chan.o      $(BUILDDIR)/client/cl_profile.o \
 	$(BUILDDIR)/client/sv_ccmds.o  $(BUILDDIR)/client/sv_ents.o       $(BUILDDIR)/client/sv_game.o \
 	$(BUILDDIR)/client/sv_init.o   $(BUILDDIR)/client/sv_main.o       $(BUILDDIR)/client/sv_send.o \
-	$(BUILDDIR)/client/sv_user.o   $(BUILDDIR)/client/sv_world.o \
+	$(BUILDDIR)/client/sv_user.o   $(BUILDDIR)/client/sv_world.o      $(BUILDDIR)/client/md5.o \
 	$(BUILDDIR)/client/q_shlinux.o $(BUILDDIR)/client/vid_so.o        $(BUILDDIR)/client/sys_linux.o \
 	$(BUILDDIR)/client/glob.o      $(BUILDDIR)/client/$(NET_UDP).o    $(BUILDDIR)/client/net_common.o \
 	$(BUILDDIR)/client/net_tcp.o   $(BUILDDIR)/client/q_shared.o      $(BUILDDIR)/client/pmove.o
@@ -460,6 +460,7 @@ $(BINDIR)/snd_sdl.$(SHLIBEXT) : $(SDL_SND_OBJS)
 $(BUILDDIR)/a3d/q2a3d.o :	     $(A3D_DIR)/q2a3d.c;		$(DO_CC)
 $(BUILDDIR)/client/cl_cin.o :	     $(CLIENT_DIR)/cl_cin.c;		$(DO_CC)
 $(BUILDDIR)/client/cl_ents.o :	     $(CLIENT_DIR)/cl_ents.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_profile.o :    $(CLIENT_DIR)/cl_profile.c;	$(DO_CC)
 $(BUILDDIR)/client/cl_fx.o :	     $(CLIENT_DIR)/cl_fx.c;		$(DO_CC)
 $(BUILDDIR)/client/cl_input.o :      $(CLIENT_DIR)/cl_input.c;		$(DO_CC)
 $(BUILDDIR)/client/cl_inv.o :	     $(CLIENT_DIR)/cl_inv.c;		$(DO_CC)
@@ -490,6 +491,7 @@ $(BUILDDIR)/client/crc.o :           $(COMMON_DIR)/crc.c;		$(DO_CC)
 $(BUILDDIR)/client/cvar.o :          $(COMMON_DIR)/cvar.c;		$(DO_CC)
 $(BUILDDIR)/client/files.o :         $(COMMON_DIR)/files.c;		$(DO_CC)
 $(BUILDDIR)/client/md4.o :           $(COMMON_DIR)/md4.c;		$(DO_CC)
+$(BUILDDIR)/client/md5.o :           $(COMMON_DIR)/md5.c;		$(DO_CC)
 $(BUILDDIR)/client/net_chan.o :      $(COMMON_DIR)/net_chan.c;		$(DO_CC)
 $(BUILDDIR)/client/net_common.o :    $(COMMON_DIR)/net_common.c;	$(DO_CC)
 $(BUILDDIR)/client/pmove.o :         $(COMMON_DIR)/pmove.c;		$(DO_CC)
@@ -530,7 +532,7 @@ PB2DED_OBJS = \
        $(BUILDDIR)/ded/sv_user.o   $(BUILDDIR)/ded/sv_world.o   $(BUILDDIR)/ded/q_shlinux.o \
        $(BUILDDIR)/ded/sys_linux.o $(BUILDDIR)/ded/glob.o       $(BUILDDIR)/ded/net_udp.o \
        $(BUILDDIR)/ded/net_tcp.o   $(BUILDDIR)/ded/q_shared.o   $(BUILDDIR)/ded/pmove.o \
-       $(BUILDDIR)/ded/cl_null.o   $(BUILDDIR)/ded/cd_null.o
+       $(BUILDDIR)/ded/cl_null.o   $(BUILDDIR)/ded/cd_null.o    $(BUILDDIR)/ded/md5.o
 
 $(BINDIR)/pb2-ded : $(PB2DED_OBJS)
 	@echo
@@ -550,6 +552,7 @@ $(BUILDDIR)/ded/net_common.o :	$(COMMON_DIR)/net_common.c;	$(DO_DED_CC)
 $(BUILDDIR)/ded/cvar.o :	$(COMMON_DIR)/cvar.c;		$(DO_DED_CC)
 $(BUILDDIR)/ded/files.o :       $(COMMON_DIR)/files.c;		$(DO_DED_CC)
 $(BUILDDIR)/ded/md4.o :	 	$(COMMON_DIR)/md4.c;		$(DO_DED_CC)
+$(BUILDDIR)/ded/md5.o :	 	$(COMMON_DIR)/md5.c;		$(DO_DED_CC)
 $(BUILDDIR)/ded/net_chan.o :    $(COMMON_DIR)/net_chan.c;	$(DO_DED_CC)
 $(BUILDDIR)/ded/pmove.o :       $(COMMON_DIR)/pmove.c;		$(DO_DED_CC)
 $(BUILDDIR)/ded/q_shared.o :    $(GAME_DIR)/q_shared.c;		$(DO_DED_CC)
