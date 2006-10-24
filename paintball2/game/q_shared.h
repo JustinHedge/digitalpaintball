@@ -114,6 +114,7 @@ typedef enum {false, true}	qboolean;
 #define	ERR_FATAL			0		// exit the entire game with a popup window
 #define	ERR_DROP			1		// print to console and disconnect from game
 #define	ERR_DISCONNECT		2		// don't kill server
+#define ERR_BENIGN			3		// print error to console and move on
 
 #define	PRINT_ALL			0
 #define PRINT_DEVELOPER		1		// only print when "developer 1"

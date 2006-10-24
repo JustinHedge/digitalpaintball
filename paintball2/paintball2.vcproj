@@ -761,9 +761,6 @@
 		<File
 			RelativePath="win32\pthreadVC.lib">
 		</File>
-		<File
-			RelativePath="win32\simplecrypt.lib">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

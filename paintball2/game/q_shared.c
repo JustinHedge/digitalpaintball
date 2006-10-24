@@ -2256,6 +2256,7 @@ void strip_garbage (char *out, const char *in) // jit
 			break;
 		case CHAR_ITALICS:
 		case CHAR_UNDERLINE:
+		case CHAR_ENDFORMAT:
 			break;
 		default:
 			*sbuf = char_remap[*s];
