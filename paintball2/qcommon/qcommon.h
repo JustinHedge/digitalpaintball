@@ -89,6 +89,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #endif
 
+#ifndef max // jit
+#define max(a, b)	(((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a, b)	(((a) < (b)) ? (a) : (b))
+#endif
+
 //============================================================================
 
 typedef struct sizebuf_s
@@ -104,7 +112,7 @@ typedef struct sizebuf_s
 void SZ_Init (sizebuf_t *buf, byte *data, int length);
 void SZ_Clear (sizebuf_t *buf);
 void *SZ_GetSpace (sizebuf_t *buf, int length);
-void SZ_Write (sizebuf_t *buf, void *data, int length);
+void SZ_Write (sizebuf_t *buf, const void *data, int length);
 void SZ_Print (sizebuf_t *buf, char *data);	// strcats onto the sizebuf
 
 //============================================================================
@@ -392,9 +400,11 @@ The game starts with a Cbuf_AddText ("exec quake.rc\n"); Cbuf_Execute ();
 void Cbuf_Init (void);
 // allocates an initial text buffer that will grow as needed
 
-void Cbuf_AddText (char *text);
+void Cbuf_AddText (const char *text);
 // as new commands are generated from the console or keybindings,
 // the text is added to the end of the command buffer.
+
+void Cbuf_AddStuffText (const char *text); // jitsecurity
 
 void Cbuf_AddTextThreadsafe (const char *text);
 // jitmultithreading - threadsafe version of above function.

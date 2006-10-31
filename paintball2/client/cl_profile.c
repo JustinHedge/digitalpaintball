@@ -449,6 +449,7 @@ void CL_ProfileLogin_f (void)
 	Cbuf_AddText("menu pop\n");
 }
 
+extern qboolean g_command_stuffed;
 
 void CL_WebLoad_f (void)
 {
@@ -456,6 +457,10 @@ void CL_WebLoad_f (void)
 #ifndef WIN32
 	char szCommand[1024];
 #endif
+
+	// Don't let malicious servers force clients to load web pages
+	if (g_command_stuffed)
+		return;
 
 	if (Cmd_Argc() != 2)
 	{

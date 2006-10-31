@@ -250,7 +250,7 @@ void Con_Dump_f (void)
 	for ( ; l <= con.current; l++)
 	{
 		line = con.text + (l % con.totallines) * con.linewidth;
-		Q_strncpyz(buffer, line, con.linewidth < sizeof(buffer) ? con.linewidth : sizeof(buffer));
+		Q_strncpyzna(buffer, line, con.linewidth < sizeof(buffer) ? con.linewidth : sizeof(buffer));
 
 		for (x = con.linewidth - 1; x >= 0; x--)
 		{

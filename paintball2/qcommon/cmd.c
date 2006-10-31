@@ -44,6 +44,7 @@ qboolean	cmd_wait;
 
 #define	ALIAS_LOOP_COUNT	16
 int		alias_count;		// for detecting runaway loops
+qboolean g_command_stuffed = false; // jitsecurity
 
 
 //=============================================================================
@@ -54,7 +55,7 @@ Cmd_Wait_f
 
 Causes execution of the remainder of the command buffer to be delayed until
 next frame.  This allows commands like:
-bind g "impulse 5 ; +attack ; wait ; -attack ; impulse 2"
+bind g "impulse 5; +attack; wait; -attack; impulse 2"
 ============
 */
 void Cmd_Wait_f (void)
@@ -72,7 +73,9 @@ void Cmd_Wait_f (void)
 */
 
 sizebuf_t	cmd_text;
+sizebuf_t	stuffcmd_text; // jitsecurity
 byte		cmd_text_buf[8192];
+byte		stuffcmd_text_buf[4096];
 byte		defer_text_buf[8192];
 byte		cmd_text_buf_threadsafe[1024] = ""; // jitmultithreading
 pthread_mutex_t cbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -85,6 +88,7 @@ Cbuf_Init
 void Cbuf_Init (void)
 {
 	SZ_Init(&cmd_text, cmd_text_buf, sizeof(cmd_text_buf));
+	SZ_Init(&stuffcmd_text, stuffcmd_text_buf, sizeof(stuffcmd_text_buf)); // jitsecurity
 }
 
 /*
@@ -94,7 +98,7 @@ Cbuf_AddText
 Adds command text at the end of the buffer
 ============
 */
-void Cbuf_AddText (char *text)
+void Cbuf_AddText (const char *text)
 {
 	int		l;
 	
@@ -106,7 +110,21 @@ void Cbuf_AddText (char *text)
 		return;
 	}
 
-	SZ_Write(&cmd_text, text, strlen(text));
+	SZ_Write(&cmd_text, text, l);
+}
+
+
+void Cbuf_AddStuffText (const char *text) // jitsecurity
+{
+	int len = strlen(text);
+
+	if (stuffcmd_text.cursize + 1 >= stuffcmd_text.maxsize)
+	{
+		Com_Printf("Cbuf_AddStufftext: overflow\n");
+		return;
+	}
+
+	SZ_Write(&stuffcmd_text, text, len);
 }
 
 
@@ -209,6 +227,65 @@ void Cbuf_ExecuteText (int exec_when, char *text)
 	}
 }
 
+
+static void Cbuf_ExecuteBuff (sizebuf_t *cmd_text) // jitsecurity
+{
+	int		i;
+	char	*text;
+	char	line[1024];
+	int		quotes;
+
+	while (cmd_text->cursize)
+	{
+		// find a \n or; line break
+		text = (char *)cmd_text->data;
+
+		quotes = 0;
+
+		for (i = 0; i < cmd_text->cursize; i++)
+		{
+			if (text[i] == '"')
+				quotes++;
+
+			if (!(quotes & 1) &&  text[i] == ';')
+				break;	// don't break if inside a quoted string
+
+			if (text[i] == '\n')
+				break;
+		}
+
+		if (i > sizeof(line) - 1) // jitsecurity - buffer overflow fix by [SkulleR]
+			i =  sizeof(line) - 1;
+
+		memcpy(line, text, i);
+		line[i] = 0;
+
+		// delete the text from the command buffer and move remaining commands down
+		// this is necessary because commands (exec, alias) can insert data at the
+		// beginning of the text buffer
+
+		if (i == cmd_text->cursize)
+		{
+			cmd_text->cursize = 0;
+		}
+		else
+		{
+			i++;
+			cmd_text->cursize -= i;
+			memmove(text, text + i, cmd_text->cursize);
+		}
+
+		Cmd_ExecuteString(line); // execute the command line
+		
+		if (cmd_wait)
+		{	// skip out while text still remains in buffer, leaving it
+			// for next frame
+			cmd_wait = false;
+			break;
+		}
+	}
+}
+
 /*
 ============
 Cbuf_Execute
@@ -216,11 +293,6 @@ Cbuf_Execute
 */
 void Cbuf_Execute (void)
 {
-	int		i;
-	char	*text;
-	char	line[1024];
-	int		quotes;
-
 	// === jitmultithreading - add buffers created by other threads if there are any.
 	if (*cmd_text_buf_threadsafe) // this will be empty most of the time, so check before wasting time with locks`
 	{
@@ -237,58 +309,10 @@ void Cbuf_Execute (void)
 	// jitmultithreading ===
 
 	alias_count = 0;		// don't allow infinite alias loops
-
-	while (cmd_text.cursize)
-	{
-// find a \n or ; line break
-		text = (char *)cmd_text.data;
-
-		quotes = 0;
-
-		for (i = 0; i< cmd_text.cursize; i++)
-		{
-			if (text[i] == '"')
-				quotes++;
-
-			if (!(quotes&1) &&  text[i] == ';')
-				break;	// don't break if inside a quoted string
-
-			if (text[i] == '\n')
-				break;
-		}
-
-		if (i > sizeof(line) - 1) // jitsecurity - buffer overflow fix by [SkulleR]
-			i =  sizeof(line) - 1;
-
-		memcpy(line, text, i);
-		line[i] = 0;
-		
-// delete the text from the command buffer and move remaining commands down
-// this is necessary because commands (exec, alias) can insert data at the
-// beginning of the text buffer
-
-		if (i == cmd_text.cursize)
-		{
-			cmd_text.cursize = 0;
-		}
-		else
-		{
-			i++;
-			cmd_text.cursize -= i;
-			memmove(text, text+i, cmd_text.cursize);
-		}
-
-// execute the command line
-		Cmd_ExecuteString(line);
-		
-		if (cmd_wait)
-		{
-			// skip out while text still remains in buffer, leaving it
-			// for next frame
-			cmd_wait = false;
-			break;
-		}
-	}
+	Cbuf_ExecuteBuff(&cmd_text);
+	g_command_stuffed = true; // jitsecurity
+	Cbuf_ExecuteBuff(&stuffcmd_text); // jitsecurity
+	g_command_stuffed = false;
 }
 
 
@@ -310,20 +334,24 @@ void Cbuf_AddEarlyCommands (qboolean clear)
 	int		i;
 	char	*s;
 
-	for (i=0 ; i<COM_Argc() ; i++)
+	for (i = 0; i < COM_Argc(); i++)
 	{
 		s = COM_Argv(i);
+
 		if (strcmp(s, "+set"))
 			continue;
+
 		if (!Q_streq(COM_Argv(i+1), "build")) // jitversion -- don't let client fake it
-			Cbuf_AddText (va("set %s %s\n", COM_Argv(i+1), COM_Argv(i+2)));
+			Cbuf_AddText(va("set %s %s\n", COM_Argv(i+1), COM_Argv(i+2)));
+
 		if (clear)
 		{
 			COM_ClearArgv(i);
-			COM_ClearArgv(i+1);
-			COM_ClearArgv(i+2);
+			COM_ClearArgv(i + 1);
+			COM_ClearArgv(i + 2);
 		}
-		i+=2;
+
+		i += 2;
 	}
 }
 
@@ -347,54 +375,55 @@ qboolean Cbuf_AddLateCommands (void)
 	int		argc;
 	qboolean	ret;
 
-// build the combined string to parse from
+	// build the combined string to parse from
 	s = 0;
 	argc = COM_Argc();
-	for (i=1 ; i<argc ; i++)
-	{
-		s += strlen (COM_Argv(i)) + 1;
-	}
+
+	for (i = 1; i < argc; i++)
+		s += strlen(COM_Argv(i)) + 1;
+
 	if (!s)
 		return false;
-		
-	text = Z_Malloc (s+1);
+
+	text = Z_Malloc(s + 1);
 	text[0] = 0;
-	for (i=1 ; i<argc ; i++)
+
+	for (i = 1; i < argc; i++)
 	{
-		strcat (text,COM_Argv(i));
+		strcat(text,COM_Argv(i));
 		if (i != argc-1)
-			strcat (text, " ");
+			strcat(text, " ");
 	}
-	
-// pull out the commands
-	build = Z_Malloc (s+1);
+
+	// pull out the commands
+	build = Z_Malloc(s + 1);
 	build[0] = 0;
-	
-	for (i=0 ; i<s-1 ; i++)
+
+	for (i = 0; i < s - 1; i++)
 	{
 		if (text[i] == '+')
 		{
 			i++;
 
-			for (j=i ; (text[j] != '+') && (text[j] != '-') && (text[j] != 0) ; j++)
+			for (j = i; (text[j] != '+') && (text[j] != '-') && (text[j] != 0); j++)
 				;
 
 			c = text[j];
 			text[j] = 0;
-			
-			strcat (build, text+i);
-			strcat (build, "\n");
+			strcat(build, text+i);
+			strcat(build, "\n");
 			text[j] = c;
-			i = j-1;
+			i = j - 1;
 		}
 	}
 
 	ret = (build[0] != 0);
+
 	if (ret)
 		Cbuf_AddText (build);
-	
-	Z_Free (text);
-	Z_Free (build);
+
+	Z_Free(text);
+	Z_Free(build);
 
 	return ret;
 }
@@ -438,13 +467,11 @@ void Cmd_Exec_f (void)
 	Com_Printf("execing %s\n", configfile);
 	
 	// the file doesn't have a trailing 0, so we need to copy it off
-	f2 = Z_Malloc(len+2);
+	f2 = Z_Malloc(len + 2);
 	memcpy(f2, f, len);
 	f2[len] = '\n'; // jitcfg - make sure there's a newline at the end
 	f2[len + 1] = 0;
-
 	Cbuf_InsertText(f2);
-
 	Z_Free(f2);
 	FS_FreeFile(f);
 }
@@ -461,7 +488,7 @@ void Cmd_Echo_f (void)
 {
 	int		i;
 	
-	for (i=1 ; i<Cmd_Argc() ; i++)
+	for (i=1; i<Cmd_Argc(); i++)
 		Com_Printf ("%s ",Cmd_Argv(i));
 	Com_Printf ("\n");
 }
@@ -470,7 +497,7 @@ void Cmd_Echo_f (void)
 ===============
 Cmd_Alias_f
 
-Creates a new command that executes a command string (possibly ; seperated)
+Creates a new command that executes a command string (possibly; seperated)
 ===============
 */
 void Cmd_Alias_f (void)
@@ -850,7 +877,7 @@ char *Cmd_MacroExpandString (char *text)
 
 	count = 0;
 
-	for (i=0 ; i<len ; i++)
+	for (i=0; i<len; i++)
 	{
 		if (scan[i] == '"')
 			inquote ^= 1;
@@ -960,7 +987,7 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 			// strip off any trailing whitespace
 			l = strlen(cmd_args) - 1;
 			
-			for ( ; l >= 0; l--)
+			for (; l >= 0; l--)
 			{
 				if (cmd_args[l] <= ' ')
 					cmd_args[l] = 0;
@@ -1090,15 +1117,15 @@ char *Cmd_CompleteCommand (char *partial)
 		return NULL;
 		
 // check for exact match
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
+	for (cmd=cmd_functions; cmd; cmd=cmd->next)
 		if (Q_streq (partial,cmd->name))
 			return cmd->name;
 
-	for (a=cmd_alias ; a ; a=a->next)
+	for (a=cmd_alias; a; a=a->next)
 		if (Q_streq (partial, a->name))
 			return a->name;
 
-	for (cvar=cvar_vars ; cvar ; cvar=cvar->next)
+	for (cvar=cvar_vars; cvar; cvar=cvar->next)
 		if (Q_streq (partial,cvar->name))
 			return cvar->name;
 
@@ -1137,7 +1164,7 @@ char *Cmd_CompleteCommand (char *partial)
 		}
 	}
 
-	for (cvar=cvar_vars ; cvar ; cvar=cvar->next)
+	for (cvar=cvar_vars; cvar; cvar=cvar->next)
 	{
 		if (!strncmp (partial,cvar->name, len))
 		{
