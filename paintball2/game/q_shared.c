@@ -2196,6 +2196,10 @@ Q_strncpyz
 */
 void Q_strncpyz (char *dest, const char *src, size_t size)
 {
+	char *dest_cpy = dest;
+	const char *src_cpy = src;
+	size_t size_cpy = size; // for debugging
+
 	if (size)
 	{
 		while (--size && (*dest++ = *src++));
@@ -2241,10 +2245,12 @@ static char char_remap[256] = {
 
 // strip out the garbage characters such as color codes
 // and map extendegggd ascii to something readable...
-void strip_garbage (char *out, const char *in) // jit
+void strip_garbage (char *cout, const char *cin) // jit
 {
 	register const unsigned char *s;
 	register unsigned char *sbuf;
+	unsigned char *out = (unsigned char *)cout; // stupid gcc warnings
+	unsigned char *in = (unsigned char *)cin;
 
 	for (sbuf = out, s = in; *s; s++)
 	{
@@ -2266,5 +2272,3 @@ void strip_garbage (char *out, const char *in) // jit
 
 	*sbuf = 0;
 }
-
-

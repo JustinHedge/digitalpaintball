@@ -116,7 +116,7 @@ int GetHTTP (const char *url, char *received, int received_max)
 	s2 = strchr(s, '/');
 	
 	if (s2)
-		len = min(sizeof(szDomain) - 1, s2 - s);
+		len = (sizeof(szDomain) - 1 < s2 - s) ? sizeof(szDomain) - 1 : s2 - s;
 	else
 		len = strlen(s);
 

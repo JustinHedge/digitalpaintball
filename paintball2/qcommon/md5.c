@@ -1,4 +1,4 @@
-#pragma hdrstop
+//#pragma hdrstop
 #include <string.h>
 #include "qcommon.h"
 
@@ -285,7 +285,6 @@ char *Com_HMACMD5String (const void *key, int keylen, const void *msg, int msgle
 	unsigned char *pOPad;
 	unsigned char *pIPad;
 	const unsigned char *pKey = key;
-	const unsigned char *pMsg = msg;
 	unsigned char *pTemp;
 	int i, len;
 	char szMD5Str[40];
@@ -359,3 +358,4 @@ void TestMD5 (void)
 		fclose(fp);
 	}
 }*/
+
