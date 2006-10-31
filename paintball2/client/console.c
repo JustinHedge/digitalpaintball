@@ -245,12 +245,12 @@ void Con_Dump_f (void)
 	}
 
 	// write the remaining lines
-	buffer[con.linewidth] = 0;
+	buffer[min(con.linewidth, sizeof(buffer) - 1)] = 0;
 
 	for ( ; l <= con.current; l++)
 	{
 		line = con.text + (l % con.totallines) * con.linewidth;
-		Q_strncpyzna(buffer, line, con.linewidth < sizeof(buffer) ? con.linewidth : sizeof(buffer));
+		strncpy(buffer, line, min(con.linewidth, sizeof(buffer) - 1));
 
 		for (x = con.linewidth - 1; x >= 0; x--)
 		{
