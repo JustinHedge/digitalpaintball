@@ -1330,9 +1330,12 @@ void R_SetGL2D (void)
 	{
 		char s[256];
 
-		Com_sprintf(s, sizeof(s), "%4i wpoly %4i epoly %i tex %i lmaps\n",
+		Com_sprintf(s, sizeof(s), "%c%c%4i wpoly %c%c%4i epoly %c9%i tex %i lmaps\n",
+			CHAR_COLOR, c_brush_polys > 1024 ? c_brush_polys > 2048 ? c_brush_polys > 4096 ? 'A' : 'C' : 'E' : '9',
 			c_brush_polys,
+			CHAR_COLOR, c_alias_polys > 2048 ? c_alias_polys > 4096 ? c_alias_polys > 8192 ? 'A' : 'C' : 'E' : '9',
 			c_alias_polys,
+			CHAR_COLOR,
 			c_visible_textures,
 			c_visible_lightmaps);
 		Draw_String(0, r_newrefdef.height - 32*hudscale, s);
