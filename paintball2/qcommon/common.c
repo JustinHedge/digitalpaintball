@@ -92,34 +92,36 @@ void Com_EndRedirect (void)
 	rd_flush = NULL;
 }
 
-static void ConsoleOutput (const char *msg) // jittimestamp
+
+static void ConsoleLogfile (const char *msg)
 {
-	static qboolean printstamp = true;
-
-	if (printstamp && timestamp_console && timestamp_console->value)
-	{	// don't tag timestamps on if it's not a new line
-		time_t now;
-		char timestamp[256];
-		struct tm *nowtime;
-		static int lastday = -1;
-
-		time(&now);
-		nowtime = localtime(&now);
+	// logfile
+	if (logfile_active && logfile_active->value)
+	{
+		char name[MAX_QPATH];
 		
-		if (nowtime->tm_mday != lastday)
+		if (!logfile)
 		{
-			Com_sprintf(timestamp, sizeof(timestamp), "[********] Date: %04d-%02d-%02d\n",
-				nowtime->tm_year + 1900, nowtime->tm_mon + 1, nowtime->tm_mday);
-			Sys_ConsoleOutput(timestamp);
-			lastday = nowtime->tm_mday;
+			// ===
+			// jit -- allow multiple console logs for servers on multiple ports. 
+			int port;
+
+			port = Cvar_Get("port", va("%i", PORT_SERVER), CVAR_NOSET)->value;
+			Com_sprintf(name, sizeof(name), "%s/qconsole%d.log", FS_Gamedir(), port);
+			// ===
+
+			if (logfile_active->value > 2)
+				logfile = fopen(name, "a");
+			else
+				logfile = fopen(name, "w");
 		}
 
-		strftime(timestamp, sizeof(timestamp), "[%H:%M:%S] ", nowtime);
-		Sys_ConsoleOutput(timestamp);
+		if (logfile)
+			fprintf(logfile, "%s", msg);
+
+		if (logfile_active->value > 1)
+			fflush(logfile);		// force it to save every time
 	}
-	
-	Sys_ConsoleOutput((char *)msg);
-	printstamp = (strchr(msg, '\n') != NULL);
 }
 
 /*
@@ -134,6 +136,7 @@ void Com_Printf (char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
+	static qboolean printstamp = true; // jittimestamp
 
 	va_start(argptr, fmt);
 	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
@@ -153,36 +156,38 @@ void Com_Printf (char *fmt, ...)
 	}
 
 	Con_Print(msg);
-		
-	// also echo to debugging console
-	ConsoleOutput(msg); // jittimestamp
-	//Sys_ConsoleOutput(msg);
 
-	// logfile
-	if (logfile_active && logfile_active->value)
-	{
-		char name[MAX_QPATH];
+	// ===
+	// jittimestamp
+	if (printstamp && timestamp_console && timestamp_console->value)
+	{	// don't tag timestamps on if it's not a new line
+		time_t now;
+		char timestamp[256];
+		struct tm *nowtime;
+		static int lastday = -1;
+
+		time(&now);
+		nowtime = localtime(&now);
 		
-		if (!logfile)
+		if (nowtime->tm_mday != lastday)
 		{
-			// ===
-			// jit -- allow multiple console logs for servers on multiple ports. 
-			int port;
-			port = Cvar_Get("port", va("%i", PORT_SERVER), CVAR_NOSET)->value;
-			Com_sprintf(name, sizeof(name), "%s/qconsole%d.log", FS_Gamedir(), port);
-			// ===
-			if (logfile_active->value > 2)
-				logfile = fopen(name, "a");
-			else
-				logfile = fopen(name, "w");
+			Com_sprintf(timestamp, sizeof(timestamp), "[********] Date: %04d-%02d-%02d\n",
+				nowtime->tm_year + 1900, nowtime->tm_mon + 1, nowtime->tm_mday);
+			Sys_ConsoleOutput(timestamp);
+			ConsoleLogfile(timestamp);
+			lastday = nowtime->tm_mday;
 		}
 
-		if (logfile)
-			fprintf(logfile, "%s", msg);
-
-		if (logfile_active->value > 1)
-			fflush(logfile);		// force it to save every time
+		strftime(timestamp, sizeof(timestamp), "[%H:%M:%S] ", nowtime);
+		Sys_ConsoleOutput(timestamp);
+		ConsoleLogfile(timestamp);
 	}
+	
+	Sys_ConsoleOutput(msg);
+	printstamp = (strchr(msg, '\n') != NULL); // so we only print timestamps after a newline.
+	ConsoleLogfile(msg);
+	// jittimestamp
+	// ===
 }
 
 
