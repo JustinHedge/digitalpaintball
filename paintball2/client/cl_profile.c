@@ -231,6 +231,7 @@ void CL_ProfileSelect_f (void)
 {
 	char szProfilePath[1024];
 	FILE *fp;
+	static qboolean autologin = true;
 
 	if (Cmd_Argc() < 2)
 		return;
@@ -258,6 +259,12 @@ void CL_ProfileSelect_f (void)
 		s = szProfileData + sizeof("PB2PROFILE1.0") + PROFILE_LOGIN_NAME_LEN;
 		Cvar_Set("menu_profile_pass", s);
 		Cvar_SetValue("menu_profile_remember_pass", *s ? 1.0f : 0.0f);
+
+		if (Cvar_Get("menu_profile_autologin", "0", CVAR_ARCHIVE)->value && autologin)
+		{
+			Cbuf_AddText("profile_login $menu_profile_file $menu_profile_pass\n");
+			autologin = false; // only autologin when the menu is first loaded
+		}
 	}
 
 	menu_profile_pass->modified = false;
