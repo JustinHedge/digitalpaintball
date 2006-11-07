@@ -431,7 +431,6 @@ void Con_Print (unsigned char *txt) // jittext
 	int		l;
 	unsigned char c; // jittext
 	static int	cr;
-	int		mask;
 	qboolean isitalics = false;
 	qboolean isunderlined = false;
 	qboolean iscolored = false;
@@ -439,27 +438,16 @@ void Con_Print (unsigned char *txt) // jittext
 
 	if (!con.initialized)
 		return;
-/* jittext
-	if (txt[0] == 1 || txt[0] == 2)
-	{
-		mask = 128;		// go to colored text
-		txt++;
-	}
-	else*/
-		mask = 0;
 
-
-	while ( (c = *txt) )
+	while ((c = *txt))
 	{
-	// count word length
-		for (l=0 ; l< con.linewidth ; l++)
-		{
-			if ( txt[l] <= ' ')
+		// count word length
+		for (l = 0; l < con.linewidth; l++)
+			if (txt[l] <= ' ')
 				break;
-		}
 
-	// word wrap
-		if (l != con.linewidth && (con.x + l > con.linewidth) )
+		// word wrap
+		if (l != con.linewidth && (con.x + l > con.linewidth))
 			con.x = 0;
 
 		txt++;
@@ -470,10 +458,9 @@ void Con_Print (unsigned char *txt) // jittext
 			cr = false;
 		}
 
-		
 		if (!con.x)
 		{
-			Con_Linefeed ();
+			Con_Linefeed();
 
 			if (isunderlined) // jittext, continue formatting or wordwrapped lines
 			{
@@ -481,12 +468,14 @@ void Con_Print (unsigned char *txt) // jittext
 				con.text[y*con.linewidth+con.x] = CHAR_UNDERLINE;
 				con.x++;
 			}
+
 			if (isitalics)
 			{
 				y = con.current % con.totallines;
 				con.text[y*con.linewidth+con.x] = CHAR_ITALICS;
 				con.x++;
 			}
+
 			if (iscolored)
 			{
 				y = con.current % con.totallines;
@@ -499,34 +488,38 @@ void Con_Print (unsigned char *txt) // jittext
 			if (con.current >= 0)
 				con.times[con.current % NUM_CON_TIMES] = cls.realtime;
 		}
-		
+
 		if (c == CHAR_COLOR) // jittext
 		{
 			iscolored = true;
 			color = *txt;
 		}
 		else if (c == CHAR_UNDERLINE)
+		{
 			isunderlined = !isunderlined;
+		}
 		else if (c == CHAR_ITALICS)
+		{
 			isitalics = !isitalics;
+		}
 
 		switch (c)
 		{
 		case '\n':
 			con.x = 0;
 			break;
-
 		case '\r':
 			con.x = 0;
 			cr = 1;
 			break;
-
 		default:	// display character and advance
 			y = con.current % con.totallines;
-			con.text[y*con.linewidth+con.x] = c;// jittext | mask | con.ormask;
+			con.text[y * con.linewidth + con.x] = c; // jittext | mask | con.ormask;
 			con.x++;
+
 			if (con.x >= con.linewidth)
 				con.x = 0;
+
 			break;
 		}
 	}
