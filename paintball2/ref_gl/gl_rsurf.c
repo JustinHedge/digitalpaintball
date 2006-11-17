@@ -1526,7 +1526,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 			}
 			else
 			{
-				// == jitest
+				// === jitest
 #ifdef COLORNODES
 				//static char r=0,g=128,b=200;
 				char r,g,b;
@@ -1535,14 +1535,14 @@ void R_RecursiveWorldNode (mnode_t *node)
 					unsigned char bytes[4];
 				} nodeptr;
 				nodeptr.ptr = node;
-				//qglColor3ub(r++, g+=200, b+=30); // jitest
-				//qglColor3ubv(nodeptr.bytes); // jitest
+				//qglColor3ub(r++, g+=200, b+=30);
+				//qglColor3ubv(nodeptr.bytes);
 				r=nodeptr.bytes[0]<<2;
 				g=nodeptr.bytes[1]+nodeptr.bytes[0];
 				b=nodeptr.bytes[2]+nodeptr.bytes[3];
 				qglColor3ub(r,g,b);
 #endif
-				// jitest == *note, be sure to remove gl_combine_ext
+				// jitest === *note, be sure to remove gl_combine_ext
 				if (qglMultiTexCoord2fARB && !(surf->flags & SURF_DRAWTURB))
 				{
 					GL_RenderLightmappedPoly(surf);

@@ -758,7 +758,7 @@ PM_CheckJump
 void PM_CheckJump (void)
 {
 	// === jitjumphack -- don't kill people's strafe jumps
-#ifdef QUAKE2
+#if 0 // doubt even Q2 players want this... #ifdef QUAKE2
 	if (pm->s.pm_flags & PMF_TIME_LAND)
 	{	// hasn't been long enough since landing to jump again
 		return;
@@ -771,11 +771,11 @@ void PM_CheckJump (void)
 		pm->s.pm_flags &= ~PMF_JUMP_HELD;
 		return;
 	}
-///*jitest
+
 	// must wait for jump to be released
 	if (pm->s.pm_flags & PMF_JUMP_HELD)
 		return;
-//*/
+
 	if (pm->s.pm_type == PM_DEAD)
 		return;
 

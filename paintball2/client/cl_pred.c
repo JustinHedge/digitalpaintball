@@ -253,8 +253,7 @@ void CL_PredictMovement (void)
 
 	frame = 0;
 
-	//if(ack >= current-1) // jitnetfps -- jitodo interpolate between sent frames
-	if (ack+1 >= current) // jitnetfps -- jitodo interpolate between sent frames
+	if (ack >= current - 1) // jitnetfps -- jitodo interpolate between sent frames
 	{
 //		//frame = ack & (CMD_BACKUP-1);
 //		//cmd = &cl.cmds[frame];
@@ -297,13 +296,11 @@ void CL_PredictMovement (void)
 	}
 	else
 	{
-
 		// run frames
 		while (++ack < current)
 		{
 			frame = ack & (CMD_BACKUP-1);
 			cmd = &cl.cmds[frame];
-
 			pm.cmd = *cmd;
 			Pmove(&pm);
 			
@@ -336,10 +333,10 @@ void CL_PredictMovement (void)
 #ifdef INTERP
 	step = pm.s.origin[2] - cl.oldz;
 
-	if (step > 8 && step < 160 && (pm.s.pm_flags & PMF_ON_GROUND) )
+	if (step > 8 && step < 160 && (pm.s.pm_flags & PMF_ON_GROUND))
 	{
-		cl.predicted_step = step * 0.125;
-		cl.predicted_step_time = cls.realtime - cls.frametime * 500;
+		cl.predicted_step = step * 0.125f;
+		cl.predicted_step_time = cls.realtime - cls.frametime * 500.0f;
 	}
 
 	cl.oldz = pm.s.origin[2];
@@ -349,7 +346,7 @@ void CL_PredictMovement (void)
 	oldz = cl.predicted_origins[oldframe][2];
 	step = pm.s.origin[2] - oldz;
 
-	if (step > 63 && step < 160 && (pm.s.pm_flags & PMF_ON_GROUND) )
+	if (step > 63 && step < 160 && (pm.s.pm_flags & PMF_ON_GROUND))
 	{
 		cl.predicted_step = step * 0.125;
 		cl.predicted_step_time = cls.realtime - cls.frametime * 500;
@@ -360,7 +357,6 @@ void CL_PredictMovement (void)
 	cl.predicted_origin[0] = pm.s.origin[0]*0.125;
 	cl.predicted_origin[1] = pm.s.origin[1]*0.125;
 	cl.predicted_origin[2] = pm.s.origin[2]*0.125;
-
 
 	// jitnetfps -- what do we need to predict the angles for anyway?!
 	//VectorCopy (pm.viewangles, cl.predicted_angles);

@@ -280,7 +280,7 @@ unsigned Com_MD5Checksum (void *buffer, int length)
 }
 
 // hmac( key, m ) = h( (key ^ opad) + h( (key ^ ipad) + m ) )
-char *Com_HMACMD5String (const void *key, int keylen, const void *msg, int msglen, char *out, size_t outsize)
+char *Com_HMACMD5String (const void *key, size_t keylen, const void *msg, int msglen, char *out, size_t outsize)
 {
 	unsigned char *pOPad;
 	unsigned char *pIPad;
