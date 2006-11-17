@@ -68,6 +68,7 @@ typedef struct rs_stage_s {
 	rs_offset_t				offset;			// jitrscript
 	rs_tcGen_t				tcGen;			// jitrscript
 	vec4_t					tcGenVec[2];	// jitrscript
+	qboolean				sharp;			// jitrscript
 
 	float					rot_speed;		// rotate speed (0 for no rotate);
 

@@ -238,9 +238,9 @@ void GL_TextureMode(const char *string )
 	gl_filter_max = modes[i].maximize;
 
 	// change all the existing mipmap texture objects
-	for (i=0, glt=gltextures; i<numgltextures; i++, glt++)
+	for (i = 0, glt = gltextures; i < numgltextures; i++, glt++)
 	{
-		if (glt->type != it_pic && glt->type != it_sky)
+		if (glt->type != it_pic && glt->type != it_sky && glt->type != it_sharppic) // jitrscript
 		{
 			GL_Bind(glt->texnum);
 			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
@@ -311,37 +311,41 @@ void	GL_ImageList_f (void)
 		"PAL"
 	};
 
-	ri.Con_Printf (PRINT_ALL, "------------------\n");
+	ri.Con_Printf(PRINT_ALL, "------------------\n");
 	texels = 0;
 
-	for (i=0, image=gltextures; i<numgltextures; i++, image++)
+	for (i = 0, image = gltextures; i < numgltextures; i++, image++)
 	{
 		if (image->texnum <= 0)
 			continue;
+
 		texels += image->upload_width*image->upload_height;
+
 		switch (image->type)
 		{
 		case it_skin:
-			ri.Con_Printf (PRINT_ALL, "M");
+			ri.Con_Printf(PRINT_ALL, "M");
 			break;
 		case it_sprite:
-			ri.Con_Printf (PRINT_ALL, "S");
+			ri.Con_Printf(PRINT_ALL, "S");
 			break;
 		case it_wall:
-			ri.Con_Printf (PRINT_ALL, "W");
+			ri.Con_Printf(PRINT_ALL, "W");
 			break;
 		case it_pic:
-			ri.Con_Printf (PRINT_ALL, "P");
+		case it_sharppic: // jitrscript
+			ri.Con_Printf(PRINT_ALL, "P");
 			break;
 		default:
-			ri.Con_Printf (PRINT_ALL, " ");
+			ri.Con_Printf(PRINT_ALL, " ");
 			break;
 		}
 
-		ri.Con_Printf (PRINT_ALL,  " %3i %3i %s: %s\n",
+		ri.Con_Printf(PRINT_ALL,  " %3i %3i %s: %s\n",
 			image->upload_width, image->upload_height, palstrings[image->paletted], image->name);
 	}
-	ri.Con_Printf (PRINT_ALL, "Total texel count (not counting mipmaps): %i\n", texels);
+
+	ri.Con_Printf(PRINT_ALL, "Total texel count (not counting mipmaps): %i\n", texels);
 }
 
 
@@ -1230,7 +1234,7 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	byte		*scan;
 	int			comp;
 	GLint		max_size;
-	qboolean	mipmap = (imagetype != it_pic && imagetype != it_sky);
+	qboolean	mipmap = (imagetype != it_pic && imagetype != it_sharppic && imagetype != it_sky); // jitrscript
 
 	uploaded_paletted = false;
 
@@ -1470,14 +1474,14 @@ GL_LoadPic
 This is also used as an entry point for the generated r_notexture
 ================
 */
-image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetype_t type, int bits)
+image_t *GL_LoadPic (const char *name, byte *pic, int width, int height, imagetype_t type, int bits)
 {
 	image_t		*image;
 	int			i;
 	qboolean	sharp = false; // jit, for images we don't want filtered.
 
 	// find a free image_t
-	for (i=0, image=gltextures; i<numgltextures; i++,image++)
+	for (i = 0, image = gltextures; i < numgltextures; i++, image++)
 	{
 		if (!image->texnum)
 			break;
@@ -1494,9 +1498,9 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 	image = &gltextures[i];
 
 	if (strlen(name) >= sizeof(image->name))
-		ri.Sys_Error (ERR_DROP, "Draw_LoadPic: \"%s\" is too long", name);
+		ri.Sys_Error(ERR_DROP, "Draw_LoadPic: \"%s\" is too long", name);
 
-	strcpy (image->name, name);
+	Q_strncpyz(image->name, name, sizeof(image->name));
 	image->registration_sequence = registration_sequence;
 	
 	image->width = width;
@@ -1520,7 +1524,7 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 		image->height = 128;
 	}
 	else if (strstr(name, "pics/gamma") || strstr(name, "pics/menu_char_colors") ||
-		(image->type == it_pic && bits == 8))
+		(image->type == it_pic && bits == 8) || image->type == it_sharppic) // jitrscript
 	{
 		sharp = true; // no bilinear filtering
 	}
@@ -1548,17 +1552,17 @@ image_t *GL_LoadPic(const char *name, byte *pic, int width, int height, imagetyp
 		// copy the texels into the scrap block
 		k = 0;
 
-		for (i=0; i<image->height; i++)
-			for (j=0; j<image->width; j++, k++)
-				scrap_texels[texnum][(y+i)*BLOCK_WIDTH + x + j] = pic[k];
+		for (i = 0; i < image->height; i++)
+			for (j = 0; j < image->width; j++, k++)
+				scrap_texels[texnum][(y + i) * BLOCK_WIDTH + x + j] = pic[k];
 
 		image->texnum = TEXNUM_SCRAPS + texnum;
 		image->scrap = true;
 		image->has_alpha = true;
-		image->sl = (x+0.01)/(float)BLOCK_WIDTH;
-		image->sh = (x+image->width-0.01)/(float)BLOCK_WIDTH;
-		image->tl = (y+0.01)/(float)BLOCK_WIDTH;
-		image->th = (y+image->height-0.01)/(float)BLOCK_WIDTH;
+		image->sl = (x + 0.01f) / (float)BLOCK_WIDTH;
+		image->sh = (x + image->width - 0.01f) / (float)BLOCK_WIDTH;
+		image->tl = (y + 0.01f) / (float)BLOCK_WIDTH;
+		image->th = (y + image->height - 0.01f) / (float)BLOCK_WIDTH;
 	}
 	else
 	{
@@ -1778,7 +1782,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 	}
 	else
 	{
-		for (i=0, image=gltextures; i<numgltextures; i++, image++)
+		for (i = 0, image = gltextures; i < numgltextures; i++, image++)
 		{
 			if (Q_streq(name_noext, image->name))
 			{
@@ -1946,7 +1950,7 @@ void GL_FreeUnusedImages (void)
 	r_notexture->registration_sequence = registration_sequence;
 	r_particletexture->registration_sequence = registration_sequence;
 
-	for (i=0, image=gltextures; i<numgltextures; i++, image++)
+	for (i = 0, image = gltextures; i < numgltextures; i++, image++)
 	{
 		if (image->registration_sequence == registration_sequence)
 			continue;		// used this sequence
@@ -1954,7 +1958,7 @@ void GL_FreeUnusedImages (void)
 		if (!image->registration_sequence)
 			continue;		// free image_t slot
 
-		if (image->type == it_pic)
+		if (image->type == it_pic || image->type == it_sharppic)
 			continue;		// don't free pics
 
 		//Heffo - Free Cinematic
@@ -1963,13 +1967,12 @@ void GL_FreeUnusedImages (void)
 
 		// free it
 		hash_delete(&gltextures_hash, image->name);
+
 		if (image->rscript) // jitrscript
 			image->rscript->img_ptr = NULL;
 
 		qglDeleteTextures (1, &image->texnum);
-		
-		//memset (image, 0, sizeof(*image));
-		memset (image, 0, sizeof(image_t)); // jit (not sure if this makes a difference)
+		memset(image, 0, sizeof(image_t)); // jit (not sure if this makes a difference)
 	}
 }
 

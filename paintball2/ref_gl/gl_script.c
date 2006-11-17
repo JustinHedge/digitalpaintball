@@ -276,8 +276,8 @@ void RS_ReadyScript (rscript_t *rs)
 	if (rs->ready)
 		return;
 
-	mode = (rs->dontflush) ? it_pic : it_wall;
 	stage = rs->stage;
+	mode = stage->sharp ? it_sharppic : (rs->dontflush) ? it_pic : it_wall;
 
 	while (stage != NULL)
 	{
@@ -285,7 +285,7 @@ void RS_ReadyScript (rscript_t *rs)
 
 		while (anim != NULL)
 		{
-			anim->texture = GL_FindImage (anim->name, mode);
+			anim->texture = GL_FindImage(anim->name, mode);
 
 			if (!anim->texture)
 				anim->texture = r_notexture;
@@ -316,8 +316,8 @@ void RS_UpdateRegistration (void)
 
 	while (rs != NULL)
 	{
-		mode = (rs->dontflush) ? it_pic : it_wall;
 		stage = rs->stage;
+		mode = stage->sharp ? it_sharppic : (rs->dontflush) ? it_pic : it_wall; // jitrscript
 
 		while (stage != NULL)
 		{
@@ -325,7 +325,7 @@ void RS_UpdateRegistration (void)
 
 			while (anim != NULL)
 			{
-				anim->texture = GL_FindImage(anim->name,mode);
+				anim->texture = GL_FindImage(anim->name, mode);
 
 				if (!anim->texture)
 					anim->texture = r_notexture;
@@ -335,7 +335,7 @@ void RS_UpdateRegistration (void)
 
 			if (stage->texture)
 			{
-				stage->texture = GL_FindImage(stage->name,mode);
+				stage->texture = GL_FindImage(stage->name, mode);
 
 				if (!stage->texture)
 					stage->texture = r_notexture;
@@ -496,8 +496,7 @@ scriptname
 
 static void rs_stage_map (rs_stage_t *stage, char **token)
 {
-	*token = strtok (NULL, TOK_DELIMINATORS);
-
+	*token = strtok(NULL, TOK_DELIMINATORS);
 	Q_strncpyz(stage->name, *token, sizeof(stage->name));
 }
 
@@ -546,13 +545,13 @@ static void rs_stage_blendfunc (rs_stage_t *stage, char **token)
 
 static void rs_stage_alphashift (rs_stage_t *stage, char **token)
 {
-	*token = strtok (NULL, TOK_DELIMINATORS);
+	*token = strtok(NULL, TOK_DELIMINATORS);
 	stage->alphashift.speed = (float)atof(*token);
 
-	*token = strtok (NULL, TOK_DELIMINATORS);
+	*token = strtok(NULL, TOK_DELIMINATORS);
 	stage->alphashift.min = (float)atof(*token);
 
-	*token = strtok (NULL, TOK_DELIMINATORS);
+	*token = strtok(NULL, TOK_DELIMINATORS);
 	stage->alphashift.max = (float)atof(*token);
 }
 
@@ -660,6 +659,11 @@ static void rs_stage_offset (rs_stage_t *stage, char **token) // jitrscript
 	stage->offset.offsetY = atof(*token);
 }
 
+static void rs_stage_sharp (rs_stage_t *stage, char **token) // jitrscript
+{
+	stage->sharp = true;
+}
+
 static rs_stagekey_t rs_stagekeys[] = 
 {
 	{	"map",			&rs_stage_map			},
@@ -675,6 +679,7 @@ static rs_stagekey_t rs_stagekeys[] =
 	{	"scaleadd",		&rs_stage_scaleadd		}, // jitrscript
 	{	"offset",		&rs_stage_offset		}, // jitrscript
 	{	"tcgen",		&rs_stage_tcGen			}, // jitrscript
+	{	"sharp",		&rs_stage_sharp			}, // jitrscript
 
 	{	NULL,			NULL					}
 };

@@ -166,7 +166,8 @@ typedef enum
 	it_sprite,
 	it_wall,
 	it_pic,
-	it_sky
+	it_sky,
+	it_sharppic // jitrscript
 } imagetype_t;
 
 typedef struct image_s
