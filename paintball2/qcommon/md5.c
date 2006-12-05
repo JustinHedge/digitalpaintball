@@ -291,7 +291,7 @@ char *Com_HMACMD5String (const void *key, size_t keylen, const void *msg, int ms
 
 	pOPad = Z_Malloc(keylen);
 	pIPad = Z_Malloc(keylen);
-	len = max(keylen + msglen, keylen + 32);
+	len = (int)max(keylen + msglen, keylen + 32);
 	pTemp = Z_Malloc(len);
 
 	for (i = 0; i < keylen; ++i)
@@ -302,10 +302,10 @@ char *Com_HMACMD5String (const void *key, size_t keylen, const void *msg, int ms
 
 	memcpy(pTemp, pIPad, keylen);
 	memcpy(pTemp + keylen, msg, msglen);
-	Com_MD5HashString(pTemp, keylen + msglen, szMD5Str, sizeof(szMD5Str));
+	Com_MD5HashString(pTemp, (int)(keylen + msglen), szMD5Str, sizeof(szMD5Str));
 	memcpy(pTemp, pOPad, keylen);
 	memcpy(pTemp + keylen, szMD5Str, strlen(szMD5Str));
-	Com_MD5HashString(pTemp, keylen + strlen(szMD5Str), out, outsize);
+	Com_MD5HashString(pTemp, (int)(keylen + strlen(szMD5Str)), out, outsize);
 	Z_Free(pTemp);
 	Z_Free(pOPad);
 	Z_Free(pIPad);
