@@ -220,6 +220,7 @@ PROTOCOL
 #define	PORT_MASTER	27900
 #define	PORT_CLIENT	(rand()%11000)+5000
 #define	PORT_SERVER	27910
+#define	PORT_SERVER_MAX	27920
 
 //=========================================
 
@@ -842,7 +843,7 @@ extern	int		time_before_ref;
 extern	int		time_after_ref;
 
 void Z_Free (void *ptr);
-void *Z_Malloc (int size);			// returns 0 filled memory
+void *Z_Malloc (size_t size);			// returns 0 filled memory
 void *Z_TagMalloc (int size, int tag);
 void Z_FreeTags (int tag);
 
