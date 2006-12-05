@@ -758,6 +758,16 @@
 				RelativePath="a3d\q2a3d.h">
 			</File>
 		</Filter>
+		<Filter
+			Name="xfire"
+			Filter="">
+			<File
+				RelativePath="xfire\xfiregameclient.cpp">
+			</File>
+			<File
+				RelativePath="xfire\xfiregameclient.h">
+			</File>
+		</Filter>
 		<File
 			RelativePath="win32\pthreadVC.lib">
 		</File>
