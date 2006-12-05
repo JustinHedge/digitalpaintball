@@ -34,10 +34,16 @@ static void ping_broadcast (void)
 
 	if (!noudp->value)
 	{
-		adr.type = NA_BROADCAST;
-		adr.port = BigShort(PORT_SERVER);
-		sprintf(buff, "info %i", PROTOCOL_VERSION);
-		Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
+		int i;
+
+		// Scan the LAN for multiple IP's
+		for (i = PORT_SERVER; i <= PORT_SERVER_MAX; i++) // jitLAN
+		{
+			adr.type = NA_BROADCAST;
+			adr.port = BigShort(i);
+			sprintf(buff, "info %i", PROTOCOL_VERSION);
+			Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
+		}
 	}
 
 	if (!noipx->value)
@@ -88,7 +94,7 @@ void M_ServerlistPrint_f (void)
 {
 	int i;
 
-	for(i=0; i<m_serverlist.nummapped; i++)
+	for(i = 0; i < m_serverlist.nummapped; i++)
 		Com_Printf("%2d) %s\n    %s\n", i+1, m_serverlist.ips[i],
 			m_serverlist.info[i]);
 }
@@ -97,8 +103,10 @@ static void free_menu_serverlist (void) // jitodo -- eh, something should call t
 {
 	if (m_serverlist.info)
 		free_string_array(m_serverlist.info, m_serverlist.nummapped);
+
 	if (m_serverlist.ips)
 		free_string_array(m_serverlist.ips, m_serverlist.nummapped);
+
 	if (m_serverlist.server)
 		Z_Free(m_serverlist.server);
 
@@ -352,7 +360,7 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 	pthread_mutex_lock(&m_mut_widgets);
 
 	// check if server exists in current serverlist:
-	for (i=0; i<m_serverlist.numservers; i++)
+	for (i = 0; i < m_serverlist.numservers; i++)
 	{
 		if (adrs_equal(adr, m_serverlist.server[i].adr))
 		{
@@ -398,18 +406,18 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 			m_serverlist_server_t *tempserver;
 
 			// Double the size:
-			tempinfo = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2);
-			tempips = Z_Malloc(sizeof(char*)*m_serverlist.actualsize*2);
-			tempserver = Z_Malloc(sizeof(m_serverlist_server_t)*m_serverlist.actualsize*2);
+			tempinfo = Z_Malloc(sizeof(char*) * m_serverlist.actualsize * 2);
+			tempips = Z_Malloc(sizeof(char*) * m_serverlist.actualsize * 2);
+			tempserver = Z_Malloc(sizeof(m_serverlist_server_t) * m_serverlist.actualsize * 2);
 
-			for(i=0; i<m_serverlist.actualsize; i++)
+			for(i = 0; i < m_serverlist.actualsize; i++)
 			{
 				tempinfo[i] = m_serverlist.info[i];
 				tempips[i] = m_serverlist.ips[i];
 				tempserver[i] = m_serverlist.server[i];
 			}
 
-			for (i=m_serverlist.actualsize; i<m_serverlist.actualsize*2; i++)
+			for (i = m_serverlist.actualsize; i < m_serverlist.actualsize * 2; i++)
 			{
 				memset(&tempserver[i], 0, sizeof(m_serverlist_server_t));
 				tempserver[i].remap = -1;
@@ -438,7 +446,7 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 		else
 		{
 			// this will probably only happen with LAN servers.
-			ping = Sys_Milliseconds() - m_serverlist.server[m_serverlist.numservers].ping_request_time;
+			ping = Sys_Milliseconds() - m_serverPingSartTime;
 			m_serverlist.ips[m_serverlist.nummapped] = text_copy(addrip);
 			update_serverlist_server(&m_serverlist.server[m_serverlist.numservers], info, ping);
 			m_serverlist.info[m_serverlist.nummapped] =
