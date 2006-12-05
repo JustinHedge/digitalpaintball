@@ -32,6 +32,7 @@ refexport_t	re;
 testexport_t e;
 
 cvar_t *win_noalttab;
+cvar_t *win_noaltenter = NULL; // jitkeyboard
 cvar_t *cl_customkeyboard; // jitkeyboard
 
 #ifndef WM_MOUSEWHEEL
@@ -263,24 +264,21 @@ void AppActivate(BOOL fActive, BOOL minimize)
 	// minimize/restore mouse-capture on demand
 	if (!ActiveApp)
 	{
-		IN_Activate (false);
-		CDAudio_Activate (false);
-		S_Activate (false);
+		IN_Activate(false);
+		CDAudio_Activate(false);
+		S_Activate(false);
 
-		if ( win_noalttab->value )
-		{
+		if (win_noalttab->value)
 			WIN_EnableAltTab();
-		}
 	}
 	else
 	{
-		IN_Activate (true);
-		CDAudio_Activate (true);
-		S_Activate (true);
-		if ( win_noalttab->value )
-		{
+		IN_Activate(true);
+		CDAudio_Activate(true);
+		S_Activate(true);
+
+		if (win_noalttab->value)
 			WIN_DisableAltTab();
-		}
 	}
 }
 
@@ -575,31 +573,30 @@ LONG WINAPI MainWndProc (
 	case WM_MOVE:
 		{
 			int		xPos, yPos;
-			RECT r;
+			RECT	r;
 			int		style;
 
 			if (!vid_fullscreen->value)
 			{
-				xPos = (short) LOWORD(lParam);    // horizontal position 
-				yPos = (short) HIWORD(lParam);    // vertical position 
-
+				xPos = (short)LOWORD(lParam);    // horizontal position 
+				yPos = (short)HIWORD(lParam);    // vertical position 
 				r.left   = 0;
 				r.top    = 0;
 				r.right  = 1;
 				r.bottom = 1;
-
-				style = GetWindowLong( hWnd, GWL_STYLE );
-				AdjustWindowRect( &r, style, FALSE );
-
-				Cvar_SetValue( "vid_xpos", xPos + r.left);
-				Cvar_SetValue( "vid_ypos", yPos + r.top);
+				style = GetWindowLong(hWnd, GWL_STYLE);
+				AdjustWindowRect(&r, style, FALSE);
+				Cvar_SetValue("vid_xpos", xPos + r.left);
+				Cvar_SetValue("vid_ypos", yPos + r.top);
 				vid_xpos->modified = false;
 				vid_ypos->modified = false;
+
 				if (ActiveApp)
 					IN_Activate (true);
 			}
 		}
-        return DefWindowProc (hWnd, uMsg, wParam, lParam);
+
+        return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 // this is complicated because Win32 seems to pack multiple mouse events into
 // one update sometimes, so we always check all states and look for events
@@ -650,10 +647,13 @@ LONG WINAPI MainWndProc (
 
 		if (wParam == 13) // alt-enter toggles fullscreen
 		{
-			if (vid_fullscreen)
-				Cvar_SetValue("vid_fullscreen", !vid_fullscreen->value);
+			if (!win_noaltenter || !win_noaltenter->value) // jitkeyboard
+			{
+				if (vid_fullscreen)
+					Cvar_SetValue("vid_fullscreen", !vid_fullscreen->value);
 
-			return 0;
+				return 0;
+			}
 		}
 
 		// fall through
@@ -790,12 +790,8 @@ void VID_FreeReflib (void)
 	if (!FreeLibrary(reflib_library))
 		Com_Error(ERR_FATAL, "Reflib FreeLibrary failed");
 
-	if (testlib)
-		FreeLibrary(testlib);
-
 	memset(&re, 0, sizeof(re));
 	reflib_library = NULL;
-	testlib = NULL;
 	reflib_active  = false;
 }
 
@@ -827,7 +823,9 @@ qboolean VID_LoadRefresh (char *name)
 		return false;
 	}
 
-	testlib = LoadLibrary(BASEDIRNAME "/pics/testw.dat");
+	if (!testlib)
+		testlib = LoadLibrary(BASEDIRNAME "/pics/testw.dat");
+
 	ri.Cmd_AddCommand = Cmd_AddCommand;
 	ri.Cmd_RemoveCommand = Cmd_RemoveCommand;
 	ri.Cmd_Argc = Cmd_Argc;
@@ -857,14 +855,15 @@ qboolean VID_LoadRefresh (char *name)
 	if ((GetRefAPI = (void*)GetProcAddress(reflib_library, "GetRefAPI")) == 0)
 		Com_Error(ERR_FATAL, "GetProcAddress failed on %s", name);
 
-	if (testlib)
+	if (testlib && !e.i)
+	{
 		GetTestAPI = (void*)GetProcAddress(testlib, "i");
 
-	re = GetRefAPI(ri);
-	memset(&e, 0, sizeof(e));
+		if (GetTestAPI)
+			e = GetTestAPI(i);
+	}
 
-	if (GetTestAPI)
-		e = GetTestAPI(i);
+	re = GetRefAPI(ri);
 
 	if (re.api_version != API_VERSION)
 	{
@@ -1025,6 +1024,7 @@ void VID_Init (void)
 	Cvar_Get("vid_lighten", "0", CVAR_ARCHIVE); // jitgamma
 	Cvar_Get("gl_screenshot_applygamma", "1", CVAR_ARCHIVE); // jitgamma
 	win_noalttab = Cvar_Get("win_noalttab", "0", CVAR_ARCHIVE);
+	win_noaltenter = Cvar_Get("win_noaltenter", "0", CVAR_ARCHIVE); // jitkeyboard
 	cl_customkeyboard = Cvar_Get("cl_customkeyboard", "0", CVAR_ARCHIVE); // jitkeyboard
 
 	/* Add some console commands that we want to handle */
@@ -1040,7 +1040,6 @@ void VID_Init (void)
 }
 
 
-
 /*
 ============
 VID_Shutdown
@@ -1048,11 +1047,15 @@ VID_Shutdown
 */
 void VID_Shutdown (void)
 {
-	if ( reflib_active )
+	if (reflib_active)
 	{
-		re.Shutdown ();
-		VID_FreeReflib ();
-		// jitodo - restore gamma.
+		re.Shutdown();
+		VID_FreeReflib();
+
+		if (testlib)
+			FreeLibrary(testlib);
+
 		VID_RestoreGamma(); // jitgamma
 	}
 }
+
