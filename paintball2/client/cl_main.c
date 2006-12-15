@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_main.c  -- client main loop
 
 #include "client.h"
+
 #ifdef WIN32
 #include <windows.h> // jit/pooy
 #endif
@@ -2091,6 +2092,10 @@ void CL_Frame (int msec)
 	if (cl_sleep->value) // jitsleep - allow users to reduce CPU usage.
 		Sleep(cl_sleep->value);
 
+#ifdef XFIRE
+	CL_Xfire(); // jitxfire
+#endif
+
 	extratime += msec;
 	sendtime += msec; // jitnetfps
 
@@ -2100,8 +2105,8 @@ void CL_Frame (int msec)
 		if (cl_locknetfps->value && cls.state == ca_connected && extratime < 100)
 			return;			// don't flood packets out while connecting
 
-		if (cl_maxfps->value) // jitnetfps
-			if (extratime < 1000/cl_maxfps->value)
+		if (cl_maxfps->value >= 5.0f) // jitnetfps
+			if (extratime < 1000 / cl_maxfps->value)
 				return;			// framerate is too high
 
 		if (cl_locknetfps->value) // jitnetfps

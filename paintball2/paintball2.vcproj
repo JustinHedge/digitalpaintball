@@ -29,7 +29,7 @@
 				EnableFiberSafeOptimizations="TRUE"
 				OptimizeForProcessor="2"
 				OptimizeForWindowsApplication="TRUE"
-				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS"
+				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,XFIRE"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
@@ -89,7 +89,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				OptimizeForProcessor="1"
-				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS"
+				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,XFIRE"
 				RuntimeLibrary="1"
 				DefaultCharIsUnsigned="FALSE"
 				UsePrecompiledHeader="2"
@@ -565,6 +565,19 @@
 				<File
 					RelativePath=".\client\menu.c">
 				</File>
+				<Filter
+					Name="xfire"
+					Filter="">
+					<File
+						RelativePath="xfire\pb2_xfire.c">
+					</File>
+					<File
+						RelativePath="xfire\xfiregameclient.cpp">
+					</File>
+					<File
+						RelativePath="xfire\xfiregameclient.h">
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Server"
@@ -756,16 +769,6 @@
 			</File>
 			<File
 				RelativePath="a3d\q2a3d.h">
-			</File>
-		</Filter>
-		<Filter
-			Name="xfire"
-			Filter="">
-			<File
-				RelativePath="xfire\xfiregameclient.cpp">
-			</File>
-			<File
-				RelativePath="xfire\xfiregameclient.h">
 			</File>
 		</Filter>
 		<File

@@ -704,6 +704,11 @@ extern char **cl_maplist_modes;
 extern int cl_maplist_count;
 extern int cl_maplist_modes_count;
 
+
+// pb2_xfire.c -- jitxfire
+void CL_Xfire (void);
+
+
 //
 // cl_pred.c
 //
