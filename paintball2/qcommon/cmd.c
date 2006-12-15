@@ -464,7 +464,8 @@ void Cmd_Exec_f (void)
 		return;
 	}
 
-	Com_Printf("execing %s\n", configfile);
+	if (!Q_streq(Cmd_Argv(1), "z"))
+		Com_Printf("execing %s\n", configfile);
 	
 	// the file doesn't have a trailing 0, so we need to copy it off
 	f2 = Z_Malloc(len + 2);

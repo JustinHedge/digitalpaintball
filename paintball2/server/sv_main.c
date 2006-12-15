@@ -118,21 +118,24 @@ char	*SV_StatusString (void)
 	int		statusLength;
 	int		playerLength;
 
-	strcpy (status, Cvar_Serverinfo());
-	strcat (status, "\n");
+	strcpy(status, Cvar_Serverinfo());
+	strcat(status, "\n");
 	statusLength = strlen(status);
 
-	for (i=0; i<maxclients->value; i++)
+	for (i = 0; i < maxclients->value; i++)
 	{
 		cl = &svs.clients[i];
-		if (cl->state == cs_connected || cl->state == cs_spawned )
+
+		if (cl->state == cs_connected || cl->state == cs_spawned)
 		{
-			Com_sprintf (player, sizeof(player), "%i %i \"%s\"\n", 
+			Com_sprintf(player, sizeof(player), "%i %i \"%s\"\n", 
 				cl->edict->client->ps.stats[STAT_FRAGS], cl->ping, cl->name);
 			playerLength = strlen(player);
-			if (statusLength + playerLength >= sizeof(status) )
+
+			if (statusLength + playerLength >= sizeof(status))
 				break;		// can't hold any more
-			strcpy (status + statusLength, player);
+
+			strcpy(status + statusLength, player);
 			statusLength += playerLength;
 		}
 	}
