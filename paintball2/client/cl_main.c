@@ -245,6 +245,7 @@ void CL_Stop_f (void)
 	Com_Printf ("Stopped demo.\n");
 }
 
+
 /*
 ====================
 CL_Record_f
@@ -254,7 +255,7 @@ record <demoname>
 Begins recording a demo from the current position
 ====================
 */
-void CL_Record_f (void)
+void CL_RecordFile (const char *sDemoName) // jitdemo
 {
 	char	name[MAX_OSPATH];
 	char	buf_data[MAX_MSGLEN];
@@ -264,12 +265,6 @@ void CL_Record_f (void)
 	entity_state_t	*ent;
 	entity_state_t	nullstate;
 	unsigned char *scorestr;
-
-	if (Cmd_Argc() != 2)
-	{
-		Com_Printf("record <demoname>\n");
-		return;
-	}
 
 	if (cls.demorecording)
 	{
@@ -283,10 +278,13 @@ void CL_Record_f (void)
 		return;
 	}
 
-	//
-	// open the demo file
-	//
-	Com_sprintf(name, sizeof(name), "%s/demos/%s.dm2", FS_Gamedir(), Cmd_Argv(1));
+	// === jitdemo
+	Com_sprintf(name, sizeof(name), "%s/demos/%s.dm2", FS_Gamedir(), sDemoName);
+	i = 0;
+
+	while (FileExists(name))
+		Com_sprintf(name, sizeof(name), "%s/demos/%s_%03d.dm2", FS_Gamedir(), sDemoName, ++i);
+	// jitdemo ===
 
 	Com_Printf("recording to %s.\n", name);
 	FS_CreatePath(name);
@@ -381,6 +379,50 @@ void CL_Record_f (void)
 
 	// the rest of the demo file will be individual frames
 }
+
+
+// === jitdemo
+void CL_Record_f (void)
+{
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf("record <demoname>\n");
+		return;
+	}
+
+	CL_RecordFile(Cmd_Argv(1));
+}
+
+
+CL_ARecord_f (void)
+{
+	time_t now;
+	char szDemoName[MAX_OSPATH];
+	char szTimeStamp[MAX_OSPATH];
+	char szLevelName[MAX_OSPATH];
+	char *s, *sExt = NULL;
+
+	Q_strncpyz(szLevelName, cl.configstrings[CS_MODELS + 1] + 5, sizeof(szLevelName)); // copy map filename, sans "maps/"
+
+	for (s = szLevelName; *s; ++s)
+	{
+		if (*s == '\\' || *s == '/' || *s == ' ')
+			*s = '_';
+
+		if (*s == '.')
+			sExt = s;
+	}
+
+	if (sExt)
+		*sExt = 0; // strip off .bsp
+
+	time(&now);
+	strftime(szTimeStamp, sizeof(szTimeStamp), "%Y%m%d_%H%M%S", localtime(&now));
+	Com_sprintf(szDemoName, sizeof(szDemoName), "%s_%s_%s", Cmd_Argv(1), szLevelName, szTimeStamp);
+	CL_RecordFile(szDemoName);
+}
+// jitdemo ===
+
 
 //======================================================================
 
@@ -1839,6 +1881,7 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("\x7Fr4e12", CL_Test1_f);
 	Cmd_AddCommand("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand("record", CL_Record_f);
+	Cmd_AddCommand("arecord", CL_ARecord_f); // jitdemo
 	Cmd_AddCommand("stop", CL_Stop_f);
 	Cmd_AddCommand("cvar_inc", CL_Increase_f);
 	Cmd_AddCommand("cvar_toggle", CL_Toggle_f);
