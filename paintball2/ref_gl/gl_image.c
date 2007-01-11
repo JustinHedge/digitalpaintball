@@ -1026,39 +1026,44 @@ void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,
 	int		i, j;
 	unsigned	*inrow, *inrow2;
 	unsigned	frac, fracstep;
-	unsigned	p1[1024], p2[1024];
+	unsigned	p1[4096], p2[4096]; // jittex
 	byte		*pix1, *pix2, *pix3, *pix4;
 
-	fracstep = inwidth*0x10000/outwidth;
+	outwidth = min(outwidth, 4096); // jittex
+	outheight = min(outheight, 4096); // jittex
+	fracstep = inwidth * 0x10000 / outwidth;
+	frac = fracstep >> 2;
 
-	frac = fracstep>>2;
-	for (i=0; i<outwidth; i++)
+	for (i = 0; i < outwidth; i++)
 	{
-		p1[i] = 4*(frac>>16);
-		frac += fracstep;
-	}
-	frac = 3*(fracstep>>2);
-	for (i=0; i<outwidth; i++)
-	{
-		p2[i] = 4*(frac>>16);
+		p1[i] = 4 * (frac >> 16);
 		frac += fracstep;
 	}
 
-	for (i=0; i<outheight; i++, out += outwidth)
+	frac = 3 * (fracstep >> 2);
+
+	for (i = 0; i < outwidth; i++)
 	{
-		inrow = in + inwidth*(int)((i+0.25)*inheight/outheight);
-		inrow2 = in + inwidth*(int)((i+0.75)*inheight/outheight);
+		p2[i] = 4 * (frac >> 16);
+		frac += fracstep;
+	}
+
+	for (i = 0; i < outheight; i++, out += outwidth)
+	{
+		inrow = in + inwidth * (int)((i + 0.25f) * inheight / outheight);
+		inrow2 = in + inwidth * (int)((i + 0.75f) * inheight / outheight);
 		frac = fracstep >> 1;
-		for (j=0; j<outwidth; j++)
+
+		for (j = 0; j < outwidth; j++)
 		{
 			pix1 = (byte *)inrow + p1[j];
 			pix2 = (byte *)inrow + p2[j];
 			pix3 = (byte *)inrow2 + p1[j];
 			pix4 = (byte *)inrow2 + p2[j];
-			((byte *)(out+j))[0] = (pix1[0] + pix2[0] + pix3[0] + pix4[0])>>2;
-			((byte *)(out+j))[1] = (pix1[1] + pix2[1] + pix3[1] + pix4[1])>>2;
-			((byte *)(out+j))[2] = (pix1[2] + pix2[2] + pix3[2] + pix4[2])>>2;
-			((byte *)(out+j))[3] = (pix1[3] + pix2[3] + pix3[3] + pix4[3])>>2;
+			((byte *)(out + j))[0] = (pix1[0] + pix2[0] + pix3[0] + pix4[0]) >> 2;
+			((byte *)(out + j))[1] = (pix1[1] + pix2[1] + pix3[1] + pix4[1]) >> 2;
+			((byte *)(out + j))[2] = (pix1[2] + pix2[2] + pix3[2] + pix4[2]) >> 2;
+			((byte *)(out + j))[3] = (pix1[3] + pix2[3] + pix3[3] + pix4[3]) >> 2;
 		}
 	}
 }
@@ -1311,7 +1316,7 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	}
 	else
 	{
-		scaled = malloc(scaled_width*scaled_height*4);
+		scaled = malloc(scaled_width * scaled_height * 4);
 		GL_ResampleTexture(data, width, height, scaled, scaled_width, scaled_height);
 	}
 
