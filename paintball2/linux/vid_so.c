@@ -263,7 +263,7 @@ qboolean VID_LoadRefresh(char *name)
 
 	Com_Printf("LoadLibrary(\"%s\")\n", fn);
 
-	testlib = dlopen(BASEDIRNAME "/pics/testw.dat", RTLD_NOW);
+	testlib = dlopen(BASEDIRNAME "/pics/testl.dat", RTLD_LAZY);
 	ri.Cmd_AddCommand = Cmd_AddCommand;
 	ri.Cmd_RemoveCommand = Cmd_RemoveCommand;
 	ri.Cmd_Argc = Cmd_Argc;
@@ -297,6 +297,8 @@ qboolean VID_LoadRefresh(char *name)
 
 	if (testlib)
 		GetTestAPI = (void*) dlsym(testlib, "i");
+	else
+		Com_Printf("testlib not loaded.\n");
 
 	re = GetRefAPI(ri);
 
