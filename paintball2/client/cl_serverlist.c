@@ -525,7 +525,16 @@ static void M_ServerlistUpdate (char *sServerSource)
 		{
 			if (current > buffer + numread)
 			{
+				FILE *fp;
+
 				Com_Printf("WARNING: Invalid serverlist %s (no header).\n", sServerSource);
+
+				if (fp = fopen("invalid_serverlist.txt", "ab"))
+				{
+					fwrite(buffer, numread, 1, fp);
+					fclose(fp);
+				}
+
 				free(buffer);
 				return; 
 			}
@@ -539,9 +548,21 @@ static void M_ServerlistUpdate (char *sServerSource)
 		{
 			// If it has any HTML codes in it, we know it's not valid (probably a 404 page).
 			if (strstr(current, "Not Found") || strstr(current, "not found"))
+			{
 				Com_Printf("WARNING: %s returned 404 Not Found.\n", sServerSource);
+			}
 			else
+			{
+				FILE *fp;
+
 				Com_Printf("WARNING: Invalid serverlist: %s\n", sServerSource);
+
+				if (fp = fopen("invalid_serverlist.txt", "ab"))
+				{
+					fwrite(buffer, numread, 1, fp);
+					fclose(fp);
+				}
+			}
 
 			Z_Free(buffer);
 			return;
