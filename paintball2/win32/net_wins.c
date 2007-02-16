@@ -155,16 +155,16 @@ qboolean	NET_CompareBaseAdr (netadr_t a, netadr_t b)
 	return false; // jit, shut up warning
 }
 
-char	*NET_AdrToString (netadr_t a)
+char *NET_AdrToString (netadr_t a)
 {
-	static	char	s[64];
+	static char s[64];
 
 	if (a.type == NA_LOOPBACK)
-		Com_sprintf (s, sizeof(s), "loopback");
+		Com_sprintf(s, sizeof(s), "loopback");
 	else if (a.type == NA_IP)
-		Com_sprintf (s, sizeof(s), "%i.%i.%i.%i:%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3], ntohs(a.port));
+		Com_sprintf(s, sizeof(s), "%i.%i.%i.%i:%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3], ntohs(a.port));
 	else
-		Com_sprintf (s, sizeof(s), "%02x%02x%02x%02x:%02x%02x%02x%02x%02x%02x:%i", a.ipx[0], a.ipx[1], a.ipx[2], a.ipx[3], a.ipx[4], a.ipx[5], a.ipx[6], a.ipx[7], a.ipx[8], a.ipx[9], ntohs(a.port));
+		Com_sprintf(s, sizeof(s), "%02x%02x%02x%02x:%02x%02x%02x%02x%02x%02x:%i", a.ipx[0], a.ipx[1], a.ipx[2], a.ipx[3], a.ipx[4], a.ipx[5], a.ipx[6], a.ipx[7], a.ipx[8], a.ipx[9], ntohs(a.port));
 
 	return s;
 }
@@ -409,33 +409,39 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 	if (to.type == NA_BROADCAST)
 	{
 		net_socket = ip_sockets[sock];
+
 		if (!net_socket)
 			return;
 	}
 	else if (to.type == NA_IP)
 	{
 		net_socket = ip_sockets[sock];
+
 		if (!net_socket)
 			return;
 	}
 	else if (to.type == NA_IPX)
 	{
 		net_socket = ipx_sockets[sock];
+
 		if (!net_socket)
 			return;
 	}
 	else if (to.type == NA_BROADCAST_IPX)
 	{
 		net_socket = ipx_sockets[sock];
+
 		if (!net_socket)
 			return;
 	}
 	else
+	{
 		Com_Error(ERR_FATAL, "NET_SendPacket: bad address type");
+	}
 
 	NetadrToSockadr(&to, &addr);
-
 	ret = sendto(net_socket, data, length, 0, &addr, sizeof(addr));
+
 	if (ret == -1)
 	{
 		int err = WSAGetLastError();
@@ -445,28 +451,25 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 			return;
 
 		// some PPP links dont allow broadcasts
-		// Knightmare- NO ERROR fix for pinging servers w/ unplugged LAN cable
-		if (((err == WSAEADDRNOTAVAIL) || Q_streq(NET_ErrorString(), "NO ERROR"))
+		if (((err == WSAEADDRNOTAVAIL) || err == WSAEHOSTUNREACH) // jit - added WSAEHOSTUNREACH
 			&& ((to.type == NA_BROADCAST) || (to.type == NA_BROADCAST_IPX)))
 			return; 
-		//if ((err == WSAEADDRNOTAVAIL) && ((to.type == NA_BROADCAST) || (to.type == NA_BROADCAST_IPX)))
-		//	return; 
 
 		if (dedicated->value)	// let dedicated servers continue after errors
 		{
-			Com_Printf ("NET_SendPacket ERROR: %s to %s\n", NET_ErrorString(),
+			Com_Printf("NET_SendPacket ERROR: %s to %s\n", NET_ErrorString(),
 				NET_AdrToString (to));
 		}
 		else
 		{
 			if (err == WSAEADDRNOTAVAIL)
 			{
-				Com_DPrintf ("NET_SendPacket Warning: %s : %s\n", 
+				Com_DPrintf("NET_SendPacket Warning: %s : %s\n", 
 						NET_ErrorString(), NET_AdrToString(to));
 			}
 			else
 			{
-				Com_Error (ERR_DROP, "NET_SendPacket ERROR: %s to %s\n", 
+				Com_Error(ERR_BENIGN, "NET_SendPacket ERROR: %s to %s", // jitnet -- changed to benign err type.
 						NET_ErrorString(), NET_AdrToString(to));
 			}
 		}
@@ -812,17 +815,18 @@ void	NET_Shutdown (void)
 NET_ErrorString
 ====================
 */
-char *NET_ErrorString (void)
+char *NET_ErrorString (void) // jiterr - revised to cover all error codes
 {
-	int		code;
+	int code;
+	static char errstr[64];
 
-	code = WSAGetLastError ();
+	code = WSAGetLastError();
+
 	switch (code)
 	{
 	case WSAEINTR: return "WSAEINTR";
 	case WSAEBADF: return "WSAEBADF";
 	case WSAEACCES: return "WSAEACCES";
-	case WSAEDISCON: return "WSAEDISCON";
 	case WSAEFAULT: return "WSAEFAULT";
 	case WSAEINVAL: return "WSAEINVAL";
 	case WSAEMFILE: return "WSAEMFILE";
@@ -844,7 +848,7 @@ char *NET_ErrorString (void)
 	case WSAENETDOWN: return "WSAENETDOWN";
 	case WSAENETUNREACH: return "WSAENETUNREACH";
 	case WSAENETRESET: return "WSAENETRESET";
-	case WSAECONNABORTED: return "WSWSAECONNABORTEDAEINTR";
+	case WSAECONNABORTED: return "WSAECONNABORTED";
 	case WSAECONNRESET: return "WSAECONNRESET";
 	case WSAENOBUFS: return "WSAENOBUFS";
 	case WSAEISCONN: return "WSAEISCONN";
@@ -856,13 +860,62 @@ char *NET_ErrorString (void)
 	case WSAELOOP: return "WSAELOOP";
 	case WSAENAMETOOLONG: return "WSAENAMETOOLONG";
 	case WSAEHOSTDOWN: return "WSAEHOSTDOWN";
+	case WSAEHOSTUNREACH: return "WSAEHOSTUNREACH";
+	case WSAENOTEMPTY: return "WSAENOTEMPTY";
+	case WSAEPROCLIM: return "WSAEPROCLIM";
+	case WSAEUSERS: return "WSAEUSERS";
+	case WSAEDQUOT: return "WSAEDQUOT";
+	case WSAESTALE: return "WSAESTALE";
+	case WSAEREMOTE: return "WSAEREMOTE";
 	case WSASYSNOTREADY: return "WSASYSNOTREADY";
 	case WSAVERNOTSUPPORTED: return "WSAVERNOTSUPPORTED";
 	case WSANOTINITIALISED: return "WSANOTINITIALISED";
+	case WSAEDISCON: return "WSAEDISCON";
+	case WSAENOMORE: return "WSAENOMORE";
+	case WSAECANCELLED: return "WSAECANCELLED";
+	case WSAEINVALIDPROCTABLE: return "WSAEINVALIDPROCTABLE";
+	case WSAEINVALIDPROVIDER: return "WSAEINVALIDPROVIDER";
+	case WSAEPROVIDERFAILEDINIT: return "WSAEPROVIDERFAILEDINIT";
+	case WSASYSCALLFAILURE: return "WSASYSCALLFAILURE";
+	case WSASERVICE_NOT_FOUND: return "WSASERVICE_NOT_FOUND";
+	case WSATYPE_NOT_FOUND: return "WSATYPE_NOT_FOUND";
+	case WSA_E_NO_MORE: return "WSA_E_NO_MORE";
+	case WSA_E_CANCELLED: return "WSA_E_CANCELLED";
+	case WSAEREFUSED: return "WSAEREFUSED";
 	case WSAHOST_NOT_FOUND: return "WSAHOST_NOT_FOUND";
 	case WSATRY_AGAIN: return "WSATRY_AGAIN";
 	case WSANO_RECOVERY: return "WSANO_RECOVERY";
 	case WSANO_DATA: return "WSANO_DATA";
-	default: return "NO ERROR";
+	case WSA_QOS_RECEIVERS: return "WSA_QOS_RECEIVERS";
+	case WSA_QOS_SENDERS: return "WSA_QOS_SENDERS";
+	case WSA_QOS_NO_SENDERS: return "WSA_QOS_NO_SENDERS";
+	case WSA_QOS_NO_RECEIVERS: return "WSA_QOS_NO_RECEIVERS";
+	case WSA_QOS_REQUEST_CONFIRMED: return "WSA_QOS_REQUEST_CONFIRMED";
+	case WSA_QOS_ADMISSION_FAILURE: return "WSA_QOS_ADMISSION_FAILURE";
+	case WSA_QOS_POLICY_FAILURE: return "WSA_QOS_POLICY_FAILURE";
+	case WSA_QOS_BAD_STYLE: return "WSA_QOS_BAD_STYLE";
+	case WSA_QOS_BAD_OBJECT: return "WSA_QOS_BAD_OBJECT";
+	case WSA_QOS_TRAFFIC_CTRL_ERROR: return "WSA_QOS_TRAFFIC_CTRL_ERROR";
+	case WSA_QOS_GENERIC_ERROR: return "WSA_QOS_GENERIC_ERROR";
+	case WSA_QOS_ESERVICETYPE: return "WSA_QOS_ESERVICETYPE";
+	case WSA_QOS_EFLOWSPEC: return "WSA_QOS_EFLOWSPEC";
+	case WSA_QOS_EPROVSPECBUF: return "WSA_QOS_EPROVSPECBUF";
+	case WSA_QOS_EFILTERSTYLE: return "WSA_QOS_EFILTERSTYLE";
+	case WSA_QOS_EFILTERTYPE: return "WSA_QOS_EFILTERTYPE";
+	case WSA_QOS_EFILTERCOUNT: return "WSA_QOS_EFILTERCOUNT";
+	case WSA_QOS_EOBJLENGTH: return "WSA_QOS_EOBJLENGTH";
+	case WSA_QOS_EFLOWCOUNT: return "WSA_QOS_EFLOWCOUNT";
+	case WSA_QOS_EUNKOWNPSOBJ: return "WSA_QOS_EUNKOWNPSOBJ";
+	case WSA_QOS_EPOLICYOBJ: return "WSA_QOS_EPOLICYOBJ";
+	case WSA_QOS_EFLOWDESC: return "WSA_QOS_EFLOWDESC";
+	case WSA_QOS_EPSFLOWSPEC: return "WSA_QOS_EPSFLOWSPEC";
+	case WSA_QOS_EPSFILTERSPEC: return "WSA_QOS_EPSFILTERSPEC";
+	case WSA_QOS_ESDMODEOBJ: return "WSA_QOS_ESDMODEOBJ";
+	case WSA_QOS_ESHAPERATEOBJ: return "WSA_QOS_ESHAPERATEOBJ";
+	case WSA_QOS_RESERVED_PETYPE: return "WSA_QOS_RESERVED_PETYPE";
+	default:
+		Com_sprintf(errstr, sizeof(errstr), "Unhandled WSA code: %d", code);
+		return errstr;
 	}
 }
+
