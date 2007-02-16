@@ -2178,16 +2178,22 @@ qboolean FileExists (const char *filename) // jit
 Q_snprintfz
 ==============
 */
-void Q_snprintfz (char *dest, size_t size, const char *fmt, ...) // jitskm
+int Q_snprintfz (char *dest, size_t size, const char *fmt, ...) // jitskm
 {
 	va_list	argptr;
+	int len;
 
 	if (size)
 	{
 		va_start(argptr, fmt);
-		_vsnprintf(dest, size, fmt, argptr);
+		len = _vsnprintf(dest, size, fmt, argptr);
 		va_end(argptr);
 		dest[size-1] = 0;
+		return len;
+	}
+	else
+	{
+		return 0;
 	}
 }
 
