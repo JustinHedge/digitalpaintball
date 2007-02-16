@@ -151,7 +151,7 @@ void Com_Printf (char *fmt, ...)
 			*rd_buffer = 0;
 		}
 
-		strcat (rd_buffer, msg);
+		strcat(rd_buffer, msg);
 		return;
 	}
 
@@ -259,7 +259,8 @@ void Com_Error (int code, char *fmt, ...)
 	switch (code) // jiterror
 	{
 	case ERR_BENIGN: // jiterror - don't close the app.  Just print the error to the console.
-		Com_Printf("********************\nERROR: %s\n********************\n", msg);
+		Com_Printf("*** ERROR: %s\n", msg);
+		recursive = false;
 		return;
 	case ERR_DISCONNECT:
 		CL_Drop();
