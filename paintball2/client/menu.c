@@ -124,22 +124,20 @@ static void M_DrawBackground (image_t *background)
 	char version[64];
 
 	re.DrawStretchPic2(0, 0, viddef.width, viddef.height, background);
-	SCR_AddDirtyPoint(0,0);
-	SCR_AddDirtyPoint(viddef.width-1, viddef.height-1);
-
-	Com_sprintf (version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
-	re.DrawString(viddef.width-176*hudscale, viddef.height-12*hudscale, version);
+	SCR_AddDirtyPoint(0, 0);
+	SCR_AddDirtyPoint(viddef.width - 1, viddef.height - 1);
+	Com_sprintf(version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
+	re.DrawStringAlpha(viddef.width - 176 * hudscale, viddef.height - 12 * hudscale, version, 1.0f);
 }
 
 void M_ForceMenuOff (void)
 {
 	m_menudepth = 0;
-
 	cls.key_dest = key_game;
 	Key_ClearStates();
 	Cvar_Set("paused", "0");
 	m_active_bind_widget = NULL;
-		m_active_bind_command = NULL;
+	m_active_bind_command = NULL;
 
 	if (oldscale && (oldscale != cl_hudscale->value))
 		Cvar_SetValue("cl_hudscale", oldscale);

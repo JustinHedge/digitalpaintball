@@ -90,6 +90,7 @@
 				Optimization="0"
 				OptimizeForProcessor="1"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,XFIRE"
+				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				DefaultCharIsUnsigned="FALSE"
 				UsePrecompiledHeader="2"

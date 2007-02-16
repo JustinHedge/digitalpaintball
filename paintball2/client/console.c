@@ -619,7 +619,6 @@ Draws the last few lines of output transparently over the game top
 */
 void Con_DrawNotify (void)
 {
-//jit	int		x, v;
 	int		v;
 	char	*text;
 	int		i;
@@ -627,28 +626,27 @@ void Con_DrawNotify (void)
 	char	*s;
 	int		skip;
 
-
 	v = 0;
-	for (i= con.current-NUM_CON_TIMES+1 ; i<=con.current ; i++)
+
+	for (i = con.current-NUM_CON_TIMES + 1 ; i <= con.current; i++)
 	{
 		if (i < 0)
 			continue;
+
 		time = con.times[i % NUM_CON_TIMES];
+
 		if (time == 0)
 			continue;
+
 		time = cls.realtime - time;
+
 		if (time > con_notifytime->value*1000)
 			continue;
-		text = con.text + (i % con.totallines)*(con.linewidth);
-		
-		//for (x = 0 ; x < con.linewidth ; x++)
-		//	re.DrawChar((x*hudscale+1)<<3, v, text[x]); // jithudscale
-		Draw_StringLen(8*hudscale, v, text, con.linewidth); // jit, draw whole line at once
 
-		//v += 8;
-		v += 8*hudscale; // jithudscale
+		text = con.text + (i % con.totallines) * (con.linewidth);
+		Draw_StringLen(8 * hudscale, v, text, con.linewidth); // jit, draw whole line at once
+		v += 8 * hudscale; // jithudscale
 	}
-
 
 	if (cls.key_dest == key_message)
 	{
@@ -669,18 +667,19 @@ void Con_DrawNotify (void)
 		}
 
 		s = chat_buffer;
-		if (chat_bufferlen > ((viddef.width/hudscale)>>3)-(skip+1))
-			s += chat_bufferlen - (((viddef.width/hudscale)>>3)-(skip+1));
 
-		re.DrawString(skip<<3,v,s);
-		re.DrawChar((strlen(s)*hudscale+skip)<<3, v, 10+((cls.realtime>>8)&1));
-		v += 8*hudscale;
+		if (chat_bufferlen > ((viddef.width/hudscale) >> 3) - (skip + 1))
+			s += chat_bufferlen - (((viddef.width/hudscale) >> 3) - (skip + 1));
+
+		re.DrawString(skip << 3, v, s);
+		re.DrawChar((strlen(s) * hudscale+skip) << 3, v, 10 + ((cls.realtime >> 8) & 1));
+		v += 8 * hudscale;
 	}
-	
+
 	if (v)
 	{
-		SCR_AddDirtyPoint (0,0);
-		SCR_AddDirtyPoint (viddef.width-1, v);
+		SCR_AddDirtyPoint(0,0);
+		SCR_AddDirtyPoint(viddef.width - 1, v);
 	}
 }
 

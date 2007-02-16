@@ -90,13 +90,13 @@ int			c_brush_polys, c_alias_polys;
 
 float		v_blend[4];			// final blending color
 
-// <!-- jitfog
-void	Draw_String(int x, int y, const char *str);
+// === jitfog
+void Draw_String (int x, int y, const char *str);
 vec3_t fogcolor = { 0.408, 0.447, 0.584 };
 float fogdensity = 0.008;
 float fogdistance = 512;
 qboolean fogenabled = false; // doesn't work right with overbright :(
-// jit -->
+// jit ===
 
 void GL_Strings_f(void);
 
@@ -2213,7 +2213,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 R_Shutdown
 ===============
 */
-void R_Shutdown(void)
+void R_Shutdown (void)
 {
 	ri.Cmd_RemoveCommand("modellist");
 	ri.Cmd_RemoveCommand("screenshot");
@@ -2226,7 +2226,10 @@ void R_Shutdown(void)
 	RS_FreeAllScripts(); // jitrscript
 
 	if (char_colors)
+	{
 		free(char_colors); // jittext
+		char_colors = NULL;
+	}
 
 	/*
 	** shut down OS specific OpenGL stuff like contexts, etc.

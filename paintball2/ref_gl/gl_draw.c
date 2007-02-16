@@ -22,8 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "gl_local.h"
 
-image_t		*draw_chars;
-byte		*char_colors; // jittext
+image_t		*draw_chars = NULL;
+byte		*char_colors = NULL; // jittext
 
 extern	qboolean	scrap_dirty;
 extern cvar_t *cl_hudscale; //jithudscale
@@ -160,11 +160,11 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 	textscale = (int)cl_hudscale->value;
 
 	if (gl_state.currenttextures[gl_state.currenttmu] != draw_chars->texnum)
-		GL_Bind (draw_chars->texnum);
+		GL_Bind(draw_chars->texnum);
+
 	GLSTATE_DISABLE_ALPHATEST // jitconsole
 	GLSTATE_ENABLE_BLEND // jitconsole
 	GL_TexEnv(GL_COMBINE_EXT); // jittext (brighter text now)
-	
 	size = 0.0625;
 
 	if (gl_textshadow->value)
@@ -179,7 +179,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 		py = y;
 	}
 
-	qglBegin (GL_QUADS);
+	qglBegin(GL_QUADS);
 
 	do
 	{
@@ -246,11 +246,11 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 				// look up color in char_colors.tga:
 				if (!shadowpass)
 				{
-					register int num4 = num*4;
+					register int num4 = num * 4;
 
-					qglColor4f(*(char_colors+num4)/255.0f, 
-						*(char_colors+num4+1)/255.0f,
-						*(char_colors+num4+2)/255.0f, alpha);
+					qglColor4f(*(char_colors + num4) / 255.0f, 
+						*(char_colors + num4 + 1) / 255.0f,
+						*(char_colors + num4 + 2) / 255.0f, alpha);
 				}
 
 				nextiscolor = false;
@@ -259,40 +259,38 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 			}
 			// ]==
 
-			if (py <= -8)
+			if (py <= -8 * textscale)
 			{	// totally off screen
-				//s++; px+=8;
-				s++; px+=8*textscale; //jithudscale
+				s++;
+				px += 8 * textscale; //jithudscale
 				continue;
 			}
 
 			if (underlined) // jitconsole
 			{
-				row = CHAR_UNDERLINE_NUM>>4;
-				col = CHAR_UNDERLINE_NUM&15;
-
-				frow = row*0.0625;
-				fcol = col*0.0625;
-
+				row = CHAR_UNDERLINE_NUM >> 4;
+				col = CHAR_UNDERLINE_NUM & 15;
+				frow = row * 0.0625;
+				fcol = col * 0.0625;
 				qglTexCoord2f(fcol, frow);
-				qglVertex2f(px, py+4*textscale);
+				qglVertex2f(px, py + 4 * textscale);
 				qglTexCoord2f(fcol + size, frow);
-				qglVertex2f(px+8*textscale, py+4*textscale); // jithudscale...
+				qglVertex2f(px + 8 * textscale, py + 4 * textscale); // jithudscale...
 				qglTexCoord2f(fcol + size, frow + size);
-				qglVertex2f(px+8*textscale, py+12*textscale);
+				qglVertex2f(px + 8 * textscale, py + 12 * textscale);
 				qglTexCoord2f(fcol, frow + size);
-				qglVertex2f(px, py+12*textscale);
+				qglVertex2f(px, py + 12 * textscale);
 			}
 
-			if ((num&127) == 32)		// space
+			if ((num & 127) == 32)		// space
 			{
-				s++; px+=8*textscale; //jithudscale
+				s++;
+				px += 8 * textscale; //jithudscale
 				continue;
 			}
 
 			row = num>>4;
 			col = num&15;
-
 			frow = row*0.0625;
 			fcol = col*0.0625;
 
@@ -319,7 +317,8 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 				qglVertex2f (px, py+8*textscale);
 			}
 
-			s++; px+=8*textscale; //jithudscale
+			s++;
+			px += 8 * textscale; //jithudscale
 		}
 
 		if (shadowpass)
@@ -329,23 +328,25 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 			underlined = false;
 			shadowpass = false;
 			passagain = true;
-			//qglColor3fv(whitetext);
 			qglColor4f(1.0f, 1.0f, 1.0f, alpha);
 			s = str;
-			px=x;
-			py=y;
+			px = x;
+			py = y;
 		}
 		else
+		{
 			passagain = false;
+		}
 	} while (passagain);
 
-	qglEnd ();
+	qglEnd();
 
 	if (coloredtext)
 	{
 		//qglColor3fv(whitetext);
 		qglColor4f(1.0f, 1.0f, 1.0f, alpha);
 	}
+
 	GL_TexEnv(GL_MODULATE); // jittext
 }
 
