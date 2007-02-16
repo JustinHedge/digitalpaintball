@@ -1811,9 +1811,9 @@ void CL_InitLocal (void)
 	serverlist_source2 =	Cvar_Get("serverlist_source2", 
 		"http://digitalpaint.planetquake.gamespy.com/serverlist.php", 0); // jitserverlist / jitmenu
 	serverlist_source3 =	Cvar_Get("serverlist_source3",
-		"http://dpball.com/serverlist.php", 0); // jitserverlist / jitmenu
+		"http://dplogin.com/serverlist.php", 0); // jitserverlist / jitmenu
 	serverlist_blacklist =	Cvar_Get("serverlist_blacklist",
-		"http://dpball.com/blacklist.php", 0);
+		"http://dplogin.com/blacklist.php", 0);
 
 	// fix up old serverlist settings now that the server has moved:
 	if (Q_streq(serverlist_source->string, "http://www.planetquake.com/digitalpaint/servers.txt"))
