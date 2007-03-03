@@ -1210,12 +1210,18 @@ void Z_Free (void *ptr)
 	zhead_t	*z;
 
 	if (!ptr)
+	{
+		assert(ptr != NULL);
 		Com_Error(ERR_FATAL, "Z_Free: null pointer"); // jitmalloc
+	}
 
 	z = ((zhead_t *)ptr) - 1;
 
 	if (z->magic != Z_MAGIC)
+	{
+		assert(z->magic == Z_MAGIC);
 		Com_Error(ERR_FATAL, "Z_Free: bad magic");
+	}
 
 	z->prev->next = z->next;
 	z->next->prev = z->prev;

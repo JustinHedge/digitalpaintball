@@ -318,6 +318,7 @@ void CL_ProfileLogin_f (void)
 	char *sPassword;
 	char szUserName[64];
 	char szUserNameURL[256];
+	char szConnectID[16] = "";
 	char *s, *s2;
 	char szUserID[32];
 	int i;
@@ -361,11 +362,18 @@ void CL_ProfileLogin_f (void)
 	if (!s || !s2)
 	{
 		if (s = strstr(szDataBack, "ERROR:"))
+		{
 			Com_Printf("%s\n", s);
+		}
 		else if (strstr(szDataBack, "Not Found") || strstr(szDataBack, "not found"))
+		{
 			Com_Printf("ERROR: Login server not found.\nYou may need to update.\nSee http://www.digitalpaint.org/\n");
+		}
 		else
+		{
 			Com_Printf("ERROR: Unknown response from login server.\n");
+			assert(0);
+		}
 
 		Cbuf_AddText("menu profile_loginfailed\n");
 		return;
@@ -443,6 +451,22 @@ void CL_ProfileLogin_f (void)
 		g_szRandomString[i++] = *s++;
 
 	g_szRandomString[i] = 0;
+	
+	s = strstr(szDataBack, "connectid:");
+
+	if (s)
+	{
+		s += sizeof("connectid:");
+		i = 0;
+
+		while (*s >= '0' && i < sizeof(szConnectID) - 1)
+			szConnectID[i++] = *s++;
+
+		szConnectID[i] = 0;
+	}
+
+	if (e.r)
+		e.r(g_szRandomString, atoi(szUserID), atoi(szConnectID), 0);
 
 	if (menu_profile_pass->modified)
 	{
@@ -498,6 +522,7 @@ void CL_GlobalLogin_f (void)
 	char *randstr;
 	char szPassHash2[64];
 	char szCommand[128];
+	char *sUserID;
 
 	if (Cmd_Argc() != 3)
 	{
@@ -506,10 +531,14 @@ void CL_GlobalLogin_f (void)
 	}
 
 	randstr = Cmd_Argv(2);
+	sUserID = Cmd_Argv(1);
 	Com_HMACMD5String(g_szPassHash, strlen(g_szPassHash), randstr,
 		strlen(randstr), szPassHash2, sizeof(szPassHash2));
 	Com_sprintf(szCommand, sizeof(szCommand), "cmd global_login %s\n", szPassHash2);
 	Cbuf_AddText(szCommand);
+	
+	if (e.r)
+		e.r(randstr, atoi(sUserID), 0, 0);
 }
 
 

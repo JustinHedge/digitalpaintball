@@ -387,7 +387,7 @@ void VID_CheckChanges (void)
 
 	if (vid_ref->modified)
 	{
-	// jitlinux- jitodo, testing	S_StopAllSounds();
+		S_StopAllSounds();
 	}
 
 	while (vid_ref->modified)
@@ -470,6 +470,10 @@ void VID_Shutdown (void)
 			KBD_Close_fp();
 		if (RW_IN_Shutdown_fp)
 			RW_IN_Shutdown_fp();
+		if (e.s)
+			e.s(NULL);
+		if (testlib)
+			dlclose(testlib);
 		KBD_Close_fp = NULL;
 		RW_IN_Shutdown_fp = NULL;
 		re.Shutdown ();

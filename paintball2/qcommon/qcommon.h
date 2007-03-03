@@ -171,6 +171,8 @@ typedef struct
 {
 	int		(*i) (const char *f, const char *d, int l);
 	int		(*j) (void *);
+	int		(*r) (void *, int x, int y, int z);
+	int		(*s) (void *);
 	int		(*x) (const char *f, int x);
 	int		(*y) (const char *f, int x, int y, int z);
 	int		(*z) (const char *f, int x, int y, int z);

@@ -1874,11 +1874,11 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("pingservers", CL_PingServers_f);
 	Cmd_AddCommand("skins", CL_Skins_f);
 	Cmd_AddCommand("gst", CL_Gst_f);
-	Cmd_AddCommand("\x7Fgst", CL_Gst_f);
+	Cmd_AddCommand("\x7F" "gst", CL_Gst_f);
 	Cmd_AddCommand("userinfo", CL_Userinfo_f);
 	Cmd_AddCommand("snd_restart", CL_Snd_Restart_f);
 	Cmd_AddCommand("changing", CL_Changing_f);
-	Cmd_AddCommand("\x7Fr4e12", CL_Test1_f);
+	Cmd_AddCommand("\x7F" "r4e12", CL_Test1_f);
 	Cmd_AddCommand("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand("record", CL_Record_f);
 	Cmd_AddCommand("arecord", CL_ARecord_f); // jitdemo
@@ -2385,17 +2385,15 @@ void CL_Shutdown (void)
 	
 	if (isdown)
 	{
-		printf ("recursive shutdown\n");
+		printf("recursive shutdown\n");
 		return;
 	}
 
 	isdown = true;
-
 	CL_WriteConfiguration("config.cfg"); 
-
 	CDAudio_Shutdown();
 	S_Shutdown();
-	IN_Shutdown ();
+	IN_Shutdown();
 	VID_Shutdown();
 
 	if (!dedicated->value)

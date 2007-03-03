@@ -311,6 +311,8 @@ typedef struct
 	void	(*Cbuf_ExecuteText) (int exec_when, char *text);
 	cvar_t	*(*Cvar_Get) (char *name, char *value, int flags);
 	cvar_t	*(*Cvar_Set) (char *name, char *value);
+	int		(*FS_LoadFileZ) (const char *path, void **buffer);
+	void	(*FS_FreeFile) (void *buffer);
 } testimport_t;
 
 // this is the only function actually exported at the linker level

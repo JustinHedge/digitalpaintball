@@ -802,11 +802,10 @@ void NET_Init (void)
 NET_Shutdown
 ====================
 */
-void	NET_Shutdown (void)
+void NET_Shutdown (void)
 {
-	NET_Config (false);	// close sockets
-
-	WSACleanup ();
+	NET_Config(false);	// close sockets
+	WSACleanup();
 }
 
 

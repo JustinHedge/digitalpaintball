@@ -240,7 +240,7 @@ int FS_FOpenFile (const char *filename, FILE **file)
 	{
 		if (!strncmp(filename, link->from, link->fromlength))
 		{
-			Com_sprintf(netpath, sizeof(netpath), "%s%s", link->to, filename+link->fromlength);
+			Com_sprintf(netpath, sizeof(netpath), "%s%s", link->to, filename + link->fromlength);
 			*file = fopen(netpath, "rb");
 
 			if (*file)
