@@ -74,9 +74,9 @@ void Cmd_Wait_f (void)
 
 sizebuf_t	cmd_text;
 sizebuf_t	stuffcmd_text; // jitsecurity
-byte		cmd_text_buf[8192];
+byte		cmd_text_buf[32768]; // jitexec -- increased  buffer from 8k to 32k
 byte		stuffcmd_text_buf[4096];
-byte		defer_text_buf[8192];
+byte		defer_text_buf[32768]; // jitexec -- increased  buffer from 8k to 32k
 byte		cmd_text_buf_threadsafe[1024] = ""; // jitmultithreading
 pthread_mutex_t cbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
