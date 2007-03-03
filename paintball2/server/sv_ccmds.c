@@ -758,50 +758,61 @@ void SV_Status_f (void)
 	client_t	*cl;
 	char		*s;
 	int			ping;
+	char		szCleanName[256]; // jitstatus
+	
 	if (!svs.clients)
 	{
 		Com_Printf ("No server running.\n");
 		return;
 	}
-	Com_Printf ("map              : %s\n", sv.name);
 
-	Com_Printf ("num score ping name            lastmsg address               qport \n");
-	Com_Printf ("--- ----- ---- --------------- ------- --------------------- ------\n");
-	for (i=0,cl=svs.clients ; i<maxclients->value; i++,cl++)
+	Com_Printf("map              : %s\n", sv.name);
+	Com_Printf("num score ping name            lastmsg address               qport \n");
+	Com_Printf("--- ----- ---- --------------- ------- --------------------- ------\n");
+
+	for (i = 0, cl = svs.clients; i < maxclients->value; i++, cl++)
 	{
 		if (!cl->state)
 			continue;
-		Com_Printf ("%3i ", i);
-		Com_Printf ("%5i ", cl->edict->client->ps.stats[STAT_FRAGS]);
+
+		Com_Printf("%3i ", i);
+		Com_Printf("%5i ", cl->edict->client->ps.stats[STAT_FRAGS]);
 
 		if (cl->state == cs_connected)
-			Com_Printf ("CNCT ");
+		{
+			Com_Printf("CNCT ");
+		}
 		else if (cl->state == cs_zombie)
-			Com_Printf ("ZMBI ");
+		{
+			Com_Printf("ZMBI ");
+		}
 		else
 		{
 			ping = cl->ping < 9999 ? cl->ping : 9999;
-			Com_Printf ("%4i ", ping);
+			Com_Printf("%4i ", ping);
 		}
 
-		Com_Printf ("%s", cl->name);
-		l = 16 - strlen(cl->name);
-		for (j=0 ; j<l ; j++)
-			Com_Printf (" ");
+		strip_garbage(szCleanName, cl->name); // jitstatus
+		szCleanName[16] = 0; // jitstatus
+		Com_Printf("%s", szCleanName); // jitstatus
+		l = 16 - strlen(szCleanName); // jitstatus
 
-		Com_Printf ("%7i ", svs.realtime - cl->lastmessage );
+		for (j = 0; j < l; j++)
+			Com_Printf(" ");
 
-		s = NET_AdrToString ( cl->netchan.remote_address);
-		Com_Printf ("%s", s);
+		Com_Printf("%7i ", svs.realtime - cl->lastmessage);
+		s = NET_AdrToString(cl->netchan.remote_address);
+		Com_Printf("%s", s);
 		l = 22 - strlen(s);
-		for (j=0 ; j<l ; j++)
-			Com_Printf (" ");
-		
-		Com_Printf ("%5i", cl->netchan.qport);
 
-		Com_Printf ("\n");
+		for (j = 0; j < l; j++)
+			Com_Printf(" ");
+
+		Com_Printf("%5i", cl->netchan.qport);
+		Com_Printf("\n");
 	}
-	Com_Printf ("\n");
+
+	Com_Printf("\n");
 }
 
 /*
