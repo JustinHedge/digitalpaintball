@@ -226,7 +226,8 @@ static void LoadListHttp (const char *sHttpSource)
 		return;
 	}
 
-	nSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	//nSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	nSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	memset(&address, 0, sizeof(address));
 	address.sin_family = AF_INET;
 	address.sin_addr.S_un.S_addr = *(unsigned long *)pHostent->h_addr_list[0];
