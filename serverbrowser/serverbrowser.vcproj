@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.00"
 	Name="serverbrowser"
+	ProjectGUID="{FA0DE5CE-0A74-4C36-817B-CE19035B1014}"
 	SccProjectName=""
 	SccLocalPath="">
 	<Platforms>
