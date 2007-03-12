@@ -85,15 +85,15 @@ int CCheckParm (char *parm)
 void InitConProc (int argc, char **argv)
 {
 	unsigned	threadAddr;
-	HANDLE		hFile;
-	HANDLE		heventParent;
-	HANDLE		heventChild;
+	HANDLE		hFile = 0; // jitinit -- these weren't initialized
+	HANDLE		heventParent = 0; // jitinit
+	HANDLE		heventChild = 0; // jitinit
 	int			t;
 
 	ccom_argc = argc;
 	ccom_argv = argv;
 
-// give QHOST a chance to hook into the console
+	// give QHOST a chance to hook into the console
 	if ((t = CCheckParm ("-HFILE")) > 0)
 	{
 		if (t < argc)
@@ -113,7 +113,7 @@ void InitConProc (int argc, char **argv)
 	}
 
 
-// ignore if we don't have all the events.
+	// ignore if we don't have all the events.
 	if (!hFile || !heventParent || !heventChild)
 	{
 		printf ("Qhost not present.\n");
