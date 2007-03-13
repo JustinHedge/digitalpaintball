@@ -157,7 +157,8 @@ BASE_CFLAGS=-I$(LOCALBASE)/include -I$(X11BASE)/include \
             -Dstricmp=strcasecmp -D_inline= -DSleep=usleep \
             -DGAME_NAME='\"$(GAME_NAME)\"'\
 	    -DPAINTBALL2_VERSION='\"$(VERSION)\"' \
-	    -DBUILD_VERSION='\"$(BUILD)\"'
+	    -DBUILD_VERSION='\"$(BUILD)\"' -Wno-pointer-sign \
+            -D_THREAD_SAFE
 
 ifneq ($(strip $(USE_X86_ASM)),YES)
 BASE_CFLAGS+=-DC_ONLY
@@ -217,7 +218,7 @@ RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops \
 	-fomit-frame-pointer -fexpensive-optimizations -fno-strict-aliasing
 endif
 
-DEBUG_CFLAGS=$(BASE_CFLAGS) -g -ggdb -Wall -pipe -ffloat-store -ffast-math -D_DEBUG 
+DEBUG_CFLAGS=$(BASE_CFLAGS) -g -ggdb -pipe -ffloat-store -ffast-math -D_DEBUG 
 
 LDFLAGS=-L$(LOCALBASE)/lib -lm
 

@@ -196,7 +196,7 @@ void SVC_Info (void)
 	{
 		count = 0;
 
-		for (i=0; i<maxclients->value; i++)
+		for (i = 0; i < maxclients->value; i++)
 			if (svs.clients[i].state >= cs_connected)
 				count++;
 

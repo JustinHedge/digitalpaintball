@@ -795,7 +795,7 @@ void R_PolyBlend (void)
 		b = gl_brightness->value * (1.0f - gl_autobrightness->value +
 			gl_autobrightness->value * autobright) / 2.0f + 0.5f; // value needs to be between 0.5 and 1.0
 		qglColor4f(b, b, b, 1);
-		ri.Con_Printf(PRINT_ALL, "%g  %g  %g\n", shadeavg, autobright, timediff);
+		//ri.Con_Printf(PRINT_ALL, "%g  %g  %g\n", shadeavg, autobright, timediff);
 
 		qglBegin(GL_QUADS);
 			qglVertex3f(10, 100, 100);
@@ -1042,9 +1042,9 @@ void R_SetupGL (void)
     qglLoadIdentity();
 
 	if (fogenabled && fogdistance) // jitfog
-		MYgluPerspective(r_newrefdef.fov_y, screenaspect, 4 * 74 / r_newrefdef.fov_y, fogdistance + 128); // jitfov
+		MYgluPerspective(r_newrefdef.fov_y, screenaspect, 4 * 74 / max(r_newrefdef.fov_y, 40), fogdistance + 128); // jitfov
 	else
-		MYgluPerspective(r_newrefdef.fov_y, screenaspect, 4 * 74 / r_newrefdef.fov_y, 15000/*4096*/);  //jitfov
+		MYgluPerspective(r_newrefdef.fov_y, screenaspect, 4 * 74 / max(r_newrefdef.fov_y, 40), 15000/*4096*/);  //jitfov
 
 	qglCullFace(GL_FRONT); // todo
 	qglMatrixMode(GL_MODELVIEW);

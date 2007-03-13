@@ -291,6 +291,8 @@ qboolean VID_LoadRefresh(char *name)
 	i.Cbuf_ExecuteText = Cbuf_ExecuteText;
 	i.Cvar_Get = Cvar_Get;
 	i.Cvar_Set = Cvar_Set;
+	i.FS_LoadFileZ = FS_LoadFileZ;
+	i.FS_FreeFile = FS_FreeFile;
 
 	if ((GetRefAPI = (void *) dlsym(reflib_library, "GetRefAPI")) == 0)
 		Com_Error(ERR_FATAL, "dlsym failed on %s", name);
