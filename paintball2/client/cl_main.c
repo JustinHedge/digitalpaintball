@@ -99,6 +99,7 @@ cvar_t	*serverlist_source; // jitserverlist / jitmenu
 cvar_t	*serverlist_source2; // jitserverlist / jitmenu
 cvar_t	*serverlist_source3; // jitserverlist / jitmenu
 cvar_t	*serverlist_blacklist;
+cvar_t	*serverlist_udp_source1; // jitserverlist
 
 client_static_t	cls;
 client_state_t	cl;
@@ -1059,13 +1060,9 @@ void CL_ConnectionlessPacket (void)
 	
 	MSG_BeginReading(&net_message);
 	MSG_ReadLong(&net_message);	// skip the -1
-
 	s = MSG_ReadStringLine(&net_message);
-
 	Cmd_TokenizeString(s, false);
-
 	c = Cmd_Argv(0);
-
 	Com_Printf("%s: %s\n", NET_AdrToString(net_from), c);
 
 	// server connection
@@ -1110,8 +1107,8 @@ void CL_ConnectionlessPacket (void)
 	// print command from somewhere
 	if (Q_streq(c, "print"))
 	{
-		s = MSG_ReadString (&net_message);
-		Com_Printf ("%s", s);
+		s = MSG_ReadString(&net_message);
+		Com_Printf("%s", s);
 		return;
 	}
 
@@ -1134,6 +1131,13 @@ void CL_ConnectionlessPacket (void)
 	if (Q_streq(c, "echo"))
 	{
 		Netchan_OutOfBandPrint(NS_CLIENT, net_from, "%s", Cmd_Argv(1) );
+		return;
+	}
+
+	// serverlist listing from UDP serverlist source
+	if (Q_streq(c, "serverlist1"))
+	{
+		CL_ServerlistPacket(net_from, &net_message);
 		return;
 	}
 
@@ -1814,6 +1818,7 @@ void CL_InitLocal (void)
 		"http://dplogin.com/serverlist.php", 0); // jitserverlist / jitmenu
 	serverlist_blacklist =	Cvar_Get("serverlist_blacklist",
 		"http://dplogin.com/blacklist.php", 0);
+	serverlist_udp_source1 = Cvar_Get("serverlist_udp_source1", "dplogin.com:27900", 0); // jitserverlist
 
 	// fix up old serverlist settings now that the server has moved:
 	if (Q_streq(serverlist_source->string, "http://www.planetquake.com/digitalpaint/servers.txt"))
@@ -2363,10 +2368,10 @@ void CL_Init (void)
 	Con_ToggleConsole_f(); // jitspoe -- start with console down
 	Con_ToggleConsole_f(); // jitspoe -- lift it up again if in play
 	M_Menu_Main_f(); // jitmenu
+	CL_VerifyContent(); // jit
 #ifndef QUAKE2
 	Cbuf_AddText("menu profile\n"); // jitprofile
 #endif
-	CL_VerifyContent(); // jit
 	Cbuf_Execute();
 }
 

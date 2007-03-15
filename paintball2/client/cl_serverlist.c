@@ -490,6 +490,44 @@ void M_ServerlistRefresh_f (void)
 }
 
 
+static void CL_PingServerlistServer (const char *pServerAddress)
+{
+	char buff[64];
+	netadr_t adr;
+
+	Com_Printf("pinging %s...\n", pServerAddress);
+
+	if (!NET_StringToAdr(pServerAddress, &adr))
+	{
+		Com_Printf("Bad address: %s\n", pServerAddress);
+		return;
+	}
+
+	if (!adr.port)
+		adr.port = BigShort(PORT_SERVER);
+
+	Com_sprintf(buff, sizeof(buff), "info %i", PROTOCOL_VERSION);
+	Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
+	Com_sprintf(buff, sizeof(buff), "%s --- 0/0", pServerAddress);
+	// Add to listas being pinged
+	M_AddToServerList(adr, buff, true);
+}
+
+
+void CL_ServerlistPacket (netadr_t net_from, sizebuf_t *net_message)
+{
+	char *cmd;
+	int i = 1;
+
+	while ((cmd = MSG_ReadStringLine(net_message)) && *cmd) // not threadsafe!
+	{
+		// todo: queue up a list and ping at intervals to get more accurate pings
+		CL_PingServerlistServer(cmd);
+		// todo: check for incomplete lists -- do we need to continue?
+	}
+}
+
+
 // Download list of ip's from a remote location and
 // add them to the local serverlist
 #define BUFFER_SIZE 32767
@@ -500,9 +538,7 @@ static void M_ServerlistUpdate (char *sServerSource)
 	qboolean file = false;
 	char *current;
 	char *found = NULL;
-	netadr_t adr;
 	int bytes_read = 0;
-	char buff[256];
 
 	if (!*sServerSource)
 		return;
@@ -607,24 +643,8 @@ static void M_ServerlistUpdate (char *sServerSource)
 		if (!*found || Q_streq(found, "X"))
 			goto done;
 
-		Com_Printf("pinging %s...\n", found);
-
-		if (!NET_StringToAdr(found, &adr))
-		{
-			Com_Printf("Bad address: %s\n", found);
-			continue;
-		}
-
-		if (!adr.port)
-			adr.port = BigShort(PORT_SERVER);
-
+		CL_PingServerlistServer(found);
 		Sleep(16); // jitodo -- make a cvar for the time between pings
-		sprintf(buff, "info %i", PROTOCOL_VERSION);
-		Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
-		sprintf(buff, "%s --- 0/0", found);
-		// Add to listas being pinged
-		M_AddToServerList(adr, buff, true);
-
 		// Start at the next line:
 		current++;
 
@@ -686,13 +706,30 @@ void *M_ServerlistUpdate_multithreaded (void *ptr)
 	return NULL;
 }
 
+
+#define UDP_SERVERLIST_PORT 27900
+
+static void M_ServerlistUpdateUDP (void)
+{
+	netadr_t adr;
+
+	adr.port = htons(UDP_SERVERLIST_PORT);
+	NET_StringToAdr(serverlist_udp_source1->string, &adr);
+	Netchan_OutOfBandPrint(NS_CLIENT, adr, "serverlist1 0\n");
+}
+
+
 void M_ServerlistUpdate_f (void)
 {
+#if 1 // todo - cvar?
+	M_ServerlistUpdateUDP();
+#else
 	if (!refreshing)
 	{
 		refreshing = true;
 		pthread_create(&updatethread, NULL, M_ServerlistUpdate_multithreaded, NULL);;
 	}
+#endif
 }
 
 
