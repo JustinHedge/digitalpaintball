@@ -138,6 +138,8 @@ static void WriteProfileFile (const char *sProfilePath, const char *sLoginName, 
 
 		if (bRawPass)
 		{
+			// Raw password data is data read straight from the profile file
+			// (I think it's only used if the profile name is changed)
 			fwrite(sPassword, PROFILE_PASSWORD_LEN, 1, fp);
 		}
 		else
