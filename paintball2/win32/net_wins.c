@@ -256,21 +256,21 @@ idnewt:28000
 192.246.40.70:28000
 =============
 */
-qboolean	NET_StringToAdr (char *s, netadr_t *a)
+qboolean	NET_StringToAdr (const char *s, netadr_t *a)
 {
 	struct sockaddr sadr;
 	
-	if (Q_streq (s, "localhost"))
+	if (Q_streq(s, "localhost"))
 	{
-		memset (a, 0, sizeof(*a));
+		memset(a, 0, sizeof(*a));
 		a->type = NA_LOOPBACK;
 		return true;
 	}
 
-	if (!NET_StringToSockaddr (s, &sadr))
+	if (!NET_StringToSockaddr(s, &sadr))
 		return false;
 	
-	SockadrToNetadr (&sadr, a);
+	SockadrToNetadr(&sadr, a);
 
 	return true;
 }
