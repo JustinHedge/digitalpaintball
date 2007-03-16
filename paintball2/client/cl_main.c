@@ -1137,7 +1137,7 @@ void CL_ConnectionlessPacket (void)
 	// serverlist listing from UDP serverlist source
 	if (Q_streq(c, "serverlist1"))
 	{
-		CL_ServerlistPacket(net_from, &net_message);
+		CL_ServerlistPacket(net_from, Cmd_Argv(1), &net_message);
 		return;
 	}
 

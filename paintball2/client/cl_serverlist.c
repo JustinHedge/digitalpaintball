@@ -7,6 +7,7 @@
 #endif
 
 #define INITIAL_SERVERLIST_SIZE 32
+#define UDP_SERVERLIST_PORT 27900
 
 // Local globals
 static pthread_mutex_t m_mut_serverlist;
@@ -14,6 +15,7 @@ static pthread_t updatethread;
 static pthread_t pingthread;
 static qboolean refreshing = false;
 static int m_serverPingSartTime;
+char g_szRandomServerlistString[32];
 
 // Project-wide Globals
 m_serverlist_t m_serverlist;
@@ -509,20 +511,23 @@ static void CL_PingServerlistServer (const char *pServerAddress)
 	Com_sprintf(buff, sizeof(buff), "info %i", PROTOCOL_VERSION);
 	Netchan_OutOfBandPrint(NS_CLIENT, adr, buff);
 	Com_sprintf(buff, sizeof(buff), "%s --- 0/0", pServerAddress);
-	// Add to listas being pinged
+	// Add to list as being pinged
 	M_AddToServerList(adr, buff, true);
 }
 
 
-void CL_ServerlistPacket (netadr_t net_from, sizebuf_t *net_message)
+void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *net_message)
 {
-	char *cmd;
+	char *sServerIP;
 	int i = 1;
 
-	while ((cmd = MSG_ReadStringLine(net_message)) && *cmd) // not threadsafe!
+	if (!Q_streq(sRandStr, g_szRandomServerlistString))
+		return; // malicious packet?  Whatever, just ignore it.
+
+	while ((sServerIP = MSG_ReadStringLine(net_message)) && *sServerIP) // not threadsafe!
 	{
 		// todo: queue up a list and ping at intervals to get more accurate pings
-		CL_PingServerlistServer(cmd);
+		CL_PingServerlistServer(sServerIP);
 		// todo: check for incomplete lists -- do we need to continue?
 	}
 }
@@ -707,15 +712,27 @@ void *M_ServerlistUpdate_multithreaded (void *ptr)
 }
 
 
-#define UDP_SERVERLIST_PORT 27900
+static void GenerateRandomServerlistString (void)
+{
+	int i;
+
+	for (i = 0; i < 12; ++i)
+	{
+		g_szRandomServerlistString[i] = (int)(frand() * 26) + 'a';
+	}
+
+	g_szRandomServerlistString[i] = 0;
+}
+
 
 static void M_ServerlistUpdateUDP (void)
 {
 	netadr_t adr;
 
+	GenerateRandomServerlistString();
 	adr.port = htons(UDP_SERVERLIST_PORT);
 	NET_StringToAdr(serverlist_udp_source1->string, &adr);
-	Netchan_OutOfBandPrint(NS_CLIENT, adr, "serverlist1 0\n");
+	Netchan_OutOfBandPrint(NS_CLIENT, adr, "serverlist1 0 %s\n", g_szRandomServerlistString);
 }
 
 
