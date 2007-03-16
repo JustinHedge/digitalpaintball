@@ -269,7 +269,7 @@ qboolean	NET_StringToAdr (const char *s, netadr_t *a)
 
 	if (!NET_StringToSockaddr(s, &sadr))
 		return false;
-	
+
 	SockadrToNetadr(&sadr, a);
 
 	return true;
