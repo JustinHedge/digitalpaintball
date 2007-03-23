@@ -803,13 +803,13 @@ void SV_Frame (int msec)
     svs.realtime += msec;
 
 	// keep the random time dependent
-	rand ();
+	rand();
 
 	// check timeouts
-	SV_CheckTimeouts ();
+	SV_CheckTimeouts();
 
 	// get packets from clients
-	SV_ReadPackets ();
+	SV_ReadPackets();
 
 	// move autonomous things around if enough time has passed
 	if (!sv_timedemo->value && svs.realtime < sv.time)
@@ -818,34 +818,35 @@ void SV_Frame (int msec)
 		if (sv.time - svs.realtime > 100)
 		{
 			if (sv_showclamp->value)
-				Com_Printf ("sv lowclamp\n");
+				Com_Printf("sv lowclamp\n");
+
 			svs.realtime = sv.time - 100;
 		}
+
 		NET_Sleep(sv.time - svs.realtime);
 		return;
 	}
 
 	// update ping based on the last known frame from all clients
-	SV_CalcPings ();
+	SV_CalcPings();
 
 	// give the clients some timeslices
-	SV_GiveMsec ();
+	SV_GiveMsec();
 
 	// let everything in the world think and move
-	SV_RunGameFrame ();
+	SV_RunGameFrame();
 
 	// send messages back to the clients that had packets read this frame
-	SV_SendClientMessages ();
+	SV_SendClientMessages();
 
 	// save the entire world state if recording a serverdemo
-	SV_RecordDemoMessage ();
+	SV_RecordDemoMessage();
 
 	// send a heartbeat to the master if needed
-	Master_Heartbeat ();
+	Master_Heartbeat();
 
 	// clear teleport flags, etc for next frame
-	SV_PrepWorldFrame ();
-
+	SV_PrepWorldFrame();
 }
 
 //============================================================================

@@ -77,7 +77,7 @@ void NET_OpenIP (void)
 				port = PORT_ANY;
 		}
 
-		ip_sockets[NS_CLIENT] = NET_IPSocket (ip->string, port);
+		ip_sockets[NS_CLIENT] = NET_IPSocket(ip->string, port);
 
 		if (!ip_sockets[NS_CLIENT])
 			ip_sockets[NS_CLIENT] = NET_IPSocket(ip->string, PORT_ANY);

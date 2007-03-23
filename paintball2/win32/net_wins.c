@@ -187,7 +187,7 @@ idnewt:28000
 	sscanf (copy, "%x", &val);	\
 	((struct sockaddr_ipx *)sadr)->dest = val
 
-qboolean	NET_StringToSockaddr (char *s, struct sockaddr *sadr)
+qboolean NET_StringToSockaddr (const char *s, struct sockaddr *sadr)
 {
 	struct hostent	*h;
 	char	*colon;
@@ -353,9 +353,7 @@ qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 			continue;
 
 		fromlen = sizeof(from);
-		ret = recvfrom (net_socket, net_message->data, net_message->maxsize
-			, 0, (struct sockaddr *)&from, &fromlen);
-
+		ret = recvfrom(net_socket, net_message->data, net_message->maxsize, 0, (struct sockaddr *)&from, &fromlen);
 		SockadrToNetadr(&from, net_from);
 
 		if (ret == -1)
@@ -364,24 +362,20 @@ qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 
 			if (err == WSAEWOULDBLOCK)
 				continue;
-			if (err == WSAEMSGSIZE) {
-				Com_Printf ("Warning:  Oversize packet from %s\n",
-						NET_AdrToString(*net_from));
+
+			if (err == WSAEMSGSIZE)
+			{
+				Com_Printf("Warning:  Oversize packet from %s\n", NET_AdrToString(*net_from));
 				continue;
 			}
 
-		//	if (dedicated->value)	// let dedicated servers continue after errors, jit, don't drop listen either (stupid wsaeconnreset)
-				Com_Printf ("NET_GetPacket: %s from %s\n", NET_ErrorString(),
-						NET_AdrToString(*net_from));
-		/*	else
-				Com_Error (ERR_DROP, "NET_GetPacket: %s from %s", 
-						NET_ErrorString(), NET_AdrToString(*net_from));*/
+			Com_Printf("NET_GetPacket: %s from %s\n", NET_ErrorString(), NET_AdrToString(*net_from));
 			continue;
 		}
 
 		if (ret == net_message->maxsize)
 		{
-			Com_Printf ("Oversize packet from %s\n", NET_AdrToString (*net_from));
+			Com_Printf("Oversize packet from %s\n", NET_AdrToString(*net_from));
 			continue;
 		}
 
@@ -554,32 +548,34 @@ int NET_IPSocket (char *net_interface, int port)
 	int					i = 1;
 	int					err;
 
-	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+	if ((newsocket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 	{
 		err = WSAGetLastError();
+
 		if (err != WSAEAFNOSUPPORT)
-			Com_Printf ("WARNING: UDP_OpenSocket: socket: %s", NET_ErrorString());
+			Com_Printf("WARNING: UDP_OpenSocket: socket: %s", NET_ErrorString());
+
 		return 0;
 	}
 
 	// make it non-blocking
-	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1)
+	if (ioctlsocket(newsocket, FIONBIO, &_true) == -1)
 	{
-		Com_Printf ("WARNING: UDP_OpenSocket: ioctl FIONBIO: %s\n", NET_ErrorString());
+		Com_Printf("WARNING: UDP_OpenSocket: ioctl FIONBIO: %s\n", NET_ErrorString());
 		return 0;
 	}
 
 	// make it broadcast capable
 	if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, (char *)&i, sizeof(i)) == -1)
 	{
-		Com_Printf ("WARNING: UDP_OpenSocket: setsockopt SO_BROADCAST: %s\n", NET_ErrorString());
+		Com_Printf("WARNING: UDP_OpenSocket: setsockopt SO_BROADCAST: %s\n", NET_ErrorString());
 		return 0;
 	}
 
 	if (!net_interface || !net_interface[0] || !stricmp(net_interface, "localhost"))
 		address.sin_addr.s_addr = INADDR_ANY;
 	else
-		NET_StringToSockaddr (net_interface, (struct sockaddr *)&address);
+		NET_StringToSockaddr(net_interface, (struct sockaddr *)&address);
 
 	if (port == PORT_ANY)
 		address.sin_port = 0;
@@ -588,10 +584,10 @@ int NET_IPSocket (char *net_interface, int port)
 
 	address.sin_family = AF_INET;
 
-	if ( bind (newsocket, (void *)&address, sizeof(address)) == -1)
+	if (bind(newsocket, (void *)&address, sizeof(address)) == -1)
 	{
-		Com_Printf ("WARNING: UDP_OpenSocket: bind: %s\n", NET_ErrorString());
-		closesocket (newsocket);
+		Com_Printf("WARNING: UDP_OpenSocket: bind: %s\n", NET_ErrorString());
+		closesocket(newsocket);
 		return 0;
 	}
 
@@ -670,11 +666,13 @@ void NET_OpenIPX (void)
 		if (!port)
 		{
 			port = Cvar_Get("hostport", "0", CVAR_NOSET)->value;
+
 			if (!port)
 			{
 				port = Cvar_Get("port", va("%i", PORT_SERVER), CVAR_NOSET)->value;
 			}
 		}
+
 		ipx_sockets[NS_SERVER] = NET_IPXSocket (port);
 	}
 
@@ -685,15 +683,19 @@ void NET_OpenIPX (void)
 	if (!ipx_sockets[NS_CLIENT])
 	{
 		port = Cvar_Get("ipx_clientport", "0", CVAR_NOSET)->value;
+
 		if (!port)
 		{
 			port = Cvar_Get("clientport", va("%i", PORT_CLIENT), CVAR_NOSET)->value;
+
 			if (!port)
 				port = PORT_ANY;
 		}
+
 		ipx_sockets[NS_CLIENT] = NET_IPXSocket (port);
+
 		if (!ipx_sockets[NS_CLIENT])
-			ipx_sockets[NS_CLIENT] = NET_IPXSocket (PORT_ANY);
+			ipx_sockets[NS_CLIENT] = NET_IPXSocket(PORT_ANY);
 	}
 }
 
