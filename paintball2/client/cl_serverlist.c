@@ -516,6 +516,16 @@ static void CL_PingServerlistServer (const char *pServerAddress)
 }
 
 
+static void M_ServerlistUpdateUDP (int nStart)
+{
+	netadr_t adr;
+
+	adr.port = htons(UDP_SERVERLIST_PORT);
+	NET_StringToAdr(serverlist_udp_source1->string, &adr);
+	Netchan_OutOfBandPrint(NS_CLIENT, adr, "serverlist1 %d %s\n", nStart, g_szRandomServerlistString);
+}
+
+
 void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *net_message)
 {
 	char *sServerIP;
@@ -526,6 +536,22 @@ void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *ne
 
 	while ((sServerIP = MSG_ReadStringLine(net_message)) && *sServerIP) // not threadsafe!
 	{
+		if (*sServerIP == '*')
+		{
+			if (memcmp(sServerIP, "*continue:", sizeof("*continue")) == 0)
+			{
+				int nStart;
+
+				// serverlist did not fit in one packet, we need another to resume it.
+				// actually, we'll probably never use this -- just have the server send all packets.
+				nStart = atoi(sServerIP + sizeof("*continue:"));
+				M_ServerlistUpdateUDP(nStart);
+				break;
+			}
+
+			continue; // not a serverlist ip, special line.
+		}
+
 		// todo: queue up a list and ping at intervals to get more accurate pings
 		CL_PingServerlistServer(sServerIP);
 		// todo: check for incomplete lists -- do we need to continue?
@@ -725,21 +751,10 @@ static void GenerateRandomServerlistString (void)
 }
 
 
-static void M_ServerlistUpdateUDP (void)
-{
-	netadr_t adr;
-
-	GenerateRandomServerlistString();
-	adr.port = htons(UDP_SERVERLIST_PORT);
-	NET_StringToAdr(serverlist_udp_source1->string, &adr);
-	Netchan_OutOfBandPrint(NS_CLIENT, adr, "serverlist1 0 %s\n", g_szRandomServerlistString);
-}
-
-
 void M_ServerlistUpdate_f (void)
 {
 #if 1 // todo - cvar?
-	M_ServerlistUpdateUDP();
+	M_ServerlistUpdateUDP(0);
 #else
 	if (!refreshing)
 	{
@@ -858,6 +873,8 @@ static qboolean serverlist_load (void)
 
 void Serverlist_Init (void)
 {
+	GenerateRandomServerlistString();
+
 	// Init mutex:
 	pthread_mutex_init(&m_mut_serverlist, NULL);
 
