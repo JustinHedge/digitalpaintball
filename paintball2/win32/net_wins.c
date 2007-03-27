@@ -365,7 +365,7 @@ qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 
 			if (err == WSAEMSGSIZE)
 			{
-				Com_Printf("Warning:  Oversize packet from %s\n", NET_AdrToString(*net_from));
+				Com_Printf("Warning: Oversize packet from %s\n", NET_AdrToString(*net_from));
 				continue;
 			}
 

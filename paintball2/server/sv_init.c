@@ -352,7 +352,7 @@ void SV_InitGame (void)
 	svs.client_entities = Z_Malloc (sizeof(entity_state_t)*svs.num_client_entities);
 
 	// init network stuff
-	NET_Config ( (maxclients->value > 1) );
+	NET_Config((maxclients->value > 1));
 
 	// heartbeats will always be sent to the id master
 	svs.last_heartbeat = -99999;		// send immediately
@@ -360,9 +360,9 @@ void SV_InitGame (void)
 	NET_StringToAdr (idmaster, &master_adr[0]);
 
 	// init game
-	SV_InitGameProgs ();
+	SV_InitGameProgs();
 
-	for (i=0 ; i<maxclients->value ; i++)
+	for (i = 0; i < maxclients->value; i++)
 	{
 		ent = EDICT_NUM(i+1);
 		ent->s.number = i+1;
