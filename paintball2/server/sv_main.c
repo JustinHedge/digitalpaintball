@@ -491,6 +491,12 @@ void SV_ConnectionlessPacket (void)
 {
 	char *s, *c;
 
+	if (sv.attractloop)
+	{
+		Com_Printf("Ignored connectionless packet from %s while in attractloop.\n", NET_AdrToString(net_from));
+		return;
+	}
+
 	// jitsecurity -- fix from Echon.
 	// 1024 is the absolute largest, but nothing should be over 600 unless it's malicious.
 	if (net_message.cursize > 800)
