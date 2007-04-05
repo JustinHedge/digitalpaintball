@@ -122,6 +122,9 @@ char	*SV_StatusString (void)
 	strcat(status, "\n");
 	statusLength = strlen(status);
 
+	if (sv.attractloop) // jitdemo - fix crash from status command while playing a demo.
+		return status;
+
 	for (i = 0; i < maxclients->value; i++)
 	{
 		cl = &svs.clients[i];
@@ -491,11 +494,11 @@ void SV_ConnectionlessPacket (void)
 {
 	char *s, *c;
 
-	if (sv.attractloop)
-	{
-		Com_Printf("Ignored connectionless packet from %s while in attractloop.\n", NET_AdrToString(net_from));
-		return;
-	}
+	//if (sv.attractloop) -- oops, guess these are needed to connect to the demo to watch it...
+	//{
+	//	Com_Printf("Ignored connectionless packet from %s while in attractloop.\n", NET_AdrToString(net_from));
+	//	return;
+	//}
 
 	// jitsecurity -- fix from Echon.
 	// 1024 is the absolute largest, but nothing should be over 600 unless it's malicious.
@@ -1000,7 +1003,7 @@ void SV_Init (void)
 	Cvar_Get("protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO|CVAR_NOSET);;
 	maxclients     = Cvar_Get("maxclients", "1", CVAR_SERVERINFO | CVAR_LATCH);
 	hostname       = Cvar_Get("hostname", "Paintball 2.0 (build " BUILD_S ")", CVAR_SERVERINFO | CVAR_ARCHIVE);
-	timeout        = Cvar_Get("timeout", "125", 0);
+	timeout        = Cvar_Get("timeout", "30", 0); // jittimeout - 30 secounds should be plenty
 	zombietime     = Cvar_Get("zombietime", "2", 0);
 	sv_showclamp   = Cvar_Get("showclamp", "0", 0);
 	sv_paused      = Cvar_Get("paused", "0", 0);
