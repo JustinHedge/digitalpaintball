@@ -214,6 +214,7 @@ void S_Q2A3DStartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, fl
 	else
 	{
 		atten = 3.0f / attenuation;
+
 		if (tr.fraction != 1.0f) // blocked
 			atten *= (1.0f - tr.fraction);
 	}
@@ -224,36 +225,37 @@ void S_Q2A3DStartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, fl
 	
 	if (debugbuff = a3d.A3D_StartSound(sound_origin, listener_forward,listener_origin,namebuffer,atten,s_volume->value,sfx->Id,water))
 		return;
-	//Com_Printf("try %s\n",namebuffer);
+
 	//if startsound failed, the A3D engine doesn't have it cahched
 	//so get a handle to the file and cache it.
 	if (!a3d.A3D_cachefile(namebuffer,NULL))//try and reassign it to a buffer
 	{
-		FS_LoadFile (namebuffer, (void **)&wavfile);
+		FS_LoadFile(namebuffer, (void **)&wavfile);
+
 		if (!wavfile)
 		{
-			//Com_Printf("couldn't find %s\n",namebuffer);
 			a3d.A3D_StartSound(sound_origin, listener_forward,listener_origin,namebuffer,atten,s_volume->value,sfx->Id,0);
-			//Com_Printf("missing %s\n",namebuffer);
 			return;//couldn't find, see if startsound can handle it (e.g. ogg files)
 		}
+
 		if (!a3d.A3D_cachefile(namebuffer,wavfile))
 		{
-			//Com_Printf("A3D sound failed %s\n",namebuffer);
-			FS_FreeFile (wavfile);//if we fail to cache, free it for use later
+			FS_FreeFile(wavfile);//if we fail to cache, free it for use later
+			return; // jit
 		}
-		//Com_Printf("cached\n");
+
 		//then try to start it again
 		if (debugbuff = a3d.A3D_StartSound(sound_origin, listener_forward,listener_origin,namebuffer,atten,s_volume->value,sfx->Id,0))
 		{
-			FS_FreeFile (wavfile);//its now in the cache and nolonger needed
-			//Com_Printf("%s %d\n",namebuffer,debugbuff);
+			FS_FreeFile(wavfile);//its now in the cache and nolonger needed
 			return;
 		}
-		FS_FreeFile (wavfile);//just in case it failed, free the file
+
+		FS_FreeFile(wavfile);//just in case it failed, free the file
 	}
-	a3d.A3D_StartSound(sound_origin, listener_forward,listener_origin,namebuffer,atten,s_volume->value,sfx->Id,0);
-	//Com_Printf("A3D sound failed %s\n",namebuffer);
+
+	a3d.A3D_StartSound(sound_origin, listener_forward, listener_origin, namebuffer, atten, s_volume->value, sfx->Id, 0);
+
 	//else we failed, play it as a normal sound (should never get here)
 	return;
 }
