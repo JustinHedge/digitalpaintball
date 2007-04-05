@@ -1065,9 +1065,9 @@ void CL_ConnectionlessPacket (void)
 	c = Cmd_Argv(0);
 	Com_Printf("%s: %s\n", NET_AdrToString(net_from), c);
 
-	// server connection
 	if (Q_streq(c, "client_connect"))
 	{
+		// server connection
 		if (cls.state == ca_connected)
 		{
 			Com_Printf("Dup connect received.  Ignored.\n");
@@ -1080,17 +1080,15 @@ void CL_ConnectionlessPacket (void)
 		cls.state = ca_connected;
 		return;
 	}
-
-	// server responding to a status broadcast
-	if (Q_streq(c, "info"))
+	else if (Q_streq(c, "info"))
 	{
+		// server responding to a status broadcast
 		CL_ParseStatusMessage();
 		return;
 	}
-
-	// remote command from gui front end
-	if (Q_streq(c, "cmd"))
+	else if (Q_streq(c, "cmd"))
 	{
+		// remote command from gui front end
 		if (!NET_IsLocalAddress(net_from))
 		{
 			Com_Printf("Command packet from remote host.  Ignored.\n");
@@ -1103,41 +1101,47 @@ void CL_ConnectionlessPacket (void)
 		Cbuf_AddText("\n");
 		return;
 	}
-
-	// print command from somewhere
-	if (Q_streq(c, "print"))
+	else if (Q_streq(c, "print"))
 	{
+		// print command from somewhere
 		s = MSG_ReadString(&net_message);
 		Com_Printf("%s", s);
 		return;
 	}
-
-	// ping from somewhere
-	if (Q_streq(c, "ping"))
+	else if (Q_streq(c, "ping"))
 	{
+		// ping from somewhere
 		Netchan_OutOfBandPrint(NS_CLIENT, net_from, "ack");
 		return;
 	}
-
-	// challenge from the server we are connecting to
-	if (Q_streq(c, "challenge"))
+	else if (Q_streq(c, "challenge"))
 	{
+		// challenge from the server we are connecting to
 		cls.challenge = atoi(Cmd_Argv(1));
 		CL_SendConnectPacket();
 		return;
 	}
-
-	// echo request from server
-	if (Q_streq(c, "echo"))
+	else if (Q_streq(c, "echo"))
 	{
+		// echo request from server
 		Netchan_OutOfBandPrint(NS_CLIENT, net_from, "%s", Cmd_Argv(1) );
 		return;
 	}
-
-	// serverlist listing from UDP serverlist source
-	if (Q_streq(c, "serverlist1"))
+	else if (Q_streq(c, "serverlist1"))
 	{
+		// serverlist listing from UDP serverlist source
 		CL_ServerlistPacket(net_from, Cmd_Argv(1), &net_message);
+		return;
+	}
+	else if (Q_streq(c, "vninitresponse"))
+	{
+		// Information from the global login server
+		CL_VNInitResponse(net_from, &net_message);
+		return;
+	}
+	else if (Q_streq(c, "vnresponse"))
+	{
+		CL_VNResponse(net_from, &net_message);
 		return;
 	}
 
@@ -1949,7 +1953,7 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("+scores", CL_ScoreboardShow_f); // jitscores
 	Cmd_AddCommand("-scores", CL_ScoreboardHide_f); // jitscores
 
-	AddProfileCommands(); // jitprofile
+	CL_InitProfile(); // jitprofile
 
 	// Xile/NiceAss LOC
 	Cmd_AddCommand("loc_add", CL_AddLoc_f);
@@ -2041,7 +2045,7 @@ cheatvar_t	cheatvars[] = {
 	{"gl_saturatelighting", "0"},
 	{"gl_lockpvs", "0"}, // jit
 	{"gl_showbbox", "0"}, // jit
-	{"gl_showtris", "0"}, // jit
+	//{"gl_showtris", "0"}, // jit
 	{"cl_minfps", "0"}, // jit
 	{"r_drawworld", "1"}, // jit
 	{"build", BUILD_S}, // jitversion

@@ -31,6 +31,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t *menu_profile_pass;
 static char g_szPassHash[64] = "";
 static char g_szRandomString[64] = "";
+static int g_nVNInitUnique;
+static qboolean g_bPassHashed = false;
+static char g_szUserNameURL[256];
+static char g_szUserName[64];
+static int g_nUserID;
 
 static const char *GetUniqueSystemString (void)
 {
@@ -313,47 +318,101 @@ static void urlencode (char *out, int out_size, const char *in)
 void CL_ProfileLogin_f (void)
 {
 	char szPassword[256];
-	char szPassHash2[256];
-	char szPassHash[256];
-	char szRequest[1024];
-	char szDataBack[4096];
 	char *sPassword;
-	char szUserName[64];
-	char szUserNameURL[256];
-	char szConnectID[16] = "";
-	char *s, *s2;
-	char szUserID[32];
-	int i;
-	qboolean bPassHashed = false;
+	netadr_t adr;
+
+	Cbuf_AddText("menu profile_login\n");
 
 	if (Cmd_Argc() < 3)
 		return;
 
-	strip_garbage(szUserName, Cmd_Argv(1));
-	urlencode(szUserNameURL, sizeof(szUserNameURL), szUserName);
+	strip_garbage(g_szUserName, Cmd_Argv(1));
+	urlencode(g_szUserNameURL, sizeof(g_szUserNameURL), g_szUserName);
 	sPassword = Cmd_Argv(2);
 
-	if (!*szUserName || !*sPassword)
+	if (!*g_szUserName || !*sPassword)
 		return; // blank value (shouldn't happen)
 
 	if (menu_profile_pass->modified)
 	{
 		// Generate password hash (raw password is never sent or stored).
 		Com_sprintf(szPassword, sizeof(szPassword), "%sDPLogin001", sPassword);
-		Com_MD5HashString(szPassword, strlen(szPassword), szPassHash, sizeof(szPassHash));
+		Com_MD5HashString(szPassword, strlen(szPassword), g_szPassHash, sizeof(g_szPassHash));
 	}
 	else
 	{
 		// Password was saved.  Already hashed.
-		Q_strncpyz(szPassHash, sPassword, sizeof(szPassword));
-		bPassHashed = true;
+		Q_strncpyz(g_szPassHash, sPassword, sizeof(g_szPassHash));
+		g_bPassHashed = true;
 	}
 
-	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=1&username=%s", szUserNameURL);
+	NET_Config(true); // allow remote
 
-	if (GetHTTP(szRequest, szDataBack, sizeof(szDataBack)) < 1)
+	if (NET_StringToAdr("dplogin.com:27900", &adr))
 	{
+		Netchan_OutOfBandPrint(NS_CLIENT, adr, "vninit\nusername=%s&uniqueid=%d", g_szUserNameURL, g_nVNInitUnique);
+	}
+	else
+	{
+		Com_Printf("ERROR: CL_ProfileLogin_f(): Failed to resolve login server domain.\n"
+			"Visit Digital Paint forums for support.\n");
 		Cbuf_AddText("menu profile_loginfailed\n");
+	}
+}
+
+#define MAX_BUFFER_SIZE 1024
+
+static int SizebuffCopyZ (char *sOutString, int nOutStringSize, sizebuf_t *ptData)
+{
+	int nSize;
+
+	if (!ptData)
+	{
+		sOutString[0] = 0;
+		return 0;
+	}
+
+	nSize = ptData->cursize;
+	
+	if (nSize > nOutStringSize - 1)
+		nSize = nOutStringSize - 1;
+
+	memcpy(sOutString, ptData->data, nSize);
+	sOutString[nSize] = 0;
+
+	return nSize;
+}
+
+
+void CL_VNInitResponse (netadr_t adr_from, sizebuf_t *ptData)
+{
+	char szDataBack[MAX_BUFFER_SIZE];
+	char *s, *s2;
+	int i;
+	char szPassHash2[256];
+	char szUserID[32];
+
+	if (!ptData)
+		return;
+
+	SizebuffCopyZ(szDataBack, sizeof(szDataBack), ptData);
+
+	// Verify that this is a valid packet, not a malicious one
+	if (s = strstr(szDataBack, "uniqueid:"))
+	{
+		s += sizeof("uniqueid:");
+		
+		if (atoi(s) != g_nVNInitUnique)
+		{
+			Com_Printf("uniqueid mismatch\n");
+			assert(0);
+			return;
+		}
+	}
+	else
+	{
+		Com_Printf("uniqueid missing\n");
+		assert(0);
 		return;
 	}
 
@@ -367,13 +426,9 @@ void CL_ProfileLogin_f (void)
 		{
 			Com_Printf("%s\n", s);
 		}
-		else if (strstr(szDataBack, "Not Found") || strstr(szDataBack, "not found"))
-		{
-			Com_Printf("ERROR: Login server not found.\nYou may need to update.\nSee http://www.digitalpaint.org/\n");
-		}
 		else
 		{
-			Com_Printf("ERROR: Unknown response from login server.\n");
+			Com_Printf("ERROR: CL_VNInitResponse(): Unknown response from login server.\n");
 			assert(0);
 		}
 
@@ -395,29 +450,33 @@ void CL_ProfileLogin_f (void)
 		szUserID[i++] = *s2++;
 
 	szUserID[i] = 0;
+	g_nUserID = atoi(szUserID);
 
-	if (!bPassHashed)
+	if (!g_bPassHashed)
 	{
-		// Salt with userid
-		Com_sprintf(szPassword, sizeof(szPassword), "%s%s", szPassHash, szUserID);
-		Com_MD5HashString(szPassword, strlen(szPassword), szPassHash, sizeof(szPassHash));
-	}
+		char szPassword[256];
 
-	// save global copy for verification later
-	Q_strncpyz(g_szPassHash, szPassHash, sizeof(g_szPassHash));
+		// Salt with userid
+		Com_sprintf(szPassword, sizeof(szPassword), "%s%s", g_szPassHash, szUserID);
+		Com_MD5HashString(szPassword, strlen(szPassword), g_szPassHash, sizeof(g_szPassHash));
+	}
 
 	// Use HMAC with MD5 to authenticate message (random string) with login server.
-	Com_HMACMD5String(szPassHash, strlen(szPassHash), g_szRandomString,
+	Com_HMACMD5String(g_szPassHash, strlen(g_szPassHash), g_szRandomString,
 		strlen(g_szRandomString), szPassHash2, sizeof(szPassHash2));
-	Com_sprintf(szRequest, sizeof(szRequest), "http://www.dplogin.com/gamelogin.php?init=2&pwhash=%s&username=%s",
-		szPassHash2, szUserNameURL);
+	Netchan_OutOfBandPrint(NS_CLIENT, adr_from, "vn\nusername=%s&pwhash=%s&uniqueid=%d",
+		g_szUserNameURL, szPassHash2, g_nVNInitUnique);
+}
 
-	if (GetHTTP(szRequest, szDataBack, sizeof(szDataBack)) < 1)
-	{
-		Cbuf_AddText("menu profile_loginfailed\n");
-		return;
-	}
 
+void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
+{
+	char szDataBack[MAX_BUFFER_SIZE];
+	char *s;
+	int i;
+	char szConnectID[16] = "";
+
+	SizebuffCopyZ(szDataBack, sizeof(szDataBack), ptData);
 	s = strstr(szDataBack, "GameLoginStatus: PASSED");
 
 	if (!s)
@@ -425,11 +484,31 @@ void CL_ProfileLogin_f (void)
 		if (s = strstr(szDataBack, "ERROR:"))
 			Com_Printf("%s\n", s);
 		else if (s = strstr(szDataBack, "GameLoginStatus: FAILED"))
-			Com_Printf("Incorrect password for username %s\n", szUserName);
+			Com_Printf("Incorrect password for username %s\n", g_szUserName);
 		else
 			Com_Printf("ERROR: Unknown response from login server.\n");
 
 		Cbuf_AddText("menu profile_loginfailed\n");
+		assert(0);
+		return;
+	}
+
+	// Verify that this is a valid packet, not a malicious one
+	if (s = strstr(szDataBack, "uniqueid:"))
+	{
+		s += sizeof("uniqueid:");
+		
+		if (atoi(s) != g_nVNInitUnique)
+		{
+			Com_Printf("uniqueid mismatch\n");
+			assert(0);
+			return;
+		}
+	}
+	else
+	{
+		Com_Printf("uniqueid missing\n");
+		assert(0);
 		return;
 	}
 
@@ -443,6 +522,7 @@ void CL_ProfileLogin_f (void)
 			Com_Printf("ERROR: Unknown response from login server.\n");
 
 		Cbuf_AddText("menu profile_loginfailed\n");
+		assert(0);
 		return;
 	}
 
@@ -453,7 +533,6 @@ void CL_ProfileLogin_f (void)
 		g_szRandomString[i++] = *s++;
 
 	g_szRandomString[i] = 0;
-	
 	s = strstr(szDataBack, "connectid:");
 
 	if (s)
@@ -468,21 +547,24 @@ void CL_ProfileLogin_f (void)
 	}
 
 	if (e.r)
-		e.r(g_szRandomString, atoi(szUserID), atoi(szConnectID), 0);
+		e.r(g_szRandomString, g_nUserID, atoi(szConnectID), 0);
 
 	if (menu_profile_pass->modified)
 	{
 		char szProfileOutPath[MAX_OSPATH];
 
 		Com_sprintf(szProfileOutPath, sizeof(szProfileOutPath), "%s/profiles/%s.prf", FS_Gamedir(), Cvar_Get("menu_profile_file", "unnamed", 0)->string);
-		WriteProfileFile(szProfileOutPath, szUserName,
-			Cvar_Get("menu_profile_remember_pass", "0", 0)->value ? szPassHash : "", false);
+		WriteProfileFile(szProfileOutPath, g_szUserName,
+			Cvar_Get("menu_profile_remember_pass", "0", 0)->value ? g_szPassHash : "", false);
 	}
 
-	Cbuf_AddText("menu pop\n");
+	Cbuf_AddText("menu pop profile_login\n");
+	Cbuf_AddText("menu pop profile\n");
 }
 
+
 extern qboolean g_command_stuffed;
+
 
 void CL_WebLoad_f (void)
 {
@@ -544,9 +626,10 @@ void CL_GlobalLogin_f (void)
 }
 
 
-void AddProfileCommands (void) // TODO: Change to InitProfile or something more appropriate.
+void CL_InitProfile (void)
 {
 	menu_profile_pass = Cvar_Get("menu_profile_pass", "", 0);
+	g_nVNInitUnique = rand() * rand() * rand();
 	Cmd_AddCommand("webload", CL_WebLoad_f);
 	Cmd_AddCommand("profile_edit", CL_ProfileEdit_f);
 	Cmd_AddCommand("profile_edit2", CL_ProfileEdit2_f);
