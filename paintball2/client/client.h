@@ -612,7 +612,9 @@ void CL_ProfileEdit2_f (void);
 void CL_ProfileAdd_f (void);
 void CL_ProfileSelect_f (void);
 void CL_WebLoad_f (void);
-void AddProfileCommands (void);
+void CL_InitProfile (void);
+void CL_VNInitResponse (netadr_t adr_from, sizebuf_t *ptData);
+void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData);
 // jit
 // ===
 
