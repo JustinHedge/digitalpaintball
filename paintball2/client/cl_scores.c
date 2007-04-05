@@ -447,7 +447,7 @@ void CL_ScoreboardHide_f (void)
 	if (cls.server_gamebuild < 126)
 		Cbuf_AddText("cmd scoresoff\n");
 	else
-		Cbuf_AddText("menu pop\n");
+		Cbuf_AddText("menu pop scores\n");
 }
 
 

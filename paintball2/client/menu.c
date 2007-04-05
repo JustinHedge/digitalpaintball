@@ -1595,7 +1595,7 @@ static void M_PushMenuScreen (menu_screen_t *menu, qboolean samelevel)
 	}
 }
 
-static void M_PopMenu (void)
+static void M_PopMenu (const char *sMenuName)
 {
 	menu_widget_t *widget;
 	menu_screen_t *menu;
@@ -1607,7 +1607,7 @@ static void M_PopMenu (void)
 
 	m_menudepth--;
 
-	if (menu = m_menu_screens[m_menudepth])
+	if ((menu = m_menu_screens[m_menudepth]) && (!sMenuName || !*sMenuName || Q_streq(sMenuName, menu->name)))
 	{
 		widget = menu->widget;
 
@@ -1859,7 +1859,7 @@ qboolean M_Keydown (int key)
 		switch (key) 
 		{
 		case K_ESCAPE:
-			M_PopMenu();
+			M_PopMenu(NULL);
 			break;
 		case K_ENTER:
 		case K_KP_ENTER:
@@ -2525,7 +2525,7 @@ void M_Menu_f (void)
 
 	if (Q_streq(menuname, "pop") || Q_streq(menuname, "back"))
 	{
-		M_PopMenu();
+		M_PopMenu(Cmd_Argv(3));
 	}
 	else if (Q_streq(menuname, "off") || Q_streq(menuname, "close"))
 	{
