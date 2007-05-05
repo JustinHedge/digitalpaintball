@@ -735,14 +735,14 @@ void SV_Kick_f (void)
 		return;
 	}
 
-	if (!SV_SetPlayer ())
+	if (!SV_SetPlayer())
 		return;
 
-	SV_BroadcastPrintf (PRINT_HIGH, "%s was kicked\n", sv_client->name);
+	SV_BroadcastPrintf(PRINT_HIGH, "%s was kicked\n", sv_client->name);
 	// print directly, because the dropped client won't get the
 	// SV_BroadcastPrintf message
-	SV_ClientPrintf (sv_client, PRINT_HIGH, "You were kicked from the game\n");
-	SV_DropClient (sv_client);
+	SV_ClientPrintf(sv_client, PRINT_HIGH, "You were kicked from the game\n");
+	SV_DropClient(sv_client);
 	sv_client->lastmessage = svs.realtime;	// min case there is a funny zombie
 }
 
