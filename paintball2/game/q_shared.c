@@ -2087,6 +2087,7 @@ void hash_add (hash_table_t *table, const unsigned char *key, void *data)
 	hash_node_t *newnode;
 	const unsigned char *s;
 
+	hash_delete(table, key); // get rid of old value if it exists
 	newnode = malloc(sizeof(hash_node_t));
 	newnode->key = strdup(key);
 	HASHALG;
