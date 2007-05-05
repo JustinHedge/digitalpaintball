@@ -169,6 +169,12 @@ void SVC_Ack (void)
 	Com_Printf("Ping acknowledge from %s\n", NET_AdrToString(net_from));
 }
 
+void SVC_HeartbeatResponse (const char *sAddress) // jitheartbeat
+{
+	Com_Printf("Heartbeat acknowledged from %s\n", sAddress);
+}
+
+
 /*
 ================
 SVC_Info
@@ -537,6 +543,8 @@ void SV_ConnectionlessPacket (void)
 		SVC_DirectConnect();
 	else if (Q_streq(c, "rcon"))
 		SVC_RemoteCommand();
+	else if (Q_streq(c, "svheartbeatresponse"))
+		SVC_HeartbeatResponse(NET_AdrToString(net_from));
 	else
 		Com_Printf("bad connectionless packet from %s:\n%s\n", NET_AdrToString(net_from), s);
 }
