@@ -784,7 +784,7 @@ char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR] - jitcvar
          strcpy(temporary + i, start);
          strcpy(expanded, temporary);
          scan = expanded;
-         i++;
+         // jit i++;
          continue;
       }
 
