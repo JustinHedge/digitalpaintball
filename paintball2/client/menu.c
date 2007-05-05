@@ -1600,25 +1600,31 @@ static void M_PopMenu (const char *sMenuName)
 	menu_widget_t *widget;
 	menu_screen_t *menu;
 
-	MENU_SOUND_CLOSE;
-
 	if (m_menudepth < 1)
 		m_menudepth = 1;
 
-	m_menudepth--;
+	menu = m_menu_screens[m_menudepth - 1];
 
-	if ((menu = m_menu_screens[m_menudepth]) && (!sMenuName || !*sMenuName || Q_streq(sMenuName, menu->name)))
+	if (!menu)
 	{
-		widget = menu->widget;
+		M_ForceMenuOff();
+		return;
+	}
 
-		while (widget)
-		{
-			if (widget->flags & WIDGET_FLAG_PASSWORD)
-				if (widget->cvar)
-					Cbuf_AddText(va("unset %s\n", widget->cvar));
+	if (sMenuName && *sMenuName && !Q_streq(sMenuName, menu->name))
+		return;
 
-			widget = widget->next;
-		}
+	MENU_SOUND_CLOSE;
+	m_menudepth--;
+	widget = menu->widget;
+
+	while (widget)
+	{
+		if (widget->flags & WIDGET_FLAG_PASSWORD)
+			if (widget->cvar)
+				Cbuf_AddText(va("unset %s\n", widget->cvar));
+
+		widget = widget->next;
 	}
 
 	if (oldscale && (oldscale != cl_hudscale->value))
@@ -2525,7 +2531,7 @@ void M_Menu_f (void)
 
 	if (Q_streq(menuname, "pop") || Q_streq(menuname, "back"))
 	{
-		M_PopMenu(Cmd_Argv(3));
+		M_PopMenu(Cmd_Argv(2));
 	}
 	else if (Q_streq(menuname, "off") || Q_streq(menuname, "close"))
 	{
