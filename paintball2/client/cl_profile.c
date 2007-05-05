@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PROFILE_PASSWORD_LEN 64
 
 cvar_t *menu_profile_pass;
-static char g_szPassHash[64] = "";
+static char g_szPassHash[256] = "";
 static char g_szRandomString[64] = "";
 static int g_nVNInitUnique;
 static qboolean g_bPassHashed = false;
@@ -464,7 +464,7 @@ void CL_VNInitResponse (netadr_t adr_from, sizebuf_t *ptData)
 	// Use HMAC with MD5 to authenticate message (random string) with login server.
 	Com_HMACMD5String(g_szPassHash, strlen(g_szPassHash), g_szRandomString,
 		strlen(g_szRandomString), szPassHash2, sizeof(szPassHash2));
-	Netchan_OutOfBandPrint(NS_CLIENT, adr_from, "vn\nusername=%s&pwhash=%s&uniqueid=%d",
+	Netchan_OutOfBandPrint(NS_CLIENT, adr_from, "clvn\nusername=%s&pwhash=%s&uniqueid=%d",
 		g_szUserNameURL, szPassHash2, g_nVNInitUnique);
 }
 
@@ -480,7 +480,7 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 	s = strstr(szDataBack, "GameLoginStatus: PASSED");
 
 	if (!s)
-	{
+	{ // breakpoint
 		if (s = strstr(szDataBack, "ERROR:"))
 			Com_Printf("%s\n", s);
 		else if (s = strstr(szDataBack, "GameLoginStatus: FAILED"))
@@ -488,8 +488,8 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 		else
 			Com_Printf("ERROR: Unknown response from login server.\n");
 
-		Cbuf_AddText("menu profile_loginfailed\n");
-		assert(0);
+		Cbuf_AddText("menu pop profile_login;menu profile_loginfailed\n");
+//		assert(0);
 		return;
 	}
 
@@ -560,6 +560,23 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 
 	Cbuf_AddText("menu pop profile_login\n");
 	Cbuf_AddText("menu pop profile\n");
+
+	// Check for new versions
+	if (s = strstr(szDataBack, "LatestClientBuild:"))
+	{
+		s += sizeof("LatestClientBuild:");
+		
+		if (atoi(s) > BUILD)
+		{
+			static qboolean notified = false;
+
+			if (!notified) // only pop it up once.
+			{
+				Cbuf_AddText("menu newversion\n");
+				notified = true;
+			}
+		}
+	}
 }
 
 
