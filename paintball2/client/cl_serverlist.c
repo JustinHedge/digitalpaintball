@@ -522,11 +522,44 @@ static void M_ServerlistUpdateUDP (int nStart)
 
 	adr.port = htons(UDP_SERVERLIST_PORT);
 	NET_StringToAdr(serverlist_udp_source1->string, &adr);
-	Netchan_OutOfBandPrint(NS_CLIENT, adr, "serverlist1 %d %s\n", nStart, g_szRandomServerlistString);
+	//Netchan_OutOfBandPrint(NS_CLIENT, adr, "serverlist1 %d %s\n", nStart, g_szRandomServerlistString);
+	Netchan_OutOfBandPrint(NS_CLIENT, adr, "serverlist2\n");
 }
 
 
-void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *net_message)
+void CL_Serverlist2Packet (netadr_t net_from, sizebuf_t *net_message)
+{
+	if (Q_streq(MSG_ReadString(net_message), "serverlist2"))
+	{
+		int num_servers, i, j;
+		int ip[4], port;
+		char szServer[256];
+
+		num_servers = ntohl(MSG_ReadLong(net_message));
+
+		for (i = 0; i < num_servers; ++i)
+		{
+			for (j = 0; j < 4; ++j)
+			{
+				ip[j] = MSG_ReadByte(net_message);
+				
+				if (ip[j] < 0)
+				{
+//					assert(ip[j] >= 0);
+					return; // end of packet -- corrupt or truncated, just bail out.  todo: handle > 164 servers.
+				}
+			}
+
+			port = ntohs(MSG_ReadShort(net_message));
+			Com_sprintf(szServer, sizeof(szServer), "%d.%d.%d.%d:%d", ip[0], ip[1], ip[2], ip[3], port);
+			CL_PingServerlistServer(szServer);
+		}
+	}
+	//todo;
+}
+
+
+void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *net_message) // unused function
 {
 	char *sServerIP;
 	int i = 1;

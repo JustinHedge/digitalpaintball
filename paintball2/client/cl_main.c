@@ -1133,6 +1133,11 @@ void CL_ConnectionlessPacket (void)
 		CL_ServerlistPacket(net_from, Cmd_Argv(1), &net_message);
 		return;
 	}
+	else if (Q_streq(c, "serverlist2response"))
+	{
+		CL_Serverlist2Packet(net_from, &net_message);
+		return;
+	}
 	else if (Q_streq(c, "vninitresponse"))
 	{
 		// Information from the global login server

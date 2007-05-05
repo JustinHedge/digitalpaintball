@@ -499,7 +499,8 @@ void CL_GetChallengePacket (void);
 void CL_PingServers_f (void);
 void CL_Snd_Restart_f (void);
 void CL_RequestNextDownload (void);
-void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *net_message); // jit
+void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *net_message); // jit (unused)
+void CL_Serverlist2Packet (netadr_t net_from, sizebuf_t *net_message); // jitserverlist
 
 //
 // cl_input
