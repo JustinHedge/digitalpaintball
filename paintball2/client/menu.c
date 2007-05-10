@@ -1601,7 +1601,11 @@ static void M_PopMenu (const char *sMenuName)
 	menu_screen_t *menu;
 
 	if (m_menudepth < 1)
-		m_menudepth = 1;
+	{
+		// Don't think this ever gets executed, but just in case.
+		M_ForceMenuOff();
+		return;
+	}
 
 	menu = m_menu_screens[m_menudepth - 1];
 
