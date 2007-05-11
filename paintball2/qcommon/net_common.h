@@ -18,9 +18,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#ifdef WIN32
+#include <winsock.h>
+#include <wsipx.h>
+#else
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/uio.h>
+#include <errno.h>
+#include <arpa/inet.h>
+#endif
+
 extern int ip_sockets[2];
 extern int server_port;
 
 void NET_OpenIP (void);
 int NET_IPSocket (char *net_interface, int port);
 int GetHTTP (const char *url, char *received, int received_max);
+qboolean NET_StringToSockaddr (const char *s, struct sockaddr *sadr);
+void SockadrToNetadr (struct sockaddr_in *s, netadr_t *a);

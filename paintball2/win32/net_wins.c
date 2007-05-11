@@ -19,8 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // net_wins.c
 
-#include "winsock.h"
-#include "wsipx.h"
+#include <winsock.h>
+#include <wsipx.h>
 #include "../qcommon/qcommon.h"
 #include "../qcommon/net_common.h"
 
@@ -79,23 +79,6 @@ void NetadrToSockadr (netadr_t *a, struct sockaddr *s)
 		memset(((struct sockaddr_ipx *)s)->sa_netnum, 0, 4);
 		memset(((struct sockaddr_ipx *)s)->sa_nodenum, 0xff, 6);
 		((struct sockaddr_ipx *)s)->sa_socket = a->port;
-	}
-}
-
-void SockadrToNetadr (struct sockaddr *s, netadr_t *a)
-{
-	if (s->sa_family == AF_INET)
-	{
-		a->type = NA_IP;
-		*(int *)&a->ip = ((struct sockaddr_in *)s)->sin_addr.s_addr;
-		a->port = ((struct sockaddr_in *)s)->sin_port;
-	}
-	else if (s->sa_family == AF_IPX)
-	{
-		a->type = NA_IPX;
-		memcpy(&a->ipx[0], ((struct sockaddr_ipx *)s)->sa_netnum, 4);
-		memcpy(&a->ipx[4], ((struct sockaddr_ipx *)s)->sa_nodenum, 6);
-		a->port = ((struct sockaddr_ipx *)s)->sa_socket;
 	}
 }
 
@@ -171,117 +154,6 @@ char *NET_AdrToString (netadr_t a)
 
 
 /*
-=============
-NET_StringToAdr
-
-localhost
-idnewt
-idnewt:28000
-192.246.40.70
-192.246.40.70:28000
-=============
-*/
-#define DO(src,dest)	\
-	copy[0] = s[src];	\
-	copy[1] = s[src + 1];	\
-	sscanf (copy, "%x", &val);	\
-	((struct sockaddr_ipx *)sadr)->dest = val
-
-qboolean NET_StringToSockaddr (const char *s, struct sockaddr *sadr)
-{
-	struct hostent	*h;
-	char	*colon;
-	int		val;
-	char	copy[128];
-	
-	memset (sadr, 0, sizeof(*sadr));
-
-	if ((strlen(s) >= 23) && (s[8] == ':') && (s[21] == ':'))	// check for an IPX address
-	{
-		((struct sockaddr_ipx *)sadr)->sa_family = AF_IPX;
-		copy[2] = 0;
-		DO(0, sa_netnum[0]);
-		DO(2, sa_netnum[1]);
-		DO(4, sa_netnum[2]);
-		DO(6, sa_netnum[3]);
-		DO(9, sa_nodenum[0]);
-		DO(11, sa_nodenum[1]);
-		DO(13, sa_nodenum[2]);
-		DO(15, sa_nodenum[3]);
-		DO(17, sa_nodenum[4]);
-		DO(19, sa_nodenum[5]);
-		sscanf (&s[22], "%u", &val);
-		((struct sockaddr_ipx *)sadr)->sa_socket = htons((unsigned short)val);
-	}
-	else
-	{
-		((struct sockaddr_in *)sadr)->sin_family = AF_INET;
-		
-		((struct sockaddr_in *)sadr)->sin_port = 0;
-
-		strcpy (copy, s);
-		// strip off a trailing :port if present
-		for (colon = copy ; *colon ; colon++)
-			if (*colon == ':')
-			{
-				*colon = 0;
-				((struct sockaddr_in *)sadr)->sin_port = htons((short)atoi(colon+1));	
-			}
-		
-		if (copy[0] >= '0' && copy[0] <= '9')
-		{
-			*(int *)&((struct sockaddr_in *)sadr)->sin_addr = inet_addr(copy);
-		}
-		else
-		{
-			if (! (h = gethostbyname(copy)) )
-				return 0;
-			*(int *)&((struct sockaddr_in *)sadr)->sin_addr = *(int *)h->h_addr_list[0];
-		}
-	}
-	
-	return true;
-}
-
-#undef DO
-
-/*
-=============
-NET_StringToAdr
-
-localhost
-idnewt
-idnewt:28000
-192.246.40.70
-192.246.40.70:28000
-=============
-*/
-qboolean	NET_StringToAdr (const char *s, netadr_t *a)
-{
-	struct sockaddr sadr;
-	
-	if (Q_streq(s, "localhost"))
-	{
-		memset(a, 0, sizeof(*a));
-		a->type = NA_LOOPBACK;
-		return true;
-	}
-
-	if (!NET_StringToSockaddr(s, &sadr))
-		return false;
-
-	SockadrToNetadr(&sadr, a);
-
-	return true;
-}
-
-
-qboolean	NET_IsLocalAddress (netadr_t adr)
-{
-	return adr.type == NA_LOOPBACK;
-}
-
-/*
 =============================================================================
 
 LOOPBACK BUFFERS FOR LOCAL PLAYER
@@ -330,7 +202,7 @@ void NET_SendLoopPacket (netsrc_t sock, int length, void *data, netadr_t to)
 
 //=============================================================================
 
-qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_message)
+qboolean NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_message)
 {
 	int 	ret;
 	struct sockaddr from;
@@ -354,7 +226,7 @@ qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 
 		fromlen = sizeof(from);
 		ret = recvfrom(net_socket, net_message->data, net_message->maxsize, 0, (struct sockaddr *)&from, &fromlen);
-		SockadrToNetadr(&from, net_from);
+		SockadrToNetadr((struct sockaddr_in *)&from, net_from);
 
 		if (ret == -1)
 		{
@@ -534,65 +406,6 @@ int NET_TCPConnect (SOCKET sockfd, char *net_remote_address, int port)
 	return 1;
 }
 // ACT */
-
-/*
-====================
-NET_Socket
-====================
-*/
-int NET_IPSocket (char *net_interface, int port)
-{
-	int					newsocket;
-	struct sockaddr_in	address;
-	u_long				_true = true;// jit, kill warning
-	int					i = 1;
-	int					err;
-
-	if ((newsocket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-	{
-		err = WSAGetLastError();
-
-		if (err != WSAEAFNOSUPPORT)
-			Com_Printf("WARNING: UDP_OpenSocket: socket: %s", NET_ErrorString());
-
-		return 0;
-	}
-
-	// make it non-blocking
-	if (ioctlsocket(newsocket, FIONBIO, &_true) == -1)
-	{
-		Com_Printf("WARNING: UDP_OpenSocket: ioctl FIONBIO: %s\n", NET_ErrorString());
-		return 0;
-	}
-
-	// make it broadcast capable
-	if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, (char *)&i, sizeof(i)) == -1)
-	{
-		Com_Printf("WARNING: UDP_OpenSocket: setsockopt SO_BROADCAST: %s\n", NET_ErrorString());
-		return 0;
-	}
-
-	if (!net_interface || !net_interface[0] || !stricmp(net_interface, "localhost"))
-		address.sin_addr.s_addr = INADDR_ANY;
-	else
-		NET_StringToSockaddr(net_interface, (struct sockaddr *)&address);
-
-	if (port == PORT_ANY)
-		address.sin_port = 0;
-	else
-		address.sin_port = htons((short)port);
-
-	address.sin_family = AF_INET;
-
-	if (bind(newsocket, (void *)&address, sizeof(address)) == -1)
-	{
-		Com_Printf("WARNING: UDP_OpenSocket: bind: %s\n", NET_ErrorString());
-		closesocket(newsocket);
-		return 0;
-	}
-
-	return newsocket;
-}
 
 
 /*
