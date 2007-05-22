@@ -2410,7 +2410,7 @@ void CL_Shutdown (void)
 	IN_Shutdown();
 	VID_Shutdown();
 
-	if (!dedicated->value)
+	if (dedicated && !dedicated->value) // jit - null check for dedicated cvar
 	{
 		shutdown_cl_scores(); // jitscores
 		Serverlist_Shutdown();
