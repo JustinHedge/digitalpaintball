@@ -111,6 +111,10 @@ static void StripNonAlphaNum (const char *sIn, char *sOut, size_t sizeOut)
 {
 	int i = 0;
 	int c;
+	char szNoGarbage[2048];
+
+	strip_garbage(szNoGarbage, sIn);
+	sIn = szNoGarbage;
 
 	// strip non alpha-numeric characters from profile name
 	while ((c = *sIn) && i < sizeOut - 1)
@@ -124,6 +128,7 @@ static void StripNonAlphaNum (const char *sIn, char *sOut, size_t sizeOut)
 	assert(i < sizeOut - 1);
 	sOut[i] = 0;
 }
+
 
 static void WriteProfileFile (const char *sProfilePath, const char *sLoginName, const char *sPassword, qboolean bRawPass)
 {
@@ -202,6 +207,7 @@ void CL_ProfileEdit2_f (void)
 				if (Q_strcasecmp(szProfileInPath, szProfileOutPath) != 0)
 					remove(szProfileInPath);
 
+				Cvar_Set("menu_profile_file", szProfileOutName);
 				Cbuf_AddText("menu pop\n");
 				M_ReloadMenu();
 			}
@@ -215,6 +221,7 @@ void CL_ProfileAdd_f (void)
 	char szProfileName[64];
 	char szProfilePath[MAX_OSPATH];
 	const char *sLoginName;
+	char szBuff[1024];
 
 	if (Cmd_Argc() < 3)
 		return;
@@ -229,7 +236,8 @@ void CL_ProfileAdd_f (void)
 	Sys_Mkdir(szProfilePath);
 	Com_sprintf(szProfilePath, sizeof(szProfilePath), "%s/profiles/%s.prf", FS_Gamedir(), szProfileName);
 	WriteProfileFile(szProfilePath, sLoginName, "", false);
-	Cbuf_AddText("menu pop\n");
+	Com_sprintf(szBuff, sizeof(szBuff), "menu pop;menu pop;set menu_profile_file %s", szProfileName);
+	Cbuf_AddText(szBuff);
 	M_ReloadMenu();
 }
 
@@ -320,24 +328,55 @@ void CL_ProfileLogin_f (void)
 	char szPassword[256];
 	char *sPassword;
 	netadr_t adr;
-
-	Cbuf_AddText("menu profile_login\n");
+	char szProfileFile[MAX_OSPATH];
+	char *pFileContents;
 
 	if (Cmd_Argc() < 3)
+	{
+		Cbuf_AddText("menu profile_mustselect\n");
 		return;
+	}
 
-	strip_garbage(g_szUserName, Cmd_Argv(1));
+	Com_sprintf(szProfileFile, sizeof(szProfileFile), "profiles/%s.prf", Cmd_Argv(1));
+	
+	if (FS_LoadFile(szProfileFile, &pFileContents) > 0)
+	{
+		if (memcmp(pFileContents, "PB2PROFILE1.0\0", 14) == 0)
+		{
+			strip_garbage(g_szUserName, pFileContents + 14);
+		}
+		else
+		{
+			Com_Printf("Invalid profile file: %s\n", szProfileFile);
+			Cbuf_AddText("menu profile_loginfailed\n");
+			FS_FreeFile(pFileContents);
+			return;
+		}
+
+		FS_FreeFile(pFileContents);
+	}
+	else
+	{
+		Com_Printf("Failed to read profile file: %s\n", szProfileFile);
+		Cbuf_AddText("menu profile_loginfailed\n");
+		return;
+	}
+
 	urlencode(g_szUserNameURL, sizeof(g_szUserNameURL), g_szUserName);
 	sPassword = Cmd_Argv(2);
 
 	if (!*g_szUserName || !*sPassword)
+	{
+		Cbuf_AddText("menu profile_mustselect\n");
 		return; // blank value (shouldn't happen)
+	}
 
 	if (menu_profile_pass->modified)
 	{
 		// Generate password hash (raw password is never sent or stored).
 		Com_sprintf(szPassword, sizeof(szPassword), "%sDPLogin001", sPassword);
 		Com_MD5HashString(szPassword, strlen(szPassword), g_szPassHash, sizeof(g_szPassHash));
+		g_bPassHashed = false;
 	}
 	else
 	{
@@ -351,6 +390,7 @@ void CL_ProfileLogin_f (void)
 	if (NET_StringToAdr("dplogin.com:27900", &adr))
 	{
 		Netchan_OutOfBandPrint(NS_CLIENT, adr, "vninit\nusername=%s&uniqueid=%d", g_szUserNameURL, g_nVNInitUnique);
+		Cbuf_AddText("menu profile_login\n");
 	}
 	else
 	{
@@ -432,7 +472,7 @@ void CL_VNInitResponse (netadr_t adr_from, sizebuf_t *ptData)
 			assert(0);
 		}
 
-		Cbuf_AddText("menu profile_loginfailed\n");
+		Cbuf_AddText("menu pop profile_login;menu profile_loginfailed\n");
 		return;
 	}
 
@@ -643,6 +683,43 @@ void CL_GlobalLogin_f (void)
 }
 
 
+void CL_ProfileGetLogin_f (void)
+{
+	char *pProfileFile, *pOutCvar;
+	char szProfilePath[MAX_OSPATH];
+	char *pFileData;
+
+	if (Cmd_Argc() != 3)
+	{
+		Com_Printf("Usage: get_profile_name <profile file> <output cvar>\n");
+		return;
+	}
+
+	pProfileFile = Cmd_Argv(1);
+	pOutCvar = Cmd_Argv(2);
+	Com_sprintf(szProfilePath, sizeof(szProfilePath), "profiles/%s.prf", pProfileFile);
+	
+	if (FS_LoadFile(szProfilePath, &pFileData) > 0)
+	{
+		if (memcmp(pFileData, "PB2PROFILE1.0\0", 14) == 0)
+		{
+			Cvar_Set(pOutCvar, pFileData + 14);
+		}
+		else
+		{
+			Com_Printf("Invalid profile file: %s\n", pProfileFile);
+			Cvar_Set(pOutCvar, "");
+		}
+
+		FS_FreeFile(pFileData);
+	}
+	else
+	{
+		Cvar_Set(pOutCvar, "");
+	}
+}
+
+
 void CL_InitProfile (void)
 {
 	menu_profile_pass = Cvar_Get("menu_profile_pass", "", 0);
@@ -654,5 +731,6 @@ void CL_InitProfile (void)
 	Cmd_AddCommand("profile_select", CL_ProfileSelect_f);
 	Cmd_AddCommand("profile_login", CL_ProfileLogin_f);
 	Cmd_AddCommand("global_login", CL_GlobalLogin_f);
+	Cmd_AddCommand("profile_get_login", CL_ProfileGetLogin_f);
 }
 
