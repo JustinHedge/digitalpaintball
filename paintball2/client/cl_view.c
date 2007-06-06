@@ -632,7 +632,7 @@ V_Viewpos_f
 */
 void V_Viewpos_f (void)
 {
-	Com_Printf ("(%i %i %i) : %i\n", (int)cl.refdef.vieworg[0],
+	Com_Printf("(%i %i %i) : %i\n", (int)cl.refdef.vieworg[0],
 		(int)cl.refdef.vieworg[1], (int)cl.refdef.vieworg[2], 
 		(int)cl.refdef.viewangles[YAW]);
 }
@@ -644,18 +644,14 @@ V_Init
 */
 void V_Init (void)
 {
-	Cmd_AddCommand ("gun_next", V_Gun_Next_f);
-	Cmd_AddCommand ("gun_prev", V_Gun_Prev_f);
-	Cmd_AddCommand ("gun_model", V_Gun_Model_f);
-
-	Cmd_AddCommand ("viewpos", V_Viewpos_f);
-
-	crosshair = Cvar_Get ("crosshair", "1", CVAR_ARCHIVE); // jit, default crosshair on
-
-	cl_testblend = Cvar_Get ("cl_testblend", "0", 0);
-	cl_testparticles = Cvar_Get ("cl_testparticles", "0", 0);
-	cl_testentities = Cvar_Get ("cl_testentities", "0", 0);
-	cl_testlights = Cvar_Get ("cl_testlights", "0", 0);
-
-	cl_stats = Cvar_Get ("cl_stats", "0", 0);
+	Cmd_AddCommand("gun_next", V_Gun_Next_f);
+	Cmd_AddCommand("gun_prev", V_Gun_Prev_f);
+	Cmd_AddCommand("gun_model", V_Gun_Model_f);
+	Cmd_AddCommand("viewpos", V_Viewpos_f);
+	crosshair = Cvar_Get("crosshair", "2", CVAR_ARCHIVE); // jit, default crosshair on
+	cl_testblend = Cvar_Get("cl_testblend", "0", 0);
+	cl_testparticles = Cvar_Get("cl_testparticles", "0", 0);
+	cl_testentities = Cvar_Get("cl_testentities", "0", 0);
+	cl_testlights = Cvar_Get("cl_testlights", "0", 0);
+	cl_stats = Cvar_Get("cl_stats", "0", 0);
 }
