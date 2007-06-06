@@ -48,7 +48,7 @@ void SV_SetMaster_f (void)
 	}
 
 	// make sure the server is listed public
-	Cvar_Set("public", "1");
+	//Cvar_Set("public", "1");
 
 	for (i = 1; i < MAX_MASTERS; i++)
 		memset(&master_adr[i], 0, sizeof(master_adr[i]));
@@ -60,16 +60,16 @@ void SV_SetMaster_f (void)
 		if (slot == MAX_MASTERS)
 			break;
 
-		if (!NET_StringToAdr (Cmd_Argv(i), &master_adr[i]))
+		if (!NET_StringToAdr(Cmd_Argv(i), &master_adr[i]))
 		{
 			Com_Printf("Bad address: %s\n", Cmd_Argv(i));
 			continue;
 		}
 
 		if (master_adr[slot].port == 0)
-			master_adr[slot].port = BigShort (PORT_MASTER);
+			master_adr[slot].port = BigShort(PORT_MASTER);
 
-		Com_Printf("Master server at %s\n", NET_AdrToString (master_adr[slot]));
+		Com_Printf("Master server at %s\n", NET_AdrToString(master_adr[slot]));
 		Com_Printf("Sending a ping.\n");
 		Netchan_OutOfBandPrint(NS_SERVER, master_adr[slot], "ping");
 		slot++;
