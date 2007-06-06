@@ -137,11 +137,12 @@
 				RuntimeLibrary="1"
 				DefaultCharIsUnsigned="FALSE"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile="..\..\debug\ref_gl/ref_gl.pch"
+				PrecompiledHeaderFile="..\..\debug\ref_gl\ref_gl.pch"
 				AssemblerListingLocation="..\..\debug\ref_gl\"
 				ObjectFile="..\..\debug\ref_gl\"
 				ProgramDataBaseFileName="..\..\debug\ref_gl\"
 				BrowseInformation="1"
+				BrowseInformationFile="$(IntDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="3"/>
@@ -157,18 +158,18 @@
 				IgnoreDefaultLibraryNames="LIBCMT"
 				ModuleDefinitionFile=".\ref_gl.def"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="..\..\debug/ref_gl/ref_pbgl.pdb"
+				ProgramDatabaseFile="..\..\debug\ref_gl\ref_pbgl.pdb"
 				GenerateMapFile="TRUE"
-				MapFileName="..\..\debug/ref_gl/ref_pbgl.map"
+				MapFileName="..\..\debug\ref_gl\ref_pbgl.map"
 				SubSystem="2"
-				ImportLibrary="..\..\debug/ref_gl/ref_pbgl.lib"/>
+				ImportLibrary="..\..\debug\ref_gl\ref_pbgl.lib"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="_DEBUG"
 				MkTypLibCompatible="TRUE"
 				SuppressStartupBanner="TRUE"
 				TargetEnvironment="1"
-				TypeLibraryName="..\..\debug/ref_gl/ref_gl.tlb"/>
+				TypeLibraryName="..\..\debug\ref_gl\ref_gl.tlb"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
@@ -639,10 +640,10 @@
 					RelativePath="jpeg\jpegint.h">
 				</File>
 				<File
-					RelativePath=".\jpeglib.h">
+					RelativePath="jpeg\jpeglib.h">
 				</File>
 				<File
-					RelativePath="jpeg\jpeglib.h">
+					RelativePath=".\jpeglib.h">
 				</File>
 				<File
 					RelativePath="jpeg\jquant1.c">

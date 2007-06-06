@@ -84,15 +84,8 @@ void NetadrToSockadr (netadr_t *a, struct sockaddr_in *s)
 	}
 }
 
-void SockadrToNetadr (struct sockaddr_in *s, netadr_t *a)
-{
-	*(int *)&a->ip = *(int *)&s->sin_addr;
-	a->port = s->sin_port;
-	a->type = NA_IP;
-}
 
-
-qboolean	NET_CompareAdr (netadr_t a, netadr_t b)
+qboolean NET_CompareAdr (netadr_t a, netadr_t b)
 {
 	if (a.ip[0] == b.ip[0] && a.ip[1] == b.ip[1] && a.ip[2] == b.ip[2] && a.ip[3] == b.ip[3] && a.port == b.port)
 		return true;
@@ -149,87 +142,6 @@ char	*NET_BaseAdrToString (netadr_t a)
 }
 
 /*
-=============
-NET_StringToAdr
-
-localhost
-idnewt
-idnewt:28000
-192.246.40.70
-192.246.40.70:28000
-=============
-*/
-qboolean	NET_StringToSockaddr (char *s, struct sockaddr *sadr)
-{
-	struct hostent	*h;
-	char	*colon;
-	char	copy[128];
-	
-	memset (sadr, 0, sizeof(*sadr));
-	((struct sockaddr_in *)sadr)->sin_family = AF_INET;
-	
-	((struct sockaddr_in *)sadr)->sin_port = 0;
-
-	strcpy (copy, s);
-	// strip off a trailing :port if present
-	for (colon = copy ; *colon ; colon++)
-		if (*colon == ':')
-		{
-			*colon = 0;
-			((struct sockaddr_in *)sadr)->sin_port = htons((short)atoi(colon+1));	
-		}
-	
-	if (copy[0] >= '0' && copy[0] <= '9')
-	{
-		*(int *)&((struct sockaddr_in *)sadr)->sin_addr = inet_addr(copy);
-	}
-	else
-	{
-		if (! (h = gethostbyname(copy)) )
-			return 0;
-		*(int *)&((struct sockaddr_in *)sadr)->sin_addr = *(int *)h->h_addr_list[0];
-	}
-	
-	return true;
-}
-
-/*
-=============
-NET_StringToAdr
-
-localhost
-idnewt
-idnewt:28000
-192.246.40.70
-192.246.40.70:28000
-=============
-*/
-qboolean	NET_StringToAdr (char *s, netadr_t *a)
-{
-	struct sockaddr_in sadr;
-	
-	if (!strcmp (s, "localhost"))
-	{
-		memset (a, 0, sizeof(*a));
-		a->type = NA_LOOPBACK;
-		return true;
-	}
-
-	if (!NET_StringToSockaddr (s, (struct sockaddr *)&sadr))
-		return false;
-	
-	SockadrToNetadr (&sadr, a);
-
-	return true;
-}
-
-
-qboolean	NET_IsLocalAddress (netadr_t adr)
-{
-	return NET_CompareAdr (adr, net_local_adr);
-}
-
-/*
 =============================================================================
 
 LOOPBACK BUFFERS FOR LOCAL PLAYER
@@ -277,7 +189,7 @@ void NET_SendLoopPacket (netsrc_t sock, int length, void *data, netadr_t to)
 
 //=============================================================================
 
-qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_message)
+qboolean NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_message)
 {
 	int 	ret;
 	struct sockaddr_in	from;
@@ -467,67 +379,12 @@ void NET_Init (void)
 
 /*
 ====================
-NET_IPSocket
-====================
-*/
-int NET_IPSocket (char *net_interface, int port)
-{
-	int newsocket;
-	struct sockaddr_in address;
-	qboolean _true = true;
-	int	i = 1;
-
-	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-	{
-		Com_Printf ("ERROR: UDP_OpenSocket: socket: %s", NET_ErrorString());
-		return 0;
-	}
-
-	// make it non-blocking
-	if (ioctl (newsocket, FIONBIO, &_true) == -1)
-	{
-		Com_Printf ("ERROR: UDP_OpenSocket: ioctl FIONBIO:%s\n", NET_ErrorString());
-		return 0;
-	}
-
-	// make it broadcast capable
-	if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, (char *)&i, sizeof(i)) == -1)
-	{
-		Com_Printf ("ERROR: UDP_OpenSocket: setsockopt SO_BROADCAST:%s\n", NET_ErrorString());
-		return 0;
-	}
-
-	if (!net_interface || !net_interface[0] || !stricmp(net_interface, "localhost"))
-		address.sin_addr.s_addr = INADDR_ANY;
-	else
-		NET_StringToSockaddr (net_interface, (struct sockaddr *)&address);
-
-	if (port == PORT_ANY)
-		address.sin_port = 0;
-	else
-		address.sin_port = htons((short)port);
-
-	address.sin_family = AF_INET;
-
-	if( bind (newsocket, (void *)&address, sizeof(address)) == -1)
-	{
-		Com_Printf ("ERROR: UDP_OpenSocket: bind: %s\n", NET_ErrorString());
-		close (newsocket);
-		return 0;
-	}
-
-	return newsocket;
-}
-
-
-/*
-====================
 NET_Shutdown
 ====================
 */
-void	NET_Shutdown (void)
+void NET_Shutdown (void)
 {
-	NET_Config (false);	// close sockets
+	NET_Config(false);	// close sockets
 }
 
 
@@ -538,10 +395,7 @@ NET_ErrorString
 */
 char *NET_ErrorString (void)
 {
-	int		code;
-
-	code = errno;
-	return strerror (code);
+	return strerror(errno);
 }
 
 // sleeps msec or until net socket is ready
@@ -562,5 +416,10 @@ void NET_Sleep(int msec)
 	timeout.tv_sec = msec/1000;
 	timeout.tv_usec = (msec%1000)*1000;
 	select(ip_sockets[NS_SERVER]+1, &fdset, NULL, NULL, &timeout);
+}
+
+qboolean NET_IsLocalAddress (netadr_t adr)
+{
+	return NET_CompareAdr(adr, net_local_adr);
 }
 

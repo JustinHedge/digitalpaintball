@@ -386,14 +386,5 @@ qboolean NET_StringToAdr (const char *s, netadr_t *a)
 }
 
 
-qboolean NET_IsLocalAddress (netadr_t adr)
-{
-#ifdef WIN32
-	return adr.type == NA_LOOPBACK;
-#else
-	return NET_CompareAdr(adr, net_local_adr);
-#endif
-}
-
 
 
