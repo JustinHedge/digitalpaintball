@@ -314,9 +314,8 @@ void RS_UpdateRegistration (void)
 	anim_stage_t	*anim;
 	int				mode;
 
-	while (rs != NULL)
+	while (rs && (stage = rs->stage)) // jitrscript, make sure stage exists
 	{
-		stage = rs->stage;
 		mode = stage->sharp ? it_sharppic : (rs->dontflush) ? it_pic : it_wall; // jitrscript
 
 		while (stage != NULL)
