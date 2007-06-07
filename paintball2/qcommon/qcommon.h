@@ -46,9 +46,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef WIN32
 
 #ifdef NDEBUG
-#define BUILDSTRING "Win32 RELEASE (" BUILD_S ")"
+#define BUILDSTRING "Win32 RELEASE"
 #else
-#define BUILDSTRING "Win32 DEBUG (" BUILD_S ")"
+#define BUILDSTRING "Win32 DEBUG"
 #endif
 
 #ifdef _M_IX86
@@ -88,6 +88,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	CPUSTRING	"NON-WIN32"
 
 #endif
+
 
 #ifndef max // jit
 #define max(a, b)	(((a) > (b)) ? (a) : (b))

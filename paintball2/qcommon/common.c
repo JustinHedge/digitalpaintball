@@ -1500,7 +1500,7 @@ void Qcommon_Init (int argc, char **argv)
 
 	timestamp_console = Cvar_Get("timestamp_console", dedicated->value ? "1" : "0", 0); // jittimestamp
 
-	s = va("%4.2f %s %s %s", VERSION, CPUSTRING, __DATE__, BUILDSTRING);
+	s = va("%4.2f %s %s %s (%s)", VERSION, CPUSTRING, __DATE__, BUILDSTRING, BUILD_S);
 	Cvar_Get("version", s, CVAR_SERVERINFO|CVAR_NOSET);
 
 	if (dedicated->value)
