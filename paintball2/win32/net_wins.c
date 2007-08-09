@@ -558,10 +558,10 @@ void	NET_Config (qboolean multiplayer)
 }
 
 // sleeps msec or until net socket is ready
-void NET_Sleep(int msec)
+void NET_Sleep (int msec)
 {
     struct timeval timeout;
-	fd_set	fdset;
+	fd_set fdset;
 	extern cvar_t *dedicated;
 	int i;
 
@@ -570,18 +570,24 @@ void NET_Sleep(int msec)
 
 	FD_ZERO(&fdset);
 	i = 0;
-	if (ip_sockets[NS_SERVER]) {
+
+	if (ip_sockets[NS_SERVER])
+	{
 		FD_SET(ip_sockets[NS_SERVER], &fdset); // network socket
 		i = ip_sockets[NS_SERVER];
 	}
-	if (ipx_sockets[NS_SERVER]) {
+
+	if (ipx_sockets[NS_SERVER])
+	{
 		FD_SET(ipx_sockets[NS_SERVER], &fdset); // network socket
+
 		if (ipx_sockets[NS_SERVER] > i)
 			i = ipx_sockets[NS_SERVER];
 	}
-	timeout.tv_sec = msec/1000;
-	timeout.tv_usec = (msec%1000)*1000;
-	select(i+1, &fdset, NULL, NULL, &timeout);
+
+	timeout.tv_sec = msec / 1000;
+	timeout.tv_usec = (msec % 1000) * 1000;
+	select(i + 1, &fdset, NULL, NULL, &timeout);
 }
 
 //===================================================================
@@ -732,4 +738,10 @@ char *NET_ErrorString (void) // jiterr - revised to cover all error codes
 		return errstr;
 	}
 }
+
+qboolean NET_IsLocalAddress (netadr_t adr)
+{
+	return adr.type == NA_LOOPBACK;
+}
+
 
