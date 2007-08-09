@@ -270,6 +270,31 @@ void	CL_Download2_f (void) // jitdownload
 }
 #endif
 
+#ifdef USE_DOWNLOAD3
+void CL_Download3_f (void) // jitdownload
+{
+	char szFilename[MAX_OSPATH];
+
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf("Usage: download3 <filename>\n");
+		return;
+	}
+
+	Q_strncpyz(szFilename, Cmd_Argv(1), sizeof(szFilename));
+	
+	if (FS_LoadFile(szFilename, NULL) != -1)
+	{
+		Com_Printf("File already exists.\n");
+		return;
+	}
+
+	MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+	MSG_WriteString(&cls.netchan.message, va("download3 %s", szFilename));
+	cls.downloadnumber++; // not sure if this is needed, copied from other download func.
+}
+#endif
+
 /*
 ======================
 CL_RegisterSounds

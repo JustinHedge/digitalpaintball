@@ -361,7 +361,7 @@ void SV_Download2Complete_f (void) // jitdownload
 
 	// client said it's done downloading, so close the file:
 	//Com_Printf("SV Completed %d\n", offset/DOWNLOAD2_CHUNKSIZE);
-	FS_FreeFile (sv_client->download);
+	FS_FreeFile(sv_client->download);
 	sv_client->download = NULL;
 }
 #endif
@@ -460,7 +460,7 @@ void SV_BeginDownload_f (void)
 #ifdef USE_DOWNLOAD2
 void SV_BeginDownload2_f (void) // jitdownload
 {
-	char	*name;
+	char *name;
 	int offset = 0;
 
 	name = Cmd_Argv(1);
@@ -478,7 +478,7 @@ void SV_BeginDownload2_f (void) // jitdownload
 	}
 
 	if (sv_client->download)
-		FS_FreeFile (sv_client->download);
+		FS_FreeFile(sv_client->download);
 
 	// jitodo -- if the file came from a pak, tell client to download the pak! (file_from_pak)
 	// jitodo -- check for different extensions (prefer jpg over wal, etc)
@@ -491,9 +491,79 @@ void SV_BeginDownload2_f (void) // jitdownload
 	if (!sv_client->download)
 	{
 		Com_DPrintf("Couldn't download %s to %s\n", name, sv_client->name);
-		MSG_WriteByte (&sv_client->netchan.message, svc_download);
-		MSG_WriteShort (&sv_client->netchan.message, -1);
-		MSG_WriteByte (&sv_client->netchan.message, 0);
+		MSG_WriteByte(&sv_client->netchan.message, svc_download);
+		MSG_WriteShort(&sv_client->netchan.message, -1);
+		MSG_WriteByte(&sv_client->netchan.message, 0);
+		return;
+	}
+
+	if (sv_client->downloadsize == -1) // file failed to open
+	{
+		MSG_WriteByte(&sv_client->netchan.message, svc_download);
+		MSG_WriteShort(&sv_client->netchan.message, -1);
+		MSG_WriteByte(&sv_client->netchan.message, 0);
+		return;
+	}
+
+	//SV_NextDownload_f();
+	Com_DPrintf("Downloading %s to %s\n", name, sv_client->name);
+	MSG_WriteByte(&sv_client->netchan.message, svc_download2ack); // acknowledge download request
+	MSG_WriteLong(&sv_client->netchan.message, sv_client->downloadsize); // tell client filesize
+	MSG_WriteByte(&sv_client->netchan.message, 0); // tell client which compression algorithm to use (0 = none)
+	MSG_WriteString(&sv_client->netchan.message, name); // tell client what filename should be.
+	Com_Printf("SV Acknw: %d\n", offset/DOWNLOAD2_CHUNKSIZE);
+}
+#endif
+
+#ifdef USE_DOWNLOAD3
+void SV_BeginDownload3_f (void) // jitdownload
+{
+	char *name;
+	int chunk_offset = 0;
+	int num_chunks, i;
+
+	name = Cmd_Argv(1);
+
+	if (Cmd_Argc() > 2)
+		chunk_offset = atoi(Cmd_Argv(2)); // downloaded offset
+
+	// don't allow anything with .. path
+	if (!CheckDownloadFilename(name))
+	{
+		MSG_WriteByte(&sv_client->netchan.message, svc_download);
+		MSG_WriteShort(&sv_client->netchan.message, -1);
+		MSG_WriteByte(&sv_client->netchan.message, 0);
+		return;
+	}
+
+	if (sv_client->download)
+		FS_FreeFile(sv_client->download);
+
+	// jitodo -- (maybe) if the file came from a pak, tell client to download the pak (file_from_pak)
+	// jitodo -- check for different extensions (prefer jpg over wal, download lowres if no highres texture available, etc)
+	sv_client->downloadsize = FS_LoadFile(name, (void **)&sv_client->download);
+	num_chunks = (sv_client->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
+	sv_client->download3_chunks = Z_Malloc(num_chunks);
+
+	if (chunk_offset > num_chunks)
+		chunk_offset = num_chunks;
+
+	sv_client->downloadcount = chunk_offset;
+
+	for (i = 0; i < num_chunks; ++i)
+	{
+		if (i < chunk_offset)
+			sv_client->download3_chunks = -1;
+		else
+			sv_client->download3_chunks = 0;
+	}
+
+	if (!sv_client->download)
+	{
+		Com_DPrintf("Couldn't download %s to %s\n", name, sv_client->name);
+		MSG_WriteByte(&sv_client->netchan.message, svc_download);
+		MSG_WriteShort(&sv_client->netchan.message, -1);
+		MSG_WriteByte(&sv_client->netchan.message, 0);
 		return;
 	}
 
@@ -645,6 +715,9 @@ ucmd_t ucmds[] =
 	{"download2", SV_BeginDownload2_f},
 	{"nextdl2", SV_NextDownload2_f},
 	{"dl2complete", SV_Download2Complete_f},
+#endif
+#ifdef USE_DOWNLOAD3 // jitdownload
+	{"download2", SV_BeginDownload3_f},
 #endif
 
 	{NULL, NULL}

@@ -88,6 +88,16 @@ void SV_DropClient (client_t *drop)
 		drop->download = NULL;
 	}
 
+#ifdef USE_DOWNLOAD3
+	if (drop->download3_chunks)
+	{
+		Z_Free(drop->download3_chunks);
+		drop->download3_chunks = NULL;
+		drop->download3_numchunks = 0;
+		drop->download3_delay = 0;
+	}
+#endif
+
 	drop->state = cs_zombie;		// become free in a few seconds
 	drop->name[0] = 0;
 }
@@ -349,7 +359,7 @@ void SVC_DirectConnect (void)
 	memset (newcl, 0, sizeof(client_t));
 
 	// if there is already a slot for this ip, reuse it
-	for (i=0,cl=svs.clients; i<maxclients->value; i++,cl++)
+	for (i = 0, cl = svs.clients; i < maxclients->value; i++, cl++)
 	{
 		if (cl->state == cs_free)
 			continue;
@@ -695,6 +705,30 @@ void SV_ReadPackets (void)
 	}
 }
 
+#ifdef USE_DOWNLOAD3
+// Send downloads to clients if any are active
+static void SV_SendDownload3 (void) // jitdownload
+{
+	int i, max = (int)maxclients->value;
+	client_t *cl;
+
+	sv.download3_active = false;
+
+	for (i = 0; i < max; ++i)
+	{
+		cl = &svs.clients[i];
+
+		if (cl->state == cs_connected && cl->download3_chunks)
+		{
+
+			todo;
+		}
+	}
+
+	todo;
+}
+#endif
+
 /*
 ==================
 SV_CheckTimeouts
@@ -827,6 +861,7 @@ void SV_Frame (int msec)
 
 	// get packets from clients
 	SV_ReadPackets();
+	SV_SendDownload3(); // jitdownload
 
 	// move autonomous things around if enough time has passed
 	if (!sv_timedemo->value && svs.realtime < sv.time)
@@ -840,7 +875,12 @@ void SV_Frame (int msec)
 			svs.realtime = sv.time - 100;
 		}
 
-		NET_Sleep(sv.time - svs.realtime);
+#ifdef USE_DOWNLOAD3
+		if (sv.download3_active) // jitdownload
+			NET_Sleep(1); // Sleep just a little so we aren't just doing a busy wait.
+		else
+#endif
+			NET_Sleep(sv.time - svs.realtime);
 		return;
 	}
 

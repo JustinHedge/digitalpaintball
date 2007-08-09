@@ -1914,6 +1914,9 @@ void CL_InitLocal (void)
 #ifdef USE_DOWNLOAD2
 	Cmd_AddCommand("download2", CL_Download2_f); // jitdownload
 #endif
+#ifdef USE_DOWNLOAD3
+	Cmd_AddCommand("download3", CL_Download2_f); // jitdownload
+#endif
 	Cmd_AddCommand("writeconfig", CL_WriteConfig_f); // jitconfig
 
 

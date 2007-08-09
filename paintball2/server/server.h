@@ -64,6 +64,9 @@ typedef struct
 	// demo server information
 	FILE		*demofile;
 	qboolean	timedemo;		// don't time sync
+#ifdef USE_DOWNLOAD3
+	qboolean	download3_active; // jitdownload
+#endif
 } server_t;
 
 #define EDICT_NUM(n) ((edict_t *)((byte *)ge->edicts + ge->edict_size*(n)))
@@ -133,6 +136,10 @@ typedef struct client_s
 
 	netchan_t		netchan;
 	int				commandMsec2;		// jitspeedhackcheck
+#ifdef USE_DOWNLOAD3 // jitdownload
+	unsigned int	*download3_chunks;	// array containing status of chunks that have been sent
+	int				download3_delay;	// time/window between sending chunks (increases as packets are lost, decreases as packets are received)
+#endif
 } client_t;
 
 // a client can leave the server in one of four ways:
