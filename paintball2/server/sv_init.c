@@ -347,9 +347,9 @@ void SV_InitGame (void)
 	}
 
 	svs.spawncount = rand();
-	svs.clients = Z_Malloc (sizeof(client_t)*maxclients->value);
-	svs.num_client_entities = maxclients->value*UPDATE_BACKUP*64;
-	svs.client_entities = Z_Malloc (sizeof(entity_state_t)*svs.num_client_entities);
+	svs.clients = Z_Malloc(sizeof(client_t) * (int)maxclients->value);
+	svs.num_client_entities = maxclients->value * UPDATE_BACKUP * 64;
+	svs.client_entities = Z_Malloc(sizeof(entity_state_t) * svs.num_client_entities);
 
 	// init network stuff
 	NET_Config((maxclients->value > 1));
@@ -357,17 +357,17 @@ void SV_InitGame (void)
 	// heartbeats will always be sent to the id master
 	svs.last_heartbeat = -99999;		// send immediately
 	Com_sprintf(idmaster, sizeof(idmaster), "192.246.40.37:%i", PORT_MASTER);
-	NET_StringToAdr (idmaster, &master_adr[0]);
+	NET_StringToAdr(idmaster, &master_adr[0]);
 
 	// init game
 	SV_InitGameProgs();
 
 	for (i = 0; i < maxclients->value; i++)
 	{
-		ent = EDICT_NUM(i+1);
-		ent->s.number = i+1;
+		ent = EDICT_NUM(i + 1);
+		ent->s.number = i + 1;
 		svs.clients[i].edict = ent;
-		memset (&svs.clients[i].lastcmd, 0, sizeof(svs.clients[i].lastcmd));
+		memset(&svs.clients[i].lastcmd, 0, sizeof(svs.clients[i].lastcmd));
 	}
 }
 

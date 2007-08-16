@@ -556,7 +556,7 @@ void SV_SendClientMessages (void)
 	}
 
 	// send a message to each connected client
-	for (i=0, c=svs.clients; i < maxclients->value; i++, c++)
+	for (i = 0, c = svs.clients; i < maxclients->value; i++, c++)
 	{
 		if (!c->state)
 			continue;

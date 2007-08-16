@@ -93,8 +93,6 @@ void SV_DropClient (client_t *drop)
 	{
 		Z_Free(drop->download3_chunks);
 		drop->download3_chunks = NULL;
-		drop->download3_numchunks = 0;
-		drop->download3_delay = 0;
 	}
 #endif
 
@@ -356,7 +354,7 @@ void SVC_DirectConnect (void)
 	}
 
 	newcl = &temp;
-	memset (newcl, 0, sizeof(client_t));
+	memset(newcl, 0, sizeof(client_t));
 
 	// if there is already a slot for this ip, reuse it
 	for (i = 0, cl = svs.clients; i < maxclients->value; i++, cl++)
@@ -381,7 +379,8 @@ void SVC_DirectConnect (void)
 
 	// find a client slot
 	newcl = NULL;
-	for (i=0,cl=svs.clients; i<maxclients->value; i++,cl++)
+
+	for (i = 0, cl = svs.clients; i < maxclients->value; i++, cl++)
 	{
 		if (cl->state == cs_free)
 		{
@@ -403,10 +402,13 @@ gotnewcl:
 	// this is the only place a client_t is ever initialized
 	*newcl = temp;
 	sv_client = newcl;
-	edictnum = (newcl-svs.clients)+1;
+	edictnum = (newcl - svs.clients) + 1;
 	ent = EDICT_NUM(edictnum);
 	newcl->edict = ent;
 	newcl->challenge = challenge; // save challenge for checksumming
+#ifdef USE_DOWNLOAD3
+	newcl->download3_delay = DOWNLOAD3_STARTDELAY; // jitdownload
+#endif
 
 	// get the game a chance to reject this connection or modify the userinfo
 	if (!sv.attractloop) // jitdemo - don't call game functions for demo plays
@@ -417,30 +419,27 @@ gotnewcl:
 				Netchan_OutOfBandPrint(NS_SERVER, adr, "print\n%s\nConnection refused.\n",  
 					Info_ValueForKey(userinfo, "rejmsg"));
 			else
-				Netchan_OutOfBandPrint(NS_SERVER, adr, "print\nConnection refused.\n" );
+				Netchan_OutOfBandPrint(NS_SERVER, adr, "print\nConnection refused.\n");
 
 			Com_DPrintf("Game rejected a connection.\n");
-
 			return;
 		}
 
 		// parse some info from the info strings
-		Q_strncpyz(newcl->userinfo, userinfo, sizeof(newcl->userinfo)-1);
+		Q_strncpyz(newcl->userinfo, userinfo, sizeof(newcl->userinfo) - 1);
 		SV_UserinfoChanged(newcl);
 	}
 
 	// send the connect packet to the client
 	Netchan_OutOfBandPrint(NS_SERVER, adr, "client_connect");
-
-	Netchan_Setup(NS_SERVER, &newcl->netchan , adr, qport);
-
+	Netchan_Setup(NS_SERVER, &newcl->netchan, adr, qport);
 	newcl->state = cs_connected;
-	
 	SZ_Init(&newcl->datagram, newcl->datagram_buf, sizeof(newcl->datagram_buf));
 	newcl->datagram.allowoverflow = true;
 	newcl->lastmessage = svs.realtime;	// don't timeout
 	newcl->lastconnect = svs.realtime;
 }
+
 
 int Rcon_Validate (void)
 {
@@ -706,26 +705,120 @@ void SV_ReadPackets (void)
 }
 
 #ifdef USE_DOWNLOAD3
+static void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
+{
+	unsigned char msgbuf[MAX_MSGLEN];
+	sizebuf_t message;
+	unsigned int offset = chunk_to_send * DOWNLOAD3_CHUNKSIZE;
+	int chunksize;
+	unsigned int md5sum;
+	unsigned short md5sum_short;
+
+	if (!cl->download)
+		return;
+
+	if (offset > cl->downloadsize)
+		return;
+
+	chunksize = cl->downloadsize - offset;
+
+	if (chunksize > DOWNLOAD3_CHUNKSIZE)
+		chunksize = DOWNLOAD3_CHUNKSIZE;
+
+	memset(&message, 0, sizeof(message));
+	message.data = msgbuf;
+	message.maxsize = MAX_MSGLEN;
+	md5sum = Com_MD5Checksum(cl->download + offset, chunksize);
+	md5sum_short = (unsigned short)(md5sum & 0xFFFF);
+	MSG_WriteByte(&message, svc_download3);
+	MSG_WriteShort(&message, md5sum_short);
+	MSG_WriteLong(&message, chunk_to_send);
+	SZ_Write(&message, cl->download + offset, chunksize);
+	Netchan_Transmit(&cl->netchan, message.cursize, message.data);
+	cl->download3_delay *= 1.09f;
+}
+
+
 // Send downloads to clients if any are active
 static void SV_SendDownload3 (void) // jitdownload
 {
 	int i, max = (int)maxclients->value;
 	client_t *cl;
+	int realtime = Sys_Milliseconds();
+	float fPacketsToSend;
 
 	sv.download3_active = false;
+
+	if (realtime == -1 || realtime == 0) // probably won't ever happen, but just to be safe...
+		realtime = 1;
 
 	for (i = 0; i < max; ++i)
 	{
 		cl = &svs.clients[i];
 
-		if (cl->state == cs_connected && cl->download3_chunks)
+		if (cl->download3_chunks)
 		{
+			sv.download3_active = true;
 
-			todo;
+			if (realtime - cl->download3_lastsent >= (int)cl->download3_delay)
+			{
+				int i, num_chunks = (cl->downloadsize + DOWNLOAD3_CHUNKSIZE - 1) / DOWNLOAD3_CHUNKSIZE;
+				unsigned int timediff, largest_timediff = 0;
+				int chunk_to_send;
+				int chunk_status;
+				int nPacket, nPacketsToSend;
+
+				fPacketsToSend = ((float)(realtime - cl->download3_lastsent) / cl->download3_delay);
+
+				if (fPacketsToSend > 40.0f) // have to use a floating point or else this might overflow to a really high value on fast connections.
+					nPacketsToSend = 40; // sanity check - don't try to send more than 8 packets at once or they start dropping
+				else if (fPacketsToSend < 1.0f)
+					nPacketsToSend = 1; // always send one packet (though this should already be the case)
+				else
+					nPacketsToSend = (int)fPacketsToSend;
+
+				for (nPacket = 0; nPacket < nPacketsToSend; ++nPacket)
+				{
+					chunk_to_send = -1;
+
+					for (i = 0; i < num_chunks; ++i)
+					{
+						chunk_status = cl->download3_chunks[i];
+
+						// Find either a chunk that hasn't been sent yet or the oldest chunk that hasn't been ack'd.
+						// todo: have a minimum resend time so the last chunks don't get sent over and over again.
+						if (chunk_status == 0)
+						{
+							chunk_to_send = i;
+							break;
+						}
+						else if (chunk_status != -1)
+						{
+							timediff = realtime - chunk_status;
+
+							if (timediff > largest_timediff && timediff > DOWNLOAD3_MINRESENDWAIT)
+							{
+								largest_timediff = timediff;
+								chunk_to_send = i;
+							}
+						}
+					}
+
+					if (chunk_to_send != -1)
+					{
+						Com_Printf("DL3SEND %04d: %d %g %d\n", chunk_to_send, realtime - cl->download3_lastsent, cl->download3_delay, nPacketsToSend);
+						SV_SendDownload3Chunk(cl, chunk_to_send);
+						cl->download3_lastsent = realtime;
+						cl->download3_chunks[chunk_to_send] = realtime;
+					}
+					else
+					{
+						break; // nothing to send, so break out of the loop.
+					}
+				}
+			}
 		}
 	}
-
-	todo;
 }
 #endif
 
@@ -806,14 +899,14 @@ SV_RunGameFrame
 void SV_RunGameFrame (void)
 {
 	if (host_speeds->value)
-		time_before_game = Sys_Milliseconds ();
+		time_before_game = Sys_Milliseconds();
 
 	// we always need to bump framenum, even if we
 	// don't run the world, otherwise the delta
 	// compression can get confused when a client
 	// has the "current" frame
 	sv.framenum++;
-	sv.time = sv.framenum*100;
+	sv.time = sv.framenum * 100;
 
 	// don't run if paused
 	//if (!sv_paused->value || maxclients->value > 1)
@@ -833,7 +926,7 @@ void SV_RunGameFrame (void)
 	}
 
 	if (host_speeds->value)
-		time_after_game = Sys_Milliseconds ();
+		time_after_game = Sys_Milliseconds();
 
 }
 
@@ -861,7 +954,9 @@ void SV_Frame (int msec)
 
 	// get packets from clients
 	SV_ReadPackets();
+#ifdef USE_DOWNLOAD3
 	SV_SendDownload3(); // jitdownload
+#endif
 
 	// move autonomous things around if enough time has passed
 	if (!sv_timedemo->value && svs.realtime < sv.time)

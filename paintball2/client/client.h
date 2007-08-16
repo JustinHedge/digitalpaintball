@@ -206,6 +206,7 @@ typedef enum {
 	ca_active			// game views should be displayed
 } connstate_t;
 
+#if 0 // jitdownload -- don't think this is used.
 typedef enum {
 	dl_none,
 	dl_model,
@@ -213,6 +214,7 @@ typedef enum {
 	dl_skin,
 	dl_single
 } dltype_t;		// download type
+#endif
 
 typedef enum {
 	key_game,
@@ -252,15 +254,26 @@ typedef struct
 	char		downloadtempname[MAX_OSPATH];
 	char		downloadname[MAX_OSPATH];
 	int			downloadnumber;
+#if 0 // I don't think this is used.
 	dltype_t	downloadtype;
+#endif
 	int			downloadpercent;
 
 // demo recording info must be here, so it isn't cleared on level change
 	qboolean	demorecording;
 	qboolean	demowaiting;	// don't record until a non-delta message is received
 	FILE		*demofile;
-
+#ifdef USE_DOWNLOAD2
 	qboolean	download2active; // jitdownload
+#endif
+#ifdef USE_DOWNLOAD3 // jitdownload
+	byte		*download3chunks;
+	byte		*download3data;
+	unsigned	download3size;
+	int			download3compression;
+	int			download3lastchunkwritten;
+	int			download3completechunks;
+#endif
 	unsigned	last_transmit_time; // jitnetfps
 	unsigned	server_gamebuild; // jitversion
 	unsigned	server_enginebuild; // jitversion
@@ -553,6 +566,9 @@ void CL_ParseClientinfo (int player);
 void CL_Download_f (void);
 #ifdef USE_DOWNLOAD2
 void CL_Download2_f (void); // jitdownload
+#endif
+#ifdef USE_DOWNLOAD3
+void CL_Download3_f (void); // jitdownload
 #endif
 void CL_WriteConfig_f (void); // jitconfig
 

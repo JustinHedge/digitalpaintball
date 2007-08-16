@@ -54,7 +54,7 @@ char *svc_strings[256] =
 
 //=============================================================================
 
-void CL_DownloadFileName(char *dest, int destlen, char *fn)
+void CL_DownloadFileName (char *dest, int destlen, char *fn)
 {
 	if (strncmp(fn, "players", 7) == 0)
 		Com_sprintf(dest, destlen, "%s/%s", BASEDIRNAME, fn);
@@ -468,6 +468,224 @@ void CL_ParseDownload (void)
 		CL_RequestNextDownload ();
 	}
 }
+
+#ifdef USE_DOWNLOAD3 // jitdownload
+
+static void CL_StartDownload3 (void)
+{
+	const char *filename;
+	int num_chunks, i;
+	char name[MAX_OSPATH];
+
+	if (cls.download3chunks)
+	{
+		Z_Free(cls.download3chunks);
+		cls.download3chunks = NULL;
+	}
+
+	if (cls.download3data)
+	{
+		Z_Free(cls.download3data);
+		cls.download3data = NULL;
+	}
+
+	cls.download3completechunks = 0;
+	cls.download3size = MSG_ReadLong(&net_message); // how big is the file?
+	cls.download3compression = (int)MSG_ReadByte(&net_message); // compression mode / reserved.  Unused so far.  0 == none.
+
+	if (cls.download3compression != 0)
+	{
+		Com_Printf("Compression mode not supported: %d\n", cls.download3compression);
+	}
+
+	filename = MSG_ReadString(&net_message); // get the filename
+
+	if (strstr(filename, ".."))
+	{
+		Com_Printf("Refusing to download a path with ..\n");
+		return;
+	}
+
+	if (FS_LoadFile(filename, NULL) != -1)
+	{
+		Com_Printf("File already exists.\n");
+		return;
+	}
+
+	strcpy(cls.downloadname, filename);
+	num_chunks = (cls.download3size + DOWNLOAD3_CHUNKSIZE - 1) / DOWNLOAD3_CHUNKSIZE;
+
+	// download to a temp name, and only rename
+	// to the real name when done, so if interrupted
+	// a runt file wont be left
+	COM_StripExtension(cls.downloadname, cls.downloadtempname);
+	strcat(cls.downloadtempname, ".tmp");
+	CL_DownloadFileName(name, sizeof(name), cls.downloadtempname);
+	FS_CreatePath(name);
+	cls.download = fopen(name, "r+b");
+
+	// Allocate data
+	cls.download3chunks = Z_Malloc(num_chunks * sizeof(qboolean));
+	cls.download3data = Z_Malloc(cls.download3size);
+
+	if (!cls.download3data || !cls.download3chunks)
+	{
+		Com_Printf("Failed to allocate %d bytes for file download.\n", cls.download3size);
+		return;
+	}
+
+	memset(cls.download3chunks, DOWNLOAD3_CHUNKWAITING, num_chunks * sizeof(qboolean));
+
+	if (cls.download) // file already exists, so resume
+	{
+		int offset, chunk_offset;
+
+		fseek(cls.download, 0, SEEK_END);
+		offset = ftell(cls.download);
+		chunk_offset = offset / DOWNLOAD3_CHUNKSIZE;
+
+		if (chunk_offset >= num_chunks)
+			chunk_offset = 0; // Something is screwball.  We have more data than there is in the file.  Just start over.
+
+		for (i = 0; i < chunk_offset; ++i)
+			cls.download3chunks[i] = DOWNLOAD3_CHUNKWRITTEN;
+
+		Com_Printf("Resuming %s\n", cls.downloadname);
+	}
+	else
+	{
+		cls.download = fopen(name, "wb");
+
+		if (!cls.download)
+		{
+			Com_Printf("Failed to open %s\n", cls.downloadtempname);
+			return;
+		}
+
+		Com_Printf("Downloading %s\n", cls.downloadname);
+	}
+}
+
+
+static void CL_ParseDownload3 (void)
+{
+	int num_chunks = (cls.download3size + DOWNLOAD3_CHUNKSIZE - 1) / DOWNLOAD3_CHUNKSIZE;
+	unsigned short md5sum_short;
+	int chunk, i;
+	int chunksize;
+	char chunkdata[DOWNLOAD3_CHUNKSIZE];
+	qboolean done = true;
+	byte msg_data[MAX_MSGLEN];
+	sizebuf_t msg;
+
+	md5sum_short = MSG_ReadShort(&net_message); // TODO: Validate this.
+	chunk = MSG_ReadLong(&net_message);
+
+	if (chunk >= num_chunks || chunk < 0)
+	{
+		Com_Printf("Download chunk out of range: %d\n", chunk);
+		return;
+	}
+
+	// All chunks will be DOWNLOAD3_CHUNKSIZE except maybe the last one.
+	if (chunk == num_chunks - 1)
+	{
+		chunksize = cls.download3size % DOWNLOAD3_CHUNKSIZE;
+
+		if (!chunksize)
+			chunksize = DOWNLOAD3_CHUNKSIZE;
+	}
+	else
+	{
+		chunksize = DOWNLOAD3_CHUNKSIZE;
+	}
+
+	MSG_ReadData(&net_message, chunkdata, chunksize);
+
+	if (!cls.download3data || !cls.download3chunks)
+		return;
+
+	memcpy(cls.download3data + (chunk * DOWNLOAD3_CHUNKSIZE), chunkdata, chunksize);
+
+	if (cls.download3chunks[chunk] == DOWNLOAD3_CHUNKWAITING)
+	{
+		cls.download3chunks[chunk] = DOWNLOAD3_CHUNKRECEIVED;
+		++cls.download3completechunks;
+	}
+
+	// write some data if we can
+	for (i = 0; i < num_chunks; ++i)
+	{
+		if (cls.download3chunks[i] == DOWNLOAD3_CHUNKWAITING)
+		{
+			done = false;
+			break; // drop out of the loop.  Don'w want to write the file out of sequence
+		}
+		else if (cls.download3chunks[i] == DOWNLOAD3_CHUNKRECEIVED)
+		{
+			// Data  received but not written.  Write it.
+			if (i == num_chunks - 1)
+			{
+				chunksize = cls.download3size % DOWNLOAD3_CHUNKSIZE;
+
+				if (!chunksize)
+					chunksize = DOWNLOAD3_CHUNKSIZE;
+			}
+			else
+			{
+				chunksize = DOWNLOAD3_CHUNKSIZE;
+			}
+
+			fwrite(cls.download3data + (i * DOWNLOAD3_CHUNKSIZE), chunksize, 1, cls.download);
+			cls.download3chunks[i] = DOWNLOAD3_CHUNKWRITTEN;
+		}
+	}
+
+	cls.downloadpercent = 100 * cls.download3completechunks / num_chunks;
+	SZ_Init(&msg, msg_data, sizeof(msg_data));
+	//MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+	//MSG_WriteString(&cls.netchan.message, va("dl3ack %d", chunk));
+	MSG_WriteByte(&msg, clc_stringcmd);
+	MSG_WriteString(&msg, va("dl3ack %d", chunk));
+
+	if (done) // transfer is complete
+	{
+		char oldn[MAX_OSPATH];
+		char newn[MAX_OSPATH];
+
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString(&cls.netchan.message, va("dl3complete %d", 0)); // todo: fileid
+		fclose(cls.download);
+		cls.download = NULL;
+
+		if (cls.download3chunks)
+		{
+			Z_Free(cls.download3chunks);
+			cls.download3chunks = NULL;
+		}
+
+		if (cls.download3data)
+		{
+			Z_Free(cls.download3data);
+			cls.download3data = NULL;
+		}
+
+		// rename the temp file to it's final name
+		CL_DownloadFileName(oldn, sizeof(oldn), cls.downloadtempname);
+		CL_DownloadFileName(newn, sizeof(newn), cls.downloadname);
+
+		if (rename(oldn, newn) != 0)
+			Com_Printf("Failed to rename %s to %s.\n", oldn, newn);
+
+		// get another file if needed
+		CL_RequestNextDownload();
+	}
+
+	//todo;
+	Netchan_Transmit(&cls.netchan, msg.cursize, msg.data); // send packet immediately.
+}
+
+#endif
 
 #ifdef USE_DOWNLOAD2
 
@@ -1434,6 +1652,15 @@ void CL_ParseServerMessage (void)
 
 		case svc_download2ack: // jitdownload
 			CL_StartDownload2();
+			break;
+#endif
+#ifdef USE_DOWNLOAD3 // jitdownload
+		case svc_download3:
+			CL_ParseDownload3();
+			break;
+
+		case svc_download3start:
+			CL_StartDownload3();
 			break;
 #endif
 		case svc_frame:

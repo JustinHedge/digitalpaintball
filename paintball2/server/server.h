@@ -137,8 +137,9 @@ typedef struct client_s
 	netchan_t		netchan;
 	int				commandMsec2;		// jitspeedhackcheck
 #ifdef USE_DOWNLOAD3 // jitdownload
-	unsigned int	*download3_chunks;	// array containing status of chunks that have been sent
-	int				download3_delay;	// time/window between sending chunks (increases as packets are lost, decreases as packets are received)
+	int				*download3_chunks;	// array containing status of chunks that have been sent
+	float			download3_delay;	// time/window between sending chunks (increases as packets are lost, decreases as packets are received)
+	int				download3_lastsent;
 #endif
 } client_t;
 

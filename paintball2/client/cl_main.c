@@ -503,15 +503,15 @@ void CL_ForwardToServer_f (void)
 {
 	if (cls.state != ca_connected && cls.state != ca_active)
 	{
-		Com_Printf ("Can't \"%s\", not connected\n", Cmd_Argv(0));
+		Com_Printf("Can't \"%s\", not connected\n", Cmd_Argv(0));
 		return;
 	}
 	
 	// don't forward the first argument
 	if (Cmd_Argc() > 1)
 	{
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		SZ_Print (&cls.netchan.message, Cmd_Args());
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		SZ_Print(&cls.netchan.message, Cmd_Args());
 	}
 }
 
@@ -817,7 +817,7 @@ void CL_ClearState (void)
 	// wipe the entire cl structure
 	memset(&cl, 0, sizeof(cl));
 	memset(&cl_entities, 0, sizeof(cl_entities));
-	SZ_Clear (&cls.netchan.message);
+	SZ_Clear(&cls.netchan.message);
 }
 
 /*
@@ -1915,7 +1915,7 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("download2", CL_Download2_f); // jitdownload
 #endif
 #ifdef USE_DOWNLOAD3
-	Cmd_AddCommand("download3", CL_Download2_f); // jitdownload
+	Cmd_AddCommand("download3", CL_Download3_f); // jitdownload
 #endif
 	Cmd_AddCommand("writeconfig", CL_WriteConfig_f); // jitconfig
 
