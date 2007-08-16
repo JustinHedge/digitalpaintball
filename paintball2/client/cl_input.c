@@ -545,7 +545,7 @@ void CL_SendCmd (void)
 	if (cls.state == ca_connected)
 	{
 		if (cls.netchan.message.cursize	|| curtime - cls.netchan.last_sent > 1000 )
-			Netchan_Transmit (&cls.netchan, 0, NULL); // buf.data);	 - jit, kill warning
+			Netchan_Transmit(&cls.netchan, 0, NULL); // buf.data);	 - jit, kill warning
 		return;
 	}
 
@@ -553,8 +553,8 @@ void CL_SendCmd (void)
 	if (userinfo_modified)
 	{
 		userinfo_modified = false;
-		MSG_WriteByte (&cls.netchan.message, clc_userinfo);
-		MSG_WriteString (&cls.netchan.message, Cvar_Userinfo() );
+		MSG_WriteByte(&cls.netchan.message, clc_userinfo);
+		MSG_WriteString(&cls.netchan.message, Cvar_Userinfo());
 	}
 
 	SZ_Init (&buf, data, sizeof(data));
@@ -562,50 +562,47 @@ void CL_SendCmd (void)
 	if (cmd->buttons && cl.cinematictime > 0 && !cl.attractloop 
 		&& cls.realtime - cl.cinematictime > 1000)
 	{	// skip the rest of the cinematic
-		SCR_FinishCinematic ();
+		SCR_FinishCinematic();
 	}
 
 	// begin a client move command
-	MSG_WriteByte (&buf, clc_move);
+	MSG_WriteByte(&buf, clc_move);
 
 	// save the position for a checksum byte
 	checksumIndex = buf.cursize;
-	MSG_WriteByte (&buf, 0);
+	MSG_WriteByte(&buf, 0);
 
 	// let the server know what the last frame we
 	// got was, so the next message can be delta compressed
 	if (cl_nodelta->value || !cl.frame.valid || cls.demowaiting)
-		MSG_WriteLong (&buf, -1);	// no compression
+		MSG_WriteLong(&buf, -1);	// no compression
 	else
-		MSG_WriteLong (&buf, cl.frame.serverframe);
+		MSG_WriteLong(&buf, cl.frame.serverframe);
 
 	// send this and the previous cmds in the message, so
 	// if the last packet was dropped, it can be recovered
 	i = (cls.netchan.outgoing_sequence-2) & (CMD_BACKUP-1);
 	cmd = &cl.cmds[i];
-	memset (&nullcmd, 0, sizeof(nullcmd));
-	MSG_WriteDeltaUsercmd (&buf, &nullcmd, cmd);
+	memset(&nullcmd, 0, sizeof(nullcmd));
+	MSG_WriteDeltaUsercmd(&buf, &nullcmd, cmd);
 	oldcmd = cmd;
 
 	i = (cls.netchan.outgoing_sequence-1) & (CMD_BACKUP-1);
 	cmd = &cl.cmds[i];
-	MSG_WriteDeltaUsercmd (&buf, oldcmd, cmd);
+	MSG_WriteDeltaUsercmd(&buf, oldcmd, cmd);
 	oldcmd = cmd;
 
 	i = (cls.netchan.outgoing_sequence) & (CMD_BACKUP-1);
 	cmd = &cl.cmds[i];
-	MSG_WriteDeltaUsercmd (&buf, oldcmd, cmd);
+	MSG_WriteDeltaUsercmd(&buf, oldcmd, cmd);
 
 	// calculate a checksum over the move commands
 	buf.data[checksumIndex] = COM_BlockSequenceCRCByte(
 		buf.data + checksumIndex + 1, buf.cursize - checksumIndex - 1,
 		cls.netchan.outgoing_sequence);
 
-	//
 	// deliver the message
-	//
 	Netchan_Transmit(&cls.netchan, buf.cursize, buf.data);
-
 	cls.last_transmit_time = cls.realtime;
 }
 
