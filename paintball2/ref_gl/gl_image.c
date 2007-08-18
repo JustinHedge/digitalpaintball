@@ -1255,6 +1255,8 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	// let people sample down the world textures for speed
 	if (gl_picmip->value > 2.0f)
 		ri.Cvar_Set("gl_picmip", "2");
+	else if (gl_picmip->value < 0.0f)
+		ri.Cvar_Set("gl_picmip", "0");
 
 	if (mipmap)
 	{
@@ -1266,6 +1268,8 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	{
 		if (gl_skymip->value > 3.0f)
 			ri.Cvar_Set("gl_skymip", "3");
+		else if (gl_skymip->value < 0.0f)
+			ri.Cvar_Set("gl_skymip", "0");
 
 		scaled_width >>= (int)gl_skymip->value;
 		scaled_height >>= (int)gl_skymip->value;
