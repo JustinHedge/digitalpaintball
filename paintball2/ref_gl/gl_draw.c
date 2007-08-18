@@ -170,8 +170,8 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 	if (gl_textshadow->value)
 	{
 		shadowpass = true;
-		px=x+textscale;
-		py=y+textscale;
+		px = x + textscale;
+		py = y + textscale;
 	}
 	else
 	{
@@ -198,6 +198,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 				switch (num)
 				{
 				case CHAR_COLOR:
+
 					if (!(*(s+1))) // end of string
 					{
 						nextiscolor = false;
@@ -209,33 +210,41 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 						s++;
 						continue;
 					}
+
 					break;
 				case CHAR_UNDERLINE:
 					s++;
 					underlined = !underlined;
-					if (*s != '\0') // only draw if at end of string
+
+					//if (*s != '\0') // only draw if at end of string
 						continue;
-					else // so the string null-terminates!
-						s--;
+					//else // so the string null-terminates!
+					//	s--;
+
 					break;
 				case CHAR_ITALICS:
 					s++;
 					italicized = !italicized;
-					if (*s != '\0') // only draw if at end of string
+
+					//if (*s != '\0') // only draw if at end of string
 						continue;
-					else
-						s--;
+					//else
+					//	s--;
+
 					break;
 				case CHAR_ENDFORMAT:
 					s++;
 					italicized = false;
 					underlined = false;
+
 					if (!shadowpass)
 						qglColor4f(1.0f, 1.0f, 1.0f, alpha);
-					if (*s != '\0') // draw character if at end of string.
+
+					//if (*s != '\0') // draw character if at end of string.
 						continue;
-					else
-						s--;
+					//else
+					//	s--;
+
 					break;
 				default:
 					break;
