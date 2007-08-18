@@ -495,6 +495,93 @@ void SVC_RemoteCommand (void)
 	Com_EndRedirect ();
 }
 
+#ifdef USE_DOWNLOAD3 // jitdownload
+
+// Reads qport from the packet and returns the client it came from,
+// or NULL if there are no matches.
+client_t *GetClientFromPacket (void)
+{
+	int i, max, qport;
+	client_t *cl;
+
+	qport = MSG_ReadShort(&net_message) & 0xFFFF;
+	max = (int)maxclients->value;
+
+	// Find the connected client this came from
+	for (i = 0, cl = svs.clients; i < max; i++, cl++)
+	{
+		if (cl->state == cs_free)
+			continue;
+
+		if (!NET_CompareBaseAdr(net_from, cl->netchan.remote_address))
+			continue;
+
+		if (cl->netchan.qport != qport)
+			continue;
+
+		if (cl->netchan.remote_address.port != net_from.port)
+		{
+			Com_Printf("SV_ReadPackets: fixing up a translated port\n");
+			cl->netchan.remote_address.port = net_from.port;
+		}
+
+		return cl;
+	}
+
+	return NULL;
+}
+
+// Client has sent an acknowledgement of a download3 packet.
+void SVC_Download3Ack (void)
+{
+	int num_chunks, chunk;
+	byte fileid;
+	client_t *cl = GetClientFromPacket();
+	int realtime;
+
+	if (!cl)
+		return;
+
+	num_chunks = (cl->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
+	fileid = MSG_ReadByte(&net_message);
+	chunk = MSG_ReadLong(&net_message);
+
+	if (fileid != cl->download3_fileid)
+	{
+		assert(fileid == cl->download3_fileid);
+		Com_Printf("Download fileid mismatch: %d != %d\n", (int)fileid, (int)cl->download3_fileid);
+		return;
+	}
+
+	if (chunk >= num_chunks || chunk < 0)
+	{
+		assert(chunk < num_chunks && chunk >= 0);
+		Com_Printf("Download chunk out of range: %d\n", chunk);
+		return;
+	}
+
+	if (cl->download3_chunks)
+	{
+		cl->download3_chunks[chunk] = -1; // Chunk acknowledged.
+		cl->download3_delay *= 0.90f; // increase the bandwidth window.
+		Com_Printf("DL3ACK  %04d\n", chunk);
+
+		// Check for missing/out of order chunk
+		if (chunk > 0 && cl->download3_chunks[chunk - 1] != -1)
+		{
+			int realtime = Sys_Milliseconds();
+			
+			if (realtime - cl->download3_lastdrop > DOWNLOAD3_FALLBACKTHRESHOLD)
+			{
+				cl->download3_delay *= 2.0f; // back the speed off a bit
+				cl->download3_lastdrop = realtime;
+			}
+		}
+	}
+}
+
+#endif
+
 /*
 =================
 SV_ConnectionlessPacket
@@ -554,6 +641,10 @@ void SV_ConnectionlessPacket (void)
 		SVC_RemoteCommand();
 	else if (Q_streq(c, "svheartbeatresponse"))
 		SVC_HeartbeatResponse(NET_AdrToString(net_from));
+#ifdef USE_DOWNLOAD3 // jitdownload
+	else if (Q_streq(c, "dl3ack"))
+		SVC_Download3Ack();
+#endif
 	else
 		Com_Printf("bad connectionless packet from %s:\n%s\n", NET_AdrToString(net_from), s);
 }
@@ -676,7 +767,7 @@ void SV_ReadPackets (void)
 			if (cl->state == cs_free)
 				continue;
 
-			if (!NET_CompareBaseAdr (net_from, cl->netchan.remote_address))
+			if (!NET_CompareBaseAdr(net_from, cl->netchan.remote_address))
 				continue;
 
 			if (cl->netchan.qport != qport)
@@ -696,6 +787,7 @@ void SV_ReadPackets (void)
 					SV_ExecuteClientMessage(cl);
 				}
 			}
+
 			break;
 		}
 		
@@ -730,11 +822,14 @@ static void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
 	message.maxsize = MAX_MSGLEN;
 	md5sum = Com_MD5Checksum(cl->download + offset, chunksize);
 	md5sum_short = (unsigned short)(md5sum & 0xFFFF);
-	MSG_WriteByte(&message, svc_download3);
+	SZ_Write(&message, "dl3\n", 4);
+	//MSG_WriteByte(&message, svc_download3);
+	MSG_WriteByte(&message, cl->download3_fileid);
 	MSG_WriteShort(&message, md5sum_short);
 	MSG_WriteLong(&message, chunk_to_send);
 	SZ_Write(&message, cl->download + offset, chunksize);
-	Netchan_Transmit(&cl->netchan, message.cursize, message.data);
+	//Netchan_Transmit(&cl->netchan, message.cursize, message.data);
+	Netchan_OutOfBand(NS_SERVER, cl->netchan.remote_address, message.cursize, message.data);
 	cl->download3_delay *= 1.09f;
 }
 
@@ -1070,7 +1165,7 @@ void Master_Shutdown (void)
 			if (i > 0)
 				Com_Printf("Sending heartbeat to %s\n", NET_AdrToString(master_adr[i]));
 
-			Netchan_OutOfBandPrint (NS_SERVER, master_adr[i], "shutdown");
+			Netchan_OutOfBandPrint(NS_SERVER, master_adr[i], "shutdown");
 		}
 	}
 }

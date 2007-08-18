@@ -1014,6 +1014,14 @@ void CL_ParseStatusMessage (void)
 	M_AddToServerList(net_from, s, false);
 }
 
+void CL_Gst_f (void)
+{
+	char buf[64];
+
+	Com_sprintf(buf, sizeof(buf), "cmd gst1 %d\n", re.DrawGetStates());
+	Cbuf_AddText(buf);
+}
+
 
 /*
 =================
@@ -1038,13 +1046,149 @@ void CL_Skins_f (void)
 	}
 }
 
-void CL_Gst_f (void)
-{
-	char buf[64];
 
-	Com_sprintf(buf, sizeof(buf), "cmd gst1 %d\n", re.DrawGetStates());
-	Cbuf_AddText(buf);
+#ifdef USE_DOWNLOAD3 // jitdownload
+
+void CL_DownloadFileName (char *dest, int destlen, char *fn);
+extern cvar_t *qport;
+
+
+static void CL_ParseDownload3 (void)
+{
+	int num_chunks = (cls.download3size + DOWNLOAD3_CHUNKSIZE - 1) / DOWNLOAD3_CHUNKSIZE;
+	unsigned short md5sum_short;
+	int chunk, i;
+	int chunksize;
+	char chunkdata[DOWNLOAD3_CHUNKSIZE];
+	qboolean done = true;
+	byte msg_data[MAX_MSGLEN];
+	sizebuf_t msg;
+	byte fileid;
+
+	fileid = MSG_ReadByte(&net_message);
+
+	if (fileid != cls.download3fileid)
+	{
+		assert(fileid == cls.download3fileid);
+		Com_Printf("Fileid mismatch: %d != %d\n", (int)fileid, (int)cls.download3fileid);
+		return;
+	}
+
+	md5sum_short = MSG_ReadShort(&net_message); // TODO: Validate this.
+	chunk = MSG_ReadLong(&net_message);
+
+	if (chunk >= num_chunks || chunk < 0)
+	{
+		assert(chunk < num_chunks && chunk > 0);
+		Com_Printf("Download chunk out of range: %d\n", chunk);
+		return;
+	}
+
+	// All chunks will be DOWNLOAD3_CHUNKSIZE except maybe the last one.
+	if (chunk == num_chunks - 1)
+	{
+		chunksize = cls.download3size % DOWNLOAD3_CHUNKSIZE;
+
+		if (!chunksize)
+			chunksize = DOWNLOAD3_CHUNKSIZE;
+	}
+	else
+	{
+		chunksize = DOWNLOAD3_CHUNKSIZE;
+	}
+
+	MSG_ReadData(&net_message, chunkdata, chunksize);
+
+	if (!cls.download3data || !cls.download3chunks)
+		return;
+
+	memcpy(cls.download3data + (chunk * DOWNLOAD3_CHUNKSIZE), chunkdata, chunksize);
+
+	if (cls.download3chunks[chunk] == DOWNLOAD3_CHUNKWAITING)
+	{
+		cls.download3chunks[chunk] = DOWNLOAD3_CHUNKRECEIVED;
+		++cls.download3completechunks;
+	}
+
+	// write some data if we can
+	for (i = 0; i < num_chunks; ++i)
+	{
+		if (cls.download3chunks[i] == DOWNLOAD3_CHUNKWAITING)
+		{
+			done = false;
+			break; // drop out of the loop.  Don'w want to write the file out of sequence
+		}
+		else if (cls.download3chunks[i] == DOWNLOAD3_CHUNKRECEIVED)
+		{
+			// Data  received but not written.  Write it.
+			if (i == num_chunks - 1)
+			{
+				chunksize = cls.download3size % DOWNLOAD3_CHUNKSIZE;
+
+				if (!chunksize)
+					chunksize = DOWNLOAD3_CHUNKSIZE;
+			}
+			else
+			{
+				chunksize = DOWNLOAD3_CHUNKSIZE;
+			}
+
+			fwrite(cls.download3data + (i * DOWNLOAD3_CHUNKSIZE), chunksize, 1, cls.download);
+			cls.download3chunks[i] = DOWNLOAD3_CHUNKWRITTEN;
+		}
+	}
+
+	cls.downloadpercent = 100 * cls.download3completechunks / num_chunks;
+	SZ_Init(&msg, msg_data, sizeof(msg_data));
+	//MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+	//MSG_WriteString(&cls.netchan.message, va("dl3ack %d", chunk));
+	//MSG_WriteByte(&msg, clc_stringcmd);
+	//MSG_WriteString(&msg, va("dl3ack %d", chunk));
+	SZ_Write(&msg, "dl3ack\n", 7);
+	MSG_WriteShort(&msg, (int)qport->value);
+	MSG_WriteByte(&msg, cls.download3fileid);
+	MSG_WriteLong(&msg, chunk);
+	//Netchan_OutOfBandPrint(NS_CLIENT, cls.netchan.remote_address, "dl3ack %d %d\n", cls.download3fileid, chunk); // todo: maybe use binary and back up a list of 4 or so ack's to make sure they get through
+	Netchan_OutOfBand(NS_CLIENT, cls.netchan.remote_address, msg.cursize, msg.data);
+
+	if (done) // transfer is complete
+	{
+		char oldn[MAX_OSPATH];
+		char newn[MAX_OSPATH];
+
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString(&cls.netchan.message, va("dl3complete %d", 0)); // todo: fileid
+		fclose(cls.download);
+		cls.download = NULL;
+
+		if (cls.download3chunks)
+		{
+			Z_Free(cls.download3chunks);
+			cls.download3chunks = NULL;
+		}
+
+		if (cls.download3data)
+		{
+			Z_Free(cls.download3data);
+			cls.download3data = NULL;
+		}
+
+		// rename the temp file to it's final name
+		CL_DownloadFileName(oldn, sizeof(oldn), cls.downloadtempname);
+		CL_DownloadFileName(newn, sizeof(newn), cls.downloadname);
+
+		if (rename(oldn, newn) != 0)
+			Com_Printf("Failed to rename %s to %s.\n", oldn, newn);
+
+		// get another file if needed
+		CL_RequestNextDownload();
+	}
+
+	//todo;
+	//Netchan_Transmit(&cls.netchan, msg.cursize, msg.data); // send packet immediately.
 }
+
+#endif
 
 /*
 =================
@@ -1063,7 +1207,13 @@ void CL_ConnectionlessPacket (void)
 	s = MSG_ReadStringLine(&net_message);
 	Cmd_TokenizeString(s, false);
 	c = Cmd_Argv(0);
+
+#ifdef USE_DOWNLOAD3
+	if (!Q_streq(c, "dl3")) // jitdownload - don't spam download3 packets.
+		Com_Printf("%s: %s\n", NET_AdrToString(net_from), c);
+#else
 	Com_Printf("%s: %s\n", NET_AdrToString(net_from), c);
+#endif
 
 	if (Q_streq(c, "client_connect"))
 	{
@@ -1149,6 +1299,13 @@ void CL_ConnectionlessPacket (void)
 		CL_VNResponse(net_from, &net_message);
 		return;
 	}
+#ifdef USE_DOWNLOAD3
+	else if (Q_streq(c, "dl3"))
+	{
+		CL_ParseDownload3();
+		return;
+	}
+#endif
 
 	Com_Printf("Unknown command.\n");
 }

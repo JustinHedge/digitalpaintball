@@ -64,13 +64,14 @@ typedef struct
 	// demo server information
 	FILE		*demofile;
 	qboolean	timedemo;		// don't time sync
-#ifdef USE_DOWNLOAD3
-	qboolean	download3_active; // jitdownload
+#ifdef USE_DOWNLOAD3 // jitdownload
+	qboolean	download3_active;
+	qboolean	download3_nextfileid;
 #endif
 } server_t;
 
-#define EDICT_NUM(n) ((edict_t *)((byte *)ge->edicts + ge->edict_size*(n)))
-#define NUM_FOR_EDICT(e) ( ((byte *)(e)-(byte *)ge->edicts ) / ge->edict_size)
+#define EDICT_NUM(n) ((edict_t *)((byte *)ge->edicts + ge->edict_size * (n)))
+#define NUM_FOR_EDICT(e) (((byte *)(e) - (byte *)ge->edicts) / ge->edict_size)
 
 
 typedef enum
@@ -140,6 +141,8 @@ typedef struct client_s
 	int				*download3_chunks;	// array containing status of chunks that have been sent
 	float			download3_delay;	// time/window between sending chunks (increases as packets are lost, decreases as packets are received)
 	int				download3_lastsent;
+	int				download3_lastdrop; // time the last packet was dropped.
+	byte			download3_fileid;
 #endif
 } client_t;
 

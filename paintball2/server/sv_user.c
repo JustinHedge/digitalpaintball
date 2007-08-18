@@ -579,13 +579,17 @@ void SV_BeginDownload3_f (void) // jitdownload
 
 	//SV_NextDownload_f();
 	Com_DPrintf("Downloading %s to %s\n", name, sv_client->name);
+	sv_client->download3_fileid = sv.download3_nextfileid;
+	sv.download3_nextfileid++;
 	MSG_WriteByte(&sv_client->netchan.message, svc_download3start); // acknowledge download request
+	MSG_WriteByte(&sv_client->netchan.message, sv_client->download3_fileid);
 	MSG_WriteLong(&sv_client->netchan.message, sv_client->downloadsize); // tell client filesize
 	MSG_WriteByte(&sv_client->netchan.message, 0); // tell client which compression algorithm to use (0 = none)
 	MSG_WriteString(&sv_client->netchan.message, name); // tell client what filename should be.
 	sv_client->download3_lastsent = Sys_Milliseconds();
 	//Com_Printf("SV Acknw: %d\n", chunk_offset);
 }
+
 
 void SV_AckDownload3_f (void)
 {
@@ -760,7 +764,7 @@ ucmd_t ucmds[] =
 #endif
 #ifdef USE_DOWNLOAD3 // jitdownload
 	{"download3", SV_BeginDownload3_f},
-	{"dl3ack", SV_AckDownload3_f},
+	//{"dl3ack", SV_AckDownload3_f},
 	{"dl3complete", SV_CompleteDownload3_f},
 #endif
 

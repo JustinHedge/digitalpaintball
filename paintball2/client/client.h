@@ -273,6 +273,7 @@ typedef struct
 	int			download3compression;
 	int			download3lastchunkwritten;
 	int			download3completechunks;
+	byte		download3fileid;
 #endif
 	unsigned	last_transmit_time; // jitnetfps
 	unsigned	server_gamebuild; // jitversion
