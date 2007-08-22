@@ -138,7 +138,6 @@ void Netchan_OutOfBandPrint (int net_socket, netadr_t adr, char *format, ...)
 	_vsnprintf(string, sizeof(string), format, argptr); // jitsecurity -- prevent buffer overruns
 	va_end(argptr);
 	NULLTERMINATE(string); // jitsecurity -- make sure string is null terminated.
-
 	Netchan_OutOfBand(net_socket, adr, strlen(string), (byte *)string);
 }
 
@@ -152,16 +151,14 @@ called to open a channel to a remote system
 */
 void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport)
 {
-	memset (chan, 0, sizeof(*chan));
-	
+	memset(chan, 0, sizeof(*chan));
 	chan->sock = sock;
 	chan->remote_address = adr;
 	chan->qport = qport;
 	chan->last_received = curtime;
 	chan->incoming_sequence = 0;
 	chan->outgoing_sequence = 1;
-
-	SZ_Init (&chan->message, chan->message_buf, sizeof(chan->message_buf));
+	SZ_Init(&chan->message, chan->message_buf, sizeof(chan->message_buf));
 	chan->message.allowoverflow = true;
 }
 
@@ -212,6 +209,7 @@ A 0 length will still generate a packet and deal with the reliable messages.
 ================
 */
 char pps_string[16]; // jitnetfps
+
 void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 {
 	sizebuf_t	send;
@@ -222,69 +220,64 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 	extern cvar_t *cl_drawpps; // jitnetfps
 #endif
 
-// check for message overflow
+	// check for message overflow
 	if (chan->message.overflowed)
 	{
 		chan->fatal_error = true;
-		Com_Printf ("%s:Outgoing message overflow\n"
-			, NET_AdrToString (chan->remote_address));
+		Com_Printf("%s:Outgoing message overflow\n", NET_AdrToString(chan->remote_address));
 		return;
 	}
 
-	send_reliable = Netchan_NeedReliable (chan);
+	send_reliable = Netchan_NeedReliable(chan);
 
 	if (!chan->reliable_length && chan->message.cursize)
 	{
-		memcpy (chan->reliable_buf, chan->message_buf, chan->message.cursize);
+		memcpy(chan->reliable_buf, chan->message_buf, chan->message.cursize);
 		chan->reliable_length = chan->message.cursize;
 		chan->message.cursize = 0;
 		chan->reliable_sequence ^= 1;
 	}
 
-
-// write the packet header
-	SZ_Init (&send, send_buf, sizeof(send_buf));
-
-	w1 = ( chan->outgoing_sequence & ~(1<<31) ) | (send_reliable<<31);
-	w2 = ( chan->incoming_sequence & ~(1<<31) ) | (chan->incoming_reliable_sequence<<31);
-
+	// write the packet header
+	SZ_Init(&send, send_buf, sizeof(send_buf));
+	w1 = (chan->outgoing_sequence & ~(1 << 31)) | (send_reliable << 31);
+	w2 = (chan->incoming_sequence & ~(1 << 31)) | (chan->incoming_reliable_sequence << 31);
 	chan->outgoing_sequence++;
 	chan->last_sent = curtime;
-
-	MSG_WriteLong (&send, w1);
-	MSG_WriteLong (&send, w2);
+	MSG_WriteLong(&send, w1);
+	MSG_WriteLong(&send, w2);
 
 	// send the qport if we are a client
 	if (chan->sock == NS_CLIENT)
-		MSG_WriteShort (&send, qport->value);
+		MSG_WriteShort(&send, qport->value);
 
-// copy the reliable message to the packet first
+	// copy the reliable message to the packet first
 	if (send_reliable)
 	{
-		SZ_Write (&send, chan->reliable_buf, chan->reliable_length);
+		SZ_Write(&send, chan->reliable_buf, chan->reliable_length);
 		chan->last_reliable_sequence = chan->outgoing_sequence;
 	}
-	
-// add the unreliable part if space is available
-	if (send.maxsize - send.cursize >= length)
-		SZ_Write (&send, data, length);
-	else
-		Com_Printf ("Netchan_Transmit: dumped unreliable\n");
 
-// send the datagram
-	NET_SendPacket (chan->sock, send.cursize, send.data, chan->remote_address);
+	// add the unreliable part if space is available
+	if (send.maxsize - send.cursize >= length)
+		SZ_Write(&send, data, length);
+	else
+		Com_Printf("Netchan_Transmit: dumped unreliable\n");
+
+	// send the datagram
+	NET_SendPacket(chan->sock, send.cursize, send.data, chan->remote_address);
 
 	if (showpackets->value)
 	{
 		if (send_reliable)
-			Com_Printf ("send %4i : s=%i reliable=%i ack=%i rack=%i\n"
+			Com_Printf("send %4i : s=%i reliable=%i ack=%i rack=%i\n"
 				, send.cursize
 				, chan->outgoing_sequence - 1
 				, chan->reliable_sequence
 				, chan->incoming_sequence
 				, chan->incoming_reliable_sequence);
 		else
-			Com_Printf ("send %4i : s=%i ack=%i rack=%i\n"
+			Com_Printf("send %4i : s=%i ack=%i rack=%i\n"
 				, send.cursize
 				, chan->outgoing_sequence - 1
 				, chan->incoming_sequence
@@ -299,12 +292,12 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 
 		if (!(framecount & 0xF)) // once every 16 frames
 		{
-			Com_sprintf(pps_string, sizeof(pps_string), "%3.0fpps\n", 1000.0f*framecount/(curtime-lasttime));
+			Com_sprintf(pps_string, sizeof(pps_string), "%3.0fpps\n", 1000.0f * framecount / (curtime - lasttime));
 			lasttime = curtime;
 			framecount = 0;
 		}
 
-		framecount ++;
+		framecount++;
 	}
 #endif
 }

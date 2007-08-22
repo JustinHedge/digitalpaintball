@@ -314,7 +314,7 @@ void SV_NextDownload2_f (void) // jitdownload
 		return;
 
 	if (Cmd_Argc() >= 2)
-		offset = atoi(Cmd_Argv(1)) * DOWNLOAD2_CHUNKSIZE; // downloaded offset -- jitodo, make this a long instead.
+		offset = atoi(Cmd_Argv(1)) * DOWNLOAD2_CHUNKSIZE; // downloaded offset 
 	else
 		return;
 
@@ -345,7 +345,7 @@ void SV_NextDownload2_f (void) // jitdownload
 	Com_Printf("%d SV Sent: %d\n", curtime, offset/DOWNLOAD2_CHUNKSIZE);
 	//SV_SendSingleClientMessage(sv_client, 0, NULL); // hope this works!!!
 	Netchan_Transmit(&sv_client->netchan, message.cursize, message.data);
-	//Netchan_OutOfBand(NC_SERVER, todo_adr, message.cursize, message.data);
+	//Netchan_OutOfBand(NC_SERVER, adr, message.cursize, message.data);
 
 //	if (offset+r < sv_client->downloadsize)
 //		return;
@@ -517,6 +517,9 @@ void SV_BeginDownload2_f (void) // jitdownload
 #endif
 
 #ifdef USE_DOWNLOAD3
+int GetNextDownload3Chunk (client_t *cl);
+void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send);
+
 void SV_BeginDownload3_f (void) // jitdownload
 {
 	char *name;
@@ -526,7 +529,23 @@ void SV_BeginDownload3_f (void) // jitdownload
 	name = Cmd_Argv(1);
 
 	if (Cmd_Argc() > 2)
-		chunk_offset = atoi(Cmd_Argv(2)); // downloaded offset
+		chunk_offset = atoi(Cmd_Argv(2)); // downloaded offset - todo, not used.  This is handled in the dl3confirm
+
+	
+	if (sv_client->download)
+		FS_FreeFile(sv_client->download);
+
+	if (sv_client->download3_chunks)
+	{
+		Z_Free(sv_client->download3_chunks);
+		sv_client->download3_chunks = NULL;
+	}
+
+	if (sv_client->download3_window)
+	{
+		Z_Free(sv_client->download3_window);
+		sv_client->download3_window = NULL;
+	}
 
 	// don't allow anything with .. path
 	if (!CheckDownloadFilename(name))
@@ -536,9 +555,6 @@ void SV_BeginDownload3_f (void) // jitdownload
 		MSG_WriteByte(&sv_client->netchan.message, 0);
 		return;
 	}
-
-	if (sv_client->download)
-		FS_FreeFile(sv_client->download);
 
 	// jitodo -- (maybe) if the file came from a pak, tell client to download the pak (file_from_pak)
 	// jitodo -- check for different extensions (prefer jpg over wal, download lowres if no highres texture available, etc)
@@ -563,6 +579,7 @@ void SV_BeginDownload3_f (void) // jitdownload
 
 	num_chunks = (sv_client->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
 	sv_client->download3_chunks = Z_Malloc(num_chunks * sizeof(int));
+	sv_client->download3_window = Z_Malloc(num_chunks * sizeof(int)); // window will never get this big, but allocate enough that we won't have to worry about it.
 
 	if (chunk_offset > num_chunks)
 		chunk_offset = num_chunks;
@@ -591,6 +608,54 @@ void SV_BeginDownload3_f (void) // jitdownload
 }
 
 
+void SV_CompleteDownload3_f (void)
+{
+	if (!sv_client->download)
+		return;
+
+	// client said it's done downloading, so close the file:
+	FS_FreeFile(sv_client->download);
+	sv_client->download = NULL;
+
+	if (sv_client->download3_chunks)
+	{
+		Z_Free(sv_client->download3_chunks);
+		sv_client->download3_chunks = NULL;
+	}
+}
+
+
+void SV_ConfirmDownload3_f (void)
+{
+	int i, start_chunk, chunk;
+	int num_chunks = (sv_client->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
+
+	start_chunk = atoi(Cmd_Argv(1));
+
+	if (start_chunk < 0) // Client refused the download
+	{
+		SV_CompleteDownload3_f();
+		return;
+	}
+
+	if (start_chunk >= num_chunks)
+		start_chunk = num_chunks - 1;
+
+	for (i = 0; i < start_chunk; ++i)
+		sv_client->download3_chunks[i] = -1;
+
+	if (sv_client->download3_windowsize < 1)
+		sv_client->download3_windowsize = 1;
+
+	for (i = 0; i < sv_client->download3_windowsize; ++i)
+	{
+		chunk = GetNextDownload3Chunk(sv_client);
+		SV_SendDownload3Chunk(sv_client, chunk);
+		sv_client->download3_window[i] = chunk;
+	}
+}
+
+
 void SV_AckDownload3_f (void)
 {
 	int num_chunks, chunk;
@@ -610,23 +675,6 @@ void SV_AckDownload3_f (void)
 		sv_client->download3_chunks[chunk] = -1; // Chunk acknowledged.
 		sv_client->download3_delay *= 0.90f;
 		Com_Printf("DL3ACK  %04d\n", chunk);
-	}
-}
-
-
-void SV_CompleteDownload3_f (void)
-{
-	if (!sv_client->download)
-		return;
-
-	// client said it's done downloading, so close the file:
-	FS_FreeFile(sv_client->download);
-	sv_client->download = NULL;
-
-	if (sv_client->download3_chunks)
-	{
-		Z_Free(sv_client->download3_chunks);
-		sv_client->download3_chunks = NULL;
 	}
 }
 #endif
@@ -764,6 +812,7 @@ ucmd_t ucmds[] =
 #endif
 #ifdef USE_DOWNLOAD3 // jitdownload
 	{"download3", SV_BeginDownload3_f},
+	{"dl3confirm", SV_ConfirmDownload3_f},
 	//{"dl3ack", SV_AckDownload3_f},
 	{"dl3complete", SV_CompleteDownload3_f},
 #endif

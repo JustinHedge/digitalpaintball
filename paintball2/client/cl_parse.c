@@ -211,7 +211,7 @@ void	CL_Download_f (void)
 
 	Com_sprintf(filename, sizeof(filename), "%s", Cmd_Argv(1));
 
-	if (strstr (filename, ".."))
+	if (strstr(filename, ".."))
 	{
 		Com_Printf ("Refusing to download a path with ..\n");
 		return;
@@ -229,11 +229,11 @@ void	CL_Download_f (void)
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
-	COM_StripExtension (cls.downloadname, cls.downloadtempname);
-	strcat (cls.downloadtempname, ".tmp");
+	COM_StripExtension(cls.downloadname, cls.downloadtempname);
+	strcat(cls.downloadtempname, ".tmp");
 
-	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	MSG_WriteString (&cls.netchan.message,
+	MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+	MSG_WriteString(&cls.netchan.message,
 		va("download %s", cls.downloadname));
 
 	cls.downloadnumber++;
@@ -477,6 +477,12 @@ static void CL_StartDownload3 (void)
 	int num_chunks, i;
 	char name[MAX_OSPATH];
 
+	if (cls.download)
+	{
+		fclose(cls.download);
+		cls.download = NULL;
+	}
+
 	if (cls.download3chunks)
 	{
 		Z_Free(cls.download3chunks);
@@ -502,12 +508,16 @@ static void CL_StartDownload3 (void)
 	if (strstr(filename, ".."))
 	{
 		Com_Printf("Refusing to download a path with ..\n");
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		SZ_Print(&cls.netchan.message, "dl3confirm -1\n");
 		return;
 	}
 
 	if (FS_LoadFile(filename, NULL) != -1)
 	{
 		Com_Printf("File already exists.\n");
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		SZ_Print(&cls.netchan.message, "dl3confirm -1\n");
 		return;
 	}
 
@@ -530,6 +540,8 @@ static void CL_StartDownload3 (void)
 	if (!cls.download3data || !cls.download3chunks)
 	{
 		Com_Printf("Failed to allocate %d bytes for file download.\n", cls.download3size);
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		SZ_Print(&cls.netchan.message, "dl3confirm -1\n");
 		return;
 	}
 
@@ -549,7 +561,10 @@ static void CL_StartDownload3 (void)
 		for (i = 0; i < chunk_offset; ++i)
 			cls.download3chunks[i] = DOWNLOAD3_CHUNKWRITTEN;
 
+		fseek(cls.download, chunk_offset * DOWNLOAD3_CHUNKSIZE, SEEK_SET);
 		Com_Printf("Resuming %s\n", cls.downloadname);
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		SZ_Print(&cls.netchan.message, va("dl3confirm %d\n", chunk_offset));
 	}
 	else
 	{
@@ -558,10 +573,14 @@ static void CL_StartDownload3 (void)
 		if (!cls.download)
 		{
 			Com_Printf("Failed to open %s\n", cls.downloadtempname);
+			MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+			SZ_Print(&cls.netchan.message, "dl3confirm -1\n");
 			return;
 		}
 
 		Com_Printf("Downloading %s\n", cls.downloadname);
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		SZ_Print(&cls.netchan.message, "dl3confirm 0\n");
 	}
 }
 
@@ -730,7 +749,7 @@ void CL_WriteReceivedDownload2()
 {
 	int i;
 
-	for(i=0; i<SIMULT_DL2_PACKETS; i++)
+	for (i = 0; i<SIMULT_DL2_PACKETS; i++)
 	{
 		if (download_chunks[i].used && download_chunks[i].offset == next_write_offset)
 		{

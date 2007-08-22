@@ -1551,22 +1551,25 @@ void Qcommon_Frame (int msec)
 	if (log_stats->modified)
 	{
 		log_stats->modified = false;
-		if ( log_stats->value )
+
+		if (log_stats->value)
 		{
-			if ( log_stats_file )
+			if (log_stats_file)
 			{
-				fclose( log_stats_file );
+				fclose(log_stats_file);
 				log_stats_file = 0;
 			}
-			log_stats_file = fopen( "stats.log", "w" );
-			if ( log_stats_file )
-				fprintf( log_stats_file, "entities,dlights,parts,frame time\n" );
+
+			log_stats_file = fopen("stats.log", "w");
+
+			if (log_stats_file)
+				fprintf(log_stats_file, "entities,dlights,parts,frame time\n");
 		}
 		else
 		{
-			if ( log_stats_file )
+			if (log_stats_file)
 			{
-				fclose( log_stats_file );
+				fclose(log_stats_file);
 				log_stats_file = 0;
 			}
 		}
@@ -1574,10 +1577,10 @@ void Qcommon_Frame (int msec)
 
 	if (showtrace->value)
 	{
-		extern	int c_traces, c_brush_traces;
-		extern	int	c_pointcontents;
+		extern int c_traces, c_brush_traces;
+		extern int c_pointcontents;
 
-		Com_Printf ("%4i traces  %4i points\n", c_traces, c_pointcontents);
+		Com_Printf("%4i traces  %4i points\n", c_traces, c_pointcontents);
 		c_traces = 0;
 		c_brush_traces = 0;
 		c_pointcontents = 0;
@@ -1585,10 +1588,12 @@ void Qcommon_Frame (int msec)
 
 	do
 	{
-		s = Sys_ConsoleInput ();
+		s = Sys_ConsoleInput();
+
 		if (s)
-			Cbuf_AddText (va("%s\n",s));
-	} while (s);
+			Cbuf_AddText(va("%s\n", s));
+	}
+	while (s);
 
 	Cbuf_Execute();
 
