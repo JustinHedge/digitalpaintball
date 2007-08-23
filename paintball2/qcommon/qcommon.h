@@ -243,7 +243,7 @@ PROTOCOL
 #define DOWNLOAD3_MAXWINDOWSIZE 128
 #define DOWNLOAD3_RTT_ALPHA 0.125f // spec from TCP
 #define DOWNLOAD3_RTT_BETA 0.25f // spec from TCP
-#define DOWNLOAD3_MINRESENDWAIT 200 // 200ms before attempting to re-send a packet.
+#define DOWNLOAD3_MINRESENDWAIT 1000 // 1 second before attempting to re-send a packet.
 #define DOWNLOAD3_FALLBACKTHRESHOLD 100 // time to wait, in ms, between throttle backs for dropped packets
 #define DOWNLOAD3_CHUNKWRITTEN 2
 #define DOWNLOAD3_CHUNKRECEIVED 1

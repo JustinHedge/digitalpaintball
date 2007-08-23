@@ -554,10 +554,13 @@ int GetNextDownload3Chunk (client_t *cl)
 		{
 			timediff = realtime - chunk_status;
 
-			if (timediff > DOWNLOAD3_MINRESENDWAIT && timediff > cl->download3_rtt_est * 8.0f)
+			if (timediff > cl->download3_rtt_est * 8.0f + DOWNLOAD3_MINRESENDWAIT)
 			{
 				// This chunk is REALLY old and will probably never be received, so re-send it.
 				chunk_to_send = i;
+#ifdef DOWNLOAD3_DEBUG
+				Com_Printf("Chunk %d considered dropped after %d ms.  Re-sending.\n", i, timediff);
+#endif
 				break;
 			}
 			else if (timediff > largest_timediff)
