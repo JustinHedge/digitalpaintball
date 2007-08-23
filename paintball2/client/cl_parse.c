@@ -495,10 +495,6 @@ void CL_StopCurrentDownload (void)
 	cls.download3size = 0;
 	cls.download3lastfileid = cls.download3fileid;
 	cls.download3fileid = -1;
-	cls.download3rate = 0.0f;
-	cls.download3completechunks = 0;
-	cls.download3bytesreceived = 0;
-	cls.download3bytessincelastratecheck = 0;
 }
 
 static void CL_StartDownload3 (void)
@@ -508,6 +504,10 @@ static void CL_StartDownload3 (void)
 	char name[MAX_OSPATH];
 
 	CL_StopCurrentDownload();
+	cls.download3rate = 0.0f;
+	cls.download3completechunks = 0;
+	cls.download3bytesreceived = 0;
+	cls.download3bytessincelastratecheck = 0;
 	cls.download3fileid = MSG_ReadByte(&net_message);
 	cls.download3size = MSG_ReadLong(&net_message); // how big is the file?
 	cls.download3compression = (int)MSG_ReadByte(&net_message); // compression mode / reserved.  Unused so far.  0 == none.
