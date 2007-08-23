@@ -232,12 +232,10 @@ PROTOCOL
 #define	UPDATE_MASK		(UPDATE_BACKUP-1)
 
 
-
-//==================
-// the svc_strings[] array in cl_parse.c should mirror this
-//==================
 #define USE_DOWNLOAD3 // jitdownload
+
 #ifdef USE_DOWNLOAD3 // jitdownload
+#define DOWNLOAD3_DEBUG
 #define DOWNLOAD3_CHUNKSIZE 1380
 #define DOWNLOAD3_MAX_MSGLEN 1400
 #define DOWNLOAD3_STARTDELAY 100 // 100ms = 10k/s
@@ -251,6 +249,10 @@ PROTOCOL
 #define DOWNLOAD3_CHUNKRECEIVED 1
 #define DOWNLOAD3_CHUNKWAITING 0
 #endif
+
+//==================
+// the svc_strings[] array in cl_parse.c should mirror this
+//==================
 
 //
 // server to client

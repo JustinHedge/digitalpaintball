@@ -611,6 +611,9 @@ void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
 	NET_SendPacket(NS_SERVER, message.cursize, message.data, cl->netchan.remote_address);
 	cl->download3_delay *= 1.09f;
 	cl->download3_chunks[chunk_to_send] = realtime;
+#ifdef DOWNLOAD3_DEBUG
+	Com_Printf("DL3SEND %04d\n", chunk_to_send);
+#endif
 }
 
 
@@ -643,7 +646,7 @@ static void AddToDownload3Window (client_t *cl, int chunk)
 		}
 	}
 
-#if 0//1//def DOWNLOAD3_ALWAYS_INC_WINDOW
+#ifdef DOWNLOAD3_ALWAYS_INC_WINDOW
 	if (windowsize < num_chunks) // testing: always expand the window.
 	{
 		new_chunk = GetNextDownload3Chunk(cl);
@@ -653,7 +656,9 @@ static void AddToDownload3Window (client_t *cl, int chunk)
 	}
 #endif
 
+#ifdef DOWNLOAD3_DEBUG
 	Com_Printf("Yay! Chunk %d saved from dropped packet sequence!\n", chunk);
+#endif
 }
 
 
@@ -703,7 +708,7 @@ void SVC_Download3Ack (void)
 				if (cl->download3_rtt_dev)
 				{
 					cl->download3_rtt_dev = (1.0f - DOWNLOAD3_RTT_BETA) * cl->download3_rtt_dev + DOWNLOAD3_RTT_BETA * dev;
-					Com_Printf("DL3RTT\t%g\t%g\n", cl->download3_rtt_est, cl->download3_rtt_dev);
+					//Com_Printf("DL3RTT\t%g\t%g\n", cl->download3_rtt_est, cl->download3_rtt_dev);
 				}
 				else
 				{
@@ -717,8 +722,10 @@ void SVC_Download3Ack (void)
 		}
 
 		cl->download3_chunks[chunk] = -1; // Chunk acknowledged.
-		AddToDownload3Window(cl, chunk);
+#ifdef DOWNLOAD3_DEBUG
 		Com_Printf("DL3ACK  %04d\n", chunk);
+#endif
+		AddToDownload3Window(cl, chunk);
 #if 0
 		cl->download3_delay *= 0.90f; // increase the bandwidth window.
 
@@ -996,6 +1003,9 @@ static void SV_HandleDownload3 (void)
 							// Packet probably dropped.  Halve the window size and send more data
 							window_size = (window_size + 1) / 2;
 							cl->download3_windowsize = window_size;
+#ifdef DOWNLOAD3_DEBUG
+							Com_Printf("Chunk %d timed out, halving window size to %d\n", chunk, window_size);
+#endif
 
 							for (window = 0; window < window_size; ++window)
 							{
