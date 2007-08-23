@@ -493,7 +493,9 @@ void CL_StopCurrentDownload (void)
 
 	cls.download3lastchunkwritten = 0;
 	cls.download3size = 0;
+	cls.download3lastfileid = cls.download3fileid;
 	cls.download3fileid = -1;
+	cls.download3rate = 0.0f;
 }
 
 static void CL_StartDownload3 (void)
@@ -507,6 +509,8 @@ static void CL_StartDownload3 (void)
 	cls.download3fileid = MSG_ReadByte(&net_message);
 	cls.download3size = MSG_ReadLong(&net_message); // how big is the file?
 	cls.download3compression = (int)MSG_ReadByte(&net_message); // compression mode / reserved.  Unused so far.  0 == none.
+	cls.download3starttime = Sys_Milliseconds();
+	cls.download3lastratecheck = cls.download3starttime;
 
 	if (cls.download3compression != 0)
 		Com_Printf("Compression mode/version not supported: %d\n", cls.download3compression);
@@ -573,6 +577,7 @@ static void CL_StartDownload3 (void)
 		Com_Printf("Resuming %s\n", cls.downloadname);
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
 		SZ_Print(&cls.netchan.message, va("dl3confirm %d\n", chunk_offset));
+		cls.download3completechunks = chunk_offset;
 	}
 	else
 	{
@@ -1552,21 +1557,7 @@ void CL_ParseServerMessage (void)
 		case svc_download:
 			CL_ParseDownload();
 			break;
-#ifdef USE_DOWNLOAD2
-		case svc_download2: // jitdownload
-			CL_ParseDownload2();
-			break;
-
-		case svc_download2ack: // jitdownload
-			CL_StartDownload2();
-			break;
-#endif
 #ifdef USE_DOWNLOAD3 // jitdownload
-#if 0
-		case svc_download3:
-			CL_ParseDownload3();
-			break;
-#endif
 		case svc_download3start:
 			CL_StartDownload3();
 			break;

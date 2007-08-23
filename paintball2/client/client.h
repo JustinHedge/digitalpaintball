@@ -274,6 +274,12 @@ typedef struct
 	int			download3lastchunkwritten;
 	int			download3completechunks;
 	byte		download3fileid;
+	byte		download3lastfileid;
+	float		download3rate; // transfer speed in bytes/second
+	int			download3starttime;
+	int			download3lastratecheck;
+	int			download3bytessincelastratecheck;
+	int			download3bytesreceived;
 #endif
 	unsigned	last_transmit_time; // jitnetfps
 	unsigned	server_gamebuild; // jitversion

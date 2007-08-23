@@ -1065,11 +1065,17 @@ static void CL_ParseDownload3 (void)
 	byte msg_data[MAX_MSGLEN];
 	sizebuf_t msg;
 	byte fileid;
+	unsigned int md5sum;
+	int realtime = Sys_Milliseconds();
+	int timediff;
 
 	fileid = MSG_ReadByte(&net_message);
 
 	if (fileid != cls.download3fileid)
 	{
+		if (fileid == cls.download3lastfileid) // fileid of a previous download.  Ignore it
+			return;
+
 		assert(fileid == cls.download3fileid);
 		Com_Printf("Fileid mismatch: %d != %d\n", (int)fileid, (int)cls.download3fileid);
 		return;
@@ -1099,6 +1105,14 @@ static void CL_ParseDownload3 (void)
 	}
 
 	MSG_ReadData(&net_message, chunkdata, chunksize);
+	md5sum = Com_MD5Checksum(chunkdata, chunksize);
+
+	if (md5sum_short != (unsigned short)(md5sum & 0xFFFF))
+	{
+		assert(md5sum_short == (unsigned short)(md5sum & 0xFFFF));
+		Com_Printf("MD5 sum failed for chunk %d\n", chunk);
+		return;
+	}
 
 	if (!cls.download3data || !cls.download3chunks)
 		return;
@@ -1109,10 +1123,12 @@ static void CL_ParseDownload3 (void)
 	{
 		cls.download3chunks[chunk] = DOWNLOAD3_CHUNKRECEIVED;
 		++cls.download3completechunks;
+		cls.download3bytesreceived += chunksize;
+		cls.download3bytessincelastratecheck += chunksize;
 	}
 
 	// write some data if we can
-	for (i = 0; i < num_chunks; ++i)
+	for (i = cls.download3lastchunkwritten; i < num_chunks; ++i)
 	{
 		if (cls.download3chunks[i] == DOWNLOAD3_CHUNKWAITING)
 		{
@@ -1136,21 +1152,35 @@ static void CL_ParseDownload3 (void)
 
 			fwrite(cls.download3data + (i * DOWNLOAD3_CHUNKSIZE), chunksize, 1, cls.download);
 			cls.download3chunks[i] = DOWNLOAD3_CHUNKWRITTEN;
+			cls.download3lastchunkwritten = i;
 		}
 	}
 
 	cls.downloadpercent = 100 * cls.download3completechunks / num_chunks;
 	SZ_Init(&msg, msg_data, sizeof(msg_data));
-	//MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-	//MSG_WriteString(&cls.netchan.message, va("dl3ack %d", chunk));
-	//MSG_WriteByte(&msg, clc_stringcmd);
-	//MSG_WriteString(&msg, va("dl3ack %d", chunk));
 	SZ_Write(&msg, "dl3ack\n", 7);
 	MSG_WriteShort(&msg, (int)qport->value);
 	MSG_WriteByte(&msg, cls.download3fileid);
 	MSG_WriteLong(&msg, chunk);
-	//Netchan_OutOfBandPrint(NS_CLIENT, cls.netchan.remote_address, "dl3ack %d %d\n", cls.download3fileid, chunk); // todo: maybe use binary and back up a list of 4 or so ack's to make sure they get through
 	Netchan_OutOfBand(NS_CLIENT, cls.netchan.remote_address, msg.cursize, msg.data);
+
+	// Update rate
+	timediff = realtime - cls.download3lastratecheck;
+
+	if (timediff > 1000) // check every second
+	{
+		float rate;
+
+		rate = 1000.0f * (float)cls.download3bytessincelastratecheck / (float)timediff;
+
+		if (cls.download3rate)
+			cls.download3rate = 0.75f * cls.download3rate + 0.25f * rate;
+		else
+			cls.download3rate = rate;
+
+		cls.download3bytessincelastratecheck = 0;
+		cls.download3lastratecheck = realtime;
+	}
 
 	if (done) // transfer is complete
 	{
@@ -1168,12 +1198,33 @@ static void CL_ParseDownload3 (void)
 		if (rename(oldn, newn) != 0)
 			Com_Printf("Failed to rename %s to %s.\n", oldn, newn);
 
+		// Display some statistics on the file transfer
+		timediff = realtime - cls.download3starttime;
+		
+		if (cls.download3bytesreceived > 1024*1024)
+			Com_Printf("%1.2f MB received in %1.2f seconds.", (float)cls.download3bytesreceived / (float)(1024*1024), (float)timediff / 1000.0f);
+		else if (cls.download3bytesreceived > 1024)
+			Com_Printf("%1.2f KB received in %1.2f seconds.", (float)cls.download3bytesreceived / (float)(1024), (float)timediff / 1000.0f);
+		else
+			Com_Printf("%d Bytes received in %1.2f seconds.", cls.download3bytesreceived, (float)timediff / 1000.0f);
+
+		if (timediff)
+		{
+			float rate = 1000.0f * (float)cls.download3bytesreceived / (float)timediff; // B/s
+
+			if (rate > 1024*1024)
+				Com_Printf(" %1.2f MB/s.", rate / 1048576.0f);
+			else if (rate > 1024)
+				Com_Printf(" %1.2f KB/s.", rate / 1024.0f);
+			else
+				Com_Printf(" %1.2f B/s.", rate);
+		}
+
+		Com_Printf("\n");
+
 		// get another file if needed
 		CL_RequestNextDownload();
 	}
-
-	//todo;
-	//Netchan_Transmit(&cls.netchan, msg.cursize, msg.data); // send packet immediately.
 }
 
 #endif

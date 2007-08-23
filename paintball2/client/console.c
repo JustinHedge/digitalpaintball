@@ -811,7 +811,20 @@ void Con_DrawConsole (float frac)
 		dlbar[i++] = '\x82';
 		dlbar[i] = 0;
 		len = strlen(dlbar);
-		Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%%", cls.downloadpercent);
+
+#ifdef USE_DOWNLOAD3
+		if (cls.download3rate)
+		{
+			if (cls.download3rate > 1048576.0f)
+				Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fMB/s", cls.downloadpercent, cls.download3rate / 1048576.0f);
+			else if (cls.download3rate > 1024.0f)
+				Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fKB/s", cls.downloadpercent, cls.download3rate / 1024.0f);
+			else
+				Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fB/s", cls.downloadpercent, cls.download3rate);
+		}
+		else
+#endif
+			Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%%", cls.downloadpercent);
 
 		// draw it
 		y = con.vislines-12*hudscale;
