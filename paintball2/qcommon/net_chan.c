@@ -80,7 +80,11 @@ cvar_t		*qport;
 
 netadr_t	net_from;
 sizebuf_t	net_message;
+#ifdef USE_DOWNLOAD3
+byte		net_message_buffer[DOWNLOAD3_MAX_MSGLEN]; // jitdownload - download packets may be larger
+#else
 byte		net_message_buffer[MAX_MSGLEN];
+#endif
 
 /*
 ===============

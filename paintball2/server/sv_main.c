@@ -554,10 +554,19 @@ int GetNextDownload3Chunk (client_t *cl)
 		{
 			timediff = realtime - chunk_status;
 
-			if (timediff > largest_timediff)// && timediff > DOWNLOAD3_MINRESENDWAIT)
+			if (timediff > DOWNLOAD3_MINRESENDWAIT)
 			{
-				largest_timediff = timediff;
-				chunk_to_send = i;
+				if (timediff > cl->download3_rtt_est * 8.0f)
+				{
+					// This chunk is REALLY old and will probably never be received, so re-send it.
+					chunk_to_send = i;
+					break;
+				}
+				else if (timediff > largest_timediff)
+				{
+					largest_timediff = timediff;
+					chunk_to_send = i;
+				}
 			}
 		}
 	}
@@ -568,7 +577,7 @@ int GetNextDownload3Chunk (client_t *cl)
 
 void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
 {
-	unsigned char msgbuf[MAX_MSGLEN];
+	unsigned char msgbuf[DOWNLOAD3_MAX_MSGLEN];
 	sizebuf_t message;
 	unsigned int offset = chunk_to_send * DOWNLOAD3_CHUNKSIZE;
 	int chunksize;
@@ -590,9 +599,8 @@ void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
 	if (chunksize > DOWNLOAD3_CHUNKSIZE)
 		chunksize = DOWNLOAD3_CHUNKSIZE;
 
-	memset(&message, 0, sizeof(message));
-	message.data = msgbuf;
-	message.maxsize = MAX_MSGLEN;
+	SZ_Init(&message, msgbuf, sizeof(msgbuf));
+	MSG_WriteLong(&message, -1); // out of band packet
 	md5sum = Com_MD5Checksum(cl->download + offset, chunksize);
 	md5sum_short = (unsigned short)(md5sum & 0xFFFF);
 	SZ_Write(&message, "dl3\n", 4);
@@ -602,7 +610,8 @@ void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
 	MSG_WriteLong(&message, chunk_to_send);
 	SZ_Write(&message, cl->download + offset, chunksize);
 	//Netchan_Transmit(&cl->netchan, message.cursize, message.data);
-	Netchan_OutOfBand(NS_SERVER, cl->netchan.remote_address, message.cursize, message.data);
+//	Netchan_OutOfBand(NS_SERVER, cl->netchan.remote_address, message.cursize, message.data);
+	NET_SendPacket(NS_SERVER, message.cursize, message.data, cl->netchan.remote_address);
 	cl->download3_delay *= 1.09f;
 	cl->download3_chunks[chunk_to_send] = realtime;
 }
@@ -636,6 +645,16 @@ static void AddToDownload3Window (client_t *cl, int chunk)
 		}
 	}
 
+#if 0//1//def DOWNLOAD3_ALWAYS_INC_WINDOW
+	if (windowsize < num_chunks) // testing: always expand the window.
+	{
+		new_chunk = GetNextDownload3Chunk(cl);
+		cl->download3_window[windowsize] = new_chunk;
+		SV_SendDownload3Chunk(cl, new_chunk);
+		cl->download3_windowsize++;
+	}
+#endif
+
 	Com_Printf("Yay! Chunk %d saved from dropped packet sequence!\n", chunk);
 }
 
@@ -643,10 +662,9 @@ static void AddToDownload3Window (client_t *cl, int chunk)
 // Client has sent an acknowledgement of a download3 packet.
 void SVC_Download3Ack (void)
 {
-	int num_chunks, chunk;
+	int num_chunks, chunk, chunk_status;
 	byte fileid;
 	client_t *cl = GetClientFromPacket();
-//	int realtime;
 
 	if (!cl)
 		return;
@@ -671,6 +689,35 @@ void SVC_Download3Ack (void)
 
 	if (cl->download3_chunks)
 	{
+		chunk_status = cl->download3_chunks[chunk];
+
+		if (chunk_status != 0 && chunk_status != -1)
+		{
+			int realtime = Sys_Milliseconds();
+			int timediff = realtime - chunk_status;
+			float dev;
+
+			if (cl->download3_rtt_est)
+			{
+				dev = fabs(timediff - cl->download3_rtt_est);
+				cl->download3_rtt_est = (1 - DOWNLOAD3_RTT_ALPHA) * cl->download3_rtt_est + DOWNLOAD3_RTT_ALPHA * (float)timediff;
+				
+				if (cl->download3_rtt_dev)
+				{
+					cl->download3_rtt_dev = (1.0f - DOWNLOAD3_RTT_BETA) * cl->download3_rtt_dev + DOWNLOAD3_RTT_BETA * dev;
+					Com_Printf("DL3RTT\t%g\t%g\n", cl->download3_rtt_est, cl->download3_rtt_dev);
+				}
+				else
+				{
+					cl->download3_rtt_dev = dev;
+				}
+			}
+			else
+			{
+				cl->download3_rtt_est = (float)timediff;
+			}
+		}
+
 		cl->download3_chunks[chunk] = -1; // Chunk acknowledged.
 		AddToDownload3Window(cl, chunk);
 		Com_Printf("DL3ACK  %04d\n", chunk);

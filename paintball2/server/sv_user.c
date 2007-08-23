@@ -655,7 +655,7 @@ void SV_ConfirmDownload3_f (void)
 	}
 }
 
-
+/*
 void SV_AckDownload3_f (void)
 {
 	int num_chunks, chunk;
@@ -677,6 +677,7 @@ void SV_AckDownload3_f (void)
 		Com_Printf("DL3ACK  %04d\n", chunk);
 	}
 }
+*/
 #endif
 
 //============================================================================

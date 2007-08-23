@@ -331,11 +331,22 @@ void CL_ParseDownload (void)
 	int		r, i;
 
 	// read the data
-	size = MSG_ReadShort (&net_message);
+	size = MSG_ReadShort(&net_message);
 	percent = MSG_ReadByte(&net_message);
+
+#ifdef USE_DOWNLOAD3
+	// If for some reason we have a download active at the same time as a download3,
+	// ignore the old style download
+	if (cls.download3chunks)
+	{
+		net_message.readcount += size;
+		return;
+	}
+#endif
+
 	if (size == -1)
 	{
-		Com_Printf ("Server does not have this file.\n");
+		Com_Printf("Server does not have this file.\n");
 
 		if (cls.downloadname)	// (jitdownload) Knightmare- save name of failed download
 		{
@@ -343,7 +354,7 @@ void CL_ParseDownload (void)
 			qboolean added = false;
 
 			// check if this name is already in the table
-			for (i=0; i<NUM_FAIL_DLDS; i++)
+			for (i = 0; i < NUM_FAIL_DLDS; i++)
 			{
 				if (lastfaileddownload[i] && strlen(lastfaileddownload[i])
 					&& Q_streq(cls.downloadname, lastfaileddownload[i]))
@@ -352,43 +363,49 @@ void CL_ParseDownload (void)
 					break;
 				}
 			}
+
 			// if it isn't already in the table, then we need to add it
 			if (!found)
 			{
 				char *file_ext;
-				for (i=0; i<NUM_FAIL_DLDS; i++)
+
+				for (i = 0; i < NUM_FAIL_DLDS; i++)
+				{
 					if (!lastfaileddownload[i] || !strlen(lastfaileddownload[i]))
 					{	// found an open spot, fill it
 						sprintf(lastfaileddownload[i], "%s", cls.downloadname);
 						added = true;
 						break;
 					}
+				}
+
 				// if there wasn't an open spot, we'll have to move one over to make room
 				// and add it in the last spot
 				if (!added)
 				{
-					for (i=0; i<NUM_FAIL_DLDS-1; i++)
-					{
+					for (i = 0; i < NUM_FAIL_DLDS-1; i++)
 						sprintf(lastfaileddownload[i], "%s", lastfaileddownload[i+1]);
-					}
+
 					sprintf(lastfaileddownload[NUM_FAIL_DLDS-1], "%s", cls.downloadname);
 				}
 				
 				// jitdownload -- if jpg failed, try tga, then pcx or wal
 				if (file_ext=strstr(cls.downloadname, ".jpg"))
 				{
-					*file_ext=0;
+					*file_ext = 0;
 					strcat(cls.downloadname, ".tga");
 					CL_CheckOrDownloadFile(cls.downloadname);
 					return;
 				}
 				else if (file_ext=strstr(cls.downloadname, ".tga"))
 				{
-					*file_ext=0;
+					*file_ext = 0;
+
 					if (strstr(cls.downloadname, "textures"))
 						strcat(cls.downloadname, ".wal");
 					else
 						strcat(cls.downloadname, ".pcx");
+
 					CL_CheckOrDownloadFile(cls.downloadname);
 					return;
 				}
@@ -399,11 +416,11 @@ void CL_ParseDownload (void)
 		if (cls.download)
 		{
 			// if here, we tried to resume a file but the server said no
-			fclose (cls.download);
+			fclose(cls.download);
 			cls.download = NULL;
 		}
 
-		CL_RequestNextDownload ();
+		CL_RequestNextDownload();
 		return;
 	}
 
@@ -411,72 +428,51 @@ void CL_ParseDownload (void)
 	if (!cls.download)
 	{
 		CL_DownloadFileName(name, sizeof(name), cls.downloadtempname);
+		FS_CreatePath(name);
+		cls.download = fopen(name, "wb");
 
-		FS_CreatePath (name);
-
-		cls.download = fopen (name, "wb");
 		if (!cls.download)
 		{
 			net_message.readcount += size;
-			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
-			CL_RequestNextDownload ();
+			Com_Printf("Failed to open %s\n", cls.downloadtempname);
+			CL_RequestNextDownload();
 			return;
 		}
 	}
 
-	fwrite (net_message.data + net_message.readcount, 1, size, cls.download);
+	fwrite(net_message.data + net_message.readcount, 1, size, cls.download);
 	net_message.readcount += size;
 
 	if (percent != 100)
 	{
 		// request next block
-// change display routines by zoid
-#if 0
-		Com_Printf (".");
-		if (10*(percent/10) != cls.downloadpercent)
-		{
-			cls.downloadpercent = 10*(percent/10);
-			Com_Printf ("%i%%", cls.downloadpercent);
-		}
-#endif
 		cls.downloadpercent = percent;
-
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		SZ_Print (&cls.netchan.message, "nextdl");
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		SZ_Print(&cls.netchan.message, "nextdl");
 	}
 	else
 	{
-		char	oldn[MAX_OSPATH];
-		char	newn[MAX_OSPATH];
+		char oldn[MAX_OSPATH];
+		char newn[MAX_OSPATH];
 
-//		Com_Printf ("100%%\n");
-
-		fclose (cls.download);
-
+		fclose(cls.download);
 		// rename the temp file to it's final name
 		CL_DownloadFileName(oldn, sizeof(oldn), cls.downloadtempname);
 		CL_DownloadFileName(newn, sizeof(newn), cls.downloadname);
-		r = rename (oldn, newn);
+		r = rename(oldn, newn);
+
 		if (r)
 			Com_Printf ("failed to rename.\n");
 
 		cls.download = NULL;
 		cls.downloadpercent = 0;
-
-		// get another file if needed
-
-		CL_RequestNextDownload ();
+		CL_RequestNextDownload(); // get another file if needed
 	}
 }
 
 #ifdef USE_DOWNLOAD3 // jitdownload
-
-static void CL_StartDownload3 (void)
+void CL_StopCurrentDownload (void)
 {
-	const char *filename;
-	int num_chunks, i;
-	char name[MAX_OSPATH];
-
 	if (cls.download)
 	{
 		fclose(cls.download);
@@ -495,6 +491,18 @@ static void CL_StartDownload3 (void)
 		cls.download3data = NULL;
 	}
 
+	cls.download3lastchunkwritten = 0;
+	cls.download3size = 0;
+	cls.download3fileid = -1;
+}
+
+static void CL_StartDownload3 (void)
+{
+	const char *filename;
+	int num_chunks, i;
+	char name[MAX_OSPATH];
+
+	CL_StopCurrentDownload();
 	cls.download3completechunks = 0;
 	cls.download3fileid = MSG_ReadByte(&net_message);
 	cls.download3size = MSG_ReadLong(&net_message); // how big is the file?

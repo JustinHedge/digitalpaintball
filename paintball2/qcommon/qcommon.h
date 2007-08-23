@@ -236,13 +236,14 @@ PROTOCOL
 //==================
 // the svc_strings[] array in cl_parse.c should mirror this
 //==================
-#define USE_DOWNLOAD2 // jitdownload
-#define DOWNLOAD2_CHUNKSIZE 1024 // jitdownload
 #define USE_DOWNLOAD3 // jitdownload
 #ifdef USE_DOWNLOAD3 // jitdownload
-#define DOWNLOAD3_CHUNKSIZE 1024
+#define DOWNLOAD3_CHUNKSIZE 1380
+#define DOWNLOAD3_MAX_MSGLEN 1400
 #define DOWNLOAD3_STARTDELAY 100 // 100ms = 10k/s
 #define DOWNLOAD3_STARTWINDOWSIZE 1
+#define DOWNLOAD3_RTT_ALPHA 0.125f // spec from TCP
+#define DOWNLOAD3_RTT_BETA 0.25f // spec from TCP
 #define DOWNLOAD3_MINRESENDWAIT 200 // 200ms before attempting to re-send a packet.
 #define DOWNLOAD3_FALLBACKTHRESHOLD 100 // time to wait, in ms, between throttle backs for dropped packets
 #define DOWNLOAD3_CHUNKWRITTEN 2
@@ -280,10 +281,6 @@ enum svc_ops_e
 	svc_packetentities,			// [...]
 	svc_deltapacketentities,	// [...]
 	svc_frame,
-#ifdef USE_DOWNLOAD2
-	svc_download2,	// jitdownload - fast downloads
-	svc_download2ack, // jitdownload -- server acknowledges download2 request
-#endif
 #ifdef USE_DOWNLOAD3 // jitdownload
 	svc_download3,
 	svc_download3start
@@ -687,7 +684,11 @@ typedef struct
 
 extern	netadr_t	net_from;
 extern	sizebuf_t	net_message;
-extern	byte		net_message_buffer[MAX_MSGLEN];
+#ifdef USE_DOWNLOAD3
+extern byte		net_message_buffer[DOWNLOAD3_MAX_MSGLEN]; // jitdownload - download packets may be larger
+#else
+extern byte		net_message_buffer[MAX_MSGLEN];
+#endif
 
 
 void Netchan_Init (void);

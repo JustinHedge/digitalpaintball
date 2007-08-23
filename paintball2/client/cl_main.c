@@ -1050,6 +1050,7 @@ void CL_Skins_f (void)
 #ifdef USE_DOWNLOAD3 // jitdownload
 
 void CL_DownloadFileName (char *dest, int destlen, char *fn);
+void CL_StopCurrentDownload (void);
 extern cvar_t *qport;
 
 
@@ -1157,21 +1158,8 @@ static void CL_ParseDownload3 (void)
 		char newn[MAX_OSPATH];
 
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString(&cls.netchan.message, va("dl3complete %d", 0)); // todo: fileid
-		fclose(cls.download);
-		cls.download = NULL;
-
-		if (cls.download3chunks)
-		{
-			Z_Free(cls.download3chunks);
-			cls.download3chunks = NULL;
-		}
-
-		if (cls.download3data)
-		{
-			Z_Free(cls.download3data);
-			cls.download3data = NULL;
-		}
+		MSG_WriteString(&cls.netchan.message, va("dl3complete %d", cls.download3fileid)); // todo: fileid
+		CL_StopCurrentDownload();
 
 		// rename the temp file to it's final name
 		CL_DownloadFileName(oldn, sizeof(oldn), cls.downloadtempname);
