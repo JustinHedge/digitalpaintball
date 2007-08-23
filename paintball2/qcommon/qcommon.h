@@ -242,6 +242,7 @@ PROTOCOL
 #define DOWNLOAD3_MAX_MSGLEN 1400
 #define DOWNLOAD3_STARTDELAY 100 // 100ms = 10k/s
 #define DOWNLOAD3_STARTWINDOWSIZE 1
+#define DOWNLOAD3_MAXWINDOWSIZE 128
 #define DOWNLOAD3_RTT_ALPHA 0.125f // spec from TCP
 #define DOWNLOAD3_RTT_BETA 0.25f // spec from TCP
 #define DOWNLOAD3_MINRESENDWAIT 200 // 200ms before attempting to re-send a packet.
@@ -282,7 +283,6 @@ enum svc_ops_e
 	svc_deltapacketentities,	// [...]
 	svc_frame,
 #ifdef USE_DOWNLOAD3 // jitdownload
-	svc_download3,
 	svc_download3start
 #endif
 };
