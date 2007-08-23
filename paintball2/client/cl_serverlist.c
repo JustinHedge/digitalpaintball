@@ -555,7 +555,6 @@ void CL_Serverlist2Packet (netadr_t net_from, sizebuf_t *net_message)
 			CL_PingServerlistServer(szServer);
 		}
 	}
-	//todo;
 }
 
 
