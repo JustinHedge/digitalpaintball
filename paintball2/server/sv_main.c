@@ -554,19 +554,16 @@ int GetNextDownload3Chunk (client_t *cl)
 		{
 			timediff = realtime - chunk_status;
 
-			if (timediff > DOWNLOAD3_MINRESENDWAIT)
+			if (timediff > DOWNLOAD3_MINRESENDWAIT && timediff > cl->download3_rtt_est * 8.0f)
 			{
-				if (timediff > cl->download3_rtt_est * 8.0f)
-				{
-					// This chunk is REALLY old and will probably never be received, so re-send it.
-					chunk_to_send = i;
-					break;
-				}
-				else if (timediff > largest_timediff)
-				{
-					largest_timediff = timediff;
-					chunk_to_send = i;
-				}
+				// This chunk is REALLY old and will probably never be received, so re-send it.
+				chunk_to_send = i;
+				break;
+			}
+			else if (timediff > largest_timediff)
+			{
+				largest_timediff = timediff;
+				chunk_to_send = i;
 			}
 		}
 	}
@@ -633,7 +630,8 @@ static void AddToDownload3Window (client_t *cl, int chunk)
 			SV_SendDownload3Chunk(cl, new_chunk);
 			cl->download3_window[i] = new_chunk;
 
-			if (windowsize < num_chunks)
+			//if (windowsize < num_chunks)
+			if (windowsize < DOWNLOAD3_MAXWINDOWSIZE)
 			{
 				new_chunk = GetNextDownload3Chunk(cl);
 				cl->download3_window[windowsize] = new_chunk;
