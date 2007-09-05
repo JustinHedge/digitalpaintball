@@ -1180,6 +1180,7 @@ void COM_StripExtension (const char *in, char *out)
 {
 	while (*in && *in != '.')
 		*out++ = *in++;
+
 	*out = 0;
 }
 
@@ -1191,15 +1192,19 @@ COM_FileExtension
 char *COM_FileExtension (char *in)
 {
 	static char exten[8];
-	int		i;
+	int i;
 
 	while (*in && *in != '.')
 		in++;
+
 	if (!*in)
 		return "";
+
 	in++;
-	for (i=0 ; i<7 && *in ; i++,in++)
+
+	for (i = 0; i < 7 && *in; i++,in++)
 		exten[i] = *in;
+
 	exten[i] = 0;
 	return exten;
 }
