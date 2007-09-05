@@ -61,6 +61,32 @@ void Master_Shutdown (void);
 //============================================================================
 
 
+#ifdef USE_DOWNLOAD3
+void SV_FreeDownloadData (client_t *cl) // jitdownload
+{
+	if (cl->download)
+	{
+		FS_FreeFile(cl->download);
+		cl->download = NULL;
+	}
+
+	if (cl->download3_chunks)
+	{
+		Z_Free(cl->download3_chunks);
+		cl->download3_chunks = NULL;
+	}
+
+	if (cl->download3_window)
+	{
+		Z_Free(cl->download3_window);
+		cl->download3_window = NULL;
+	}
+
+	cl->download3_active = 0;
+}
+#endif
+
+
 /*
 =====================
 SV_DropClient
@@ -82,17 +108,13 @@ void SV_DropClient (client_t *drop)
 		ge->ClientDisconnect(drop->edict);
 	}
 
+#ifdef USE_DOWNLOAD3
+	SV_FreeDownloadData(drop); // jitdownload
+#else
 	if (drop->download)
 	{
 		FS_FreeFile(drop->download);
 		drop->download = NULL;
-	}
-
-#ifdef USE_DOWNLOAD3
-	if (drop->download3_chunks)
-	{
-		Z_Free(drop->download3_chunks);
-		drop->download3_chunks = NULL;
 	}
 #endif
 
@@ -636,7 +658,6 @@ static void AddToDownload3Window (client_t *cl, int chunk)
 			SV_SendDownload3Chunk(cl, new_chunk);
 			cl->download3_window[i] = new_chunk;
 
-			//if (windowsize < num_chunks)
 			if (windowsize < DOWNLOAD3_MAXWINDOWSIZE)
 			{
 				new_chunk = GetNextDownload3Chunk(cl);
@@ -650,7 +671,7 @@ static void AddToDownload3Window (client_t *cl, int chunk)
 	}
 
 #ifdef DOWNLOAD3_ALWAYS_INC_WINDOW
-	if (windowsize < num_chunks) // testing: always expand the window.
+	if (windowsize < DOWNLOAD3_MAXWINDOWSIZE) // testing: always expand the window when a chunk is ack'd.
 	{
 		new_chunk = GetNextDownload3Chunk(cl);
 		cl->download3_window[windowsize] = new_chunk;
@@ -665,26 +686,12 @@ static void AddToDownload3Window (client_t *cl, int chunk)
 }
 
 
-// Client has sent an acknowledgement of a download3 packet.
-void SVC_Download3Ack (void)
+static void Download3AckChunk (client_t *cl, int chunk, int num_chunks)
 {
-	int num_chunks, chunk, chunk_status;
-	byte fileid;
-	client_t *cl = GetClientFromPacket();
+	int chunk_status;
 
-	if (!cl)
+	if (chunk == -1)
 		return;
-
-	num_chunks = (cl->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
-	fileid = MSG_ReadByte(&net_message);
-	chunk = MSG_ReadLong(&net_message);
-
-	if (fileid != cl->download3_fileid)
-	{
-		assert(fileid == cl->download3_fileid);
-		Com_Printf("Download fileid mismatch: %d != %d\n", (int)fileid, (int)cl->download3_fileid);
-		return;
-	}
 
 	if (chunk >= num_chunks || chunk < 0)
 	{
@@ -693,7 +700,7 @@ void SVC_Download3Ack (void)
 		return;
 	}
 
-	if (cl->download3_chunks)
+	if (cl->download3_active && cl->download3_chunks)
 	{
 		chunk_status = cl->download3_chunks[chunk];
 
@@ -711,7 +718,9 @@ void SVC_Download3Ack (void)
 				if (cl->download3_rtt_dev)
 				{
 					cl->download3_rtt_dev = (1.0f - DOWNLOAD3_RTT_BETA) * cl->download3_rtt_dev + DOWNLOAD3_RTT_BETA * dev;
+#ifdef DOWNLOAD3_DEBUG
 					//Com_Printf("DL3RTT\t%g\t%g\n", cl->download3_rtt_est, cl->download3_rtt_dev);
+#endif
 				}
 				else
 				{
@@ -722,30 +731,45 @@ void SVC_Download3Ack (void)
 			{
 				cl->download3_rtt_est = (float)timediff;
 			}
-		}
 
-		cl->download3_chunks[chunk] = -1; // Chunk acknowledged.
+			AddToDownload3Window(cl, chunk);
+			cl->download3_chunks[chunk] = -1; // Chunk acknowledged.
 #ifdef DOWNLOAD3_DEBUG
-		Com_Printf("DL3ACK  %04d\n", chunk);
+			Com_Printf("DL3ACK  %04d\n", chunk);
 #endif
-		AddToDownload3Window(cl, chunk);
-#if 0
-		cl->download3_delay *= 0.90f; // increase the bandwidth window.
-
-/*
-		// Check for missing/out of order chunk
-		if (chunk > 0 && cl->download3_chunks[chunk - 1] != -1)
-		{
-			int realtime = Sys_Milliseconds();
-			
-			if (realtime - cl->download3_lastdrop > DOWNLOAD3_FALLBACKTHRESHOLD)
-			{
-				cl->download3_delay *= 2.0f; // back the speed off a bit
-				cl->download3_lastdrop = realtime;
-			}
 		}
-		*/
-#endif
+	}
+}
+
+
+// Client has sent an acknowledgement of a download3 packet.
+void SVC_Download3Ack (void)
+{
+	int num_chunks, chunk;
+	byte fileid;
+	client_t *cl = GetClientFromPacket();
+	int i;
+
+	if (!cl)
+		return;
+
+	num_chunks = (cl->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
+	fileid = MSG_ReadByte(&net_message);
+	chunk = MSG_ReadLong(&net_message);
+
+	if (fileid != cl->download3_fileid)
+	{
+		assert(fileid == cl->download3_fileid);
+		Com_Printf("Download fileid mismatch: %d != %d\n", (int)fileid, (int)cl->download3_fileid);
+		return;
+	}
+
+	Download3AckChunk(cl, chunk, num_chunks);
+
+	for (i = 0; i < DOWNLOAD3_NUMBACKUPACKS; ++i)
+	{
+		chunk = MSG_ReadLong(&net_message);
+		Download3AckChunk(cl, chunk, num_chunks);
 	}
 }
 
@@ -973,7 +997,6 @@ static void SV_HandleDownload3 (void)
 	int i, max = (int)maxclients->value;
 	client_t *cl;
 	int realtime = Sys_Milliseconds();
-//	float fPacketsToSend;
 	int timeout_interval;
 
 	sv.download3_active = false;
@@ -985,7 +1008,7 @@ static void SV_HandleDownload3 (void)
 	{
 		cl = &svs.clients[i];
 
-		if (cl->download3_chunks)
+		if (cl->download3_active && cl->download3_chunks)
 		{
 			int window, window_size = cl->download3_windowsize, chunk, chunk_status;
 
@@ -1022,67 +1045,6 @@ static void SV_HandleDownload3 (void)
 					}
 				}
 			}
-			/*
-//			sv.download3_active = true;
-
-			if (realtime - cl->download3_lastsent >= (int)cl->download3_delay)
-			{
-				int i, num_chunks = (cl->downloadsize + DOWNLOAD3_CHUNKSIZE - 1) / DOWNLOAD3_CHUNKSIZE;
-				unsigned int timediff, largest_timediff = 0;
-				int chunk_to_send;
-				int chunk_status;
-				int nPacket, nPacketsToSend;
-
-				fPacketsToSend = ((float)(realtime - cl->download3_lastsent) / cl->download3_delay);
-
-				if (fPacketsToSend > 40.0f) // have to use a floating point or else this might overflow to a really high value on fast connections.
-					nPacketsToSend = 40; // sanity check - don't try to send more than 8 packets at once or they start dropping
-				else if (fPacketsToSend < 1.0f)
-					nPacketsToSend = 1; // always send one packet (though this should already be the case)
-				else
-					nPacketsToSend = (int)fPacketsToSend;
-
-				for (nPacket = 0; nPacket < nPacketsToSend; ++nPacket)
-				{
-					chunk_to_send = -1;
-
-					for (i = 0; i < num_chunks; ++i)
-					{
-						chunk_status = cl->download3_chunks[i];
-
-						// Find either a chunk that hasn't been sent yet or the oldest chunk that hasn't been ack'd.
-						// todo: have a minimum resend time so the last chunks don't get sent over and over again.
-						if (chunk_status == 0)
-						{
-							chunk_to_send = i;
-							break;
-						}
-						else if (chunk_status != -1)
-						{
-							timediff = realtime - chunk_status;
-
-							if (timediff > largest_timediff && timediff > DOWNLOAD3_MINRESENDWAIT)
-							{
-								largest_timediff = timediff;
-								chunk_to_send = i;
-							}
-						}
-					}
-
-					if (chunk_to_send != -1)
-					{
-						Com_Printf("DL3SEND %04d: %d %g %d\n", chunk_to_send, realtime - cl->download3_lastsent, cl->download3_delay, nPacketsToSend);
-						SV_SendDownload3Chunk(cl, chunk_to_send);
-						cl->download3_lastsent = realtime;
-						cl->download3_chunks[chunk_to_send] = realtime;
-					}
-					else
-					{
-						break; // nothing to send, so break out of the loop.
-					}
-				}
-			}
-			*/
 		}
 	}
 }

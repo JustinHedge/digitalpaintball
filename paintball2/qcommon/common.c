@@ -1670,3 +1670,35 @@ void BinToHex (void *pData, size_t sizeData, char *HexString, size_t sizeOut) //
 
 	*HexString = '\0';
 }
+
+
+#ifdef USE_DOWNLOAD3
+qboolean PathContainsInvalidCharacters (const char *filename) // jitdownload
+{
+	int c;
+	const char *p = filename;
+
+	while ((c = *p))
+	{
+		switch (c)
+		{
+		case '\\': // only allow / so Linux paths work.
+		case '?':
+		case '*':
+		case ':':
+		case '<':
+		case '>':
+		case '|':
+			return true;
+		}
+
+		p++;
+	}
+
+	return false;
+}
+#endif
+
+
+
+

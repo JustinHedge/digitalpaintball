@@ -1069,6 +1069,9 @@ static void CL_ParseDownload3 (void)
 	int realtime = Sys_Milliseconds();
 	int timediff;
 
+	if (!cls.download)
+		return; // no downolad active, but there may be some trailing packets still
+
 	fileid = MSG_ReadByte(&net_message);
 
 	if (fileid != cls.download3fileid)
@@ -1081,7 +1084,7 @@ static void CL_ParseDownload3 (void)
 		return;
 	}
 
-	md5sum_short = MSG_ReadShort(&net_message); // TODO: Validate this.
+	md5sum_short = MSG_ReadShort(&net_message);
 	chunk = MSG_ReadLong(&net_message);
 
 	if (chunk >= num_chunks || chunk < 0)
@@ -1162,6 +1165,13 @@ static void CL_ParseDownload3 (void)
 	MSG_WriteShort(&msg, (int)qport->value);
 	MSG_WriteByte(&msg, cls.download3fileid);
 	MSG_WriteLong(&msg, chunk);
+
+	for (i = 0; i < DOWNLOAD3_NUMBACKUPACKS; ++i)
+		MSG_WriteLong(&msg, cls.download3backacks[i]);
+
+	cls.download3backacks[cls.download3currentbackack] = chunk;
+	cls.download3currentbackack++;
+	cls.download3currentbackack %= DOWNLOAD3_NUMBACKUPACKS;
 	Netchan_OutOfBand(NS_CLIENT, cls.netchan.remote_address, msg.cursize, msg.data);
 
 	// Update rate
@@ -1190,6 +1200,7 @@ static void CL_ParseDownload3 (void)
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString(&cls.netchan.message, va("dl3complete %d", cls.download3fileid)); // todo: fileid
 		CL_StopCurrentDownload();
+		cls.download3requested = false;
 
 		// rename the temp file to it's final name
 		CL_DownloadFileName(oldn, sizeof(oldn), cls.downloadtempname);
@@ -1221,9 +1232,7 @@ static void CL_ParseDownload3 (void)
 		}
 
 		Com_Printf("\n");
-
-		// get another file if needed
-		CL_RequestNextDownload();
+		CL_RequestNextDownload(); // get another file if needed
 	}
 }
 
@@ -2107,9 +2116,6 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("setenv", CL_Setenv_f );
 	Cmd_AddCommand("precache", CL_Precache_f);
 	Cmd_AddCommand("download", CL_Download_f);
-#ifdef USE_DOWNLOAD2
-	Cmd_AddCommand("download2", CL_Download2_f); // jitdownload
-#endif
 #ifdef USE_DOWNLOAD3
 	Cmd_AddCommand("download3", CL_Download3_f); // jitdownload
 #endif
@@ -2293,18 +2299,10 @@ void CL_FixCvarCheats (void)
 /*
 ==================
 CL_SendCommand
-
 ==================
 */
-
-void CL_RequestNextDownload2(); // jitdownload
-
 void CL_SendCommand (void)
 {
-#ifdef USE_DOWNLOAD2
-	if (cls.download2active && cls.download) // jitdownload
-		CL_RequestNextDownload2(); // flood some download requests.
-#endif
 	// get new key events
 	Sys_SendKeyEvents();
 
@@ -2328,7 +2326,6 @@ void CL_SendCommand (void)
 /*
 ==================
 CL_Frame
-
 ==================
 */
 void CL_Frame (int msec)

@@ -295,78 +295,6 @@ void SV_NextDownload_f (void)
 	sv_client->download = NULL;
 }
 
-#ifdef USE_DOWNLOAD2
-//void SV_SendSingleClientMessage(client_t *c, int msglen, char *msgbuff); // jitdownload
-void SV_NextDownload2_f (void) // jitdownload
-{
-	unsigned int		r;
-//	int		percent;
-//	int		size;
-	unsigned int	offset;
-	unsigned char msgbuf[MAX_MSGLEN];
-	sizebuf_t message;
-
-	memset(&message, 0, sizeof(message));
-	message.data = msgbuf;
-	message.maxsize = MAX_MSGLEN;
-
-	if (!sv_client->download)
-		return;
-
-	if (Cmd_Argc() >= 2)
-		offset = atoi(Cmd_Argv(1)) * DOWNLOAD2_CHUNKSIZE; // downloaded offset 
-	else
-		return;
-
-	if (offset > sv_client->downloadsize) // this shouldn't happen unless the client screwed up or is malicious.
-		offset = sv_client->downloadsize;
-
-	r = sv_client->downloadsize - offset;
-	if (r > DOWNLOAD2_CHUNKSIZE)
-		r = DOWNLOAD2_CHUNKSIZE;
-
-//	MSG_WriteByte(&sv_client->netchan.message, svc_download2);
-	MSG_WriteByte(&message, svc_download2);
-//	MSG_WriteShort (&sv_client->netchan.message, r);
-
-	// so the client knows what part of the file this is in the event
-	// that packets get out of order:
-	//MSG_WriteLong(&sv_client->netchan.message, offset/DOWNLOAD2_CHUNKSIZE);
-	MSG_WriteLong(&message, offset/DOWNLOAD2_CHUNKSIZE);
-
-//	size = sv_client->downloadsize;
-//	if (!size)
-//		size = 1;
-//	percent = sv_client->downloadcount*100/size;
-//	MSG_WriteByte (&sv_client->netchan.message, percent);
-	//SZ_Write (&sv_client->netchan.message, sv_client->download + offset, r);
-	SZ_Write (&message, sv_client->download + offset, r);
-
-	Com_Printf("%d SV Sent: %d\n", curtime, offset/DOWNLOAD2_CHUNKSIZE);
-	//SV_SendSingleClientMessage(sv_client, 0, NULL); // hope this works!!!
-	Netchan_Transmit(&sv_client->netchan, message.cursize, message.data);
-	//Netchan_OutOfBand(NC_SERVER, adr, message.cursize, message.data);
-
-//	if (offset+r < sv_client->downloadsize)
-//		return;
-
-
-}
-
-
-void SV_Download2Complete_f (void) // jitdownload
-{
-	if (!sv_client->download)
-		return;
-
-	// client said it's done downloading, so close the file:
-	//Com_Printf("SV Completed %d\n", offset/DOWNLOAD2_CHUNKSIZE);
-	FS_FreeFile(sv_client->download);
-	sv_client->download = NULL;
-}
-
-#endif
-
 
 static qboolean CheckDownloadFilename (const char *name) // jitsecurity
 {
@@ -402,6 +330,7 @@ static qboolean CheckDownloadFilename (const char *name) // jitsecurity
 #else
 		|| (strncmp(name, "config", 6) == 0) // jitsecurity - don't allow downloads from configs dir.
 #endif
+		|| PathContainsInvalidCharacters(name) // jitdownload
 		)
 	{
 		return false;
@@ -458,67 +387,11 @@ void SV_BeginDownload_f (void)
 	Com_DPrintf("Downloading %s to %s\n", name, sv_client->name);
 }
 
-#ifdef USE_DOWNLOAD2
-void SV_BeginDownload2_f (void) // jitdownload
-{
-	char *name;
-	int offset = 0;
-
-	name = Cmd_Argv(1);
-
-	if (Cmd_Argc() > 2)
-		offset = atoi(Cmd_Argv(2)); // downloaded offset
-
-	// don't allow anything with .. path
-	if (!CheckDownloadFilename(name))
-	{
-		MSG_WriteByte(&sv_client->netchan.message, svc_download);
-		MSG_WriteShort(&sv_client->netchan.message, -1);
-		MSG_WriteByte(&sv_client->netchan.message, 0);
-		return;
-	}
-
-	if (sv_client->download)
-		FS_FreeFile(sv_client->download);
-
-	// jitodo -- if the file came from a pak, tell client to download the pak! (file_from_pak)
-	// jitodo -- check for different extensions (prefer jpg over wal, etc)
-	sv_client->downloadsize = FS_LoadFile(name, (void **)&sv_client->download);
-	sv_client->downloadcount = offset;
-
-	if (offset > sv_client->downloadsize)
-		sv_client->downloadcount = sv_client->downloadsize;
-
-	if (!sv_client->download)
-	{
-		Com_DPrintf("Couldn't download %s to %s\n", name, sv_client->name);
-		MSG_WriteByte(&sv_client->netchan.message, svc_download);
-		MSG_WriteShort(&sv_client->netchan.message, -1);
-		MSG_WriteByte(&sv_client->netchan.message, 0);
-		return;
-	}
-
-	if (sv_client->downloadsize == -1) // file failed to open
-	{
-		MSG_WriteByte(&sv_client->netchan.message, svc_download);
-		MSG_WriteShort(&sv_client->netchan.message, -1);
-		MSG_WriteByte(&sv_client->netchan.message, 0);
-		return;
-	}
-
-	//SV_NextDownload_f();
-	Com_DPrintf("Downloading %s to %s\n", name, sv_client->name);
-	MSG_WriteByte(&sv_client->netchan.message, svc_download2ack); // acknowledge download request
-	MSG_WriteLong(&sv_client->netchan.message, sv_client->downloadsize); // tell client filesize
-	MSG_WriteByte(&sv_client->netchan.message, 0); // tell client which compression algorithm to use (0 = none)
-	MSG_WriteString(&sv_client->netchan.message, name); // tell client what filename should be.
-	Com_Printf("SV Acknw: %d\n", offset/DOWNLOAD2_CHUNKSIZE);
-}
-#endif
 
 #ifdef USE_DOWNLOAD3
 int GetNextDownload3Chunk (client_t *cl);
 void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send);
+void SV_FreeDownloadData (client_t *cl);
 
 void SV_BeginDownload3_f (void) // jitdownload
 {
@@ -531,21 +404,7 @@ void SV_BeginDownload3_f (void) // jitdownload
 	if (Cmd_Argc() > 2)
 		chunk_offset = atoi(Cmd_Argv(2)); // downloaded offset - todo, not used.  This is handled in the dl3confirm
 
-	
-	if (sv_client->download)
-		FS_FreeFile(sv_client->download);
-
-	if (sv_client->download3_chunks)
-	{
-		Z_Free(sv_client->download3_chunks);
-		sv_client->download3_chunks = NULL;
-	}
-
-	if (sv_client->download3_window)
-	{
-		Z_Free(sv_client->download3_window);
-		sv_client->download3_window = NULL;
-	}
+	SV_FreeDownloadData(sv_client); // make sure we stop any current downloads
 
 	// don't allow anything with .. path
 	if (!CheckDownloadFilename(name))
@@ -579,7 +438,7 @@ void SV_BeginDownload3_f (void) // jitdownload
 
 	num_chunks = (sv_client->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
 	sv_client->download3_chunks = Z_Malloc(num_chunks * sizeof(int));
-	sv_client->download3_window = Z_Malloc(num_chunks * sizeof(int)); // window will never get this big, but allocate enough that we won't have to worry about it.
+	sv_client->download3_window = Z_Malloc(DOWNLOAD3_MAXWINDOWSIZE * sizeof(int));
 
 	if (chunk_offset > num_chunks)
 		chunk_offset = num_chunks;
@@ -610,18 +469,21 @@ void SV_BeginDownload3_f (void) // jitdownload
 
 void SV_CompleteDownload3_f (void)
 {
+	int fileid;
+
 	if (!sv_client->download)
 		return;
 
-	// client said it's done downloading, so close the file:
-	FS_FreeFile(sv_client->download);
-	sv_client->download = NULL;
+	fileid = atoi(Cmd_Argv(1));
 
-	if (sv_client->download3_chunks)
+	if (fileid != sv_client->download3_fileid)
 	{
-		Z_Free(sv_client->download3_chunks);
-		sv_client->download3_chunks = NULL;
+		assert(fileid == sv_client->download3_fileid);
+		Com_Printf("%s: dl3complete fileid %d != %d\n", sv_client->name, fileid, sv_client->download3_fileid);
+		return;
 	}
+
+	SV_FreeDownloadData(sv_client);
 }
 
 
@@ -644,8 +506,13 @@ void SV_ConfirmDownload3_f (void)
 	for (i = 0; i < start_chunk; ++i)
 		sv_client->download3_chunks[i] = -1;
 
+	if (sv_client->download3_windowsize > num_chunks)
+		sv_client->download3_windowsize = num_chunks; // more than this and we're just wasting packets
+
 	if (sv_client->download3_windowsize < 1)
 		sv_client->download3_windowsize = 1;
+
+	sv_client->download3_active = true;
 
 	for (i = 0; i < sv_client->download3_windowsize; ++i)
 	{
@@ -806,15 +673,9 @@ ucmd_t ucmds[] =
 
 	{"download", SV_BeginDownload_f},
 	{"nextdl", SV_NextDownload_f},
-#ifdef USE_DOWNLOAD2 // jitdownload
-	{"download2", SV_BeginDownload2_f},
-	{"nextdl2", SV_NextDownload2_f},
-	{"dl2complete", SV_Download2Complete_f},
-#endif
 #ifdef USE_DOWNLOAD3 // jitdownload
 	{"download3", SV_BeginDownload3_f},
 	{"dl3confirm", SV_ConfirmDownload3_f},
-	//{"dl3ack", SV_AckDownload3_f},
 	{"dl3complete", SV_CompleteDownload3_f},
 #endif
 

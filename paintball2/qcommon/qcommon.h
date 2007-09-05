@@ -237,6 +237,7 @@ PROTOCOL
 #ifdef USE_DOWNLOAD3 // jitdownload
 #define DOWNLOAD3_DEBUG
 #define DOWNLOAD3_CHUNKSIZE 1380
+#define DOWNLOAD3_NUMBACKUPACKS 1 // number of backup acks in an ack packet (current ack + 4 backups)
 #define DOWNLOAD3_MAX_MSGLEN 1400
 #define DOWNLOAD3_STARTDELAY 100 // 100ms = 10k/s
 #define DOWNLOAD3_STARTWINDOWSIZE 1
@@ -845,6 +846,9 @@ void		Com_SetServerState (int state);
 unsigned	Com_BlockChecksum (void *buffer, int length);
 byte		COM_BlockSequenceCRCByte (byte *base, int length, int sequence);
 void		BinToHex (void *pData, size_t sizeData, char *HexString, size_t sizeOut); // jit
+#ifdef USE_DOWNLOAD3 // jitdownload
+qboolean PathContainsInvalidCharacters (const char *filename);
+#endif
 
 float	frand(void);	// 0 ti 1
 float	crand(void);	// -1 to 1

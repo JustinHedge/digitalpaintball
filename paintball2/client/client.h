@@ -263,9 +263,6 @@ typedef struct
 	qboolean	demorecording;
 	qboolean	demowaiting;	// don't record until a non-delta message is received
 	FILE		*demofile;
-#ifdef USE_DOWNLOAD2
-	qboolean	download2active; // jitdownload
-#endif
 #ifdef USE_DOWNLOAD3 // jitdownload
 	byte		*download3chunks;
 	byte		*download3data;
@@ -280,6 +277,9 @@ typedef struct
 	int			download3lastratecheck;
 	int			download3bytessincelastratecheck;
 	int			download3bytesreceived;
+	qboolean	download3requested; // did we actually request the download?
+	int			download3backacks[DOWNLOAD3_NUMBACKUPACKS];
+	byte		download3currentbackack;
 #endif
 	unsigned	last_transmit_time; // jitnetfps
 	unsigned	server_gamebuild; // jitversion
@@ -571,9 +571,6 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s);
 void SHOWNET(char *s);
 void CL_ParseClientinfo (int player);
 void CL_Download_f (void);
-#ifdef USE_DOWNLOAD2
-void CL_Download2_f (void); // jitdownload
-#endif
 #ifdef USE_DOWNLOAD3
 void CL_Download3_f (void); // jitdownload
 #endif

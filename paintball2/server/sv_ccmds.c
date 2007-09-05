@@ -617,31 +617,31 @@ void SV_Loadgame_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("USAGE: loadgame <directory>\n");
+		Com_Printf("USAGE: loadgame <directory>\n");
 		return;
 	}
 
-	Com_Printf ("Loading game...\n");
-
+	Com_Printf("Loading game...\n");
 	dir = Cmd_Argv(1);
-	if (strstr (dir, "..") || strstr (dir, "/") || strstr (dir, "\\") )
+
+	if (strstr(dir, "..") || strstr (dir, "/") || strstr (dir, "\\") )
 	{
 		Com_Printf ("Bad savedir.\n");
 	}
 
 	// make sure the server.ssv file exists
-	Com_sprintf (name, sizeof(name), "%s/save/%s/server.ssv", FS_Gamedir(), Cmd_Argv(1));
-	f = fopen (name, "rb");
+	Com_sprintf(name, sizeof(name), "%s/save/%s/server.ssv", FS_Gamedir(), Cmd_Argv(1));
+	f = fopen(name, "rb");
+
 	if (!f)
 	{
-		Com_Printf ("No such savegame: %s\n", name);
+		Com_Printf("No such savegame: %s\n", name);
 		return;
 	}
+
 	fclose (f);
-
-	SV_CopySaveGame (Cmd_Argv(1), "current");
-
-	SV_ReadServerFile ();
+	SV_CopySaveGame(Cmd_Argv(1), "current");
+	SV_ReadServerFile();
 
 	// go to the map
 	sv.state = ss_dead;		// don't save current level when changing

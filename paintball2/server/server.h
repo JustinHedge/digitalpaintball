@@ -143,6 +143,7 @@ typedef struct client_s
 	int				download3_lastsent;
 	int				download3_lastdrop; // time the last packet was dropped.
 	byte			download3_fileid;
+	byte			download3_active;
 	int				*download3_window;	// TCP-like window
 	int				download3_windowsize;
 	float			download3_rtt_est;	// round trip time estimation, following TCP specs
