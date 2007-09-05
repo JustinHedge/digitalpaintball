@@ -118,7 +118,7 @@ void FS_CreatePath (char *path)
 {
 	char	*ofs;
 	
-	for (ofs = path+1; *ofs; ofs++)
+	for (ofs = path + 1; *ofs; ofs++)
 	{
 		if (*ofs == '/')
 		{	// create the directory
