@@ -441,8 +441,12 @@ static void UpdateServer (const struct sockaddr_in *tFrom, const char *pData, in
 
 				if (s)
 				{	// The name is within quotes, so we need to skip the first and last character
-					strip_garbage(szName, s + 1); 
-					tPlayerInfo.sName.assign(szName, strlen(szName) - 1);
+					strip_garbage(szName, s + 1);
+
+					if (*szName)
+						tPlayerInfo.sName.assign(szName, strlen(szName) - 1);
+					else
+						tPlayerInfo.sName = "";
 				}
 				else
 				{	// This shouldn't happen.
