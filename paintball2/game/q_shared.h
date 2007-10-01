@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	
 // q_shared.h -- included first by ALL program modules
 
+#ifndef Q_SHARED_H
+#define Q_SHARED_H
+
 #ifdef _WIN32
 // unknown pragmas are SUPPOSED to be ignored, but....
 #pragma warning(disable : 4244)     // MIPS
@@ -294,6 +297,7 @@ void Quat_ToEulerAngle (const quat_t q, vec3_t angle);
 //=============================================
 
 char *COM_SkipPath (char *pathname);
+char *COM_FileExtension (char *in);
 void COM_StripExtension (const char *in, char *out);
 void COM_FileBase (char *in, char *out);
 void COM_FilePath (char *in, char *out);
@@ -1409,3 +1413,4 @@ void Q_strncpyz (char *dest, const char *src, size_t size); // jitskm
 void Q_strncpyzna (char *dest, const char *src, size_t size); // jit
 void strip_garbage (char *out, const char *in); // jit
 
+#endif

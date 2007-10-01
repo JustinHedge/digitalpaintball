@@ -824,12 +824,14 @@ void Con_DrawConsole (float frac)
 		}
 		else
 #endif
+		{
 			Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%%", cls.downloadpercent);
+		}
 
 		// draw it
-		y = con.vislines-12*hudscale;
-		re.DrawString(8*hudscale, y, dlbar_fill);  // jit
-		re.DrawString(8*hudscale, y, dlbar); // jit, draw whole line at once
+		y = con.vislines - 12 * hudscale;
+		re.DrawString(8 * hudscale, y, dlbar_fill);  // jit
+		re.DrawString(8 * hudscale, y, dlbar); // jit, draw whole line at once
 		// jittext ===
 	}
 //ZOID

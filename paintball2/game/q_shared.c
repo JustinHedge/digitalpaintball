@@ -1159,15 +1159,18 @@ COM_SkipPath
 */
 char *COM_SkipPath (char *pathname)
 {
-	char	*last;
+	char *last;
 	
 	last = pathname;
+
 	while (*pathname)
 	{
-		if (*pathname=='/')
-			last = pathname+1;
+		if (*pathname == '/')
+			last = pathname + 1;
+
 		pathname++;
 	}
+
 	return last;
 }
 
