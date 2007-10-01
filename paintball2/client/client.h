@@ -280,6 +280,7 @@ typedef struct
 	qboolean	download3requested; // did we actually request the download?
 	int			download3backacks[DOWNLOAD3_NUMBACKUPACKS];
 	byte		download3currentbackack;
+	unsigned	download3md5sum;
 #endif
 	unsigned	last_transmit_time; // jitnetfps
 	unsigned	server_gamebuild; // jitversion
@@ -346,6 +347,9 @@ extern	cvar_t	*cl_timedemo;
 
 extern	cvar_t	*cl_vwep;
 extern	cvar_t	*r_oldmodels;
+#ifdef USE_DOWNLOAD3
+extern	cvar_t	*cl_fast_download; // jitdownload
+#endif
 
 // Xile/NiceAss LOC
 extern cvar_t *cl_drawlocs;
@@ -521,6 +525,12 @@ void CL_Snd_Restart_f (void);
 void CL_RequestNextDownload (void);
 void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *net_message); // jit (unused)
 void CL_Serverlist2Packet (netadr_t net_from, sizebuf_t *net_message); // jitserverlist
+
+#ifdef USE_DOWNLOAD3
+void CL_DownloadFileName (char *dest, int destlen, char *fn);
+void CL_StopCurrentDownload (void);
+extern cvar_t *qport;
+#endif
 
 //
 // cl_input

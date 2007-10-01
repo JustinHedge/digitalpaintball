@@ -139,9 +139,6 @@ typedef struct client_s
 	int				commandMsec2;		// jitspeedhackcheck
 #ifdef USE_DOWNLOAD3 // jitdownload
 	int				*download3_chunks;	// array containing status of chunks that have been sent
-	float			download3_delay;	// time/window between sending chunks (increases as packets are lost, decreases as packets are received)
-	int				download3_lastsent;
-	int				download3_lastdrop; // time the last packet was dropped.
 	byte			download3_fileid;
 	byte			download3_active;
 	int				*download3_window;	// TCP-like window
@@ -241,6 +238,12 @@ void SV_UserinfoChanged (client_t *cl);
 
 void Master_Heartbeat (void);
 void Master_Packet (void);
+
+#ifdef USE_DOWNLOAD3
+int GetNextDownload3Chunk (client_t *cl);
+void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send);
+void SV_FreeDownloadData (client_t *cl);
+#endif
 
 //
 // sv_init.c

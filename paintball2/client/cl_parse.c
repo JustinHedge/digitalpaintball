@@ -82,7 +82,7 @@ void clearfaileddownloads() // jitdownload
 		*lastfaileddownload[i] = '\0';
 }
 
-qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jpg before
+qboolean CL_CheckOrDownloadFile (char *filename)
 {
 	FILE	*fp;
 	char	name[MAX_OSPATH];
@@ -164,31 +164,41 @@ qboolean	CL_CheckOrDownloadFile (char *filename) // jitodo, check for tga and jp
 	// open the file if not opened yet
 	CL_DownloadFileName(name, sizeof(name), cls.downloadtempname);
 
-//	FS_CreatePath (name);
+#ifdef USE_DOWNLOAD3
+	cls.download3rate = 0.0f;
 
-	fp = fopen (name, "r+b");
-	if (fp)
-	{ // it exists
-		int len;
-		fseek(fp, 0, SEEK_END);
-		len = ftell(fp);
+	if (cl_fast_download->value)
+	{
+		// Forward this on to the download3 console command to avoid redundant code
+		Cbuf_AddText(va("download3 %s\n", cls.downloadname));
+	}
+	else
+#endif
+	{
+		fp = fopen(name, "r+b");
 
-		cls.download = fp;
+		if (fp)
+		{ // it exists
+			int len;
+			fseek(fp, 0, SEEK_END);
+			len = ftell(fp);
 
-		// give the server an offset to start the download
-		Com_Printf("Resuming %s\n", cls.downloadname);
-		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString(&cls.netchan.message,
-			va("download %s %i", cls.downloadname, len));
-	} else {
-		Com_Printf("Downloading %s\n", cls.downloadname);
-		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString(&cls.netchan.message,
-			va("download %s", cls.downloadname));
+			cls.download = fp;
+
+			// give the server an offset to start the download
+			Com_Printf("Resuming %s\n", cls.downloadname);
+			MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+			MSG_WriteString(&cls.netchan.message,
+				va("download %s %i", cls.downloadname, len));
+		} else {
+			Com_Printf("Downloading %s\n", cls.downloadname);
+			MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+			MSG_WriteString(&cls.netchan.message,
+				va("download %s", cls.downloadname));
+		}
 	}
 
 	cls.downloadnumber++;
-
 	return false;
 }
 
@@ -203,6 +213,14 @@ Request a download from the server
 void CL_Download_f (void)
 {
 	char filename[MAX_OSPATH];
+
+#ifdef USE_DOWNLOAD3
+	if (cl_fast_download->value)
+	{
+		CL_Download3_f();
+		return;
+	}
+#endif
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf("Usage: download <filename>\n");
@@ -237,6 +255,9 @@ void CL_Download_f (void)
 		va("download %s", cls.downloadname));
 
 	cls.downloadnumber++;
+#ifdef USE_DOWNLOAD3
+	cls.download3rate = 0.0f;
+#endif
 }
 
 
@@ -384,12 +405,16 @@ void CL_ParseDownload (void)
 		}
 		// end Knightmare
 
+#ifdef USE_DOWNLOAD3
+		CL_StopCurrentDownload();
+#else
 		if (cls.download)
 		{
 			// if here, we tried to resume a file but the server said no
 			fclose(cls.download);
 			cls.download = NULL;
 		}
+#endif
 
 		CL_RequestNextDownload();
 		return;
@@ -426,7 +451,11 @@ void CL_ParseDownload (void)
 		char oldn[MAX_OSPATH];
 		char newn[MAX_OSPATH];
 
+#ifdef USE_DOWNLOAD3
+		CL_StopCurrentDownload();
+#else
 		fclose(cls.download);
+#endif
 		// rename the temp file to it's final name
 		CL_DownloadFileName(oldn, sizeof(oldn), cls.downloadtempname);
 		CL_DownloadFileName(newn, sizeof(newn), cls.downloadname);
@@ -464,7 +493,10 @@ void CL_StopCurrentDownload (void)
 
 	cls.download3lastchunkwritten = 0;
 	cls.download3size = 0;
-	cls.download3lastfileid = cls.download3fileid;
+
+	if (cls.download3fileid != -1)
+		cls.download3lastfileid = cls.download3fileid;
+
 	cls.download3fileid = -1;
 	memset(cls.download3backacks, -1, sizeof(cls.download3backacks));
 	cls.download3currentbackack = 0;
@@ -492,6 +524,7 @@ static void CL_StartDownload3 (void)
 		Com_Printf("Compression mode/version not supported: %d\n", cls.download3compression);
 
 	filename = MSG_ReadString(&net_message); // get the filename
+	cls.download3md5sum = MSG_ReadLong(&net_message);
 
 	if (!cls.download3requested)
 	{
@@ -504,7 +537,7 @@ static void CL_StartDownload3 (void)
 	{
 		Com_Printf("Refusing to download a path with .. or starting with /.\n");
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-		SZ_Print(&cls.netchan.message, "dl3confirm -1\n");
+		SZ_Print(&cls.netchan.message, va("dl3confirm -1 %d\n", cls.download3fileid));
 		cls.download3requested = false;
 		CL_RequestNextDownload(); // get another file if needed
 		return;
@@ -514,7 +547,7 @@ static void CL_StartDownload3 (void)
 	{
 		Com_Printf("Filename contains invalid characters: %s\n", filename);
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-		SZ_Print(&cls.netchan.message, "dl3confirm -1\n");
+		SZ_Print(&cls.netchan.message, va("dl3confirm -1 %d\n", cls.download3fileid));
 		cls.download3requested = false;
 		CL_RequestNextDownload(); // get another file if needed
 		return;
@@ -524,7 +557,7 @@ static void CL_StartDownload3 (void)
 	{
 		Com_Printf("File already exists.\n");
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-		SZ_Print(&cls.netchan.message, "dl3confirm -1\n");
+		SZ_Print(&cls.netchan.message, va("dl3confirm -1 %d\n", cls.download3fileid));
 		cls.download3requested = false;
 		CL_RequestNextDownload(); // get another file if needed
 		return;
@@ -550,7 +583,7 @@ static void CL_StartDownload3 (void)
 	{
 		Com_Printf("Failed to allocate %d bytes for file download.\n", cls.download3size);
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-		SZ_Print(&cls.netchan.message, "dl3confirm -1\n");
+		SZ_Print(&cls.netchan.message, va("dl3confirm -1 %d\n", cls.download3fileid));
 		cls.download3requested = false;
 		CL_RequestNextDownload(); // get another file if needed
 		return;
@@ -575,7 +608,7 @@ static void CL_StartDownload3 (void)
 		fseek(cls.download, chunk_offset * DOWNLOAD3_CHUNKSIZE, SEEK_SET);
 		Com_Printf("Resuming %s\n", cls.downloadname);
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-		SZ_Print(&cls.netchan.message, va("dl3confirm %d\n", chunk_offset));
+		SZ_Print(&cls.netchan.message, va("dl3confirm %d %d\n", chunk_offset, cls.download3fileid));
 		cls.download3completechunks = chunk_offset;
 	}
 	else
@@ -586,7 +619,7 @@ static void CL_StartDownload3 (void)
 		{
 			Com_Printf("Failed to open %s\n", cls.downloadtempname);
 			MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-			SZ_Print(&cls.netchan.message, "dl3confirm -1\n");
+			SZ_Print(&cls.netchan.message, va("dl3confirm -1 %d\n", cls.download3fileid));
 			cls.download3requested = false;
 			CL_RequestNextDownload(); // get another file if needed
 			return;
@@ -594,7 +627,7 @@ static void CL_StartDownload3 (void)
 
 		Com_Printf("Downloading %s\n", cls.downloadname);
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-		SZ_Print(&cls.netchan.message, "dl3confirm 0\n");
+		SZ_Print(&cls.netchan.message, va("dl3confirm 0 %d\n", cls.download3fileid));
 	}
 }
 
@@ -1170,12 +1203,16 @@ void CL_ParseServerMessage (void)
 		case svc_reconnect:
 			Com_Printf("Server disconnected, reconnecting\n");
 
+#ifdef USE_DOWNLOAD3
+			CL_StopCurrentDownload();
+#else
 			if (cls.download)
 			{
 				//ZOID, close download
 				fclose(cls.download);
 				cls.download = NULL;
 			}
+#endif
 
 			cls.state = ca_connecting;
 			cls.connect_time = -99999;	// CL_CheckForResend() will fire immediately

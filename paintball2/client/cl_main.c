@@ -100,6 +100,9 @@ cvar_t	*serverlist_source2; // jitserverlist / jitmenu
 cvar_t	*serverlist_source3; // jitserverlist / jitmenu
 cvar_t	*serverlist_blacklist;
 cvar_t	*serverlist_udp_source1; // jitserverlist
+#ifdef USE_DOWNLOAD3
+cvar_t	*cl_fast_download; // jitdownload
+#endif
 
 client_static_t	cls;
 client_state_t	cl;
@@ -862,12 +865,16 @@ void CL_Disconnect (void)
 	Netchan_Transmit(&cls.netchan, strlen(final), final);
 	CL_ClearState();
 
+#ifdef USE_DOWNLOAD3
+	CL_StopCurrentDownload();
+#else
 	// stop download
 	if (cls.download)
 	{
 		fclose(cls.download);
 		cls.download = NULL;
 	}
+#endif
 
 	cls.state = ca_disconnected;
 }
@@ -1048,12 +1055,6 @@ void CL_Skins_f (void)
 
 
 #ifdef USE_DOWNLOAD3 // jitdownload
-
-void CL_DownloadFileName (char *dest, int destlen, char *fn);
-void CL_StopCurrentDownload (void);
-extern cvar_t *qport;
-
-
 static void CL_ParseDownload3 (void)
 {
 	int num_chunks = (cls.download3size + DOWNLOAD3_CHUNKSIZE - 1) / DOWNLOAD3_CHUNKSIZE;
@@ -1196,11 +1197,43 @@ static void CL_ParseDownload3 (void)
 	{
 		char oldn[MAX_OSPATH];
 		char newn[MAX_OSPATH];
+		unsigned int md5sum;
+		int file_length;
+		char *file_data;
 
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString(&cls.netchan.message, va("dl3complete %d", cls.download3fileid)); // todo: fileid
+		MSG_WriteString(&cls.netchan.message, va("dl3complete %d", cls.download3fileid));
 		CL_StopCurrentDownload();
 		cls.download3requested = false;
+
+		// Verify that the file downloaded correctly
+		file_length = FS_LoadFile(cls.downloadtempname, &file_data);
+
+		if (file_length < 0)
+		{
+			assert(file_length >= 0);
+			Com_Printf("Failed to open temporary file %s.\n", cls.downloadtempname);
+		}
+		else
+		{
+			md5sum = Com_MD5Checksum(file_data, file_length);
+			FS_FreeFile(file_data);
+
+			if (md5sum != cls.download3md5sum)
+			{
+				Com_Printf("MD5 sum check on downloaded file failed.  %d != %d.  Re-downloading.\n", md5sum, cls.download3md5sum);
+				CL_DownloadFileName(oldn, sizeof(oldn), cls.downloadtempname);
+
+				if (remove(oldn) != 0)
+				{
+					assert(0);
+					Com_Printf("Failed to remove temporary file %s.\n", oldn);
+				}
+				
+				Cbuf_AddText(va("download3 %s\n", cls.downloadname));
+				return;
+			}
+		}
 
 		// rename the temp file to it's final name
 		CL_DownloadFileName(oldn, sizeof(oldn), cls.downloadtempname);
@@ -2019,6 +2052,9 @@ void CL_InitLocal (void)
 	cl_language =		Cvar_Get("cl_language", "english", CVAR_ARCHIVE); // jittrans
 	cl_centerprintkills = Cvar_Get("cl_centerprintkills", "1", CVAR_ARCHIVE); // jit
 	r_oldmodels =		Cvar_Get("r_oldmodels", "0", CVAR_ARCHIVE); // jit
+#ifdef USE_DOWNLOAD3
+	cl_fast_download =	Cvar_Get("cl_fast_download", "0", 0); // jitdownload - todo - enable by default, archive
+#endif
 	
 	if (cl_hudscale->value < 1.0)
 		Cvar_Set("cl_hudscale", "1");
@@ -2120,7 +2156,6 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("download3", CL_Download3_f); // jitdownload
 #endif
 	Cmd_AddCommand("writeconfig", CL_WriteConfig_f); // jitconfig
-
 
 	//
 	// forward to server commands

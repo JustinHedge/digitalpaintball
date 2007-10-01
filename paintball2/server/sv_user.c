@@ -273,25 +273,26 @@ void SV_NextDownload_f (void)
 		return;
 
 	r = sv_client->downloadsize - sv_client->downloadcount;
+
 	if (r > 1024)
 		r = 1024;
 
-	MSG_WriteByte (&sv_client->netchan.message, svc_download);
-	MSG_WriteShort (&sv_client->netchan.message, r);
-
+	MSG_WriteByte(&sv_client->netchan.message, svc_download);
+	MSG_WriteShort(&sv_client->netchan.message, r);
 	sv_client->downloadcount += r;
 	size = sv_client->downloadsize;
+
 	if (!size)
 		size = 1;
-	percent = sv_client->downloadcount*100/size;
-	MSG_WriteByte (&sv_client->netchan.message, percent);
-	SZ_Write (&sv_client->netchan.message,
-		sv_client->download + sv_client->downloadcount - r, r);
+
+	percent = sv_client->downloadcount * 100 / size;
+	MSG_WriteByte(&sv_client->netchan.message, percent);
+	SZ_Write(&sv_client->netchan.message, sv_client->download + sv_client->downloadcount - r, r);
 
 	if (sv_client->downloadcount != sv_client->downloadsize)
 		return;
 
-	FS_FreeFile (sv_client->download);
+	FS_FreeFile(sv_client->download);
 	sv_client->download = NULL;
 }
 
@@ -368,7 +369,7 @@ void SV_BeginDownload_f (void)
 	if (sv_client->download)
 		FS_FreeFile (sv_client->download);
 
-	sv_client->downloadsize = FS_LoadFile (name, (void **)&sv_client->download);
+	sv_client->downloadsize = FS_LoadFile(name, (void **)&sv_client->download);
 	sv_client->downloadcount = offset;
 
 	if (offset > sv_client->downloadsize)
@@ -389,21 +390,75 @@ void SV_BeginDownload_f (void)
 
 
 #ifdef USE_DOWNLOAD3
-int GetNextDownload3Chunk (client_t *cl);
-void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send);
-void SV_FreeDownloadData (client_t *cl);
+static long LoadFileOrAlternate (const char *filename, char *filename_alt, size_t filename_alt_len, void **data_ptr)
+{
+	int size;
+	const char *sExt;
+	char filename_temp[MAX_QPATH];
+	char filename_noext[MAX_QPATH];
+
+	Q_strncpyz(filename_temp, filename, sizeof(filename_temp));
+	COM_StripExtension(filename_temp, filename_noext);
+
+	// Check for files in this order: png, tga, jpg, pcx, wal
+	while ((size = FS_LoadFile(filename_temp, data_ptr)) < 0)
+	{
+		sExt = COM_FileExtension(filename_temp);
+
+		if (Q_strcasecmp(sExt, "png") == 0)
+		{
+			Com_sprintf(filename_temp, sizeof(filename_temp), "%s.tga", filename_noext);
+		}
+		else if (Q_strcasecmp(sExt, "tga") == 0)
+		{
+			Com_sprintf(filename_temp, sizeof(filename_temp), "%s.jpg", filename_noext);
+		}
+		else if (Q_strcasecmp(sExt, "jpg") == 0)
+		{
+			Com_sprintf(filename_temp, sizeof(filename_temp), "%s.pcx", filename_noext);
+		}
+		else if (Q_strcasecmp(sExt, "pcx") == 0)
+		{
+			Com_sprintf(filename_temp, sizeof(filename_temp), "%s.wal", filename_noext);
+		}
+		else if (Q_strcasecmp(sExt, "skm") == 0)
+		{
+			Com_sprintf(filename_temp, sizeof(filename_temp), "%s.md2", filename_noext);
+		}
+		else if (Q_strcasecmp(sExt, "md3") == 0)
+		{
+			Com_sprintf(filename_temp, sizeof(filename_temp), "%s.md2", filename_noext);
+		}
+		else
+		{
+			char *s;
+			
+			Q_strncpyz(filename_temp, filename, sizeof(filename_temp));
+
+			// if we don't have the high-res version, check for the regular version.
+			if ((s = strstr(filename_temp, "/hr4/")))
+			{
+				memmove(s, s + 4, strlen(s + 3));
+				return LoadFileOrAlternate(filename_temp, filename_alt, filename_alt_len, data_ptr);
+			}
+
+			return -1;
+		}
+	}
+
+	Q_strncpyz(filename_alt, filename_temp, filename_alt_len);
+	return size;
+}
+
 
 void SV_BeginDownload3_f (void) // jitdownload
 {
 	char *name;
-	int chunk_offset = 0;
-	int num_chunks, i;
+	int num_chunks;
+	char download_filename[MAX_QPATH];
+	unsigned int md5sum;
 
 	name = Cmd_Argv(1);
-
-	if (Cmd_Argc() > 2)
-		chunk_offset = atoi(Cmd_Argv(2)); // downloaded offset - todo, not used.  This is handled in the dl3confirm
-
 	SV_FreeDownloadData(sv_client); // make sure we stop any current downloads
 
 	// don't allow anything with .. path
@@ -417,11 +472,12 @@ void SV_BeginDownload3_f (void) // jitdownload
 
 	// jitodo -- (maybe) if the file came from a pak, tell client to download the pak (file_from_pak)
 	// jitodo -- check for different extensions (prefer jpg over wal, download lowres if no highres texture available, etc)
-	sv_client->downloadsize = FS_LoadFile(name, (void **)&sv_client->download);
+	//sv_client->downloadsize = FS_LoadFile(name, (void **)&sv_client->download);
+	sv_client->downloadsize = LoadFileOrAlternate(name, download_filename, sizeof(download_filename), (void **)&sv_client->download);
 
 	if (!sv_client->download)
 	{
-		Com_DPrintf("Couldn't download %s to %s\n", name, sv_client->name);
+		Com_DPrintf("Couldn't download %s to %s\n", download_filename, sv_client->name);
 		MSG_WriteByte(&sv_client->netchan.message, svc_download);
 		MSG_WriteShort(&sv_client->netchan.message, -1);
 		MSG_WriteByte(&sv_client->netchan.message, 0);
@@ -438,32 +494,19 @@ void SV_BeginDownload3_f (void) // jitdownload
 
 	num_chunks = (sv_client->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
 	sv_client->download3_chunks = Z_Malloc(num_chunks * sizeof(int));
+	memset(sv_client->download3_chunks, 0, num_chunks * sizeof(int));
 	sv_client->download3_window = Z_Malloc(DOWNLOAD3_MAXWINDOWSIZE * sizeof(int));
-
-	if (chunk_offset > num_chunks)
-		chunk_offset = num_chunks;
-
-	sv_client->downloadcount = chunk_offset;
-
-	for (i = 0; i < num_chunks; ++i)
-	{
-		if (i < chunk_offset)
-			sv_client->download3_chunks[i] = -1;
-		else
-			sv_client->download3_chunks[i] = 0;
-	}
-
-	//SV_NextDownload_f();
-	Com_DPrintf("Downloading %s to %s\n", name, sv_client->name);
+	sv_client->downloadcount = 0;
+	md5sum = Com_MD5Checksum(sv_client->download, sv_client->downloadsize);
 	sv_client->download3_fileid = sv.download3_nextfileid;
 	sv.download3_nextfileid++;
 	MSG_WriteByte(&sv_client->netchan.message, svc_download3start); // acknowledge download request
 	MSG_WriteByte(&sv_client->netchan.message, sv_client->download3_fileid);
 	MSG_WriteLong(&sv_client->netchan.message, sv_client->downloadsize); // tell client filesize
 	MSG_WriteByte(&sv_client->netchan.message, 0); // tell client which compression algorithm to use (0 = none)
-	MSG_WriteString(&sv_client->netchan.message, name); // tell client what filename should be.
-	sv_client->download3_lastsent = Sys_Milliseconds();
-	//Com_Printf("SV Acknw: %d\n", chunk_offset);
+	MSG_WriteString(&sv_client->netchan.message, download_filename); // tell client what filename should be.
+	MSG_WriteLong(&sv_client->netchan.message, md5sum); // md5 checksum of the file, for validation.
+	Com_DPrintf("Downloading %s to %s\n", download_filename, sv_client->name);
 }
 
 
@@ -491,8 +534,17 @@ void SV_ConfirmDownload3_f (void)
 {
 	int i, start_chunk, chunk;
 	int num_chunks = (sv_client->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
+	int client_fileid;
 
 	start_chunk = atoi(Cmd_Argv(1));
+	client_fileid = atoi(Cmd_Argv(2));
+
+	if (client_fileid != sv_client->download3_fileid)
+	{
+		assert(client_fileid == sv_client->download3_fileid);
+		Com_Printf("Client sent dl3ack for fileid %d when server was on fileid %d\n", client_fileid, sv_client->download3_fileid);
+		return;
+	}
 
 	if (start_chunk < 0) // Client refused the download
 	{
@@ -521,30 +573,6 @@ void SV_ConfirmDownload3_f (void)
 		sv_client->download3_window[i] = chunk;
 	}
 }
-
-/*
-void SV_AckDownload3_f (void)
-{
-	int num_chunks, chunk;
-
-	num_chunks = (sv_client->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
-	chunk = atoi(Cmd_Argv(1));
-
-	if (chunk >= num_chunks || chunk < 0)
-	{
-		assert(chunk < num_chunks && chunk >= 0);
-		Com_Printf("Download chunk out of range: %d\n", chunk);
-		return;
-	}
-
-	if (sv_client->download3_chunks)
-	{
-		sv_client->download3_chunks[chunk] = -1; // Chunk acknowledged.
-		sv_client->download3_delay *= 0.90f;
-		Com_Printf("DL3ACK  %04d\n", chunk);
-	}
-}
-*/
 #endif
 
 //============================================================================

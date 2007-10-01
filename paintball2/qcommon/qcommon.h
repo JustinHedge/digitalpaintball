@@ -235,16 +235,15 @@ PROTOCOL
 #define USE_DOWNLOAD3 // jitdownload
 
 #ifdef USE_DOWNLOAD3 // jitdownload
-#define DOWNLOAD3_DEBUG
+//#define DOWNLOAD3_DEBUG
 #define DOWNLOAD3_CHUNKSIZE 1380
-#define DOWNLOAD3_NUMBACKUPACKS 1 // number of backup acks in an ack packet (current ack + 4 backups)
-#define DOWNLOAD3_MAX_MSGLEN 1400
+#define DOWNLOAD3_NUMBACKUPACKS 1 // number of backup acks in an ack packet (current ack + 1 backup)
 #define DOWNLOAD3_STARTDELAY 100 // 100ms = 10k/s
 #define DOWNLOAD3_STARTWINDOWSIZE 1
-#define DOWNLOAD3_MAXWINDOWSIZE 128
+#define DOWNLOAD3_MAXWINDOWSIZE 64
 #define DOWNLOAD3_RTT_ALPHA 0.125f // spec from TCP
 #define DOWNLOAD3_RTT_BETA 0.25f // spec from TCP
-#define DOWNLOAD3_MINRESENDWAIT 1000 // 1 second before attempting to re-send a packet.
+#define DOWNLOAD3_MINRESENDWAIT 1000 // minimum of 1 second before attempting to re-send a packet.
 #define DOWNLOAD3_FALLBACKTHRESHOLD 100 // time to wait, in ms, between throttle backs for dropped packets
 #define DOWNLOAD3_CHUNKWRITTEN 2
 #define DOWNLOAD3_CHUNKRECEIVED 1
@@ -687,12 +686,7 @@ typedef struct
 
 extern	netadr_t	net_from;
 extern	sizebuf_t	net_message;
-#ifdef USE_DOWNLOAD3
-extern byte		net_message_buffer[DOWNLOAD3_MAX_MSGLEN]; // jitdownload - download packets may be larger
-#else
 extern byte		net_message_buffer[MAX_MSGLEN];
-#endif
-
 
 void Netchan_Init (void);
 void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport);
@@ -925,6 +919,7 @@ void SCR_BeginLoadingPlaque (void);
 void SV_Init (void);
 void SV_Shutdown (char *finalmsg, qboolean reconnect);
 void SV_Frame (int msec);
+
 
 
 

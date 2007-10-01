@@ -35,12 +35,15 @@ cvar_t	*zombietime;			// seconds to sink messages after disconnect
 
 cvar_t	*rcon_password;			// password for remote server commands
 
-//cvar_t	*allow_fast_downloads; // jitdownload
-cvar_t	*allow_download;
+cvar_t *allow_download;
 cvar_t *allow_download_players;
 cvar_t *allow_download_models;
 cvar_t *allow_download_sounds;
 cvar_t *allow_download_maps;
+#ifdef USE_DOWNLOAD3
+cvar_t *sv_fast_download; // jitdownload
+cvar_t *sv_fast_download_max_rate;
+#endif
 
 cvar_t *sv_airaccelerate;
 
@@ -429,7 +432,6 @@ gotnewcl:
 	newcl->edict = ent;
 	newcl->challenge = challenge; // save challenge for checksumming
 #ifdef USE_DOWNLOAD3 // jitdownload
-	newcl->download3_delay = DOWNLOAD3_STARTDELAY;
 	newcl->download3_windowsize = DOWNLOAD3_STARTWINDOWSIZE;
 #endif
 
@@ -542,12 +544,6 @@ client_t *GetClientFromPacket (void)
 		if (cl->netchan.qport != qport)
 			continue;
 
-		if (cl->netchan.remote_address.port != net_from.port)
-		{
-			Com_Printf("SV_ReadPackets: fixing up a translated port\n");
-			cl->netchan.remote_address.port = net_from.port;
-		}
-
 		return cl;
 	}
 
@@ -599,7 +595,7 @@ int GetNextDownload3Chunk (client_t *cl)
 
 void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
 {
-	unsigned char msgbuf[DOWNLOAD3_MAX_MSGLEN];
+	unsigned char msgbuf[MAX_MSGLEN];
 	sizebuf_t message;
 	unsigned int offset = chunk_to_send * DOWNLOAD3_CHUNKSIZE;
 	int chunksize;
@@ -626,15 +622,11 @@ void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
 	md5sum = Com_MD5Checksum(cl->download + offset, chunksize);
 	md5sum_short = (unsigned short)(md5sum & 0xFFFF);
 	SZ_Write(&message, "dl3\n", 4);
-	//MSG_WriteByte(&message, svc_download3);
 	MSG_WriteByte(&message, cl->download3_fileid);
 	MSG_WriteShort(&message, md5sum_short);
 	MSG_WriteLong(&message, chunk_to_send);
 	SZ_Write(&message, cl->download + offset, chunksize);
-	//Netchan_Transmit(&cl->netchan, message.cursize, message.data);
-//	Netchan_OutOfBand(NS_SERVER, cl->netchan.remote_address, message.cursize, message.data);
 	NET_SendPacket(NS_SERVER, message.cursize, message.data, cl->netchan.remote_address);
-	cl->download3_delay *= 1.09f;
 	cl->download3_chunks[chunk_to_send] = realtime;
 #ifdef DOWNLOAD3_DEBUG
 	Com_Printf("DL3SEND %04d\n", chunk_to_send);
@@ -999,8 +991,6 @@ static void SV_HandleDownload3 (void)
 	int realtime = Sys_Milliseconds();
 	int timeout_interval;
 
-	sv.download3_active = false;
-
 	if (realtime == -1 || realtime == 0) // probably won't ever happen, but just to be safe...
 		realtime = 1;
 
@@ -1198,12 +1188,7 @@ void SV_Frame (int msec)
 			svs.realtime = sv.time - 100;
 		}
 
-#ifdef USE_DOWNLOAD3
-		if (sv.download3_active) // jitdownload
-			NET_Sleep(1); // Sleep just a little so we aren't just doing a busy wait.
-		else
-#endif
-			NET_Sleep(sv.time - svs.realtime);
+		NET_Sleep(sv.time - svs.realtime);
 		return;
 	}
 
@@ -1381,12 +1366,15 @@ void SV_Init (void)
 	sv_timedemo    = Cvar_Get("timedemo", "0", 0);
 	sv_enforcetime = Cvar_Get("sv_enforcetime", "0", 0); // 1.831 - disabled because of problems. "240", 0); // jitspeedhackcheck
 	sv_noextascii  = Cvar_Get("sv_noextascii", "1", 0); // jit
-//	allow_fastdownloads = Cvar_Get("allow_fast_downloads", "1", CVAR_ARCHIVE); // jitdownload (incomplete)
 	allow_download          = Cvar_Get("allow_download", "1", CVAR_ARCHIVE);
 	allow_download_players  = Cvar_Get("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1
 	allow_download_models   = Cvar_Get("allow_download_models", "1", CVAR_ARCHIVE);
 	allow_download_sounds   = Cvar_Get("allow_download_sounds", "1", CVAR_ARCHIVE);
 	allow_download_maps	    = Cvar_Get("allow_download_maps", "1", CVAR_ARCHIVE);
+#ifdef USE_DOWNLOAD3
+	sv_fast_download		= Cvar_Get("sv_fast_download", "0", 0); // jitdownload - todo - enable by default
+	sv_fast_download_max_rate = Cvar_Get("sv_fast_download_max_rate", "0", 0);
+#endif
 
 	sv_noreload = Cvar_Get("sv_noreload", "0", 0);
 	sv_airaccelerate = Cvar_Get("sv_airaccelerate", "0", CVAR_LATCH);
