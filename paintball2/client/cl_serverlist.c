@@ -74,7 +74,7 @@ void *CL_PingServers_multithreaded (void *ptr) // jitmultithreading
 		sprintf(buff, "info %i", PROTOCOL_VERSION);
 		Netchan_OutOfBandPrint(NS_CLIENT, m_serverlist.server[i].adr, buff);
 		M_AddToServerList(m_serverlist.server[i].adr, "", true);
-		Sleep(16); // jitodo - cvar for delay between pings
+		Sleep(32); // jitodo - cvar for delay between pings
 	}
 
 	refreshing = false;
