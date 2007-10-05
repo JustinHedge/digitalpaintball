@@ -593,6 +593,44 @@ int GetNextDownload3Chunk (client_t *cl)
 }
 
 
+static qboolean Download3RateExceeded (void)
+{
+	if (sv_fast_download_max_rate->value)
+	{
+		static int last_rate_check = 0;
+		int current_time = Sys_Milliseconds();
+		static float rateaverage = 0.0f;
+
+		if (!last_rate_check)
+			last_rate_check = current_time;
+
+		if (current_time - last_rate_check > 0)
+		{
+			float rate; // rate in KB/s
+
+			rate = (float)sv.download3_bytessent / 1024.0f / (float)(current_time - last_rate_check) * 1000.0f;
+			rateaverage = rateaverage * 0.5f + rate * 0.5f;
+			sv.download3_bytessent = 0;
+			last_rate_check = current_time;
+			sv.download3_rateexceeded = rateaverage > sv_fast_download_max_rate->value;
+#ifdef DOWNLOAD3_DEBUG
+			Com_Printf("Rate: %g\n", rateaverage);
+#endif
+
+			return sv.download3_rateexceeded;
+		}
+		else
+		{
+			return sv.download3_rateexceeded;
+		}
+	}
+	else
+	{
+		return false; // no max rate
+	}
+}
+
+
 void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
 {
 	unsigned char msgbuf[MAX_MSGLEN];
@@ -603,14 +641,18 @@ void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
 	unsigned short md5sum_short;
 	int realtime = Sys_Milliseconds();
 
+	if (!cl->download || offset > cl->downloadsize || chunk_to_send < 0)
+		return;
+
 	if (realtime == -1 || realtime == 0) // probably won't ever happen, but just to be safe...
 		realtime = 1;
 
-	if (!cl->download)
+	if (Download3RateExceeded())
+	{
+		// Fake sending a packet that will later time out to throttle download rate
+		cl->download3_chunks[chunk_to_send] = realtime;
 		return;
-
-	if (offset > cl->downloadsize || chunk_to_send < 0)
-		return;
+	}
 
 	chunksize = cl->downloadsize - offset;
 
@@ -628,6 +670,7 @@ void SV_SendDownload3Chunk (client_t *cl, int chunk_to_send)
 	SZ_Write(&message, cl->download + offset, chunksize);
 	NET_SendPacket(NS_SERVER, message.cursize, message.data, cl->netchan.remote_address);
 	cl->download3_chunks[chunk_to_send] = realtime;
+	sv.download3_bytessent += chunksize;
 #ifdef DOWNLOAD3_DEBUG
 	Com_Printf("DL3SEND %04d\n", chunk_to_send);
 #endif
@@ -1372,7 +1415,7 @@ void SV_Init (void)
 	allow_download_sounds   = Cvar_Get("allow_download_sounds", "1", CVAR_ARCHIVE);
 	allow_download_maps	    = Cvar_Get("allow_download_maps", "1", CVAR_ARCHIVE);
 #ifdef USE_DOWNLOAD3
-	sv_fast_download		= Cvar_Get("sv_fast_download", "0", 0); // jitdownload - todo - enable by default
+	sv_fast_download		= Cvar_Get("sv_fast_download", "1", 0); // jitdownload
 	sv_fast_download_max_rate = Cvar_Get("sv_fast_download_max_rate", "0", 0);
 #endif
 

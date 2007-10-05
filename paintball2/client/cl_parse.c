@@ -78,15 +78,19 @@ char lastfaileddownload[NUM_FAIL_DLDS][MAX_OSPATH];
 void clearfaileddownloads() // jitdownload
 {
 	int i;
+
 	for (i = 0; i < NUM_FAIL_DLDS; i++)
 		*lastfaileddownload[i] = '\0';
 }
 
-qboolean CL_CheckOrDownloadFile (char *filename)
+qboolean CL_CheckOrDownloadFile (const char *check_filename)
 {
 	FILE	*fp;
 	char	name[MAX_OSPATH];
+	char	filename[MAX_OSPATH];
 	int		i;
+
+	Q_strncpyz(filename, check_filename, sizeof(filename) - 4);
 
 	if (FS_LoadFile(filename, NULL) != -1)
 	{	// it exists, no need to download
@@ -102,7 +106,7 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 	// (jitdownload) Knightmare- don't try again to download a file that just failed
 	for (i = 0; i < NUM_FAIL_DLDS; i++)
 	{
-		if (lastfaileddownload[i] && strlen(lastfaileddownload[i]) &&
+		if (lastfaileddownload[i] && *lastfaileddownload[i] &&
 			Q_streq(filename, lastfaileddownload[i]))
 		{	// we already tried downlaoding this, server didn't have it
 			return true;
@@ -114,35 +118,74 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 	if (strstr(filename, ".pcx") || strstr(filename, ".jpg") || 
 		strstr(filename, ".tga") || strstr(filename, ".wal"))
 	{
-		// look for jpg first:
-		COM_StripExtension(filename, name);
-		strcat(name, ".jpg");
+		int retry;
 
-		if (FS_LoadFile(name, NULL) != -1)
-			return true; // jpg exists, don't try to download anything else
+		for (retry = 0; retry < 2; ++retry)
+		{
+			// look for jpg first:
+			COM_StripExtension(filename, name, sizeof(name));
+			strcat(name, ".jpg");
 
-		// couldn't find jpg, let's try tga;
-		COM_StripExtension(filename, name);
-		strcat(name, ".tga");
+			if (FS_LoadFile(name, NULL) != -1)
+				return true; // jpg exists, don't try to download anything else
 
-		if (FS_LoadFile(name, NULL) != -1)
-			return true; // tga exists
+			// couldn't find jpg, let's try tga;
+			COM_StripExtension(filename, name, sizeof(name));
+			strcat(name, ".tga");
 
-		// no tga, try wal/pcx:
-		COM_StripExtension(filename, name);
+			if (FS_LoadFile(name, NULL) != -1)
+				return true; // tga exists
 
-		if (strstr(filename, "textures"))
-			strcat(name, ".wal");
-		else
-			strcat(name, ".pcx");
+			// no tga, try wal/pcx:
+			COM_StripExtension(filename, name, sizeof(name));
 
-		if (FS_LoadFile(name, NULL) != -1)
-			return true; // pcx/wal exists
+			if (strstr(filename, "textures"))
+				strcat(name, ".wal");
+			else
+				strcat(name, ".pcx");
+
+			if (FS_LoadFile(name, NULL) != -1)
+				return true; // pcx/wal exists
+
+	#ifdef USE_DOWNLOAD3
+			// If high-resolution textures are enabled, check for them first.
+			if (cl_fast_download->value && cls.download3supported && gl_highres_textures->value)
+			{
+				if (!strstr(name, "/hr4/"))
+				{
+					char *lastdir, *s;
+
+					lastdir = s = filename;
+
+					while (*s)
+					{
+						if (*s == '/')
+							lastdir = s + 1;
+
+						s++;
+					}
+
+					memmove(lastdir + 4, lastdir, strlen(lastdir) + 1);
+					memcpy(lastdir, "hr4/", 4);
+
+					// don't try again to download a file that just failed
+					for (i = 0; i < NUM_FAIL_DLDS; i++)
+					{
+						if (lastfaileddownload[i] && *lastfaileddownload[i] &&
+							Q_streq(filename, lastfaileddownload[i]))
+						{	// we already tried downlaoding this, server didn't have it
+							return true;
+						}
+					}
+				}
+			}
+		}
+	#endif
 	}
 
 	if (strstr(filename, ".md2"))
 	{	// .md2 file not required if we have a .skm
-		COM_StripExtension(filename, name);
+		COM_StripExtension(filename, name, sizeof(name));
 		strcat(name, ".skm");
 
 		if (FS_LoadFile(name, NULL) != -1)
@@ -156,7 +199,7 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
-	COM_StripExtension(cls.downloadname, cls.downloadtempname);
+	COM_StripExtension(cls.downloadname, cls.downloadtempname, sizeof(cls.downloadtempname));
 	strcat(cls.downloadtempname, ".tmp");
 
 //ZOID
@@ -167,9 +210,10 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 #ifdef USE_DOWNLOAD3
 	cls.download3rate = 0.0f;
 
-	if (cl_fast_download->value)
+	if (cl_fast_download->value && cls.download3supported)
 	{
 		// Forward this on to the download3 console command to avoid redundant code
+		Com_Printf("Requesting %s\n", cls.downloadname);
 		Cbuf_AddText(va("download3 %s\n", cls.downloadname));
 	}
 	else
@@ -215,7 +259,7 @@ void CL_Download_f (void)
 	char filename[MAX_OSPATH];
 
 #ifdef USE_DOWNLOAD3
-	if (cl_fast_download->value)
+	if (cl_fast_download->value && cls.download3supported)
 	{
 		CL_Download3_f();
 		return;
@@ -247,7 +291,7 @@ void CL_Download_f (void)
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
-	COM_StripExtension(cls.downloadname, cls.downloadtempname);
+	COM_StripExtension(cls.downloadname, cls.downloadtempname, sizeof(cls.downloadtempname));
 	strcat(cls.downloadtempname, ".tmp");
 
 	MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
@@ -294,18 +338,21 @@ CL_RegisterSounds
 */
 void CL_RegisterSounds (void)
 {
-	int		i;
+	int i;
 
-	S_BeginRegistration ();
-	CL_RegisterTEntSounds ();
-	for (i=1 ; i<MAX_SOUNDS ; i++)
+	S_BeginRegistration();
+	CL_RegisterTEntSounds();
+
+	for (i = 1; i < MAX_SOUNDS; i++)
 	{
-		if (!cl.configstrings[CS_SOUNDS+i][0])
+		if (!cl.configstrings[CS_SOUNDS + i][0])
 			break;
-		cl.sound_precache[i] = S_RegisterSound (cl.configstrings[CS_SOUNDS+i]);
-		Sys_SendKeyEvents ();	// pump message loop
+
+		cl.sound_precache[i] = S_RegisterSound (cl.configstrings[CS_SOUNDS + i]);
+		Sys_SendKeyEvents();	// pump message loop
 	}
-	S_EndRegistration ();
+
+	S_EndRegistration();
 }
 
 
@@ -338,7 +385,7 @@ void CL_ParseDownload (void)
 
 	if (size == -1)
 	{
-		Com_Printf("Server does not have this file.\n");
+		Com_Printf("Server does not have this file or refused download.\n");
 
 		if (cls.downloadname)	// (jitdownload) Knightmare- save name of failed download
 		{
@@ -380,26 +427,31 @@ void CL_ParseDownload (void)
 
 					sprintf(lastfaileddownload[NUM_FAIL_DLDS-1], "%s", cls.downloadname);
 				}
-				
-				// jitdownload -- if jpg failed, try tga, then pcx or wal
-				if (file_ext=strstr(cls.downloadname, ".jpg"))
-				{
-					*file_ext = 0;
-					strcat(cls.downloadname, ".tga");
-					CL_CheckOrDownloadFile(cls.downloadname);
-					return;
-				}
-				else if (file_ext=strstr(cls.downloadname, ".tga"))
-				{
-					*file_ext = 0;
 
-					if (strstr(cls.downloadname, "textures"))
-						strcat(cls.downloadname, ".wal");
-					else
-						strcat(cls.downloadname, ".pcx");
+#ifdef USE_DOWNLOAD3
+				if (!cls.download3supported || !cl_fast_download->value) // dl3 system checks for alternates server-side
+#endif
+				{
+					// jitdownload -- if jpg failed, try tga, then pcx or wal
+					if (file_ext=strstr(cls.downloadname, ".jpg"))
+					{
+						*file_ext = 0;
+						strcat(cls.downloadname, ".tga");
+						CL_CheckOrDownloadFile(cls.downloadname);
+						return;
+					}
+					else if (file_ext=strstr(cls.downloadname, ".tga"))
+					{
+						*file_ext = 0;
 
-					CL_CheckOrDownloadFile(cls.downloadname);
-					return;
+						if (strstr(cls.downloadname, "textures"))
+							strcat(cls.downloadname, ".wal");
+						else
+							strcat(cls.downloadname, ".pcx");
+
+						CL_CheckOrDownloadFile(cls.downloadname);
+						return;
+					}
 				}
 			}	
 		}
@@ -569,7 +621,7 @@ static void CL_StartDownload3 (void)
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
-	COM_StripExtension(cls.downloadname, cls.downloadtempname);
+	COM_StripExtension(cls.downloadname, cls.downloadtempname, sizeof(cls.downloadtempname));
 	strcat(cls.downloadtempname, ".tmp");
 	CL_DownloadFileName(name, sizeof(name), cls.downloadtempname);
 	FS_CreatePath(name);
@@ -1141,6 +1193,22 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 			s, (s[strlen(s)-1] == '\n') ? "" : "\n");
 }
 
+
+#ifdef USE_DOWNLOAD3
+void CL_ParseServerExtensions (void)
+{
+	const char *extensions;
+
+	extensions = MSG_ReadString(&net_message);
+
+	// does the server support the download3 protocol and have it enabled?
+	cls.download3supported = (qboolean)atoi(Info_ValueForKey((char *)extensions, "download3"));
+
+	// we can add more extensions here later - not limited to just download3.
+}
+#endif
+
+
 /*
 =====================
 CL_ParseServerMessage
@@ -1311,6 +1379,10 @@ void CL_ParseServerMessage (void)
 #ifdef USE_DOWNLOAD3 // jitdownload
 		case svc_download3start:
 			CL_StartDownload3();
+			break;
+
+		case svc_extensions:
+			CL_ParseServerExtensions();
 			break;
 #endif
 		case svc_frame:

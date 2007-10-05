@@ -285,7 +285,8 @@ enum svc_ops_e
 	svc_deltapacketentities,	// [...]
 	svc_frame,
 #ifdef USE_DOWNLOAD3 // jitdownload
-	svc_download3start
+	svc_download3start,
+	svc_extensions
 #endif
 };
 

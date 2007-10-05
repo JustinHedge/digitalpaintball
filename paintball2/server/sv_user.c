@@ -107,11 +107,30 @@ void SV_New_f (void)
 		sv_client->edict = ent;
 		memset(&sv_client->lastcmd, 0, sizeof(sv_client->lastcmd));
 
+#ifdef USE_DOWNLOAD3
+		MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
+		MSG_WriteString(&sv_client->netchan.message, "cmd getextensions\n"); // jitdownload - will probably use for other things as well
+#endif
+
 		// begin fetching configstrings
 		MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
 		MSG_WriteString(&sv_client->netchan.message, va("cmd configstrings %i 0\n", svs.spawncount));
 	}
 }
+
+
+#ifdef USE_DOWNLOAD3
+// Hopefully this can be standardized somewhat - send server extensions to the client
+void SV_GetExtensions_f (void)
+{
+	char extensions[MAX_INFO_STRING] = "";
+
+	Info_SetValueForKey(extensions, "download3", sv_fast_download->string);
+	MSG_WriteByte(&sv_client->netchan.message, svc_extensions);
+	MSG_WriteString(&sv_client->netchan.message, extensions);
+}
+#endif
+
 
 /*
 ==================
@@ -398,7 +417,7 @@ static long LoadFileOrAlternate (const char *filename, char *filename_alt, size_
 	char filename_noext[MAX_QPATH];
 
 	Q_strncpyz(filename_temp, filename, sizeof(filename_temp));
-	COM_StripExtension(filename_temp, filename_noext);
+	COM_StripExtension(filename_temp, filename_noext, sizeof(filename_noext));
 
 	// Check for files in this order: png, tga, jpg, pcx, wal
 	while ((size = FS_LoadFile(filename_temp, data_ptr)) < 0)
@@ -462,7 +481,8 @@ void SV_BeginDownload3_f (void) // jitdownload
 	SV_FreeDownloadData(sv_client); // make sure we stop any current downloads
 
 	// don't allow anything with .. path
-	if (!CheckDownloadFilename(name))
+	// don't download if sv_fast_download is disabled
+	if (!CheckDownloadFilename(name) || !sv_fast_download->value)
 	{
 		MSG_WriteByte(&sv_client->netchan.message, svc_download);
 		MSG_WriteShort(&sv_client->netchan.message, -1);
@@ -470,9 +490,6 @@ void SV_BeginDownload3_f (void) // jitdownload
 		return;
 	}
 
-	// jitodo -- (maybe) if the file came from a pak, tell client to download the pak (file_from_pak)
-	// jitodo -- check for different extensions (prefer jpg over wal, download lowres if no highres texture available, etc)
-	//sv_client->downloadsize = FS_LoadFile(name, (void **)&sv_client->download);
 	sv_client->downloadsize = LoadFileOrAlternate(name, download_filename, sizeof(download_filename), (void **)&sv_client->download);
 
 	if (!sv_client->download)
@@ -705,6 +722,7 @@ ucmd_t ucmds[] =
 	{"download3", SV_BeginDownload3_f},
 	{"dl3confirm", SV_ConfirmDownload3_f},
 	{"dl3complete", SV_CompleteDownload3_f},
+	{"getextensions", SV_GetExtensions_f},
 #endif
 
 	{NULL, NULL}

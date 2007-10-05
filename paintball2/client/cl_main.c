@@ -95,6 +95,7 @@ cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_drawhud; // jithud
 cvar_t	*cl_language; // jittrans
 cvar_t	*r_oldmodels;
+cvar_t	*gl_highres_textures; // jit
 cvar_t	*serverlist_source; // jitserverlist / jitmenu
 cvar_t	*serverlist_source2; // jitserverlist / jitmenu
 cvar_t	*serverlist_source3; // jitserverlist / jitmenu
@@ -2052,8 +2053,9 @@ void CL_InitLocal (void)
 	cl_language =		Cvar_Get("cl_language", "english", CVAR_ARCHIVE); // jittrans
 	cl_centerprintkills = Cvar_Get("cl_centerprintkills", "1", CVAR_ARCHIVE); // jit
 	r_oldmodels =		Cvar_Get("r_oldmodels", "0", CVAR_ARCHIVE); // jit
+	gl_highres_textures = Cvar_Get("gl_highres_textures", "1", CVAR_ARCHIVE); // jit
 #ifdef USE_DOWNLOAD3
-	cl_fast_download =	Cvar_Get("cl_fast_download", "0", 0); // jitdownload - todo - enable by default, archive
+	cl_fast_download =	Cvar_Get("cl_fast_download", "1", CVAR_ARCHIVE); // jitdownload
 #endif
 	
 	if (cl_hudscale->value < 1.0)

@@ -281,6 +281,7 @@ typedef struct
 	int			download3backacks[DOWNLOAD3_NUMBACKUPACKS];
 	byte		download3currentbackack;
 	unsigned	download3md5sum;
+	qboolean	download3supported; // does the server support it?
 #endif
 	unsigned	last_transmit_time; // jitnetfps
 	unsigned	server_gamebuild; // jitversion
@@ -347,6 +348,7 @@ extern	cvar_t	*cl_timedemo;
 
 extern	cvar_t	*cl_vwep;
 extern	cvar_t	*r_oldmodels;
+extern	cvar_t	*gl_highres_textures;
 #ifdef USE_DOWNLOAD3
 extern	cvar_t	*cl_fast_download; // jitdownload
 #endif
@@ -382,7 +384,7 @@ extern	netadr_t	net_from;
 extern	sizebuf_t	net_message;
 
 void DrawAltString (int x, int y, char *s);	// toggle high bit
-qboolean	CL_CheckOrDownloadFile (char *filename);
+qboolean CL_CheckOrDownloadFile (const char *filename);
 
 void CL_AddNetgraph (void);
 

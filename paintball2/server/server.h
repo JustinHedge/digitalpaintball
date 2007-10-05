@@ -67,6 +67,8 @@ typedef struct
 #ifdef USE_DOWNLOAD3 // jitdownload
 	qboolean	download3_active;
 	qboolean	download3_nextfileid;
+	unsigned	download3_bytessent; // bytes sent since last rate check
+	qboolean	download3_rateexceeded; // have we exceeded sv_fast_download_max_rate?
 #endif
 } server_t;
 
@@ -214,6 +216,10 @@ extern	cvar_t		*sv_noextascii;			// jit
 
 extern	client_t	*sv_client;
 extern	edict_t		*sv_player;
+
+#ifdef USE_DOWNLOAD3
+extern cvar_t *sv_fast_download; // jitdownload
+#endif
 
 //===========================================================
 
