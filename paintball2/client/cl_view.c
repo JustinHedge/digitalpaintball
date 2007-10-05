@@ -304,7 +304,7 @@ void CL_PrepRefresh (void)
 
 	// let the render dll load the map
 	Q_strncpyz(mapname, cl.configstrings[CS_MODELS+1] + 5, sizeof(mapname));	// skip "maps/"
-	COM_StripExtension(mapname, mapname);
+	COM_StripExtension(mapname, mapname, sizeof(mapname));
 
 	// register models, pics, and skins
 	Com_Printf("Map: %s\r", mapname); 

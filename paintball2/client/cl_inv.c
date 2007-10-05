@@ -58,7 +58,7 @@ void CL_DrawItemPickups (void)
 	int i, j;
 	float alpha;
 
-	for (i=0, j=startpos; i<MAX_ITEM_STRINGS; i++, j++, j%=MAX_ITEM_STRINGS)
+	for (i = 0, j = startpos; i < MAX_ITEM_STRINGS; i++, j++, j %= MAX_ITEM_STRINGS)
 	{
 		if (*item_strings[j])
 		{
@@ -74,7 +74,7 @@ void CL_DrawItemPickups (void)
 			}
 
 			// jitodo -- cvars for positioning.
-			re.DrawStringAlpha(0+8*hudscale, viddef.height-(40+i*8)*hudscale, item_strings[j], alpha);
+			re.DrawStringAlpha(0 + 8 * hudscale, viddef.height - (40 + i * 8) * hudscale, item_strings[j], alpha);
 		}
 		else
 		{
@@ -93,10 +93,10 @@ CL_ParseInventory
 */
 void CL_ParseInventory (void)
 {
-	int		i;
+	int i;
 
-	for (i=0 ; i<MAX_ITEMS ; i++)
-		cl.inventory[i] = MSG_ReadShort (&net_message);
+	for (i = 0; i < MAX_ITEMS; i++)
+		cl.inventory[i] = MSG_ReadShort(&net_message);
 }
 
 
@@ -110,7 +110,7 @@ void Inv_DrawString (int x, int y, char *string)
 	while (*string)
 	{
 		re.DrawChar(x, y, *string);
-		x+=8*hudscale; // jithudscale
+		x += 8 * hudscale; // jithudscale
 		string++;
 	}
 }
