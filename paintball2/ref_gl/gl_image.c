@@ -1893,7 +1893,7 @@ void R_RegisterSkin (const char *name, struct model_s *model, struct image_s **s
 	if (skmodel->nummeshes < max)
 		max = skmodel->nummeshes;
 
-	COM_StripExtension(name, skinname);
+	COM_StripExtension(name, skinname, sizeof(skinname));
 	strcat(skinname, ".skin");
 	len = ri.FS_LoadFileZ(skinname, &skindata);
 

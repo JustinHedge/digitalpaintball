@@ -308,7 +308,7 @@ char	*va(char *format, ...);
 // does a varargs printf into a temp buffer
 #endif
 
-void COM_StripExtension (const char *in, char *out);
+void COM_StripExtension (const char *in, char *out, int out_size); // jitsecurity
 
 void	Draw_GetPicSize (int *w, int *h, char *name);
 void	Draw_Pic (int x, int y, char *name);

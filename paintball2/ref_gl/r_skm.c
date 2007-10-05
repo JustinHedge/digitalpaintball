@@ -334,7 +334,7 @@ void Mod_LoadSkeletalModel (model_t *mod, model_t *parent, void *buffer)
 		char temp[MAX_QPATH];
 		char poseName[MAX_QPATH], configName[MAX_QPATH];
 
-		COM_StripExtension(mod->name, temp);
+		COM_StripExtension(mod->name, temp, sizeof(temp));
 		Q_snprintfz(configName, sizeof(configName), "%s.cfg", temp);
 
 		memset(poseName, 0, sizeof(poseName));
@@ -361,7 +361,7 @@ void Mod_LoadSkeletalModel (model_t *mod, model_t *parent, void *buffer)
 				if (!Q_strcasecmp(token, "import"))
 				{
 					token = COM_ParseExt(&ptr, false);
-					COM_StripExtension(token, temp);
+					COM_StripExtension(token, temp, sizeof(temp));
 					Q_snprintfz(poseName, sizeof(poseName), "%s.skp", temp);
 					break;
 				}

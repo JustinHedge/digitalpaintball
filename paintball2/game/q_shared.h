@@ -297,8 +297,8 @@ void Quat_ToEulerAngle (const quat_t q, vec3_t angle);
 //=============================================
 
 char *COM_SkipPath (char *pathname);
-char *COM_FileExtension (char *in);
-void COM_StripExtension (const char *in, char *out);
+const char *COM_FileExtension (const char *in); // jit
+void COM_StripExtension (const char *in, char *out, int out_size); // jitsecurity
 void COM_FileBase (char *in, char *out);
 void COM_FilePath (char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);

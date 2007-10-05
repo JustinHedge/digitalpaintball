@@ -1179,12 +1179,24 @@ char *COM_SkipPath (char *pathname)
 COM_StripExtension
 ============
 */
-void COM_StripExtension (const char *in, char *out)
+void COM_StripExtension (const char *in, char *out, int out_size) // jitsecurity
 {
-	while (*in && *in != '.')
-		*out++ = *in++;
+	char *out_ext = NULL;
+	int i = 1;
 
-	*out = 0;
+	while (*in && i < out_size)
+	{
+		*out++ = *in++;
+		i++;
+
+		if (*in == '.')
+			out_ext = out;
+	}
+
+	if (out_ext)
+		*out_ext = 0;
+	else
+		*out = 0;
 }
 
 /*
@@ -1192,24 +1204,19 @@ void COM_StripExtension (const char *in, char *out)
 COM_FileExtension
 ============
 */
-char *COM_FileExtension (char *in)
+const char *COM_FileExtension (const char *in) // jit
 {
-	static char exten[8];
-	int i;
+	const char *out_ext = "";
 
-	while (*in && *in != '.')
-		in++;
+	while (*in)
+	{
+		if (*in == '.')
+			out_ext = in + 1;
 
-	if (!*in)
-		return "";
+		++in;
+	}
 
-	in++;
-
-	for (i = 0; i < 7 && *in; i++,in++)
-		exten[i] = *in;
-
-	exten[i] = 0;
-	return exten;
+	return out_ext;
 }
 
 /*
