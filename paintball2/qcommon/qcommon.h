@@ -284,6 +284,22 @@ enum svc_ops_e
 	svc_packetentities,			// [...]
 	svc_deltapacketentities,	// [...]
 	svc_frame,
+	svc_reserved01,				// jit - reserved for potential compatibility with other engines
+	svc_reserved02,
+	svc_reserved03,
+	svc_reserved04,
+	svc_reserved05,
+	svc_reserved06,
+	svc_reserved07,
+	svc_reserved08,
+	svc_reserved09,
+	svc_reserved10,
+	svc_reserved11,
+	svc_reserved12,
+	svc_reserved13,
+	svc_reserved14,
+	svc_reserved15,
+	svc_reserved16,
 #ifdef USE_DOWNLOAD3 // jitdownload
 	svc_download3start,
 	svc_extensions
