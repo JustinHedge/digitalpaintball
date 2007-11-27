@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef WIN32
 #include <windows.h>
 #endif
+#include <direct.h> // jit - for getcwd
 
 /*
 =============================================================================
@@ -912,6 +913,15 @@ void FS_FreeFileList (char **list, int n) // jit
 }
 
 
+void FS_cwd_f (void)
+{
+	char dir[1024];
+
+	getcwd(dir, sizeof(dir));
+	Com_Printf("%s\n", dir);
+}
+
+
 /*
 ** FS_Dir_f
 */
@@ -977,10 +987,11 @@ void FS_Path_f (void)
 
 	Com_Printf("Current search path:\n");
 
-	for (s=fs_searchpaths; s; s=s->next)
+	for (s = fs_searchpaths; s; s = s->next)
 	{
 		if (s == fs_base_searchpaths)
 			Com_Printf("----------\n");
+
 		if (s->pack)
 			Com_Printf("%s(%i files)\n", s->pack->filename, s->pack->numfiles);
 		else
@@ -989,9 +1000,10 @@ void FS_Path_f (void)
 
 	Com_Printf("\nLinks:\n");
 
-	for (l=fs_links; l; l=l->next)
+	for (l = fs_links; l; l = l->next)
 		Com_Printf("%s : %s\n", l->from, l->to);
 }
+
 
 /*
 ================
@@ -1032,6 +1044,8 @@ void FS_InitFilesystem (void)
 	Cmd_AddCommand("path", FS_Path_f);
 // jitsecurity -- disabled:	Cmd_AddCommand("link", FS_Link_f);
 	Cmd_AddCommand("dir", FS_Dir_f);
+	Cmd_AddCommand("pwd", FS_cwd_f); // jit
+	Cmd_AddCommand("cwd", FS_cwd_f); // jit
 
 	//
 	// basedir <path>
