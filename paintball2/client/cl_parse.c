@@ -89,8 +89,37 @@ qboolean CL_CheckOrDownloadFile (const char *check_filename)
 	char	name[MAX_OSPATH];
 	char	filename[MAX_OSPATH];
 	int		i;
+	const char *file_ext;
 
 	Q_strncpyz(filename, check_filename, sizeof(filename) - 4);
+
+	// === jitdownload - make sure we have skp files to go with skm's
+	if (Q_streq(COM_FileExtension(filename), "md2"))
+	{
+		COM_StripExtension(filename, name, sizeof(name));
+		Q_strncatz(name, ".skm", sizeof(name));
+
+		if (FS_LoadFile(name, NULL) != -1)
+		{
+			// make sure the .skp exists, too
+			COM_StripExtension(filename, name, sizeof(name));
+			Q_strncatz(name, ".skp", sizeof(name));
+
+			if (FS_LoadFile(name, NULL) != -1)
+				return true;
+			else
+				Q_strncpyz(filename, name, sizeof(filename)); // we need to download the .skp file.
+		}
+		else
+		{
+			// Check if .md2 exists
+			if (FS_LoadFile(filename, NULL) != -1)
+				return true;
+            else if (cls.download3supported)
+				Q_strncpyz(filename, name, sizeof(filename)); // request the .skm file
+		}
+	}
+	// jitdownload ===
 
 	if (FS_LoadFile(filename, NULL) != -1)
 	{	// it exists, no need to download
@@ -115,8 +144,10 @@ qboolean CL_CheckOrDownloadFile (const char *check_filename)
 
 	// ===
 	// jitdownload, check for jpgs and tga's if pcx's aren't there
-	if (strstr(filename, ".pcx") || strstr(filename, ".jpg") || 
-		strstr(filename, ".tga") || strstr(filename, ".wal"))
+	file_ext = COM_FileExtension(filename);
+
+	if (Q_streq(file_ext, "pcx") || Q_streq(file_ext, "jpg") ||
+		Q_streq(file_ext, "tga") || Q_streq(file_ext, "wal"))
 	{
 		int retry;
 
@@ -124,34 +155,37 @@ qboolean CL_CheckOrDownloadFile (const char *check_filename)
 		{
 			// look for jpg first:
 			COM_StripExtension(filename, name, sizeof(name));
-			strcat(name, ".jpg");
+			Q_strncatz(name, ".jpg", sizeof(name));
 
 			if (FS_LoadFile(name, NULL) != -1)
 				return true; // jpg exists, don't try to download anything else
 
 			// couldn't find jpg, let's try tga;
 			COM_StripExtension(filename, name, sizeof(name));
-			strcat(name, ".tga");
+			Q_strncatz(name, ".tga", sizeof(name));
 
 			if (FS_LoadFile(name, NULL) != -1)
 				return true; // tga exists
 
-			// no tga, try wal/pcx:
+			// no tga, try pcx:
 			COM_StripExtension(filename, name, sizeof(name));
-
-			if (strstr(filename, "textures"))
-				strcat(name, ".wal");
-			else
-				strcat(name, ".pcx");
+			Q_strncatz(name, ".pcx", sizeof(name));
 
 			if (FS_LoadFile(name, NULL) != -1)
-				return true; // pcx/wal exists
+				return true;
 
-	#ifdef USE_DOWNLOAD3
+			// no pcx, try wal:
+			COM_StripExtension(filename, name, sizeof(name));
+			Q_strncatz(name, ".wal", sizeof(name));
+
+			if (FS_LoadFile(name, NULL) != -1)
+				return true;
+
+#ifdef USE_DOWNLOAD3
 			// If high-resolution textures are enabled, check for them first.
 			if (cl_fast_download->value && cls.download3supported && gl_highres_textures->value)
 			{
-				if (!strstr(name, "/hr4/"))
+				if (!strstr(filename, "/hr4/"))
 				{
 					char *lastdir, *s;
 
@@ -179,17 +213,27 @@ qboolean CL_CheckOrDownloadFile (const char *check_filename)
 					}
 				}
 			}
+#endif
 		}
-	#endif
 	}
 
-	if (strstr(filename, ".md2"))
-	{	// .md2 file not required if we have a .skm
+	if (Q_streq(COM_FileExtension(filename), "md2"))
+	{
+		// .md2 file not required if we have a .skm
 		COM_StripExtension(filename, name, sizeof(name));
-		strcat(name, ".skm");
+		Q_strncatz(name, ".skm", sizeof(name));
 
 		if (FS_LoadFile(name, NULL) != -1)
-			return true;
+		{
+			// make sure the .skp exists, too
+			COM_StripExtension(filename, name, sizeof(name));
+			Q_strncatz(name, ".skp", sizeof(name));
+
+			if (FS_LoadFile(name, NULL) != -1)
+				return true;
+			else
+				Q_strncpyz(filename, name, sizeof(filename)); // we need to download the .skp file.
+		}
 	}
 	// jit
 	// ===
@@ -813,7 +857,7 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 #else
 		//===
 		//jit
-		switch(s ? s[strlen(s)-1] : 0)
+		switch(s ? s[strlen(s) - 1] : 0)
 		{
 		case 'r':
 			Com_sprintf(skin_filename, sizeof(skin_filename), "players/male/pb2r.pcx");
@@ -1025,39 +1069,39 @@ void CL_ParseConfigString (void)
 		if (cl.refresh_prepped)
 			CDAudio_Play (atoi(cl.configstrings[CS_CDTRACK]), true);
 	}
-	else if (i >= CS_MODELS && i < CS_MODELS+MAX_MODELS)
+	else if (i >= CS_MODELS && i < CS_MODELS + MAX_MODELS)
 	{
 		if (cl.refresh_prepped)
 		{
-			cl.model_draw[i-CS_MODELS] = re.RegisterModel (cl.configstrings[i]);
+			cl.model_draw[i-CS_MODELS] = re.RegisterModel(cl.configstrings[i]);
 
 			if (cl.configstrings[i][0] == '*')
-				cl.model_clip[i-CS_MODELS] = CM_InlineModel (cl.configstrings[i]);
+				cl.model_clip[i - CS_MODELS] = CM_InlineModel(cl.configstrings[i]);
 			else
-				cl.model_clip[i-CS_MODELS] = NULL;
+				cl.model_clip[i - CS_MODELS] = NULL;
 		}
 	}
-	else if (i >= CS_SOUNDS && i < CS_SOUNDS+MAX_MODELS)
+	else if (i >= CS_SOUNDS && i < CS_SOUNDS + MAX_MODELS)
 	{
 		if (cl.refresh_prepped)
-			cl.sound_precache[i-CS_SOUNDS] = S_RegisterSound (cl.configstrings[i]);
+			cl.sound_precache[i - CS_SOUNDS] = S_RegisterSound(cl.configstrings[i]);
 	}
-	else if (i >= CS_IMAGES && i < CS_IMAGES+MAX_MODELS)
+	else if (i >= CS_IMAGES && i < CS_IMAGES + MAX_MODELS)
 	{
 		if (cl.refresh_prepped)
-			cl.image_precache[i-CS_IMAGES] = re.RegisterPic (cl.configstrings[i]);
+			cl.image_precache[i - CS_IMAGES] = re.RegisterPic(cl.configstrings[i]);
 	}
-	else if (i >= CS_PLAYERSKINS && i < CS_PLAYERSKINS+MAX_CLIENTS)
+	else if (i >= CS_PLAYERSKINS && i < CS_PLAYERSKINS + MAX_CLIENTS)
 	{
 		if (cl.refresh_prepped && !Q_streq(olds, s))
-			CL_ParseClientinfo(i-CS_PLAYERSKINS);
+			CL_ParseClientinfo(i - CS_PLAYERSKINS);
 	}
 	else if (i == CS_SERVERGVERSION) // jitversion
 	{
 		s = strstr(cl.configstrings[CS_SERVERGVERSION], "Gamebuild:");
 
 		if (s)
-			cls.server_gamebuild = atoi(s+10);
+			cls.server_gamebuild = atoi(s + 10);
 		else
 			cls.server_gamebuild = 0;
 	}
@@ -1194,21 +1238,6 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 }
 
 
-#ifdef USE_DOWNLOAD3
-void CL_ParseServerExtensions (void)
-{
-	const char *extensions;
-
-	extensions = MSG_ReadString(&net_message);
-
-	// does the server support the download3 protocol and have it enabled?
-	cls.download3supported = (qboolean)atoi(Info_ValueForKey((char *)extensions, "download3"));
-
-	// we can add more extensions here later - not limited to just download3.
-}
-#endif
-
-
 /*
 =====================
 CL_ParseServerMessage
@@ -1258,6 +1287,14 @@ void CL_ParseServerMessage (void)
 		switch (cmd)
 		{
 		default:
+#ifdef USE_DOWNLOAD3 // jitdownload
+			if (cls.download3supported && cmd == cls.download3startcmd)
+			{
+				CL_StartDownload3();
+				break;
+			}
+#endif
+
 			Com_Error(ERR_DROP, "CL_ParseServerMessage: Illegible server message (%d)\n", cmd); // jit
 			break;
 			
@@ -1376,15 +1413,11 @@ void CL_ParseServerMessage (void)
 		case svc_download:
 			CL_ParseDownload();
 			break;
-#ifdef USE_DOWNLOAD3 // jitdownload
+/*#ifdef USE_DOWNLOAD3 // jitdownload
 		case svc_download3start:
 			CL_StartDownload3();
 			break;
-
-		case svc_extensions:
-			CL_ParseServerExtensions();
-			break;
-#endif
+#endif*/
 		case svc_frame:
 			CL_ParseFrame();
 			break;

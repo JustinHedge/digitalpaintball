@@ -1270,6 +1270,21 @@ static void CL_ParseDownload3 (void)
 	}
 }
 
+
+void CL_ParseExtensions_f (void)
+{
+	const char *extensions = Cmd_Argv(1);
+
+	cls.download3startcmd = atoi(Info_ValueForKey((char *)extensions, "download3"));
+	cls.download3supported = cls.download3startcmd > 0;
+}
+
+
+void CL_ClearExtensions (void)
+{
+	cls.download3supported = false;
+}
+
 #endif
 
 /*
@@ -1511,9 +1526,9 @@ byte *precache_model; // used for skin checking in alias models
 
 // ENV_CNT is map load, ENV_CNT+1 is first env map
 #define ENV_CNT (CS_PLAYERSKINS + MAX_CLIENTS * PLAYER_MULT)
-#define TEXTURE_CNT (ENV_CNT+13)
+#define TEXTURE_CNT (ENV_CNT + 13)
 
-static const char *env_suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
+static const char *env_suf[6] = { "rt", "bk", "lf", "ft", "up", "dn" };
 
 void CL_RequestNextDownload (void)
 {
@@ -1527,21 +1542,21 @@ void CL_RequestNextDownload (void)
 	if (!allow_download->value && precache_check < ENV_CNT)
 		precache_check = ENV_CNT;
 
-//ZOID
 	if (precache_check == CS_MODELS)
-	{ // confirm map
-		precache_check = CS_MODELS+2; // 0 isn't used
+	{
+		// confirm map
+		precache_check = CS_MODELS + 2; // 0 isn't used
 
 		if (allow_download_maps->value)
-			if (!CL_CheckOrDownloadFile(cl.configstrings[CS_MODELS+1]))
+			if (!CL_CheckOrDownloadFile(cl.configstrings[CS_MODELS + 1]))
 				return; // started a download
 	}
 
-	if (precache_check >= CS_MODELS && precache_check < CS_MODELS+MAX_MODELS)
+	if (precache_check >= CS_MODELS && precache_check < CS_MODELS + MAX_MODELS)
 	{
 		if (allow_download_models->value)
 		{
-			while (precache_check < CS_MODELS+MAX_MODELS &&
+			while (precache_check < CS_MODELS + MAX_MODELS &&
 				cl.configstrings[precache_check][0])
 			{
 				if (cl.configstrings[precache_check][0] == '*' ||
@@ -1558,6 +1573,7 @@ void CL_RequestNextDownload (void)
 						precache_model_skin = 1;
 						return; // started a download
 					}
+
 					precache_model_skin = 1;
 				}
 
@@ -1568,12 +1584,62 @@ void CL_RequestNextDownload (void)
 
 					if (!precache_model)
 					{
-						precache_model_skin = 0;
-						precache_check++;
-						continue; // couldn't load it
+						// === jitskm - check if SKM exists
+						char skmfile[MAX_QPATH];
+						char skpfile[MAX_QPATH];
+
+						COM_StripExtension(cl.configstrings[precache_check], skmfile, sizeof(skmfile));
+						Q_strncatz(skmfile, ".skm", sizeof(skmfile));
+						
+						if (FS_LoadFile(skmfile, (void **)&precache_model) > 0)
+						{
+							// .skm exists, make sure we have a .skp to go with it
+							COM_StripExtension(skmfile, skpfile, sizeof(skpfile));
+							Q_strncatz(skpfile, ".skp", sizeof(skpfile));
+
+							if (LittleLong(*(unsigned *)precache_model) != SKMHEADER)
+							{
+								// not an skp model
+								FS_FreeFile(precache_model);
+								precache_model = 0;
+								precache_model_skin = 0;
+								precache_check++;
+								continue;
+							}
+							
+							if (!CL_CheckOrDownloadFile(skpfile))
+							{
+								// we don't need to close the file or anything here, do we?
+								return; // started a download
+							}
+						}
+
+						if (!precache_model)
+						{
+						// jitskm ===
+							precache_model_skin = 0;
+							precache_check++;
+							continue; // couldn't load it
+						}
 					}
 
-					if (LittleLong(*(unsigned *)precache_model) != IDALIASHEADER)
+					// todo - if skm, check for .skin file and/or necessary textures
+
+					// === jitskm - check for both skm headers and md2
+					if (LittleLong(*(unsigned *)precache_model) == IDALIASHEADER)
+					{
+						pheader = (dmdl_t *)precache_model;
+
+						if (LittleLong(pheader->version) != ALIAS_VERSION)
+						{
+							FS_FreeFile(precache_model);
+							precache_model = 0;
+							precache_check++;
+							precache_model_skin = 0;
+							continue; // couldn't load it
+						}
+					}
+					else if (LittleLong(*(unsigned *)precache_model) != SKMHEADER)
 					{
 						// not an alias model
 						FS_FreeFile(precache_model);
@@ -1582,30 +1648,74 @@ void CL_RequestNextDownload (void)
 						precache_check++;
 						continue;
 					}
+					// jitskm ===
+				}
+
+				if (LittleLong(*(unsigned *)precache_model) == IDALIASHEADER)
+				{
+					char skinname[MAX_QPATH];
+					const char *ext;
 
 					pheader = (dmdl_t *)precache_model;
 
-					if (LittleLong (pheader->version) != ALIAS_VERSION)
+					while (precache_model_skin - 1 < LittleLong(pheader->num_skins))
 					{
-						precache_check++;
-						precache_model_skin = 0;
-						continue; // couldn't load it
+						// === jitdownload - try JPG first
+						Q_strncpyz(skinname, (char *)precache_model +
+							LittleLong(pheader->ofs_skins) + 
+							(precache_model_skin - 1) * MAX_SKINNAME, sizeof(skinname));
+
+						ext = COM_FileExtension(skinname);
+						
+						if (Q_strcasecmp(ext, "pcx") == 0)
+						{
+							COM_StripExtension(skinname, skinname, sizeof(skinname));
+							Q_strncatz(skinname, ".jpg", sizeof(skinname));
+						}
+
+						if (!CL_CheckOrDownloadFile(skinname))
+						// jitdownload ===
+						{
+							precache_model_skin++;
+							return; // started a download
+						}
+
+						precache_model_skin++;
 					}
 				}
-
-				pheader = (dmdl_t *)precache_model;
-
-				while (precache_model_skin - 1 < LittleLong(pheader->num_skins))
+				else if (LittleLong(*(unsigned *)precache_model) == SKMHEADER)
 				{
-					if (!CL_CheckOrDownloadFile((char *)precache_model +
-						LittleLong(pheader->ofs_skins) + 
-						(precache_model_skin - 1)*MAX_SKINNAME))
-					{
-						precache_model_skin++;
-						return; // started a download
-					}
+					dskmheader_t *header = (dskmheader_t *)precache_model;
+					dskmmesh_t *mesh;
+					char skinname[MAX_QPATH];
+					char *s;
 
-					precache_model_skin++;
+					mesh = (dskmmesh_t *)(precache_model + LittleLong(header->ofs_meshes));
+
+					while (precache_model_skin <= LittleLong(header->num_meshes))
+					{
+						// Create the full path for the skin name
+						Q_strncpyz(skinname, cl.configstrings[precache_check], sizeof(skinname));
+						s = strrchr(skinname, '/');
+						
+						if (!s)
+							s = skinname;
+						else
+							++s;
+
+						Q_strncpyz(s, mesh[precache_model_skin - 1].shadername, sizeof(skinname));
+
+						if (!*COM_FileExtension(skinname)) // no file extension, so throw a .jpg on there.
+							Q_strncatz(skinname, ".jpg", sizeof(skinname));
+
+						if (!CL_CheckOrDownloadFile(skinname))
+						{
+							++precache_model_skin;
+							return; // started a download
+						}
+
+						++precache_model_skin;
+					}
 				}
 
 				if (precache_model)
@@ -1648,7 +1758,7 @@ void CL_RequestNextDownload (void)
 		precache_check = CS_IMAGES;
 	}
 
-	if (precache_check >= CS_IMAGES && precache_check < CS_IMAGES+MAX_IMAGES)
+	if (precache_check >= CS_IMAGES && precache_check < CS_IMAGES + MAX_IMAGES)
 	{
 		if (precache_check == CS_IMAGES)
 			precache_check++; // zero is blank
@@ -1677,19 +1787,19 @@ void CL_RequestNextDownload (void)
 				int i, n;
 				char model[MAX_QPATH], skin[MAX_QPATH], *p;
 
-				i = (precache_check - CS_PLAYERSKINS)/PLAYER_MULT;
-				n = (precache_check - CS_PLAYERSKINS)%PLAYER_MULT;
+				i = (precache_check - CS_PLAYERSKINS) / PLAYER_MULT;
+				n = (precache_check - CS_PLAYERSKINS) % PLAYER_MULT;
 
-				if (!cl.configstrings[CS_PLAYERSKINS+i][0])
+				if (!cl.configstrings[CS_PLAYERSKINS + i][0])
 				{
 					precache_check = CS_PLAYERSKINS + (i + 1) * PLAYER_MULT;
 					continue;
 				}
 
-				if ((p = strchr(cl.configstrings[CS_PLAYERSKINS+i], '\\')) != NULL)
+				if ((p = strchr(cl.configstrings[CS_PLAYERSKINS + i], '\\')) != NULL)
 					p++;
 				else
-					p = cl.configstrings[CS_PLAYERSKINS+i];
+					p = cl.configstrings[CS_PLAYERSKINS + i];
 
 				strcpy(model, p);
 				p = strchr(model, '/');
@@ -1754,7 +1864,7 @@ void CL_RequestNextDownload (void)
 					/*FALL THROUGH*/
 
 				case 4: // skin_i
-					Com_sprintf(fn, sizeof(fn), "players/%s/%s_i.pcx", model, skin);
+					Com_sprintf(fn, sizeof(fn), "players/%s/%s_i.jpg", model, skin);
 
 					if (!CL_CheckOrDownloadFile(fn))
 					{
@@ -1845,79 +1955,63 @@ retry_mapload:
 			{
 				int n = precache_check++ - ENV_CNT - 1;
 
-				if ((strstr(cl.configstrings[CS_SKY], "fog ") 
-					!= cl.configstrings[CS_SKY]) &&
-					(strstr(cl.configstrings[CS_SKY], "fogd ") 
-					!= cl.configstrings[CS_SKY])) // jitfog
+				if ((strstr(cl.configstrings[CS_SKY], "fog ") != cl.configstrings[CS_SKY]) &&
+					(strstr(cl.configstrings[CS_SKY], "fogd ") != cl.configstrings[CS_SKY])) // jitfog
 				{
 					char *temp; // jitfog
-					if ((temp=strchr(cl.configstrings[CS_SKY], ' ')))  // jitfog
-						*temp='\0';
+
+					if ((temp = strchr(cl.configstrings[CS_SKY], ' ')))  // jitfog
+						*temp = '\0';
 					
-					/*if (n & 1)
-						Com_sprintf(fn, sizeof(fn), "env/%s%s.pcx", 
-						cl.configstrings[CS_SKY], env_suf[n/2]);
-					else
-						Com_sprintf(fn, sizeof(fn), "env/%s%s.tga", 
-						cl.configstrings[CS_SKY], env_suf[n/2]);*/
 					Com_sprintf(fn, sizeof(fn), "env/%s%s.jpg", // jitdownload
-						cl.configstrings[CS_SKY], env_suf[n/2]);
+						cl.configstrings[CS_SKY], env_suf[n / 2]);
+
 					// jitodo, strip fog code out of sky
 					if (!CL_CheckOrDownloadFile(fn))
 						return; // started a download
+
 					if (temp) // jitfog
-						*temp=' ';
+						*temp = ' ';
 				}
 			}
 		}
+
 		precache_check = TEXTURE_CNT;
 	}
 
-	if (precache_check == TEXTURE_CNT) {
-		precache_check = TEXTURE_CNT+1;
+	if (precache_check == TEXTURE_CNT)
+	{
+		precache_check = TEXTURE_CNT + 1;
 		precache_tex = 0;
 	}
 
 	// confirm existance of textures, download any that don't exist
-	if (precache_check == TEXTURE_CNT+1)
+	if (precache_check == TEXTURE_CNT + 1)
 	{
 		// from qcommon/cmodel.c
-		extern int			numtexinfo;
-		extern mapsurface_t	map_surfaces[];
+		extern int numtexinfo;
+		extern mapsurface_t map_surfaces[];
 
 		if (allow_download->value && allow_download_maps->value)
 		{
 			while (precache_tex < numtexinfo)
 			{
 				char fn[MAX_OSPATH];
-//				signed int	sz;
 				unsigned int pt;
 
 				pt = precache_tex++;
-
-				/*sprintf(fn, "textures/%s.tga", map_surfaces[pt].rname);
-				sz=FS_LoadFile (fn, NULL);
-				if (sz < 0) {
-					sprintf(fn, "textures/%s.jpg", map_surfaces[pt].rname);
-					sz=FS_LoadFile (fn, NULL);
-				}
-
-				if (sz < 0) {
-					sprintf(fn, "textures/%s.wal", map_surfaces[pt].rname);
-					if (!CL_CheckOrDownloadFile(fn))
-						return; // started a download
-				}*/
-				sprintf(fn, "textures/%s.jpg", map_surfaces[pt].rname);
+				Com_sprintf(fn, sizeof(fn), "textures/%s.jpg", map_surfaces[pt].rname);
 
 				if (!CL_CheckOrDownloadFile(fn))
 					return; // started a download
 			}
 		}
-		precache_check = TEXTURE_CNT+999;
+
+		precache_check = TEXTURE_CNT + 999;
 	}
 
 	// -- jit -- check for "requiredfiles" --
-	if (precache_check == TEXTURE_CNT+999
+	if (precache_check == TEXTURE_CNT + 999
 		&& cl.configstrings[CS_REQUIREDFILES]
 		&& *cl.configstrings[CS_REQUIREDFILES])
 	{
@@ -1941,10 +2035,8 @@ retry_mapload:
 	}
 	// -- jit end --
 
-//ZOID
 	CL_RegisterSounds();
 	CL_PrepRefresh();
-
 	MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
 	MSG_WriteString(&cls.netchan.message, va("begin %i\n", precache_spawncount));
 }
@@ -2156,6 +2248,7 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("download", CL_Download_f);
 #ifdef USE_DOWNLOAD3
 	Cmd_AddCommand("download3", CL_Download3_f); // jitdownload
+	Cmd_AddCommand("svextensions", CL_ParseExtensions_f); // jitextensions
 #endif
 	Cmd_AddCommand("writeconfig", CL_WriteConfig_f); // jitconfig
 

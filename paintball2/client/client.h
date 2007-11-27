@@ -282,6 +282,7 @@ typedef struct
 	byte		download3currentbackack;
 	unsigned	download3md5sum;
 	qboolean	download3supported; // does the server support it?
+	byte		download3startcmd;
 #endif
 	unsigned	last_transmit_time; // jitnetfps
 	unsigned	server_gamebuild; // jitversion
