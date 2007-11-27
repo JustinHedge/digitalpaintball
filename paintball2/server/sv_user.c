@@ -48,6 +48,25 @@ void SV_BeginDemoserver (void)
 		Com_Error(ERR_DROP, "Couldn't open %s\n", name);
 }
 
+
+#ifdef USE_DOWNLOAD3
+// Hopefully this can be standardized somewhat - send server extensions to the client
+void SV_WriteExtensions (sizebuf_t *message)
+{
+	char extensions[MAX_INFO_STRING] = "";
+	char cmd[1024];
+	char val[64];
+
+	if (sv_fast_download->value)
+		Info_SetValueForKey(extensions, "download3", itoa(svc_download3start, val, 10));
+
+	Com_sprintf(cmd, sizeof(cmd), "svextensions \"%s\"\n", extensions);
+	MSG_WriteByte(message, svc_stufftext);
+	MSG_WriteString(message, cmd);
+}
+#endif
+
+
 /*
 ================
 SV_New_f
@@ -108,8 +127,7 @@ void SV_New_f (void)
 		memset(&sv_client->lastcmd, 0, sizeof(sv_client->lastcmd));
 
 #ifdef USE_DOWNLOAD3
-		MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
-		MSG_WriteString(&sv_client->netchan.message, "cmd getextensions\n"); // jitdownload - will probably use for other things as well
+		SV_WriteExtensions(&sv_client->netchan.message);
 #endif
 
 		// begin fetching configstrings
@@ -117,19 +135,6 @@ void SV_New_f (void)
 		MSG_WriteString(&sv_client->netchan.message, va("cmd configstrings %i 0\n", svs.spawncount));
 	}
 }
-
-
-#ifdef USE_DOWNLOAD3
-// Hopefully this can be standardized somewhat - send server extensions to the client
-void SV_GetExtensions_f (void)
-{
-	char extensions[MAX_INFO_STRING] = "";
-
-	Info_SetValueForKey(extensions, "download3", sv_fast_download->string);
-	MSG_WriteByte(&sv_client->netchan.message, svc_extensions);
-	MSG_WriteString(&sv_client->netchan.message, extensions);
-}
-#endif
 
 
 /*
@@ -590,6 +595,16 @@ void SV_ConfirmDownload3_f (void)
 		sv_client->download3_window[i] = chunk;
 	}
 }
+
+void SV_ExtensionsDummy_f (void)
+{
+	// the svextensions command may get passed back to the server if the client doesn't support it.  Just ignore it.
+}
+
+void SV_ClientExtensions_f (void)
+{
+	// Nothing here, yet...
+}
 #endif
 
 //============================================================================
@@ -722,7 +737,8 @@ ucmd_t ucmds[] =
 	{"download3", SV_BeginDownload3_f},
 	{"dl3confirm", SV_ConfirmDownload3_f},
 	{"dl3complete", SV_CompleteDownload3_f},
-	{"getextensions", SV_GetExtensions_f},
+	{"svextensions", SV_ExtensionsDummy_f}, // for clients that don't support extensions
+	{"clextensions", SV_ClientExtensions_f},
 #endif
 
 	{NULL, NULL}
