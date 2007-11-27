@@ -2232,6 +2232,34 @@ void Q_strncpyz (char *dest, const char *src, size_t size)
 	}
 }
 
+//==============
+//Q_strncatz
+// Taken from warsow source, original author unknown
+//==============
+void Q_strncatz (char *dest, const char *src, size_t size)
+{
+#ifdef HAVE_STRLCAT
+	strlcat(dest, src, size);
+#else
+	if (size)
+	{
+		while (--size && *dest++);
+
+		if (size)
+		{
+			dest--;
+			size++;
+
+			while (--size && (*dest++ = *src++));
+		}
+
+		*dest = '\0';
+	}
+
+	assert(size > 0);
+#endif
+}
+
 // no-assert version, for buffers we know will overflow
 void Q_strncpyzna (char *dest, const char *src, size_t size)
 {

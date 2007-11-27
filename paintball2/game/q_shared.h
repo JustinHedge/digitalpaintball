@@ -1410,6 +1410,11 @@ qboolean FileExists (const char *filename); // jit
 float RadiusFromBounds (const vec3_t mins, const vec3_t maxs); // jitskm
 int Q_snprintfz (char *dest, size_t size, const char *fmt, ...); // jitskm
 void Q_strncpyz (char *dest, const char *src, size_t size); // jitskm
+#ifdef HAVE_STRLCAT
+#define Q_strncatz(a, b, c) strlcat(a, b, c)
+#else
+void Q_strncatz (char *dest, const char *src, size_t size);
+#endif
 void Q_strncpyzna (char *dest, const char *src, size_t size); // jit
 void strip_garbage (char *out, const char *in); // jit
 
