@@ -649,14 +649,10 @@ cmodel_t *CM_LoadMap (char *name, qboolean clientload, unsigned *checksum)
 	CMod_LoadAreaPortals(&header.lumps[LUMP_AREAPORTALS]);
 	CMod_LoadVisibility(&header.lumps[LUMP_VISIBILITY]);
 	CMod_LoadEntityString(&header.lumps[LUMP_ENTITIES]);
-
 	FS_FreeFile(buf);
-
 	CM_InitBoxHull();
-
 	memset(portalopen, 0, sizeof(portalopen));
 	FloodAreaConnections();
-
 	// jitnodraw strcpy(map_name, name);
 
 	return &map_cmodels[0];

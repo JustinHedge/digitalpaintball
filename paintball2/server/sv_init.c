@@ -227,28 +227,24 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 
 	if (serverstate != ss_game)
 	{
-		sv.models[1] = CM_LoadMap ("", false, &checksum);	// no real map
+		sv.models[1] = CM_LoadMap("", false, &checksum);	// no real map
 	}
 	else
 	{
 		Com_sprintf(sv.configstrings[CS_MODELS+1], sizeof(sv.configstrings[CS_MODELS+1]),
 			"maps/%s.bsp", server);
-		sv.models[1] = CM_LoadMap(sv.configstrings[CS_MODELS+1], false, &checksum);
+		sv.models[1] = CM_LoadMap(sv.configstrings[CS_MODELS + 1], false, &checksum);
 	}
 
-	Com_sprintf(sv.configstrings[CS_MAPCHECKSUM], sizeof(sv.configstrings[CS_MAPCHECKSUM]),
-		"%i", checksum);
+	Com_sprintf(sv.configstrings[CS_MAPCHECKSUM], sizeof(sv.configstrings[CS_MAPCHECKSUM]), "%i", checksum);
 
-	//
 	// clear physics interaction links
-	//
-	SV_ClearWorld ();
+	SV_ClearWorld();
 	
-	for (i=1 ; i< CM_NumInlineModels() ; i++)
+	for (i = 1; i < CM_NumInlineModels(); i++)
 	{
-		Com_sprintf (sv.configstrings[CS_MODELS+1+i], sizeof(sv.configstrings[CS_MODELS+1+i]),
-			"*%i", i);
-		sv.models[i+1] = CM_InlineModel (sv.configstrings[CS_MODELS+1+i]);
+		Com_sprintf (sv.configstrings[CS_MODELS + 1 + i], sizeof(sv.configstrings[CS_MODELS + 1 + i]), "*%i", i);
+		sv.models[i + 1] = CM_InlineModel(sv.configstrings[CS_MODELS + 1 + i]);
 	}
 
 	//

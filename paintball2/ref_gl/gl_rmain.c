@@ -578,6 +578,7 @@ void R_DrawEntitiesOnList (void)
 				R_DrawSpriteModel(currententity);
 				break;
 			default:
+				assert(0);
 				ri.Sys_Error(ERR_DROP, "Bad modeltype");
 				break;
 			}
@@ -624,6 +625,7 @@ void R_DrawEntitiesOnList (void)
 				//R_DrawSpriteModel(currententity); jit, draw sprites later
 				break;
 			default:
+				assert(0);
 				ri.Sys_Error(ERR_DROP, "Bad modeltype");
 				break;
 			}

@@ -94,11 +94,12 @@
 				RuntimeLibrary="1"
 				DefaultCharIsUnsigned="FALSE"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile="..\debug/exe/paintball2.pch"
-				AssemblerListingLocation="..\debug/exe/"
-				ObjectFile="..\debug/exe/"
-				ProgramDataBaseFileName="..\debug/exe/"
+				PrecompiledHeaderFile="..\debug\exe\paintball2.pch"
+				AssemblerListingLocation="..\debug\exe\"
+				ObjectFile="..\debug\exe\"
+				ProgramDataBaseFileName="..\debug\exe\"
 				BrowseInformation="1"
+				BrowseInformationFile="$(IntDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="3"/>
@@ -112,9 +113,9 @@
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="..\debug/exe/paintball2.pdb"
+				ProgramDatabaseFile="..\debug\exe\paintball2.pdb"
 				GenerateMapFile="TRUE"
-				MapFileName="..\debug/exe/paintball2.map"
+				MapFileName="..\debug\exe\paintball2.map"
 				SubSystem="2"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -122,7 +123,7 @@
 				MkTypLibCompatible="TRUE"
 				SuppressStartupBanner="TRUE"
 				TargetEnvironment="1"
-				TypeLibraryName="..\debug/paintball2.tlb"/>
+				TypeLibraryName="..\debug\paintball2.tlb"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
