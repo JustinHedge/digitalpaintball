@@ -21,8 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 #ifdef WIN32
 #include <windows.h>
-#endif
 #include <direct.h> // jit - for getcwd
+#else
+#include <unistd.h>
+#endif
+
 
 /*
 =============================================================================
