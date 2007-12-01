@@ -55,10 +55,9 @@ void SV_WriteExtensions (sizebuf_t *message)
 {
 	char extensions[MAX_INFO_STRING] = "";
 	char cmd[1024];
-	char val[64];
 
 	if (sv_fast_download->value)
-		Info_SetValueForKey(extensions, "download3", itoa(svc_download3start, val, 10));
+		Info_SetValueForKey(extensions, "download3", va("%d", (int)svc_download3start));
 
 	Com_sprintf(cmd, sizeof(cmd), "svextensions \"%s\"\n", extensions);
 	MSG_WriteByte(message, svc_stufftext);
