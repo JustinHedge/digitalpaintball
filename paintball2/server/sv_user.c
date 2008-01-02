@@ -423,20 +423,20 @@ static long LoadFileOrAlternate (const char *filename, char *filename_alt, size_
 	Q_strncpyz(filename_temp, filename, sizeof(filename_temp));
 	COM_StripExtension(filename_temp, filename_noext, sizeof(filename_noext));
 
-	// Check for files in this order: png, tga, jpg, pcx, wal
+	// Check for files in this order: png, jpg, tga, pcx, wal
 	while ((size = FS_LoadFile(filename_temp, data_ptr)) < 0)
 	{
 		sExt = COM_FileExtension(filename_temp);
 
 		if (Q_strcasecmp(sExt, "png") == 0)
 		{
-			Com_sprintf(filename_temp, sizeof(filename_temp), "%s.tga", filename_noext);
-		}
-		else if (Q_strcasecmp(sExt, "tga") == 0)
-		{
 			Com_sprintf(filename_temp, sizeof(filename_temp), "%s.jpg", filename_noext);
 		}
 		else if (Q_strcasecmp(sExt, "jpg") == 0)
+		{
+			Com_sprintf(filename_temp, sizeof(filename_temp), "%s.tga", filename_noext);
+		}
+		else if (Q_strcasecmp(sExt, "tga") == 0)
 		{
 			Com_sprintf(filename_temp, sizeof(filename_temp), "%s.pcx", filename_noext);
 		}
@@ -542,7 +542,9 @@ void SV_CompleteDownload3_f (void)
 
 	if (fileid != sv_client->download3_fileid)
 	{
+#ifdef WIN32
 		assert(fileid == sv_client->download3_fileid);
+#endif
 		Com_Printf("%s: dl3complete fileid %d != %d\n", sv_client->name, fileid, sv_client->download3_fileid);
 		return;
 	}
@@ -562,7 +564,9 @@ void SV_ConfirmDownload3_f (void)
 
 	if (client_fileid != sv_client->download3_fileid)
 	{
+#ifdef WIN32
 		assert(client_fileid == sv_client->download3_fileid);
+#endif
 		Com_Printf("Client sent dl3ack for fileid %d when server was on fileid %d\n", client_fileid, sv_client->download3_fileid);
 		return;
 	}
