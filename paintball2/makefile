@@ -60,7 +60,7 @@ BUILD_DEDICATED?=NO
 HAVE_IPV6?=NO 
 
 
-USE_SSE?=YES
+#USE_SSE?=YES
 ENABLE_PROFILING?=NO
 USE_X86_ASM?=NO
 
@@ -199,17 +199,19 @@ ifeq ($(strip $(WITH_LIBDIR)),YES)
 endif
 
 #ifeq ($(ARCH),i386)
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -mmmx \
-	-ffast-math -ffloat-store -funroll-loops -fno-strict-aliasing
+#RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -mmmx \
+#	-ffast-math -ffloat-store -funroll-loops -fno-strict-aliasing
+RELEASE_CFLAGS=$(BASE_CFLAGS) \
+	-ffast-math -ffloat-store -funroll-loops
 #endif
-
-ifeq ($(USE_SSE),YES)
-RELEASE_CFLAGS+=-msse -mfpmath=sse
-endif
 
 ifeq ($(ARCH),ppc)
 RELEASE_CFLAGS=$(BASE_CFLAGS) -O2 -ffast-math -funroll-loops \
 	-fomit-frame-pointer -fexpensive-optimizations
+endif
+
+ifeq ($(USE_SSE),YES)
+RELEASE_CFLAGS+=-msse -mfpmath=sse
 endif
 
 ifeq ($(ARCH),x86_64)
