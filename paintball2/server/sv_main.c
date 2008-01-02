@@ -794,7 +794,9 @@ void SVC_Download3Ack (void)
 
 	if (fileid != cl->download3_fileid)
 	{
+#ifdef WIN32
 		assert(fileid == cl->download3_fileid);
+#endif
 		Com_Printf("Download fileid mismatch: %d != %d\n", (int)fileid, (int)cl->download3_fileid);
 		return;
 	}
