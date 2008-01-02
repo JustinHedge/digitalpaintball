@@ -399,7 +399,7 @@ void CL_Record_f (void)
 }
 
 
-CL_ARecord_f (void)
+void CL_ARecord_f (void)
 {
 	time_t now;
 	char szDemoName[MAX_OSPATH];
@@ -671,10 +671,17 @@ void CL_CheckForResend (void)
 }
 
 
+#ifdef USE_DOWNLOAD3
+static void CL_ClearExtensions (void)
+{
+	cls.download3supported = false;
+}
+#endif
+
+
 /*
 ================
 CL_Connect_f
-
 ================
 */
 void CL_Connect_f (void)
@@ -696,11 +703,11 @@ void CL_Connect_f (void)
 		CL_Disconnect();
 
 	server = Cmd_Argv(1);
-
 	NET_Config(true);		// allow remote
-
 	CL_Disconnect();
-
+#ifdef USE_DOWNLOAD3
+	CL_ClearExtensions();
+#endif
 	cls.state = ca_connecting;
 	Q_strncpyz(cls.servername, server, sizeof(cls.servername)-1);
 	cls.connect_time = -99999;	// CL_CheckForResend() will fire immediately
@@ -1208,7 +1215,7 @@ static void CL_ParseDownload3 (void)
 		cls.download3requested = false;
 
 		// Verify that the file downloaded correctly
-		file_length = FS_LoadFile(cls.downloadtempname, &file_data);
+		file_length = FS_LoadFile(cls.downloadtempname, (void *)&file_data);
 
 		if (file_length < 0)
 		{
@@ -1278,13 +1285,6 @@ void CL_ParseExtensions_f (void)
 	cls.download3startcmd = atoi(Info_ValueForKey((char *)extensions, "download3"));
 	cls.download3supported = cls.download3startcmd > 0;
 }
-
-
-void CL_ClearExtensions (void)
-{
-	cls.download3supported = false;
-}
-
 #endif
 
 /*
@@ -2603,7 +2603,7 @@ static qboolean CL_VerifyFileSizes (const char *filename)
 	char *data, *token, *p;
 	int size, filesize;
 
-	if (FS_LoadFileZ(filename, &data) > 0)
+	if (FS_LoadFileZ(filename, (void *)&data) > 0)
 	{
 		p = data;
 		
