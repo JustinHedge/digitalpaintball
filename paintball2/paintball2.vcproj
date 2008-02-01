@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.00"
 	Name="paintball2"
+	ProjectGUID="{78DD81DB-C9E6-4AAC-AF53-B8A4F8E4C70D}"
 	SccProjectName=""
 	SccLocalPath="">
 	<Platforms>
