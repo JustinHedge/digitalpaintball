@@ -62,6 +62,7 @@ static unsigned int temp_array[MAX_DECODE_ARRAY];
 #define GAMEMODE_KOTH			16
 #define GAMEMODE_ELIM			32
 #define GAMEMODE_PONG			64
+#define GAMEMODE_TDM			128
 
 
 void CL_UpdateMaplistModes (void)
@@ -78,6 +79,8 @@ void CL_UpdateMaplistModes (void)
 				cl_maplist_modes[i++] = "Elim";
 			if (finger->gamemode_flags & GAMEMODE_DM)
 				cl_maplist_modes[i++] = "DM";
+			if (finger->gamemode_flags & (GAMEMODE_DM | GAMEMODE_TDM))
+				cl_maplist_modes[i++] = "TDM";
 			if (finger->gamemode_flags & GAMEMODE_1FLAG)
 				cl_maplist_modes[i++] = "1-Flag";
 			if (finger->gamemode_flags & GAMEMODE_2FLAG)
