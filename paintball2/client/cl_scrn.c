@@ -1499,59 +1499,66 @@ void SCR_UpdateScreen (void)
 			if (cl_drawhud->value)
 			{
 				// Draw FPS display - MrG - jit, modified
-				if (cl_drawfps->value) 
+				if (cl_drawfps->value)
 				{
 					static char s[15];
-					//static int fpscounter=0;
-					//static float framerate=60.0f; // arbitrary starting value
-
-					//if(cl.frametime == 0.0f)
-					//	cl.frametime = 0.001f;
-
-					//framerate *= .80f;
-					////framerate += (1.0f/cls.frametime)*.20;
-					//framerate += (1.0f/cl.frametime)*.20f; // jitnetfps
-
-
-					//if ((cl.time + 1000) < fpscounter)
-					//	fpscounter = cl.time + 100;
-
-					//if (cl.time > fpscounter) // slow fps display
-
 					static int framecount = 0;
 					static int lasttime = 0;
 
-
-
-					if (!(framecount & 0xF)) // once every 16 frames
+					if (cl_drawfps->value > 1) // per-frame display, not averaged
 					{
-						register float t;
-						t = curtime-lasttime;
-						if (t>160000.0f)
-							t = 160.0f;
-						else
-							t /= 1000.0f;
-						//Com_sprintf(s,sizeof(s),"%3.0ffps", framerate);
-						Com_sprintf(s,sizeof(s),"%3.0ffps", framecount/t);
-						//fpscounter = cl.time + 100; 
-						lasttime = curtime;
-						framecount = 0;
+						register float framerate;
+
+						framerate = 1.0f / cls.frametime;
+						Com_sprintf(s, sizeof(s), "%3.0ffps", framerate);
+					}
+					else // average framerate over a few frames
+					{
+						if (!(framecount & 0xF)) // once every 16 frames
+						{
+							register float t;
+							
+							t = curtime - lasttime;
+
+							if (t > 160000.0f)
+								t = 160.0f;
+							else
+								t /= 1000.0f;
+
+							Com_sprintf(s, sizeof(s), "%3.0ffps", framecount / t);
+							lasttime = curtime;
+							framecount = 0;
+						}
 					}
 
-					framecount ++;
-
-					re.DrawString(viddef.width-56*hudscale,64*hudscale,s);
+					framecount++;
+					re.DrawString(viddef.width - 56 * hudscale, 64 * hudscale, s);
 				}
 
 				if (cl_drawpps->value) // jitnetfps
 				{
 					extern char pps_string[15];
-					re.DrawString(viddef.width-56*hudscale, 72*hudscale, pps_string);
+
+					re.DrawString(viddef.width - 56 * hudscale, 72 * hudscale, pps_string);
+				}
+
+				if (cl_drawtexinfo->value) // jit
+				{
+					trace_t tr;
+					vec3_t end;
+					char texinfo[1024];
+
+					VectorMA(cl.predicted_origin, 8192, cl.v_forward, end);
+					tr = CM_BoxTrace(cl.predicted_origin, end, vec3_origin, vec3_origin, 0, MASK_ALL);
+					Com_sprintf(texinfo, sizeof(texinfo), "%s %d 0x%x 0x%x", tr.surface->name, tr.surface->value, tr.surface->flags, tr.contents);
+					re.DrawString(0, viddef.height - 44 * hudscale, texinfo);
 				}
 
 				SCR_DrawStats();
+
 				if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 1)
 					SCR_DrawLayout();
+
 				//if (cl.frame.playerstate.stats[STAT_LAYOUTS] & 2)
 				//	CL_DrawInventory();
 
