@@ -324,6 +324,7 @@ extern	cvar_t	*cl_anglespeedkey;
 
 extern	cvar_t	*cl_drawfps; // jit
 extern	cvar_t	*cl_drawpps; // jitnetfps
+extern	cvar_t	*cl_drawtexinfo; // jit
 extern	cvar_t	*cl_centerprintkills; // jit
 extern	cvar_t	*cl_shownet;
 extern	cvar_t	*cl_showmiss;
