@@ -862,6 +862,7 @@ void R_DrawAlphaSurfaces (void)
 	GLSTATE_ENABLE_BLEND
 	qglDepthMask(0); // jitalpha - disable depth writing
 	GL_TexEnv(GL_MODULATE);
+	currentmodel = r_worldmodel; // jit - we're drawing world polygons now.  Don't confuse them with whatever entity was drawn last.
 
 	// the textures are prescaled up for a better lighting range,
 	// so scale it back down
@@ -911,7 +912,8 @@ void R_DrawAlphaSurfaces (void)
 			{
 				GL_EnableMultitexture(true);
 				GL_SelectTexture(QGL_TEXTURE0);
-				GL_TexEnv(GL_REPLACE);
+				//GL_TexEnv(GL_REPLACE);
+				GL_TexEnv(GL_MODULATE);
 				GL_SelectTexture(QGL_TEXTURE1);
 
 				if (gl_lightmap->value)
