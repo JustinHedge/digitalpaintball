@@ -391,7 +391,8 @@ PB2_OBJS = \
 	$(BUILDDIR)/client/sv_user.o   $(BUILDDIR)/client/sv_world.o      $(BUILDDIR)/client/md5.o \
 	$(BUILDDIR)/client/q_shlinux.o $(BUILDDIR)/client/vid_so.o        $(BUILDDIR)/client/sys_linux.o \
 	$(BUILDDIR)/client/glob.o      $(BUILDDIR)/client/$(NET_UDP).o    $(BUILDDIR)/client/net_common.o \
-	$(BUILDDIR)/client/net_tcp.o   $(BUILDDIR)/client/q_shared.o      $(BUILDDIR)/client/pmove.o
+	$(BUILDDIR)/client/net_tcp.o   $(BUILDDIR)/client/q_shared.o      $(BUILDDIR)/client/pmove.o \
+	$(BUILDDIR)/client/vid_common.o
 
 CD_OBJS = \
 	$(BUILDDIR)/client/cd_linux.o 
@@ -510,6 +511,7 @@ $(BUILDDIR)/client/sv_user.o :       $(SERVER_DIR)/sv_user.c;		$(DO_CC)
 $(BUILDDIR)/client/sv_world.o :      $(SERVER_DIR)/sv_world.c;		$(DO_CC)
 $(BUILDDIR)/client/q_shlinux.o :     $(LINUX_DIR)/q_shlinux.c;		$(DO_CC)
 $(BUILDDIR)/client/vid_so.o :        $(LINUX_DIR)/vid_so.c;		$(DO_CC)
+$(BUILDDIR)/client/vid_common.o :    $(CLIENT_DIR)/vid_common.c;	$(DO_CC)
 $(BUILDDIR)/client/snd_mixa.o :      $(LINUX_DIR)/snd_mixa.s;		$(DO_AS)
 $(BUILDDIR)/client/sys_linux.o :     $(LINUX_DIR)/sys_linux.c;		$(DO_CC)
 $(BUILDDIR)/client/glob.o :          $(LINUX_DIR)/glob.c;		$(DO_CC)

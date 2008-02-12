@@ -56,8 +56,6 @@ qboolean	reflib_active = 0;
 
 HWND        cl_hwnd;            // Main window handle for life of program
 
-#define VID_NUM_MODES (sizeof(vid_modes) / sizeof(vid_modes[0]))
-
 LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 static qboolean s_alttab_disabled;
@@ -119,8 +117,6 @@ DLL GLUE
 ==========================================================================
 */
 
-#define	MAXPRINTMSG	4096
-
 void VID_Printf (int print_level, char *fmt, ...)
 {
 	va_list		argptr;
@@ -147,19 +143,6 @@ void VID_Printf (int print_level, char *fmt, ...)
 	}
 }
 
-void VID_Error (int err_level, char *fmt, ...)
-{
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-	static qboolean	inupdate;
-	
-	va_start(argptr,fmt);
-	_vsnprintf(msg, sizeof(msg), fmt, argptr); // jitsecurity -- prevent buffer overruns
-	va_end(argptr);
-	NULLTERMINATE(msg); // jitsecurity -- make sure string is null terminated.
-
-	Com_Error(err_level,"%s", msg);
-}
 
 //==========================================================================
 byte        scantokey[128] =
@@ -682,74 +665,10 @@ LONG WINAPI MainWndProc (
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-/*
-============
-VID_Restart_f
-
-Console command to re-start the video mode and refresh DLL. We do this
-simply by setting the modified flag for the vid_ref variable, which will
-cause the entire video mode and refresh DLL to be reset on the next frame.
-============
-*/
-void VID_Restart_f (void)
-{
-	vid_ref->modified = true;
-}
-
 void VID_Front_f( void )
 {
 	SetWindowLong(cl_hwnd, GWL_EXSTYLE, WS_EX_TOPMOST);
 	SetForegroundWindow(cl_hwnd);
-}
-
-/*
-** VID_GetModeInfo
-*/
-typedef struct vidmode_s
-{
-	const char *description;
-	int         width, height;
-	int         mode;
-} vidmode_t;
-
-vidmode_t vid_modes[] =
-{
-	{ "Mode 0: 320x240",    320, 240,   0 },
-	{ "Mode 1: 400x300",    400, 300,   1 },
-	{ "Mode 2: 512x384",    512, 384,   2 },
-	{ "Mode 3: 640x480",    640, 480,   3 },
-	{ "Mode 4: 800x600",    800, 600,   4 },
-	{ "Mode 5: 960x720",    960, 720,   5 },
-	{ "Mode 6: 1024x768",   1024, 768,  6 },
-	{ "Mode 7: 1152x864",   1152, 864,  7 },
-	{ "Mode 8: 1280x960",   1280, 960,  8 },
-	{ "Mode 9: 1280x1024",  1280, 1024, 9 }, // jit
-	{ "Mode 10: 1600x1200", 1600, 1200, 10 },
-	{ "Mode 11: 2048x1536", 2048, 1536, 11 },
-	 // jit
-	{ "blah", 720, 480,   12 },
-	{ "blah", 720, 576,   13 },
-	{ "blah", 848, 480,   14 },
-	{ "blah", 960, 600,   15 },
-	{ "blah", 1088, 612,  16 },
-	{ "blah", 1280, 720,  17 },
-	{ "blah", 1280, 768,  18 },
-	{ "blah", 1280, 800,  19 },
-	{ "blah", 1680, 1050, 20 },
-	{ "blah", 1440, 900,  21 },
-	{ "blah", 1920, 1200, 22 },
-	// jitodo, custom resolution
-};
-
-qboolean VID_GetModeInfo (int *width, int *height, int mode)
-{
-	if (mode < 0 || mode >= VID_NUM_MODES)
-		return false;
-
-	*width  = vid_modes[mode].width;
-	*height = vid_modes[mode].height;
-
-	return true;
 }
 
 /*
@@ -775,15 +694,6 @@ void VID_UpdateWindowPosAndSize (int x, int y)
 	MoveWindow( cl_hwnd, vid_xpos->value, vid_ypos->value, w, h, TRUE );
 }
 
-/*
-** VID_NewWindow
-*/
-void VID_NewWindow (int width, int height)
-{
-	viddef.width = width;
-	viddef.height = height;
-	cl.force_refdef = true;		// can't use a paused refdef
-}
 
 void VID_FreeReflib (void)
 {
@@ -847,6 +757,7 @@ qboolean VID_LoadRefresh (char *name)
 	ri.Vid_NewWindow = VID_NewWindow;
 	ri.Z_Free = Z_Free; // jitmalloc
 	ri.Z_Malloc = Z_Malloc; // jitmalloc
+	ri.e = &e;
 	i.Com_Printf = Com_Printf;
 	i.Cbuf_ExecuteText = Cbuf_ExecuteText;
 	i.Cvar_Get = Cvar_Get;

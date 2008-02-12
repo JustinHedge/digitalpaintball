@@ -497,6 +497,9 @@
 				RelativePath=".\win32\sys_win.c">
 			</File>
 			<File
+				RelativePath="client\vid_common.c">
+			</File>
+			<File
 				RelativePath=".\win32\vid_dll.c">
 			</File>
 			<File
