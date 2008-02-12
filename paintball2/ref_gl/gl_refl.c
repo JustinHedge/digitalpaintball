@@ -59,13 +59,14 @@ void R_init_refl (int maxNoReflections)
 	int				i = 0;
 	int len; // jitwater
 	char *fragment_program_text; // jitwater
+	int err;
 	//===========================
 
 	if (maxNoReflections < 1) // jit
 		maxNoReflections = 1;
 
 	R_setupArrays(maxNoReflections);	// setup number of reflections
-	assert(qglGetError() == GL_NO_ERROR);
+	assert((err = qglGetError()) == GL_NO_ERROR);
 
 	//okay we want to set REFL_TEXH etc to be less than the resolution 
 	//otherwise white boarders are left .. we dont want that.
@@ -141,8 +142,15 @@ void R_init_refl (int maxNoReflections)
 		// Make sure the program loaded correctly
 		{
 			int err = 0;
-			assert((err = qglGetError()) == GL_NO_ERROR);
-			err = err; // for debugging only -- todo, remove
+
+			err = qglGetError();
+
+			if (err != GL_NO_ERROR)
+				ri.Con_Printf(PRINT_ALL, "OpenGL error with ARB fragment program: 0x%x\n", err);
+
+#ifdef WIN32 // since linux is retarded and kills the whole program
+			assert(err == GL_NO_ERROR);
+#endif
 		}
 
 		distort_tex = Draw_FindPic("/textures/sfx/water/distort1.tga");

@@ -202,6 +202,7 @@ qboolean VID_LoadRefresh(char *name)
 	ri.Vid_NewWindow = VID_NewWindow;
 	ri.Z_Free = Z_Free; // jitmalloc
 	ri.Z_Malloc = Z_Malloc; // jitmalloc
+	ri.e = &e;
 	ri.M_MenuActive = M_MenuActive; // jitmenu
 	ri.M_MouseMove = M_MouseMove; // jitmenu
 	i.Com_Printf = Com_Printf;
