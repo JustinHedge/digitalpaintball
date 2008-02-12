@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _VID_H_
 #define _VID_H_
 
+#define	MAXPRINTMSG	4096
+
 typedef struct vrect_s
 {
 	int				x,y,width,height;
@@ -32,16 +34,31 @@ typedef struct
 	unsigned		width, height;			// coordinates from main game
 } viddef_t;
 
+typedef struct vidmode_s
+{
+	const char *description;
+	int         width, height;
+	int         mode;
+} vidmode_t;
+
 extern	viddef_t	viddef;				// global video state
 
 // Video module initialisation etc
-void	VID_Init (void);
-void	VID_Shutdown (void);
-void	VID_CheckChanges (void);
+void VID_Init (void);
+void VID_Shutdown (void);
+void VID_CheckChanges (void);
+void VID_Restart_f (void);
+void VID_MenuDraw (void);
+const char *VID_MenuKey (int);
+qboolean VID_GetModeInfo (int *width, int *height, int mode);
+void VID_NewWindow (int width, int height);
+void VID_Error (int err_level, char *fmt, ...);
 
-// jitmenu void	VID_MenuInit( void );
-void	VID_MenuDraw( void );
-const char *VID_MenuKey( int );
+extern	cvar_t		*vid_gamma;
+extern	cvar_t		*vid_ref;			// Name of Refresh DLL loaded
+extern	cvar_t		*vid_xpos;			// X coordinate of window position
+extern	cvar_t		*vid_ypos;			// Y coordinate of window position
+extern	cvar_t		*vid_fullscreen;
 
 #endif
 
