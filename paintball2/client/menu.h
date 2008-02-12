@@ -190,6 +190,7 @@ typedef struct MENU_WIDGET_S {
 	WIDGET_TYPE type;
 	int flags;			// for things like numbersonly
 	qboolean modified;	// drawing information changed
+	qboolean dynamic;	// contents can change / variables in string
 	char *name;			// so you can reference a certain widget by name
 	char *command;		// command executed when widget activated
 	char *doubleclick;	// command exceuted on double click.
@@ -203,10 +204,13 @@ typedef struct MENU_WIDGET_S {
 	char *hovertext;	// text when mouse over widget
 	char *selectedtext;	// text when mouse clicked on widget
 	image_t *pic;		// image displayed by widget
+	char *picname;		// text name of pic
 	image_t *hoverpic;	// image displayed when mouse over widget
+	char *hoverpicname;
 	int hoverpicwidth;
 	int hoverpicheight;
 	image_t *selectedpic;// image displayed when mouse clicked on widget
+	char *selectedpicname;
 	qboolean enabled;	// for greying out widgets
 	qboolean hover;		// mouse is over widget
 	qboolean selected;	// widget has 'focus'

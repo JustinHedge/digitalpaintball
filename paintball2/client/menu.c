@@ -49,13 +49,14 @@ pthread_mutex_t			m_mut_widgets;
 extern m_serverlist_t	m_serverlist;
 
 static void M_UpdateDrawingInformation (menu_widget_t *widget);
+extern char *Cmd_MacroExpandString (char *text);
 
 // same thing as strdup, only uses Z_Malloc
 char *text_copy (const char *in)
 {
 	char *out;
 
-	out = Z_Malloc(sizeof(char)*(strlen(in)+1));
+	out = Z_Malloc(sizeof(char) * (strlen(in) + 1));
 	strcpy(out, in);
 
 	return out;
@@ -230,6 +231,7 @@ static menu_widget_t *free_widgets (menu_widget_t *widget)
 	// recursively free widgets in list
 	if (widget->next)
 		widget->next = free_widgets(widget->next);
+
 	if (widget->subwidget)
 		widget->subwidget = free_widgets(widget->subwidget);
 
@@ -239,20 +241,31 @@ static menu_widget_t *free_widgets (menu_widget_t *widget)
 		remove_named_widget(widget);
 		Z_Free(widget->name);
 	}
+
+	if (widget->picname)
+		Z_Free(widget->picname);
+
 	if (widget->command)
 		Z_Free(widget->command);
+
 	if (widget->doubleclick)
 		Z_Free(widget->doubleclick);
+
 	if (widget->cvar)
 		Z_Free(widget->cvar);
+
 	if (widget->cvar_default)
 		Z_Free(widget->cvar_default);
+
 	if (widget->hovertext)
 		Z_Free(widget->hovertext);
+
 	if (widget->text)
 		Z_Free(widget->text);
+
 	if (widget->selectedtext)
 		Z_Free(widget->selectedtext);
+
 	if (widget->listsource)
 		Z_Free(widget->listsource);
 
@@ -276,48 +289,46 @@ static menu_widget_t *free_widgets (menu_widget_t *widget)
 	return NULL;
 }
 
+
 static menu_widget_t *M_GetNewBlankMenuWidget (void)
 {
 	menu_widget_t *widget;
 
 	widget = Z_Malloc(sizeof(menu_widget_t));
 	memset(widget, 0, sizeof(menu_widget_t));
-
 	widget->enabled = true;
 	widget->modified = true;
 
 	return widget;
 }
 
+
 static menu_widget_t *M_GetNewMenuWidget (WIDGET_TYPE type, const char *text, const char *cvar, 
 								  const char *cmd, int x, int y, qboolean enabled)
 {
 	menu_widget_t *widget;
-	int len;
 
 	widget = M_GetNewBlankMenuWidget();
 	widget->type = type;
 
 	if (text)
 	{
-		len = sizeof(char) * (strlen(text) + 1);
-		widget->text = Z_Malloc(len*sizeof(char));
-		memcpy(widget->text, text, len);
+		if (strchr(text, '$'))
+			widget->dynamic = true;
+
+		widget->text = text_copy(text);
 	}
 
 	if (cvar)
 	{
-		len = sizeof(char) * (strlen(cvar) + 1);
-		widget->cvar = Z_Malloc(len*sizeof(char));
-		memcpy(widget->cvar, cvar, len);
+		if (strchr(cvar, '$'))
+			widget->dynamic = true;
+
+		widget->cvar = text_copy(cvar);
 	}
 
 	if (cmd)
-	{
-		len = sizeof(char) * (strlen(cmd) + 1);
-		widget->command = Z_Malloc(len*sizeof(char));
-		memcpy(widget->command, cmd, len);
-	}
+		widget->command = text_copy(cmd);
 
 	widget->x = x;
 	widget->y = y;
@@ -327,11 +338,13 @@ static menu_widget_t *M_GetNewMenuWidget (WIDGET_TYPE type, const char *text, co
 	return widget;
 }
 
+
 static void callback_vscrollbar_tray (menu_widget_t *widget)
 {
 	widget->hover = true;
 	widget->selected = false;
 }
+
 
 static void callback_vscrollbar_tray_drag (menu_widget_t *widget)
 {
@@ -363,6 +376,7 @@ static void callback_vscrollbar_tray_drag (menu_widget_t *widget)
 
 	m_vscrollbar_tray_selected = true;
 }
+
 
 static menu_widget_t *M_CreateScrollbar (WIDGET_TYPE type, int x, int y, int length,
 										 int total, int visible, int offset,
@@ -441,19 +455,21 @@ static void callback_select_item (menu_widget_t *widget)
 
 	if (widget->parent && widget->parent->command)
 	{
-		Cbuf_AddText(widget->parent->command);
+		Cbuf_AddText(Cmd_MacroExpandString(widget->parent->command));
 		Cbuf_AddText("\n");
 	}
 }
+
 
 static void callback_doubleclick_item (menu_widget_t *widget)
 {
 	if (widget->parent->doubleclick)
 	{
-		Cbuf_AddText(widget->parent->doubleclick);
+		Cbuf_AddText(Cmd_MacroExpandString(widget->parent->doubleclick));
 		Cbuf_AddText("\n");
 	}
 }
+
 
 static void callback_select_scrollup (menu_widget_t *widget)
 {
@@ -651,20 +667,39 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 	if (widget->enabled)
 	{
 		if (widget->text)
-			text = widget->text;
+		{
+			if (widget->dynamic)
+				text = Cmd_MacroExpandString(widget->text);
+			else
+				text = widget->text;
+		}
 
 		if (widget->pic)
-			pic = widget->pic;
+		{
+			if (widget->dynamic && widget->picname)
+				pic = re.DrawFindPic(Cmd_MacroExpandString(widget->picname));
+			else
+				pic = widget->pic;
+		}
 
 		// Update text/pic for hovering/selection
 		if (widget->hover || widget->selected)
 		{
 			if (widget->hovertext)
-				text = widget->hovertext;
+			{
+				if (widget->dynamic)
+					text = Cmd_MacroExpandString(widget->hovertext);
+				else
+					text = widget->hovertext;
+			}
+
 			if (widget->hoverpic)
-				pic = widget->hoverpic;
-			else if (widget->pic)
-				pic = widget->pic;
+			{
+				if (widget->dynamic && widget->hoverpicname)
+					pic = re.DrawFindPic(Cmd_MacroExpandString(widget->hoverpicname));
+				else
+					pic = widget->hoverpic;
+			}
 		}
 
 		// Calculate picture size
@@ -673,7 +708,7 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			widget->widgetSize.x = (widget->picwidth) ? widget->picwidth : pic->width;
 			widget->widgetSize.y = (widget->picheight) ? widget->picheight : pic->height;
 
-			if (pic == widget->hoverpic)
+			if (widget->hover || widget->selected)
 			{
 				if (widget->hoverpicwidth)
 					widget->widgetSize.x = widget->hoverpicwidth;
@@ -1021,7 +1056,7 @@ static void update_select_subwidgets (menu_widget_t *widget)
 static void M_UpdateDrawingInformation (menu_widget_t *widget)
 {
 	// only update if the widget or the hudscale has changed
-	if (!(widget->modified || cl_hudscale->modified))
+	if (!(widget->modified || cl_hudscale->modified || widget->dynamic))
 		return;
 
 	M_UpdateWidgetPosition(widget);
@@ -1033,7 +1068,7 @@ static void M_UpdateDrawingInformation (menu_widget_t *widget)
 }
 
 
-static void M_DeselectWidget(menu_widget_t *current)
+static void M_DeselectWidget (menu_widget_t *current)
 {
 	// jitodo - apply changes to field, call this func during keyboard arrow selection
 	current->slider_hover = SLIDER_SELECTED_NONE;
@@ -1043,12 +1078,18 @@ static void M_DeselectWidget(menu_widget_t *current)
 }
 
 
+static void M_UnfocusWidget (menu_widget_t *current)
+{
+	current->hover = false;
+}
+
+
 static menu_widget_t *find_widget_under_cursor (menu_widget_t *widget)
 {
 	menu_widget_t *selected = NULL;
 	menu_widget_t *sub_selected;
 
-	while(widget)
+	while (widget)
 	{
 		if (widget_is_selectable(widget) &&
 			m_mouse.x > widget->mouseBoundaries.left &&
@@ -1061,12 +1102,13 @@ static menu_widget_t *find_widget_under_cursor (menu_widget_t *widget)
 		else
 		{
 			// clear selections
-			M_DeselectWidget(widget);
+			M_UnfocusWidget(widget);
 		}
 
 		if (widget->subwidget)
 		{
 			sub_selected = find_widget_under_cursor(widget->subwidget);
+
 			if (sub_selected)
 				selected = sub_selected;
 		}
@@ -1305,9 +1347,25 @@ static void field_adjustCursor (menu_widget_t *widget)
 static void M_AdjustWidget (menu_screen_t *menu, int direction, qboolean keydown)
 {
 	menu_widget_t *widget;
+	menu_widget_t *selected = NULL;
 
 	// find an active widget, if there is one:
-	for (widget=menu->widget; widget && !widget->hover && !widget->selected; widget = widget->next);
+	for (widget = menu->widget; widget != NULL; widget = widget->next)
+	{
+		if (widget->selected)
+		{
+			selected = widget;
+			break;
+		}
+
+        if (widget->hover)
+		{
+			if (!selected) // use the hover widget only if there is no selected one.
+				selected = widget;
+		}
+	}
+
+	widget = selected;
 
 	if (widget)
 	{
@@ -1382,7 +1440,7 @@ static void widget_execute (menu_widget_t *widget, qboolean doubleclick)
 
 			if (widget->doubleclick)
 			{
-				Cbuf_AddText(widget->doubleclick);
+				Cbuf_AddText(Cmd_MacroExpandString(widget->doubleclick));
 				Cbuf_AddText("\n");
 			}
 		}
@@ -1393,7 +1451,7 @@ static void widget_execute (menu_widget_t *widget, qboolean doubleclick)
 
 			if (widget->command)
 			{
-				Cbuf_AddText(widget->command);
+				Cbuf_AddText(Cmd_MacroExpandString(widget->command));
 				Cbuf_AddText("\n");
 			}
 		}
@@ -1413,10 +1471,31 @@ static void widget_execute (menu_widget_t *widget, qboolean doubleclick)
 			field_activate(widget);
 			break;
 		default:
+			widget->selected = false;
 			break;
 		}
 
 		widget->hover = true;
+
+		while (widget->parent)
+		{
+			widget = widget->parent;
+			widget->hover = true;
+		}
+	}
+}
+
+
+static void M_DeselectAllWidgets (menu_widget_t *widget)
+{
+	while (widget)
+	{
+		M_DeselectWidget(widget);
+
+		if (widget->subwidget)
+			M_DeselectAllWidgets(widget->subwidget);
+
+		widget = widget->next;
 	}
 }
 
@@ -1438,6 +1517,7 @@ static void M_KBAction (menu_screen_t *menu, MENU_ACTION action)
 		switch (action)
 		{
 		case M_ACTION_SELECT:
+			M_DeselectAllWidgets(menu->widget);
 			widget->selected = true;
 			break;
 		case M_ACTION_EXECUTE:
@@ -1486,7 +1566,7 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 		return false;
 
 	// If we're actually over something
-	if (NULL != (newSelection = find_widget_under_cursor(menu->widget))) 
+	if ((newSelection = find_widget_under_cursor(menu->widget))) 
 	{
 		newSelection->modified = true;
 
@@ -1512,6 +1592,8 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 			newSelection->hover = true;
 			break;
 		case M_ACTION_SELECT:
+			M_DeselectAllWidgets(menu->widget);
+
 			switch (newSelection->type)
 			{
 			case WIDGET_TYPE_SLIDER:
@@ -1525,6 +1607,7 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 			default:
 				break;
 			}
+
 			newSelection->selected = true;
 			break;
 		case M_ACTION_EXECUTE:
@@ -1639,10 +1722,11 @@ static void M_PopMenu (const char *sMenuName)
 }
 
 // find the first widget that is selected or hilighted and return it
-// otherwise return null.
-static menu_widget_t *M_GetActiveWidget(menu_screen_t *menu)
+// otherwise return null.  Selected widgets have higher priority.
+static menu_widget_t *M_GetActiveWidget (menu_screen_t *menu)
 {
 	menu_widget_t *widget;
+	menu_widget_t *active = NULL;
 
 	if (!menu)
 		menu = m_current_menu;
@@ -1650,11 +1734,18 @@ static menu_widget_t *M_GetActiveWidget(menu_screen_t *menu)
 	if (!menu)
 		return NULL;
 
-	for (widget=menu->widget; widget && !widget->hover && !widget->selected; widget = widget->next)
-		; // logic all in for loop
+	for (widget = menu->widget; widget; widget = widget->next)
+	{
+		if (widget->selected)
+			return widget;
 
-	return widget;
+		if (widget->hover)
+			active = widget;
+	}
+
+	return active;
 }
+
 
 // returns true if key was handled here (user inputed data into field)
 // returns false if no field was active.
@@ -1791,6 +1882,7 @@ qboolean M_Keyup (int key)
 	if (gamekeydown[key])
 		return false;
 
+
 	if (m_active_bind_command)
 	{
 		if (key != K_MOUSE1) // linux hack
@@ -1866,6 +1958,8 @@ qboolean M_Keydown (int key)
 	}
 	else
 	{
+		menu_widget_t *widget;
+
 		switch (key) 
 		{
 		case K_ESCAPE:
@@ -1892,11 +1986,27 @@ qboolean M_Keydown (int key)
 		case K_MWHEELDOWN:
 			M_MouseAction(m_current_menu, M_ACTION_SCROLLDOWN);
 			break;
-		case K_DOWNARROW:
-			M_HilightNextWidget(m_current_menu);
+		case K_TAB:
+			if (keydown[K_SHIFT])
+				M_HilightPreviousWidget(m_current_menu);
+			else
+				M_HilightNextWidget(m_current_menu);
 			break;
 		case K_UPARROW:
-			M_HilightPreviousWidget(m_current_menu);
+			widget = M_GetActiveWidget(m_current_menu);
+
+			if (widget && widget->type == WIDGET_TYPE_SELECT)
+				M_AdjustWidget(m_current_menu, -1, true);
+			else
+				M_HilightPreviousWidget(m_current_menu);
+			break;
+		case K_DOWNARROW:
+			widget = M_GetActiveWidget(m_current_menu);
+
+			if (widget && widget->type == WIDGET_TYPE_SELECT)
+				M_AdjustWidget(m_current_menu, 1, true);
+			else
+				M_HilightNextWidget(m_current_menu);
 			break;
 		case K_RIGHTARROW:
 			M_AdjustWidget(m_current_menu, 1, true);
@@ -2041,7 +2151,7 @@ static void select_begin_file_list (menu_widget_t *widget, char *findname)
 }
 
 
-static menu_screen_t* M_GetNewMenuScreen(const char *menu_name, const char *background)
+static menu_screen_t* M_GetNewMenuScreen (const char *menu_name, const char *background)
 {
 	menu_screen_t* menu;
 	
@@ -2055,6 +2165,7 @@ static menu_screen_t* M_GetNewMenuScreen(const char *menu_name, const char *back
 	return menu;
 }
 
+
 static void M_ErrorMenu (menu_screen_t* menu, const char *text)
 {
 	char err[16];
@@ -2066,6 +2177,7 @@ static void M_ErrorMenu (menu_screen_t* menu, const char *text)
 	menu->widget->next->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, "Back",
 			NULL, "menu pop", 8, 224, true);
 }
+
 
 static int M_WidgetGetType (const char *s)
 {
@@ -2158,6 +2270,7 @@ static void widget_complete (menu_widget_t *widget)
 	//pthread_mutex_unlock(&m_mut_widgets);
 }
 
+
 static void menu_from_file (menu_screen_t *menu)
 {
 	char menu_filename[MAX_QPATH];
@@ -2246,15 +2359,50 @@ static void menu_from_file (menu_screen_t *menu)
 					else if (Q_streq(token, "password") && widget)
 						widget->flags |= WIDGET_FLAG_PASSWORD;
 					else if (Q_streq(token, "text") && widget)
-						widget->text = text_copy(COM_Parse(&buf));
+					{
+						char *text = COM_Parse(&buf);
+
+						if (strchr(text, '$'))
+							widget->dynamic = true;
+
+						widget->text = text_copy(text);
+					}
 					else if (Q_streq(token, "hovertext") && widget)
-						widget->hovertext = text_copy(COM_Parse(&buf));
+					{
+						char *text = COM_Parse(&buf);
+
+						if (strchr(text, '$'))
+							widget->dynamic = true;
+
+						widget->hovertext = text_copy(text);
+					}
 					else if (Q_streq(token, "selectedtext") && widget)
-						widget->selectedtext = text_copy(COM_Parse(&buf));
+					{
+						char *text = COM_Parse(&buf);
+
+						if (strchr(text, '$'))
+							widget->dynamic = true;
+
+						widget->selectedtext = text_copy(text);
+					}
 					else if (Q_streq(token, "cvar") && widget)
-						widget->cvar = text_copy(COM_Parse(&buf));
+					{
+						char *text = COM_Parse(&buf);
+
+						if (strchr(text, '$'))
+							widget->dynamic = true;
+
+						widget->cvar = text_copy(text);
+					}
 					else if (Q_streq(token, "cvar_default") && widget)
-						widget->cvar_default = text_copy(COM_Parse(&buf));
+					{
+						char *text = COM_Parse(&buf);
+
+						if (strchr(text, '$'))
+							widget->dynamic = true;
+
+						widget->cvar_default = text_copy(text);
+					}
 					else if (Q_streq(token, "command") || Q_streq(token, "cmd"))
 					{
 						if (widget)
@@ -2266,10 +2414,20 @@ static void menu_from_file (menu_screen_t *menu)
 						widget->doubleclick = text_copy(COM_Parse(&buf));
 					else if (Q_streq(token, "pic") && widget)
 					{
-						widget->pic = re.DrawFindPic(COM_Parse(&buf));
+						char *picname = COM_Parse(&buf);
+
+						if (strchr(picname, '$'))
+						{
+							widget->dynamic = true;
+							widget->picname = text_copy(picname);
+						}
+
+						widget->pic = re.DrawFindPic(Cmd_MacroExpandString(picname));
+						
 						// default to double resolution, since it's too blocky otherwise.
 						if (!widget->picwidth)
 							widget->picwidth = widget->pic->width / 2.0f;
+
 						if (!widget->picheight)
 							widget->picheight = widget->pic->height / 2.0f;
 					}
@@ -2279,10 +2437,20 @@ static void menu_from_file (menu_screen_t *menu)
 						widget->picheight = atoi(COM_Parse(&buf));
 					else if (Q_streq(token, "hoverpic") && widget)
 					{
-						widget->hoverpic = re.DrawFindPic(COM_Parse(&buf));
+						char *picname = COM_Parse(&buf);
+
+						if (strchr(picname, '$'))
+						{
+							widget->dynamic = true;
+							widget->hoverpicname = text_copy(picname);
+						}
+
+						widget->hoverpic = re.DrawFindPic(Cmd_MacroExpandString(picname));
+
 						// default to double resolution, since it's too blocky otherwise.
 						if (!widget->hoverpicwidth)
 							widget->hoverpicwidth = widget->hoverpic->width / 2.0f;
+
 						if (!widget->hoverpicheight)
 							widget->hoverpicheight = widget->hoverpic->height / 2.0f;
 					}
@@ -2291,7 +2459,17 @@ static void menu_from_file (menu_screen_t *menu)
 					else if (Q_streq(token, "hoverpicheight") && widget)
 						widget->hoverpicheight = atoi(COM_Parse(&buf));
 					else if (Q_streq(token, "selectedpic") && widget)
-						widget->selectedpic = re.DrawFindPic(COM_Parse(&buf));
+					{
+						char *picname = COM_Parse(&buf);
+
+						if (strchr(picname, '$'))
+						{
+							widget->dynamic = true;
+							widget->selectedpicname = text_copy(picname);
+						}
+
+						widget->selectedpic = re.DrawFindPic(Cmd_MacroExpandString(picname));
+					}
 					else if ((Q_streq(token, "xabs") || Q_streq(token, "xleft") || Q_streq(token, "x")) && widget)
 						x = widget->x = atoi(COM_Parse(&buf));
 					else if ((Q_streq(token, "yabs") || Q_streq(token, "ytop") || Q_streq(token, "y")) && widget)
@@ -2548,7 +2726,7 @@ void M_Menu_f (void)
 
 		if (menu->command)
 		{
-			Cbuf_AddText(menu->command);
+			Cbuf_AddText(Cmd_MacroExpandString(menu->command));
 			Cbuf_AddText("\n");
 		}
 
@@ -2586,7 +2764,7 @@ void M_Init (void)
 }
 
 
-static void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, SLIDER_SELECTED slider_selected)
+static void M_DrawSlider (int x, int y, float pos, SLIDER_SELECTED slider_hover, SLIDER_SELECTED slider_selected)
 {
 	int xorig;
 
@@ -2599,6 +2777,7 @@ static void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, 
 		re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_slider1lh);
 	else
 		re.DrawStretchPic2(x, y, SLIDER_BUTTON_WIDTH, SLIDER_BUTTON_HEIGHT, i_slider1l);
+
 	x += SLIDER_BUTTON_WIDTH;
 
 	// tray:
@@ -2606,6 +2785,7 @@ static void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, 
 		re.DrawStretchPic2(x, y, SLIDER_TRAY_WIDTH, SLIDER_TRAY_HEIGHT, i_slider1th);
 	else
 		re.DrawStretchPic2(x, y, SLIDER_TRAY_WIDTH, SLIDER_TRAY_HEIGHT, i_slider1t);
+
 	x += SLIDER_TRAY_WIDTH;
 
 	// right arrow
@@ -2618,6 +2798,7 @@ static void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, 
 
 	// knob:
 	x = xorig + SLIDER_BUTTON_WIDTH + pos*(SLIDER_TRAY_WIDTH-SLIDER_KNOB_WIDTH);
+
 	if (slider_selected == SLIDER_SELECTED_TRAY ||
 		slider_hover == SLIDER_SELECTED_KNOB ||	slider_selected == SLIDER_SELECTED_KNOB)
 		re.DrawStretchPic2(x, y, SLIDER_KNOB_WIDTH, SLIDER_KNOB_HEIGHT, i_slider1bs);
@@ -2626,6 +2807,7 @@ static void M_DrawSlider(int x, int y, float pos, SLIDER_SELECTED slider_hover, 
 	else
 		re.DrawStretchPic2(x, y, SLIDER_KNOB_WIDTH, SLIDER_KNOB_HEIGHT, i_slider1b);
 }
+
 
 static float M_SliderGetPos(menu_widget_t *widget)
 {
@@ -2648,11 +2830,13 @@ static float M_SliderGetPos(menu_widget_t *widget)
 
 	if (retval > 1.0f)
 		retval = 1.0f;
+
 	if (retval < 0.0f)
 		retval = 0.0f;
 
 	return retval;
 }
+
 
 static void M_DrawCheckbox (int x, int y, qboolean checked, qboolean hover, qboolean selected)
 {
@@ -2767,39 +2951,92 @@ static void M_DrawWidget (menu_widget_t *widget)
 	if (widget->enabled)
 	{
 		if (widget->pic)
-			pic = widget->pic;
+		{
+			if (widget->dynamic)
+				pic = re.DrawFindPic(Cmd_MacroExpandString(widget->picname));
+			else
+				pic = widget->pic;
+		}
 
 		if (widget->text)
-			text = widget->text;
+		{
+			if (widget->dynamic)
+				text = Cmd_MacroExpandString(widget->text);
+			else
+				text = widget->text;
+		}
 
-		//
 		// Update text/pic for hovering/selection
-		//
 		if (widget->selected)
 		{
 			if (widget->selectedtext)
-				text = widget->selectedtext;
+			{
+				if (widget->dynamic)
+					text = Cmd_MacroExpandString(widget->selectedtext);
+				else
+					text = widget->selectedtext;
+			}
 			else if (widget->text)
-				text = va("%c%c%s", CHAR_COLOR, 214, widget->text);
+			{
+				if (widget->dynamic)
+					text = va("%c%c%s", CHAR_COLOR, 214, Cmd_MacroExpandString(widget->text));
+				else
+					text = va("%c%c%s", CHAR_COLOR, 214, widget->text);
+			}
 
 			if (widget->selectedpic)
-				pic = widget->selectedpic;
+			{
+				if (widget->dynamic && widget->selectedpicname)
+					pic = re.DrawFindPic(Cmd_MacroExpandString(widget->selectedpicname));
+				else
+					pic = widget->selectedpic;
+			}
 			else if (widget->hoverpic)
-				pic = widget->hoverpic;
+			{
+				if (widget->dynamic && widget->hoverpicname)
+					pic = re.DrawFindPic(Cmd_MacroExpandString(widget->hoverpicname));
+				else
+					pic = widget->hoverpic;
+			}
 			else if (widget->pic)
-				pic = widget->pic;
+			{
+				if (widget->dynamic && widget->picname)
+					pic = re.DrawFindPic(Cmd_MacroExpandString(widget->picname));
+				else
+					pic = widget->pic;
+			}
 		}
 		else if (widget->hover)
 		{
 			if (widget->hovertext)
-				text = widget->hovertext;
+			{
+				if (widget->dynamic)
+					text = Cmd_MacroExpandString(widget->hovertext);
+				else
+					text = widget->hovertext;
+			}
 			else if (widget->text)
-				text = va("%c%c%s", CHAR_COLOR, 218, widget->text);
+			{
+				if (widget->dynamic)
+					text = va("%c%c%s", CHAR_COLOR, 218, Cmd_MacroExpandString(widget->text));
+				else
+					text = va("%c%c%s", CHAR_COLOR, 218, widget->text);
+			}
 			
 			if (widget->hoverpic)
-				pic = widget->hoverpic;
+			{
+				if (widget->dynamic && widget->hoverpicname)
+					pic = re.DrawFindPic(Cmd_MacroExpandString(widget->hoverpicname));
+				else
+					pic = widget->hoverpic;
+			}
 			else if (widget->pic)
-				pic = widget->pic;
+			{
+				if (widget->dynamic && widget->picname)
+					pic = re.DrawFindPic(Cmd_MacroExpandString(widget->picname));
+				else
+					pic = widget->pic;
+			}
 		}
 
 		switch (widget->type) 
@@ -2813,6 +3050,7 @@ static void M_DrawWidget (menu_widget_t *widget)
 				checkbox_checked = true;
 			else
 				checkbox_checked = false;
+
 			M_DrawCheckbox(widget->widgetCorner.x, widget->widgetCorner.y, 
 				checkbox_checked, widget->hover, widget->selected);
 			break;
