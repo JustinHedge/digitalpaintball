@@ -64,7 +64,7 @@ void SCR_DrawPaintballHUD1 (void) // todo version check
 		
 		// Only draw the other hud stuff if the player
 		// isn't observing:
-		if (picname && picname[5] != 'w')
+		if (picname && picname[5] != 'w') // !mask_w
 		{
 			teamcolor = picname[5];
 

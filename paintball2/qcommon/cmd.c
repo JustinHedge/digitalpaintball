@@ -961,7 +961,7 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 
 	while (1)
 	{
-		// skip whitespace up to a /n
+		// skip whitespace up to a newline
 		while (*text && *text <= ' ' && *text != '\n')
 			text++;
 

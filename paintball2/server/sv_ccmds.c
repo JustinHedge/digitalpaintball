@@ -103,6 +103,7 @@ qboolean SV_SetPlayer (void)
 	if (s[0] >= '0' && s[0] <= '9')
 	{
 		idnum = atoi(Cmd_Argv(1));
+
 		if (idnum < 0 || idnum >= maxclients->value)
 		{
 			Com_Printf("Bad client slot: %i\n", idnum);
@@ -111,6 +112,7 @@ qboolean SV_SetPlayer (void)
 
 		sv_client = &svs.clients[idnum];
 		sv_player = sv_client->edict;
+
 		if (!sv_client->state)
 		{
 			Com_Printf("Client %i is not active\n", idnum);
@@ -120,10 +122,11 @@ qboolean SV_SetPlayer (void)
 	}
 
 	// check for a name match
-	for (i=0,cl=svs.clients ; i<maxclients->value; i++,cl++)
+	for (i = 0, cl = svs.clients; i < maxclients->value; i++, cl++)
 	{
 		if (!cl->state)
 			continue;
+
 		if (Q_streq(cl->name, s))
 		{
 			sv_client = cl;
@@ -132,7 +135,7 @@ qboolean SV_SetPlayer (void)
 		}
 	}
 
-	Com_Printf ("Userid %s is not on the server\n", s);
+	Com_Printf("Userid %s is not on the server\n", s);
 	return false;
 }
 
@@ -725,13 +728,13 @@ void SV_Kick_f (void)
 {
 	if (!svs.initialized)
 	{
-		Com_Printf ("No server running.\n");
+		Com_Printf("No server running.\n");
 		return;
 	}
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("Usage: kick <userid>\n");
+		Com_Printf("Usage: kick <userid>\n");
 		return;
 	}
 
@@ -887,16 +890,22 @@ void SV_DumpUser_f (void)
 {
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("Usage: info <userid>\n");
+		Com_Printf("Usage: dumpuser <userid>\n");
 		return;
 	}
 
-	if (!SV_SetPlayer ())
+	if (!svs.initialized) // jit
+	{
+		Com_Printf("No server running.\n");
+		return;
+	}
+
+	if (!SV_SetPlayer())
 		return;
 
-	Com_Printf ("userinfo\n");
-	Com_Printf ("--------\n");
-	Info_Print (sv_client->userinfo);
+	Com_Printf("userinfo\n");
+	Com_Printf("--------\n");
+	Info_Print(sv_client->userinfo);
 
 }
 

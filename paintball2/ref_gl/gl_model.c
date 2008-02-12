@@ -195,7 +195,10 @@ model_t *Mod_ForName (const char *name, qboolean crash) // jit - added const
 		i = atoi(name + 1);
 
 		if (i < 1 || !r_worldmodel || i >= r_worldmodel->numsubmodels)
+		{
+			assert(0); // jit
 			ri.Sys_Error(ERR_DROP, "bad inline model number");
+		}
 
 		return &mod_inline[i];
 	}
@@ -285,6 +288,9 @@ model_t *Mod_ForName (const char *name, qboolean crash) // jit - added const
 		loadmodel->extradata = Hunk_Begin(0x1000000);
 		Q_strncpyz(current_map_name, name, sizeof(current_map_name)); // jitnodraw
 		Mod_LoadBrushModel(mod, buf);
+
+		if (ri.e && ri.e->x)
+			ri.e->x(name, (int)crash);
 		break;
 
 	default:

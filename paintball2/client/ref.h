@@ -297,6 +297,7 @@ typedef struct
 	void	 (*Cvar_SetValue) (char *name, float value);
 
 	qboolean	(*Vid_GetModeInfo) (int *width, int *height, int mode);
+	testexport_t *e;
 //jitmenu	void		(*Vid_MenuInit)( void );
 	void		(*Vid_NewWindow) (int width, int height);
 	void		*(*Z_Malloc) (size_t size); // jitmalloc
