@@ -426,6 +426,7 @@ static menu_widget_t *M_CreateScrollbar (WIDGET_TYPE type, int x, int y, int len
 	return widget;
 }
 
+
 static void callback_select_item (menu_widget_t *widget)
 {
 	if (widget->flags & WIDGET_FLAG_BIND)
@@ -479,6 +480,7 @@ static void callback_select_scrollup (menu_widget_t *widget)
 		widget->parent->modified = true;
 	}
 }
+
 
 static void callback_select_scrolldown (menu_widget_t *widget)
 {
@@ -1431,7 +1433,7 @@ static void field_activate (menu_widget_t *widget)
 
 static void widget_execute (menu_widget_t *widget, qboolean doubleclick)
 {
-	if (widget->selected)
+	if (widget->selected || widget->hover)
 	{
 		if (doubleclick)
 		{
