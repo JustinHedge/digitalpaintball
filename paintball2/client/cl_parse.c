@@ -1214,7 +1214,10 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 		s ++;
 
 	// todo - create a separate chat console.
-	S_StartLocalSound("misc/talk.wav");
+	if (isteam)
+		S_StartLocalSound("misc/talk_team.wav");
+	else
+		S_StartLocalSound("misc/talk.wav");
 
 	if (cl_timestamp->value)
 		Com_Printf("%c%c[%s] %c%s%s%s%c%c%s%s %s%s",
