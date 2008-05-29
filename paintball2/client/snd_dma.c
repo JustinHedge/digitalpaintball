@@ -45,7 +45,7 @@ void S_StopAllSounds(void);
 // only begin attenuating sound volumes when outside the FULLVOLUME range
 #define		SOUND_FULLVOLUME	80
 
-#define		SOUND_LOOPATTENUATE	0.003
+#define		SOUND_LOOPATTENUATE	0.0035 // jitsound - was .003
 
 
 int			s_registration_sequence;
@@ -564,7 +564,7 @@ void S_SpatializeOrigin (vec3_t origin, float master_vol, float dist_mult, int *
 {
     vec_t		dot;
     vec_t		dist;
-    vec_t		lscale, rscale, scale;
+    vec_t		lscale, rscale, scale, scale2;
     vec3_t		source_vec;
 
 	if (cls.state != ca_active)
@@ -575,34 +575,51 @@ void S_SpatializeOrigin (vec3_t origin, float master_vol, float dist_mult, int *
 
 // calculate stereo seperation and distance attenuation
 	VectorSubtract(origin, listener_origin, source_vec);
-
 	dist = VectorNormalize(source_vec);
 	dist -= SOUND_FULLVOLUME;
+	
 	if (dist < 0)
 		dist = 0;			// close enough to be at full volume
+
 	dist *= dist_mult;		// different attenuation levels
-	
+	//dist *= dist_mult * 10.0f;	// jitsound
 	dot = DotProduct(listener_right, source_vec);
 
 	if (dma.channels == 1 || !dist_mult)
 	{ // no attenuation = no spatialization
-		rscale = 1.0;
-		lscale = 1.0;
+		rscale = 1.0f;
+		lscale = 1.0f;
 	}
 	else
 	{
-		rscale = 0.5 * (1.0 + dot);
-		lscale = 0.5*(1.0 - dot);
+		rscale = 0.5f * (1.0f + dot);
+		lscale = 0.5f * (1.0f - dot);
 	}
 
 	// add in distance effect
-	scale = (1.0 - dist) * rscale;
-	*right_vol = (int) (master_vol * scale);
+	//scale = (1.0 - dist) * rscale;
+	//scale = rscale / (1.0f + dist); // jitsound
+	scale = rscale / (1.0f + dist * 20.0f); // jitsound
+	scale2 = (1.0f - dist) * rscale;
+
+	if (scale2 < scale) // jitsound
+		scale = scale2;
+
+	*right_vol = (int)(master_vol * scale);
+
 	if (*right_vol < 0)
 		*right_vol = 0;
 
-	scale = (1.0 - dist) * lscale;
-	*left_vol = (int) (master_vol * scale);
+	//scale = (1.0 - dist) * lscale;
+	//scale = lscale / (1.0f + dist); // jitsound
+	scale = lscale / (1.0f + dist * 20.0f); // jitsound
+	scale2 = (1.0f - dist) * lscale;
+
+	if (scale2 < scale)
+		scale = scale2;
+
+	*left_vol = (int)(master_vol * scale);
+
 	if (*left_vol < 0)
 		*left_vol = 0;
 }
@@ -702,9 +719,10 @@ void S_IssuePlaysound (playsound_t *ps)
 
 	// spatialize
 	if (ps->attenuation == ATTN_STATIC)
-		ch->dist_mult = ps->attenuation * 0.001;
+		ch->dist_mult = SOUND_LOOPATTENUATE; // jitsound - was attenuation * .001
 	else
-		ch->dist_mult = ps->attenuation * 0.0005;
+		ch->dist_mult = ps->attenuation * 0.00025f; // jitsound - was 0.0005
+
 	ch->master_vol = ps->volume;
 	ch->entnum = ps->entnum;
 	ch->entchannel = ps->entchannel;
@@ -990,26 +1008,29 @@ void S_AddLoopSounds (void)
 	if (!cl.sound_prepped)
 		return;
 
-	for (i=0 ; i<cl.frame.num_entities ; i++)
+	for (i = 0; i < cl.frame.num_entities; i++)
 	{
 		num = (cl.frame.parse_entities + i)&(MAX_PARSE_ENTITIES-1);
 		ent = &cl_parse_entities[num];
 		sounds[i] = ent->sound;
 	}
 
-	for (i=0 ; i<cl.frame.num_entities ; i++)
+	for (i = 0; i < cl.frame.num_entities; i++)
 	{
 		if (!sounds[i])
 			continue;
 
 		sfx = cl.sound_precache[sounds[i]];
+
 		if (!sfx)
 			continue;		// bad sound effect
+
 		sc = sfx->cache;
+
 		if (!sc)
 			continue;
 
-		num = (cl.frame.parse_entities + i)&(MAX_PARSE_ENTITIES-1);
+		num = (cl.frame.parse_entities + i) & (MAX_PARSE_ENTITIES - 1);
 		ent = &cl_parse_entities[num];
 
 		// find the total contribution of all sounds of this type
