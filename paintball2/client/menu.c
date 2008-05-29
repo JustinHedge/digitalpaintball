@@ -49,7 +49,7 @@ pthread_mutex_t			m_mut_widgets;
 extern m_serverlist_t	m_serverlist;
 
 static void M_UpdateDrawingInformation (menu_widget_t *widget);
-extern char *Cmd_MacroExpandString (char *text);
+extern char *Cmd_MacroExpandString (const char *text);
 
 // same thing as strdup, only uses Z_Malloc
 char *text_copy (const char *in)
@@ -304,7 +304,7 @@ static menu_widget_t *M_GetNewBlankMenuWidget (void)
 
 
 static menu_widget_t *M_GetNewMenuWidget (WIDGET_TYPE type, const char *text, const char *cvar, 
-								  const char *cmd, int x, int y, qboolean enabled)
+								  const char *cmd, int x, int y, qboolean enabled, qboolean parse_vars)
 {
 	menu_widget_t *widget;
 
@@ -313,7 +313,7 @@ static menu_widget_t *M_GetNewMenuWidget (WIDGET_TYPE type, const char *text, co
 
 	if (text)
 	{
-		if (strchr(text, '$'))
+		if (parse_vars && strchr(text, '$'))
 			widget->dynamic = true;
 
 		widget->text = text_copy(text);
@@ -321,7 +321,7 @@ static menu_widget_t *M_GetNewMenuWidget (WIDGET_TYPE type, const char *text, co
 
 	if (cvar)
 	{
-		if (strchr(cvar, '$'))
+		if (parse_vars && strchr(cvar, '$'))
 			widget->dynamic = true;
 
 		widget->cvar = text_copy(cvar);
@@ -927,7 +927,7 @@ static void update_select_subwidgets (menu_widget_t *widget)
 		new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL,
 			x + width*TEXT_WIDTH_UNSCALED - 
 			SCROLL_ARROW_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED*2,
-			y, true);
+			y, true, false);
 
 		new_widget->callback = callback_select_scrollup;
 		new_widget->picwidth = SCROLL_ARROW_WIDTH_UNSCALED;
@@ -945,7 +945,7 @@ static void update_select_subwidgets (menu_widget_t *widget)
 			SCROLL_ARROW_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED*2,
 			y + widget->select_rows*
 			(TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + SELECT_VSPACING_UNSCALED - 
-			SCROLL_ARROW_HEIGHT_UNSCALED, true);
+			SCROLL_ARROW_HEIGHT_UNSCALED, true, false);
 
 		new_widget->callback = callback_select_scrolldown;
 		new_widget->picwidth = SCROLL_ARROW_WIDTH_UNSCALED;
@@ -1008,7 +1008,7 @@ static void update_select_subwidgets (menu_widget_t *widget)
 				x+SELECT_HSPACING_UNSCALED, 
 				y + (i - widget->select_vstart) * 
 				(TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED) +
-				SELECT_VSPACING_UNSCALED, true);
+				SELECT_VSPACING_UNSCALED, true, false);
 
 			*nullpos = temp;
 		}
@@ -1019,7 +1019,7 @@ static void update_select_subwidgets (menu_widget_t *widget)
 				x+SELECT_HSPACING_UNSCALED, 
 				y + (i - widget->select_vstart) * 
 				(TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED) +
-				SELECT_VSPACING_UNSCALED, true);
+				SELECT_VSPACING_UNSCALED, true, false);
 		}
 
 		// set images for background
@@ -1320,6 +1320,7 @@ static void M_HilightPreviousWidget (menu_screen_t *menu)
 	}
 }
 
+
 static void field_adjustCursor (menu_widget_t *widget)
 {
 	int pos, string_len=0;
@@ -1425,11 +1426,13 @@ static void M_AdjustWidget (menu_screen_t *menu, int direction, qboolean keydown
 	}
 }
 
+
 static void field_activate (menu_widget_t *widget)
 {
 	widget->field_cursorpos = (m_mouse.x - widget->widgetCorner.x)/(TEXT_WIDTH) + widget->field_start;
 	field_adjustCursor(widget);
 }
+
 
 static void widget_execute (menu_widget_t *widget, qboolean doubleclick)
 {
@@ -2133,21 +2136,25 @@ static void select_begin_list (menu_widget_t *widget, char *buf)
 	}
 }
 
-static void select_strip_from_list (menu_widget_t *widget, const char *striptext)
+
+static void select_strip_from_list (menu_widget_t *widget, const char *striptext_in)
 {
 	int i, len;
 	char *textpos;
+	const char *striptext;
 
+	striptext = Cmd_MacroExpandString(striptext_in); // for variables in menu widgets
 	len = strlen(striptext);
 
 	for (i = 0; i < widget->select_totalitems; i++)
 		if (textpos = strstr(widget->select_list[i], striptext))
-			strcpy(textpos, textpos+len);
+			strcpy(textpos, textpos + len);
 }
+
 
 static void select_begin_file_list (menu_widget_t *widget, char *findname)
 {
-	widget->select_list = FS_ListFiles(findname, &widget->select_totalitems, 0, 0);
+	widget->select_list = FS_ListFiles(Cmd_MacroExpandString(findname), &widget->select_totalitems, 0, 0);
 	widget->select_totalitems--;
 	widget->flags |= WIDGET_FLAG_FILELIST;
 }
@@ -2173,11 +2180,11 @@ static void M_ErrorMenu (menu_screen_t* menu, const char *text)
 	char err[16];
 	sprintf(err, "%c%c%cERROR:", CHAR_UNDERLINE, CHAR_COLOR, 'A');
 	menu->widget = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, err,
-			NULL, NULL, 60, 116, true);
+			NULL, NULL, 60, 116, true, false);
 	menu->widget->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, text,
-			NULL, NULL, 60, 124, true);
+			NULL, NULL, 60, 124, true, false);
 	menu->widget->next->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, "Back",
-			NULL, "menu pop", 8, 224, true);
+			NULL, "menu pop", 8, 224, true, false);
 }
 
 
@@ -2954,7 +2961,7 @@ static void M_DrawWidget (menu_widget_t *widget)
 	{
 		if (widget->pic)
 		{
-			if (widget->dynamic)
+			if (widget->dynamic && widget->picname)
 				pic = re.DrawFindPic(Cmd_MacroExpandString(widget->picname));
 			else
 				pic = widget->pic;
