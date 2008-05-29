@@ -857,6 +857,9 @@ char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned 
 	int nfiles = 0;
 	char **list = 0;
 
+	if (!findname || !*findname)
+		return NULL;
+
 	s = Sys_FindFirst(findname, musthave, canthave);
 
 	while(s)
