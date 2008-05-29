@@ -93,24 +93,22 @@ void Draw_Char (int x, int y, int num) // jitodo -- try to remove all calls to t
 	int textscale;
 
 	textscale = (int)cl_hudscale->value; // jithudscale
-
 	num &= 255;
 	
-	if ( (num&127) == 32 )
+	if ((num & 127) == 32)
 		return;		// space
 
 	if (y <= -8)
 		return;			// totally off screen
 
-	row = num>>4;
-	col = num&15;
-
-	frow = row*0.0625;
-	fcol = col*0.0625;
-	size = 0.0625;
+	row = num >> 4;
+	col = num & 15;
+	frow = row * 0.0625;
+	fcol = col * 0.0625;
+	size = 0.0625f;
 	GLSTATE_DISABLE_ALPHATEST // jitconsole
 	GLSTATE_ENABLE_BLEND // jitconsole
-	GL_Bind (draw_chars->texnum);
+	GL_Bind(draw_chars->texnum);
 
 #ifdef BEEFQUAKERENDER // jit3dfx
 	VA_SetElem2(tex_array[0],fcol, frow);
@@ -123,16 +121,16 @@ void Draw_Char (int x, int y, int num) // jitodo -- try to remove all calls to t
 	VA_SetElem2(vert_array[3],x, y+8*textscale);
 	qglDrawArrays (GL_QUADS, 0, 4);
 #else
-	qglBegin (GL_QUADS);
-	qglTexCoord2f (fcol, frow);
-	qglVertex2f (x, y);
-	qglTexCoord2f (fcol + size, frow);
-	qglVertex2f (x+8*textscale, y); // jithudscale...
-	qglTexCoord2f (fcol + size, frow + size);
-	qglVertex2f (x+8*textscale, y+8*textscale);
-	qglTexCoord2f (fcol, frow + size);
-	qglVertex2f (x, y+8*textscale);
-	qglEnd ();
+	qglBegin(GL_QUADS);
+	qglTexCoord2f(fcol, frow);
+	qglVertex2f(x, y);
+	qglTexCoord2f(fcol + size, frow);
+	qglVertex2f(x + 8 * textscale, y); // jithudscale...
+	qglTexCoord2f(fcol + size, frow + size);
+	qglVertex2f(x + 8 * textscale, y+8*textscale);
+	qglTexCoord2f(fcol, frow + size);
+	qglVertex2f(x, y + 8 * textscale);
+	qglEnd();
 #endif
 }
 
@@ -829,9 +827,9 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 	int			row;
 	float		t;
 
-	GL_Bind (0);
+	GL_Bind(0);
 
-	if (rows<=256)
+	if (rows <= 256)
 	{
 		hscale = 1;
 		trows = rows;
@@ -841,7 +839,8 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 		hscale = rows * 0.00390625; // /256.0;
 		trows = 256;
 	}
-	t = rows*hscale * 0.00390625;// / 256;
+
+	t = rows * hscale * 0.00390625;// / 256;
 
 	if (!qglColorTableEXT)
 	{

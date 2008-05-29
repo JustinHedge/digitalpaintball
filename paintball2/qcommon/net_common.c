@@ -193,7 +193,7 @@ int NET_IPSocket (char *net_interface, int port)
 	u_long _true = 1;
 	int     i = 1;
 
-	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+	if ((newsocket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 	{
 #ifdef WIN32
 		int err;

@@ -786,6 +786,7 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	rscript_t		*rs; // jitrscript
 	image_t			*skin_image;
 	axis_origin_t	*pose;
+	qboolean		counttris = true;
 
 	if (meshnum < 0 || meshnum >= skmodel->nummeshes)
 		return;
@@ -884,7 +885,6 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 	numtris = mesh->numtris;
 	numverts = mesh->numverts;
-	c_alias_polys += numtris;
 	boneverts = mesh->vertexes->verts;
 	indexes = mesh->indexes;
 
@@ -929,11 +929,16 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 	if (!skin_image)
 		skin_image = mesh->skins[e->skinnum];
+	else
+		counttris = false; // entity-specified skin (probably a player model)
 
 	if (!skin_image)
 		skin_image = r_notexture;
 
 	rs = skin_image->rscript;
+
+	if (counttris)
+		c_alias_polys += numtris;
 
 	// Lighting done in software for now -- just vertex colors.  Simulates Q2 style lighting.
 	for (j = 0; j < numverts; j++)

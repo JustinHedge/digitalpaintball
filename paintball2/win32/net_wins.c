@@ -420,7 +420,7 @@ int NET_IPXSocket (int port)
 	int					_true = 1;
 	int					err;
 
-	if ((newsocket = socket (PF_IPX, SOCK_DGRAM, NSPROTO_IPX)) == -1)
+	if ((newsocket = socket(PF_IPX, SOCK_DGRAM, NSPROTO_IPX)) == -1)
 	{
 		err = WSAGetLastError();
 		if (err != WSAEAFNOSUPPORT)
@@ -429,31 +429,32 @@ int NET_IPXSocket (int port)
 	}
 
 	// make it non-blocking
-	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1)
+	if (ioctlsocket(newsocket, FIONBIO, &_true) == -1)
 	{
-		Com_Printf ("WARNING: IPX_Socket: ioctl FIONBIO: %s\n", NET_ErrorString());
+		Com_Printf("WARNING: IPX_Socket: ioctl FIONBIO: %s\n", NET_ErrorString());
 		return 0;
 	}
 
 	// make it broadcast capable
 	if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, (char *)&_true, sizeof(_true)) == -1)
 	{
-		Com_Printf ("WARNING: IPX_Socket: setsockopt SO_BROADCAST: %s\n", NET_ErrorString());
+		Com_Printf("WARNING: IPX_Socket: setsockopt SO_BROADCAST: %s\n", NET_ErrorString());
 		return 0;
 	}
 
 	address.sa_family = AF_IPX;
-	memset (address.sa_netnum, 0, 4);
-	memset (address.sa_nodenum, 0, 6);
+	memset(address.sa_netnum, 0, 4);
+	memset(address.sa_nodenum, 0, 6);
+
 	if (port == PORT_ANY)
 		address.sa_socket = 0;
 	else
 		address.sa_socket = htons((short)port);
 
-	if ( bind (newsocket, (void *)&address, sizeof(address)) == -1)
+	if (bind(newsocket, (void *)&address, sizeof(address)) == -1)
 	{
-		Com_Printf ("WARNING: IPX_Socket: bind: %s\n", NET_ErrorString());
-		closesocket (newsocket);
+		Com_Printf("WARNING: IPX_Socket: bind: %s\n", NET_ErrorString());
+		closesocket(newsocket);
 		return 0;
 	}
 
@@ -476,6 +477,7 @@ void NET_OpenIPX (void)
 	if (!ipx_sockets[NS_SERVER])
 	{
 		port = Cvar_Get("ipx_hostport", "0", CVAR_NOSET)->value;
+
 		if (!port)
 		{
 			port = Cvar_Get("hostport", "0", CVAR_NOSET)->value;
@@ -486,7 +488,7 @@ void NET_OpenIPX (void)
 			}
 		}
 
-		ipx_sockets[NS_SERVER] = NET_IPXSocket (port);
+		ipx_sockets[NS_SERVER] = NET_IPXSocket(port);
 	}
 
 	// dedicated servers don't need client ports
@@ -505,7 +507,7 @@ void NET_OpenIPX (void)
 				port = PORT_ANY;
 		}
 
-		ipx_sockets[NS_CLIENT] = NET_IPXSocket (port);
+		ipx_sockets[NS_CLIENT] = NET_IPXSocket(port);
 
 		if (!ipx_sockets[NS_CLIENT])
 			ipx_sockets[NS_CLIENT] = NET_IPXSocket(PORT_ANY);
@@ -606,10 +608,10 @@ void NET_Init (void)
 	int		r;
 
 	wVersionRequested = MAKEWORD(1, 1); 
-	r = WSAStartup (MAKEWORD(1, 1), &winsockdata);
+	r = WSAStartup(MAKEWORD(1, 1), &winsockdata);
 
 	if (r)
-		Com_Error (ERR_FATAL,"Winsock initialization failed.");
+		Com_Error(ERR_FATAL,"Winsock initialization failed.");
 
 	Com_Printf("Winsock Initialized\n");
 	noudp = Cvar_Get("noudp", "0", CVAR_NOSET);

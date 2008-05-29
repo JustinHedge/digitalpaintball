@@ -735,129 +735,137 @@ Cmd_MacroExpandString
 ======================
 */
 #if 1
-char *Cmd_MacroExpandString (char *text) // from q2pro by [SkulleR] - jitcvar
+char *Cmd_MacroExpandString (const char *text) // from q2pro by [SkulleR] - jitcvar
 {
-   int      i, j, count, len;
-   qboolean   inquote;
-   char   *scan, *start;
-   static   char   expanded[MAX_STRING_CHARS];
-   char   temporary[MAX_STRING_CHARS];
-   char   *token;
-   cvar_t   *var;
+	int i, j, count, len;
+	qboolean inquote;
+	char *scan, *start;
+	static char expanded[MAX_STRING_CHARS];
+	char temporary[MAX_STRING_CHARS];
+	char *token;
+	cvar_t *var;
+	register char c;
 
-   inquote = false;
-   scan = text;
-   len = strlen(scan);
+	if (!text)
+	{
+		assert(text);
+		return NULL;
+	}
 
-   if (len >= MAX_STRING_CHARS)
-   {
-      Com_Printf("Line exceeded %i chars, discarded.\n", MAX_STRING_CHARS);
-      return NULL;
-   }
+	inquote = false;
+	scan = text;
+	len = strlen(scan);
 
-   count = 0;
+	if (len >= MAX_STRING_CHARS)
+	{
+		Com_Printf("Line exceeded %i chars, discarded.\n", MAX_STRING_CHARS);
+		return NULL;
+	}
 
-   for (i = 0; i < len; i++)
-   {
-      if (!scan[i])
-         break;
+	count = 0;
 
-      if (scan[i] == '"')
-         inquote ^= 1;
+	for (i = 0; i < len; i++)
+	{
+		if (!scan[i])
+			break;
 
-      if (inquote)
-         continue;   // don't expand inside quotes
+		if (scan[i] == '"')
+			inquote ^= 1;
 
-      if (scan[i] != '$')
-         continue;
-      
-      // scan out the complete macro
-      start = scan + i + 1;
+		if (inquote)
+			continue;   // don't expand inside quotes
 
-      if (!*start)
-         break;
+		if (scan[i] != '$')
+			continue;
 
-      // convert $$text to $text and skip
-      if (*start == '$')
-	  {
-         strncpy(temporary, scan, i);
-         strcpy(temporary + i, start);
-         strcpy(expanded, temporary);
-         scan = expanded;
-         // jit i++;
-         continue;
-      }
+		// scan out the complete macro
+		start = scan + i + 1;
 
-	  while (*start == 32) // jitcvar - remove whitespace between $ and cvar name
-		  start++;
+		if (!*start)
+			break;
 
-      // allow $var$ scripting
-      token = temporary;
+		// convert $$text to $text and skip
+		if (*start == '$')
+		{
+			strncpy(temporary, scan, i);
+			strcpy(temporary + i, start);
+			strcpy(expanded, temporary);
+			scan = expanded;
+			// jit i++;
+			continue;
+		}
 
-      while (*start > 32)
-	  {
-         *token++ = *start++;
+		while (*start == 32) // jitcvar - remove whitespace between $ and cvar name
+			start++;
 
-         if (*start == '$')
-		 {
-            start++;
-            break;
-         }
-      }
-      *token = 0;
+		// allow $var$ scripting
+		token = temporary;
 
-      if (token == temporary)
-         continue;
+		while ((c = *start) > 32  && c != ';')
+		{
+			*token++ = *start++;
 
-	  // check for macros first
-	  /*macro = Cmd_MacroFind( temporary );
-	  if ( macro ) {
-	  macro->function( buffer, sizeof( buffer ) );
-	  token = buffer;
-	  } else {*/
-	  //var = Cvar_FindVar( temporary );
-	  var = Cvar_Get(temporary, 0, 0); // jit (don't have that func)
+			if (*start == '$')
+			{
+				start++;
+				break;
+			}
+		}
 
-	  if (var) //&& !(var->flags & CVAR_PRIVATE)) {
-		  token = var->string;
-	  else
-		  token = "";
-	  //}
+		*token = 0;
 
-      j = strlen(token);
-      len += j;
+		if (token == temporary)
+			continue;
 
-      if (len >= MAX_STRING_CHARS)
-	  {
-         Com_Printf("Expanded line exceeded %i chars, discarded.\n", MAX_STRING_CHARS );
-         return NULL;
-      }
+		// check for macros first
+		/*macro = Cmd_MacroFind( temporary );
+		if ( macro ) {
+		macro->function( buffer, sizeof( buffer ) );
+		token = buffer;
+		} else {*/
+		//var = Cvar_FindVar( temporary );
+		var = Cvar_Get(temporary, 0, 0); // jit (don't have that func)
 
-      strncpy(temporary, scan, i);
-      strcpy(temporary + i, token);
-      strcpy(temporary + i + j, start);
-      strcpy(expanded, temporary);
-      scan = expanded;
-      i--;
+		if (var) //&& !(var->flags & CVAR_PRIVATE)) {
+			token = var->string;
+		else
+			token = "";
+		//}
 
-      if (++count == 100)
-	  {
-         Com_Printf("Macro expansion loop, discarded.\n");
-         return NULL;
-      }
-   }
+		j = strlen(token);
+		len += j;
 
-   if (inquote)
-   {
-      Com_Printf("Line has unmatched quote, discarded.\n");
-      return NULL;
-   }
+		if (len >= MAX_STRING_CHARS)
+		{
+			Com_Printf("Expanded line exceeded %i chars, discarded.\n", MAX_STRING_CHARS );
+			return NULL;
+		}
 
-   return scan;
+		strncpy(temporary, scan, i);
+		strcpy(temporary + i, token);
+		strcpy(temporary + i + j, start);
+		strcpy(expanded, temporary);
+		scan = expanded;
+		i--;
+
+		if (++count == 100)
+		{
+			Com_Printf("Macro expansion loop, discarded.\n");
+			return NULL;
+		}
+	}
+
+	if (inquote)
+	{
+		Com_Printf("Line has unmatched quote, discarded.\n");
+		return NULL;
+	}
+
+	return scan;
 } 
 
 #else
-char *Cmd_MacroExpandString (char *text)
+char *Cmd_MacroExpandString (const char *text)
 {
 	int		i, j, count, len;
 	qboolean	inquote;

@@ -563,7 +563,7 @@ void R_DrawEntitiesOnList (void)
 				continue;
 			}
 
-			switch(currentmodel->type)
+			switch (currentmodel->type)
 			{
 			case mod_alias:
 				R_DrawAliasModel(currententity);

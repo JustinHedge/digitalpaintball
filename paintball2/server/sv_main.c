@@ -730,8 +730,8 @@ static void Download3AckChunk (client_t *cl, int chunk, int num_chunks)
 
 	if (chunk >= num_chunks || chunk < 0)
 	{
+		Com_Printf("Download chunk out of range: %d (%d)\n", chunk, num_chunks);
 		assert(chunk < num_chunks && chunk >= 0);
-		Com_Printf("Download chunk out of range: %d\n", chunk);
 		return;
 	}
 
@@ -786,6 +786,9 @@ void SVC_Download3Ack (void)
 	int i;
 
 	if (!cl)
+		return;
+
+	if (!cl->download3_active)
 		return;
 
 	num_chunks = (cl->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
