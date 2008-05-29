@@ -229,24 +229,22 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 
 	VectorAdd (move, oldframe->translate, move);
 
-	for (i=0; i<3; i++)
+	for (i = 0; i < 3; i++)
 	{
 		move[i] = backlerp*move[i] + frontlerp*frame->translate[i];
 	}
 
-	for (i=0; i<3; i++)
+	for (i = 0; i < 3; i++)
 	{
 		frontv[i] = frontlerp*frame->scale[i];
 		backv[i] = backlerp*oldframe->scale[i];
 	}
 
 	lerp = s_lerped[0];
-
 	GL_LerpVerts(paliashdr->num_xyz, v, ov, verts, lerp, move, frontv, backv);
-
 	//qglEnableClientState(GL_COLOR_ARRAY);
-
 	rs = (rscript_t*)currententity->model->script[currententity->skinnum];
+
 	if (!rs)
 	{
 #ifdef BEEFQUAKERENDER // jit3dfx
@@ -254,14 +252,20 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 		{
 			// get the vertex count and primitive type
 			count = *order++;
-			va=0;
+			va = 0;
+
 			if (!count)
 				break;		// done
-			if (count < 0) {
+
+			if (count < 0)
+			{
 				count = -count;
-				mode=GL_TRIANGLE_FAN;
-			} else
-				mode=GL_TRIANGLE_STRIP;
+				mode = GL_TRIANGLE_FAN;
+			}
+			else
+			{
+				mode = GL_TRIANGLE_STRIP;
+			}
 
 			do {
 				// texture coordinates come from the draw list
@@ -274,7 +278,8 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 				va++;
 				order += 3;
 			} while (--count);
-			qglDrawArrays(mode,0,va);
+
+			qglDrawArrays(mode, 0, va);
 		}
 #else // old q2 code (with shells removed):
 		if (gl_vertex_arrays->value)
@@ -341,14 +346,20 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 			{
 				// get the vertex count and primitive type
 				count = *order++;
-				va=0;
+				va = 0;
+
 				if (!count)
 					break;		// done
-				if (count < 0) {
+
+				if (count < 0)
+				{
 					count = -count;
-					mode=GL_TRIANGLE_FAN;
-				} else
-					mode=GL_TRIANGLE_STRIP;
+					mode = GL_TRIANGLE_FAN;
+				}
+				else
+				{
+					mode = GL_TRIANGLE_STRIP;
+				}
 
 				do {
 					// texture coordinates come from the draw list
@@ -980,6 +991,7 @@ void R_DrawAliasModel (entity_t *e)
 	vec3_t		bbox[8];
 	image_t		*skin;
 	extern qboolean g_drawing_refl;
+	qboolean counttris = true;
 
 	if (!(e->flags & RF_WEAPONMODEL))
 	{
@@ -1120,12 +1132,6 @@ void R_DrawAliasModel (entity_t *e)
 	VectorNormalize (shadevector);
 
 	//
-	// locate the proper data
-	//
-
-	c_alias_polys += paliashdr->num_tris;
-
-	//
 	// draw all the triangles
 	//
 	if (currententity->flags & RF_DEPTHHACK) // hack the depth range to prevent view model from poking into walls
@@ -1171,13 +1177,14 @@ void R_DrawAliasModel (entity_t *e)
 	if (currententity->skins[0])
 	{
 		skin = currententity->skins[0];	// custom player skin
+		counttris = false;
 	}
 	else
 	{
 		if (currententity->skinnum >= MAX_MD2SKINS)
 		{
 			skin = currentmodel->skins[0];
-			currententity->skinnum=0;
+			currententity->skinnum = 0;
 		}
 		else
 		{
@@ -1186,7 +1193,7 @@ void R_DrawAliasModel (entity_t *e)
 			if (!skin)
 			{
 				skin = currentmodel->skins[0];
-				currententity->skinnum=0;
+				currententity->skinnum = 0;
 			}
 		}
 	}
@@ -1194,14 +1201,13 @@ void R_DrawAliasModel (entity_t *e)
 	if (!skin)
 		skin = r_notexture;	// fallback...
 
+	if (counttris) // jit
+		c_alias_polys += paliashdr->num_tris;
+
 	// draw it
 	GL_Bind(skin->texnum);
-
 	qglShadeModel(GL_SMOOTH);
-
-///	GL_TexEnv(GL_MODULATE);
 	GL_TexEnv(GL_COMBINE_EXT); // jitbright
-	
 
 	if (currententity->flags & RF_TRANSLUCENT)
 	{
@@ -1228,9 +1234,13 @@ void R_DrawAliasModel (entity_t *e)
 
 	if (!r_lerpmodels->value)
 		currententity->backlerp = 0;
-	if (currententity->flags & (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE | RF_SHELL_DOUBLE | RF_SHELL_HALF_DAM)) {
+
+	if (currententity->flags & (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE | RF_SHELL_DOUBLE | RF_SHELL_HALF_DAM))
+	{
 		GL_DrawAliasFrameLerpShell(paliashdr,currententity->backlerp);
-	} else {
+	}
+	else
+	{
 		GL_DrawAliasFrameLerp (paliashdr, currententity->backlerp);
 	}
 
@@ -1274,7 +1284,6 @@ void R_DrawAliasModel (entity_t *e)
 	}
 	// jit ===
 
-	//if ((currententity->flags & RF_WEAPONMODEL) && (r_lefthand->value == 1.0F))
 	if ((currententity->flags & RF_WEAPONMODEL) && (r_lefthand->value != 2.0F)) // jithand
 	{
 		qglMatrixMode(GL_PROJECTION);
@@ -1307,6 +1316,7 @@ void R_DrawAliasModel (entity_t *e)
 		GLSTATE_DISABLE_BLEND
 		qglPopMatrix ();
 	}
+
 	qglColor4f (1,1,1,1);
 }
 
