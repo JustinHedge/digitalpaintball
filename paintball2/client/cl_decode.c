@@ -364,10 +364,15 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 			if (num_elements > current_element)
 				cl_scores_setstarttime(index_array[2], index_array[current_element++]);
 		}
+
+		S_StartLocalSound("misc/enter.wav");
+
 		break;
 	case EVENT_DISCONNECT:
 		if (num_elements > 2)
 			cl_scores_clear(index_array[2]);
+
+		S_StartLocalSound("misc/disconnect.wav");
 		break;
 	case EVENT_JOIN:
 		if (num_elements > 3)
