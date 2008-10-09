@@ -940,10 +940,11 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	if (counttris)
 		c_alias_polys += numtris;
 
-	// Lighting done in software for now -- just vertex colors.  Simulates Q2 style lighting.
+	// Lighting done in software for now -- just vertex colors.  Simulates Q2 style MD2 lighting.
 	for (j = 0; j < numverts; j++)
 	{
-		light = (DotProduct(inNormalsArray[j], default_lightdir) + 1.0f) / 2.0f * 1.4f + 0.6f;
+		//light = (DotProduct(inNormalsArray[j], default_lightdir) + 1.0f) / 2.0f * 1.4f + 0.6f;
+		light = (DotProduct(inNormalsArray[j], default_lightdir) + 1.0f) / 2.0f * 0.7f + 0.3f;
 		VectorScale(shadelight, light, colorArray[j]);
 	}
 
