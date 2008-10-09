@@ -515,8 +515,10 @@ void SV_BeginDownload3_f (void) // jitdownload
 
 	num_chunks = (sv_client->downloadsize + (DOWNLOAD3_CHUNKSIZE - 1)) / DOWNLOAD3_CHUNKSIZE;
 	sv_client->download3_chunks = Z_Malloc(num_chunks * sizeof(int));
+	assert(sv_client->download3_chunks);
 	memset(sv_client->download3_chunks, 0, num_chunks * sizeof(int));
 	sv_client->download3_window = Z_Malloc(DOWNLOAD3_MAXWINDOWSIZE * sizeof(int));
+	assert(sv_client->download3_window);
 	sv_client->downloadcount = 0;
 	md5sum = Com_MD5Checksum(sv_client->download, sv_client->downloadsize);
 	sv_client->download3_fileid = sv.download3_nextfileid;
