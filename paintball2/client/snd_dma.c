@@ -148,7 +148,7 @@ void S_Init (void)
 	else
 	{
 		s_volume = Cvar_Get ("s_volume", "0.7", CVAR_ARCHIVE);
-		s_khz = Cvar_Get ("s_khz", "44", CVAR_ARCHIVE); // jit, default to 44 (was 11)
+		s_khz = Cvar_Get ("s_khz", "48", CVAR_ARCHIVE); // jit, default to 48 (was 11)
 		s_loadas8bit = Cvar_Get ("s_loadas8bit", "0", CVAR_ARCHIVE); // jit, was 1
 		s_mixahead = Cvar_Get ("s_mixahead", "0.2", CVAR_ARCHIVE);
 		s_show = Cvar_Get ("s_show", "0", 0);
