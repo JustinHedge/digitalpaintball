@@ -47,7 +47,7 @@ typedef struct pml_s
 
 pmove_t		*pm;
 pml_t		pml;
-
+float	g_viewheight = 0; // jit
 
 // movement parameters
 float	pm_stopspeed = 100;
@@ -1410,6 +1410,7 @@ void Pmove (pmove_t *pmove)
 	// set groundentity, watertype, and waterlevel for final spot
 	PM_CatagorizePosition();
 	PM_SnapPosition();
+	g_viewheight = pm->viewheight; // jit
 }
 
 
