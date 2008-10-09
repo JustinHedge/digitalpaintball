@@ -95,6 +95,7 @@ cvar_t	*cl_timestamp; // jit
 cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_drawhud; // jithud
 cvar_t	*cl_language; // jittrans
+cvar_t	*cl_drawclock; // viciouz - real time clock
 cvar_t	*r_oldmodels;
 cvar_t	*gl_highres_textures; // jit
 cvar_t	*serverlist_source; // jitserverlist / jitmenu
@@ -271,6 +272,11 @@ void CL_RecordFile (const char *sDemoName) // jitdemo
 	entity_state_t	*ent;
 	entity_state_t	nullstate;
 	unsigned char *scorestr;
+	time_t rawtime; // viciouz - timestamp demos
+	struct tm * timeinfo; // viciouz - timestamp demos
+	char timebuffer[512]; // viciouz - timestamp demos
+	char servername[512];
+
 
 	if (cls.demorecording)
 	{
@@ -306,6 +312,7 @@ void CL_RecordFile (const char *sDemoName) // jitdemo
 	// don't start saving messages until a non-delta compressed message is received
 	cls.demowaiting = true;
 
+	
 	//
 	// write out messages to hold the startup information
 	//
@@ -382,6 +389,24 @@ void CL_RecordFile (const char *sDemoName) // jitdemo
 		fwrite(&len, 4, 1, cls.demofile);
 		fwrite(buf.data, buf.cursize, 1, cls.demofile);
 	} while ((i = CL_ScoresDemoData(i, &scorestr)));
+
+	
+	// viciouz - timestamp demos
+	SZ_Init(&buf, buf_data, sizeof(buf_data));
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	strftime(timebuffer, sizeof(timebuffer) - 1, "Demo Recorded: %Y-%m-%d %H:%M:%S %Z\n", timeinfo);
+	timebuffer[sizeof(timebuffer) - 1] = 0;
+	Com_sprintf(servername, sizeof(servername), "Server: %s\n", cls.servername);
+	MSG_WriteByte(&buf, svc_print);
+	MSG_WriteByte(&buf, PRINT_HIGH);
+	MSG_WriteString(&buf, timebuffer);
+	MSG_WriteByte(&buf, svc_print);
+	MSG_WriteByte(&buf, PRINT_HIGH);
+	MSG_WriteString(&buf, servername);
+	len = LittleLong(buf.cursize);
+	fwrite(&len, 4, 1, cls.demofile);
+	fwrite(buf.data, buf.cursize, 1, cls.demofile);
 
 	// the rest of the demo file will be individual frames
 }
@@ -2145,6 +2170,7 @@ void CL_InitLocal (void)
 	cl_timestamp =		Cvar_Get("cl_timestamp", "0", CVAR_ARCHIVE); // jit
 	cl_hudscale =		Cvar_Get("cl_hudscale", "1", CVAR_ARCHIVE); // jithudscale
 	cl_language =		Cvar_Get("cl_language", "english", CVAR_ARCHIVE); // jittrans
+	cl_drawclock =		Cvar_Get("cl_drawclock", "0", CVAR_ARCHIVE); // viciouz - real time clock
 	cl_centerprintkills = Cvar_Get("cl_centerprintkills", "1", CVAR_ARCHIVE); // jit
 	r_oldmodels =		Cvar_Get("r_oldmodels", "0", CVAR_ARCHIVE); // jit
 	gl_highres_textures = Cvar_Get("gl_highres_textures", "1", CVAR_ARCHIVE); // jit

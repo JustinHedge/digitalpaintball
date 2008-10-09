@@ -1543,6 +1543,25 @@ void SCR_UpdateScreen (void)
 					re.DrawString(viddef.width - 56 * hudscale, 64 * hudscale, s);
 				}
 
+				if (cl_drawclock->value) // viciouz - real time clock
+				{
+
+					int x, y;
+					time_t rawtime;
+					struct tm * timeinfo;
+					char buffer [80];
+
+					time ( &rawtime );
+					timeinfo = localtime ( &rawtime );
+
+					strftime(buffer, 80, "%H:%M:%S", timeinfo);
+
+					x = viddef.width/2 - 64;
+					y = 1 * hudscale;
+
+					re.DrawString(x, y, buffer);
+				}
+
 				if (cl_drawpps->value) // jitnetfps
 				{
 					extern char pps_string[15];
