@@ -316,6 +316,7 @@ Sets scr_vrect, the coordinates of the rendered window
 */
 static void SCR_CalcVrect (void)
 {
+#if 0 // jit - we really probably don't need this anymore.
 	int		size;
 
 	// bound viewsize
@@ -334,6 +335,13 @@ static void SCR_CalcVrect (void)
 
 	scr_vrect.x = (viddef.width - scr_vrect.width)*0.5;
 	scr_vrect.y = (viddef.height - scr_vrect.height)*0.5;
+#else
+	scr_vrect.width = viddef.width;
+	scr_vrect.width &= ~7; // not sure what this does
+	scr_vrect.height = viddef.height;
+	scr_vrect.height &= ~1; // or this
+	scr_vrect.x = scr_vrect.y = 0;
+#endif
 }
 
 
@@ -1547,9 +1555,13 @@ void SCR_UpdateScreen (void)
 					trace_t tr;
 					vec3_t end;
 					char texinfo[1024];
+					vec3_t start;
+					extern float g_viewheight;
 
-					VectorMA(cl.predicted_origin, 8192, cl.v_forward, end);
-					tr = CM_BoxTrace(cl.predicted_origin, end, vec3_origin, vec3_origin, 0, MASK_ALL);
+					VectorCopy(cl.predicted_origin, start);
+					start[2] += g_viewheight;
+					VectorMA(start, 8192, cl.v_forward, end);
+					tr = CM_BoxTrace(start, end, vec3_origin, vec3_origin, 0, MASK_ALL);
 					Com_sprintf(texinfo, sizeof(texinfo), "%s %d 0x%x 0x%x", tr.surface->name, tr.surface->value, tr.surface->flags, tr.contents);
 					re.DrawString(0, viddef.height - 44 * hudscale, texinfo);
 				}
