@@ -97,19 +97,20 @@ void RotatePointAroundVector (vec3_t dst, const vec3_t dir, const vec3_t point, 
 	dst[2] = rot[2][0] * point[0] + rot[2][1] * point[1] + rot[2][2] * point[2];
 }
 
+
 void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 {
 	float		angle;
 	static float		sr, sp, sy, cr, cp, cy;
 	// static to help MS compiler fp bugs
 
-	angle = angles[YAW] * (M_PI*2 / 360);
+	angle = angles[YAW] * ((float)M_PI * 2.0f / 360.0f);
 	sy = sin(angle);
 	cy = cos(angle);
-	angle = angles[PITCH] * (M_PI*2 / 360);
+	angle = angles[PITCH] * ((float)M_PI * 2.0f / 360.0f);
 	sp = sin(angle);
 	cp = cos(angle);
-	angle = angles[ROLL] * (M_PI*2 / 360);
+	angle = angles[ROLL] * ((float)M_PI * 2.0f / 360.0f);
 	sr = sin(angle);
 	cr = cos(angle);
 
@@ -134,7 +135,6 @@ void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 		up[2] = cr*cp;
 	}
 }
-
 
 void ProjectPointOnPlane (vec3_t dst, const vec3_t p, const vec3_t normal)
 {
@@ -706,43 +706,63 @@ int _VectorCompare (vec3_t v1, vec3_t v2)
 }
 
 
-vec_t VectorNormalize (vec3_t v)
+
+vec_t VectorNormalizeRetLen (vec3_t v)
 {
-	float	length, ilength;
+	float ilength;
 
-	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
-	length = sqrt (length);		// FIXME
+	ilength = Q_rsqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 
-	if (length)
+	if (ilength)
 	{
-		ilength = 1/length;
+		v[0] *= ilength;
+		v[1] *= ilength;
+		v[2] *= ilength;
+
+		return 1.0f / ilength;
+	}
+	else
+	{
+		return 0.0f;
+	}
+}
+
+
+void VectorNormalize (vec3_t v)
+{
+	float ilength;
+
+	ilength = Q_rsqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+
+	if (ilength)
+	{
 		v[0] *= ilength;
 		v[1] *= ilength;
 		v[2] *= ilength;
 	}
-		
-	return length;
-
 }
 
-vec_t VectorNormalize2 (vec3_t v, vec3_t out)
+
+vec_t VectorNormalize2RetLen (vec3_t v, vec3_t out)
 {
-	float	length, ilength;
+	float ilength;
 
-	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
-	length = sqrt (length);		// FIXME
+	ilength = Q_rsqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 
-	if (length)
+	if (ilength)
 	{
-		ilength = 1/length;
-		out[0] = v[0]*ilength;
-		out[1] = v[1]*ilength;
-		out[2] = v[2]*ilength;
-	}
-		
-	return length;
+		out[0] = v[0] * ilength;
+		out[1] = v[1] * ilength;
+		out[2] = v[2] * ilength;
 
+		return 1.0f / ilength;
+	}
+	else
+	{
+		return 0.0f;
+	}
 }
+
 
 void _VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc)
 {
@@ -778,6 +798,7 @@ void _VectorCopy (vec3_t in, vec3_t out)
 	out[2] = in[2];
 }
 
+
 void _CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
 {
 	cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
@@ -785,20 +806,19 @@ void _CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
 	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
 }
 
-double sqrt(double x);
 
-vec_t _VectorLength(vec3_t v)
+vec_t VectorLength (vec3_t v)
 {
-	int		i;
-	float	length;
-	
-	length = 0;
-	for (i=0 ; i< 3 ; i++)
-		length += v[i]*v[i];
-	length = sqrt (length);		// FIXME
+	float ilength;
 
-	return length;
+	ilength = Q_rsqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+
+	if (ilength)
+		return 1.0f / ilength;
+	else
+		return 0.0f;
 }
+
 
 void _VectorInverse (vec3_t v)
 {
@@ -832,6 +852,7 @@ float Q_rsqrt (float number) // jit - Fast approximation reciprocal square root
 
 	return y;
 }
+
 
 int Q_log2 (int val)
 {
@@ -1642,21 +1663,10 @@ void Com_PageInMemory (byte *buffer, int size)
 ============================================================================
 */
 
-// jitstricmp -- _stricmp / strcasecmp directly should be faster.
-//int Q_stricmp (const char *s1, const char *s2)
-//{
-////#if defined(WIN32)
-////	return _stricmp (s1, s2);
-////#else
-////	return strcasecmp (s1, s2);
-////#endif
-//	return Q_strncasecmp(s1, s2, 99999); // jitstricmp
-//}
-
 
 int Q_strncasecmp (const char *s1, const char *s2, int n)
 {
-	int		c1, c2;
+	register int c1, c2;
 	
 	do
 	{
@@ -1749,6 +1759,7 @@ void Com_sprintf (char *dest, int size, char *fmt, ...)
 	assert(len < size); // jitdebug
 	Q_strncpyz(dest, bigbuffer, size); // jitsecurity - make sure string is terminated.
 }
+
 
 /*
 =====================================================================
@@ -1892,6 +1903,7 @@ void Info_RemoveKey (char *s, const char *key)
 	}
 }
 
+
 /*
 ==================
 Info_Validate
@@ -1904,10 +1916,13 @@ qboolean Info_Validate (char *s)
 {
 	if (strstr (s, "\""))
 		return false;
+
 	if (strstr (s, ";"))
 		return false;
+
 	return true;
 }
+
 
 void Info_SetValueForKey (char *s, char *key, char *value)
 {

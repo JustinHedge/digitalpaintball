@@ -125,29 +125,19 @@ void CL_DebugTrail (vec3_t start, vec3_t end)
 	vec3_t		move;
 	vec3_t		vec;
 	float		len;
-//	int			j;
 	cparticle_t	*p;
 	float		dec;
 	vec3_t		right, up;
-//	int			i;
-//	float		d, c, s;
-//	vec3_t		dir;
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-
+	len = VectorNormalizeRetLen(vec);
 	MakeNormalVectors (vec, right, up);
-
-//	VectorScale(vec, RT2_SKIP, vec);
-
-//	dec = 1.0;
-//	dec = 0.75;
-	dec = 3;
+	dec = 3.0f;
 	VectorScale (vec, dec, vec);
 	VectorCopy (start, move);
 
-	while (len > 0)
+	while (len > 0.0f)
 	{
 		len -= dec;
 
@@ -194,36 +184,35 @@ void CL_SmokeTrail (vec3_t start, vec3_t end, int colorStart, int colorRun, int 
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-
-	VectorScale (vec, spacing, vec);
+	len = VectorNormalizeRetLen(vec);
+	VectorScale(vec, spacing, vec);
 
 	// FIXME: this is a really silly way to have a loop
-	while (len > 0)
+	while (len > 0.0f)
 	{
 		len -= spacing;
 
 		if (!free_particles)
 			return;
+
 		p = free_particles;
 		free_particles = p->next;
 		p->next = active_particles;
 		active_particles = p;
-		VectorClear (p->accel);
-		
+		VectorClear(p->accel);
 		p->time = cl.time;
-
-		p->alpha = 1.0;
-		p->alphavel = -1.0 / (1+frand()*0.5);
+		p->alpha = 1.0f;
+		p->alphavel = -1.0f / (1.0f + frand() * 0.5f);
 		p->color = colorStart + (rand() % colorRun);
-		for (j=0 ; j<3 ; j++)
-		{
-			p->org[j] = move[j] + crand()*3;
-			p->accel[j] = 0;
-		}
-		p->vel[2] = 20 + crand()*5;
 
-		VectorAdd (move, vec, move);
+		for (j = 0; j < 3; j++)
+		{
+			p->org[j] = move[j] + crand() * 3.0f;
+			p->accel[j] = 0.0f;
+		}
+
+		p->vel[2] = 20.0f + crand() * 5.0f;
+		VectorAdd(move, vec, move);
 	}
 }
 
@@ -235,11 +224,10 @@ void CL_ForceWall (vec3_t start, vec3_t end, int color)
 	int			j;
 	cparticle_t	*p;
 
-	VectorCopy (start, move);
-	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-
-	VectorScale (vec, 4, vec);
+	VectorCopy(start, move);
+	VectorSubtract(end, start, vec);
+	len = VectorNormalizeRetLen(vec);
+	VectorScale(vec, 4, vec);
 
 	// FIXME: this is a really silly way to have a loop
 	while (len > 0)
@@ -394,14 +382,13 @@ void CL_BubbleTrail2 (vec3_t start, vec3_t end, int dist)
 	cparticle_t	*p;
 	float		dec;
 
-	VectorCopy (start, move);
-	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-
+	VectorCopy(start, move);
+	VectorSubtract(end, start, vec);
+	len = VectorNormalizeRetLen(vec);
 	dec = dist;
-	VectorScale (vec, dec, vec);
+	VectorScale(vec, dec, vec);
 
-	for (i=0 ; i<len ; i+=dec)
+	for (i = 0; i < len; i += dec)
 	{
 		if (!free_particles)
 			return;
@@ -541,29 +528,26 @@ void CL_Heatbeam (vec3_t start, vec3_t forward)
 	float		variance;
 	vec3_t		end;
 
-	VectorMA (start, 4096, forward, end);
-
-	VectorCopy (start, move);
-	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-
+	VectorMA(start, 4096, forward, end);
+	VectorCopy(start, move);
+	VectorSubtract(end, start, vec);
+	len = VectorNormalizeRetLen(vec);
 	// FIXME - pmm - these might end up using old values?
 //	MakeNormalVectors (vec, right, up);
-	VectorCopy (cl.v_right, right);
-	VectorCopy (cl.v_up, up);
+	VectorCopy(cl.v_right, right);
+	VectorCopy(cl.v_up, up);
+
 	if (vidref_val == VIDREF_GL)
 	{ // GL mode
-		VectorMA (move, -0.5, right, move);
-		VectorMA (move, -0.5, up, move);
+		VectorMA(move, -0.5f, right, move);
+		VectorMA(move, -0.5f, up, move);
 	}
 	// otherwise assume SOFT
 
-	ltime = (float) cl.time/1000.0;
+	ltime = (float)cl.time / 1000.0f;
 	start_pt = fmod(ltime*96.0,step);
-	VectorMA (move, start_pt, vec, move);
-
-	VectorScale (vec, step, vec);
-
+	VectorMA(move, start_pt, vec, move);
+	VectorScale(vec, step, vec);
 //	Com_Printf ("%f\n", ltime);
 	rstep = M_PI/10.0;
 	for (i=start_pt ; i<len ; i+=step)
@@ -855,7 +839,7 @@ void CL_TrackerTrail (vec3_t start, vec3_t end, int particleColor)
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
+	len = VectorNormalizeRetLen(vec);
 
 	VectorCopy(vec, forward);
 	vectoangles2 (forward, angle_dir);
@@ -1116,7 +1100,7 @@ void CL_TagTrail (vec3_t start, vec3_t end, float color)
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
+	len = VectorNormalizeRetLen(vec);
 
 	dec = 5;
 	VectorScale (vec, 5, vec);
@@ -1289,7 +1273,7 @@ void CL_BlasterTrail2 (vec3_t start, vec3_t end)
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
+	len = VectorNormalizeRetLen(vec);
 
 	dec = 5;
 	VectorScale (vec, 5, vec);

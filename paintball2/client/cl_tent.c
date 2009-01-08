@@ -1278,9 +1278,8 @@ void CL_AddBeams (void)
 		}
 
 	// add new entities for the beams
-		d = VectorNormalize(dist);
-
-		memset (&ent, 0, sizeof(ent));
+		d = VectorNormalizeRetLen(dist);
+		memset(&ent, 0, sizeof(ent));
 /*		if (b->model == cl_mod_lightning)
 		{
 			model_length = 35.0;
@@ -1433,9 +1432,9 @@ void CL_AddPlayerBeams (void)
 		}
 	
 	// add new entities for the beams
-		d = VectorNormalize(dist);
+		d = VectorNormalizeRetLen(dist);
 
-		memset (&ent, 0, sizeof(ent));
+		memset(&ent, 0, sizeof(ent));
 
 		{
 			model_length = 30.0;

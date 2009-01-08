@@ -510,7 +510,7 @@ void PM_WaterMove (void)
 	PM_AddCurrents (wishvel);
 
 	VectorCopy (wishvel, wishdir);
-	wishspeed = VectorNormalize(wishdir);
+	wishspeed = VectorNormalizeRetLen(wishdir);
 
 	if (wishspeed > pm_maxspeed)
 	{
@@ -558,7 +558,7 @@ void PM_AirMove (void)
 	PM_AddCurrents (wishvel);
 
 	VectorCopy (wishvel, wishdir);
-	wishspeed = VectorNormalize(wishdir);
+	wishspeed = VectorNormalizeRetLen(wishdir);
 
 	//
 	// clamp to server defined max speed
@@ -946,12 +946,12 @@ void PM_FlyMove (qboolean doclip)
 	VectorNormalize (pml.forward);
 	VectorNormalize (pml.right);
 
-	for (i=0 ; i<3 ; i++)
+	for (i = 0; i < 3; i++)
 		wishvel[i] = pml.forward[i]*fmove + pml.right[i]*smove;
-	wishvel[2] += pm->cmd.upmove;
 
-	VectorCopy (wishvel, wishdir);
-	wishspeed = VectorNormalize(wishdir);
+	wishvel[2] += pm->cmd.upmove;
+	VectorCopy(wishvel, wishdir);
+	wishspeed = VectorNormalizeRetLen(wishdir);
 
 	//
 	// clamp to server defined max speed
@@ -965,13 +965,16 @@ void PM_FlyMove (qboolean doclip)
 
 	currentspeed = DotProduct(pml.velocity, wishdir);
 	addspeed = wishspeed - currentspeed;
+
 	if (addspeed <= 0)
 		return;
+
 	accelspeed = pm_accelerate*pml.frametime*wishspeed;
+
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
-	for (i=0 ; i<3 ; i++)
+	for (i = 0; i < 3; i++)
 		pml.velocity[i] += accelspeed*wishdir[i];	
 
 	if (doclip) {

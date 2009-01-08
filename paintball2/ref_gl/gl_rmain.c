@@ -2427,7 +2427,7 @@ void R_DrawBeam(entity_t *e)
 	normalized_direction[1] = direction[1] = oldorigin[1] - origin[1];
 	normalized_direction[2] = direction[2] = oldorigin[2] - origin[2];
 
-	if (VectorNormalize(normalized_direction) == 0)
+	if (VectorNormalizeRetLen(normalized_direction) == 0)
 		return;
 
 	PerpendicularVector(perpvec, normalized_direction);

@@ -210,7 +210,7 @@ extern long Q_ftol( float f );
 #define VectorAverage(a,b,o)	((o)[0]=((a)[0]+(b)[0])*0.5,(o)[1]=((a)[1]+(b)[1])*0.5,(o)[2]=((a)[2]+(b)[2])*0.5)
 #define VectorNegate(i,o)		((o)[0]=-(i)[0],(o)[1]=-(i)[1],(o)[2]=-(i)[2])
 #define VectorInverse(v)		((v)[0]=-(v)[0],(v)[1]=-(v)[1],(v)[2]=-(v)[2])
-#define VectorLength(v)			(sqrt((v)[0]*(v)[0]+(v)[1]*(v)[1]+(v)[2]*(v)[2]))
+//#define VectorLength(v)			(sqrt((v)[0]*(v)[0]+(v)[1]*(v)[1]+(v)[2]*(v)[2]))
 #define VectorLengthSquared(v)	((v)[0]*(v)[0]+(v)[1]*(v)[1]+(v)[2]*(v)[2])
 
 void _VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc);
@@ -224,10 +224,11 @@ void _VectorCopy (vec3_t in, vec3_t out);
 void ClearBounds (vec3_t mins, vec3_t maxs);
 void AddPointToBounds (vec3_t v, vec3_t mins, vec3_t maxs);
 int _VectorCompare (vec3_t v1, vec3_t v2);
-vec_t _VectorLength (vec3_t v);
+vec_t VectorLength (vec3_t v);
 void _CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross);
-vec_t VectorNormalize (vec3_t v);		// returns vector length
-vec_t VectorNormalize2 (vec3_t v, vec3_t out);
+vec_t VectorNormalizeRetLen (vec3_t v); // returns vector length
+void VectorNormalize (vec3_t v);
+vec_t VectorNormalize2RetLen (vec3_t v, vec3_t out);
 void _VectorInverse (vec3_t v);
 void _VectorScale (vec3_t in, vec_t scale, vec3_t out);
 float Q_rsqrt (float number); // jit - from qfusion
