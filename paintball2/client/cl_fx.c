@@ -1304,7 +1304,7 @@ void CL_BlasterTrail (vec3_t start, vec3_t end)
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
+	len = VectorNormalizeRetLen(vec);
 
 	dec = 5;
 	VectorScale (vec, 5, vec);
@@ -1355,7 +1355,7 @@ void CL_QuadTrail (vec3_t start, vec3_t end)
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
+	len = VectorNormalizeRetLen(vec);
 
 	dec = 5;
 	VectorScale (vec, 5, vec);
@@ -1405,7 +1405,7 @@ void CL_FlagTrail (vec3_t start, vec3_t end, float color)
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
+	len = VectorNormalizeRetLen(vec);
 
 	dec = 5;
 	VectorScale (vec, 5, vec);
@@ -1457,7 +1457,7 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
+	len = VectorNormalizeRetLen(vec);
 
 	dec = 0.5;
 	VectorScale (vec, dec, vec);
@@ -1580,8 +1580,7 @@ void CL_RocketTrail (vec3_t start, vec3_t end, centity_t *old)
 	// fire
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-
+	len = VectorNormalizeRetLen(vec);
 	dec = 1;
 	VectorScale (vec, dec, vec);
 
@@ -1636,13 +1635,12 @@ void CL_RailTrail (vec3_t start, vec3_t end)
 	vec3_t		dir;
 	byte		clr = 0x74;
 
-	VectorCopy (start, move);
-	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
+	VectorCopy(start, move);
+	VectorSubtract(end, start, vec);
+	len = VectorNormalizeRetLen(vec);
+	MakeNormalVectors(vec, right, up);
 
-	MakeNormalVectors (vec, right, up);
-
-	for (i=0 ; i<len ; i++)
+	for (i = 0; i < len; i++)
 	{
 		if (!free_particles)
 			return;
@@ -1725,7 +1723,7 @@ void CL_IonripperTrail (vec3_t start, vec3_t ent)
 
 	VectorCopy (start, move);
 	VectorSubtract (ent, start, vec);
-	len = VectorNormalize (vec);
+	len = VectorNormalizeRetLen (vec);
 
 	dec = 5;
 	VectorScale (vec, 5, vec);
@@ -1788,7 +1786,7 @@ void CL_BubbleTrail (vec3_t start, vec3_t end)
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
+	len = VectorNormalizeRetLen (vec);
 
 	dec = 32;
 	VectorScale (vec, dec, vec);
@@ -2017,7 +2015,7 @@ void CL_TrapParticles (entity_t *ent)
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
+	len = VectorNormalizeRetLen (vec);
 
 	dec = 5;
 	VectorScale (vec, 5, vec);
@@ -2283,7 +2281,19 @@ void CL_EntityEvent (entity_state_t *ent)
 		break;
 	case EV_FOOTSTEP:
 		if (cl_footsteps->value)
-			S_StartSound (NULL, ent->number, CHAN_BODY, cl_sfx_footsteps[rand()&3], 1, ATTN_NORM, 0);
+		{
+			static int laststepnumber = 0;
+			int stepnumber = (int)(frand() * 4.0f);
+
+			if (stepnumber == laststepnumber) // jitsound - ensure step sound doesn't repeat, as that sounds weird
+			{
+				stepnumber += 1;
+				stepnumber &= 3;
+			}
+
+			laststepnumber = stepnumber;
+			S_StartSound(NULL, ent->number, CHAN_BODY, cl_sfx_footsteps[stepnumber], 1, ATTN_NORM, 0);
+		}
 		break;
 	case EV_FALLSHORT:
 		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound ("player/land1.wav"), 1, ATTN_NORM, 0);
