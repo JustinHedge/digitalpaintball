@@ -918,6 +918,23 @@ void FS_FreeFileList (char **list, int n) // jit
 	free(list);
 }
 
+/*
+ * FS_FreeList
+ *
+ * Free list of files created by FS_ListFiles().
+ * viciouz - ogg support - similar but different, the other one causes a protection fault for some reason.
+ */
+void
+FS_FreeList(char **list, int nfiles)
+{
+	int		i;
+
+	for (i = 0; i < nfiles - 1; i++)
+		free(list[i]);
+
+	free(list);
+}
+
 
 void FS_cwd_f (void)
 {
