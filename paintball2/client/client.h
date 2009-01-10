@@ -352,6 +352,7 @@ extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_vwep;
 extern	cvar_t	*r_oldmodels;
 extern	cvar_t	*gl_highres_textures;
+
 #ifdef USE_DOWNLOAD3
 extern	cvar_t	*cl_fast_download; // jitdownload
 #endif
@@ -632,6 +633,26 @@ void shutdown_cl_scores (void);
 #define GAMETYPE_KOTH	4
 #define GAMETYPE_ELIM	5
 #define MAX_SCOREBOARD_STRING 128
+
+//
+// cl_stats.c
+//
+void Stats_Init();
+void Stats_Shutdown();
+void Stats_AddEvent(int type);
+void Stats_Query();
+void Stats_LoadFromFile();
+void Stats_WriteToFile();
+void Stats_UpdateTime();
+void Stats_Clear();
+
+qboolean SV_IsDemoRunning(); // in sv_main.c for stats
+
+#define STATS_KILL 0
+#define STATS_DEATH 1
+#define STATS_GRAB 2
+#define STATS_CAP 3
+
 //
 // cl_decode.c
 //
@@ -747,6 +768,10 @@ extern int cl_maplist_modes_count;
 // pb2_xfire.c -- jitxfire
 void CL_Xfire (void);
 
+// snd_ogg.c
+void OGG_Init (void);
+void OGG_Shutdown (void);
+char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned canthave);
 
 //
 // cl_pred.c

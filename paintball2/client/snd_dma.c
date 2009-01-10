@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "snd_loc.h"
 //A3D ADD
 #include "../a3d/q2a3d.h"
+#include "snd_ogg.h"
 
 #if defined (__unix__)
 #include <sys/types.h>
@@ -257,6 +258,8 @@ void S_Init (void)
 
 		//A3D CHANGE END
 		S_StopAllSounds ();
+
+		OGG_Init();
 	}
 
 	Com_Printf("------------------------------------\n");
@@ -275,6 +278,8 @@ void S_Shutdown(void)
 	void S_Q2A3DCloseLibrary(void);
 	if (!sound_started && !a3dsound_started)
 		return;
+
+	OGG_Shutdown();
 
 	if (a3dsound_started)
 	{
@@ -1304,6 +1309,8 @@ void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 
 // mix some sound
 	S_Update_();
+
+	OGG_Stream();
 }
 
 void GetSoundtime(void)

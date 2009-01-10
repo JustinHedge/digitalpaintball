@@ -1504,3 +1504,10 @@ void SV_Shutdown (char *finalmsg, qboolean reconnect)
 	memset (&svs, 0, sizeof(svs));
 }
 
+qboolean SV_IsDemoRunning() // viciouz: hack to see if demo is running without server.h/client.h conflicts
+{
+	if (sv.attractloop)
+		return true;
+	else
+		return false;
+}

@@ -414,16 +414,26 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 			break;
 		
 		if (index_array[2] == cl.playernum)
+		{
 			Com_sprintf(event_text, sizeof(event_text), "You eliminated %s (%s).",
 				name_from_index(index_array[4]), item_from_index(index_array[5]));
+			Stats_AddEvent(STATS_KILL);
+		}
 		else if (index_array[4] == cl.playernum)
+		{
 			Com_sprintf(event_text, sizeof(event_text), "%s (%s) eliminated you.",
 				name_from_index(index_array[2]), item_from_index(index_array[3]));
+			Stats_AddEvent(STATS_DEATH);
+		}
 		else
 			break;
 
 		if (cl_centerprintkills->value)
 			event_print(event_text);
+
+
+
+		
 
 		break;
 	case EVENT_SUICIDE: // jitodo - fix all these offsets
@@ -468,6 +478,9 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		if (num_elements < 2)
 			break;
 
+		if (index_array[2] == cl.playernum)
+			Stats_AddEvent(STATS_GRAB);
+
 		cl_scores_sethasflag(index_array[2], true);
 		if (current_element < num_elements)
 			cl_scores_setgrabs(index_array[2], index_array[current_element++]);
@@ -479,6 +492,9 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 	case EVENT_CAP:
 		if (num_elements < 2)
 			break;
+
+		if (index_array[2] == cl.playernum)
+			Stats_AddEvent(STATS_CAP);
 
 		cl_scores_sethasflag(index_array[2], false);
 		if (current_element < num_elements)

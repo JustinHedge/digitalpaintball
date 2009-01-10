@@ -96,6 +96,8 @@ cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_drawhud; // jithud
 cvar_t	*cl_language; // jittrans
 cvar_t	*cl_drawclock; // viciouz - real time clock
+cvar_t  *cl_swearfilter; // viciouz - swear filter
+cvar_t  *cl_blockedwords; // viciouz - swear filter
 cvar_t	*r_oldmodels;
 cvar_t	*gl_highres_textures; // jit
 cvar_t	*serverlist_source; // jitserverlist / jitmenu
@@ -742,7 +744,7 @@ void CL_Connect_f (void)
 void CL_ParseURL_f (void) // jiturl
 {
 	char buff[1024];
-	char *s, *s1;
+	char *s, *s1, *password;
 
 	if (Cmd_Argc() < 2)
 	{
@@ -761,7 +763,15 @@ void CL_ParseURL_f (void) // jiturl
 	while (*s == '/' || *s == '\\')
 		s++;
 
-	Com_sprintf(buff, sizeof(buff)-8, "connect %s\n", s);
+	s = strtok(Cmd_Argv(1), "?");
+	password = strtok(NULL, "?");
+
+	s = strstr(Cmd_Argv(1), ":/");
+	s++;
+	while (*s == '/' || *s == '\\')
+		s++;
+
+	Com_sprintf(buff, sizeof(buff)-8, "connect %s;password \"%s\"\n", s, password);
 	s = strchr(buff, '/');
 	s1 = strchr(buff, '\\');
 
@@ -2171,6 +2181,8 @@ void CL_InitLocal (void)
 	cl_hudscale =		Cvar_Get("cl_hudscale", "1", CVAR_ARCHIVE); // jithudscale
 	cl_language =		Cvar_Get("cl_language", "english", CVAR_ARCHIVE); // jittrans
 	cl_drawclock =		Cvar_Get("cl_drawclock", "0", CVAR_ARCHIVE); // viciouz - real time clock
+	cl_swearfilter =	Cvar_Get("cl_swearfilter", "0", CVAR_ARCHIVE); // viciouz - swear filter
+	cl_blockedwords =	Cvar_Get("cl_blockedwords", "cunt,fuck,shit,nigger,faggot,fag", CVAR_ARCHIVE); // viciouz - swear filter
 	cl_centerprintkills = Cvar_Get("cl_centerprintkills", "1", CVAR_ARCHIVE); // jit
 	r_oldmodels =		Cvar_Get("r_oldmodels", "0", CVAR_ARCHIVE); // jit
 	gl_highres_textures = Cvar_Get("gl_highres_textures", "1", CVAR_ARCHIVE); // jit
@@ -2757,12 +2769,14 @@ void CL_Shutdown (void)
 		return;
 	}
 
+	
 	isdown = true;
 	CL_WriteConfiguration("config.cfg"); 
 	CDAudio_Shutdown();
 	S_Shutdown();
 	IN_Shutdown();
 	VID_Shutdown();
+	Stats_Shutdown();
 
 	if (dedicated && !dedicated->value) // jit - null check for dedicated cvar
 	{

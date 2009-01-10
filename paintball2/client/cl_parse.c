@@ -1198,6 +1198,9 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 {
 	int idx;
 	qboolean isteam, isprivate;
+	char * pch, * rep;
+	extern cvar_t *cl_swearfilter, *cl_blockedwords;
+	char wordlist[1024];
 
 	isteam = (level == PRINT_CHATN_TEAM);
 	isprivate = (level == PRINT_CHATN_PRIVATE);
@@ -1212,6 +1215,26 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 		s += 2;
 	else
 		s ++;
+
+	//viciouz - swear filter
+	if (cl_swearfilter->value)
+	{
+		cl_blockedwords = Cvar_Get("cl_blockedwords", "cunt,fuck,shit,nigger,faggot,fag", CVAR_ARCHIVE);
+		strcpy(wordlist, cl_blockedwords->string);
+		pch = strtok(wordlist," ,\0");
+		while (pch != NULL)
+		{
+			rep = strstr(s,pch);
+			while(rep != NULL)
+			{
+				if (cl_swearfilter->value == 2)
+					return;
+				strncpy(rep, "****************", strlen(pch));
+				rep = strstr(s,pch);
+			}
+			pch = strtok(NULL, " ,\0");
+		}
+	}
 
 	// todo - create a separate chat console.
 	if (isteam)

@@ -398,6 +398,9 @@ void CL_ProfileLogin_f (void)
 			"Visit Digital Paint forums for support.\n");
 		Cbuf_AddText("menu profile_loginfailed\n");
 	}
+
+	Stats_Shutdown();
+	Stats_Init();
 }
 
 #define MAX_BUFFER_SIZE 1024
