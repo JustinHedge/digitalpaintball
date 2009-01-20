@@ -523,7 +523,8 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 	s = strstr(szDataBack, "GameLoginStatus: PASSED");
 
 	if (!s)
-	{ // breakpoint
+	{
+		// breakpoint
 		if (s = strstr(szDataBack, "ERROR:"))
 			Com_Printf("%s\n", s);
 		else if (s = strstr(szDataBack, "GameLoginStatus: FAILED"))
@@ -532,7 +533,7 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 			Com_Printf("ERROR: Unknown response from login server.\n");
 
 		Cbuf_AddText("menu pop profile_login;menu profile_loginfailed\n");
-//		assert(0);
+
 		return;
 	}
 
