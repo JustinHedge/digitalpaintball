@@ -29,6 +29,10 @@ static vec3_t avelocities [NUMVERTEXNORMALS];
 extern	struct model_s	*cl_mod_smoke;
 extern	struct model_s	*cl_mod_flash;
 
+
+extern struct sfx_s	*cl_sfx_footsteps[4];
+extern struct sfx_s	*cl_sfx_footsteps_snow[4]; // jitsound
+
 /*
 ==============================================================
 
@@ -2256,6 +2260,27 @@ void CL_AddParticles (void)
 }
 
 
+struct sfx_s *get_step_sound (entity_state_t *ent, int stepnumber)
+{
+	trace_t tr;
+	vec3_t end;
+	extern float g_viewheight;
+
+	VectorCopy(ent->origin, end);
+	end[2] -= 128.0f;
+	tr = CM_BoxTrace(ent->origin, end, vec3_origin, vec3_origin, 0, MASK_PLAYERSOLID);
+
+	if (strstr(tr.surface->name, "snow") || strstr(tr.surface->name, "w_metal1"))
+	{
+		return cl_sfx_footsteps_snow[stepnumber];
+	}
+	else
+	{
+		return cl_sfx_footsteps[stepnumber];
+	}
+}
+
+
 /*
 ==============
 CL_EntityEvent
@@ -2265,7 +2290,6 @@ An entity has just been parsed that has an event value
 the female events are there for backwards compatability
 ==============
 */
-extern struct sfx_s	*cl_sfx_footsteps[4];
 
 void CL_EntityEvent (entity_state_t *ent)
 {
@@ -2292,7 +2316,7 @@ void CL_EntityEvent (entity_state_t *ent)
 			}
 
 			laststepnumber = stepnumber;
-			S_StartSound(NULL, ent->number, CHAN_BODY, cl_sfx_footsteps[stepnumber], 1, ATTN_NORM, 0);
+			S_StartSound(NULL, ent->number, CHAN_BODY, get_step_sound(ent, stepnumber), 1, ATTN_NORM, 0);
 		}
 		break;
 	case EV_FALLSHORT:

@@ -94,6 +94,7 @@ struct sfx_s	*cl_sfx_watrexp;
 // RAFAEL
 struct sfx_s	*cl_sfx_plasexp;
 struct sfx_s	*cl_sfx_footsteps[4];
+struct sfx_s	*cl_sfx_footsteps_snow[4]; // jitsound
 
 struct model_s	*cl_mod_explode;
 struct model_s	*cl_mod_smoke;
@@ -122,6 +123,7 @@ struct sfx_s	*cl_sfx_grensplat2;
 struct sfx_s	*cl_sfx_grensplat3;
 struct sfx_s	*cl_sfx_paintfly[3];
 struct sfx_s	*cl_sfx_footsteps[4];
+struct sfx_s	*cl_sfx_footsteps_snow[4]; // jitsound
 struct model_s	*cl_mod_smoke;
 struct model_s	*cl_mod_splat;
 struct model_s	*cl_mod_paintball;
@@ -151,6 +153,10 @@ void CL_RegisterTEntSounds (void) // jit, cleaned up and adjusted for paintball
 	cl_sfx_footsteps[1] = S_RegisterSound("player/step1.wav");
 	cl_sfx_footsteps[2] = S_RegisterSound("player/step2.wav");
 	cl_sfx_footsteps[3] = S_RegisterSound("player/step3.wav");
+	cl_sfx_footsteps_snow[0] = S_RegisterSound("player/step_snow0.wav");
+	cl_sfx_footsteps_snow[1] = S_RegisterSound("player/step_snow1.wav");
+	cl_sfx_footsteps_snow[2] = S_RegisterSound("player/step_snow2.wav");
+	cl_sfx_footsteps_snow[3] = S_RegisterSound("player/step_snow3.wav");
 }	
 
 /*
