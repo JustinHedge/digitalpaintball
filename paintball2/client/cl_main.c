@@ -1389,6 +1389,10 @@ void CL_ConnectionlessPacket (void)
 		// print command from somewhere
 		s = MSG_ReadString(&net_message);
 		Com_Printf("%s", s);
+
+		if (Q_streq(s, "Bad Password\nConnection refused.\n"))
+			Cbuf_AddText("disconnect; menu get_password");
+
 		return;
 	}
 	else if (Q_streq(c, "ping"))
