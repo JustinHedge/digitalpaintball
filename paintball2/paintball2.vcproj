@@ -560,6 +560,9 @@
 					RelativePath="client\cl_serverlist.c">
 				</File>
 				<File
+					RelativePath="client\cl_stats.c">
+				</File>
+				<File
 					RelativePath=".\client\cl_tent.c">
 				</File>
 				<File
@@ -626,6 +629,9 @@
 					RelativePath=".\client\snd_mix.c">
 				</File>
 				<File
+					RelativePath="client\snd_ogg.c">
+				</File>
+				<File
 					RelativePath=".\win32\snd_win.c">
 				</File>
 			</Filter>
@@ -641,6 +647,9 @@
 			</File>
 			<File
 				RelativePath=".\client\cdaudio.h">
+			</File>
+			<File
+				RelativePath="client\cl_stats.h">
 			</File>
 			<File
 				RelativePath=".\client\client.h">
@@ -701,6 +710,9 @@
 			</File>
 			<File
 				RelativePath=".\client\snd_loc.h">
+			</File>
+			<File
+				RelativePath="client\snd_ogg.h">
 			</File>
 			<File
 				RelativePath=".\client\sound.h">
@@ -778,7 +790,16 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath="win32\ogg_static.lib">
+		</File>
+		<File
 			RelativePath="win32\pthreadVC.lib">
+		</File>
+		<File
+			RelativePath="win32\vorbis_static.lib">
+		</File>
+		<File
+			RelativePath="win32\vorbisfile_static.lib">
 		</File>
 	</Files>
 	<Globals>
