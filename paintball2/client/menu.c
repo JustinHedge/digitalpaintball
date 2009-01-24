@@ -2769,7 +2769,7 @@ void M_Init (void)
 
     // Add commands
 	Cmd_AddCommand("menu", M_Menu_f);
-	Cmd_AddCommand("m_reload", M_ReloadMenu);
+	Cmd_AddCommand("menu_reload", M_ReloadMenu);
 	m_initialized = true;
 }
 
