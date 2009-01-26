@@ -1198,9 +1198,11 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 {
 	int idx;
 	qboolean isteam, isprivate;
-	char * pch, * rep;
+	char *pch, *rep;
 	extern cvar_t *cl_swearfilter, *cl_blockedwords;
 	char wordlist[1024];
+	int len;
+	qboolean darken_text = false;
 
 	isteam = (level == PRINT_CHATN_TEAM);
 	isprivate = (level == PRINT_CHATN_PRIVATE);
@@ -1216,23 +1218,40 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 	else
 		s ++;
 
-	//viciouz - swear filter
-	if (cl_swearfilter->value)
+	// jit - don't filter own text.  Let the children blabber on and think they're just being ignored, otherwise they'll try to evade the filter.
+	if (idx != cl.playernum)
 	{
-		cl_blockedwords = Cvar_Get("cl_blockedwords", "cunt,fuck,shit,nigger,faggot,fag", CVAR_ARCHIVE);
-		strcpy(wordlist, cl_blockedwords->string);
-		pch = strtok(wordlist," ,\0");
-		while (pch != NULL)
+		int filter_value = (int)(cl_swearfilter->value + 0.5f); // round to nearest integer
+
+		//viciouz - swear filter
+		if (filter_value)
 		{
-			rep = strstr(s,pch);
-			while(rep != NULL)
+			//cl_blockedwords = Cvar_Get("cl_blockedwords", "cunt,fuck,shit,nigger,faggot,fag", CVAR_ARCHIVE);
+			strcpy(wordlist, cl_blockedwords->string);
+			pch = strtok(wordlist, ","); // jit - may want to use spaces in the filters.  Regex would be the ultimate way to do it, but not very user friendly.
+
+			while (pch != NULL)
 			{
-				if (cl_swearfilter->value == 2)
-					return;
-				strncpy(rep, "****************", strlen(pch));
-				rep = strstr(s,pch);
+				rep = strstr(s, pch);
+
+				while(rep != NULL)
+				{
+					if (filter_value == 1) // jit - tweaked default behavior (eg: checkbox) to just drop the lines.  Set to 2 or other value to show **'s
+						return;
+
+					if (filter_value == 3) // jit - a little debug feature so we can see which lines are getting dropped.
+					{
+						darken_text = true;
+						break;
+					}
+
+					len = strlen(pch);
+					strncpy(rep, "***************************************", min(len, 32)); // jit - on the off chance somebody puts a huge word in there.
+					rep = strstr(s, pch);
+				}
+				
+				pch = strtok(NULL, ",");
 			}
-			pch = strtok(NULL, " ,\0");
 		}
 	}
 
@@ -1243,24 +1262,28 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 		S_StartLocalSound("misc/talk.wav");
 
 	if (cl_timestamp->value)
+	{
 		Com_Printf("%c%c[%s] %c%s%s%s%c%c%s%s %s%s",
 			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
 			timestamp, cl_scores_get_team_splat(idx), 
 			cl_scores_get_isalive(idx) ? "" : "[ELIM] ",
 			(isteam || isprivate) ? "(" : "", name_from_index(idx),
-			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
+			CHAR_COLOR, darken_text ? '0' : (isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT), 
 			(isteam || isprivate) ? ")" : "", 
 			level == PRINT_CHATN_ACTION ? "" : ":",
 			s, (s[strlen(s)-1] == '\n') ? "" : "\n");
+	}
 	else
+	{
 		Com_Printf("%c%c%c%s%s%s%c%c%s%s %s%s", cl_scores_get_team_splat(idx),
 			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
 			cl_scores_get_isalive(idx) ? "" : "[ELIM] ", // jitodo - [OBS]
 			(isteam || isprivate) ? "(" : "", name_from_index(idx),
-			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
+			CHAR_COLOR, darken_text ? '0' : (isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT), 
 			(isteam || isprivate) ? ")" : "", 
 			level == PRINT_CHATN_ACTION ? "" : ":",
 			s, (s[strlen(s)-1] == '\n') ? "" : "\n");
+	}
 }
 
 

@@ -2185,8 +2185,8 @@ void CL_InitLocal (void)
 	cl_hudscale =		Cvar_Get("cl_hudscale", "1", CVAR_ARCHIVE); // jithudscale
 	cl_language =		Cvar_Get("cl_language", "english", CVAR_ARCHIVE); // jittrans
 	cl_drawclock =		Cvar_Get("cl_drawclock", "0", CVAR_ARCHIVE); // viciouz - real time clock
-	cl_swearfilter =	Cvar_Get("cl_swearfilter", "0", CVAR_ARCHIVE); // viciouz - swear filter
-	cl_blockedwords =	Cvar_Get("cl_blockedwords", "cunt,fuck,shit,nigger,faggot,fag", CVAR_ARCHIVE); // viciouz - swear filter
+	cl_swearfilter =	Cvar_Get("cl_swearfilter", "1", 0); // viciouz - swear filter - jit - don't archive these yet, as we may want to change the defaults (people/menus can seta them to archive)
+	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,camp,liner,lining,fuck,fuq,shit,sh!t,sh1t,dick,bitch,whore,fag,walled,hack,cheat,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch, ass ,owned,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,a joke,idiot,horribad,newbed,fag", 0); // viciouz - swear filter - jit, added some more
 	cl_centerprintkills = Cvar_Get("cl_centerprintkills", "1", CVAR_ARCHIVE); // jit
 	r_oldmodels =		Cvar_Get("r_oldmodels", "0", CVAR_ARCHIVE); // jit
 	gl_highres_textures = Cvar_Get("gl_highres_textures", "1", CVAR_ARCHIVE); // jit
