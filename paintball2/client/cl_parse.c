@@ -1200,7 +1200,6 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 	qboolean isteam, isprivate;
 	char *pch, *rep;
 	extern cvar_t *cl_swearfilter, *cl_blockedwords;
-	char wordlist[1024];
 	int len;
 	qboolean darken_text = false;
 
@@ -1223,16 +1222,21 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 	{
 		int filter_value = (int)(cl_swearfilter->value + 0.5f); // round to nearest integer
 
-		//viciouz - swear filter
+		// viciouz - swear filter
 		if (filter_value)
 		{
-			//cl_blockedwords = Cvar_Get("cl_blockedwords", "cunt,fuck,shit,nigger,faggot,fag", CVAR_ARCHIVE);
-			strcpy(wordlist, cl_blockedwords->string);
+			char wordlist[1024];
+			char lowercase_text[1024];
+
+
+			Q_strncpyz(wordlist, cl_blockedwords->string, sizeof(wordlist));
+			Q_strncpyz(lowercase_text, s, sizeof(lowercase_text));
+			strtolower(lowercase_text);
 			pch = strtok(wordlist, ","); // jit - may want to use spaces in the filters.  Regex would be the ultimate way to do it, but not very user friendly.
 
 			while (pch != NULL)
 			{
-				rep = strstr(s, pch);
+				rep = strstr(lowercase_text, pch);
 
 				while(rep != NULL)
 				{
@@ -1247,7 +1251,8 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 
 					len = strlen(pch);
 					strncpy(rep, "***************************************", min(len, 32)); // jit - on the off chance somebody puts a huge word in there.
-					rep = strstr(s, pch);
+					s = lowercase_text; // todo: this ends up making everything lowercase if a filtered word is in there
+					rep = strstr(lowercase_text, pch);
 				}
 				
 				pch = strtok(NULL, ",");
