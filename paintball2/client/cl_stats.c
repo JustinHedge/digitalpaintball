@@ -53,25 +53,20 @@ void Stats_Clear()
 {
 	time_start = time(NULL);
 	rewind(statsfile);
-	fprintf(statsfile, "0 1 0 1 0");
+	fprintf(statsfile, "0 0 0 0 0 eof");
 	Stats_LoadFromFile();
-	stats.playtime = 0;
 }
 
 void Stats_LoadFromFile()
 {
 	rewind(statsfile);
-	fscanf(statsfile, "%d", &stats.kills);
-	fscanf(statsfile, "%d", &stats.deaths);
-	fscanf(statsfile, "%d", &stats.grabs);
-	fscanf(statsfile, "%d", &stats.caps);
-	fscanf(statsfile, "%d", &stats.playtime);
+	fscanf(statsfile, "%d %d %d %d %d eof", &stats.kills, &stats.deaths, &stats.grabs, &stats.caps, &stats.playtime);
 }
 
 void Stats_WriteToFile()
 {
 	rewind(statsfile);
-	fprintf(statsfile, "%d %d %d %d %deof", stats.kills, stats.deaths, stats.grabs, stats.caps, stats.playtime);
+	fprintf(statsfile, "%d %d %d %d %d eof", stats.kills, stats.deaths, stats.grabs, stats.caps, stats.playtime);
 }
 
 void Stats_UpdateTime()
@@ -110,8 +105,15 @@ void Stats_Query()
 {
 	Stats_UpdateTime();
 
+	// ifs to fix division by zero
+
 	stats.kdratio = (float)stats.kills/(float)stats.deaths;
+	if (stats.deaths == 0)
+		stats.kdratio = stats.kills;
+
 	stats.gcratio = (float)stats.grabs/(float)stats.caps;
+	if (stats.caps == 0)
+		stats.gcratio = stats.grabs;
 
 	// this is split up to make it easier to read and change
 	Com_Printf("Local Profile Statistics\n");

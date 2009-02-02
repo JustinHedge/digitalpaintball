@@ -478,12 +478,13 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		if (num_elements < 2)
 			break;
 
-		if (index_array[2] == cl.playernum)
-			Stats_AddEvent(STATS_GRAB);
-
 		cl_scores_sethasflag(index_array[2], true);
 		if (current_element < num_elements)
+		{
 			cl_scores_setgrabs(index_array[2], index_array[current_element++]);
+			if (index_array[2] == cl.playernum)
+				Stats_AddEvent(STATS_GRAB);
+		}
 		break;
 	case EVENT_DROPFLAG:
 		if (num_elements > 2)

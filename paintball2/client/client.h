@@ -772,6 +772,7 @@ void CL_Xfire (void);
 void OGG_Init (void);
 void OGG_Shutdown (void);
 char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned canthave);
+void FS_FreeList (char **list, int nfiles);
 
 //
 // cl_pred.c

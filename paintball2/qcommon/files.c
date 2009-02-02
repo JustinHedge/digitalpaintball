@@ -924,8 +924,7 @@ void FS_FreeFileList (char **list, int n) // jit
  * Free list of files created by FS_ListFiles().
  * viciouz - ogg support - similar but different, the other one causes a protection fault for some reason.
  */
-void
-FS_FreeList(char **list, int nfiles)
+void FS_FreeList(char **list, int nfiles)
 {
 	int		i;
 
