@@ -174,7 +174,7 @@ static qboolean CompareAttributes( unsigned found, unsigned musthave, unsigned c
 // === - jit
 // player menu bugfix by AnthonyJ@planetquake.com
 
-char *Sys_FindFirst (char *path, unsigned musthave, unsigned canthave )
+char *Sys_FindFirst (const char *path, unsigned musthave, unsigned canthave )
 {
 	struct _finddata_t findinfo;
 

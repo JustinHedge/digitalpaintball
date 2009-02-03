@@ -739,7 +739,7 @@ char *Cmd_MacroExpandString (const char *text) // from q2pro by [SkulleR] - jitc
 {
 	int i, j, count, len;
 	qboolean inquote;
-	char *scan, *start;
+	const char *scan, *start;
 	static char expanded[MAX_STRING_CHARS];
 	char temporary[MAX_STRING_CHARS];
 	char *token;
@@ -861,7 +861,7 @@ char *Cmd_MacroExpandString (const char *text) // from q2pro by [SkulleR] - jitc
 		return NULL;
 	}
 
-	return scan;
+	return (char *)scan;
 } 
 
 #else
@@ -943,7 +943,7 @@ Parses the given string into command line tokens.
 $Cvars will be expanded unless they are in a quoted token
 ============
 */
-void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
+void Cmd_TokenizeString (const unsigned char *text, qboolean macroExpand)
 {
 	int i;
 	unsigned char *com_token;

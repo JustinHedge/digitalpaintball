@@ -851,7 +851,7 @@ void FS_Link_f (void)
 /*
 ** FS_ListFiles
 */
-char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned canthave)
+char **FS_ListFiles (const char *findname, int *numfiles, unsigned musthave, unsigned canthave)
 {
 	char *s;
 	int nfiles = 0;
