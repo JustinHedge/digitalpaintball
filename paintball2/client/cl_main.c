@@ -1391,8 +1391,11 @@ void CL_ConnectionlessPacket (void)
 		s = MSG_ReadString(&net_message);
 		Com_Printf("%s", s);
 
-		if (Q_streq(s, "Bad Password\nConnection refused.\n") && (cl_passwordpopup->value == 1))
+		if ((Q_streq(s, "Bad Password\nConnection refused.\n") || Q_streq(s, "Server is password protected.\nConnection refused.\n")) &&
+			(cl_passwordpopup->value == 1))
+		{
 			Cbuf_AddText("disconnect; menu get_password");
+		}
 
 		return;
 	}
@@ -2187,7 +2190,7 @@ void CL_InitLocal (void)
 	cl_language =		Cvar_Get("cl_language", "english", CVAR_ARCHIVE); // jittrans
 	cl_drawclock =		Cvar_Get("cl_drawclock", "0", CVAR_ARCHIVE); // viciouz - real time clock
 	cl_swearfilter =	Cvar_Get("cl_swearfilter", "1", 0); // viciouz - swear filter - jit - don't archive these yet, as we may want to change the defaults (people/menus can seta them to archive)
-	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,camp,liner,lining,fuck,fuq,phuck,shit,sh!t,sh1t,dick,bitch,whore,fag,walled,hack,cheat,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch, ass ,owned,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,a joke,idiot,horribad,newbed,fag", 0); // viciouz - swear filter - jit, added some more
+	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,camp,liner,lining,fuck,fuq,phuck,shit,sh!t,sh1t,dick,bitch,whore,cock ,fag,walled,hack,cheat,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch, ass ,owned,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,a joke,idiot,horribad,newbed,fag", 0); // viciouz - swear filter - jit, added some more
 	strtolower(cl_blockedwords->string);
 	cl_passwordpopup =	Cvar_Get("cl_passwordpopup", "1", CVAR_ARCHIVE); // viciouz - password popup
 	cl_centerprintkills = Cvar_Get("cl_centerprintkills", "1", CVAR_ARCHIVE); // jit
