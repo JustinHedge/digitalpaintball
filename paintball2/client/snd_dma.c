@@ -713,12 +713,14 @@ void S_IssuePlaysound (playsound_t *ps)
 	sfxcache_t	*sc;
 
 	if (s_show->value)
-		Com_Printf ("Issue %i\n", ps->begin);
+		Com_Printf("Issue %i\n", ps->begin);
+
 	// pick a channel to play on
 	ch = S_PickChannel(ps->entnum, ps->entchannel);
+
 	if (!ch)
 	{
-		S_FreePlaysound (ps);
+		S_FreePlaysound(ps);
 		return;
 	}
 
@@ -732,17 +734,19 @@ void S_IssuePlaysound (playsound_t *ps)
 	ch->entnum = ps->entnum;
 	ch->entchannel = ps->entchannel;
 	ch->sfx = ps->sfx;
-	VectorCopy (ps->origin, ch->origin);
+	VectorCopy(ps->origin, ch->origin);
 	ch->fixed_origin = ps->fixed_origin;
-
 	S_Spatialize(ch);
-
 	ch->pos = 0;
-	sc = S_LoadSound (ch->sfx);
-    ch->end = paintedtime + sc->length;
+	sc = S_LoadSound(ch->sfx);
+
+	if (sc) // jitsound - this is null when you hit esc while loading a map?
+	{
+		ch->end = paintedtime + sc->length;
+	}
 
 	// free the playsound
-	S_FreePlaysound (ps);
+	S_FreePlaysound(ps);
 }
 
 struct sfx_s *S_RegisterSexedSound (entity_state_t *ent, char *base)

@@ -655,7 +655,7 @@ static char *string_for_bind(char *bind)
 static void M_UpdateWidgetPosition (menu_widget_t *widget)
 {
 	int xcenteradj, ycenteradj;
-	char *text = NULL;
+	const char *text = NULL;
 	image_t *pic = NULL;
 
 	scale = cl_hudscale->value;
@@ -1221,9 +1221,13 @@ static void toggle_checkbox (menu_widget_t *widget)
 	}
 }
 
+
 static void M_HilightNextWidget (menu_screen_t *menu)
 {
 	menu_widget_t *widget;
+
+	if (!menu)
+		return;
 
 	widget = menu->widget;
 
@@ -1264,6 +1268,7 @@ static void M_HilightNextWidget (menu_screen_t *menu)
 		MENU_SOUND_SELECT;
 	}
 }
+
 
 static void M_HilightPreviousWidget (menu_screen_t *menu)
 {
@@ -2951,7 +2956,7 @@ static void M_DrawField (menu_widget_t *widget)
 
 static void M_DrawWidget (menu_widget_t *widget)
 {
-	char *text = NULL;
+	const char *text = NULL;
 	char *cvar_val = "";
 	image_t *pic = NULL;
 	qboolean checkbox_checked;
