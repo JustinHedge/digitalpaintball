@@ -2372,6 +2372,8 @@ static void menu_from_file (menu_screen_t *menu)
 					}
 					else if (Q_streq(token, "password") && widget)
 						widget->flags |= WIDGET_FLAG_PASSWORD;
+					else if (Q_streq(token, "selected") && widget)
+						widget->selected = true;
 					else if (Q_streq(token, "text") && widget)
 					{
 						char *text = COM_Parse(&buf);
