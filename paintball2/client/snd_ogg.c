@@ -141,7 +141,7 @@ void OGG_Shutdown(void)
 	OGG_Stop();
 
 	/* Free the list of files. */
-	FS_FreeList(ogg_filelist, ogg_numfiles + 1);
+	FS_FreeList(ogg_filelist, ogg_numfiles + 1); // TODO: why does FS_FreeFileList crash?
 
 	/* Remove console commands. */
 	Cmd_RemoveCommand("ogg_list");
