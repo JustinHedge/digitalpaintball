@@ -243,8 +243,7 @@ ifeq ($(strip $(USE_XF86_DGA)),YES)
 XLDFLAGS+= -lXxf86dga
 endif
 
-GLX_LDFLAGS=-L$(X11BASE)/lib$(_LIB) -L$(LOCALBASE)/lib$(_LIB) -lGL -ljpeg
-
+GLX_LDFLAGS=-L$(X11BASE)/lib$(_LIB) -L$(LOCALBASE)/lib$(_LIB) -lGL -ljpeg -lpng
 LDFLAGS+=-lvorbisfile -lvorbis -logg
 
 SDLCONFIG?= sdl-config
