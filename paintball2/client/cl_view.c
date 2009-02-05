@@ -483,11 +483,11 @@ SCR_DrawCrosshair
 */
 void SCR_DrawCrosshair (void)
 {
-	extern cvar_t *cl_hudscale; // jithudscale
+	extern cvar_t *cl_crosshairscale; // jithudscale
 	extern cvar_t *cl_drawhud; // jit
-	int hudscale;
+	int crosshairscale;
 
-	hudscale = cl_hudscale->value; // jithudscale
+	crosshairscale = cl_crosshairscale->value; // jithudscale
 
 	if (!crosshair->value || !cl_drawhud->value)
 		return;
@@ -501,8 +501,8 @@ void SCR_DrawCrosshair (void)
 	if (!crosshair_pic[0])
 		return;
 
-	re.DrawPic (scr_vrect.x + ((scr_vrect.width - hudscale*crosshair_width)>>1)
-	, scr_vrect.y + ((scr_vrect.height - hudscale*crosshair_height)>>1), crosshair_pic);
+	re.DrawPic (scr_vrect.x + ((scr_vrect.width - crosshairscale*crosshair_width)>>1)
+	, scr_vrect.y + ((scr_vrect.height - crosshairscale*crosshair_height)>>1), crosshair_pic);
 }
 
 /*

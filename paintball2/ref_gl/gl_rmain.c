@@ -177,6 +177,7 @@ cvar_t	*gl_free_unused_textures; // jitfreeunused
 //cvar_t	*gl_modulate;
 cvar_t	*gl_lightmapgamma; // jitgamma
 cvar_t	*cl_hudscale; // jithudscale
+cvar_t  *cl_crosshairscale;
 cvar_t	*gl_nobind;
 cvar_t	*gl_round_down;
 cvar_t	*gl_picmip;
@@ -1519,6 +1520,7 @@ void R_Register(void)
 	gl_hash_textures = ri.Cvar_Get("gl_hash_textures", "1", CVAR_ARCHIVE); // jithash
 	gl_free_unused_textures = ri.Cvar_Get("gl_free_unused_textures", "1", CVAR_ARCHIVE); // jitfreeunused
 	cl_hudscale = ri.Cvar_Get("cl_hudscale", "2", CVAR_ARCHIVE); // jithudscale
+	cl_crosshairscale = ri.Cvar_Get("cl_crosshairscale", "2", CVAR_ARCHIVE); // viciouz - crosshair scale
 	gl_log = ri.Cvar_Get("gl_log", "0", 0);
 	gl_bitdepth = ri.Cvar_Get("gl_bitdepth", "0", 0);
 	gl_mode = ri.Cvar_Get("gl_mode", "3", CVAR_ARCHIVE);

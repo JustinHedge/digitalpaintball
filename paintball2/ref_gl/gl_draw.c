@@ -27,6 +27,7 @@ byte		*char_colors = NULL; // jittext
 
 extern	qboolean	scrap_dirty;
 extern cvar_t *cl_hudscale; //jithudscale
+extern cvar_t *cl_crosshairscale; // viciouz - crosshair scale
 void Scrap_Upload (void);
 extern cvar_t	*gl_textshadow; // jittext
 
@@ -670,6 +671,10 @@ void Draw_Pic2 (int x, int y, image_t *gl)
 	int picscale;
 
 	picscale = (int)cl_hudscale->value; // jithudscale
+
+	if (strstr(gl->name, "ch")) // fix this hackyness, it will probably cause problems
+		picscale = (int)cl_crosshairscale->value; // viciouz - crosshair scale
+
 	Draw_StretchPic2 (x, y, gl->width*picscale, gl->height*picscale, gl);
 }
 
