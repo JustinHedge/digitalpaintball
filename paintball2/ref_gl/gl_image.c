@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <jpeglib.h>
 #endif
 #include <ctype.h>
+#include <png.h>
 
 image_t		gltextures[MAX_GLTEXTURES];
 hash_table_t gltextures_hash; // jithash
@@ -530,6 +531,141 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 	}
 
 	ri.FS_FreeFile (pcx);
+}
+
+/*
+=========================================================
+
+PNG LOADING - Code by R1CH, taken from R1GL
+
+=========================================================
+*/
+#define MAX_TEXTURE_DIMENSIONS 2048
+// correct this if wrong - viciouz
+
+typedef struct {
+    byte *Buffer;
+    size_t Pos;
+} TPngFileBuffer;
+
+void PngReadFunc(png_struct *Png, png_bytep buf, png_size_t size)
+{
+    TPngFileBuffer *PngFileBuffer=(TPngFileBuffer*)png_get_io_ptr(Png);
+    memcpy(buf,PngFileBuffer->Buffer+PngFileBuffer->Pos,size);
+    PngFileBuffer->Pos+=size;
+}
+
+void LoadPNG (const char *name, byte **pic, int *width, int *height)
+{
+	unsigned int	i, rowbytes;
+	png_structp		png_ptr;
+	png_infop		info_ptr;
+	png_infop		end_info;
+	png_bytep		row_pointers[MAX_TEXTURE_DIMENSIONS];
+	double			file_gamma;
+
+	TPngFileBuffer	PngFileBuffer = {NULL,0};
+
+	*pic = NULL;
+
+	ri.FS_LoadFile (name, (void *)&PngFileBuffer.Buffer);
+
+    if (!PngFileBuffer.Buffer)
+		return;
+
+	if ((png_check_sig(PngFileBuffer.Buffer, 8)) == 0)
+	{
+		ri.FS_FreeFile (PngFileBuffer.Buffer); 
+		ri.Con_Printf (PRINT_ALL, "Not a PNG file: %s\n", name);
+		return;
+    }
+
+	PngFileBuffer.Pos=0;
+
+    png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL,  NULL, NULL);
+
+    if (!png_ptr)
+	{
+		ri.FS_FreeFile (PngFileBuffer.Buffer);
+		ri.Con_Printf (PRINT_ALL, "Bad PNG file: %s\n", name);
+		return;
+	}
+
+    info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr)
+	{
+        png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
+		ri.FS_FreeFile (PngFileBuffer.Buffer);
+		ri.Con_Printf (PRINT_ALL, "Bad PNG file: %s\n", name);
+		return;
+    }
+    
+	end_info = png_create_info_struct(png_ptr);
+    if (!end_info)
+	{
+        png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+		ri.FS_FreeFile (PngFileBuffer.Buffer);
+		ri.Con_Printf (PRINT_ALL, "Bad PNG file: %s\n", name);
+		return;
+    }
+
+	png_set_read_fn (png_ptr,(png_voidp)&PngFileBuffer,(png_rw_ptr)PngReadFunc);
+
+	png_read_info(png_ptr, info_ptr);
+
+	if (info_ptr->height > MAX_TEXTURE_DIMENSIONS)
+	{
+        png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+		ri.FS_FreeFile (PngFileBuffer.Buffer);
+		ri.Con_Printf (PRINT_ALL, "Oversized PNG file: %s\n", name);
+		return;
+	}
+
+	if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
+	{
+		png_set_palette_to_rgb (png_ptr);
+		png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
+	}
+
+	if (info_ptr->color_type == PNG_COLOR_TYPE_RGB)
+		png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
+
+	if ((info_ptr->color_type == PNG_COLOR_TYPE_GRAY) && info_ptr->bit_depth < 8)
+		png_set_gray_1_2_4_to_8(png_ptr);
+
+	if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
+		png_set_tRNS_to_alpha(png_ptr);
+
+	if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY || info_ptr->color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+		png_set_gray_to_rgb(png_ptr);
+
+	if (info_ptr->bit_depth == 16)
+		png_set_strip_16(png_ptr);
+
+	if (info_ptr->bit_depth < 8)
+        png_set_packing(png_ptr);
+
+	if (png_get_gAMA(png_ptr, info_ptr, &file_gamma))
+		png_set_gamma (png_ptr, 2.0, file_gamma);
+
+	png_read_update_info(png_ptr, info_ptr);
+
+	rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+
+	*pic = malloc (info_ptr->height * rowbytes);
+
+	for (i = 0; i < info_ptr->height; i++)
+		row_pointers[i] = *pic + i*rowbytes;
+
+	png_read_image(png_ptr, row_pointers);
+
+	*width = info_ptr->width;
+	*height = info_ptr->height;
+
+	png_read_end(png_ptr, end_info);
+	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+
+	ri.FS_FreeFile (PngFileBuffer.Buffer);
 }
 
 /*
@@ -1635,10 +1771,10 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 	byte *pic=NULL, *palette=NULL;
 	int width, height;
 	image_t *image;
-
-	// Try TGA:
-	Com_sprintf(tempname, sizeof(tempname), "%s.tga", name);
-	LoadTGA(tempname, &pic, &width, &height);
+	
+	// Try PNG:
+	Com_sprintf(tempname, sizeof(tempname), "%s.png", name);
+	LoadPNG(tempname, &pic, &width, &height);
 
 	if (pic)
 	{
@@ -1646,48 +1782,60 @@ image_t *GL_LoadImage(const unsigned char *name, imagetype_t type) // jitimage /
 	}
 	else
 	{
-		// Try JPG:
-		Com_sprintf(tempname, sizeof(tempname), "%s.jpg", name);
-		LoadJPG(tempname, &pic, &width, &height);
+	
+		// Try TGA:
+		Com_sprintf(tempname, sizeof(tempname), "%s.tga", name);
+		LoadTGA(tempname, &pic, &width, &height);
 
 		if (pic)
 		{
 			image = GL_LoadPic(name, pic, width, height, type, 32);
 		}
-		else
-		{
-			// Try CIN: (or not)
-			/*cinematics_t *newcin;
-
-			sprintf(tempname, "%s.cin", name);
-
-			newcin = CIN_OpenCin(name);
-
-			if (newcin)
+		else	
+		{	
+			// Try JPG:
+			Com_sprintf(tempname, sizeof(tempname), "%s.jpg", name);
+			LoadJPG(tempname, &pic, &width, &height);
+	
+			if (pic)
 			{
-				pic = malloc(256*256*4);
-				memset(pic, 192, (256*256*4));
-
-				image = GL_LoadPic(name, pic, 256, 256, type, 32);
-
-				newcin->texnum = image->texnum;
-				image->is_cin = true;
+				image = GL_LoadPic(name, pic, width, height, type, 32);
 			}
-			else*/
+			else
 			{
-				// Try PCX:
-				Com_sprintf(tempname, sizeof(tempname), "%s.pcx", name);
-				LoadPCX(tempname, &pic, &palette, &width, &height);
-
-				if (pic)
+				// Try CIN: (or not)
+				/*cinematics_t *newcin;
+	
+				sprintf(tempname, "%s.cin", name);
+	
+				newcin = CIN_OpenCin(name);
+	
+				if (newcin)
 				{
-					image = GL_LoadPic(name, pic, width, height, type, 8);
+					pic = malloc(256*256*4);
+					memset(pic, 192, (256*256*4));
+	
+					image = GL_LoadPic(name, pic, 256, 256, type, 32);
+	
+					newcin->texnum = image->texnum;
+					image->is_cin = true;
 				}
-				else
+				else*/
 				{
-					// Try WAL:
-					sprintf(tempname, "%s.wal", name);
-					image = GL_LoadWal(tempname);					
+					// Try PCX:
+					Com_sprintf(tempname, sizeof(tempname), "%s.pcx", name);
+					LoadPCX(tempname, &pic, &palette, &width, &height);
+	
+					if (pic)
+					{
+						image = GL_LoadPic(name, pic, width, height, type, 8);
+					}
+					else
+					{
+						// Try WAL:
+						sprintf(tempname, "%s.wal", name);
+						image = GL_LoadWal(tempname);					
+					}
 				}
 			}
 		}
