@@ -408,6 +408,9 @@ image_t	*Draw_FindPic (const char *name)
 		gl = GL_FindImage(name + 1, it_pic);
 	}
 
+	if (strstr(fullname, "pics/ch") && (strlen(fullname) <= 13)) // still a bit ambiguous
+		gl->is_crosshair = true;
+
 	if (!gl) // jit -- remove "can't find pic" spam
 		return r_notexture;
 	else
@@ -672,7 +675,7 @@ void Draw_Pic2 (int x, int y, image_t *gl)
 
 	picscale = (int)cl_hudscale->value; // jithudscale
 
-	if (strstr(gl->name, "pics/ch") && (strlen(gl->name) <= 9)) // find a better way to do this
+	if (gl->is_crosshair) // find a better way to do this
 		picscale = (int)cl_crosshairscale->value; // viciouz - crosshair scale
 
 	Draw_StretchPic2 (x, y, gl->width*picscale, gl->height*picscale, gl);
