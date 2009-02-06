@@ -655,8 +655,8 @@ void CL_WebLoad_f (void)
 #ifdef WIN32
 	ShellExecute(NULL, "open", sURL, NULL, NULL, SW_SHOWNORMAL);
 #else
-	// TODO: figure out how to load the default browser in linux, etc.
-	Com_sprintf(szCommand, sizeof(szCommand), "firefox \"%s\"", sURL);
+	// load default browser linux
+	Com_sprintf(szCommand, sizeof(szCommand), "x-www-browser \"%s\"", sURL);
 	system(sURL);
 #endif
 }
