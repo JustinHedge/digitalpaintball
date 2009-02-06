@@ -672,7 +672,7 @@ void Draw_Pic2 (int x, int y, image_t *gl)
 
 	picscale = (int)cl_hudscale->value; // jithudscale
 
-	if (strstr(gl->name, "ch")) // fix this hackyness, it will probably cause problems
+	if (strstr(gl->name, "pics/ch") && (strlen(gl->name) <= 9)) // find a better way to do this
 		picscale = (int)cl_crosshairscale->value; // viciouz - crosshair scale
 
 	Draw_StretchPic2 (x, y, gl->width*picscale, gl->height*picscale, gl);
