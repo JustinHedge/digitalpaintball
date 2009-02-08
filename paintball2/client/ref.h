@@ -189,6 +189,7 @@ typedef struct image_s
 	qboolean is_cin;					// Heffo - To identify a cin texture's image_t
 
 	struct rscript_s	*rscript;		// jitrscript
+	qboolean is_crosshair;				// viciouz - crosshair scale
 } image_t;
 
 #define	API_VERSION		3

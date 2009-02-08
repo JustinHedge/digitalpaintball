@@ -754,6 +754,8 @@ void CL_ParseURL_f (void) // jiturl
 		return;
 	}
 
+	// Com_Printf("Parsing: %s\n", Cmd_Argv(1)); // debug
+
 	if (!(s = strstr(Cmd_Argv(1), ":/")) && !(s = strstr(Cmd_Argv(1), ":\\")))
 	{
 		Com_Printf("Invalid URL: \"%s\"\n", Cmd_Argv(1));
@@ -765,15 +767,16 @@ void CL_ParseURL_f (void) // jiturl
 	while (*s == '/' || *s == '\\')
 		s++;
 
-	s = strtok(Cmd_Argv(1), "?");
-	password = strtok(NULL, "?");
+	s = strtok(Cmd_Argv(1), "&");
+	password = strtok(NULL, "&");
 
 	s = strstr(Cmd_Argv(1), ":/");
 	s++;
 	while (*s == '/' || *s == '\\')
 		s++;
 
-	Com_sprintf(buff, sizeof(buff)-8, "connect %s;password \"%s\"\n", s, password);
+	// viciouz - fixed browser password link - luckily semicolons and spaces strip :)
+	Com_sprintf(buff, sizeof(buff)-8, "connect %s;password %s\n", s, password); 
 	s = strchr(buff, '/');
 	s1 = strchr(buff, '\\');
 
