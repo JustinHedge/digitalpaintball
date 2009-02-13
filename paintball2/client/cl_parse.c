@@ -143,17 +143,24 @@ qboolean CL_CheckOrDownloadFile (const char *check_filename)
 	}
 
 	// ===
-	// jitdownload, check for jpgs and tga's if pcx's aren't there
+	// jitdownload, check for pngs, jpgs and tga's if pcx's aren't there
 	file_ext = COM_FileExtension(filename);
 
-	if (Q_streq(file_ext, "pcx") || Q_streq(file_ext, "jpg") ||
+	if (Q_streq(file_ext, "pcx") || Q_streq(file_ext, "jpg") || Q_streq(file_ext, "png") ||
 		Q_streq(file_ext, "tga") || Q_streq(file_ext, "wal"))
 	{
 		int retry;
 
 		for (retry = 0; retry < 2; ++retry)
 		{
-			// look for jpg first:
+			// look for png first:
+			COM_StripExtension(filename, name, sizeof(name));
+			Q_strncatz(name, ".png", sizeof(name));
+
+			if (FS_LoadFile(name, NULL) != -1)
+				return true; // png exists, don't try to download anything else
+
+			// no png, look for jpg:
 			COM_StripExtension(filename, name, sizeof(name));
 			Q_strncatz(name, ".jpg", sizeof(name));
 
@@ -476,15 +483,22 @@ void CL_ParseDownload (void)
 				if (!cls.download3supported || !cl_fast_download->value) // dl3 system checks for alternates server-side
 #endif
 				{
-					// jitdownload -- if jpg failed, try tga, then pcx or wal
-					if (file_ext=strstr(cls.downloadname, ".jpg"))
+					// jitdownload -- if png failed, try jpg, then tga, then pcx or wal
+					if (file_ext = strstr(cls.downloadname, ".png"))
+					{
+						*file_ext = 0;
+						strcat(cls.downloadname, ".jpg");
+						CL_CheckOrDownloadFile(cls.downloadname);
+						return;
+					}
+					else if (file_ext = strstr(cls.downloadname, ".jpg"))
 					{
 						*file_ext = 0;
 						strcat(cls.downloadname, ".tga");
 						CL_CheckOrDownloadFile(cls.downloadname);
 						return;
 					}
-					else if (file_ext=strstr(cls.downloadname, ".tga"))
+					else if (file_ext = strstr(cls.downloadname, ".tga"))
 					{
 						*file_ext = 0;
 

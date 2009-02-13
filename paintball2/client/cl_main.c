@@ -1708,7 +1708,7 @@ void CL_RequestNextDownload (void)
 
 					while (precache_model_skin - 1 < LittleLong(pheader->num_skins))
 					{
-						// === jitdownload - try JPG first
+						// === jitdownload - try PNG first
 						Q_strncpyz(skinname, (char *)precache_model +
 							LittleLong(pheader->ofs_skins) + 
 							(precache_model_skin - 1) * MAX_SKINNAME, sizeof(skinname));
@@ -1718,7 +1718,7 @@ void CL_RequestNextDownload (void)
 						if (Q_strcasecmp(ext, "pcx") == 0)
 						{
 							COM_StripExtension(skinname, skinname, sizeof(skinname));
-							Q_strncatz(skinname, ".jpg", sizeof(skinname));
+							Q_strncatz(skinname, ".png", sizeof(skinname));
 						}
 
 						if (!CL_CheckOrDownloadFile(skinname))
@@ -1753,8 +1753,8 @@ void CL_RequestNextDownload (void)
 
 						Q_strncpyz(s, mesh[precache_model_skin - 1].shadername, sizeof(skinname));
 
-						if (!*COM_FileExtension(skinname)) // no file extension, so throw a .jpg on there.
-							Q_strncatz(skinname, ".jpg", sizeof(skinname));
+						if (!*COM_FileExtension(skinname)) // no file extension, so throw a .png on there.
+							Q_strncatz(skinname, ".png", sizeof(skinname));
 
 						if (!CL_CheckOrDownloadFile(skinname))
 						{
@@ -1814,7 +1814,7 @@ void CL_RequestNextDownload (void)
 		while (precache_check < CS_IMAGES+MAX_IMAGES &&
 			cl.configstrings[precache_check][0])
 		{
-			Com_sprintf(fn, sizeof(fn), "pics/%s.jpg", cl.configstrings[precache_check++]); // jitdownload (was .pcx)
+			Com_sprintf(fn, sizeof(fn), "pics/%s.png", cl.configstrings[precache_check++]); // jitdownload (was .pcx)
 
 			if (!CL_CheckOrDownloadFile(fn))
 				return; // started a download
@@ -1890,7 +1890,7 @@ void CL_RequestNextDownload (void)
 					/*FALL THROUGH*/
 
 				case 2: // weapon skin
-					Com_sprintf(fn, sizeof(fn), "players/%s/weapon.jpg", model); // jitdownload
+					Com_sprintf(fn, sizeof(fn), "players/%s/weapon.png", model); // jitdownload
 
 					if (!CL_CheckOrDownloadFile(fn))
 					{
@@ -1901,7 +1901,7 @@ void CL_RequestNextDownload (void)
 					/*FALL THROUGH*/
 
 				case 3: // skin
-					Com_sprintf(fn, sizeof(fn), "players/%s/%s.jpg", model, skin); // jitdownload
+					Com_sprintf(fn, sizeof(fn), "players/%s/%s.png", model, skin); // jitdownload
 
 					if (!CL_CheckOrDownloadFile(fn))
 					{
@@ -1912,7 +1912,7 @@ void CL_RequestNextDownload (void)
 					/*FALL THROUGH*/
 
 				case 4: // skin_i
-					Com_sprintf(fn, sizeof(fn), "players/%s/%s_i.jpg", model, skin);
+					Com_sprintf(fn, sizeof(fn), "players/%s/%s_i.png", model, skin);
 
 					if (!CL_CheckOrDownloadFile(fn))
 					{
@@ -2011,7 +2011,7 @@ retry_mapload:
 					if ((temp = strchr(cl.configstrings[CS_SKY], ' ')))  // jitfog
 						*temp = '\0';
 					
-					Com_sprintf(fn, sizeof(fn), "env/%s%s.jpg", // jitdownload
+					Com_sprintf(fn, sizeof(fn), "env/%s%s.png", // jitdownload
 						cl.configstrings[CS_SKY], env_suf[n / 2]);
 
 					// jitodo, strip fog code out of sky
@@ -2048,7 +2048,7 @@ retry_mapload:
 				unsigned int pt;
 
 				pt = precache_tex++;
-				Com_sprintf(fn, sizeof(fn), "textures/%s.jpg", map_surfaces[pt].rname);
+				Com_sprintf(fn, sizeof(fn), "textures/%s.png", map_surfaces[pt].rname);
 
 				if (!CL_CheckOrDownloadFile(fn))
 					return; // started a download
