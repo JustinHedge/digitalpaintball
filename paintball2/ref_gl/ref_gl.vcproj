@@ -640,10 +640,10 @@
 					RelativePath="jpeg\jpegint.h">
 				</File>
 				<File
-					RelativePath="jpeg\jpeglib.h">
+					RelativePath=".\jpeglib.h">
 				</File>
 				<File
-					RelativePath=".\jpeglib.h">
+					RelativePath="jpeg\jpeglib.h">
 				</File>
 				<File
 					RelativePath="jpeg\jquant1.c">
@@ -725,7 +725,13 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath="..\win32\libpng.lib">
+		</File>
+		<File
 			RelativePath=".\notes.txt">
+		</File>
+		<File
+			RelativePath="..\win32\zlib.lib">
 		</File>
 	</Files>
 	<Globals>

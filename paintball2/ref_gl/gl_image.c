@@ -22,11 +22,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_cin.h"
 #ifdef WIN32
 #include "jpeg/jpeglib.h"
+#include "png/png.h"
 #else
 #include <jpeglib.h>
+#include <png.h>
 #endif
 #include <ctype.h>
-#include <png.h>
 
 image_t		gltextures[MAX_GLTEXTURES];
 hash_table_t gltextures_hash; // jithash
