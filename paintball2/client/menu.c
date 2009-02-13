@@ -1764,6 +1764,7 @@ static qboolean M_InsertField (int key)
 	char s[256];
 	menu_widget_t *widget;
 	int cursorpos, maxlength;
+	int len;
 
 	widget = M_GetActiveWidget(NULL);
 
@@ -1771,11 +1772,14 @@ static qboolean M_InsertField (int key)
 		return false;
 
 	strcpy(s, Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->string);
+	len = strlen(s);
 	cursorpos = widget->field_cursorpos;
+
+	if (cursorpos > len)
+		cursorpos = len;
+
 	maxlength = widget->field_width;
-
 	key = KeyPadKey(key);
-
 
 	if ((toupper(key) == 'V' && keydown[K_CTRL]) ||
 		 (((key == K_INS) || (key == K_KP_INS)) && keydown[K_SHIFT]))
@@ -1871,6 +1875,7 @@ static qboolean M_InsertField (int key)
 			i = s[cursorpos];
 			s[cursorpos] = key;
 			cursorpos++;
+
 			if (!i)
 				s[cursorpos] = 0;	
 		}
