@@ -2191,7 +2191,7 @@ void CL_InitLocal (void)
 	cl_drawhud =		Cvar_Get("cl_drawhud", "1", 0); // jithud
 	cl_timestamp =		Cvar_Get("cl_timestamp", "0", CVAR_ARCHIVE); // jit
 	cl_hudscale =		Cvar_Get("cl_hudscale", "2", CVAR_ARCHIVE); // jithudscale /viciouz - changed to 2 to match setting in gl_rmain.c
-	cl_crosshairscale = Cvar_Get("cl_crosshairscale", "1", CVAR_ARCHIVE); // viciouz - crosshair scale
+	cl_crosshairscale = Cvar_Get("cl_crosshairscale", "2", CVAR_ARCHIVE); // viciouz - crosshair scale
 	cl_language =		Cvar_Get("cl_language", "english", CVAR_ARCHIVE); // jittrans
 	cl_drawclock =		Cvar_Get("cl_drawclock", "0", CVAR_ARCHIVE); // viciouz - real time clock
 	cl_swearfilter =	Cvar_Get("cl_swearfilter", "1", 0); // viciouz - swear filter - jit - don't archive these yet, as we may want to change the defaults (people/menus can seta them to archive)
