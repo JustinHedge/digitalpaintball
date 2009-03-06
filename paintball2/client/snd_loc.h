@@ -169,6 +169,7 @@ extern cvar_t	*s_show;
 extern cvar_t	*s_mixahead;
 extern cvar_t	*s_testsound;
 extern cvar_t	*s_primary;
+extern cvar_t	*s_resamplequality;
 
 wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength);
 

@@ -32,7 +32,7 @@ byte *S_Alloc (int size);
 ResampleSfx
 ================
 */
-void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
+void ResampleSfx (sfx_t *sfx, int inrate, int insamples, int inwidth, byte *data)
 {
 	int		outcount;
 	int		srcsample;
@@ -42,49 +42,101 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 	sfxcache_t	*sc;
 	
 	sc = sfx->cache;
+
 	if (!sc)
 		return;
 
 	stepscale = (float)inrate / dma.speed;	// this is usually 0.5, 1, or 2
-
 	outcount = sc->length / stepscale;
 	sc->length = outcount;
+
 	if (sc->loopstart != -1)
 		sc->loopstart = sc->loopstart / stepscale;
 
 	sc->speed = dma.speed;
+
 	if (s_loadas8bit->value)
 		sc->width = 1;
 	else
-		sc->width = inwidth;
+		sc->width = 2; // jitsound - resample to 16 bit.
+
 	sc->stereo = 0;
 
-// resample / decimate to the current source rate
-
-	if (stepscale == 1 && inwidth == 1 && sc->width == 1)
+	// resample / decimate to the current source rate
+	if (stepscale == 1.0f && inwidth == 1 && sc->width == 1)
 	{
-// fast special case
-		for (i=0 ; i<outcount ; i++)
-			((signed char *)sc->data)[i]
-			= (int)( (unsigned char)(data[i]) - 128);
+		// fast special case
+		for (i = 0; i < outcount; i++)
+			((signed char *)sc->data)[i] = (int)( (unsigned char)(data[i]) - 128);
+	}
+	else if (stepscale == 1.0f && inwidth == 2 && sc->width == 2 && !bigendien)
+	{
+		// jitsound - fast special case for 16 bit sounds
+		memcpy(sc->data, data, outcount * 2);
 	}
 	else
 	{
-// general case
-		samplefrac = 0;
-		fracstep = stepscale*256;
-		for (i=0 ; i<outcount ; i++)
+		// general case
+		
+		// === jitsound - higher quality resampling
+		if (s_resamplequality->value > 0.0f)
 		{
-			srcsample = samplefrac >> 8;
-			samplefrac += fracstep;
-			if (inwidth == 2)
-				sample = LittleShort ( ((short *)data)[srcsample] );
-			else
-				sample = (int)( (unsigned char)(data[srcsample]) - 128) << 8;
-			if (sc->width == 2)
-				((short *)sc->data)[i] = sample;
-			else
-				((signed char *)sc->data)[i] = sample >> 8;
+			float point, pointdiff;
+			int point1, point2, sample1, sample2;
+
+			for (i = 0; i < outcount; ++i)
+			{
+				point = stepscale * (float)i;
+				point1 = (int)point;
+				pointdiff = point - (float)point1;
+				point2 = point1 + 1;
+
+				if (point2 >= insamples)
+				{
+					point2 = point1;
+				}
+
+				if (inwidth == 2)
+				{
+					sample1 = LittleShort(((short *)data)[point1]);
+					sample2 = LittleShort(((short *)data)[point2]);
+				}
+				else
+				{
+					sample1 = (int)((unsigned char)(data[point1]) - 128) << 8;
+					sample2 = (int)((unsigned char)(data[point2]) - 128) << 8;
+				}
+
+				sample = (short)(((float)sample1 * (1.0f - pointdiff)) + ((float)sample2 * pointdiff));
+
+				if (sc->width == 2)
+					((short *)sc->data)[i] = sample;
+				else
+					((signed char *)sc->data)[i] = sample >> 8;
+			}
+		}
+		else
+		// jitsound ===
+		{
+			// Old, faster, low-quality resampling
+			samplefrac = 0;
+			fracstep = stepscale * 256;
+
+			for (i = 0; i < outcount; i++)
+			{
+				srcsample = samplefrac >> 8;
+				samplefrac += fracstep;
+
+				if (inwidth == 2)
+					sample = LittleShort(((short *)data)[srcsample]);
+				else
+					sample = (int)((unsigned char)(data[srcsample]) - 128) << 8;
+
+				if (sc->width == 2)
+					((short *)sc->data)[i] = sample;
+				else
+					((signed char *)sc->data)[i] = sample >> 8;
+			}
 		}
 	}
 }
@@ -98,25 +150,28 @@ S_LoadSound
 */
 sfxcache_t *S_LoadSound (sfx_t *s)
 {
-    char	namebuffer[MAX_QPATH];
-	byte	*data;
+    char		namebuffer[MAX_QPATH];
+	byte		*data;
 	wavinfo_t	info;
-	int		len;
-	float	stepscale;
+	int			len;
+	float		stepscale;
 	sfxcache_t	*sc;
-	int		size;
-	char	*name;
+	int			size;
+	char		*name;
+	int			outwidth = 2;
+	
 	//A3D CHANGE
 	if (s->name[0] == '*' || a3dsound_started)
 		return NULL;
 	//A3D CHANGE END
-// see if still in memory
+	
+	// see if still in memory
 	sc = s->cache;
+	
 	if (sc)
 		return sc;
 
-//Com_Printf ("S_LoadSound: %x\n", (int)stackbuf);
-// load it in
+	// load it in
 	if (s->truename)
 		name = s->truename;
 	else
@@ -127,8 +182,6 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	else
 		Com_sprintf (namebuffer, sizeof(namebuffer), "sound/%s", name);
 
-//	Com_Printf ("loading %s\n",namebuffer);
-
 	size = FS_LoadFile (namebuffer, (void **)&data);
 
 	if (!data)
@@ -138,6 +191,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	}
 
 	info = GetWavinfo (s->name, data, size);
+
 	if (info.channels != 1)
 	{
 		Com_Printf ("%s is a stereo sample\n",s->name);
@@ -148,12 +202,19 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	stepscale = (float)info.rate / dma.speed;	
 	len = info.samples / stepscale;
 
-	len = len * info.width * info.channels;
+	// === jitsound - we want to resample to 16 bit - old code kept 8 bit as 8 bit after resampled
+	if (s_loadas8bit->value)
+		outwidth = 1;
+	else
+		outwidth = 2;
 
-	sc = s->cache = Z_Malloc (len + sizeof(sfxcache_t));
+	len = len * outwidth * info.channels;
+	sc = s->cache = Z_Malloc(len + sizeof(sfxcache_t));
+	// jitsound ===
+
 	if (!sc)
 	{
-		FS_FreeFile (data);
+		FS_FreeFile(data);
 		return NULL;
 	}
 	
@@ -162,10 +223,8 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	sc->speed = info.rate;
 	sc->width = info.width;
 	sc->stereo = info.channels;
-
-	ResampleSfx (s, sc->speed, sc->width, data + info.dataofs);
-
-	FS_FreeFile (data);
+	ResampleSfx(s, sc->speed, info.samples, sc->width, data + info.dataofs);
+	FS_FreeFile(data);
 
 	return sc;
 }

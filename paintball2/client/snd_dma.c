@@ -90,6 +90,7 @@ cvar_t		*s_khz;
 cvar_t		*s_show;
 cvar_t		*s_mixahead;
 cvar_t		*s_primary;
+cvar_t		*s_resamplequality; // jitsound
 
 
 int		s_rawend;
@@ -142,19 +143,22 @@ void S_Init (void)
 	cvar_t	*cv;
 
 	Com_Printf("\n------- sound initialization -------\n");
+	cv = Cvar_Get("s_initsound", "1", 0);
 
-	cv = Cvar_Get ("s_initsound", "1", 0);
 	if (!cv->value)
-		Com_Printf ("not initializing.\n");
+	{
+		Com_Printf("not initializing.\n");
+	}
 	else
 	{
-		s_volume = Cvar_Get ("s_volume", "0.7", CVAR_ARCHIVE);
-		s_khz = Cvar_Get ("s_khz", "48", CVAR_ARCHIVE); // jit, default to 48 (was 11)
-		s_loadas8bit = Cvar_Get ("s_loadas8bit", "0", CVAR_ARCHIVE); // jit, was 1
-		s_mixahead = Cvar_Get ("s_mixahead", "0.2", CVAR_ARCHIVE);
-		s_show = Cvar_Get ("s_show", "0", 0);
-		s_testsound = Cvar_Get ("s_testsound", "0", 0);
-		s_primary = Cvar_Get ("s_primary", "0", CVAR_ARCHIVE);	// win32 specific
+		s_volume = Cvar_Get("s_volume", "0.7", CVAR_ARCHIVE);
+		s_khz = Cvar_Get("s_khz", "48", CVAR_ARCHIVE); // jit, default to 48 (was 11)
+		s_loadas8bit = Cvar_Get("s_loadas8bit", "0", CVAR_ARCHIVE); // jit, was 1
+		s_mixahead = Cvar_Get("s_mixahead", "0.2", CVAR_ARCHIVE);
+		s_show = Cvar_Get("s_show", "0", 0);
+		s_testsound = Cvar_Get("s_testsound", "0", 0);
+		s_primary = Cvar_Get("s_primary", "0", CVAR_ARCHIVE);	// win32 specific
+		s_resamplequality = Cvar_Get("s_resamplequality", "2", CVAR_ARCHIVE); // jitsound
 
 		//A3D ADD
 		s_a3d = Cvar_Get ("s_a3d", "0", CVAR_ARCHIVE); //sound engine
@@ -1366,7 +1370,7 @@ void S_Update_(void)
 // check to make sure that we haven't overshot
 	if (paintedtime < soundtime)
 	{
-		Com_DPrintf ("S_Update_ : overflow\n");
+		Com_DPrintf("S_Update_ : overflow\n");
 		paintedtime = soundtime;
 	}
 
