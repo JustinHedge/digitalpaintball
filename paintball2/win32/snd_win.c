@@ -357,21 +357,20 @@ sndinitstat SNDDMA_InitDirect (void)
 	dma.channels = 2;
 	dma.samplebits = 16;
 
-	if (s_khz->value >= 48) // jit
+	if (s_khz->value >= 47.0f) // jit
 		dma.speed = 48000;
-	else if (s_khz->value >= 44)
+	else if (s_khz->value >= 43.0f)
 		dma.speed = 44100;
-	else if (s_khz->value >= 22)
+	else if (s_khz->value >= 21.0f)
 		dma.speed = 22050;
 	else
 		dma.speed = 11025;
 
-	Com_Printf( "Initializing DirectSound\n");
+	Com_Printf("Initializing DirectSound\n");
 
-	if ( !hInstDS )
+	if (!hInstDS)
 	{
-		Com_DPrintf( "...loading dsound.dll: " );
-
+		Com_DPrintf("...loading dsound.dll: ");
 		hInstDS = LoadLibrary("dsound.dll");
 		
 		if (hInstDS == NULL)

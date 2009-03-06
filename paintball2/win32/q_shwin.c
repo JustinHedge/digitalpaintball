@@ -174,7 +174,7 @@ static qboolean CompareAttributes( unsigned found, unsigned musthave, unsigned c
 // === - jit
 // player menu bugfix by AnthonyJ@planetquake.com
 
-char *Sys_FindFirst (const char *path, unsigned musthave, unsigned canthave )
+char *Sys_FindFirst (const char *path, unsigned musthave, unsigned canthave)
 {
 	struct _finddata_t findinfo;
 
@@ -182,7 +182,7 @@ char *Sys_FindFirst (const char *path, unsigned musthave, unsigned canthave )
 		Sys_Error ("Sys_BeginFind without close");
 	findhandle = 0;
 
-	COM_FilePath(path, findbase);
+	COM_FilePath((char *)path, findbase);
 	findhandle = _findfirst(path, &findinfo);
 
 	while ((findhandle != -1))
