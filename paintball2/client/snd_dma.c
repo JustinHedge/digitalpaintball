@@ -91,6 +91,7 @@ cvar_t		*s_show;
 cvar_t		*s_mixahead;
 cvar_t		*s_primary;
 cvar_t		*s_resamplequality; // jitsound
+cvar_t		*s_resamplevolume; // jitsound
 
 
 int		s_rawend;
@@ -151,6 +152,20 @@ void S_Init (void)
 	}
 	else
 	{
+		// === jitsound - lots of people from previous builds have old sound settings, force the new.
+		cvar_t *s_force48khz = Cvar_Get("s_force48khz", "1", CVAR_ARCHIVE);
+
+		if (s_force48khz->value)
+		{
+			Cvar_Set("s_khz", "48");
+			Cvar_Set("s_loadas8bit", "0");
+			//Cvar_Set("s_force48khz", "0");
+		}
+
+		s_resamplequality = Cvar_Get("s_resamplequality", "2", CVAR_ARCHIVE);
+		s_resamplevolume = Cvar_Get("s_resamplevolume", "0.5", 0);
+		// jitsound ===
+
 		s_volume = Cvar_Get("s_volume", "0.7", CVAR_ARCHIVE);
 		s_khz = Cvar_Get("s_khz", "48", CVAR_ARCHIVE); // jit, default to 48 (was 11)
 		s_loadas8bit = Cvar_Get("s_loadas8bit", "0", CVAR_ARCHIVE); // jit, was 1
@@ -158,7 +173,6 @@ void S_Init (void)
 		s_show = Cvar_Get("s_show", "0", 0);
 		s_testsound = Cvar_Get("s_testsound", "0", 0);
 		s_primary = Cvar_Get("s_primary", "0", CVAR_ARCHIVE);	// win32 specific
-		s_resamplequality = Cvar_Get("s_resamplequality", "2", CVAR_ARCHIVE); // jitsound
 
 		//A3D ADD
 		s_a3d = Cvar_Get ("s_a3d", "0", CVAR_ARCHIVE); //sound engine

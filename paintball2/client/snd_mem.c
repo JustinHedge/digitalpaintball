@@ -83,6 +83,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int insamples, int inwidth, byte *data
 		{
 			float point, pointdiff;
 			int point1, point2, sample1, sample2;
+			float scale = s_resamplevolume->value;
 
 			for (i = 0; i < outcount; ++i)
 			{
@@ -108,6 +109,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int insamples, int inwidth, byte *data
 				}
 
 				sample = (short)(((float)sample1 * (1.0f - pointdiff)) + ((float)sample2 * pointdiff));
+				sample *= scale;
 
 				if (sc->width == 2)
 					((short *)sc->data)[i] = sample;
