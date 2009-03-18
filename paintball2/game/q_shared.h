@@ -528,11 +528,35 @@ typedef struct cmodel_s
 	int			headnode;
 } cmodel_t;
 
+// === jitsound - enum for differnt surface sound types
+typedef enum surface_sound_type_s
+{
+	SURFACE_SOUND_DEFAULT = 0,
+	SURFACE_SOUND_WOOD_SOLID,
+	SURFACE_SOUND_WOOD_PLANK,
+	SURFACE_SOUND_WOOD_OTHER,
+	SURFACE_SOUND_METAL_BARREL,
+	SURFACE_SOUND_METAL_THIN,
+	SURFACE_SOUND_METAL_THICK,
+	SURFACE_SOUND_GLASS,
+	SURFACE_SOUND_SNOW,
+	SURFACE_SOUND_CEMENT,
+	SURFACE_SOUND_BRICK,
+	SURFACE_SOUND_DIRT,
+	SURFACE_SOUND_GRASS,
+	SURFACE_SOUND_WATER,
+	SURFACE_SOUND_TREE,
+	SURFACE_SOUND_SAND,
+	SURFACE_SOUND_ROCK
+} surface_sound_type_t;
+// jitsound ===
+
 typedef struct csurface_s
 {
 	char		name[16];
 	int			flags;
 	int			value;
+	surface_sound_type_t surface_sound; // jitsound
 } csurface_t;
 
 typedef struct mapsurface_s  // used internally due to name len probs //ZOID

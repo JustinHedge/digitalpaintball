@@ -178,6 +178,7 @@ void CMod_LoadSurfaces (lump_t *l)
 	texinfo_t *in;
 	mapsurface_t *out;
 	int i, count;
+	char *s;
 
 	in = (void *)(cmod_base + l->fileofs);
 
@@ -204,6 +205,115 @@ void CMod_LoadSurfaces (lump_t *l)
 		strtolower(out->c.name); // jit - make texture names lowercase
 		out->c.flags = LittleLong(in->flags);
 		out->c.value = LittleLong(in->value);
+
+		// === jitsound - figure out surface sound types based on texture name
+		s = strrchr(out->rname, '/');
+
+		if (!s)
+			s = out->rname;
+		else
+			++s; // get past the slash
+
+		if (strstr(s, "snow") || strstr(s, "w_metal1"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_SNOW;
+		}
+		else if (strstr(s, "brl") || strstr(s, "brt") || strstr(s, "barrel"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_METAL_BARREL;
+		}
+		else if (Q_streq(s, "sew1_5"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_CEMENT;
+		}
+		else if (Q_streq(s, "metal4_8") || Q_streq(s, "metal4_7") || Q_streq(s, "metal2") || strstr(s, "tread"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_METAL_THIN;
+		}
+		else if (strstr(s, "met") || strstr(s, "flag") || strstr(s, "jail") || strstr(s, "sew"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_METAL_THICK;
+		}
+		else if (strstr(s, "chain"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_METAL_THIN;
+		}
+		else if (strstr(s, "doorp2"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_METAL_THIN;
+		}
+		else if (Q_streq(s, "uwall1_3"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_WOOD_SOLID;
+		}
+		else if (strstr(s, "door") || strstr(s, "wall") || strstr(s, "_wood") || strstr(s, "box") || Q_streq(s, "wizwood1_4") || Q_streq(s, "wizwood1_5") ||
+			Q_streq(s, "wizwood1_6") || Q_streq(s, "wizwood1_7") || Q_streq(s, "wizwood1_8") || Q_streq(s, "wood1_3") || strstr(s, "woodfl") ||
+			Q_streq(s, "woodp1_1")) //azwall
+		{
+			out->c.surface_sound = SURFACE_SOUND_WOOD_PLANK;
+		}
+		else if (strstr(s, "arrow"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_WOOD_SOLID;
+		}
+		else if (strstr(s, "_lt") || strstr(s, "glass") || strstr(s, "lit") || strstr(s, "light"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_GLASS;
+		}
+		else if (strstr(s, "bark") || strstr(s, "logs") || strstr(s, "roof"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_TREE;
+		}
+		else if (strstr(s, "brik") || strstr(s, "wwall"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_BRICK;
+		}
+		else if (strstr(s, "concr") || strstr(s, "city5_3"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_CEMENT;
+		}
+		else if (strstr(s, "city"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_BRICK;
+		}
+		else if (strstr(s, "cliff") || strstr(s, "ground1_8") || strstr(s, "wgrnd1_08") || strstr(s, "rock") || strstr(s, "stone") || strstr(s, "marb") || strstr(s, "tile"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_ROCK;
+		}
+		else if (strstr(s, "dung") || strstr(s, "ksplat"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_WOOD_SOLID;
+		}
+		else if (strstr(s, "grass1_8") || strstr(s, "grassp2") || strstr(s, "grassp3") || strstr(s, "grave01_1"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_DIRT;
+		}
+		else if (strstr(s, "gras") || strstr(s, "ground") || strstr(s, "hay") || strstr(s, "jungle") || strstr(s, "swamp"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_GRASS;
+		}
+		else if (strstr(s, "grave"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_CEMENT;
+		}
+		else if (strstr(s, "sand"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_SAND;
+		}
+		else if (strstr(s, "tudor"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_CEMENT;
+		}
+		else if (strstr(s, "water"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_WATER;
+		}
+
+
+
+
+		// jitsound ===
+
 	}
 }
 
