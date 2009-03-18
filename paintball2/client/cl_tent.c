@@ -116,8 +116,9 @@ struct model_s	*cl_mod_heatbeam;
 struct model_s	*cl_mod_monster_heatbeam;
 struct model_s	*cl_mod_explo4_big;
 #else
-struct sfx_s	*cl_sfx_splat1; 
-struct sfx_s	*cl_sfx_splat2;
+struct sfx_s	*cl_sfx_splat[2];
+struct sfx_s	*cl_sfx_splat_barrel[2];
+struct sfx_s	*cl_sfx_splat_grass[2];
 struct sfx_s	*cl_sfx_grensplat1;
 struct sfx_s	*cl_sfx_grensplat2;
 struct sfx_s	*cl_sfx_grensplat3;
@@ -138,8 +139,12 @@ void CL_RegisterTEntSounds (void) // jit, cleaned up and adjusted for paintball
 {
 #ifdef QUAKE2
 #else
-	cl_sfx_splat1 = S_RegisterSound("splat/splat1.wav");
-	cl_sfx_splat2 = S_RegisterSound("splat/splat2.wav");
+	cl_sfx_splat[0] = S_RegisterSound("splat/splat1.wav");
+	cl_sfx_splat[1] = S_RegisterSound("splat/splat2.wav");
+	cl_sfx_splat_barrel[0] = S_RegisterSound("splat/splat1_barrel.wav");
+	cl_sfx_splat_barrel[1] = S_RegisterSound("splat/splat2_barrel.wav");
+	cl_sfx_splat_grass[0] = S_RegisterSound("splat/splat1_grass.wav");
+	cl_sfx_splat_grass[1] = S_RegisterSound("splat/splat2_grass.wav");
 	cl_sfx_grensplat1 = S_RegisterSound("splat/grensplat1.wav");
 	cl_sfx_grensplat2 = S_RegisterSound("splat/grensplat2.wav");
 	cl_sfx_grensplat3 = S_RegisterSound("splat/grensplat3.wav");
@@ -767,22 +772,34 @@ void CL_ParseTEnt (void)
 		}
 		else
 		{
-			// randomly choose 1 of 2 splat sounds:
-			cnt = rand() & 1;
-
-			if (cnt == 0)
-				S_StartSound(pos, 0, 0, cl_sfx_splat1, 1, ATTN_NORM, 0);
-			else if (cnt == 1)
-				S_StartSound(pos, 0, 0, cl_sfx_splat2, 1, ATTN_NORM, 0);
+			struct sfx_s *sound;
+			int n;
+			trace_t tr;
+			vec3_t end, start, back, forward;
+			surface_sound_type_t surface_sound = SURFACE_SOUND_DEFAULT;
 
 			// generate a splat model:
 			ex = CL_AllocExplosion();
 			VectorCopy(pos, ex->ent.origin);
 			VectorCopy(pos, ex->ent.startorigin);
 
+			// check the closest wall for an exact angle
+			VectorScale(dir, 1.0f, back);
+			VectorScale(dir, -8.0f, forward);
+			VectorAdd(ex->ent.origin, back, start);
+			VectorAdd(ex->ent.origin, forward, end);
+			tr = CM_BoxTrace(start, end, vec3_origin, vec3_origin, 0, MASK_SOLID);
+
+			if (tr.fraction < 1.0f)
+			{
+				VectorCopy(tr.plane.normal, dir);
+				surface_sound = tr.surface->surface_sound;
+			}
+
+			// Convert vector to angles
 			ex->ent.angles[0] = (float)acos(dir[2]) / (float)M_PI * 180.0f;
 
-			if (dir[0]) // jitodo, check the closest wall for an exact angle, if necessary
+			if (dir[0])
 				ex->ent.angles[1] = atan2(dir[1], dir[0]) / (float)M_PI * 180.0f;
 			else if (dir[1] > 0)
 				ex->ent.angles[1] = 90.0f;
@@ -800,6 +817,26 @@ void CL_ParseTEnt (void)
 			ex->ent.scale = ex->ent.startscale = (0.7f + frand() * 0.6f);
 			ex->frames = 1; // doesn't matter
 			ex->ent.model = cl_mod_splat;
+
+			// randomly choose 1 of 2 splat sounds:
+			if (frand() > 0.5f)
+				n = 1;
+			else
+				n = 0;
+
+			switch (surface_sound)
+			{
+			case SURFACE_SOUND_METAL_BARREL:
+				sound = cl_sfx_splat_barrel[n];
+				break;
+			case SURFACE_SOUND_GRASS:
+				sound = cl_sfx_splat_grass[n];
+				break;
+			default:
+				sound = cl_sfx_splat[n];
+			}
+
+			S_StartSound(pos, 0, 0, sound, 1, ATTN_NORM, 0);
 		}
 #endif
 		// jit

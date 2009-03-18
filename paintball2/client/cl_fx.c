@@ -2270,7 +2270,7 @@ struct sfx_s *get_step_sound (entity_state_t *ent, int stepnumber)
 	end[2] -= 128.0f;
 	tr = CM_BoxTrace(ent->origin, end, vec3_origin, vec3_origin, 0, MASK_PLAYERSOLID);
 
-	if (strstr(tr.surface->name, "snow") || strstr(tr.surface->name, "w_metal1"))
+	if (tr.surface->surface_sound == SURFACE_SOUND_SNOW)
 	{
 		return cl_sfx_footsteps_snow[stepnumber];
 	}
