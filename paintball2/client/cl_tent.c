@@ -116,9 +116,15 @@ struct model_s	*cl_mod_heatbeam;
 struct model_s	*cl_mod_monster_heatbeam;
 struct model_s	*cl_mod_explo4_big;
 #else
-struct sfx_s	*cl_sfx_splat[2];
+//struct sfx_s	*cl_sfx_splat[2];
 struct sfx_s	*cl_sfx_splat_barrel[2];
 struct sfx_s	*cl_sfx_splat_grass[2];
+struct sfx_s	*cl_sfx_splat_metal_thick[2];
+struct sfx_s	*cl_sfx_splat_metal_thin[2];
+struct sfx_s	*cl_sfx_splat_brick[2];
+struct sfx_s	*cl_sfx_splat_dirt[2];
+struct sfx_s	*cl_sfx_splat_wood_solid[2];
+struct sfx_s	*cl_sfx_splat_wood_plank[2];
 struct sfx_s	*cl_sfx_grensplat1;
 struct sfx_s	*cl_sfx_grensplat2;
 struct sfx_s	*cl_sfx_grensplat3;
@@ -139,12 +145,24 @@ void CL_RegisterTEntSounds (void) // jit, cleaned up and adjusted for paintball
 {
 #ifdef QUAKE2
 #else
-	cl_sfx_splat[0] = S_RegisterSound("splat/splat1.wav");
-	cl_sfx_splat[1] = S_RegisterSound("splat/splat2.wav");
-	cl_sfx_splat_barrel[0] = S_RegisterSound("splat/splat1_barrel.wav");
-	cl_sfx_splat_barrel[1] = S_RegisterSound("splat/splat2_barrel.wav");
-	cl_sfx_splat_grass[0] = S_RegisterSound("splat/splat1_grass.wav");
-	cl_sfx_splat_grass[1] = S_RegisterSound("splat/splat2_grass.wav");
+	//cl_sfx_splat[0] = S_RegisterSound("splat/splat1.wav");
+	//cl_sfx_splat[1] = S_RegisterSound("splat/splat2.wav");
+	cl_sfx_splat_barrel[0] = S_RegisterSound("splat/splat_barrel1.wav");
+	cl_sfx_splat_barrel[1] = S_RegisterSound("splat/splat_barrel2.wav");
+	cl_sfx_splat_grass[0] = S_RegisterSound("splat/splat_grass1.wav");
+	cl_sfx_splat_grass[1] = S_RegisterSound("splat/splat_grass2.wav");
+	cl_sfx_splat_metal_thick[0] = S_RegisterSound("splat/splat_metal_thick1.wav");
+	cl_sfx_splat_metal_thick[1] = S_RegisterSound("splat/splat_metal_thick2.wav");
+	cl_sfx_splat_metal_thin[0] = S_RegisterSound("splat/splat_metal_thin1.wav");
+	cl_sfx_splat_metal_thin[1] = S_RegisterSound("splat/splat_metal_thin2.wav");
+	cl_sfx_splat_brick[0] = S_RegisterSound("splat/splat_brick1.wav");
+	cl_sfx_splat_brick[1] = S_RegisterSound("splat/splat_brick2.wav");
+	cl_sfx_splat_dirt[0] = S_RegisterSound("splat/splat_dirt1.wav");
+	cl_sfx_splat_dirt[1] = S_RegisterSound("splat/splat_dirt2.wav");
+	cl_sfx_splat_wood_solid[0] = S_RegisterSound("splat/splat1.wav");
+	cl_sfx_splat_wood_solid[1] = S_RegisterSound("splat/splat2.wav");
+	cl_sfx_splat_wood_plank[0] = S_RegisterSound("splat/splat_wood_plank1.wav");
+	cl_sfx_splat_wood_plank[1] = S_RegisterSound("splat/splat_wood_plank2.wav");
 	cl_sfx_grensplat1 = S_RegisterSound("splat/grensplat1.wav");
 	cl_sfx_grensplat2 = S_RegisterSound("splat/grensplat2.wav");
 	cl_sfx_grensplat3 = S_RegisterSound("splat/grensplat3.wav");
@@ -830,10 +848,37 @@ void CL_ParseTEnt (void)
 				sound = cl_sfx_splat_barrel[n];
 				break;
 			case SURFACE_SOUND_GRASS:
+			case SURFACE_SOUND_SNOW:
 				sound = cl_sfx_splat_grass[n];
 				break;
+			case SURFACE_SOUND_METAL_THIN:
+				sound = cl_sfx_splat_metal_thin[n];
+				break;
+			case SURFACE_SOUND_METAL_THICK:
+			case SURFACE_SOUND_METAL_OTHER:
+				sound = cl_sfx_splat_metal_thick[n];
+				break;
+			case SURFACE_SOUND_BRICK:
+			case SURFACE_SOUND_GLASS:
+			case SURFACE_SOUND_CEMENT:
+				sound = cl_sfx_splat_brick[n];
+				break;
+			case SURFACE_SOUND_DIRT:
+			case SURFACE_SOUND_SAND:
+				sound = cl_sfx_splat_dirt[n];
+				break;
+			case SURFACE_SOUND_WOOD_PLANK:
+			case SURFACE_SOUND_WOOD_OTHER:
+				sound = cl_sfx_splat_wood_plank[n];
+				break;
+			case SURFACE_SOUND_WOOD_SOLID:
+				sound = cl_sfx_splat_wood_solid[n];
+				break;
+			case SURFACE_SOUND_DEFAULT:
+			case SURFACE_SOUND_ROCK:
 			default:
-				sound = cl_sfx_splat[n];
+				// jitodo - need a better sound for this
+				sound = cl_sfx_splat_wood_solid[n];
 			}
 
 			S_StartSound(pos, 0, 0, sound, 1, ATTN_NORM, 0);
