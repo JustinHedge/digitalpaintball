@@ -1377,6 +1377,7 @@ void SCR_UpdateScreen (void)
 	int i;
 	float separation[2] = { 0, 0 };
 	extern cvar_t *cl_hudscale;
+	extern cvar_t *cl_crosshairscale;
 
 	// if the screen is disabled (loading plaque is up, or vid mode changing)
 	// do nothing at all
@@ -1395,9 +1396,12 @@ void SCR_UpdateScreen (void)
 		return;				// not initialized yet
 
 
-	if (cl_hudscale->value < 1.0 || cl_hudscale->value > viddef.width/320.0) // jithudscale
-		Cvar_SetValue("cl_hudscale", viddef.width/320.0f); // jithudscale
-	
+	if (cl_hudscale->value < 1.0 || cl_hudscale->value > viddef.width / 320.0f) // jithudscale
+		Cvar_SetValue("cl_hudscale", viddef.width / 320.0f); // jithudscale
+
+	if (cl_crosshairscale->value < 1.0 || cl_crosshairscale->value > viddef.width / 320.0f)
+		Cvar_SetValue("cl_crosshairscale", viddef.width / 320.0f);
+
 	hudscale = cl_hudscale->value;
 
 	if (m_invert->modified || m_pitch->modified) // jitmouse
