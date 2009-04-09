@@ -29,6 +29,7 @@ cvar_t	*sv_paused;
 cvar_t	*sv_timedemo;
 
 cvar_t	*sv_enforcetime;
+cvar_t  *sv_cullentities;
 
 cvar_t	*timeout;				// seconds without any message
 cvar_t	*zombietime;			// seconds to sink messages after disconnect
@@ -1413,6 +1414,7 @@ void SV_Init (void)
 	sv_paused      = Cvar_Get("paused", "0", 0);
 	sv_timedemo    = Cvar_Get("timedemo", "0", 0);
 	sv_enforcetime = Cvar_Get("sv_enforcetime", "0", 0); // 1.831 - disabled because of problems. "240", 0); // jitspeedhackcheck
+	sv_cullentities= Cvar_Get("sv_cullentities", "0", 0);
 	sv_noextascii  = Cvar_Get("sv_noextascii", "1", 0); // jit
 	allow_download          = Cvar_Get("allow_download", "1", CVAR_ARCHIVE);
 	allow_download_players  = Cvar_Get("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1

@@ -511,6 +511,61 @@ void SV_FatPVS (vec3_t org)
 	}
 }
 
+#define offsetrandom(MIN,MAX) ((rand() & 32767) * (((MAX)-(MIN)) * (1.0f / 32767.0f)) + (MIN))
+qboolean SV_InvisibleToClient(edict_t *viewer, edict_t *seen)
+{
+    int      i;
+    trace_t   tr;
+    vec3_t   start;
+    vec3_t   end;
+
+
+	if (seen->solid == SOLID_BSP) // viciouzport - dont cull bsp models
+    {
+        return false;
+    }
+
+    if (sv_cullentities->value == 1)    // 1 only check player models, 2 = check all ents
+		if (!seen->client)   
+			return false;
+
+    memset (&tr, 0, sizeof(tr));               
+    tr.fraction = 1;
+
+	start[0] = viewer->s.origin[0];
+    start[1] = viewer->s.origin[1];
+	start[2] = viewer->s.origin[2] + viewer->client->ps.viewoffset[2]; // viciouzport - added view_ofs to this? TODO: investigate.
+
+    //aim straight at the center of "seen" from our eyes
+	end[0] = 0.5 * (seen->mins[0] + seen->maxs[0]);
+    end[1] = 0.5 * (seen->mins[1] + seen->maxs[1]);
+    end[2] = 0.5 * (seen->mins[2] + seen->maxs[2]);           
+
+	// viciouzport - set it up with sv_trace as opposed to old q1 method
+    tr = SV_Trace (start, vec3_origin, vec3_origin, end, NULL, MASK_OPAQUE);
+    if (tr.fraction == 1) // line hit the ent
+            return false;
+
+    //last attempt to eliminate any flaws...
+	if ((seen->client) || (sv_cullentities->value > 1))
+    {
+        for (i = 0; i < 64; i++)
+        {
+            end[0] = seen->s.origin[0] + offsetrandom(seen->mins[0], seen->maxs[0]);
+            end[1] = seen->s.origin[1] + offsetrandom(seen->mins[1], seen->maxs[1]);
+            end[2] = seen->s.origin[2] + offsetrandom(seen->mins[2], seen->maxs[2]);
+
+			tr = SV_Trace (start, vec3_origin, vec3_origin, end, NULL, MASK_OPAQUE);
+            if (tr.fraction == 1)// line hit the ent
+			{
+				Com_DPrintf (va("found ent in %i hits\n", i));
+                    return false;
+			}
+        }
+    }
+
+    return true;
+}
 
 /*
 =============
@@ -644,6 +699,9 @@ void SV_BuildClientFrame (client_t *client)
 						continue;
 				}
 			}
+
+			if (sv_cullentities->value && SV_InvisibleToClient(clent, ent))
+				continue;
 		}
 
 #if 0

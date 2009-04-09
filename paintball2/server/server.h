@@ -213,6 +213,7 @@ extern	cvar_t		*sv_airaccelerate;		// don't reload level state when reentering
 											// development tool
 extern	cvar_t		*sv_enforcetime;
 extern	cvar_t		*sv_noextascii;			// jit
+extern  cvar_t		*sv_cullentities;		// viciouz - anti-wallhack
 
 extern	client_t	*sv_client;
 extern	edict_t		*sv_player;

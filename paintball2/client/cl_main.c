@@ -2430,7 +2430,6 @@ typedef struct
 cheatvar_t	cheatvars[] = {
 	{"timescale", "1"},
 	{"timedemo", "0"},
-	{"r_drawworld", "1"},
 	{"cl_testlights", "0"},
 	{"r_fullbright", "0"},
 	{"r_drawflat", "0"},
