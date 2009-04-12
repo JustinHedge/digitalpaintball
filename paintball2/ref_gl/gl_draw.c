@@ -408,7 +408,7 @@ image_t	*Draw_FindPic (const char *name)
 		gl = GL_FindImage(name + 1, it_pic);
 	}
 
-	if (strstr(fullname, "pics/ch") && (strlen(fullname) <= 13)) // still a bit ambiguous
+	if (strstr(fullname, "pics/ch") && strchr("0123456789", fullname[7]) && (strlen(fullname) <= 15)) // still a bit ambiguous
 		gl->is_crosshair = true;
 
 	if (!gl) // jit -- remove "can't find pic" spam
