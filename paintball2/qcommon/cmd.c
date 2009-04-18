@@ -507,6 +507,10 @@ void Cmd_Alias_f (void)
 	char		cmd[1024];
 	int			i, c;
 	char		*s;
+	
+	// Don't let malicious servers force clients to do things they shouldn't be able to
+	if (g_command_stuffed)
+		return;
 
 	if (Cmd_Argc() == 1)
 	{
