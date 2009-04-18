@@ -78,8 +78,8 @@ void Stats_UpdateTime()
 
 void Stats_AddEvent(int type)
 {
-	// check if this is a demo or not
-	if (SV_IsDemoRunning())
+	// this should be better
+	if (cl.attractloop)
 		return;
 
 	switch (type)

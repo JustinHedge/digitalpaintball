@@ -244,7 +244,7 @@ XLDFLAGS+= -lXxf86dga
 endif
 
 GLX_LDFLAGS=-L$(X11BASE)/lib$(_LIB) -L$(LOCALBASE)/lib$(_LIB) -lGL -ljpeg -lpng
-LDFLAGS+=-lvorbisfile -lvorbis -logg
+LDFLAGS+= -B static -lvorbisfile -lvorbis -logg -B dynamic
 
 SDLCONFIG?= sdl-config
 SDLCFLAGS= $(shell $(SDLCONFIG) --cflags)
@@ -393,7 +393,8 @@ PB2_OBJS = \
 	$(BUILDDIR)/client/q_shlinux.o $(BUILDDIR)/client/vid_so.o        $(BUILDDIR)/client/sys_linux.o \
 	$(BUILDDIR)/client/glob.o      $(BUILDDIR)/client/$(NET_UDP).o    $(BUILDDIR)/client/net_common.o \
 	$(BUILDDIR)/client/net_tcp.o   $(BUILDDIR)/client/q_shared.o      $(BUILDDIR)/client/pmove.o \
-	$(BUILDDIR)/client/snd_ogg.o   $(BUILDDIR)/client/vid_common.o	  $(BUILDDIR)/client/cl_stats.o
+	$(BUILDDIR)/client/snd_ogg.o   $(BUILDDIR)/client/vid_common.o	  $(BUILDDIR)/client/cl_stats.o \
+	
 
 CD_OBJS = \
 	$(BUILDDIR)/client/cd_linux.o 
