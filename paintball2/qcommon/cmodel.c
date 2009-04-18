@@ -218,37 +218,30 @@ void CMod_LoadSurfaces (lump_t *l)
 		{
 			out->c.surface_sound = SURFACE_SOUND_SNOW;
 		}
-		else if (strstr(s, "brl") || strstr(s, "brt") || strstr(s, "barrel"))
+		else if (strstr(s, "brl") || strstr(s, "brt") || strstr(s, "barrel") || strstr(s, "fuel") || strstr(s, "drum"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_METAL_BARREL;
 		}
-		else if (Q_streq(s, "sew1_5"))
+		else if (Q_streq(s, "sew1_5") || strstr(s, "concr") || strstr(s, "city5_3") || strstr(s, "cement"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_CEMENT;
 		}
-		else if (Q_streq(s, "metal4_8") || Q_streq(s, "metal4_7") || Q_streq(s, "metal2") || strstr(s, "tread"))
+		else if (Q_streq(s, "metal4_8") || Q_streq(s, "metal4_7") || Q_streq(s, "metal2") || strstr(s, "tread") || strstr(s, "doorp1") ||
+			strstr(s, "green-door") || Q_streq(s, "ut_rustedmetal1") || strstr(s, "acside") || strstr(s, "actop") || Q_streq(s, "metal4_6"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_METAL_THIN;
 		}
-		else if (strstr(s, "met") || strstr(s, "flag") || strstr(s, "jail") || strstr(s, "sew"))
+		else if (strstr(s, "met") || strstr(s, "jail") || strstr(s, "sew") || strstr(s, "grate") || strstr(s, "chain"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_METAL_THICK;
-		}
-		else if (strstr(s, "chain"))
-		{
-			out->c.surface_sound = SURFACE_SOUND_METAL_THIN;
-		}
-		else if (strstr(s, "doorp2"))
-		{
-			out->c.surface_sound = SURFACE_SOUND_METAL_THIN;
 		}
 		else if (Q_streq(s, "uwall1_3"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_WOOD_SOLID;
 		}
-		else if (strstr(s, "door") || strstr(s, "wall") || strstr(s, "_wood") || strstr(s, "box") || Q_streq(s, "wizwood1_4") || Q_streq(s, "wizwood1_5") ||
+		else if (strstr(s, "door") || strstr(s, "azwall") || strstr(s, "_wood") || strstr(s, "box") || Q_streq(s, "wizwood1_4") || Q_streq(s, "wizwood1_5") ||
 			Q_streq(s, "wizwood1_6") || Q_streq(s, "wizwood1_7") || Q_streq(s, "wizwood1_8") || Q_streq(s, "wood1_3") || strstr(s, "woodfl") ||
-			Q_streq(s, "woodp1_1")) //azwall
+			Q_streq(s, "woodp1_1") || strstr(s, "graywood") || strstr(s, "crate") || Q_streq(s, "wood5b"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_WOOD_PLANK;
 		}
@@ -264,23 +257,19 @@ void CMod_LoadSurfaces (lump_t *l)
 		{
 			out->c.surface_sound = SURFACE_SOUND_TREE;
 		}
-		else if (strstr(s, "brik") || strstr(s, "wwall"))
+		else if (strstr(s, "brik") || strstr(s, "bric") || strstr(s, "tile") || strstr(s, "wwall"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_BRICK;
-		}
-		else if (strstr(s, "concr") || strstr(s, "city5_3"))
-		{
-			out->c.surface_sound = SURFACE_SOUND_CEMENT;
 		}
 		else if (strstr(s, "city"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_BRICK;
 		}
-		else if (strstr(s, "cliff") || strstr(s, "ground1_8") || strstr(s, "wgrnd1_08") || strstr(s, "rock") || strstr(s, "stone") || strstr(s, "marb") || strstr(s, "tile"))
+		else if (strstr(s, "cliff") || strstr(s, "ground1_8") || strstr(s, "wgrnd1_08") || strstr(s, "rock") || strstr(s, "stone") || strstr(s, "marb"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_ROCK;
 		}
-		else if (strstr(s, "dung") || strstr(s, "ksplat"))
+		else if (strstr(s, "dung") || strstr(s, "ksplat") || strstr(s, "wood"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_WOOD_SOLID;
 		}
@@ -307,6 +296,13 @@ void CMod_LoadSurfaces (lump_t *l)
 		else if (strstr(s, "water"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_WATER;
+		}
+
+		// transparent surface (do this for trans33 or trans66, but not trans33+trans66
+		if (((out->c.flags & SURF_TRANS33) && !(out->c.flags & SURF_TRANS66)) ||
+			((out->c.flags & SURF_TRANS66) && !(out->c.flags & SURF_TRANS33)))
+		{
+			out->c.surface_sound = SURFACE_SOUND_GLASS;
 		}
 
 
