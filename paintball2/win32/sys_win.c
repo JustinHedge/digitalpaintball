@@ -581,6 +581,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 		do
 		{
+			NET_Sleep(1); // jit - don't bog down CPU on the server.
 			newtime = Sys_Milliseconds();
 			time = newtime - oldtime;
 		} while (time < 1);
