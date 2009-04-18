@@ -592,7 +592,9 @@ void PM_AirMove (void)
 		PM_StepSlideMove();
 	}
 	else if (pm->groundentity)
-	{	// walking on ground
+	{
+#if 1 // jitslope - old code
+		// walking on ground
 		pml.velocity[2] = 0; //!!! this is before the accel
 		PM_Accelerate (wishdir, wishspeed, pm_accelerate);
 
@@ -603,6 +605,13 @@ void PM_AirMove (void)
 		else
 			pml.velocity[2] -= pm->s.gravity * pml.frametime;
 // PGM
+#else
+		// === jitslope - apply gravity even when on a ground entity so we walk down slopes (testing)
+		//pml.velocity[2] = 0; //!!! this is before the accel
+		pml.velocity[2] -= pm->s.gravity * pml.frametime;
+		PM_Accelerate(wishdir, wishspeed, pm_accelerate);
+		// jitslope ===
+#endif
 
 		if (!pml.velocity[0] && !pml.velocity[1])
 			return;
