@@ -2431,6 +2431,7 @@ cheatvar_t	cheatvars[] = {
 	{"timescale", "1"},
 	{"timedemo", "0"},
 	{"cl_testlights", "0"},
+	{"cl_testblend", "0"},
 	{"r_fullbright", "0"},
 	{"r_drawflat", "0"},
 	{"paused", "0"},
