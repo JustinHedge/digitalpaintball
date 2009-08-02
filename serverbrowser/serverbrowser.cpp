@@ -285,7 +285,7 @@ static void LoadList (const char *s)
 void UpdateList (void)
 {
 	SetStatus("Updating List...");
-	LoadList("http://dpball.com/serverlist.php");
+	LoadList("http://dplogin.com/serverlist.php");
 }
 
 
