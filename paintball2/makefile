@@ -83,8 +83,12 @@ ifeq ($(OSTYPE),Linux)
 BUILD_ALSA_SND?=YES      # Alsa sound driver
 endif
 BUILD_OSS_SND?=YES       # OSS sound driver
-BUILD_SDL_SND?=NO       # SDL sound driver
+BUILD_SDL_SND?=YES       # SDL sound driver
 
+#===========================#
+# OGG Vorbis Support        #
+#===========================#
+WITH_OGG_SUPPORT?=NO
 
 #===========================#
 # GLX render.               #
@@ -111,7 +115,7 @@ BUILD_JOYSTICK?=NO
 # (hopefully) end of configurable options
 
 VERSION=2.0
-BUILD=17
+BUILD=27
 
 MOUNT_DIR=.
 BINDIR=paintball2
@@ -166,6 +170,10 @@ endif
 
 ifeq ($(strip $(USE_XF86_DGA)),YES)
 BASE_CFLAGS+=-DUSE_XF86_DGA
+endif
+
+ifeq ($(strip $(WITH_OGG_SUPPORT)),YES)
+BASE_CFLAGS+=-DOGG_SUPPORT
 endif
 
 ifeq ($(ENABLE_PROFILING),YES)
@@ -243,8 +251,11 @@ ifeq ($(strip $(USE_XF86_DGA)),YES)
 XLDFLAGS+= -lXxf86dga
 endif
 
+ifeq ($(strip $(WITH_OGG_SUPPORT)),YES)
+LDFLAGS+= -lvorbisfile -lvorbis -logg 
+endif
+
 GLX_LDFLAGS=-L$(X11BASE)/lib$(_LIB) -L$(LOCALBASE)/lib$(_LIB) -lGL -ljpeg -lpng
-LDFLAGS+= -B static -lvorbisfile -lvorbis -logg -B dynamic
 
 SDLCONFIG?= sdl-config
 SDLCFLAGS= $(shell $(SDLCONFIG) --cflags)
