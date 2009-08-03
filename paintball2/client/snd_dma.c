@@ -277,7 +277,9 @@ void S_Init (void)
 		//A3D CHANGE END
 		S_StopAllSounds ();
 
+#ifdef OGG_SUPPORT
 		OGG_Init();
+#endif
 	}
 
 	Com_Printf("------------------------------------\n");
@@ -296,8 +298,9 @@ void S_Shutdown(void)
 	void S_Q2A3DCloseLibrary(void);
 	if (!sound_started && !a3dsound_started)
 		return;
-
+#ifdef OGG_SUPPORT
 	OGG_Shutdown();
+#endif
 
 	if (a3dsound_started)
 	{
@@ -1331,8 +1334,9 @@ void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 
 // mix some sound
 	S_Update_();
-
+#ifdef OGG_SUPPORT
 	OGG_Stream();
+#endif OGG_SUPPORT
 }
 
 void GetSoundtime(void)

@@ -646,8 +646,6 @@ void Stats_WriteToFile();
 void Stats_UpdateTime();
 void Stats_Clear();
 
-qboolean SV_IsDemoRunning(); // in sv_main.c for stats
-
 #define STATS_KILL 0
 #define STATS_DEATH 1
 #define STATS_GRAB 2
@@ -768,11 +766,18 @@ extern int cl_maplist_modes_count;
 // pb2_xfire.c -- jitxfire
 void CL_Xfire (void);
 
+// Remove OGG on linux for bug testing.
+#ifdef WIN32
+#define OGG_SUPPORT
+#endif
+
 // snd_ogg.c
+#ifdef OGG_SUPPORT
 void OGG_Init (void);
 void OGG_Shutdown (void);
 char **FS_ListFiles (const char *findname, int *numfiles, unsigned musthave, unsigned canthave);
 void FS_FreeList (char **list, int nfiles);
+#endif
 
 //
 // cl_pred.c
