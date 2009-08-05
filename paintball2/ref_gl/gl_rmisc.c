@@ -416,6 +416,12 @@ void GL_SetDefaultState (void)
 	{
 		float attenuations[3];
 
+		// viciouz - clamp size here so people don't use huge splats as an advantage.
+		if(gl_particle_min_size->value > 3)
+			ri.Cvar_Set("gl_particle_min_size", "3");
+		if(gl_particle_max_size->value > 40)
+			ri.Cvar_Set("gl_particle_max_size", "40");
+
 		attenuations[0] = gl_particle_att_a->value;
 		attenuations[1] = gl_particle_att_b->value;
 		attenuations[2] = gl_particle_att_c->value;

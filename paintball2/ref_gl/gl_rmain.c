@@ -719,7 +719,7 @@ R_DrawParticles
 */
 void R_DrawParticles(void)
 {
-	if (gl_ext_pointparameters->value && qglPointParameterfEXT)
+	if (gl_ext_pointparameters->value && qglPointParameterfEXT )
 	{
 		int i;
 		unsigned char color[4];
@@ -1820,6 +1820,12 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		gl_config.renderer = GL_RENDERER_PCX2;
 	else if (strstr (renderer_buffer, "verite"))
 		gl_config.renderer = GL_RENDERER_RENDITION;
+	else if (strstr (vendor_buffer, "ati "))
+	{
+		gl_config.renderer = GL_RENDERER_ATI;
+		if (gl_debug->value)
+			ri.Con_Printf(PRINT_ALL, "...ATi card workarounds will be used.\n");
+	}
 	else
 		gl_config.renderer = GL_RENDERER_OTHER;
 
@@ -1914,8 +1920,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 
 	if (strstr(gl_config.extensions_string, "GL_EXT_point_parameters"))
 	{
-		//if(gl_ext_pointparameters->value)
-		if (0) // Workaround for ATI driver bug.
+		if (gl_ext_pointparameters->value && (gl_config.renderer != GL_RENDERER_ATI)) // Workaround for ATI driver bug.
 		{
 			qglPointParameterfEXT = (void(APIENTRY*)(GLenum, GLfloat))qwglGetProcAddress("glPointParameterfEXT");
 			qglPointParameterfvEXT = (void(APIENTRY*)(GLenum, const GLfloat*))qwglGetProcAddress("glPointParameterfvEXT");
