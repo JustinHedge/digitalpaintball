@@ -1,4 +1,4 @@
-#ifdef OGG_SUPPORT
+
 /*
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
@@ -24,12 +24,13 @@
 ==========================================================
 */
 
-#include <errno.h>
-#include <vorbis/vorbisfile.h>
 
 #include "client.h"
+#ifdef OGG_SUPPORT
 #include "snd_loc.h"
 #include "snd_ogg.h"
+#include <errno.h>
+#include <vorbis/vorbisfile.h>
 
 extern int	sound_started;		/* Sound initialization flag. */
 extern cvar_t	*fs_basedir;		/* Path to "music". */
