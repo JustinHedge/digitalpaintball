@@ -29,6 +29,7 @@
 #ifdef OGG_SUPPORT
 #include "snd_loc.h"
 #include "snd_ogg.h"
+#include "../a3d/q2a3d.h"
 #include <errno.h>
 #include <vorbis/vorbisfile.h>
 
@@ -438,6 +439,7 @@ int OGG_Read(void)
 	/* Read and resample. */
 	res = ov_read(&ovFile, ovBuf, sizeof(ovBuf), 0, 2, 1, &ovSection);
 	S_RawSamplesVol(res>>2, 44100, 2, 2, (byte*)ovBuf, ogg_volume->value);
+	//S_RawSamples(res>>2, 44100, 2, 2, (byte*)ovBuf);
 
 	/* Check for end of file. */
 	if (res == 0) {
@@ -523,6 +525,11 @@ void S_RawSamplesVol (int samples, int rate, int width, int channels, byte *data
 	int	i;
 	int	src, dst;
 	float	scale;
+
+	//A3D ADD
+	if (a3dsound_started)
+		S_Q2A3DPCMStream (samples, rate, width, channels, data);
+	//A3D Add END
 
 	if (!sound_started)
 		return;

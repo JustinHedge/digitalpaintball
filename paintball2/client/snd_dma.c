@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "snd_loc.h"
 //A3D ADD
 #include "../a3d/q2a3d.h"
-#include "snd_ogg.h"
 
 #if defined (__unix__)
 #include <sys/types.h>

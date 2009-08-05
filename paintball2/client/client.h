@@ -52,6 +52,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // ===
 
 
+// Remove OGG on linux for bug testing. You can enable it in the makefile.
+#ifdef WIN32
+#define OGG_SUPPORT
+#endif
+
 //=============================================================================
 
 typedef struct
@@ -766,15 +771,12 @@ extern int cl_maplist_modes_count;
 // pb2_xfire.c -- jitxfire
 void CL_Xfire (void);
 
-// Remove OGG on linux for bug testing.
-#ifdef WIN32
-#define OGG_SUPPORT
-#endif
 
 // snd_ogg.c
 #ifdef OGG_SUPPORT
 void OGG_Init (void);
 void OGG_Shutdown (void);
+void OGG_Stream (void);
 char **FS_ListFiles (const char *findname, int *numfiles, unsigned musthave, unsigned canthave);
 void FS_FreeList (char **list, int nfiles);
 #endif
