@@ -207,6 +207,7 @@ void CMod_LoadSurfaces (lump_t *l)
 		out->c.value = LittleLong(in->value);
 
 		// === jitsound - figure out surface sound types based on texture name
+		out->c.surface_sound = SURFACE_SOUND_DEFAULT;
 		s = strrchr(out->rname, '/');
 
 		if (!s)
@@ -273,11 +274,11 @@ void CMod_LoadSurfaces (lump_t *l)
 		{
 			out->c.surface_sound = SURFACE_SOUND_WOOD_SOLID;
 		}
-		else if (strstr(s, "grass1_8") || strstr(s, "grassp2") || strstr(s, "grassp3") || strstr(s, "grave01_1"))
+		else if (strstr(s, "grass1_8") || strstr(s, "grassp2") || strstr(s, "grassp3") || strstr(s, "grave01_1") || strstr(s, "dirt"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_DIRT;
 		}
-		else if (strstr(s, "gras") || strstr(s, "ground") || strstr(s, "hay") || strstr(s, "jungle") || strstr(s, "swamp"))
+		else if (strstr(s, "gras") || strstr(s, "ground") || strstr(s, "hay") || strstr(s, "jungle") || strstr(s, "swamp") || strstr(s, "wgrnd1_6"))
 		{
 			out->c.surface_sound = SURFACE_SOUND_GRASS;
 		}
@@ -297,6 +298,10 @@ void CMod_LoadSurfaces (lump_t *l)
 		{
 			out->c.surface_sound = SURFACE_SOUND_WATER;
 		}
+		else if (strstr(s, "clip") || strstr(s, "_flag1") || strstr(s, "sky"))
+		{
+			out->c.surface_sound = SURFACE_SOUND_CEMENT;
+		}
 
 		// transparent surface (do this for trans33 or trans66, but not trans33+trans66
 		if (((out->c.flags & SURF_TRANS33) && !(out->c.flags & SURF_TRANS66)) ||
@@ -305,11 +310,12 @@ void CMod_LoadSurfaces (lump_t *l)
 			out->c.surface_sound = SURFACE_SOUND_GLASS;
 		}
 
-
-
-
+		//debug
+		if (out->c.surface_sound == SURFACE_SOUND_UNKNOWN)
+		{
+			int debug = 1;
+		}
 		// jitsound ===
-
 	}
 }
 

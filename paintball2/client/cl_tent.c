@@ -95,6 +95,12 @@ struct sfx_s	*cl_sfx_watrexp;
 struct sfx_s	*cl_sfx_plasexp;
 struct sfx_s	*cl_sfx_footsteps[4];
 struct sfx_s	*cl_sfx_footsteps_snow[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_grass[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_asphalt[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_wood_plank[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_metal[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_sand[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_metalt[4]; // jitsound
 
 struct model_s	*cl_mod_explode;
 struct model_s	*cl_mod_smoke;
@@ -131,6 +137,12 @@ struct sfx_s	*cl_sfx_grensplat3;
 struct sfx_s	*cl_sfx_paintfly[3];
 struct sfx_s	*cl_sfx_footsteps[4];
 struct sfx_s	*cl_sfx_footsteps_snow[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_grass[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_asphalt[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_wood_plank[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_metal[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_sand[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_metalt[4]; // jitsound
 struct model_s	*cl_mod_smoke;
 struct model_s	*cl_mod_splat;
 struct model_s	*cl_mod_paintball;
@@ -180,6 +192,30 @@ void CL_RegisterTEntSounds (void) // jit, cleaned up and adjusted for paintball
 	cl_sfx_footsteps_snow[1] = S_RegisterSound("player/step_snow1.wav");
 	cl_sfx_footsteps_snow[2] = S_RegisterSound("player/step_snow2.wav");
 	cl_sfx_footsteps_snow[3] = S_RegisterSound("player/step_snow3.wav");
+	cl_sfx_footsteps_grass[0] = S_RegisterSound("player/step_grass0.wav");
+	cl_sfx_footsteps_grass[1] = S_RegisterSound("player/step_grass1.wav");
+	cl_sfx_footsteps_grass[2] = S_RegisterSound("player/step_grass2.wav");
+	cl_sfx_footsteps_grass[3] = S_RegisterSound("player/step_grass3.wav");
+	cl_sfx_footsteps_asphalt[0] = S_RegisterSound("player/step_asphalt0.wav");
+	cl_sfx_footsteps_asphalt[1] = S_RegisterSound("player/step_asphalt1.wav");
+	cl_sfx_footsteps_asphalt[2] = S_RegisterSound("player/step_asphalt2.wav");
+	cl_sfx_footsteps_asphalt[3] = S_RegisterSound("player/step_asphalt3.wav");
+	cl_sfx_footsteps_wood_plank[0] = S_RegisterSound("player/step_wood_plank0.wav");
+	cl_sfx_footsteps_wood_plank[1] = S_RegisterSound("player/step_wood_plank1.wav");
+	cl_sfx_footsteps_wood_plank[2] = S_RegisterSound("player/step_wood_plank2.wav");
+	cl_sfx_footsteps_wood_plank[3] = S_RegisterSound("player/step_wood_plank3.wav");
+	cl_sfx_footsteps_metal[0] = S_RegisterSound("player/step_metal0.wav");
+	cl_sfx_footsteps_metal[1] = S_RegisterSound("player/step_metal1.wav");
+	cl_sfx_footsteps_metal[2] = S_RegisterSound("player/step_metal2.wav");
+	cl_sfx_footsteps_metal[3] = S_RegisterSound("player/step_metal3.wav");
+	cl_sfx_footsteps_sand[0] = S_RegisterSound("player/step_sand0.wav");
+	cl_sfx_footsteps_sand[1] = S_RegisterSound("player/step_sand1.wav");
+	cl_sfx_footsteps_sand[2] = S_RegisterSound("player/step_sand2.wav");
+	cl_sfx_footsteps_sand[3] = S_RegisterSound("player/step_sand3.wav");
+	cl_sfx_footsteps_metalt[0] = S_RegisterSound("player/step_metalt0.wav");
+	cl_sfx_footsteps_metalt[1] = S_RegisterSound("player/step_metalt1.wav");
+	cl_sfx_footsteps_metalt[2] = S_RegisterSound("player/step_metalt2.wav");
+	cl_sfx_footsteps_metalt[3] = S_RegisterSound("player/step_metalt3.wav");
 }	
 
 /*
@@ -794,7 +830,7 @@ void CL_ParseTEnt (void)
 			int n;
 			trace_t tr;
 			vec3_t end, start, back, forward;
-			surface_sound_type_t surface_sound = SURFACE_SOUND_DEFAULT;
+			surface_sound_type_t surface_sound = SURFACE_SOUND_UNKNOWN;
 
 			// generate a splat model:
 			ex = CL_AllocExplosion();
@@ -875,6 +911,7 @@ void CL_ParseTEnt (void)
 				sound = cl_sfx_splat_wood_solid[n];
 				break;
 			case SURFACE_SOUND_DEFAULT:
+			case SURFACE_SOUND_UNKNOWN:
 			case SURFACE_SOUND_ROCK:
 			case SURFACE_SOUND_CEMENT:
 			default:

@@ -32,6 +32,12 @@ extern	struct model_s	*cl_mod_flash;
 
 extern struct sfx_s	*cl_sfx_footsteps[4];
 extern struct sfx_s	*cl_sfx_footsteps_snow[4]; // jitsound
+extern struct sfx_s	*cl_sfx_footsteps_grass[4]; // jitsound
+extern struct sfx_s	*cl_sfx_footsteps_asphalt[4]; // jitsound
+extern struct sfx_s	*cl_sfx_footsteps_wood_plank[4]; // jitsound
+extern struct sfx_s	*cl_sfx_footsteps_metal[4]; // jitsound
+extern struct sfx_s	*cl_sfx_footsteps_sand[4]; // jitsound
+extern struct sfx_s	*cl_sfx_footsteps_metalt[4]; // jitsound
 
 /*
 ==============================================================
@@ -2265,21 +2271,63 @@ struct sfx_s *get_step_sound (entity_state_t *ent, int stepnumber)
 	trace_t tr;
 	vec3_t end;
 	extern float g_viewheight;
+	vec3_t mins, maxs;
 
 	VectorCopy(ent->origin, end);
-	end[2] -= 128.0f;
-	tr = CM_BoxTrace(ent->origin, end, vec3_origin, vec3_origin, 0, MASK_PLAYERSOLID);
+	VectorSet(mins, -16, -16, -2);
+	VectorSet(maxs, 16, 16, 2);
+	end[2] -= 64.0f;
+	tr = CM_BoxTrace(ent->origin, end, mins, maxs, 0, MASK_SOLID);
 
-	if (tr.surface->surface_sound == SURFACE_SOUND_SNOW)
+	switch (tr.surface->surface_sound)
 	{
+	case SURFACE_SOUND_SNOW:
 		return cl_sfx_footsteps_snow[stepnumber];
-	}
-	else
-	{
+	case SURFACE_SOUND_GRASS:
+		return cl_sfx_footsteps_grass[stepnumber];
+	case SURFACE_SOUND_WOOD_PLANK:
+	case SURFACE_SOUND_WOOD_SOLID:
+	case SURFACE_SOUND_WOOD_OTHER:
+		return cl_sfx_footsteps_wood_plank[stepnumber];
+	case SURFACE_SOUND_METAL_BARREL:
+	case SURFACE_SOUND_METAL_THIN:
+		return cl_sfx_footsteps_metal[stepnumber];
+	case SURFACE_SOUND_METAL_THICK:
+	case SURFACE_SOUND_METAL_OTHER:
+		return cl_sfx_footsteps_metalt[stepnumber];
+	case SURFACE_SOUND_SAND:
+		return cl_sfx_footsteps_sand[stepnumber];
+	case SURFACE_SOUND_DIRT:
 		return cl_sfx_footsteps[stepnumber];
+	case SURFACE_SOUND_CEMENT:
+	case SURFACE_SOUND_GLASS:
+	case SURFACE_SOUND_BRICK:
+	case SURFACE_SOUND_ROCK:
+	case SURFACE_SOUND_DEFAULT:
+	case SURFACE_SOUND_TREE:
+	case SURFACE_SOUND_UNKNOWN:
+	default:
+		return cl_sfx_footsteps_asphalt[stepnumber];
 	}
 }
 
+void CL_PlayFootstep (entity_state_t *ent)
+{
+	if (cl_footsteps->value)
+	{
+		static int laststepnumber = 0;
+		int stepnumber = (int)(frand() * 4.0f);
+
+		if (stepnumber == laststepnumber) // jitsound - ensure step sound doesn't repeat, as that sounds weird
+		{
+			stepnumber += 1;
+			stepnumber &= 3;
+		}
+
+		laststepnumber = stepnumber;
+		S_StartSound(NULL, ent->number, CHAN_AUTO, get_step_sound(ent, stepnumber), 1, ATTN_NORM, 0);
+	}
+}
 
 /*
 ==============
@@ -2304,30 +2352,22 @@ void CL_EntityEvent (entity_state_t *ent)
 		CL_TeleportParticles (ent->origin);
 		break;
 	case EV_FOOTSTEP:
-		if (cl_footsteps->value)
-		{
-			static int laststepnumber = 0;
-			int stepnumber = (int)(frand() * 4.0f);
-
-			if (stepnumber == laststepnumber) // jitsound - ensure step sound doesn't repeat, as that sounds weird
-			{
-				stepnumber += 1;
-				stepnumber &= 3;
-			}
-
-			laststepnumber = stepnumber;
-			S_StartSound(NULL, ent->number, CHAN_BODY, get_step_sound(ent, stepnumber), 1, ATTN_NORM, 0);
-		}
+		CL_PlayFootstep(ent);
 		break;
 	case EV_FALLSHORT:
-		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound ("player/land1.wav"), 1, ATTN_NORM, 0);
-		break;
 	case EV_FALL:
-		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound ("*fall2.wav"), 1, ATTN_NORM, 0);
+	case EV_FALLFAR:
+		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound("player/land1.wav"), 1, ATTN_NORM, 0);
+		CL_PlayFootstep(ent); // jitsound
+		break;
+	/*case EV_FALL:
+		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound("*fall2.wav"), 1, ATTN_NORM, 0);
+		CL_PlayFootstep(ent); // jitsound
 		break;
 	case EV_FALLFAR:
-		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound ("*fall1.wav"), 1, ATTN_NORM, 0);
-		break;
+		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound("*fall1.wav"), 1, ATTN_NORM, 0);
+		CL_PlayFootstep(ent); // jitsound
+		break;*/
 	}
 }
 
