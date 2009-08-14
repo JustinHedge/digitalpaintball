@@ -169,8 +169,11 @@ extern cvar_t	*s_show;
 extern cvar_t	*s_mixahead;
 extern cvar_t	*s_testsound;
 extern cvar_t	*s_primary;
+// === jitsound
 extern cvar_t	*s_resamplequality;
 extern cvar_t	*s_resamplevolume;
+extern cvar_t	*s_nojump;
+// jitsound ===
 
 wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength);
 

@@ -89,9 +89,11 @@ cvar_t		*s_khz;
 cvar_t		*s_show;
 cvar_t		*s_mixahead;
 cvar_t		*s_primary;
-cvar_t		*s_resamplequality; // jitsound
-cvar_t		*s_resamplevolume; // jitsound
-
+// === jitsound
+cvar_t		*s_resamplequality;
+cvar_t		*s_resamplevolume;
+cvar_t		*s_nojump;
+// jitsound ===
 
 int		s_rawend;
 portable_samplepair_t	s_rawsamples[MAX_RAW_SAMPLES];
@@ -162,7 +164,8 @@ void S_Init (void)
 		}
 
 		s_resamplequality = Cvar_Get("s_resamplequality", "2", CVAR_ARCHIVE);
-		s_resamplevolume = Cvar_Get("s_resamplevolume", "0.5", 0);
+		s_resamplevolume = Cvar_Get("s_resamplevolume", "0.35", 0);
+		s_nojump = Cvar_Get("s_nojump", "0", CVAR_ARCHIVE);
 		// jitsound ===
 
 		s_volume = Cvar_Get("s_volume", "0.7", CVAR_ARCHIVE);
@@ -828,6 +831,8 @@ struct sfx_s *S_RegisterSexedSound (entity_state_t *ent, char *base)
 // Start a sound effect
 // =======================================================================
 
+void CL_PlayFootstep (entity_state_t *ent);
+
 /*
 ====================
 S_StartSound
@@ -852,7 +857,21 @@ void S_StartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float f
 		return;
 
 	if (sfx->name[0] == '*')
-		sfx = S_RegisterSexedSound(&cl_entities[entnum].current, sfx->name);
+	{
+		qboolean play = true;
+
+		if (s_nojump->value)
+		{
+			if (Q_streq(sfx->name, "*jump1.wav"))
+			{
+				play = false; // don't play annoying jump sound.
+				CL_PlayFootstep(&cl_entities[entnum].current); // play footstep instead
+			}
+		}
+		if (play)
+			sfx = S_RegisterSexedSound(&cl_entities[entnum].current, sfx->name);
+	}
+
 	//A3D ADD
 	if (a3dsound_started)
 	{
