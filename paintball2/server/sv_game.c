@@ -33,24 +33,25 @@ Sends the contents of the mutlicast buffer to a single client
 */
 void PF_Unicast (edict_t *ent, qboolean reliable)
 {
-	int		p;
+	int			p;
 	client_t	*client;
 
 	if (!ent)
 		return;
 
 	p = NUM_FOR_EDICT(ent);
+
 	if (p < 1 || p > maxclients->value)
 		return;
 
-	client = svs.clients + (p-1);
+	client = svs.clients + (p - 1);
 
 	if (reliable)
-		SZ_Write (&client->netchan.message, sv.multicast.data, sv.multicast.cursize);
+		SZ_Write(&client->netchan.message, sv.multicast.data, sv.multicast.cursize);
 	else
-		SZ_Write (&client->datagram, sv.multicast.data, sv.multicast.cursize);
+		SZ_Write(&client->datagram, sv.multicast.data, sv.multicast.cursize);
 
-	SZ_Clear (&sv.multicast);
+	SZ_Clear(&sv.multicast);
 }
 
 

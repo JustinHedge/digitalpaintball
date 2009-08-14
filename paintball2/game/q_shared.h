@@ -384,8 +384,8 @@ int		Hunk_End (void);
 /*
 ** pass in an attribute mask of things you wish to REJECT
 */
-char	*Sys_FindFirst (char *path, unsigned musthave, unsigned canthave );
-char	*Sys_FindNext ( unsigned musthave, unsigned canthave );
+char	*Sys_FindFirst (const char *path, unsigned musthave, unsigned canthave);
+char	*Sys_FindNext (unsigned musthave, unsigned canthave);
 void	Sys_FindClose (void);
 
 
@@ -528,10 +528,11 @@ typedef struct cmodel_s
 	int			headnode;
 } cmodel_t;
 
-// === jitsound - enum for differnt surface sound types
+// === jitsound - enum for different surface sound types
 typedef enum surface_sound_type_s
 {
-	SURFACE_SOUND_DEFAULT = 0,
+	SURFACE_SOUND_UNKNOWN = 0,
+	SURFACE_SOUND_DEFAULT,
 	SURFACE_SOUND_WOOD_SOLID,
 	SURFACE_SOUND_WOOD_PLANK,
 	SURFACE_SOUND_WOOD_OTHER, // can be filled in with something later

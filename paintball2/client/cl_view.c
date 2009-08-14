@@ -36,7 +36,6 @@ cvar_t		*crosshair;
 cvar_t		*cl_testparticles;
 cvar_t		*cl_testentities;
 cvar_t		*cl_testlights;
-cvar_t		*cl_testblend;
 
 cvar_t		*cl_stats;
 
@@ -551,14 +550,6 @@ void V_RenderView (float stereo_separation)
 		if (cl_testlights->value)
 			V_TestLights();
 
-		if (cl_testblend->value)
-		{
-			cl.refdef.blend[0] = 1;
-			cl.refdef.blend[1] = 0.5;
-			cl.refdef.blend[2] = 0.25;
-			cl.refdef.blend[3] = 0.5;
-		}
-
 		// offset vieworg appropriately if we're doing stereo separation
 		if (stereo_separation != 0)
 		{
@@ -649,7 +640,6 @@ void V_Init (void)
 	Cmd_AddCommand("gun_model", V_Gun_Model_f);
 	Cmd_AddCommand("viewpos", V_Viewpos_f);
 	crosshair = Cvar_Get("crosshair", "2", CVAR_ARCHIVE); // jit, default crosshair on
-	cl_testblend = Cvar_Get("cl_testblend", "0", 0);
 	cl_testparticles = Cvar_Get("cl_testparticles", "0", 0);
 	cl_testentities = Cvar_Get("cl_testentities", "0", 0);
 	cl_testlights = Cvar_Get("cl_testlights", "0", 0);

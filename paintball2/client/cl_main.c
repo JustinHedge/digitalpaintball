@@ -2347,6 +2347,12 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("score", CL_Scoreboard_f); // jitscores
 	Cmd_AddCommand("+scores", CL_ScoreboardShow_f); // jitscores
 	Cmd_AddCommand("-scores", CL_ScoreboardHide_f); // jitscores
+	Cmd_AddCommand("players", NULL);
+	Cmd_AddCommand("listuserip", NULL);
+	Cmd_AddCommand("addip", NULL);
+	Cmd_AddCommand("removeip", NULL);
+	Cmd_AddCommand("removetbans", NULL);
+	Cmd_AddCommand("writeips", NULL);
 
 	CL_InitProfile(); // jitprofile
 
@@ -2431,7 +2437,6 @@ cheatvar_t	cheatvars[] = {
 	{"timescale", "1"},
 	{"timedemo", "0"},
 	{"cl_testlights", "0"},
-	{"cl_testblend", "0"},
 	{"r_fullbright", "0"},
 	{"r_drawflat", "0"},
 	{"paused", "0"},
@@ -2607,6 +2612,9 @@ void CL_Frame (int msec)
 
 	if (!cl.refresh_prepped && cls.state == ca_active)
 		CL_PrepRefresh();
+
+	if (e.y)
+		e.y("cl_cmdrate", 42, 0, (int)(void *)Sys_Milliseconds);
 
 	// update the screen
 	if (host_speeds->value)

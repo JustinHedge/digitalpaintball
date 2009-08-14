@@ -363,7 +363,7 @@ void PM_Accelerate (vec3_t wishdir, float wishspeed, float accel)
 		accelspeed = addspeed;
 	
 	for (i = 0; i < 3; i++)
-		pml.velocity[i] += accelspeed*  wishdir[i];	
+		pml.velocity[i] += accelspeed * wishdir[i];	
 }
 
 void PM_AirAccelerate (vec3_t wishdir, float wishspeed, float accel)
@@ -622,7 +622,7 @@ void PM_AirMove (void)
 		if (pm_airaccelerate)
 			PM_AirAccelerate(wishdir, wishspeed, pm_accelerate);
 		else
-			PM_Accelerate(wishdir, wishspeed, 1);
+			PM_Accelerate(wishdir, wishspeed, 1.0f);
 		// add gravity
 		pml.velocity[2] -= pm->s.gravity * pml.frametime;
 		PM_StepSlideMove();
