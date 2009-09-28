@@ -59,6 +59,8 @@ cvar_t	*public_server;			// should heartbeats be sent
 cvar_t	*sv_reconnect_limit;	// minimum seconds between connect messages
 cvar_t	*sv_noextascii = NULL;	// jit
 
+cvar_t	*sv_locked;				// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
+
 void Master_Shutdown (void);
 
 
@@ -377,6 +379,14 @@ void SVC_DirectConnect (void)
 			Netchan_OutOfBandPrint (NS_SERVER, adr, "print\nNo challenge for address.\n");
 			return;
 		}
+	}
+
+	// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
+	if ((int)sv_locked->value)
+	{
+		Com_DPrintf ("    server locked\n");
+		Netchan_OutOfBandPrint (NS_SERVER, adr, "print\nServer is locked.\n");
+		return;
 	}
 
 	newcl = &temp;
@@ -1416,6 +1426,7 @@ void SV_Init (void)
 	sv_enforcetime = Cvar_Get("sv_enforcetime", "0", 0); // 1.831 - disabled because of problems. "240", 0); // jitspeedhackcheck
 	sv_cullentities= Cvar_Get("sv_cullentities", "0", 0);
 	sv_noextascii  = Cvar_Get("sv_noextascii", "1", 0); // jit
+	sv_locked	   = Cvar_Get("sv_locked", "0", 0);		// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
 	allow_download          = Cvar_Get("allow_download", "1", CVAR_ARCHIVE);
 	allow_download_players  = Cvar_Get("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1
 	allow_download_models   = Cvar_Get("allow_download_models", "1", CVAR_ARCHIVE);
