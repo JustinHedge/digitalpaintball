@@ -1415,7 +1415,7 @@ void SV_Init (void)
 	Cvar_Get("fraglimit", "50", CVAR_SERVERINFO); // jit, was 0
 	Cvar_Get("timelimit", "20", CVAR_SERVERINFO); // jit, was 0
 	Cvar_Get("cheats", "0", CVAR_LATCH); // jit, removed serverinfo flag
-	Cvar_Get("protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO|CVAR_NOSET);;
+	Cvar_Get("protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO|CVAR_NOSET);
 	maxclients     = Cvar_Get("maxclients", "1", CVAR_SERVERINFO | CVAR_LATCH);
 	hostname       = Cvar_Get("hostname", "Paintball 2.0 (build " BUILD_S ")", CVAR_SERVERINFO | CVAR_ARCHIVE);
 	timeout        = Cvar_Get("timeout", "30", 0); // jittimeout - 30 secounds should be plenty

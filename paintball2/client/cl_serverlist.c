@@ -791,7 +791,7 @@ void M_ServerlistUpdate_f (void)
 	if (!refreshing)
 	{
 		refreshing = true;
-		pthread_create(&updatethread, NULL, M_ServerlistUpdate_multithreaded, NULL);;
+		pthread_create(&updatethread, NULL, M_ServerlistUpdate_multithreaded, NULL);
 	}
 #endif
 }
