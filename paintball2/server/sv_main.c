@@ -61,6 +61,8 @@ cvar_t	*sv_noextascii = NULL;	// jit
 
 cvar_t	*sv_locked;				// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
 
+cvar_t	*sv_certificated;		// T3RR0R15T: certificated server info
+
 void Master_Shutdown (void);
 
 

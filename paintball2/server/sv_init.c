@@ -23,6 +23,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 server_static_t	svs;				// persistant server info
 server_t		sv;					// local server
 
+// T3RR0R15T: certificated server info
+cvar_t	*cer_maxclients;
+cvar_t	*cer_elim;
+cvar_t	*cer_fraglimit;
+cvar_t	*cer_timelimit;
+cvar_t	*cer_sv_minclientbuild;
+cvar_t	*cer_guntemp_inc;
+cvar_t	*cer_guntemp_dec;
+cvar_t	*cer_flagmustbeatbase;
+cvar_t	*cer_sv_forcesky;
+cvar_t	*cer_sv_login;
+cvar_t	*cer_public;
+
 /*
 ================
 SV_FindIndex
@@ -278,6 +291,36 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 
 	// set serverinfo variable
 	Cvar_FullSet("mapname", sv.name, CVAR_SERVERINFO | CVAR_NOSET, true);
+
+	// T3RR0R15T: certificated server info (default settings atm)
+	cer_maxclients			= Cvar_Get("maxclients", "0", 0);
+	cer_elim				= Cvar_Get("elim", "0", 0);
+	cer_fraglimit			= Cvar_Get("fraglimit", "0", 0);
+	cer_timelimit			= Cvar_Get("timelimit", "0", 0);
+	cer_sv_minclientbuild   = Cvar_Get("sv_minclientbuild", "0", 0);
+	cer_guntemp_inc			= Cvar_Get("guntemp_inc", "0", 0);
+	cer_guntemp_dec			= Cvar_Get("guntemp_dec", "0", 0);
+	cer_flagmustbeatbase	= Cvar_Get("flagmustbeatbase", "0", 0);
+	cer_sv_forcesky			= Cvar_Get("sv_forcesky", "0", 0);
+	cer_sv_login			= Cvar_Get("sv_login", "0", 0);
+	cer_public				= Cvar_Get("public", "0", 0);
+
+	if (cer_maxclients->value == 16 &&
+		cer_elim->value == 60 &&
+		cer_fraglimit->value == 50 &&
+		cer_timelimit->value == 20 &&
+		cer_sv_minclientbuild->value >= 28 &&
+		cer_guntemp_inc->value == 11 &&
+		cer_guntemp_dec->value == 4 &&
+		cer_flagmustbeatbase->value == 1 &&
+		cer_sv_forcesky->value == 1 &&
+		(cer_sv_login->value == 1 || cer_sv_login->value == 2) &&
+		cer_public->value == 1)
+	{
+		Cvar_FullSet("sv_certificated", "1", CVAR_SERVERINFO | CVAR_NOSET, true);
+	} else {
+		Cvar_FullSet("sv_certificated", "0", CVAR_SERVERINFO | CVAR_NOSET, true);
+	}
 
 	Com_Printf ("-------------------------------------\n");
 }
