@@ -24,39 +24,56 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 #endif //_WIN32
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Icon
 //
-
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_SERVERBROWSER       ICON    DISCARDABLE     "serverbrowser.ICO"
-IDI_SMALL               ICON    DISCARDABLE     "SMALL.ICO"
+//
+
+IDI_SERVERBROWSER       ICON    DISCARDABLE     "serverbrowser.ico"
+IDI_SMALL               ICON    DISCARDABLE     "small.ico"
+IDI_DPLOGO              ICON    DISCARDABLE     "dplogo.ico"		// Game logo
+
+IDI_STERN0				ICON	DISCARDABLE		"stern0.ico"		// CertificatedServer off (grey)
+IDI_STERN1				ICON	DISCARDABLE		"stern1.ico"		// CertificatedServer on (yellow)
+IDI_SCHLOSS0			ICON	DISCARDABLE		"schloss0.ico"		// NeedPassword off (grey)
+IDI_SCHLOSS1			ICON	DISCARDABLE		"schloss1.ico"		// NeedPassword on (yellow)
+IDI_WELT0				ICON	DISCARDABLE		"welt0.ico"			// GLS off (grey)
+IDI_WELT1				ICON	DISCARDABLE		"welt1.ico"			// GLS on, registered players (orange)
+IDI_WELT2				ICON	DISCARDABLE		"welt2.ico"			// GLS on, all (green)
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu
+// Menu - English
 //
 
-IDC_SERVERBROWSER MENU DISCARDABLE 
+IDC_SERVERBROWSER1 MENU DISCARDABLE 
 BEGIN
     POPUP "&File"
     BEGIN
         MENUITEM "E&xit",                       IDM_EXIT
     END
-    POPUP "&List"
+    POPUP "&Server List"
     BEGIN
         MENUITEM "&Refresh (F5)",               IDM_REFRESH
         MENUITEM "&Update (Shift+F5)",          IDM_UPDATE
     END
-    POPUP "&Help"
+/*    POPUP "Language"
+    BEGIN
+		MENUITEM "English",						IDM_LANG_OPTION1  CHECKED
+		MENUITEM "Deutsch",						IDM_LANG_OPTION2
+    END
+*/	POPUP "&Help"
     BEGIN
         MENUITEM "&About ...",                  IDM_ABOUT
     END
 END
 
-IDR_MENU_TRAY MENU DISCARDABLE 
+IDR_MENU_TRAY1 MENU DISCARDABLE 
 BEGIN
     POPUP "Tray"
     BEGIN
@@ -67,8 +84,50 @@ BEGIN
         MENUITEM "Copy &Address",               ID_RIGHTCLICK_COPYADDRESS
         MENUITEM "Copy &URL",                   ID_RIGHTCLICK_COPYURL
         MENUITEM "Copy &Full Server Info",      ID_RIGHTCLICK_COPYFULLSERVERINFO
-
         MENUITEM "Copy &Server Name/IP",        ID_RIGHTCLICK_COPYNAMEIP
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu - German
+//
+
+IDC_SERVERBROWSER2 MENU DISCARDABLE 
+BEGIN
+    POPUP "&Datei"
+    BEGIN
+        MENUITEM "&Beenden",						IDM_EXIT
+    END
+    POPUP "&Serverliste"
+    BEGIN
+        MENUITEM "&Aktualisieren (F5)",				IDM_REFRESH
+        MENUITEM "&Neu Laden (Shift+F5)",			IDM_UPDATE
+    END
+/*    POPUP "Sprache"
+    BEGIN
+		MENUITEM "English",							IDM_LANG_OPTION1
+		MENUITEM "Deutsch",							IDM_LANG_OPTION2 CHECKED
+    END
+*/	POPUP "&Hilfe"
+    BEGIN
+        MENUITEM "&Über",							IDM_ABOUT
+    END
+END
+
+IDR_MENU_TRAY2 MENU DISCARDABLE 
+BEGIN
+    POPUP "Tray"
+    BEGIN
+        MENUITEM "&Beenden",							ID_TRAY_EXIT
+    END
+    POPUP "Rightclick"
+    BEGIN
+        MENUITEM "&Adresse kopieren",					ID_RIGHTCLICK_COPYADDRESS
+        MENUITEM "&URL kopieren",						ID_RIGHTCLICK_COPYURL
+        MENUITEM "&Komplette Server-Infos kopieren",	ID_RIGHTCLICK_COPYFULLSERVERINFO
+        MENUITEM "&Servername und IP kopieren",			ID_RIGHTCLICK_COPYNAMEIP
     END
 END
 
@@ -97,11 +156,10 @@ STYLE WS_POPUP | WS_BORDER
 FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_SERVERBROWSER,IDC_MYICON,14,9,21,20
-    LTEXT           "Paintball2 Server Browser Version 0.1",IDC_STATIC,49,10,
-                    126,8,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2006 Digital Paint",IDC_STATIC,49,20,115,
-                    8
-    PUSHBUTTON      "OK",IDOK,73,46,30,11,BS_FLAT | WS_GROUP
+	LTEXT			"Paintball2 Server Browser",IDC_STATIC,49,10,115,8,SS_NOPREFIX
+    LTEXT			"Version 0.1 - Build 2009-10-01",IDC_STATIC,49,21,115,8,SS_NOPREFIX
+    LTEXT			"Copyright (C) 2009 Digital Paint",IDC_STATIC,49,35,115,8
+    PUSHBUTTON		"OK",IDOK,73,50,30,11,BS_FLAT | WS_GROUP
 END
 
 
@@ -136,14 +194,27 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// String Table
+// String Table - English
 //
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_APP_TITLE           "serverbrowser"
-    IDC_SERVERBROWSER       "SERVERBROWSER"
+    IDS_APP_TITLE1          "Serverbrowser"
+    IDC_SERVERBROWSER1      "SERVERBROWSER"
 END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table - German
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_APP_TITLE2			"Serverbrowser"
+    IDC_SERVERBROWSER2		"SERVERBROWSER"
+END
+
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////

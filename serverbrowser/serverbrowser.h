@@ -52,6 +52,9 @@ typedef struct SERVERINFO {
 	int nPingStartTime;
 	int nPing;
 	int nVisible;
+	int nCertificatedServer;
+	int nNeedPassword;
+	int nGLS;
 	string sAddress;
 	string sHostName;
 	string sMapName;
@@ -71,11 +74,14 @@ typedef enum COPYTYPE {
 
 void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo);
 
-#define SERVERLIST_HOSTNAME_OFFSET	0
-#define SERVERLIST_MAP_OFFSET		1
-#define SERVERLIST_PLAYERS_OFFSET	2
-#define SERVERLIST_PING_OFFSET		3
-#define SERVERLIST_ADDRESS_OFFSET	4
+#define SERVERLIST_CERTIFICATEDSERVER_OFFSET	0
+#define SERVERLIST_NEEDPASSWORD_OFFSET			1
+#define SERVERLIST_GLS_OFFSET					2
+#define SERVERLIST_HOSTNAME_OFFSET				3
+#define SERVERLIST_MAP_OFFSET					4
+#define SERVERLIST_PLAYERS_OFFSET				5
+#define SERVERLIST_PING_OFFSET					6
+#define SERVERLIST_ADDRESS_OFFSET				7
 
 #define PLAYERLIST_NAME_OFFSET		0
 #define PLAYERLIST_SCORE_OFFSET		1

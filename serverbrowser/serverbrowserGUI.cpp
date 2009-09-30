@@ -69,10 +69,31 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 	TCHAR szTitle[MAX_LOADSTRING];
 	TCHAR szWindowClass[MAX_LOADSTRING];
 	HMENU hMenu;
+	hMenu = NULL;
+
+	char Language[10];
+	DWORD destSize;
+	destSize=10;
+	char szServerbrowserINI[256];
+	_snprintf(szServerbrowserINI, sizeof(szServerbrowserINI), "%s\\serverbrowser.ini", g_szGameDir);
+	GetPrivateProfileString("Serverbrowser","Language","NULL",Language,destSize,szServerbrowserINI);
+
+/*	if(Language == "English"){
+		TODO: Load english menu.
+	} else {
+		TODO: Lade deutsches Menü.
+	}
+*/
+	UINT uState = GetMenuState(hMenu,IDM_LANG_OPTION1,MF_BYCOMMAND);
 
 	// Create the application window
-	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadString(hInstance, IDC_SERVERBROWSER, szWindowClass, MAX_LOADSTRING);
+	if(uState & MFS_CHECKED){
+		LoadString(hInstance, IDS_APP_TITLE1, szTitle, MAX_LOADSTRING);
+		LoadString(hInstance, IDC_SERVERBROWSER1, szWindowClass, MAX_LOADSTRING);
+	} else {
+		LoadString(hInstance, IDS_APP_TITLE2, szTitle, MAX_LOADSTRING);
+		LoadString(hInstance, IDC_SERVERBROWSER2, szWindowClass, MAX_LOADSTRING);
+	}
 	memset(&wcex, 0, sizeof(wcex));
 	wcex.cbSize			= sizeof(WNDCLASSEX); 
 	wcex.style			= CS_HREDRAW | CS_VREDRAW;
@@ -83,7 +104,11 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 	wcex.hIcon			= LoadIcon(hInstance, (LPCTSTR)IDI_SERVERBROWSER);
 	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszMenuName	= (LPCSTR)IDC_SERVERBROWSER;
+	if(uState & MFS_CHECKED){
+		wcex.lpszMenuName	= (LPCSTR)IDC_SERVERBROWSER1;
+	} else {
+		wcex.lpszMenuName	= (LPCSTR)IDC_SERVERBROWSER2;
+	}
 	wcex.lpszClassName	= szWindowClass;
 	wcex.hIconSm		= LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
 	RegisterClassEx(&wcex);
@@ -99,8 +124,13 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
-	hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_SERVERBROWSER);
-	hMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENU_TRAY));
+	if(uState & MFS_CHECKED){
+		hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_SERVERBROWSER1);
+		hMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENU_TRAY1));
+	} else {
+		hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_SERVERBROWSER2);
+		hMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENU_TRAY2));
+	}
 	g_hMenuTray = GetSubMenu(hMenu, 0);
 	g_hMenuRightClick = GetSubMenu(hMenu, 1);
 	InitApp();
@@ -124,9 +154,9 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 {
 	int i;
-	char *pServerList[] = { "Server Name", "Map", "Players", "Ping", "Address" };
-	int iaServerListWidths[] = { 300, 90, 50, 38, -2 };
-	char *pPlayerList[] = { "Name", "Score", "Ping" };
+	char *pServerList[] = { "C", "PW", "GLS", "Server Name", "Map", "Players", "Ping", "Address" };
+	int iaServerListWidths[] = { 25, 30, 35, 250, 100, 50, 38, -2 };
+	char *pPlayerList[] = { "Player Name", "Kills", "Ping" };
 	int iaPlayerListWidths[] = { 200, 60, -2 };
 	char *pInfoList[] = { "Variable", "Value" };
 	int iaInfoListWidths[] = { 100, -2 };
@@ -151,7 +181,7 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 		0, 0, 300, 200, hWnd, NULL, g_hInst, NULL);
 	ListView_SetExtendedListViewStyle(g_hServerList, LVS_EX_FULLROWSELECT);
 
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < 8; i++)
 	{
 		lvColumn.cx = 150;
 		lvColumn.iSubItem = i;
@@ -204,7 +234,7 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 	g_tTrayIcon.cbSize = sizeof(g_tTrayIcon);
 	g_tTrayIcon.hIcon = LoadIcon(g_hInst, (LPCTSTR)IDI_SMALL);
 	g_tTrayIcon.hWnd = hWnd;
-	strcpy(g_tTrayIcon.szTip, "Server Browser");
+	strcpy_s(g_tTrayIcon.szTip, "Server Browser");
 	g_tTrayIcon.uCallbackMessage = WM_TRAY_ICON_NOTIFY_MESSAGE;
 	g_tTrayIcon.uFlags = NIF_ICON|NIF_TIP|NIF_MESSAGE;
 	g_tTrayIcon.uID = 0;
@@ -258,21 +288,30 @@ static BOOL CopyAddress (HWND hWnd, int nItem, copytype_t eCopyType)
 		nLen = strlen(szFullText);
 		break;
 	case COPYTYPE_URL:
-		nLen = _snprintf(szFullText, sizeof(szFullText), "paintball2://%s", szAddress);
+		nLen = _snprintf_s(szFullText, sizeof(szFullText), "paintball2://%s", szAddress);
 		szFullText[sizeof(szFullText)-1] = 0;
 		break;
 	case COPYTYPE_NAMEIP:
 		ListView_GetItemText(g_hServerList, nItem, SERVERLIST_HOSTNAME_OFFSET,
 				szHostname, sizeof(szHostname));
-		nLen = _snprintf(szFullText, sizeof(szFullText), "%s - %s", szHostname, szAddress);
+		nLen = _snprintf_s(szFullText, sizeof(szFullText), "%s - %s", szHostname, szAddress);
 		szFullText[sizeof(szFullText)-1] = 0;
 		break;
 	case COPYTYPE_FULL:
 		{
+			char szCertificatedServer[16];
+			char szNeedPassword[16];
+			char szGLS[16];
 			char szPing[16];
 			char szMap[32];
 			char szPlayers[16];
 
+			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_CERTIFICATEDSERVER_OFFSET,
+				szCertificatedServer, sizeof(szCertificatedServer));
+			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_NEEDPASSWORD_OFFSET,
+				szNeedPassword, sizeof(szNeedPassword));
+			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_GLS_OFFSET,
+				szGLS, sizeof(szGLS));
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_HOSTNAME_OFFSET,
 				szHostname, sizeof(szHostname));
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_PING_OFFSET,
@@ -281,8 +320,8 @@ static BOOL CopyAddress (HWND hWnd, int nItem, copytype_t eCopyType)
 				szMap, sizeof(szMap));
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_PLAYERS_OFFSET,
 				szPlayers, sizeof(szPlayers));
-			nLen = _snprintf(szFullText, sizeof(szFullText), "%s|%s|%s|%s|%s",
-				szAddress, szHostname, szPing, szMap, szPlayers);
+			nLen = _snprintf_s(szFullText, sizeof(szFullText), "%s|%s|%s|%s|%s|%s|%s|%s",
+				szAddress, szCertificatedServer, szNeedPassword, szGLS, szHostname, szPing, szMap, szPlayers);
 			szFullText[sizeof(szFullText)-1] = 0;
 			break;
 		}
@@ -315,6 +354,9 @@ static BOOL CopyAddress (HWND hWnd, int nItem, copytype_t eCopyType)
 
 static BOOL OnCommand (HWND hWnd, int wmId, HWND hWndCtl, UINT codeNotify)
 {
+	char szServerbrowserINI[256];
+	_snprintf(szServerbrowserINI, sizeof(szServerbrowserINI), "%s\\serverbrowser.ini", g_szGameDir);
+
 	switch (wmId)
 	{
 	case IDM_ABOUT:
@@ -327,6 +369,8 @@ static BOOL OnCommand (HWND hWnd, int wmId, HWND hWndCtl, UINT codeNotify)
 		RefreshList();
 		return TRUE;
 	case IDM_EXIT:
+		DestroyWindow(hWnd);
+		return TRUE;
 	case ID_TRAY_EXIT:
 		DestroyWindow(hWnd);
 		return TRUE;
@@ -342,6 +386,18 @@ static BOOL OnCommand (HWND hWnd, int wmId, HWND hWndCtl, UINT codeNotify)
 		return CopyAddress(hWnd, codeNotify, COPYTYPE_FULL);
 	case ID_RIGHTCLICK_COPYNAMEIP:
 		return CopyAddress(hWnd, codeNotify, COPYTYPE_NAMEIP);
+	case IDM_LANG_OPTION1:
+		SetMenu(hWnd, LoadMenu(g_hInst,MAKEINTRESOURCE(IDC_SERVERBROWSER1)));
+//		SetMenu(hWnd, LoadMenu(g_hInst,MAKEINTRESOURCE(IDR_MENU_TRAY1)));
+		WritePrivateProfileString(TEXT("Serverbrowser"),TEXT("Language"),TEXT("English"),TEXT(szServerbrowserINI));
+		SetStatus("English loaded. Please restart the serverbrowser to see all menus in this language.");
+		break;
+	case IDM_LANG_OPTION2:
+	    SetMenu(hWnd, LoadMenu(g_hInst,MAKEINTRESOURCE(IDC_SERVERBROWSER2)));
+//	    SetMenu(hWnd, LoadMenu(g_hInst,MAKEINTRESOURCE(IDR_MENU_TRAY2)));
+		WritePrivateProfileString(TEXT("Serverbrowser"),TEXT("Language"),TEXT("Deutsch"),TEXT(szServerbrowserINI));
+		SetStatus("Deutsch geladen. Bitte den Serverbrowser neu starten, um alle Menüs in dieser Sprache zu sehen.");
+		break;
 	default:
 		return FALSE;
 	}
@@ -382,9 +438,9 @@ static int CALLBACK PlayerCompareProc (LPARAM lParam1, LPARAM lParam2, LPARAM lP
 	if (lParam3 == PLAYERLIST_NAME_OFFSET)
 	{
 		if (g_abSortDirPlayers[lParam3])
-			return stricmp(szBuff1, szBuff2);
+			return _stricmp(szBuff1, szBuff2);
 		else
-			return stricmp(szBuff2, szBuff1);
+			return _stricmp(szBuff2, szBuff1);
 	}
 	else
 	{
@@ -413,9 +469,9 @@ static int CALLBACK ServerInfoCompareProc (LPARAM lParam1, LPARAM lParam2, LPARA
 	ListView_GetItemText(g_hServerInfoList, nItem2, lParam3, szBuff2, sizeof(szBuff2));
 
 	if (g_abSortDirServerInfo[lParam3])
-		return stricmp(szBuff1, szBuff2);
+		return _stricmp(szBuff1, szBuff2);
 	else
-		return stricmp(szBuff2, szBuff1);
+		return _stricmp(szBuff2, szBuff1);
 }
 
 
@@ -462,9 +518,9 @@ static int CALLBACK ServerCompareProc (LPARAM lParam1, LPARAM lParam2, LPARAM lP
 		else
 		{
 			if (g_abSortDirServers[lParam3])
-				return stricmp(szBuff1, szBuff2);
+				return _stricmp(szBuff1, szBuff2);
 			else
-				return stricmp(szBuff2, szBuff1);
+				return _stricmp(szBuff2, szBuff1);
 		}
 #ifdef SEPARATE_INACTIVE // Note: does not (always) work because serverlist isn't resorted on activity change
 	}
@@ -633,8 +689,8 @@ static void UpdateInfoLists (int nID, bool bRefresh)
 			tLVItem.lParam = i;
 			tLVItem.pszText = (char *)itrPlayers->sName.c_str();
 			nID = ListView_InsertItem(g_hPlayerList, &tLVItem);
-			ListView_SetItemText(g_hPlayerList, nID, 1, itoa(itrPlayers->nScore, szTemp, 10));
-			ListView_SetItemText(g_hPlayerList, nID, 2, itoa(itrPlayers->nPing, szTemp, 10));
+			ListView_SetItemText(g_hPlayerList, nID, 1, _itoa(itrPlayers->nScore, szTemp, 10));
+			ListView_SetItemText(g_hPlayerList, nID, 2, _itoa(itrPlayers->nPing, szTemp, 10));
 		}
 
 		// Update server cvar list
@@ -923,6 +979,27 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		nID = GetListIDFromAddress(sAddress);
 	}
 
+	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_CERTIFICATEDSERVER_OFFSET, _itoa(tServerInfo.nCertificatedServer, szTemp, 10)) &&
+		g_nServerlistSortColumn == SERVERLIST_CERTIFICATEDSERVER_OFFSET)
+	{
+		SortServerList();
+		nID = GetListIDFromAddress(sAddress);
+	}
+
+	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_NEEDPASSWORD_OFFSET, _itoa(tServerInfo.nNeedPassword, szTemp, 10)) &&
+		g_nServerlistSortColumn == SERVERLIST_NEEDPASSWORD_OFFSET)
+	{
+		SortServerList();
+		nID = GetListIDFromAddress(sAddress);
+	}
+
+	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_GLS_OFFSET, _itoa(tServerInfo.nGLS, szTemp, 10)) &&
+		g_nServerlistSortColumn == SERVERLIST_GLS_OFFSET)
+	{
+		SortServerList();
+		nID = GetListIDFromAddress(sAddress);
+	}
+
 	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_HOSTNAME_OFFSET, tServerInfo.sHostName.c_str()) &&
 		g_nServerlistSortColumn == SERVERLIST_HOSTNAME_OFFSET)
 	{
@@ -937,7 +1014,7 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		nID = GetListIDFromAddress(sAddress);
 	}
 
-	sprintf(szTemp, "%d / %d", tServerInfo.nPlayers, tServerInfo.nMaxPlayers);
+	sprintf_s(szTemp, "%d / %d", tServerInfo.nPlayers, tServerInfo.nMaxPlayers);
 
 	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_PLAYERS_OFFSET, szTemp) &&
 		g_nServerlistSortColumn == SERVERLIST_PLAYERS_OFFSET)
@@ -946,7 +1023,7 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		nID = GetListIDFromAddress(sAddress);
 	}
 
-	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_PING_OFFSET, itoa(tServerInfo.nPing, szTemp, 10)) &&
+	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_PING_OFFSET, _itoa(tServerInfo.nPing, szTemp, 10)) &&
 		g_nServerlistSortColumn == SERVERLIST_PING_OFFSET)
 	{
 		SortServerList();
@@ -967,6 +1044,7 @@ void LoadSettings (void)
 	{
 		dwSize = sizeof(g_szGameDir);
 		RegQueryValueEx(hKey, "INSTDIR", NULL, NULL, (LPBYTE)g_szGameDir, &dwSize);
+		RegCloseKey (hKey);
 	}
 	else
 	{

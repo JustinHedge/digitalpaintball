@@ -462,6 +462,9 @@ static void UpdateServer (const struct sockaddr_in *tFrom, const char *pData, in
 		int size = vInfoStrings.size() / 2;
 		const char *sVar, *sValue;
 		mIterator->second.nMaxPlayers = 0;
+		mIterator->second.nCertificatedServer = 0;
+		mIterator->second.nNeedPassword = 0;
+		mIterator->second.nGLS = 0;
 		mIterator->second.sHostName = "Unnamed";
 		mIterator->second.sMapName = "unknown";
 		mIterator->second.bMapExists = false;
@@ -476,6 +479,18 @@ static void UpdateServer (const struct sockaddr_in *tFrom, const char *pData, in
 			{
 				mIterator->second.sMapName = sValue;
 				mIterator->second.bMapExists = MapExists(sValue);
+			}
+			else if (strcmp(sVar, "sv_certificated") == 0)
+			{
+				mIterator->second.nCertificatedServer = atoi(sValue);
+			}
+			else if (strcmp(sVar, "needpass") == 0)
+			{
+				mIterator->second.nNeedPassword = atoi(sValue);
+			}
+			else if (strcmp(sVar, "sv_login") == 0)
+			{
+				mIterator->second.nGLS = atoi(sValue);
 			}
 			else if (strcmp(sVar, "hostname") == 0)
 			{
