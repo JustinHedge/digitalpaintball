@@ -71,29 +71,9 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 	HMENU hMenu;
 	hMenu = NULL;
 
-	char Language[10];
-	DWORD destSize;
-	destSize=10;
-	char szServerbrowserINI[256];
-	_snprintf(szServerbrowserINI, sizeof(szServerbrowserINI), "%s\\serverbrowser.ini", g_szGameDir);
-	GetPrivateProfileString("Serverbrowser","Language","NULL",Language,destSize,szServerbrowserINI);
-
-/*	if(Language == "English"){
-		TODO: Load english menu.
-	} else {
-		TODO: Lade deutsches Menü.
-	}
-*/
-	UINT uState = GetMenuState(hMenu,IDM_LANG_OPTION1,MF_BYCOMMAND);
-
 	// Create the application window
-	if(uState & MFS_CHECKED){
-		LoadString(hInstance, IDS_APP_TITLE1, szTitle, MAX_LOADSTRING);
-		LoadString(hInstance, IDC_SERVERBROWSER1, szWindowClass, MAX_LOADSTRING);
-	} else {
-		LoadString(hInstance, IDS_APP_TITLE2, szTitle, MAX_LOADSTRING);
-		LoadString(hInstance, IDC_SERVERBROWSER2, szWindowClass, MAX_LOADSTRING);
-	}
+	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+	LoadString(hInstance, IDC_SERVERBROWSER, szWindowClass, MAX_LOADSTRING);
 	memset(&wcex, 0, sizeof(wcex));
 	wcex.cbSize			= sizeof(WNDCLASSEX); 
 	wcex.style			= CS_HREDRAW | CS_VREDRAW;
@@ -104,11 +84,7 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 	wcex.hIcon			= LoadIcon(hInstance, (LPCTSTR)IDI_SERVERBROWSER);
 	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	if(uState & MFS_CHECKED){
-		wcex.lpszMenuName	= (LPCSTR)IDC_SERVERBROWSER1;
-	} else {
-		wcex.lpszMenuName	= (LPCSTR)IDC_SERVERBROWSER2;
-	}
+	wcex.lpszMenuName	= (LPCSTR)IDC_SERVERBROWSER;
 	wcex.lpszClassName	= szWindowClass;
 	wcex.hIconSm		= LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
 	RegisterClassEx(&wcex);
@@ -124,13 +100,8 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
-	if(uState & MFS_CHECKED){
-		hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_SERVERBROWSER1);
-		hMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENU_TRAY1));
-	} else {
-		hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_SERVERBROWSER2);
-		hMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENU_TRAY2));
-	}
+	hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_SERVERBROWSER);
+	hMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENU_TRAY));
 	g_hMenuTray = GetSubMenu(hMenu, 0);
 	g_hMenuRightClick = GetSubMenu(hMenu, 1);
 	InitApp();
@@ -386,18 +357,6 @@ static BOOL OnCommand (HWND hWnd, int wmId, HWND hWndCtl, UINT codeNotify)
 		return CopyAddress(hWnd, codeNotify, COPYTYPE_FULL);
 	case ID_RIGHTCLICK_COPYNAMEIP:
 		return CopyAddress(hWnd, codeNotify, COPYTYPE_NAMEIP);
-	case IDM_LANG_OPTION1:
-		SetMenu(hWnd, LoadMenu(g_hInst,MAKEINTRESOURCE(IDC_SERVERBROWSER1)));
-//		SetMenu(hWnd, LoadMenu(g_hInst,MAKEINTRESOURCE(IDR_MENU_TRAY1)));
-		WritePrivateProfileString(TEXT("Serverbrowser"),TEXT("Language"),TEXT("English"),TEXT(szServerbrowserINI));
-		SetStatus("English loaded. Please restart the serverbrowser to see all menus in this language.");
-		break;
-	case IDM_LANG_OPTION2:
-	    SetMenu(hWnd, LoadMenu(g_hInst,MAKEINTRESOURCE(IDC_SERVERBROWSER2)));
-//	    SetMenu(hWnd, LoadMenu(g_hInst,MAKEINTRESOURCE(IDR_MENU_TRAY2)));
-		WritePrivateProfileString(TEXT("Serverbrowser"),TEXT("Language"),TEXT("Deutsch"),TEXT(szServerbrowserINI));
-		SetStatus("Deutsch geladen. Bitte den Serverbrowser neu starten, um alle Menüs in dieser Sprache zu sehen.");
-		break;
 	default:
 		return FALSE;
 	}

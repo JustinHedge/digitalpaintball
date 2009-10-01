@@ -1,0 +1,173 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+#include "resource.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Slovak resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_SLOVAK, 0x1
+#pragma code_page(1252)
+#endif //_WIN32
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+//
+
+IDI_SERVERBROWSER       ICON    DISCARDABLE     "serverbrowser.ico"
+IDI_SMALL               ICON    DISCARDABLE     "small.ico"
+IDI_DPLOGO              ICON    DISCARDABLE     "dplogo.ico"		// Game logo
+
+IDI_STERN0				ICON	DISCARDABLE		"stern0.ico"		// CertificatedServer off (grey)
+IDI_STERN1				ICON	DISCARDABLE		"stern1.ico"		// CertificatedServer on (yellow)
+IDI_SCHLOSS0			ICON	DISCARDABLE		"schloss0.ico"		// NeedPassword off (grey)
+IDI_SCHLOSS1			ICON	DISCARDABLE		"schloss1.ico"		// NeedPassword on (yellow)
+IDI_WELT0				ICON	DISCARDABLE		"welt0.ico"			// GLS off (grey)
+IDI_WELT1				ICON	DISCARDABLE		"welt1.ico"			// GLS on, registered players (orange)
+IDI_WELT2				ICON	DISCARDABLE		"welt2.ico"			// GLS on, all (green)
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu - Slovak
+//
+
+IDC_SERVERBROWSER MENU DISCARDABLE 
+BEGIN
+    POPUP "&Súbor"
+    BEGIN
+        MENUITEM "&Skoncit",							IDM_EXIT
+    END
+    POPUP "&Zoznam"
+    BEGIN
+        MENUITEM "&Obnovit (F5)",						IDM_REFRESH
+        MENUITEM "&Update (Shift+F5)",					IDM_UPDATE
+    END
+	POPUP "&Pomoc"
+    BEGIN
+        MENUITEM "&O programe",							IDM_ABOUT
+    END
+END
+
+IDR_MENU_TRAY MENU DISCARDABLE 
+BEGIN
+    POPUP "Tray"
+    BEGIN
+        MENUITEM "&Skoncit",							ID_TRAY_EXIT
+    END
+    POPUP "Rightclick"
+    BEGIN
+        MENUITEM "Kopírovat &adresu",					ID_RIGHTCLICK_COPYADDRESS
+        MENUITEM "Kopírovat &URL",						ID_RIGHTCLICK_COPYURL
+        MENUITEM "Kopírovat &cele info o serveri",		ID_RIGHTCLICK_COPYFULLSERVERINFO
+        MENUITEM "Kopírovat &meno servera/IP",			ID_RIGHTCLICK_COPYNAMEIP
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDC_SERVERBROWSER ACCELERATORS MOVEABLE PURE 
+BEGIN
+    "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
+    "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
+    VK_F5,          IDM_REFRESH,            VIRTKEY, NOINVERT
+    VK_F5,          IDM_UPDATE,             VIRTKEY, SHIFT, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 178, 67
+STYLE WS_POPUP | WS_BORDER
+FONT 8, "MS Sans Serif"
+BEGIN
+    ICON            IDI_SERVERBROWSER,IDC_MYICON,14,9,21,20
+	LTEXT			"Paintball2 Server Browser",IDC_STATIC,49,10,115,8,SS_NOPREFIX
+    LTEXT			"Version 0.1 - Build 2009-10-01",IDC_STATIC,49,21,115,8,SS_NOPREFIX
+    LTEXT			"Copyright (C) 2009 Digital Paint",IDC_STATIC,49,35,115,8
+    PUSHBUTTON		"OK",IDOK,73,50,30,11,BS_FLAT | WS_GROUP
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""resource.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table - Slovak
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_APP_TITLE			"Serverbrowser"
+    IDC_SERVERBROWSER		"SERVERBROWSER"
+END
+
+
+#endif    // Slovak resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
