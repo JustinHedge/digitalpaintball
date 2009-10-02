@@ -16,11 +16,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// French (France) resources
+// Slovak resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
-LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+LANGUAGE LANG_SLOVAK, SUBLANG_DEFAULT
 #pragma code_page(1252)
 #endif //_WIN32
 
@@ -48,23 +48,23 @@ IDI_WELT2				ICON	DISCARDABLE		"welt2.ico"			// GLS on, all (green)
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu - French
+// Menu - Slovak
 //
 
 IDC_SERVERBROWSER MENU DISCARDABLE 
 BEGIN
-    POPUP "&Fichier"
+    POPUP "&Súbor"
     BEGIN
-        MENUITEM "&Sortir",								IDM_EXIT
+        MENUITEM "&Skoncit",							IDM_EXIT
     END
-    POPUP "&Liste"
+    POPUP "&Zoznam"
     BEGIN
-        MENUITEM "&Rafraichir (F5)",					IDM_REFRESH
-        MENUITEM "&Mettre a Jour (Shift+F5)",			IDM_UPDATE
+        MENUITEM "&Obnovit (F5)",						IDM_REFRESH
+        MENUITEM "&Update (Shift+F5)",					IDM_UPDATE
     END
-	POPUP "&Aide"
+	POPUP "&Pomoc"
     BEGIN
-        MENUITEM "&A propos de",						IDM_ABOUT
+        MENUITEM "&O programe",							IDM_ABOUT
     END
 END
 
@@ -72,14 +72,14 @@ IDR_MENU_TRAY MENU DISCARDABLE
 BEGIN
     POPUP "Tray"
     BEGIN
-        MENUITEM "&Sortir",								ID_TRAY_EXIT
+        MENUITEM "&Skoncit",							ID_TRAY_EXIT
     END
     POPUP "Rightclick"
     BEGIN
-        MENUITEM "Copier l'&adresse",					ID_RIGHTCLICK_COPYADDRESS
-        MENUITEM "Copier l'&URL",						ID_RIGHTCLICK_COPYURL
-        MENUITEM "Copiez Tout Les &Renseignements Du Serveur",	ID_RIGHTCLICK_COPYFULLSERVERINFO
-        MENUITEM "Copier le &nom du serveur/IP",		ID_RIGHTCLICK_COPYNAMEIP
+        MENUITEM "Kopírovat &adresu",					ID_RIGHTCLICK_COPYADDRESS
+        MENUITEM "Kopírovat &URL",						ID_RIGHTCLICK_COPYURL
+        MENUITEM "Kopírovat &cele info o serveri",		ID_RIGHTCLICK_COPYFULLSERVERINFO
+        MENUITEM "Kopírovat &meno servera/IP",			ID_RIGHTCLICK_COPYNAMEIP
     END
 END
 
@@ -146,17 +146,17 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// String Table - French
+// String Table - Slovak
 //
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_APP_TITLE			"Recherche de serveur"
+    IDS_APP_TITLE			"Serverbrowser"
     IDC_SERVERBROWSER		"SERVERBROWSER"
 END
 
 
-#endif    // French (France) resources
+#endif    // Slovak resources
 /////////////////////////////////////////////////////////////////////////////
 
 
