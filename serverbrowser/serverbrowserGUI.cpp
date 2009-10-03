@@ -93,7 +93,7 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 		WS_POPUP | WS_BORDER |
 		WS_CAPTION | WS_THICKFRAME |
 		WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
-		100, 100, 700, 400, NULL, NULL, hInstance, NULL);
+		100, 100, 825, 500, NULL, NULL, hInstance, NULL);
 
 	if (!hWnd)
 		return FALSE;
@@ -126,7 +126,7 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 {
 	int i;
 	char *pServerList[] = { "C", "PW", "GLS", "Server Name", "Map", "Players", "Ping", "Address" };
-	int iaServerListWidths[] = { 25, 30, 35, 250, 100, 50, 38, -2 };
+	int iaServerListWidths[] = { 25, 30, 35, 300, 150, 55, 40, -2 };
 	char *pPlayerList[] = { "Player Name", "Kills", "Ping" };
 	int iaPlayerListWidths[] = { 200, 60, -2 };
 	char *pInfoList[] = { "Variable", "Value" };
@@ -149,7 +149,7 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 	// Main Server List
 	g_hServerList = CreateWindowEx(0, WC_LISTVIEW, "",
 		WS_CHILD | WS_VISIBLE | LVS_REPORT | WS_BORDER | LVS_AUTOARRANGE | LVS_SINGLESEL,
-		0, 0, 300, 200, hWnd, NULL, g_hInst, NULL);
+		0, 0, 300, 300, hWnd, NULL, g_hInst, NULL);
 	ListView_SetExtendedListViewStyle(g_hServerList, LVS_EX_FULLROWSELECT);
 
 	for (i = 0; i < 8; i++)
@@ -332,6 +332,9 @@ static BOOL OnCommand (HWND hWnd, int wmId, HWND hWndCtl, UINT codeNotify)
 	{
 	case IDM_ABOUT:
 		DialogBox(g_hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
+		return TRUE;
+	case IDM_WEBSITE:
+		ShellExecute(NULL, "open", "www.digitalpaint.org", NULL, NULL, SW_SHOW);
 		return TRUE;
 	case IDM_UPDATE:
 		UpdateList();

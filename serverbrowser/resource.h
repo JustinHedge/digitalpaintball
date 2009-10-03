@@ -13,6 +13,7 @@
 #define IDI_SERVERBROWSER               108
 #define IDI_SMALL                       109
 #define IDC_SERVERBROWSER               110
+#define IDM_WEBSITE                     111
 #define IDR_MAINFRAME                   128
 #define IDR_MENU_TRAY                   129
 #define IDI_DPLOGO						500
