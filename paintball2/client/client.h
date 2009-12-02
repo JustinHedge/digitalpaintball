@@ -637,6 +637,8 @@ void shutdown_cl_scores (void);
 #define GAMETYPE_SIEGE	3	
 #define GAMETYPE_KOTH	4
 #define GAMETYPE_ELIM	5
+#define GAMETYPE_PONG	6
+#define GAMETYPE_TDM	7
 #define MAX_SCOREBOARD_STRING 128
 
 //
