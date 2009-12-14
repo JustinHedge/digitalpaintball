@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="serverbrowser"
 	ProjectGUID="{FA0DE5CE-0A74-4C36-817B-CE19035B1014}"
+	RootNamespace="serverbrowser"
 	>
 	<Platforms>
 		<Platform
@@ -241,107 +242,27 @@
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
 			<File
+				RelativePath=".\blank.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\dplogo.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\schloss0.ico"
+				RelativePath=".\passworded.ico"
 				>
-			</File>
-			<File
-				RelativePath=".\schloss1.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\serverbrowser.cs-CZ.rc"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						Culture="1029"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\serverbrowser.de-DE.rc"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						Culture="1031"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\serverbrowser.en-US.rc"
-				>
-			</File>
-			<File
-				RelativePath=".\serverbrowser.fr-FR.rc"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						Culture="1036"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\serverbrowser.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\serverbrowser.pl-PL.rc"
+				RelativePath=".\serverbrowser.rc"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						Culture="1045"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\serverbrowser.sk-SK.rc"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						Culture="1051"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\small.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\stern0.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\stern1.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\welt0.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\welt1.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\welt2.ico"
 				>
 			</File>
 		</Filter>

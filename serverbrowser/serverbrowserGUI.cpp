@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_LOADSTRING 100
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
+#define NUM_ICONS 2
+#define ICON_SIZE 16
 
 // Global Variables:
 static HWND g_hStatus;
@@ -48,6 +50,8 @@ static DWORD g_dwBlackTextColor = RGB(0, 0, 0);
 static DWORD g_dwWhiteTextColor = RGB(255, 255, 255);
 static DWORD g_dwFadedTextColor = RGB(160, 160, 160); // Greyed out color
 static int g_nServerlistSortColumn = -1;
+static DWORD g_iIconBlank = 0;
+static DWORD g_iIconPassworded = 0;
 
 char g_szGameDir[256];
 string g_sCurrentServerAddress;
@@ -133,6 +137,8 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 	int iaInfoListWidths[] = { 100, -2 };
 	LV_COLUMN lvColumn;
 	RECT rect;
+    HIMAGELIST hImageList;
+    HICON hIcon;
 
 	memset(&lvColumn, 0, sizeof(lvColumn));
 	lvColumn.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM;
@@ -163,6 +169,18 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 
 		ListView_SetColumnWidth(g_hServerList, i, iaServerListWidths[i]);
 	}
+
+	// Icons for main server list
+    if ((hImageList = ImageList_Create(ICON_SIZE, ICON_SIZE, ILC_MASK, 0, NUM_ICONS)) == NULL)
+	{
+        return FALSE;
+	}
+
+    hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_BLANK));
+    g_iIconBlank = ImageList_AddIcon(hImageList, hIcon);
+	hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_PASSWORDED));
+    g_iIconPassworded = ImageList_AddIcon(hImageList, hIcon);
+    ListView_SetImageList(g_hServerList, hImageList, LVSIL_SMALL);
 
 	// Player List
 	g_hPlayerList = CreateWindowEx(0, WC_LISTVIEW, "",
@@ -730,6 +748,11 @@ static BOOL OnNotify (HWND hWnd, int idFrom, NMHDR FAR *pnmhdr)
 	{
 		NM_LISTVIEW *pNMLV = (NM_LISTVIEW *)pnmhdr;
 		LPNMLVKEYDOWN pnmlvkd = (LPNMLVKEYDOWN)pnmhdr;
+		NMLVDISPINFO *pNMLVDispInfo;
+		char szAddress[64];
+		map<string, serverinfo_t>::iterator mIterator;
+		DWORD dwImage = 0;
+		BOOL ret;
 
 		switch (pnmhdr->code)
 		{
@@ -914,6 +937,12 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 	bool bFound = false;
 	bool bUpdated = false;
 	int nCount = ListView_GetItemCount(g_hServerList);
+	int iImage = g_iIconBlank;
+
+	if (tServerInfo.nNeedPassword)
+	{
+		iImage = g_iIconPassworded;
+	}
 
 	// Find a matching address to update
 	nID = GetListIDFromAddress(sAddress);
@@ -924,11 +953,12 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		LVITEM tLVItem;
 
 		memset(&tLVItem, 0, sizeof(tLVItem));
-		tLVItem.mask = LVIF_TEXT|LVIF_PARAM;
+		tLVItem.mask = LVIF_TEXT|LVIF_PARAM|LVIF_IMAGE;
 		tLVItem.iSubItem = 0;
 		tLVItem.iItem = nCount;
 		tLVItem.lParam = nCount;
 		tLVItem.pszText = "";
+		tLVItem.iImage = iImage;
 		nID = ListView_InsertItem(g_hServerList, &tLVItem);
 		TweakListviewWidths();
 	}
