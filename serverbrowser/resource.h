@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by serverbrowser.rc
+// Microsoft Visual C++ generated include file.
+// Used by serverbrowser.en-US.rc
 //
 #define IDC_MYICON                      2
 #define IDC_STATUSBAR                   3
@@ -16,14 +16,14 @@
 #define IDM_WEBSITE                     111
 #define IDR_MAINFRAME                   128
 #define IDR_MENU_TRAY                   129
-#define IDI_DPLOGO						500
-#define IDI_STERN0						501
-#define IDI_STERN1						502
-#define IDI_SCHLOSS0					503
-#define IDI_SCHLOSS1					504
-#define IDI_WELT0						505
-#define IDI_WELT1						506
-#define IDI_WELT2						507
+#define IDI_DPLOGO                      500
+#define IDI_STERN0                      501
+#define IDI_STERN1                      502
+#define IDI_SCHLOSS0                    503
+#define IDI_SCHLOSS1                    504
+#define IDI_WELT0                       505
+#define IDI_WELT1                       506
+#define IDI_WELT2                       507
 #define IDM_UPDATE                      32771
 #define IDM_REFRESH                     32772
 #define ID_TRAY_EXIT                    32773
