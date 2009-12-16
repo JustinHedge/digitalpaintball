@@ -129,8 +129,10 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 {
 	int i;
-	char *pServerList[] = { "C", "PW", "GLS", "Server Name", "Map", "Players", "Ping", "Address" };
-	int iaServerListWidths[] = { 25, 30, 35, 300, 150, 55, 40, -2 };
+	//char *pServerList[] = { "C", "PW", "GLS", "Server Name", "Map", "Players", "Ping", "Address" };
+	char *pServerList[] = { "Server Name", "Map", "Players", "Ping", "Address" };
+	//	int iaServerListWidths[] = { 25, 30, 35, 300, 150, 55, 40, -2 };
+	int iaServerListWidths[] = { 300, 150, 55, 40, -2 };
 	char *pPlayerList[] = { "Player Name", "Kills", "Ping" };
 	int iaPlayerListWidths[] = { 200, 60, -2 };
 	char *pInfoList[] = { "Variable", "Value" };
@@ -158,7 +160,7 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 		0, 0, 300, 300, hWnd, NULL, g_hInst, NULL);
 	ListView_SetExtendedListViewStyle(g_hServerList, LVS_EX_FULLROWSELECT);
 
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < SERVERLIST_OFFSET_MAX; i++)
 	{
 		lvColumn.cx = 150;
 		lvColumn.iSubItem = i;
@@ -188,7 +190,7 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 		0, 0, 300, 200, hWnd, NULL, g_hInst, NULL);
 	ListView_SetExtendedListViewStyle(g_hPlayerList, LVS_EX_FULLROWSELECT);
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < PLAYERLIST_OFFSET_MAX; i++)
 	{
 		lvColumn.cx = 150;
 		lvColumn.iSubItem = i;
@@ -295,12 +297,14 @@ static BOOL CopyAddress (HWND hWnd, int nItem, copytype_t eCopyType)
 			char szMap[32];
 			char szPlayers[16];
 
+#if 0
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_CERTIFICATEDSERVER_OFFSET,
 				szCertificatedServer, sizeof(szCertificatedServer));
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_NEEDPASSWORD_OFFSET,
 				szNeedPassword, sizeof(szNeedPassword));
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_GLS_OFFSET,
 				szGLS, sizeof(szGLS));
+#endif
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_HOSTNAME_OFFSET,
 				szHostname, sizeof(szHostname));
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_PING_OFFSET,
@@ -748,11 +752,6 @@ static BOOL OnNotify (HWND hWnd, int idFrom, NMHDR FAR *pnmhdr)
 	{
 		NM_LISTVIEW *pNMLV = (NM_LISTVIEW *)pnmhdr;
 		LPNMLVKEYDOWN pnmlvkd = (LPNMLVKEYDOWN)pnmhdr;
-		NMLVDISPINFO *pNMLVDispInfo;
-		char szAddress[64];
-		map<string, serverinfo_t>::iterator mIterator;
-		DWORD dwImage = 0;
-		BOOL ret;
 
 		switch (pnmhdr->code)
 		{
@@ -971,6 +970,7 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		nID = GetListIDFromAddress(sAddress);
 	}
 
+#if 0
 	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_CERTIFICATEDSERVER_OFFSET, _itoa(tServerInfo.nCertificatedServer, szTemp, 10)) &&
 		g_nServerlistSortColumn == SERVERLIST_CERTIFICATEDSERVER_OFFSET)
 	{
@@ -991,6 +991,7 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		SortServerList();
 		nID = GetListIDFromAddress(sAddress);
 	}
+#endif
 
 	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_HOSTNAME_OFFSET, tServerInfo.sHostName.c_str()) &&
 		g_nServerlistSortColumn == SERVERLIST_HOSTNAME_OFFSET)

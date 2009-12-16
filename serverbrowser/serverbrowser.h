@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #pragma warning(disable: 4786)
+#pragma warning(disable: 4996)
 
 #include <windows.h>
 #include "resource.h"
@@ -74,18 +75,23 @@ typedef enum COPYTYPE {
 
 void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo);
 
-#define SERVERLIST_CERTIFICATEDSERVER_OFFSET	0
-#define SERVERLIST_NEEDPASSWORD_OFFSET			1
-#define SERVERLIST_GLS_OFFSET					2
-#define SERVERLIST_HOSTNAME_OFFSET				3
-#define SERVERLIST_MAP_OFFSET					4
-#define SERVERLIST_PLAYERS_OFFSET				5
-#define SERVERLIST_PING_OFFSET					6
-#define SERVERLIST_ADDRESS_OFFSET				7
+enum serverlist_offset
+{
+	SERVERLIST_HOSTNAME_OFFSET = 0,
+	SERVERLIST_MAP_OFFSET,
+	SERVERLIST_PLAYERS_OFFSET,
+	SERVERLIST_PING_OFFSET,
+	SERVERLIST_ADDRESS_OFFSET,
+	SERVERLIST_OFFSET_MAX
+};
 
-#define PLAYERLIST_NAME_OFFSET		0
-#define PLAYERLIST_SCORE_OFFSET		1
-#define PLAYERLIST_PING_OFFSET		2
+
+enum playerlist_offset {
+	PLAYERLIST_NAME_OFFSET = 0,
+	PLAYERLIST_SCORE_OFFSET,
+	PLAYERLIST_PING_OFFSET,
+	PLAYERLIST_OFFSET_MAX
+};
 
 #define CHAR_ENDFORMAT	133
 #define CHAR_UNDERLINE	134

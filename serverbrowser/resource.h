@@ -8,6 +8,7 @@
 #define IDD_ABOUTBOX                    103
 #define IDS_APP_TITLE                   104
 #define IDM_ABOUT                       105
+#define IDS_ABOUT_AUTHORS               105
 #define IDM_EXIT                        106
 #define IDS_HELLO                       107
 #define IDI_SERVERBROWSER               108

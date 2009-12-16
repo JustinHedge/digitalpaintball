@@ -33,7 +33,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Version 0.1 - Build 2009-10-04",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -129,7 +129,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Version 0.1 - Build 2009-10-04",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -225,7 +225,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Version 0.1 - Build 2009-10-04",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -346,7 +346,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Version 0.1 - Build 2009-10-04",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -435,14 +435,14 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOG  100, 40, 170, 130
+IDD_ABOUTBOX DIALOGEX 100, 40, 170, 130
 STYLE DS_SETFONT | WS_POPUP | WS_CAPTION
 CAPTION "About Serverbrowser"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
+    ICON            IDI_DPLOGO,IDC_MYICON,35,10,20,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Version 0.1 - Build 2009-10-04",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -536,6 +536,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 END
 
@@ -564,7 +565,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Version 0.1 - Build 2009-10-04",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
