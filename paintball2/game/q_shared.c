@@ -1683,7 +1683,7 @@ int Q_strncasecmp (const char *s1, const char *s2, int n)
 			if (c2 >= 'a' && c2 <= 'z')
 				c2 -= ('a' - 'A');
 			if (c1 != c2)
-				return -1;		// strings not equal
+				return c1 - c2;		// strings not equal
 		}
 	} while (c1);
 	
@@ -1707,7 +1707,7 @@ int Q_strcasecmp (const char *s1, const char *s2)
 			if (c2 >= 'a' && c2 <= 'z')
 				c2 -= ('a' - 'A');
 			if (c1 != c2)
-				return -1;		// strings not equal
+				return c1 - c2;		// strings not equal
 		}
 	} while (c1);
 	
