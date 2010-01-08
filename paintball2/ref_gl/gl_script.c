@@ -901,7 +901,7 @@ void RS_ScanPathForScripts (char *dir)
 	int	script_count, i;
 
 	Com_sprintf(dirstring, sizeof(dirstring), "%s/scripts/*.txt", dir);
-	script_list = ri.FS_ListFiles(dirstring, &script_count, 0, 0);
+	script_list = ri.FS_ListFiles(dirstring, &script_count, 0, 0, true);
 
 	if (!script_list)
 		return;

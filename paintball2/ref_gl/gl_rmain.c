@@ -1548,7 +1548,7 @@ void R_Register(void)
 	gl_lockpvs = ri.Cvar_Get("gl_lockpvs", "0", 0);
 	gl_vertex_arrays = ri.Cvar_Get("gl_vertex_arrays", "0", CVAR_ARCHIVE);
 	gl_ext_multitexture = ri.Cvar_Get("gl_ext_multitexture", "1", CVAR_ARCHIVE);
-	gl_ext_pointparameters = ri.Cvar_Get("gl_ext_pointparameters", "1", CVAR_ARCHIVE);
+	gl_ext_pointparameters = ri.Cvar_Get("gl_ext_pointparameters", "0", CVAR_ARCHIVE); // disabled this as it doesn't play nice with some drivers
 	gl_ext_compiled_vertex_array = ri.Cvar_Get("gl_ext_compiled_vertex_array", "1", CVAR_ARCHIVE);
 	gl_ext_texture_compression = ri.Cvar_Get("gl_ext_texture_compression", "0", CVAR_ARCHIVE); // Heffo - ARB Texture Compression
 	gl_screenshot_jpeg = ri.Cvar_Get("gl_screenshot_jpeg", "1", CVAR_ARCHIVE);					// Heffo - JPEG Screenshots
