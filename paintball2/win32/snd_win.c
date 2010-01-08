@@ -244,31 +244,32 @@ static qboolean DS_CreateBuffers( void )
 /*
 ** DS_DestroyBuffers
 */
-static void DS_DestroyBuffers( void )
+static void DS_DestroyBuffers (void)
 {
-	Com_DPrintf( "Destroying DS buffers\n" );
-	if ( pDS )
+	Com_DPrintf("Destroying DS buffers\n");
+
+	if (pDS)
 	{
-		Com_DPrintf( "...setting NORMAL coop level\n" );
-		pDS->lpVtbl->SetCooperativeLevel( pDS, cl_hwnd, DSSCL_NORMAL );
+		Com_DPrintf("...setting NORMAL coop level\n");
+		pDS->lpVtbl->SetCooperativeLevel(pDS, cl_hwnd, DSSCL_NORMAL);
 	}
 
-	if ( pDSBuf )
+	if (pDSBuf)
 	{
-		Com_DPrintf( "...stopping and releasing sound buffer\n" );
-		pDSBuf->lpVtbl->Stop( pDSBuf );
-		pDSBuf->lpVtbl->Release( pDSBuf );
+		Com_DPrintf("...stopping and releasing sound buffer\n");
+		pDSBuf->lpVtbl->Stop(pDSBuf);
+		pDSBuf->lpVtbl->Release(pDSBuf);
 	}
 
 	// only release primary buffer if it's not also the mixing buffer we just released
-	if ( pDSPBuf && ( pDSBuf != pDSPBuf ) )
+	if (pDSPBuf && (pDSBuf != pDSPBuf))
 	{
-		Com_DPrintf( "...releasing primary buffer\n" );
-		pDSPBuf->lpVtbl->Release( pDSPBuf );
+		Com_DPrintf("...releasing primary buffer\n");
+		pDSPBuf->lpVtbl->Release(pDSPBuf);
 	}
+
 	pDSBuf = NULL;
 	pDSPBuf = NULL;
-
 	dma.buffer = NULL;
 }
 
@@ -844,20 +845,23 @@ The window have been destroyed and recreated
 between a deactivate and an activate.
 ===========
 */
-void S_Activate (qboolean active)
+void S_Activate (qboolean active, qboolean newwindow) // jitsound
 {
-	if ( active )
+	if (newwindow || s_disableonalttab->value) // jitsound - sometimes I don't want sound to disable when I alt-tab!
 	{
-		if ( pDS && cl_hwnd && snd_isdirect )
+		if (active)
 		{
-			DS_CreateBuffers();
+			if (pDS && cl_hwnd && snd_isdirect)
+			{
+				DS_CreateBuffers();
+			}
 		}
-	}
-	else
-	{
-		if ( pDS && cl_hwnd && snd_isdirect )
+		else
 		{
-			DS_DestroyBuffers();
+			if (pDS && cl_hwnd && snd_isdirect)
+			{
+				DS_DestroyBuffers();
+			}
 		}
 	}
 }

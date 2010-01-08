@@ -232,7 +232,7 @@ int MapKey (int key)
 	}
 }
 
-void AppActivate(BOOL fActive, BOOL minimize)
+void AppActivate (BOOL fActive, BOOL minimize, qboolean newwindow)
 {
 	Minimized = minimize;
 
@@ -249,7 +249,7 @@ void AppActivate(BOOL fActive, BOOL minimize)
 	{
 		IN_Activate(false);
 		CDAudio_Activate(false);
-		S_Activate(false);
+		S_Activate(false, newwindow);
 
 		if (win_noalttab->value)
 			WIN_EnableAltTab();
@@ -258,7 +258,7 @@ void AppActivate(BOOL fActive, BOOL minimize)
 	{
 		IN_Activate(true);
 		CDAudio_Activate(true);
-		S_Activate(true);
+		S_Activate(true, newwindow);
 
 		if (win_noalttab->value)
 			WIN_DisableAltTab();
@@ -485,6 +485,7 @@ LONG WINAPI MainWndProc (
     LPARAM  lParam)
 {
 	LONG		lRet = 0;
+	static qboolean newwindow = true;
 
 	if (uMsg == MSH_MOUSEWHEEL)
 	{
@@ -525,7 +526,7 @@ LONG WINAPI MainWndProc (
 
 	case WM_CREATE:
 		cl_hwnd = hWnd;
-
+		newwindow = true;
 		MSH_MOUSEWHEEL = RegisterWindowMessage("MSWHEEL_ROLLMSG"); 
         return DefWindowProc (hWnd, uMsg, wParam, lParam);
 
@@ -536,7 +537,7 @@ LONG WINAPI MainWndProc (
 	case WM_DESTROY:
 		// let sound and input know about this?
 		cl_hwnd = NULL;
-        return DefWindowProc (hWnd, uMsg, wParam, lParam);
+        return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 	case WM_ACTIVATE:
 		{
@@ -544,14 +545,15 @@ LONG WINAPI MainWndProc (
 
 			// KJB: Watch this for problems in fullscreen modes with Alt-tabbing.
 			fActive = LOWORD(wParam);
-			fMinimized = (BOOL) HIWORD(wParam);
+			fMinimized = (BOOL)HIWORD(wParam);
+			AppActivate(fActive != WA_INACTIVE, fMinimized, newwindow);
 
-			AppActivate( fActive != WA_INACTIVE, fMinimized);
+			if (reflib_active)
+				re.AppActivate(fActive != WA_INACTIVE);
 
-			if ( reflib_active )
-				re.AppActivate( !( fActive == WA_INACTIVE ) );
+			newwindow = false;
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
-        return DefWindowProc (hWnd, uMsg, wParam, lParam);
 
 	case WM_MOVE:
 		{
