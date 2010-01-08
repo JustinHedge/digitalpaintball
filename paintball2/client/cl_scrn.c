@@ -468,7 +468,7 @@ void SCR_DrawPause (void)
 	if (!cl_paused->value)
 		return;
 
-	re.DrawPic2 ((viddef.width-i_pause->width*hudscale)*0.5f, viddef.height*0.5f + 8.0f, i_pause);
+	re.DrawPic2((viddef.width - i_pause->width * hudscale) * 0.5f, viddef.height * 0.5f + 8.0f, i_pause);
 }
 
 /*
@@ -482,7 +482,7 @@ void SCR_DrawLoading (void)
 		return;
 
 	scr_draw_loading = false;
-	re.DrawPic2 ((viddef.width-i_loading->width*hudscale)*0.5f, (viddef.height-i_loading->height*hudscale)*0.5f, i_loading);
+	re.DrawPic2((viddef.width - i_loading->width * hudscale) * 0.5f, (viddef.height - i_loading->height * hudscale) * 0.5f, i_loading);
 }
 
 //=============================================================================
@@ -496,21 +496,23 @@ Scroll it up or down
 */
 void SCR_RunConsole (void)
 {
-// decide on the height of the console
+	// decide on the height of the console
 	if (cls.key_dest == key_console)
-		scr_conlines = 0.5;		// half screen
+		scr_conlines = 0.5f;		// half screen
 	else
-		scr_conlines = 0;				// none visible
+		scr_conlines = 0.0f;		// none visible
 	
 	if (scr_conlines < scr_con_current)
 	{
-		scr_con_current -= scr_conspeed->value*cl.frametime; // jitnetfps
+		scr_con_current -= scr_conspeed->value * cl.frametime; // jitnetfps
+
 		if (scr_conlines > scr_con_current)
 			scr_con_current = scr_conlines;
 	}
 	else if (scr_conlines > scr_con_current)
 	{
-		scr_con_current += scr_conspeed->value*cl.frametime; // jitnetfps
+		scr_con_current += scr_conspeed->value * cl.frametime; // jitnetfps
+
 		if (scr_conlines < scr_con_current)
 			scr_con_current = scr_conlines;
 	}
@@ -578,7 +580,7 @@ void SCR_BeginLoadingPlaque (void)
 		return;
 
 	if (cl.cinematictime > 0)
-		scr_draw_loading = 2;	// clear to balack first
+		scr_draw_loading = 2;	// clear to black first
 	else
 		scr_draw_loading = 1;
 
@@ -595,7 +597,7 @@ SCR_EndLoadingPlaque
 void SCR_EndLoadingPlaque (void)
 {
 	cls.disable_screen = 0;
-	Con_ClearNotify ();
+	Con_ClearNotify();
 }
 
 /*
@@ -1383,10 +1385,10 @@ void SCR_UpdateScreen (void)
 	// do nothing at all
 	if (cls.disable_screen)
 	{
-		if (Sys_Milliseconds() - cls.disable_screen > 120000)
+		if (Sys_Milliseconds() - cls.disable_screen > 10000) // jit - dropped from 2 mins to 10 seconds
 		{
 			cls.disable_screen = 0;
-			Com_Printf ("Loading plaque timed out.\n");
+			Com_Printf("Loading plaque timed out.\n");
 		}
 
 		return;
@@ -1453,7 +1455,7 @@ void SCR_UpdateScreen (void)
 		{	//  loading plaque over black screen
 			re.CinematicSetPalette(NULL);
 			scr_draw_loading = false;
-			re.DrawPic2 ((viddef.width-i_loading->width)*0.5f, (viddef.height-i_loading->height)*0.5f, i_loading);
+			re.DrawPic2((viddef.width - i_loading->width) * 0.5f, (viddef.height - i_loading->height) * 0.5f, i_loading);
 //			re.EndFrame();
 //			return;
 		} 

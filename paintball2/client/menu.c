@@ -2164,7 +2164,7 @@ static void select_strip_from_list (menu_widget_t *widget, const char *striptext
 
 static void select_begin_file_list (menu_widget_t *widget, char *findname)
 {
-	widget->select_list = FS_ListFiles(Cmd_MacroExpandString(findname), &widget->select_totalitems, 0, 0);
+	widget->select_list = FS_ListFiles(Cmd_MacroExpandString(findname), &widget->select_totalitems, 0, 0, true);
 	widget->select_totalitems--;
 	widget->flags |= WIDGET_FLAG_FILELIST;
 }

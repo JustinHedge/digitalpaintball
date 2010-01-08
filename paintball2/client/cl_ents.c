@@ -609,11 +609,10 @@ void CL_ParseFrame (void)
 			cl.predicted_origin[0] = cl.frame.playerstate.pmove.origin[0]*0.125;
 			cl.predicted_origin[1] = cl.frame.playerstate.pmove.origin[1]*0.125;
 			cl.predicted_origin[2] = cl.frame.playerstate.pmove.origin[2]*0.125;
-			VectorCopy (cl.frame.playerstate.viewangles, cl.predicted_angles);
+			VectorCopy(cl.frame.playerstate.viewangles, cl.predicted_angles);
 
-			if (cls.disable_servercount != cl.servercount
-				&& cl.refresh_prepped)
-				SCR_EndLoadingPlaque ();	// get rid of loading plaque
+			if (cls.disable_servercount != cl.servercount && cl.refresh_prepped)
+				SCR_EndLoadingPlaque();	// get rid of loading plaque
 		}
 
 		cl.sound_prepped = true;	// can start mixing ambient sounds

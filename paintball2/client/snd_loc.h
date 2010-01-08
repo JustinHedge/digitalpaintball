@@ -173,6 +173,7 @@ extern cvar_t	*s_primary;
 extern cvar_t	*s_resamplequality;
 extern cvar_t	*s_resamplevolume;
 extern cvar_t	*s_nojump;
+extern cvar_t	*s_disableonalttab;
 // jitsound ===
 
 wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength);

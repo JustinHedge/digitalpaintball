@@ -130,7 +130,7 @@ Con_ToggleConsole_f
 */
 void Con_ToggleConsole_f (void)
 {
-	SCR_EndLoadingPlaque ();	// get rid of loading plaque
+	SCR_EndLoadingPlaque();	// get rid of loading plaque
 
 	// jitdemo, removed, don't stop demos
 /*

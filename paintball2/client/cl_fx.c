@@ -38,6 +38,7 @@ extern struct sfx_s	*cl_sfx_footsteps_wood_plank[4]; // jitsound
 extern struct sfx_s	*cl_sfx_footsteps_metal[4]; // jitsound
 extern struct sfx_s	*cl_sfx_footsteps_sand[4]; // jitsound
 extern struct sfx_s	*cl_sfx_footsteps_metalt[4]; // jitsound
+extern struct sfx_s	*cl_sfx_footsteps_barrel[4]; // jitsound
 
 /*
 ==============================================================
@@ -2290,6 +2291,7 @@ struct sfx_s *get_step_sound (entity_state_t *ent, int stepnumber)
 	case SURFACE_SOUND_WOOD_OTHER:
 		return cl_sfx_footsteps_wood_plank[stepnumber];
 	case SURFACE_SOUND_METAL_BARREL:
+		return cl_sfx_footsteps_barrel[stepnumber];
 	case SURFACE_SOUND_METAL_THIN:
 		return cl_sfx_footsteps_metal[stepnumber];
 	case SURFACE_SOUND_METAL_THICK:

@@ -261,7 +261,7 @@ void OGG_LoadFileList(void)
 
 	/* Get file list. */
 	list = FS_ListFiles(va("%s/%s/*.ogg", FS_Gamedir() ,OGG_DIR), &ogg_numfiles, 0,
-	    SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM);
+	    SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM, false);
 	ogg_numfiles--;
 
 	/* Check if there are posible Ogg files. */

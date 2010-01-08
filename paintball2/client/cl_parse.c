@@ -424,6 +424,14 @@ void CL_ParseDownload (void)
 	size = MSG_ReadShort(&net_message);
 	percent = MSG_ReadByte(&net_message);
 
+	// === jitdemo - multi-map support
+	if (cl.attractloop)
+	{
+		net_message.readcount += size;
+		return;
+	}
+	// jitdemo ===
+
 #ifdef USE_DOWNLOAD3
 	// If for some reason we have a download active at the same time as a download3,
 	// ignore the old style download
@@ -760,6 +768,7 @@ void CL_ParseServerData (void)
 	extern cvar_t	*fs_gamedirvar;
 	char	*str;
 	int		i;
+	qboolean attractloop = cl.attractloop; // jitdemo - multi-map demo support
 	
 	Com_DPrintf ("Serverdata packet received.\n");
 	// wipe the client_state_t struct
@@ -780,6 +789,11 @@ void CL_ParseServerData (void)
 
 	cl.servercount = MSG_ReadLong(&net_message);
 	cl.attractloop = MSG_ReadByte(&net_message);
+
+	// === jitdemo - multi-map demo support (not sure if this is the correct way to go about this - may not still be on the demo at this point)
+	if (attractloop)
+		cl.attractloop = true;
+	// jitdemo ===
 
 	// game directory
 	str = MSG_ReadString(&net_message);

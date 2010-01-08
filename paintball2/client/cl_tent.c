@@ -101,6 +101,7 @@ struct sfx_s	*cl_sfx_footsteps_wood_plank[4]; // jitsound
 struct sfx_s	*cl_sfx_footsteps_metal[4]; // jitsound
 struct sfx_s	*cl_sfx_footsteps_sand[4]; // jitsound
 struct sfx_s	*cl_sfx_footsteps_metalt[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_barrel[4]; // jitsound
 
 struct model_s	*cl_mod_explode;
 struct model_s	*cl_mod_smoke;
@@ -143,6 +144,7 @@ struct sfx_s	*cl_sfx_footsteps_wood_plank[4]; // jitsound
 struct sfx_s	*cl_sfx_footsteps_metal[4]; // jitsound
 struct sfx_s	*cl_sfx_footsteps_sand[4]; // jitsound
 struct sfx_s	*cl_sfx_footsteps_metalt[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_barrel[4]; // jitsound
 struct model_s	*cl_mod_smoke;
 struct model_s	*cl_mod_splat;
 struct model_s	*cl_mod_paintball;
@@ -216,6 +218,10 @@ void CL_RegisterTEntSounds (void) // jit, cleaned up and adjusted for paintball
 	cl_sfx_footsteps_metalt[1] = S_RegisterSound("player/step_metalt1.wav");
 	cl_sfx_footsteps_metalt[2] = S_RegisterSound("player/step_metalt2.wav");
 	cl_sfx_footsteps_metalt[3] = S_RegisterSound("player/step_metalt3.wav");
+	cl_sfx_footsteps_barrel[0] = S_RegisterSound("player/step_barrel0.wav");
+	cl_sfx_footsteps_barrel[1] = S_RegisterSound("player/step_barrel1.wav");
+	cl_sfx_footsteps_barrel[2] = S_RegisterSound("player/step_barrel2.wav");
+	cl_sfx_footsteps_barrel[3] = S_RegisterSound("player/step_barrel3.wav");
 }	
 
 /*

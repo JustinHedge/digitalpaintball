@@ -93,6 +93,7 @@ cvar_t		*s_primary;
 cvar_t		*s_resamplequality;
 cvar_t		*s_resamplevolume;
 cvar_t		*s_nojump;
+cvar_t		*s_disableonalttab;
 // jitsound ===
 
 int		s_rawend;
@@ -166,6 +167,7 @@ void S_Init (void)
 		s_resamplequality = Cvar_Get("s_resamplequality", "2", CVAR_ARCHIVE);
 		s_resamplevolume = Cvar_Get("s_resamplevolume", "0.35", 0);
 		s_nojump = Cvar_Get("s_nojump", "0", CVAR_ARCHIVE);
+		s_disableonalttab = Cvar_Get("s_disableonalttab", "1", 0);
 		// jitsound ===
 
 		s_volume = Cvar_Get("s_volume", "0.7", CVAR_ARCHIVE);

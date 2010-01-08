@@ -586,13 +586,13 @@ void SCR_PlayCinematic (char *arg)
 	cl.cinematicframe = 0;
 	dot = strstr (arg, ".");
 
-	if (dot && Q_streq (dot, ".pcx"))
+	if (dot && Q_streq(dot, ".pcx"))
 	{	// static pcx image
 		Com_sprintf (name, sizeof(name), "pics/%s", arg);
 		SCR_LoadPCX (name, &cin.pic, &palette, &cin.width, &cin.height);
 		cl.cinematicframe = -1;
 		cl.cinematictime = 1;
-		SCR_EndLoadingPlaque ();
+		SCR_EndLoadingPlaque();
 		cls.state = ca_active;
 		cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 
@@ -621,7 +621,7 @@ void SCR_PlayCinematic (char *arg)
 		return;
 	}
 
-	SCR_EndLoadingPlaque ();
+	SCR_EndLoadingPlaque();
 
 	cls.state = ca_active;
 	cl_scores_setinuse_all(false); // jitscores - clear scoreboard

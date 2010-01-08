@@ -779,7 +779,7 @@ void CL_Xfire (void);
 void OGG_Init (void);
 void OGG_Shutdown (void);
 void OGG_Stream (void);
-char **FS_ListFiles (const char *findname, int *numfiles, unsigned musthave, unsigned canthave);
+char **FS_ListFiles (const char *findname, int *numfiles, unsigned musthave, unsigned canthave, qboolean sort);
 void FS_FreeList (char **list, int nfiles);
 #endif
 

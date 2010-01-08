@@ -602,11 +602,11 @@ void CL_Drop (void)
 	if (cls.state == ca_disconnected)
 		return;
 
-	CL_Disconnect ();
+	CL_Disconnect();
 
 	// drop loading plaque unless this is the initial game start
 	if (cls.disable_servercount != -1)
-		SCR_EndLoadingPlaque ();	// get rid of loading plaque
+		SCR_EndLoadingPlaque();	// get rid of loading plaque
 }
 
 
@@ -908,7 +908,7 @@ void CL_Disconnect (void)
 
 	// send a disconnect message to the server
 	final[0] = clc_stringcmd;
-	strcpy((char*)final+1, "disconnect");
+	strcpy((char *)final + 1, "disconnect");
 	Netchan_Transmit(&cls.netchan, strlen(final), final);
 	Netchan_Transmit(&cls.netchan, strlen(final), final);
 	Netchan_Transmit(&cls.netchan, strlen(final), final);
@@ -926,6 +926,7 @@ void CL_Disconnect (void)
 #endif
 
 	cls.state = ca_disconnected;
+	cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 }
 
 void CL_Disconnect_f (void)
@@ -1023,6 +1024,11 @@ void CL_Reconnect_f (void)
 	//if we are downloading, we don't change!  This so we don't suddenly stop downloading a map
 	if (cls.download) // jitodo -- we SHOULD make it stop downloading and switch to the next map!
 		return;
+
+	// === jitdemo - multi-map demo support
+	//if (cl.attractloop)
+	//	return;
+	// jitdemo ===
 
 	S_StopAllSounds();
 
@@ -1584,6 +1590,15 @@ void CL_RequestNextDownload (void)
 	char fn[MAX_OSPATH];
 	dmdl_t *pheader;
 
+	// === jitdemo - multi-map demo support
+	if (cl.attractloop)
+	{
+		CL_RegisterSounds(); // not sure if this is necessary
+		CL_PrepRefresh(); // so the loading plaque goes away when the map switches
+		return;
+	}
+	// jitdemo ===
+
 	if (cls.state != ca_connected)
 		return;
 
@@ -2144,6 +2159,39 @@ void CL_SaveLoc_f (void)
 }
 
 
+void CL_Measure_f (void) // jitmeasure
+{
+	static qboolean started = false;
+	static vec3_t pos;
+	trace_t tr;
+	vec3_t end;
+	vec3_t start;
+	extern float g_viewheight;
+
+	VectorCopy(cl.predicted_origin, start);
+	start[2] += g_viewheight;
+	VectorMA(start, 8192, cl.v_forward, end);
+	tr = CM_BoxTrace(start, end, vec3_origin, vec3_origin, 0, MASK_ALL);
+
+	if (started)
+	{
+		vec3_t diff;
+		float len;
+
+		started = false;
+		VectorSubtract(pos, tr.endpos, diff);
+		len = VectorLength(diff);
+		// 56 units is player height, we'll say that's 6 ft / 1.8288m
+		Com_Printf("Distance: %g units, %g ft, %g m\n", len, len * 6.0f / 56.0f, len * 1.8288f / 56.0f);
+	}
+	else
+	{
+		VectorCopy(tr.endpos, pos);
+		started = true;
+	}
+}
+
+
 /*
 =================
 CL_InitLocal
@@ -2306,6 +2354,7 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("svextensions", CL_ParseExtensions_f); // jitextensions
 #endif
 	Cmd_AddCommand("writeconfig", CL_WriteConfig_f); // jitconfig
+	Cmd_AddCommand("measure", CL_Measure_f); // jitmeasure
 
 	//
 	// forward to server commands
@@ -2418,6 +2467,7 @@ void CL_WriteConfig_f (void) // jitconfig
 
 	CL_WriteConfiguration(Cmd_Argv(1));
 }
+
 
 /*
 ==================
