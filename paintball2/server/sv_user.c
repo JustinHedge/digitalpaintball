@@ -91,6 +91,11 @@ void SV_New_f (void)
 	// demo servers just dump the file message
 	if (sv.state == ss_demo)
 	{
+		// === jitdemo - multi-map demo support (not sure if this is correct)
+		if (sv.demofile) // already playing a demo
+			return;
+		// jitdemo ===
+
 		SV_BeginDemoserver();
 		return;
 	}
@@ -154,7 +159,7 @@ void SV_Configstrings_f (void)
 	}
 
 	// handle the case of a level changing while a client was connecting
-	if (atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (atoi(Cmd_Argv(1)) != svs.spawncount && !sv.attractloop) // jitdemo - multi-map demo support
 	{
 		Com_Printf("SV_Configstrings_f from different level\n");
 		SV_New_f();
@@ -213,7 +218,7 @@ void SV_Baselines_f (void)
 	}
 	
 	// handle the case of a level changing while a client was connecting
-	if (atoi(Cmd_Argv(1)) != svs.spawncount)
+	if (atoi(Cmd_Argv(1)) != svs.spawncount && !sv.attractloop) // jitdemo - multi-map support
 	{
 		Com_Printf("SV_Baselines_f from different level\n");
 		SV_New_f();
@@ -275,7 +280,9 @@ void SV_Begin_f (void)
 	sv_client->state = cs_spawned;
 	
 	// call the game begin function
-	ge->ClientBegin(sv_player);
+	if (!sv.attractloop) // jitdemo - multi-map demo support
+		ge->ClientBegin(sv_player);
+
 	Cbuf_InsertFromDefer();
 }
 
@@ -684,7 +691,8 @@ void SV_Nextserver (void)
 
 	if (!v[0])
 	{
-		Cbuf_AddText("killserver\n");
+		if (!sv.demofile) // jitdemo - multi-map demo support not playing a demo
+			Cbuf_AddText("killserver\n");
 	}
 	else
 	{
@@ -837,6 +845,11 @@ void SV_ExecuteClientMessage (client_t *cl)
 	int		checksumIndex;
 	qboolean	move_issued;
 	int		lastframe;
+
+	// === jitdemo - multi-map demo support (not sure if this is correct)
+	//if (sv.attractloop)
+	//	return;
+	// jitdemo ===
 
 	sv_client = cl;
 	sv_player = sv_client->edict;

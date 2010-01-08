@@ -469,7 +469,8 @@ Puts the server in demo mode on a specific map/cinematic
 */
 void SV_DemoMap_f (void)
 {
-	SV_Map (true, Cmd_Argv(1), false );
+	sv.state = ss_dead; // jitdemo - multi-map demo support (not sure if this is right)
+	SV_Map(true, Cmd_Argv(1), false);
 }
 
 /*
@@ -648,7 +649,7 @@ void SV_Loadgame_f (void)
 
 	// go to the map
 	sv.state = ss_dead;		// don't save current level when changing
-	SV_Map (false, svs.mapcmd, true);
+	SV_Map(false, svs.mapcmd, true);
 }
 
 

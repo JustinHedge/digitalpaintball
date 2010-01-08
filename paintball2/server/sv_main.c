@@ -744,7 +744,7 @@ static void Download3AckChunk (client_t *cl, int chunk, int num_chunks)
 	if (chunk >= num_chunks || chunk < 0)
 	{
 		Com_Printf("Download chunk out of range: %d (%d)\n", chunk, num_chunks);
-		assert(chunk < num_chunks && chunk >= 0);
+		//assert(chunk < num_chunks && chunk >= 0);
 		return;
 	}
 
@@ -910,6 +910,7 @@ void SV_CalcPings (void)
 	int			i, j;
 	client_t	*cl;
 	int			total, count;
+	struct gclient_s *client; // jitdemo
 
 	for (i=0 ; i<maxclients->value ; i++)
 	{
@@ -944,7 +945,12 @@ void SV_CalcPings (void)
 #endif
 
 		// let the game dll know about the ping
-		cl->edict->client->ping = cl->ping;
+		// === jitdemo - multi-map demo support
+		client = cl->edict->client;
+
+		if (client)
+			client->ping = cl->ping;
+		// jitdemo ===
 	}
 }
 
@@ -1498,23 +1504,27 @@ before Sys_Quit or Sys_Error
 void SV_Shutdown (char *finalmsg, qboolean reconnect)
 {
 	if (svs.clients)
-		SV_FinalMessage (finalmsg, reconnect);
+		SV_FinalMessage(finalmsg, reconnect);
 
-	Master_Shutdown ();
-	SV_ShutdownGameProgs ();
+	Master_Shutdown();
+	SV_ShutdownGameProgs();
 
 	// free current level
 	if (sv.demofile)
-		fclose (sv.demofile);
-	memset (&sv, 0, sizeof(sv));
+		fclose(sv.demofile);
+
+	memset(&sv, 0, sizeof(sv));
 	Com_SetServerState (sv.state);
 
 	// free server static data
 	if (svs.clients)
-		Z_Free (svs.clients);
+		Z_Free(svs.clients);
+
 	if (svs.client_entities)
-		Z_Free (svs.client_entities);
+		Z_Free(svs.client_entities);
+
 	if (svs.demofile)
-		fclose (svs.demofile);
-	memset (&svs, 0, sizeof(svs));
+		fclose(svs.demofile);
+
+	memset(&svs, 0, sizeof(svs));
 }

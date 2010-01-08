@@ -460,10 +460,11 @@ void SV_DemoCompleted (void)
 {
 	if (sv.demofile)
 	{
-		fclose (sv.demofile);
+		fclose(sv.demofile);
 		sv.demofile = NULL;
 	}
-	SV_Nextserver ();
+
+	SV_Nextserver();
 }
 
 
@@ -544,6 +545,14 @@ void SV_SendClientMessages (void)
 			}
 			if (msglen > MAX_MSGLEN)
 				Com_Error (ERR_DROP, "SV_SendClientMessages: msglen > MAX_MSGLEN");
+
+			// === jitdemo - multi-map demo support
+			if (msglen == 0)
+			{
+				//int debug = ftell(sv.demofile);
+				return;
+			}
+			// jitdemo ===
 
 			r = fread(msgbuf, msglen, 1, sv.demofile);
 
