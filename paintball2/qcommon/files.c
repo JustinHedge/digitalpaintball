@@ -575,7 +575,10 @@ pack_t *FS_LoadPackFile (char *packfile)
 
 int SortList (const void *data1, const void *data2)
 {
-	return Q_strcasecmp ( (char *)data2, (char *)data1);
+	const char **a = (const char **)data1;
+    const char **b = (const char **)data2;
+
+	return Q_strcasecmp(*a, *b);
 }
 
 /*
@@ -612,7 +615,7 @@ void FS_AddGameDirectory (char *dir)
 
 	for (j = 0; j < 1; j++)
 	{
-		if (!(pakfile_list = FS_ListFiles(dirstring, &pakfile_count, 0, 0)))
+		if (!(pakfile_list = FS_ListFiles(dirstring, &pakfile_count, 0, 0, true)))
 			return;
 
 		// Add each pak file from our list to the search path
@@ -851,7 +854,7 @@ void FS_Link_f (void)
 /*
 ** FS_ListFiles
 */
-char **FS_ListFiles (const char *findname, int *numfiles, unsigned musthave, unsigned canthave)
+char **FS_ListFiles (const char *findname, int *numfiles, unsigned musthave, unsigned canthave, qboolean sort)
 {
 	char *s;
 	int nfiles = 0;
@@ -897,7 +900,7 @@ char **FS_ListFiles (const char *findname, int *numfiles, unsigned musthave, uns
 	}
 
 	Sys_FindClose();
-
+	qsort(list, nfiles, sizeof(char *), SortList);
 	return list;
 }
 
@@ -977,7 +980,7 @@ void FS_Dir_f (void)
 		Com_Printf("Directory of %s\n", findname);
 		Com_Printf("----\n");
 
-		if ((dirnames = FS_ListFiles(findname, &ndirs, 0, 0)) != 0)
+		if ((dirnames = FS_ListFiles(findname, &ndirs, 0, 0, true)) != 0)
 		{
 			int i;
 

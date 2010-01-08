@@ -1529,7 +1529,7 @@ void Qcommon_Init (int argc, char **argv)
 	else
 	{	// the user asked for something explicit
 		// so drop the loading plaque
-		SCR_EndLoadingPlaque ();
+		SCR_EndLoadingPlaque();
 	}
 
 	Com_Printf ("====== Paintball II Initialized ======\n\n");

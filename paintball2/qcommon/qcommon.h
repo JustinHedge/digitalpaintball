@@ -32,14 +32,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "md5.h"
 
 #ifdef QUAKE2
-#define VERSION		0.27
+#define VERSION		0.28 // jitversion
 #define BASEDIRNAME "baseq2"
 #define BUILD 0
 #define BUILD_S "0"
 #else
 #define	VERSION		2.0 // jitversion (was 3.21)
-#define BUILD		27 // jitversion / jitbuild -- Paintball2 build number
-#define BUILD_S		"27" // jitversion, for strings.
+#define BUILD		28 // jitversion / jitbuild -- Paintball2 build number
+#define BUILD_S		"28" // jitversion, for strings.
 #define	BASEDIRNAME	"pball" // jit, was "baseq2"
 #endif
 
@@ -813,7 +813,7 @@ int		FS_LoadFileZ (const char *path, void **buffer); // jit - null-terminated
 // a null buffer will just return the file length without loading
 // a -1 length is not present
 
-char **FS_ListFiles (const char *findname, int *numfiles, unsigned musthave, unsigned canthave);
+char **FS_ListFiles (const char *findname, int *numfiles, unsigned musthave, unsigned canthave, qboolean sort);
 void	FS_FreeFileList (char **list, int n); // jit
 void	FS_FreeList (char **list, int nfiles);
 void	FS_Read (void *buffer, int len, FILE *f);
