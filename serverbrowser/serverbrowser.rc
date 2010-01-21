@@ -33,9 +33,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-01-20",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -45,7 +45,7 @@ END
 // Accelerator
 //
 
-IDC_SERVERBROWSER ACCELERATORS 
+IDC_SERVERBROWSER ACCELERATORS
 BEGIN
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
@@ -59,7 +59,7 @@ END
 // Menu
 //
 
-IDC_SERVERBROWSER MENU 
+IDC_SERVERBROWSER MENU
 BEGIN
     POPUP "&Soubor"
     BEGIN
@@ -77,7 +77,7 @@ BEGIN
     END
 END
 
-IDR_MENU_TRAY MENU 
+IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
@@ -98,7 +98,7 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
     IDC_SERVERBROWSER       "SERVERBROWSER"
@@ -129,9 +129,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-01-20",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -141,7 +141,7 @@ END
 // Accelerator
 //
 
-IDC_SERVERBROWSER ACCELERATORS 
+IDC_SERVERBROWSER ACCELERATORS
 BEGIN
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
@@ -155,7 +155,7 @@ END
 // Menu
 //
 
-IDC_SERVERBROWSER MENU 
+IDC_SERVERBROWSER MENU
 BEGIN
     POPUP "&Plik"
     BEGIN
@@ -173,7 +173,7 @@ BEGIN
     END
 END
 
-IDR_MENU_TRAY MENU 
+IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
@@ -194,7 +194,7 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Wyszukiwarka serwerów"
     IDC_SERVERBROWSER       "SERVERBROWSER"
@@ -225,9 +225,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-01-20",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -237,7 +237,7 @@ END
 // Accelerator
 //
 
-IDC_SERVERBROWSER ACCELERATORS 
+IDC_SERVERBROWSER ACCELERATORS
 BEGIN
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
@@ -251,7 +251,7 @@ END
 // Menu
 //
 
-IDC_SERVERBROWSER MENU 
+IDC_SERVERBROWSER MENU
 BEGIN
     POPUP "&Súbor"
     BEGIN
@@ -269,7 +269,7 @@ BEGIN
     END
 END
 
-IDR_MENU_TRAY MENU 
+IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
@@ -290,7 +290,7 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
     IDC_SERVERBROWSER       "SERVERBROWSER"
@@ -346,9 +346,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-01-20",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -358,7 +358,7 @@ END
 // Accelerator
 //
 
-IDC_SERVERBROWSER ACCELERATORS 
+IDC_SERVERBROWSER ACCELERATORS
 BEGIN
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
@@ -372,7 +372,7 @@ END
 // Menu
 //
 
-IDC_SERVERBROWSER MENU 
+IDC_SERVERBROWSER MENU
 BEGIN
     POPUP "&Datei"
     BEGIN
@@ -390,7 +390,7 @@ BEGIN
     END
 END
 
-IDR_MENU_TRAY MENU 
+IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
@@ -411,7 +411,7 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
     IDC_SERVERBROWSER       "SERVERBROWSER"
@@ -442,9 +442,9 @@ FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,20,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-01-20",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -454,7 +454,7 @@ END
 // Accelerator
 //
 
-IDC_SERVERBROWSER ACCELERATORS 
+IDC_SERVERBROWSER ACCELERATORS
 BEGIN
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
@@ -468,7 +468,7 @@ END
 // Menu
 //
 
-IDC_SERVERBROWSER MENU 
+IDC_SERVERBROWSER MENU
 BEGIN
     POPUP "&File"
     BEGIN
@@ -486,7 +486,7 @@ BEGIN
     END
 END
 
-IDR_MENU_TRAY MENU 
+IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
@@ -508,18 +508,18 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE
 BEGIN
     "\r\n"
     "\0"
@@ -533,7 +533,7 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
@@ -565,9 +565,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2009-12-15",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-01-20",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2009 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -577,7 +577,7 @@ END
 // Accelerator
 //
 
-IDC_SERVERBROWSER ACCELERATORS 
+IDC_SERVERBROWSER ACCELERATORS
 BEGIN
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
@@ -591,7 +591,7 @@ END
 // Menu
 //
 
-IDC_SERVERBROWSER MENU 
+IDC_SERVERBROWSER MENU
 BEGIN
     POPUP "&Fichier"
     BEGIN
@@ -609,7 +609,7 @@ BEGIN
     END
 END
 
-IDR_MENU_TRAY MENU 
+IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
@@ -630,7 +630,7 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Recherche de serveur"
     IDC_SERVERBROWSER       "SERVERBROWSER"
