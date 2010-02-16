@@ -1579,7 +1579,7 @@ qboolean GL_Upload8 (byte *data, int width, int height, imagetype_t imagetype, q
 }
 
 
-image_t  *GL_LoadDummyPic(const char *name, int width, int height, imagetype_t type) // jitrscript
+image_t  *GL_LoadDummyPic (const char *name, int width, int height, imagetype_t type) // jitrscript
 {
 	image_t *image;
 	int i;

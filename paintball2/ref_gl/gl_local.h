@@ -333,6 +333,7 @@ void R_RegisterSkin (const char *name, struct model_s *model, struct image_s **s
 void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int *height);
 image_t *GL_LoadPic (const char *name, byte *pic, int width, int height, imagetype_t type, int bits);
 image_t	*GL_FindImage (const char *name, imagetype_t type);
+image_t *GL_CreateBlankImage (const char *name, int width, int height, imagetype_t type);
 void	GL_TextureMode(const char *string );
 void	GL_ImageList_f (void);
 

@@ -64,7 +64,9 @@ void R_init_refl (int maxNoReflections)
 	int				i = 0;
 	int len; // jitwater
 	char *fragment_program_text; // jitwater
+#ifdef _DEBUG
 	int err;
+#endif
 	//===========================
 
 	if (maxNoReflections < 1) // jit
@@ -204,14 +206,14 @@ void R_setupArrays (int maxNoReflections)
 	free(g_refl_X);
 	free(g_refl_Y);
 	free(g_refl_Z);
-	free(g_refl_images);
+	free(g_refl_images); // TODO: Make sure there isn't a memory leak here.  Do we need to free the images, too?
 	free(g_waterDistance);
 
 	g_refl_X		= (float *)	malloc ( sizeof(float) * maxNoReflections );
 	g_refl_Y		= (float *)	malloc ( sizeof(float) * maxNoReflections );
 	g_refl_Z		= (float *)	malloc ( sizeof(float) * maxNoReflections );
 	g_waterDistance	= (float *)	malloc ( sizeof(float) * maxNoReflections );
-	g_refl_images		= (image_t *)malloc(sizeof(image_t *) * maxNoReflections);
+	g_refl_images	= (image_t **)malloc(sizeof(image_t *) * maxNoReflections);
 	
 	memset(g_refl_X			, 0, sizeof(float));
 	memset(g_refl_Y			, 0, sizeof(float));
@@ -525,7 +527,7 @@ void R_UpdateReflTex (refdef_t *fd)
 #ifdef USE_FBO
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_refl_framebuffer); // todo - array of framebuffers
 #endif
-		glPushAttrib(GL_VIEWPORT_BIT);
+		qglPushAttrib(GL_VIEWPORT_BIT);
 		qglViewport(0, 0, g_reflTexW, g_reflTexH);
 		//qglBindTexture(GL_TEXTURE_2D, g_refl_images[g_active_refl]->texnum); // not necessary, but can't get the stupid texture rendered to
 		R_RenderView(fd);	// draw the scene here!
@@ -539,7 +541,7 @@ void R_UpdateReflTex (refdef_t *fd)
 			0, 0, g_reflTexW, g_reflTexH);
 		//qglViewport(0, 0, vid.width, vid.height);
 #endif // !USE_FBO
-		glPopAttrib();
+		qglPopAttrib();
 
 		R_Clear(); // jitwater
 	}
