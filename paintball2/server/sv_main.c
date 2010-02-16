@@ -384,7 +384,7 @@ void SVC_DirectConnect (void)
 	}
 
 	// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
-	if ((int)sv_locked->value)
+	if (sv_locked->value)
 	{
 		Com_DPrintf ("    server locked\n");
 		Netchan_OutOfBandPrint (NS_SERVER, adr, "print\nServer is locked.\n");
