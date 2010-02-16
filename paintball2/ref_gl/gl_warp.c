@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_refl.h" // jitwater / MPO
 
 extern	model_t	*loadmodel;
+extern	image_t	**g_refl_images;
 
 char	skyname[MAX_QPATH];
 float	skyrotate;
@@ -449,7 +450,7 @@ void EmitWaterPolys (msurface_t *fa)
 				GL_MBind(QGL_TEXTURE2, water_normal_tex->texnum); // Normal texture
 			}
 
-			GL_MBind(QGL_TEXTURE0, g_tex_num[g_active_refl]); // Reflection texture
+			GL_MBind(QGL_TEXTURE0, g_refl_images[g_active_refl]->texnum); // Reflection texture
 			// jitwater ===
 
 			break;

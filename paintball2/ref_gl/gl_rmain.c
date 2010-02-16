@@ -52,6 +52,26 @@ PFNGLPROGRAMSTRINGARBPROC           qglProgramStringARB          = NULL;
 PFNGLPROGRAMENVPARAMETER4FARBPROC   qglProgramEnvParameter4fARB  = NULL;
 PFNGLPROGRAMLOCALPARAMETER4FARBPROC qglProgramLocalParameter4fARB = NULL;
 // jitwater ===
+
+// === jitwater - FBO extensions
+PFNGLISRENDERBUFFEREXTPROC                               qglIsRenderbufferEXT = NULL;
+PFNGLBINDRENDERBUFFEREXTPROC                             qglBindRenderbufferEXT = NULL;
+PFNGLDELETERENDERBUFFERSEXTPROC                          qglDeleteRenderbuffersEXT = NULL;
+PFNGLGENRENDERBUFFERSEXTPROC                             qglGenRenderbuffersEXT = NULL;
+PFNGLRENDERBUFFERSTORAGEEXTPROC                          qglRenderbufferStorageEXT = NULL;
+PFNGLGETRENDERBUFFERPARAMETERIVEXTPROC                   qglGetRenderbufferParameterivEXT = NULL;
+PFNGLISFRAMEBUFFEREXTPROC                                qglIsFramebufferEXT = NULL;
+PFNGLBINDFRAMEBUFFEREXTPROC                              qglBindFramebufferEXT = NULL;
+PFNGLDELETEFRAMEBUFFERSEXTPROC                           qglDeleteFramebuffersEXT = NULL;
+PFNGLGENFRAMEBUFFERSEXTPROC                              qglGenFramebuffersEXT = NULL;
+PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC                       qglCheckFramebufferStatusEXT = NULL;
+PFNGLFRAMEBUFFERTEXTURE1DEXTPROC                         qglFramebufferTexture1DEXT = NULL;
+PFNGLFRAMEBUFFERTEXTURE2DEXTPROC                         qglFramebufferTexture2DEXT = NULL;
+PFNGLFRAMEBUFFERTEXTURE3DEXTPROC                         qglFramebufferTexture3DEXT = NULL;
+PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC                      qglFramebufferRenderbufferEXT = NULL;
+PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC          qglGetFramebufferAttachmentParameterivEXT = NULL;
+PFNGLGENERATEMIPMAPEXTPROC                               qglGenerateMipmapEXT = NULL;
+// jitwater ===
 //****************************************************************************
 
 cvar_t	*gl_debug; // jit
@@ -2150,6 +2170,26 @@ qboolean R_Init (void *hinstance, void *hWnd)
 			ri.Con_Printf(PRINT_ALL, "...GL_ARB_fragment_program not found\n");
 	}
 	// jitwater ===
+
+	// === jitwater - FBO extensions
+	if (strstr(gl_config.extensions_string, "GL_EXT_framebuffer_object"))
+	{
+		qglGenFramebuffersEXT = (PFNGLGENRENDERBUFFERSEXTPROC)qwglGetProcAddress("glGenFramebuffersEXT");
+		qglBindFramebufferEXT = (PFNGLBINDRENDERBUFFEREXTPROC)qwglGetProcAddress("glBindFramebufferEXT");
+		qglGenRenderbuffersEXT = (PFNGLGENRENDERBUFFERSEXTPROC)qwglGetProcAddress("glGenRenderbuffersEXT");
+		qglBindRenderbufferEXT = (PFNGLBINDRENDERBUFFEREXTPROC)qwglGetProcAddress("glBindRenderbufferEXT");
+		qglRenderbufferStorageEXT = (PFNGLRENDERBUFFERSTORAGEEXTPROC)qwglGetProcAddress("glRenderbufferStorageEXT");
+		qglFramebufferRenderbufferEXT = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)qwglGetProcAddress("glFramebufferRenderbufferEXT");
+		qglDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC)qwglGetProcAddress("glDeleteFramebuffersEXT");
+		qglDeleteRenderbuffersEXT = (PFNGLDELETERENDERBUFFERSEXTPROC)qwglGetProcAddress("glDeleteRenderbuffersEXT");
+	}
+	else
+	{
+		gl_state.fbo = false;
+
+		if (gl_debug->value)
+			ri.Con_Printf(PRINT_ALL, "...GL_EXT_framebuffer_object not found\n");
+	}
 
 	if (strstr(gl_config.extensions_string, "GL_NV_register_combiners"))
 	{

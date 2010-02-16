@@ -1,5 +1,5 @@
 // gl_refl.c
-// by Matt Ownby
+// by Matt Ownby - updates by jitspoe
 
 // adds reflective water to the Quake2 engine
 
@@ -21,7 +21,7 @@ float	*g_refl_X;
 float	*g_refl_Y;
 float	*g_refl_Z;				// the Z (vertical) value of each reflection
 float	*g_waterDistance;		// the rough distance from player to water .. we want to render the closest water surface.
-int		*g_tex_num;				// corresponding texture numbers for each reflection
+image_t	**g_refl_images;
 int		maxReflections;			// maximum number of reflections
 unsigned int g_water_program_id; // jitwater
 image_t *distort_tex = NULL; // jitwater
@@ -31,6 +31,11 @@ image_t *water_normal_tex = NULL; // jitwater
 // (instead of the world itself)
 qboolean g_drawing_refl = false;
 qboolean g_refl_enabled = true;	// whether reflections should be drawn at all
+//#define USE_FBO
+#ifdef USE_FBO
+GLuint g_refl_framebuffer = 0; // jitwater
+GLuint g_refl_renderbuffer = 0; // jitwater
+#endif
 
 float	g_last_known_fov = 90.0f;	// jit - default to 90.
 
@@ -94,25 +99,17 @@ void R_init_refl (int maxNoReflections)
 	g_reflTexW = REFL_TEXW;
 	g_reflTexH = REFL_TEXH;
 	
-	for (i = 0; i < maxReflections; i++)
-	{
-		buf = (unsigned char *)malloc(REFL_TEXW * REFL_TEXH * 3);	// create empty buffer for texture
-
-		if (buf)
-		{
-			memset(buf, 255, (REFL_TEXW * REFL_TEXH * 3));	// fill it with white color so we can easily see where our tex border is
-			g_tex_num[i] = txm_genTexObject(buf, REFL_TEXW, REFL_TEXH, GL_RGB,false,true);	// make this texture
-			free(buf);	// once we've made texture memory, we don't need the sys ram anymore
-		}
-		else
-		{
-			ri.Sys_Error(ERR_FATAL, "Maloc failed?"); // jit
-		}
-	}
-
 	// if screen dimensions are smaller than texture size, we have to use screen dimensions instead (doh!)
 	g_reflTexW = (vid.width < REFL_TEXW) ? vid.width : REFL_TEXW;	//keeping these in for now ..
 	g_reflTexH = (vid.height < REFL_TEXH) ? vid.height : REFL_TEXH;
+
+	for (i = 0; i < maxReflections; i++)
+	{
+		g_refl_images[i] = GL_CreateBlankImage("_reflection", g_reflTexW, g_reflTexH, it_pic);
+
+		if (gl_debug->value)
+			ri.Con_Printf(PRINT_ALL, "Reflection texture %d texnum = %d\n", i, g_refl_images[i]->texnum);
+	}
 
 	if (gl_debug->value)
 	{
@@ -127,7 +124,7 @@ void R_init_refl (int maxNoReflections)
 		qglGenProgramsARB(1, &g_water_program_id);
 		qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_program_id);
 		qglProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2, 1.0f, 0.1f, 0.6f, 0.5f); // jitest
-		len = ri.FS_LoadFileZ("scripts/water1.arbf", &fragment_program_text);
+		len = ri.FS_LoadFileZ("scripts/water1.arbf", (void *)&fragment_program_text);
 
 		if (len > 0)
 		{
@@ -156,6 +153,33 @@ void R_init_refl (int maxNoReflections)
 		distort_tex = Draw_FindPic("/textures/sfx/water/distort1.tga");
 		water_normal_tex = Draw_FindPic("/textures/sfx/water/normal1.tga");
 	}
+#ifdef USE_FBO
+	// FBO initialization
+	qglGenFramebuffersEXT(1, &g_refl_framebuffer);
+	assert((err = qglGetError()) == GL_NO_ERROR);
+	qglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_refl_framebuffer);
+	assert((err = qglGetError()) == GL_NO_ERROR);
+
+	qglGenRenderbuffersEXT(1, &g_refl_renderbuffer);
+	qglBindRenderbufferEXT(GL_RENDERBUFFER_EXT, g_refl_renderbuffer);
+	qglRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, g_reflTexW, g_reflTexH);
+	qglFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, g_refl_renderbuffer);
+	assert((err = qglGetError()) == GL_NO_ERROR);
+
+	if (gl_debug->value)
+	{
+		int wtf = g_refl_images[0]->texnum;
+		ri.Con_Printf(PRINT_ALL, "Reflective texture bound = %d\n", wtf);
+	}
+
+	GL_Bind(g_refl_images[0]->texnum);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, g_refl_images[0]->texnum, 0);
+	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+	assert(status == GL_FRAMEBUFFER_COMPLETE_EXT);
+
+	// Unbind framebuffer
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+#endif // USE_FBO
 	// jitwater ===
 }
 
@@ -180,14 +204,14 @@ void R_setupArrays (int maxNoReflections)
 	free(g_refl_X);
 	free(g_refl_Y);
 	free(g_refl_Z);
-	free(g_tex_num);
+	free(g_refl_images);
 	free(g_waterDistance);
 
 	g_refl_X		= (float *)	malloc ( sizeof(float) * maxNoReflections );
 	g_refl_Y		= (float *)	malloc ( sizeof(float) * maxNoReflections );
 	g_refl_Z		= (float *)	malloc ( sizeof(float) * maxNoReflections );
 	g_waterDistance	= (float *)	malloc ( sizeof(float) * maxNoReflections );
-	g_tex_num		= (int   *) malloc ( sizeof(int)   * maxNoReflections );
+	g_refl_images		= (image_t *)malloc(sizeof(image_t *) * maxNoReflections);
 	
 	memset(g_refl_X			, 0, sizeof(float));
 	memset(g_refl_Y			, 0, sizeof(float));
@@ -279,6 +303,10 @@ static int txm_genTexObject(unsigned char *texData, int w, int h,
 	unsigned int texNum;
 
 	qglGenTextures(1, &texNum);
+	qglGenTextures(1, &texNum);
+
+	if (gl_debug->value)
+		ri.Con_Printf(PRINT_ALL, "Reflection texnum = %d\n", texNum);
 
 	repeat = false;
 	mipmap = false;
@@ -463,7 +491,7 @@ so you can see whats going on
 */
 void R_DrawDebugReflTexture (void)
 {
-	qglBindTexture(GL_TEXTURE_2D, g_tex_num[0]);	// do the first texture
+	qglBindTexture(GL_TEXTURE_2D, g_refl_images[0]->texnum);	// do the first texture
 	qglBegin(GL_QUADS);
 	qglTexCoord2f(1, 1); qglVertex3f(0, 0, 0);
 	qglTexCoord2f(0, 1); qglVertex3f(200, 0, 0);
@@ -494,12 +522,25 @@ void R_UpdateReflTex (refdef_t *fd)
 	{
 		//qglClearColor(0, 0, 0, 1);								//clear screen
 		//qglClear(/*GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT); jitwater
+#ifdef USE_FBO
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_refl_framebuffer); // todo - array of framebuffers
+#endif
+		glPushAttrib(GL_VIEWPORT_BIT);
+		qglViewport(0, 0, g_reflTexW, g_reflTexH);
+		//qglBindTexture(GL_TEXTURE_2D, g_refl_images[g_active_refl]->texnum); // not necessary, but can't get the stupid texture rendered to
 		R_RenderView(fd);	// draw the scene here!
-		qglBindTexture(GL_TEXTURE_2D, g_tex_num[g_active_refl]);
+#ifdef USE_FBO
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+#else
+		qglBindTexture(GL_TEXTURE_2D, g_refl_images[g_active_refl]->texnum);
 		qglCopyTexSubImage2D(GL_TEXTURE_2D, 0,
-			(REFL_TEXW - g_reflTexW) >> 1,
-			(REFL_TEXH - g_reflTexH) >> 1,
+			0,//(REFL_TEXW - g_reflTexW) >> 1,
+			0,//(REFL_TEXH - g_reflTexH) >> 1,
 			0, 0, g_reflTexW, g_reflTexH);
+		//qglViewport(0, 0, vid.width, vid.height);
+#endif // !USE_FBO
+		glPopAttrib();
+
 		R_Clear(); // jitwater
 	}
 

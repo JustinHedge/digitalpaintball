@@ -453,6 +453,7 @@ typedef struct
 	qboolean	texture_combine; // jitbright
 	float		max_anisotropy; // jitanisotropy
 	qboolean	fragment_program; // jitwater
+	qboolean	fbo; // jitwater
 
 	unsigned char originalRedGammaTable[256];
 	unsigned char originalGreenGammaTable[256];

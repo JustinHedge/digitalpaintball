@@ -1579,7 +1579,7 @@ qboolean GL_Upload8 (byte *data, int width, int height, imagetype_t imagetype, q
 }
 
 
-image_t  *GL_LoadBlankPic(const char *name, int width, int height, imagetype_t type) // jitrscript
+image_t  *GL_LoadDummyPic(const char *name, int width, int height, imagetype_t type) // jitrscript
 {
 	image_t *image;
 	int i;
@@ -1608,6 +1608,61 @@ image_t  *GL_LoadBlankPic(const char *name, int width, int height, imagetype_t t
 	image->width = width;
 	image->height = height;
 	image->type = type;
+	image->texnum = -1; // hopefully this won't break anything - it wasn't here before.
+
+	return image;
+}
+
+
+image_t *GL_CreateBlankImage (const char *name, int width, int height, imagetype_t type)
+{
+	image_t		*image;
+	qboolean	sharp = false;
+	int		i;
+	unsigned char	*buf;
+
+	// find a free image_t
+	for (i = 0, image = gltextures; i < numgltextures; i++, image++)
+	{
+		if (!image->texnum)
+			break;
+	}
+
+	if (i == numgltextures)
+	{
+		if (numgltextures == MAX_GLTEXTURES)
+			ri.Sys_Error (ERR_DROP, "MAX_GLTEXTURES");
+
+		numgltextures++;
+	}
+
+	image = &gltextures[i];
+
+	if (strlen(name) >= sizeof(image->name))
+		ri.Sys_Error(ERR_DROP, "Draw_LoadPic: \"%s\" is too long", name);
+
+	Q_strncpyz(image->name, name, sizeof(image->name));
+	image->registration_sequence = registration_sequence;
+	image->width = width;
+	image->height = height;
+	image->type = type;
+	image->scrap = false;
+	image->texnum = TEXNUM_IMAGES + (image - gltextures);
+	GL_Bind(image->texnum);
+	buf = (unsigned char *)malloc(width * height * 4);     // create empty buffer for texture
+	assert(buf);
+	memset(buf, 255, (width * height * 4)); // default to white
+	//memset(buf, 90, (width * height * 4)); // default to dark grey
+	image->has_alpha = GL_Upload32((unsigned *)buf, width, height,
+				image->type, sharp);
+	free(buf);
+	image->upload_width = upload_width;		// after power of 2 and scales
+	image->upload_height = upload_height;
+	image->paletted = uploaded_paletted;
+	image->sl = 0;
+	image->sh = 1;
+	image->tl = 0;
+	image->th = 1;
 
 	return image;
 }
@@ -1879,7 +1934,7 @@ image_t *GL_LoadRScriptImage (const char *name) // jitrscript
 		if (!height)
 			height = 64;
 
-		image = GL_LoadBlankPic(name, width, height, type);
+		image = GL_LoadDummyPic(name, width, height, type);
 		image->rscript = rs;
 		rs->img_ptr = image;
 

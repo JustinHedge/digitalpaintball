@@ -513,4 +513,25 @@ extern	PFNGLPROGRAMENVPARAMETER4FARBPROC   qglProgramEnvParameter4fARB;
 extern	PFNGLPROGRAMLOCALPARAMETER4FARBPROC qglProgramLocalParameter4fARB;
 // jitwater ===
 
+// === jitwater - FBO extensions for off-screen reflection rendering
+// GL_EXT_framebuffer_object
+extern PFNGLISRENDERBUFFEREXTPROC				qglIsRenderbufferEXT;
+extern PFNGLBINDRENDERBUFFEREXTPROC				qglBindRenderbufferEXT;
+extern PFNGLDELETERENDERBUFFERSEXTPROC				qglDeleteRenderbuffersEXT;
+extern PFNGLGENRENDERBUFFERSEXTPROC				qglGenRenderbuffersEXT;
+extern PFNGLRENDERBUFFERSTORAGEEXTPROC				qglRenderbufferStorageEXT;
+extern PFNGLGETRENDERBUFFERPARAMETERIVEXTPROC			qglGetRenderbufferParameterivEXT;
+extern PFNGLISFRAMEBUFFEREXTPROC				qglIsFramebufferEXT;
+extern PFNGLBINDFRAMEBUFFEREXTPROC				qglBindFramebufferEXT;
+extern PFNGLDELETEFRAMEBUFFERSEXTPROC				qglDeleteFramebuffersEXT;
+extern PFNGLGENFRAMEBUFFERSEXTPROC				qglGenFramebuffersEXT;
+extern PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC			qglCheckFramebufferStatusEXT;
+extern PFNGLFRAMEBUFFERTEXTURE1DEXTPROC				qglFramebufferTexture1DEXT;
+extern PFNGLFRAMEBUFFERTEXTURE2DEXTPROC				qglFramebufferTexture2DEXT;
+extern PFNGLFRAMEBUFFERTEXTURE3DEXTPROC				qglFramebufferTexture3DEXT;
+extern PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC			qglFramebufferRenderbufferEXT;
+extern PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC		qglGetFramebufferAttachmentParameterivEXT;
+extern PFNGLGENERATEMIPMAPEXTPROC				qglGenerateMipmapEXT;
+// jitwater ===
+
 #endif

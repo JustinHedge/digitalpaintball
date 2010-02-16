@@ -264,7 +264,8 @@ void GL_ScreenShot_JPG (void)
 	free(rgbdata);
 
 	// Done!
-	ri.Con_Printf(PRINT_ALL, "Wrote %s\n", picname);
+	if (picname[0] != 'x' && picname[1] != '_')
+		ri.Con_Printf(PRINT_ALL, "Wrote %s\n", picname);
 }
 
 /* 
@@ -354,7 +355,9 @@ void GL_ScreenShot_f (void)
 	fwrite(buffer, 1, c, f);
 	fclose(f);
 	free(buffer);
-	ri.Con_Printf(PRINT_ALL, "Wrote %s\n", picname);
+
+	if (picname[0] != 'x' && picname[1] != '_')
+		ri.Con_Printf(PRINT_ALL, "Wrote %s\n", picname);
 } 
 
 /*
