@@ -2,7 +2,7 @@
 # Paintball2 Makefile for Linux
 #
 # Nov '97 by Zoid <zoid@idsoftware.com>
-# Modified Jan 2005 by jitspoe
+# Modified Jan 2010 by jitspoe
 #
 # ELF only
 #
@@ -118,7 +118,7 @@ VERSION=2.0
 BUILD=27
 
 MOUNT_DIR=.
-BINDIR=paintball2
+BINDIR=~/paintball2
 
 BUILD_DEBUG_DIR=build_debug
 BUILD_RELEASE_DIR=build_release
