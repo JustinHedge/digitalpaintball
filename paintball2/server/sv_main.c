@@ -1283,6 +1283,14 @@ void SV_Frame (int msec)
 
 //============================================================================
 
+#define	HEARTBEAT_SECONDS	300
+
+// Force a heartbeat to the master server in X seconds
+void Force_Master_Heartbeat (int seconds)
+{
+	svs.last_heartbeat = svs.realtime - HEARTBEAT_SECONDS * 1000 + seconds * 1000;
+}
+
 /*
 ================
 Master_Heartbeat
@@ -1291,7 +1299,6 @@ Send a message to the master every few minutes to
 let it know we are alive, and log information
 ================
 */
-#define	HEARTBEAT_SECONDS	300
 void Master_Heartbeat (void)
 {
 	char		*string;

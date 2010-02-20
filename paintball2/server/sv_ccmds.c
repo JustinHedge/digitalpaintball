@@ -29,6 +29,7 @@ These commands can only be entered from stdin or by a remote operator datagram
 ===============================================================================
 */
 
+
 /*
 ====================
 SV_SetMaster_f
@@ -75,7 +76,7 @@ void SV_SetMaster_f (void)
 		slot++;
 	}
 
-	svs.last_heartbeat = -9999999;
+	Force_Master_Heartbeat(4); // Force heartbeat to happen after 4 seconds.
 }
 
 
@@ -862,7 +863,7 @@ SV_Heartbeat_f
 */
 void SV_Heartbeat_f (void)
 {
-	svs.last_heartbeat = -9999999;
+	Force_Master_Heartbeat(0);
 }
 
 

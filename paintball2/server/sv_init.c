@@ -392,7 +392,7 @@ void SV_InitGame (void)
 	NET_Config((maxclients->value > 1));
 
 	// heartbeats will always be sent to the id master
-	svs.last_heartbeat = -99999;		// send immediately
+	Force_Master_Heartbeat(4);		// send in 4 seconds (give the server time to load)
 	Com_sprintf(idmaster, sizeof(idmaster), "192.246.40.37:%i", PORT_MASTER);
 	NET_StringToAdr(idmaster, &master_adr[0]);
 
