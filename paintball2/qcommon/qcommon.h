@@ -32,14 +32,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "md5.h"
 
 #ifdef QUAKE2
-#define VERSION		0.28 // jitversion
+#define VERSION		0.29 // jitversion
 #define BASEDIRNAME "baseq2"
 #define BUILD 0
 #define BUILD_S "0"
 #else
 #define	VERSION		2.0 // jitversion (was 3.21)
-#define BUILD		28 // jitversion / jitbuild -- Paintball2 build number
-#define BUILD_S		"28" // jitversion, for strings.
+#define BUILD		29 // jitversion / jitbuild -- Paintball2 build number
+#define BUILD_S		"29" // jitversion, for strings.
 #define	BASEDIRNAME	"pball" // jit, was "baseq2"
 #endif
 
