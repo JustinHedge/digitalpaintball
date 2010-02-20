@@ -162,7 +162,7 @@ BASE_CFLAGS=-I$(LOCALBASE)/include -I$(X11BASE)/include \
             -DGAME_NAME='\"$(GAME_NAME)\"'\
 	    -DPAINTBALL2_VERSION='\"$(VERSION)\"' \
 	    -DBUILD_VERSION='\"$(BUILD)\"' -Wno-pointer-sign \
-            -D_THREAD_SAFE
+            -D_THREAD_SAFE -fno-stack-protector
 
 ifneq ($(strip $(USE_X86_ASM)),YES)
 BASE_CFLAGS+=-DC_ONLY
