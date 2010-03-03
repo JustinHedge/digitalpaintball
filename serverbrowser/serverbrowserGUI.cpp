@@ -52,9 +52,83 @@ static DWORD g_dwFadedTextColor = RGB(160, 160, 160); // Greyed out color
 static int g_nServerlistSortColumn = -1;
 static DWORD g_iIconBlank = 0;
 static DWORD g_iIconPassworded = 0;
+static bool g_bAlreadyOpen = false;
+static DWORD g_dwExistingProcess = 0;
 
 char g_szGameDir[256];
 string g_sCurrentServerAddress;
+#define PID_FILE "%USERPROFILE%\\DPPB2_Serverbrowser.pid"
+
+
+
+// Ugh, what a pain.  This is a callback for every window
+BOOL CALLBACK AlreadyOpenEnumWindowsProc (HWND hWnd, LPARAM lParam)
+{
+	DWORD dwProcess;
+	GetWindowThreadProcessId(hWnd, &dwProcess);
+	
+	if (g_dwExistingProcess == dwProcess)
+	{
+		HWND hWndRoot = GetAncestor(hWnd, GA_ROOT);
+		ShowWindow(hWnd, SW_SHOW);
+		SetForegroundWindow(hWnd);
+		g_bAlreadyOpen = true;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+// If process already exists, give it focus, otherwise save this process id in case somebody tries to open the server browser twice
+bool AlreadyOpen ()
+{
+	char szPIDFile[1024];
+	DWORD dwProcess = GetCurrentProcessId();
+	DWORD dwWritten;
+	DWORD dwRead;
+
+	ExpandEnvironmentStrings(PID_FILE, szPIDFile, sizeof(szPIDFile));
+
+	HANDLE hFile = CreateFile(szPIDFile, GENERIC_READ | GENERIC_WRITE,
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_HIDDEN, NULL);
+
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		DWORD dwError = GetLastError();
+		return false;
+	}
+
+	ReadFile(hFile, &g_dwExistingProcess, sizeof(DWORD), &dwRead, NULL);
+
+	if (g_dwExistingProcess && dwRead == sizeof(DWORD))
+	{
+		EnumWindows(AlreadyOpenEnumWindowsProc, 0);
+
+		if (g_bAlreadyOpen)
+		{
+			CloseHandle(hFile);
+			return true;
+		}
+	}
+
+	WriteFile(hFile, &dwProcess, sizeof(dwProcess), &dwWritten, NULL);
+	CloseHandle(hFile);
+
+	return false;
+}
+
+
+// Don't leave junk in the user's directory
+void DeletePIDFile ()
+{
+	char szPIDFile[1024];
+
+	ExpandEnvironmentStrings(PID_FILE, szPIDFile, sizeof(szPIDFile));
+	DeleteFile(szPIDFile);
+}
+
 
 // Foward declarations of functions included in this code module:
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
@@ -74,6 +148,11 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 	TCHAR szWindowClass[MAX_LOADSTRING];
 	HMENU hMenu;
 	hMenu = NULL;
+
+	if (AlreadyOpen())
+	{
+		return 0;
+	}
 
 	// Create the application window
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -121,6 +200,7 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 	}
 
 	DestroyMenu(hMenu);
+	DeletePIDFile();
 	ShutdownApp();
 	return msg.wParam;
 }
