@@ -260,7 +260,7 @@ void OGG_LoadFileList(void)
 	int	  j;			/* Real position in list. */
 
 	/* Get file list. */
-	list = FS_ListFiles(va("%s/%s/*.ogg", FS_Gamedir() ,OGG_DIR), &ogg_numfiles, 0,
+	list = FS_ListFiles(va("%s/%s/*.ogg", FS_Gamedir(), OGG_DIR), &ogg_numfiles, 0,
 	    SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM, false);
 	ogg_numfiles--;
 
@@ -303,7 +303,7 @@ void OGG_LoadPlaylist(char *playlist)
 	int	 size;		/* Length of buffer and strings. */
 
 	/* Open playlist. */
-	if ((size = FS_LoadFile(va("%s/%s.lst", OGG_DIR, ogg_playlist->string),
+	if ((size = FS_LoadFile(va("%s/%s/%s.lst", FS_Gamedir(), OGG_DIR, ogg_playlist->string),
 	    (void **)&buffer)) < 0) {
 		Com_Printf("OGG_LoadPlaylist: could not open playlist: %s.\n", strerror(errno));
 		return;
@@ -315,7 +315,7 @@ void OGG_LoadPlaylist(char *playlist)
 	    ptr = strtok(NULL, "\n")) {
 		if ((byte *)ptr != buffer)
 			ptr[-1] = '\n';
-		if (OGG_Check(va("%s/%s", OGG_DIR, ptr)))
+		if (OGG_Check(va("%s/%s/%s", FS_Gamedir(), OGG_DIR, ptr)))
 			ogg_numfiles++;
 	}
 
@@ -326,8 +326,8 @@ void OGG_LoadPlaylist(char *playlist)
 	for (ptr = strtok((char *)buffer, "\n");
 	    ptr != NULL;
 	    ptr = strtok(NULL, "\n"))
-		if (OGG_Check(va("%s/%s", OGG_DIR, ptr)))
-			ogg_filelist[i++] = strdup(va("%s/%s", OGG_DIR, ptr));
+		if (OGG_Check(va("%s/%s/%s", FS_Gamedir(), OGG_DIR, ptr)))
+			ogg_filelist[i++] = strdup(va("%s/%s/%s", FS_Gamedir(), OGG_DIR, ptr));
 
 	/* Free file buffer. */
 	FS_FreeFile(buffer);
@@ -412,7 +412,7 @@ qboolean OGG_OpenName(char *filename)
 	char	*name;	/* File name. */
 	int	 i;	/* Loop counter. */
 
-	name = va("%s/%s.ogg", OGG_DIR, filename);
+	name = va("%s/%s/%s.ogg", FS_Gamedir(), OGG_DIR, filename);
 	for (i = 0; i < ogg_numfiles; i++)
 		if (strcmp(name, ogg_filelist[i]) == 0)
 			break;
@@ -728,8 +728,7 @@ Change position in the file being played.
 */
 void OGG_SeekCmd(void)
 {
-
-	if (ogg_status != STOP)
+	if (ogg_status == STOP)
 		return;
 
 	if (Cmd_Argc() < 2) {
