@@ -72,6 +72,15 @@ void GL_EnableMultitexture (qboolean enable)
 
 	GL_SelectTexture(QGL_TEXTURE0);
 	GL_TexEnv(GL_REPLACE);
+
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qglGetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
 }
 
 void GL_SelectTexture (GLenum texture)
@@ -138,10 +147,12 @@ void GL_TexEnv(GLenum mode)
 
 void GL_Bind (int texnum)
 {
+#if 0 // jit - don't need that
 	extern	image_t	*draw_chars;
 
 	if (gl_nobind->value && draw_chars)		// performance evaluation option
 		texnum = draw_chars->texnum;
+#endif
 
 	if (gl_state.currenttextures[gl_state.currenttmu] == texnum)
 		return;
@@ -1378,6 +1389,15 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	GLint		max_size;
 	qboolean	mipmap = (imagetype != it_pic && imagetype != it_sharppic && imagetype != it_sky); // jitrscript
 
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qglGetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
+
 	uploaded_paletted = false;
 
 	for (scaled_width = 1; scaled_width < width; scaled_width <<= 1);
@@ -1501,6 +1521,15 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropy->value);
 		else
 			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+
+#ifdef DEBUG
+		{
+			int err;
+
+			err = qglGetError();
+			assert(err == GL_NO_ERROR);
+		}
+#endif
 	}
 	else
 	{
@@ -1510,12 +1539,43 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 		qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sharp ? GL_NEAREST : gl_filter_max);
 		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sharp ? GL_NEAREST : gl_filter_max);
+
+#ifdef DEBUG
+		{
+			int err;
+
+			err = qglGetError();
+			assert(err == GL_NO_ERROR);
+		}
+#endif
 	}
 
 	if (imagetype == it_sky) // jitsky
 	{
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#ifdef DEBUG
+		{
+			int err;
+
+			err = qglGetError();
+			assert(err == GL_NO_ERROR);
+		}
+#endif
+
+		// Clamp to edge not supported until 1.2
+		if (gl_config.version >= 1.2f)
+		{
+			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		}
+
+#ifdef DEBUG
+		{
+			int err;
+
+			err = qglGetError();
+			assert(err == GL_NO_ERROR);
+		}
+#endif
 	}
 	else
 	{
@@ -1525,6 +1585,15 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 
 	if (upload_width != width || upload_height != height)
 		free(scaled);
+
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qglGetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
 
 	return (samples == gl_alpha_format);
 }

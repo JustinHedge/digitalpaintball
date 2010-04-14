@@ -754,10 +754,14 @@ extern cvar_t	*cl_animdump;
 
 void GLimp_EndFrame (void)
 {
-	int err;
+#ifdef DEBUG
+	{
+		int err;
 
-	err = qglGetError();
-	assert(err == GL_NO_ERROR);
+		err = qglGetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
 
 	// frame dump - MrG
 	if (cl_animdump->value)
