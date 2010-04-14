@@ -1278,7 +1278,7 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 					}
 
 					len = strlen(pch);
-					strnset(rep, '*', len); // jit - on the off chance somebody puts a huge word in there.
+					memset(rep, '*', len); // jit - on the off chance somebody puts a huge word in there.
 					s = lowercase_text; // todo: this ends up making everything lowercase if a filtered word is in there
 					rep = strstr(lowercase_text, pch);
 				}
