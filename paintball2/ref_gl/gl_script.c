@@ -1536,14 +1536,14 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 
 					RS_SetTexcoords(stage, &os, &ot, surf);
 
-					if (lightmap)
+					if (lightmap && qglMultiTexCoord2fARB)
 					{
-						qglMultiTexCoord2fARB(QGL_TEXTURE0, os+txm, ot+tym);
+						qglMultiTexCoord2fARB(QGL_TEXTURE0, os + txm, ot + tym);
 						qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 					}
 					else
 					{
-						qglTexCoord2f(os+txm, ot+tym); // jitrscript (added txm/tym)
+						qglTexCoord2f(os + txm, ot + tym); // jitrscript (added txm/tym)
 					}
 
 					if (!rs->warpsmooth)
@@ -1552,7 +1552,7 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 					}
 					else
 					{
-						scale = rs->warpdist*sin(v[0]*rs->warpsmooth+time)*sin(v[1]*rs->warpsmooth+time)*sin(v[2]*rs->warpsmooth+time);
+						scale = rs->warpdist * sin(v[0] * rs->warpsmooth+time) * sin(v[1] * rs->warpsmooth + time) * sin(v[2] * rs->warpsmooth + time);
 						VectorMA(v, scale, surf->plane->normal, wv);
 						qglVertex3fv(wv);
 					}
