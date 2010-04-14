@@ -1803,6 +1803,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	gl_config.vendor_string = qglGetString(GL_VENDOR);
 	gl_config.renderer_string = qglGetString(GL_RENDERER);
 	gl_config.version_string = qglGetString(GL_VERSION);
+	gl_config.version = atof(gl_config.version_string);
 	gl_config.extensions_string = qglGetString(GL_EXTENSIONS);
 
 	if (gl_debug->value) // jit
