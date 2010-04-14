@@ -166,7 +166,7 @@ void S_Init (void)
 
 		s_resamplequality = Cvar_Get("s_resamplequality", "2", CVAR_ARCHIVE);
 		s_resamplevolume = Cvar_Get("s_resamplevolume", "0.35", 0);
-		s_nojump = Cvar_Get("s_nojump", "0", CVAR_ARCHIVE);
+		s_nojump = Cvar_Get("s_nojump", "1", CVAR_ARCHIVE);
 		s_disableonalttab = Cvar_Get("s_disableonalttab", "1", 0);
 		// jitsound ===
 
