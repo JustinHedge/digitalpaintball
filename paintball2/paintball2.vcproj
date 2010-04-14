@@ -1,100 +1,156 @@
-<?xml version="1.0" encoding = "Windows-1252"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.00"
+	Version="9.00"
 	Name="paintball2"
 	ProjectGUID="{78DD81DB-C9E6-4AAC-AF53-B8A4F8E4C70D}"
-	SccProjectName=""
-	SccLocalPath="">
+	TargetFrameworkVersion="131072"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="..\release\exe"
 			IntermediateDirectory="..\release\exe"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName="..\release/exe/paintball2.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/J /Op-"
 				Optimization="4"
-				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
-				EnableFiberSafeOptimizations="TRUE"
-				OptimizeForProcessor="2"
-				OptimizeForWindowsApplication="TRUE"
+				OmitFramePointers="true"
+				EnableFiberSafeOptimizations="true"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,XFIRE"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
-				DefaultCharIsUnsigned="FALSE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				DefaultCharIsUnsigned="false"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile="..\release/exe/paintball2.pch"
 				AssemblerListingLocation="..\release/exe/"
 				ObjectFile="..\release/exe/"
 				ProgramDataBaseFileName="..\release/exe/"
 				BrowseInformation="1"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="0"/>
+				SuppressStartupBanner="true"
+				DebugInformationFormat="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="winmm.lib wsock32.lib"
 				OutputFile="..\paintball2.exe"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				ProgramDatabaseFile="..\release/exe/paintball2.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
-				EnableCOMDATFolding="2"/>
+				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName="..\release/exe/paintball2.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="..\debug\exe"
 			IntermediateDirectory="..\debug\exe"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName="..\debug\paintball2.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				OptimizeForProcessor="1"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,XFIRE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				DefaultCharIsUnsigned="FALSE"
-				UsePrecompiledHeader="2"
+				DefaultCharIsUnsigned="false"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile="..\debug\exe\paintball2.pch"
 				AssemblerListingLocation="..\debug\exe\"
 				ObjectFile="..\debug\exe\"
@@ -102,704 +158,1041 @@
 				BrowseInformation="1"
 				BrowseInformationFile="$(IntDir)\"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="3"/>
+				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="winmm.lib wsock32.lib"
 				OutputFile="..\paintball2.exe"
 				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
+				SuppressStartupBanner="true"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\debug\exe\paintball2.pdb"
-				GenerateMapFile="TRUE"
+				GenerateMapFile="true"
 				MapFileName="..\debug\exe\paintball2.map"
-				SubSystem="2"/>
+				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName="..\debug\paintball2.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Debug Alpha|Win32"
 			OutputDirectory=".\DebugAxp"
 			IntermediateDirectory=".\DebugAxp"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\DebugAxp/paintball2.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/QA21164 /MTd /QAieee1 "
 				Optimization="0"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,C_ONLY"
-				RuntimeLibrary="5"
-				UsePrecompiledHeader="2"
+				RuntimeLibrary="1"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\DebugAxp/paintball2.pch"
 				AssemblerListingLocation=".\DebugAxp/"
 				ObjectFile=".\DebugAxp/"
 				ProgramDataBaseFileName=".\DebugAxp/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="3"/>
+				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib wsock32.lib"
 				OutputFile=".\DebugAxp/paintball2.exe"
 				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
+				SuppressStartupBanner="true"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\DebugAxp/paintball2.pdb"
-				SubSystem="2"/>
+				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\DebugAxp/paintball2.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release Alpha|Win32"
 			OutputDirectory=".\ReleaseAXP"
 			IntermediateDirectory=".\ReleaseAXP"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\ReleaseAXP/paintball2.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/QA21164 /QAieee1 "
 				InlineFunctionExpansion="1"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,C_ONLY"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\ReleaseAXP/paintball2.pch"
 				AssemblerListingLocation=".\ReleaseAXP/"
 				ObjectFile=".\ReleaseAXP/"
 				ProgramDataBaseFileName=".\ReleaseAXP/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib wsock32.lib"
 				OutputFile=".\ReleaseAXP/paintball2.exe"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				ProgramDatabaseFile=".\ReleaseAXP/paintball2.pdb"
-				SubSystem="2"/>
+				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\ReleaseAXP/paintball2.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release No Opt|Win32"
 			IntermediateDirectory="Release No Opt"
-			ConfigurationType="1">
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			>
 			<Tool
-				Name="VCCLCompilerTool"/>
+				Name="VCPreBuildEventTool"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCCustomBuildTool"
+			/>
 			<Tool
-				Name="VCLinkerTool"/>
+				Name="VCXMLDataGeneratorTool"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCMIDLTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCCLCompilerTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCResourceCompilerTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCLinkerTool"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Q2|Win32"
 			OutputDirectory="Q2"
 			IntermediateDirectory="Q2"
-			ConfigurationType="1">
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="QUAKE2"/>
+				PreprocessorDefinitions="QUAKE2"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="c:\games\quake2\pb2q2.exe"/>
+				OutputFile="c:\games\quake2\pb2q2.exe"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="PB2Q2 - Release|Win32"
 			OutputDirectory="..\release\q2exe"
 			IntermediateDirectory="..\release\q2exe"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName="..\release/exe/paintball2.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/J /Op-"
 				Optimization="4"
-				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
-				EnableFiberSafeOptimizations="TRUE"
-				OptimizeForProcessor="2"
-				OptimizeForWindowsApplication="TRUE"
+				OmitFramePointers="true"
+				EnableFiberSafeOptimizations="true"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,QUAKE2"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
-				DefaultCharIsUnsigned="FALSE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				DefaultCharIsUnsigned="false"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile="..\release/exe/paintball2.pch"
 				AssemblerListingLocation="..\release/q2exe/"
 				ObjectFile="..\release/q2exe/"
 				ProgramDataBaseFileName="..\release/q2exe/"
 				BrowseInformation="1"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="0"/>
+				SuppressStartupBanner="true"
+				DebugInformationFormat="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="winmm.lib wsock32.lib"
 				OutputFile="c:\games\quake2\pbq2.exe"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				ProgramDatabaseFile="..\release/exe/paintball2.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
-				EnableCOMDATFolding="2"/>
+				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName="..\release/exe/paintball2.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="PB2Q2 - Debug|Win32"
 			OutputDirectory="..\debug/q2exe/"
 			IntermediateDirectory="..\debug/q2exe/"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName="..\debug/paintball2.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				OptimizeForProcessor="1"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,QUAKE2"
 				RuntimeLibrary="1"
-				DefaultCharIsUnsigned="FALSE"
-				UsePrecompiledHeader="2"
+				DefaultCharIsUnsigned="false"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile="..\debug/exe/paintball2.pch"
 				AssemblerListingLocation="..\debug/q2exe/"
 				ObjectFile="..\debug/q2exe/"
 				ProgramDataBaseFileName="..\debug/q2exe/"
 				BrowseInformation="1"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="3"/>
+				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="winmm.lib wsock32.lib"
 				OutputFile="c:\games\quake2\pb2q2.exe"
 				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
+				SuppressStartupBanner="true"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\debug/exe/paintball2.pdb"
-				GenerateMapFile="TRUE"
+				GenerateMapFile="true"
 				MapFileName="..\debug/exe/paintball2.map"
-				SubSystem="2"/>
+				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName="..\debug/paintball2.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
+	<References>
+	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
-			Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90">
+			Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90"
+			>
 			<File
-				RelativePath=".\win32\cd_win.c">
+				RelativePath=".\win32\cd_win.c"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\cmd.c">
+				RelativePath=".\qcommon\cmd.c"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\cmodel.c">
+				RelativePath=".\qcommon\cmodel.c"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\common.c">
+				RelativePath=".\qcommon\common.c"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\conproc.c">
+				RelativePath=".\win32\conproc.c"
+				>
 			</File>
 			<File
-				RelativePath=".\client\console.c">
+				RelativePath=".\client\console.c"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\crc.c">
+				RelativePath=".\qcommon\crc.c"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\cvar.c">
+				RelativePath=".\qcommon\cvar.c"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\files.c">
+				RelativePath=".\qcommon\files.c"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\in_win.c">
+				RelativePath=".\win32\in_win.c"
+				>
 			</File>
 			<File
-				RelativePath=".\client\keys.c">
+				RelativePath=".\client\keys.c"
+				>
 			</File>
 			<File
-				RelativePath=".\game\m_flash.c">
+				RelativePath=".\game\m_flash.c"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\md4.c">
+				RelativePath=".\qcommon\md4.c"
+				>
 			</File>
 			<File
-				RelativePath="qcommon\md5.c">
+				RelativePath="qcommon\md5.c"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\net_chan.c">
+				RelativePath=".\qcommon\net_chan.c"
+				>
 			</File>
 			<File
-				RelativePath="qcommon\net_common.c">
+				RelativePath="qcommon\net_common.c"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\net_wins.c">
+				RelativePath=".\win32\net_wins.c"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\pmove.c">
+				RelativePath=".\qcommon\pmove.c"
+				>
 			</File>
 			<File
-				RelativePath=".\game\q_shared.c">
+				RelativePath=".\game\q_shared.c"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\q_shwin.c">
+				RelativePath=".\win32\q_shwin.c"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\sys_win.c">
+				RelativePath=".\win32\sys_win.c"
+				>
 			</File>
 			<File
-				RelativePath="client\vid_common.c">
+				RelativePath="client\vid_common.c"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\vid_dll.c">
+				RelativePath=".\win32\vid_dll.c"
+				>
 			</File>
 			<File
-				RelativePath=".\client\x86.c">
+				RelativePath=".\client\x86.c"
+				>
 			</File>
 			<Filter
 				Name="Client"
-				Filter="">
+				>
 				<File
-					RelativePath=".\client\cl_cin.c">
+					RelativePath=".\client\cl_cin.c"
+					>
 				</File>
 				<File
-					RelativePath="client\cl_decode.c">
+					RelativePath="client\cl_decode.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_ents.c">
+					RelativePath=".\client\cl_ents.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_fx.c">
+					RelativePath=".\client\cl_fx.c"
+					>
 				</File>
 				<File
-					RelativePath="client\cl_hud.c">
+					RelativePath="client\cl_hud.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_images.c">
+					RelativePath=".\client\cl_images.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_input.c">
+					RelativePath=".\client\cl_input.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_inv.c">
+					RelativePath=".\client\cl_inv.c"
+					>
 				</File>
 				<File
-					RelativePath="client\cl_loc.c">
+					RelativePath="client\cl_loc.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_main.c">
+					RelativePath=".\client\cl_main.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_newfx.c">
+					RelativePath=".\client\cl_newfx.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_parse.c">
+					RelativePath=".\client\cl_parse.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_pred.c">
+					RelativePath=".\client\cl_pred.c"
+					>
 				</File>
 				<File
-					RelativePath="client\cl_profile.c">
+					RelativePath="client\cl_profile.c"
+					>
 				</File>
 				<File
-					RelativePath="client\cl_scores.c">
+					RelativePath="client\cl_scores.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_scrn.c">
+					RelativePath=".\client\cl_scrn.c"
+					>
 				</File>
 				<File
-					RelativePath="client\cl_serverlist.c">
+					RelativePath="client\cl_serverlist.c"
+					>
 				</File>
 				<File
-					RelativePath="client\cl_stats.c">
+					RelativePath="client\cl_stats.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_tent.c">
+					RelativePath=".\client\cl_tent.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\cl_view.c">
+					RelativePath=".\client\cl_view.c"
+					>
 				</File>
 				<File
-					RelativePath="client\cl_vote.c">
+					RelativePath="client\cl_vote.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\menu.c">
+					RelativePath=".\client\menu.c"
+					>
 				</File>
 				<Filter
 					Name="xfire"
-					Filter="">
+					>
 					<File
-						RelativePath="xfire\pb2_xfire.c">
+						RelativePath="xfire\pb2_xfire.c"
+						>
 					</File>
 					<File
-						RelativePath="xfire\xfiregameclient.cpp">
+						RelativePath="xfire\xfiregameclient.cpp"
+						>
 					</File>
 					<File
-						RelativePath="xfire\xfiregameclient.h">
+						RelativePath="xfire\xfiregameclient.h"
+						>
 					</File>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="Server"
-				Filter="">
+				>
 				<File
-					RelativePath=".\server\sv_ccmds.c">
+					RelativePath=".\server\sv_ccmds.c"
+					>
 				</File>
 				<File
-					RelativePath=".\server\sv_ents.c">
+					RelativePath=".\server\sv_ents.c"
+					>
 				</File>
 				<File
-					RelativePath=".\server\sv_game.c">
+					RelativePath=".\server\sv_game.c"
+					>
 				</File>
 				<File
-					RelativePath=".\server\sv_init.c">
+					RelativePath=".\server\sv_init.c"
+					>
 				</File>
 				<File
-					RelativePath=".\server\sv_main.c">
+					RelativePath=".\server\sv_main.c"
+					>
 				</File>
 				<File
-					RelativePath=".\server\sv_send.c">
+					RelativePath=".\server\sv_send.c"
+					>
 				</File>
 				<File
-					RelativePath=".\server\sv_user.c">
+					RelativePath=".\server\sv_user.c"
+					>
 				</File>
 				<File
-					RelativePath=".\server\sv_world.c">
+					RelativePath=".\server\sv_world.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Sound"
-				Filter="">
+				>
 				<File
-					RelativePath=".\client\snd_dma.c">
+					RelativePath=".\client\snd_dma.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\snd_mem.c">
+					RelativePath=".\client\snd_mem.c"
+					>
 				</File>
 				<File
-					RelativePath=".\client\snd_mix.c">
+					RelativePath=".\client\snd_mix.c"
+					>
 				</File>
 				<File
-					RelativePath="client\snd_ogg.c">
+					RelativePath="client\snd_ogg.c"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\snd_win.c">
+					RelativePath=".\win32\snd_win.c"
+					>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;fi;fd">
+			Filter="h;hpp;hxx;hm;inl;fi;fd"
+			>
 			<File
-				RelativePath=".\client\anorms.h">
+				RelativePath=".\client\anorms.h"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\bspfile.h">
+				RelativePath=".\qcommon\bspfile.h"
+				>
 			</File>
 			<File
-				RelativePath=".\client\cdaudio.h">
+				RelativePath=".\client\cdaudio.h"
+				>
 			</File>
 			<File
-				RelativePath="client\cl_stats.h">
+				RelativePath="client\cl_stats.h"
+				>
 			</File>
 			<File
-				RelativePath=".\client\client.h">
+				RelativePath=".\client\client.h"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\conproc.h">
+				RelativePath=".\win32\conproc.h"
+				>
 			</File>
 			<File
-				RelativePath=".\client\console.h">
+				RelativePath=".\client\console.h"
+				>
 			</File>
 			<File
-				RelativePath=".\game\game.h">
+				RelativePath=".\game\game.h"
+				>
 			</File>
 			<File
-				RelativePath=".\client\input.h">
+				RelativePath=".\client\input.h"
+				>
 			</File>
 			<File
-				RelativePath=".\client\keys.h">
+				RelativePath=".\client\keys.h"
+				>
 			</File>
 			<File
-				RelativePath="qcommon\md5.h">
+				RelativePath="qcommon\md5.h"
+				>
 			</File>
 			<File
-				RelativePath="client\menu.h">
+				RelativePath="client\menu.h"
+				>
 			</File>
 			<File
-				RelativePath="qcommon\net_common.h">
+				RelativePath="qcommon\net_common.h"
+				>
 			</File>
 			<File
-				RelativePath="win32\pthread.h">
+				RelativePath="win32\pthread.h"
+				>
 			</File>
 			<File
-				RelativePath=".\game\q_shared.h">
+				RelativePath=".\game\q_shared.h"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\qcommon.h">
+				RelativePath=".\qcommon\qcommon.h"
+				>
 			</File>
 			<File
-				RelativePath=".\qcommon\qfiles.h">
+				RelativePath=".\qcommon\qfiles.h"
+				>
 			</File>
 			<File
-				RelativePath=".\client\ref.h">
+				RelativePath=".\client\ref.h"
+				>
 			</File>
 			<File
-				RelativePath="win32\sched.h">
+				RelativePath="win32\sched.h"
+				>
 			</File>
 			<File
-				RelativePath=".\client\screen.h">
+				RelativePath=".\client\screen.h"
+				>
 			</File>
 			<File
-				RelativePath="win32\semaphore.h">
+				RelativePath="win32\semaphore.h"
+				>
 			</File>
 			<File
-				RelativePath=".\server\server.h">
+				RelativePath=".\server\server.h"
+				>
 			</File>
 			<File
-				RelativePath="qcommon\simplecrypt.h">
+				RelativePath="qcommon\simplecrypt.h"
+				>
 			</File>
 			<File
-				RelativePath=".\client\snd_loc.h">
+				RelativePath=".\client\snd_loc.h"
+				>
 			</File>
 			<File
-				RelativePath="client\snd_ogg.h">
+				RelativePath="client\snd_ogg.h"
+				>
 			</File>
 			<File
-				RelativePath=".\client\sound.h">
+				RelativePath=".\client\sound.h"
+				>
 			</File>
 			<File
-				RelativePath=".\client\vid.h">
+				RelativePath=".\client\vid.h"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\winquake.h">
+				RelativePath=".\win32\winquake.h"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
-			Filter="ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe">
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe"
+			>
 			<File
-				RelativePath=".\win32\icon2.ico">
+				RelativePath=".\win32\icon2.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\paintball2.ico">
+				RelativePath=".\win32\paintball2.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\q2.ico">
+				RelativePath=".\win32\q2.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\q2.rc">
+				RelativePath=".\win32\q2.rc"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+						AdditionalIncludeDirectories="win32;$(NoInherit)"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+						AdditionalIncludeDirectories="win32;$(NoInherit)"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug Alpha|Win32">
+					Name="Debug Alpha|Win32"
+					>
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+						AdditionalIncludeDirectories="win32;$(NoInherit)"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release Alpha|Win32">
+					Name="Release Alpha|Win32"
+					>
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+						AdditionalIncludeDirectories="win32;$(NoInherit)"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="PB2Q2 - Release|Win32">
+					Name="PB2Q2 - Release|Win32"
+					>
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+						AdditionalIncludeDirectories="win32;$(NoInherit)"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="PB2Q2 - Debug|Win32">
+					Name="PB2Q2 - Debug|Win32"
+					>
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+						AdditionalIncludeDirectories="win32;$(NoInherit)"
+					/>
 				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
 			Name="a3d"
-			Filter="">
+			>
 			<File
-				RelativePath="a3d\a3d.h">
+				RelativePath="a3d\a3d.h"
+				>
 			</File>
 			<File
-				RelativePath="a3d\q2a3d.c">
+				RelativePath="a3d\q2a3d.c"
+				>
 			</File>
 			<File
-				RelativePath="a3d\q2a3d.h">
+				RelativePath="a3d\q2a3d.h"
+				>
 			</File>
 		</Filter>
 		<File
-			RelativePath="win32\ogg_static.lib">
+			RelativePath="win32\ogg_static.lib"
+			>
 		</File>
 		<File
-			RelativePath="win32\pthreadVC.lib">
+			RelativePath="win32\pthreadVC.lib"
+			>
 		</File>
 		<File
-			RelativePath="win32\vorbis_static.lib">
+			RelativePath="win32\vorbis_static.lib"
+			>
 		</File>
 		<File
-			RelativePath="win32\vorbisfile_static.lib">
+			RelativePath="win32\vorbisfile_static.lib"
+			>
 		</File>
 	</Files>
 	<Globals>
