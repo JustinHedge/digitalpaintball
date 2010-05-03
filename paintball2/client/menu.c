@@ -1838,6 +1838,10 @@ static qboolean M_InsertField (int key)
 	{
 		cursorpos = strlen(s);
 	}
+	else if (key == K_SPACE && (widget->flags & WIDGET_FLAG_NOSPACE))
+	{
+		return false;
+	}
 	else if (key >= 32 && key < 127)
 	{
 		// color codes
@@ -1883,6 +1887,16 @@ static qboolean M_InsertField (int key)
 
 	// put updated values in widget's cvar
 	widget->field_cursorpos = cursorpos;
+
+	if (widget->limit > 0)
+	{
+		if (cursorpos >= widget->limit)
+			cursorpos = widget->limit - 1;
+
+		if (strlen(s) > widget->limit)
+			s[widget->limit] = 0;
+	}
+
 	Cvar_Set(widget->cvar, s);
 	field_adjustCursor(widget);
 	return true;
@@ -1946,6 +1960,9 @@ qboolean M_Keyup (int key)
 // returns false if not
 qboolean M_Keydown (int key)
 {
+	if (!m_current_menu)
+		return false;
+
 	if (m_active_bind_command)
 	{
 		if (key == K_ESCAPE || key == '`') // jitodo -- is console toggled before this?
@@ -2037,7 +2054,7 @@ qboolean M_Keydown (int key)
 		}
 	}
 
-	return true;
+	return !m_current_menu->allow_game_input;
 }
 
 
@@ -2349,6 +2366,12 @@ static void menu_from_file (menu_screen_t *menu)
 							menu->background = re.DrawFindPic(token);
 					}
 
+					// Should the game have input while this menu is up?
+					if (Q_streq(token, "allowgameinput") && !widget)
+					{
+						menu->allow_game_input = true;
+					}
+
 					// new widget:
 					if (Q_streq(token, "widget"))
 					{
@@ -2379,6 +2402,15 @@ static void menu_from_file (menu_screen_t *menu)
 						widget->flags |= WIDGET_FLAG_PASSWORD;
 					else if (Q_streq(token, "selected") && widget)
 						widget->selected = true;
+					else if (Q_streq(token, "nospace") && widget)
+						widget->flags |= WIDGET_FLAG_NOSPACE;
+					else if (Q_streq(token, "limit"))
+					{
+						char *text = COM_Parse(&buf);
+
+						if (widget)
+							widget->limit = atoi(text);
+					}
 					else if (Q_streq(token, "text") && widget)
 					{
 						char *text = COM_Parse(&buf);

@@ -108,6 +108,7 @@ extern cvar_t *serverlist_udp_source1; // jitserverlist
 #define WIDGET_FLAG_NOBG		1024 // no background for select widget
 #define WIDGET_FLAG_BIND		2048 // key binding
 #define WIDGET_FLAG_PASSWORD	4096
+#define WIDGET_FLAG_NOSPACE		8192 // No spaces allowed in this edit box
 
 typedef enum {
 	WIDGET_TYPE_UNKNOWN	= 0,
@@ -198,6 +199,7 @@ typedef struct MENU_WIDGET_S {
 	char *cvar_default;	// set cvar to this value if unset
 	int x;				// position from 0 (left) to 320 (right)
 	int y;				// position from 0 (top) to 240 (bottom)
+	int limit;			// max number of characters for edit fields (0 for no limit)
 	WIDGET_HALIGN halign;	// horizontal alignment relative to x, y coords
 	WIDGET_VALIGN valign;	// vertical alignment relative to x, y coords
 	char *text;			// text displayed by widget
@@ -278,6 +280,7 @@ typedef struct MENU_SCREEN_S {
 	menu_widget_t	*widget;
 	menu_widget_t	*selected_widget;
 	menu_widget_t	*hover_widget;
+	qboolean		allow_game_input; // if true, input will go to the game while this menu is up
 	struct MENU_SCREEN_S *next;
 } menu_screen_t;
 
