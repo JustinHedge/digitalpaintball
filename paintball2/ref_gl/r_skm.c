@@ -788,6 +788,15 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	axis_origin_t	*pose;
 	qboolean		counttris = true;
 
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qglGetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
+
 	if (meshnum < 0 || meshnum >= skmodel->nummeshes)
 		return;
 
@@ -948,6 +957,15 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 		VectorScale(shadelight, light, colorArray[j]);
 	}
 
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qglGetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
+
 	if (rs) // jitskm / jitrscript
 	{
 		rs_stage_t *stage = rs->stage;
@@ -957,6 +975,15 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 		if (!rs->ready)
 			RS_ReadyScript(rs);
+
+#ifdef DEBUG
+		{
+			int err;
+
+			err = qglGetError();
+			assert(err == GL_NO_ERROR);
+		}
+#endif
 
 		while (stage)
 		{
@@ -1009,8 +1036,24 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 			if (stage->blendfunc.blend)
 			{
+#ifdef DEBUG
+				{
+					int err;
+
+					err = qglGetError();
+					assert(err == GL_NO_ERROR);
+				}
+#endif
 				qglBlendFunc(stage->blendfunc.source, stage->blendfunc.dest);
 				GLSTATE_ENABLE_BLEND
+#ifdef DEBUG
+				{
+					int err;
+
+					err = qglGetError();
+					assert(err == GL_NO_ERROR);
+				}
+#endif
 			}
 			else
 			{
@@ -1044,10 +1087,27 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 			if (stage->tcGen == TC_GEN_ENVIRONMENT)
 			{
+#ifdef DEBUG
+				{
+					int err;
+
+					err = qglGetError();
+					assert(err == GL_NO_ERROR);
+				}
+#endif
+
 				qglTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 				qglTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-				GLSTATE_ENABLE_TEXGEN
+				GLSTATE_ENABLE_TEXGEN;
 				neednormals = true;
+#ifdef DEBUG
+				{
+					int err;
+
+					err = qglGetError();
+					assert(err == GL_NO_ERROR);
+				}
+#endif
 			}
 
 			if (stage->alphamask)
@@ -1118,6 +1178,14 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 		qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		qglDisableClientState(GL_VERTEX_ARRAY);
 		qglDisableClientState(GL_COLOR_ARRAY);
+#ifdef DEBUG
+		{
+			int err;
+
+			err = qglGetError();
+			assert(err == GL_NO_ERROR);
+		}
+#endif
 	}
 
 //#define DRAW_NORMALS
@@ -1166,6 +1234,14 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	}
 	qglEnd();
 	qglEnable(GL_DEPTH_TEST);
+#endif
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qglGetError();
+		assert(err == GL_NO_ERROR);
+	}
 #endif
 }
 

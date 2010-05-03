@@ -276,6 +276,15 @@ void RS_ReadyScript (rscript_t *rs)
 	if (rs->ready)
 		return;
 
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qglGetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
+
 	stage = rs->stage;
 	mode = stage->sharp ? it_sharppic : (rs->dontflush) ? it_pic : it_wall;
 
