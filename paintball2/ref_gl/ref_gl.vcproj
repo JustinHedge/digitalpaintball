@@ -228,7 +228,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS"
+				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS"
 				RuntimeLibrary="1"
 				DefaultCharIsUnsigned="false"
 				UsePrecompiledHeader="0"
@@ -985,11 +985,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\jpeglib.h"
+					RelativePath="jpeg\jpeglib.h"
 					>
 				</File>
 				<File
-					RelativePath="jpeg\jpeglib.h"
+					RelativePath=".\jpeglib.h"
 					>
 				</File>
 				<File
