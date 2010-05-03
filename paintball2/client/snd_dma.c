@@ -170,7 +170,7 @@ void S_Init (void)
 		s_disableonalttab = Cvar_Get("s_disableonalttab", "1", 0);
 		// jitsound ===
 
-		s_volume = Cvar_Get("s_volume", "0.7", CVAR_ARCHIVE);
+		s_volume = Cvar_Get("s_volume", "0.9", CVAR_ARCHIVE);
 		s_khz = Cvar_Get("s_khz", "48", CVAR_ARCHIVE); // jit, default to 48 (was 11)
 		s_loadas8bit = Cvar_Get("s_loadas8bit", "0", CVAR_ARCHIVE); // jit, was 1
 		s_mixahead = Cvar_Get("s_mixahead", "0.2", CVAR_ARCHIVE);
@@ -629,7 +629,7 @@ void S_SpatializeOrigin (vec3_t origin, float master_vol, float dist_mult, int *
 	// add in distance effect
 	//scale = (1.0 - dist) * rscale;
 	//scale = rscale / (1.0f + dist); // jitsound
-	scale = rscale / (1.0f + dist * 20.0f); // jitsound
+	scale = rscale / (1.0f + dist * 16.0f); // jitsound
 	scale2 = (1.0f - dist) * rscale;
 
 	if (scale2 < scale) // jitsound
