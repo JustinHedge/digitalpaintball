@@ -521,9 +521,26 @@ qboolean GLimp_InitGL (void)
 
 		DescribePixelFormat(glw_state.hDC, pixelformat, sizeof(pfd), &pfd);
 
-		if (!(pfd.dwFlags & PFD_GENERIC_ACCELERATED))
+		// PFD_GENERIC_FORMAT only = software
+		// PFD_GENERIC_ACCELERATED only = MCD accelerated
+		// Neither PFD_GENERIC_ACCELERATED nor PFD_GENERIC_FORMAT = ICD accelerated
+		// I imagine PFD_SUPPORT_OPENGL must be true, otherwise we're screwed.
+		if ((!(pfd.dwFlags & PFD_GENERIC_ACCELERATED) && (pfd.dwFlags & PFD_GENERIC_FORMAT)) || !(pfd.dwFlags & PFD_SUPPORT_OPENGL))
 		{
+			int mb;
 			extern cvar_t *gl_allow_software;
+			static int prompted = 0; // Only pop this up once, otherwise it will hit on the retry.
+
+			if (!prompted)
+			{
+				prompted = 1;
+				mb = MessageBox(NULL, "You do not have graphic drivers installed that support hardware accelerated OpenGL.  Would you like to load a web page that will help you find appropriate drivers?", "Paintball 2 - No Drivers", MB_YESNO | MB_ICONEXCLAMATION);
+
+				if (mb == IDYES)
+				{
+					ShellExecute(NULL, "open", "http://www.digitalpaint.org/drivers/", NULL, NULL, SW_SHOWNORMAL);
+				}
+			}
 
 			if (gl_allow_software->value)
 				glw_state.mcd_accelerated = true;
