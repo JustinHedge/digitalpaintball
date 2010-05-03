@@ -947,7 +947,7 @@ Parses the given string into command line tokens.
 $Cvars will be expanded unless they are in a quoted token
 ============
 */
-void Cmd_TokenizeString (const unsigned char *text, qboolean macroExpand)
+void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 {
 	int i;
 	unsigned char *com_token;

@@ -508,7 +508,7 @@ char	*Cmd_Args (void);
 // functions. Cmd_Argv () will return an empty string, not a NULL
 // if arg > argc, so string operations are always safe.
 
-void	Cmd_TokenizeString (const unsigned char *text, qboolean macroExpand); // jittext
+void	Cmd_TokenizeString (unsigned char *text, qboolean macroExpand); // jittext
 // Takes a null terminated string.  Does not need to be /n terminated.
 // breaks the string up into arg tokens.
 

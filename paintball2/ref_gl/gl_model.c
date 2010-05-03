@@ -510,7 +510,7 @@ void Mod_LoadTexinfo (lump_t *l)
 		}
 	}
 
-	if (stricmp(current_map_name, "maps/tranquilhavoc.bsp") == 0) // jitnodraw
+	if (Q_strcasecmp(current_map_name, "maps/tranquilhavoc.bsp") == 0) // jitnodraw
 		remove_nodraw = true;
 	// jit
 	// ===

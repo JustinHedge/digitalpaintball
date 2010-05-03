@@ -779,13 +779,8 @@ void FS_SetGamedir (char *dir)
 
 	if (Q_streq(dir, BASEDIRNAME) || (*dir == 0))
 	{
-#ifdef QUAKE2
-		Cvar_FullSet("gamedir", "baseq2", CVAR_SERVERINFO|CVAR_NOSET, true);
-		Cvar_FullSet("game", "baseq2", CVAR_LATCH|CVAR_SERVERINFO, true);
-#else
-		Cvar_FullSet("gamedir", "pball", CVAR_SERVERINFO|CVAR_NOSET, true); // jit, always display gamedir as "pball"
-		Cvar_FullSet("game", "pball", CVAR_LATCH|CVAR_SERVERINFO, true); // jit
-#endif
+		Cvar_FullSet("gamedir", BASEDIRNAME, CVAR_SERVERINFO | CVAR_NOSET, true); // jit, always display gamedir as "pball"
+		Cvar_FullSet("game", BASEDIRNAME, CVAR_LATCH | CVAR_SERVERINFO, true); // jit
 	}
 	else
 	{
@@ -1106,11 +1101,7 @@ void FS_InitFilesystem (void)
 	fs_base_searchpaths = fs_searchpaths;
 
 	// check for game override
-#ifdef QUAKE2
-	fs_gamedirvar = Cvar_Get("game", "baseq2", CVAR_LATCH|CVAR_SERVERINFO); 
-#else
-	fs_gamedirvar = Cvar_Get("game", "pball", CVAR_LATCH|CVAR_SERVERINFO); // jit
-#endif
+	fs_gamedirvar = Cvar_Get("game", BASEDIRNAME, CVAR_LATCH | CVAR_SERVERINFO); // jit
 
 	if (fs_gamedirvar->string[0])
 		FS_SetGamedir(fs_gamedirvar->string);

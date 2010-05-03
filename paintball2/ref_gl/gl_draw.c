@@ -504,7 +504,7 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 		if (!rs->ready) // jit
 			RS_ReadyScript(rs);
 
-		stage=rs->stage;
+		stage = rs->stage;
 
 		while (stage)
 		{
