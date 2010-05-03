@@ -127,6 +127,7 @@ extern	cvar_t *allow_download_maps;
 //======================================================================
 
 extern cvar_t *Cvar_FindVar (char *var_name);
+qboolean CL_HasProfile ();
 
 void CL_Toggle_f (void)
 {
@@ -2818,7 +2819,12 @@ void CL_Init (void)
 	M_Menu_Main_f(); // jitmenu
 	CL_VerifyContent(); // jit
 #ifndef QUAKE2
-	Cbuf_AddText("menu profile\n"); // jitprofile
+	// === jitprofile
+	if (CL_HasProfile())
+		Cbuf_AddText("menu profile\n");
+	else
+		Cbuf_AddText("menu noprofile\n");
+	// jitprofile ===
 #endif
 	Cbuf_Execute();
 }
