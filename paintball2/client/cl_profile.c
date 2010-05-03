@@ -97,7 +97,7 @@ void CL_ProfileEdit_f (void)
 	{
 		char szProfilePath[MAX_OSPATH];
 
-		Com_sprintf(szProfilePath, sizeof(szProfilePath), "pball/profiles/%s.prf", Cmd_Argv(1));
+		Com_sprintf(szProfilePath, sizeof(szProfilePath), BASEDIRNAME "/profiles/%s.prf", Cmd_Argv(1));
 
 		if (!FileExists(szProfilePath))
 			Cbuf_AddText("menu profile_mustselect\n");
@@ -236,7 +236,7 @@ void CL_ProfileAdd_f (void)
 	Sys_Mkdir(szProfilePath);
 	Com_sprintf(szProfilePath, sizeof(szProfilePath), "%s/profiles/%s.prf", FS_Gamedir(), szProfileName);
 	WriteProfileFile(szProfilePath, sLoginName, "", false);
-	Com_sprintf(szBuff, sizeof(szBuff), "menu pop;menu pop;set menu_profile_file %s", szProfileName);
+	Com_sprintf(szBuff, sizeof(szBuff), "menu pop;menu pop;set name \"%s\";set menu_profile_file %s\n", sLoginName, szProfileName);
 	Cbuf_AddText(szBuff);
 	M_ReloadMenu();
 }
@@ -283,6 +283,17 @@ void CL_ProfileSelect_f (void)
 	}
 
 	menu_profile_pass->modified = false;
+}
+
+
+qboolean CL_HasProfile ()
+{
+	int filecount;
+	char **files = FS_ListFiles(BASEDIRNAME "/profiles/*.prf", &filecount, 0, 0, true);
+	
+	FS_FreeFileList(files, filecount);
+
+	return filecount > 0;
 }
 
 
