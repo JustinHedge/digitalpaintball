@@ -84,7 +84,7 @@ BEGIN
             VALUE "FileVersion", "Build " BUILD_S
             VALUE "InternalName", "paintball2"
             VALUE "LegalCopyright", "Copyright (C) 1998-2010"
-            VALUE "OriginalFilename", "paintball.exe"
+            VALUE "OriginalFilename", "paintball2.exe"
             VALUE "ProductName", "Paintball 2"
             VALUE "ProductVersion", "Alpha"
         END
