@@ -2277,8 +2277,7 @@ int Draw_GetPalette (void)
 
 	if (!pal)
 	{
-		ri.Sys_Error(ERR_FATAL, "Couldn't load pics/colormap.pcx\nPlease make sure the game"
-			"is installed properly.\nView the documentation on digitalpaint.org for more details."); // jit
+		ri.Sys_Error(ERR_FATAL, "Couldn't load pics/colormap.pcx\nPlease make sure the game is installed properly.\nView the documentation on digitalpaint.org for more details."); // jit
 	}
 
 
