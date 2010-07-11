@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="serverbrowser"
 	ProjectGUID="{FA0DE5CE-0A74-4C36-817B-CE19035B1014}"
 	RootNamespace="serverbrowser"
@@ -245,7 +245,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\certificated.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\dplogo.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\gls1.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\gls2.ico"
 				>
 			</File>
 			<File

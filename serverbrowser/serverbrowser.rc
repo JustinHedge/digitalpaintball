@@ -35,7 +35,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-03-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -83,6 +83,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Webové stránky",             IDM_WEBSITE
+        MENUITEM "&Info",                       IDM_ABOUT
         MENUITEM "&Ukoncete",                   ID_TRAY_EXIT
     END
     POPUP "Rightclick"
@@ -103,6 +105,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 END
 
@@ -131,7 +134,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-03-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -179,6 +182,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Internetowej",               IDM_WEBSITE
+        MENUITEM "&O programie",                IDM_ABOUT
         MENUITEM "&Wyjscie",                    ID_TRAY_EXIT
     END
     POPUP "Rightclick"
@@ -199,6 +204,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Wyszukiwarka serwerów"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 END
 
@@ -227,7 +233,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-03-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -275,6 +281,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Webové stránky",             IDM_WEBSITE
+        MENUITEM "&O programe",                 IDM_ABOUT
         MENUITEM "&Skoncit",                    ID_TRAY_EXIT
     END
     POPUP "Rightclick"
@@ -295,6 +303,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 END
 
@@ -319,10 +328,53 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_SERVERBROWSER       ICON                    "serverbrowser.ico"
-IDI_PASSWORDED          ICON                    "passworded.ico"
+IDI_CERTIFICATED        ICON                    "certificated.ico"
+IDI_NEEDPASSWORD        ICON                    "needpassword.ico"
+IDI_GLS1                ICON                    "gls1.ico"
+IDI_GLS2                ICON                    "gls2.ico"
 IDI_BLANK               ICON                    "blank.ico"
 IDI_DPLOGO              ICON                    "dplogo.ico"
 IDI_SMALL               ICON                    "small.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,2010,04,02
+ PRODUCTVERSION 0,2010,04,02
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040004b0"
+        BEGIN
+            VALUE "Comments", "http://www.digitalpaint.org"
+            VALUE "CompanyName", "Digital Paint"
+			VALUE "FileDescription", "Digital Paint: Paintball 2 - Serverbrowser"
+            VALUE "FileVersion", "0.2010.04.02"
+            VALUE "InternalName", "serverbrowser"
+            VALUE "LegalCopyright", "Copyright (C) 2006-2010"
+            VALUE "OriginalFilename", "serverbrowser.exe"
+            VALUE "ProductName", "Paintball 2 - Serverbrowser"
+            VALUE "ProductVersion", "Release"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x400, 1200
+    END
+END
+
 #endif    // Neutral resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -348,7 +400,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-03-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -396,6 +448,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Website",                    IDM_WEBSITE
+        MENUITEM "&Über",                       IDM_ABOUT
         MENUITEM "&Beenden",                    ID_TRAY_EXIT
     END
     POPUP "Rightclick"
@@ -416,6 +470,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 END
 
@@ -444,7 +499,7 @@ FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,20,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-03-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -492,6 +547,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Website",                    IDM_WEBSITE
+        MENUITEM "&About",                      IDM_ABOUT
         MENUITEM "E&xit",                       ID_TRAY_EXIT
     END
     POPUP "Rightclick"
@@ -567,7 +624,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-03-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
@@ -615,6 +672,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Site web",                   IDM_WEBSITE
+        MENUITEM "&A propos de",                IDM_ABOUT
         MENUITEM "&Sortir",                     ID_TRAY_EXIT
     END
     POPUP "Rightclick"
@@ -635,6 +694,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Recherche de serveur"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 END
 

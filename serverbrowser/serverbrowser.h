@@ -53,7 +53,7 @@ typedef struct SERVERINFO {
 	int nPingStartTime;
 	int nPing;
 	int nVisible;
-	int nCertificatedServer;
+	int nCertificated;
 	int nNeedPassword;
 	int nGLS;
 	string sAddress;
@@ -77,7 +77,10 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo);
 
 enum serverlist_offset
 {
-	SERVERLIST_HOSTNAME_OFFSET = 0,
+	SERVERLIST_CERTIFICATED_OFFSET,
+	SERVERLIST_NEEDPASSWORD_OFFSET,
+	SERVERLIST_GLS_OFFSET,
+	SERVERLIST_HOSTNAME_OFFSET = 3,
 	SERVERLIST_MAP_OFFSET,
 	SERVERLIST_PLAYERS_OFFSET,
 	SERVERLIST_PING_OFFSET,

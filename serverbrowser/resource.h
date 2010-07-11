@@ -17,8 +17,11 @@
 #define IDM_WEBSITE                     111
 #define IDR_MAINFRAME                   128
 #define IDR_MENU_TRAY                   129
-#define IDI_PASSWORDED                  132
-#define IDI_BLANK                       133
+#define IDI_CERTIFICATED                132
+#define IDI_NEEDPASSWORD                133
+#define IDI_GLS1                        134
+#define IDI_GLS2                        135
+#define IDI_BLANK                       136
 #define IDI_DPLOGO                      500
 #define IDM_UPDATE                      32771
 #define IDM_REFRESH                     32772

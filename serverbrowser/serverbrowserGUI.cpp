@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_LOADSTRING 100
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
-#define NUM_ICONS 2
+#define NUM_ICONS 5
 #define ICON_SIZE 16
 
 // Global Variables:
@@ -51,7 +51,10 @@ static DWORD g_dwWhiteTextColor = RGB(255, 255, 255);
 static DWORD g_dwFadedTextColor = RGB(160, 160, 160); // Greyed out color
 static int g_nServerlistSortColumn = -1;
 static DWORD g_iIconBlank = 0;
-static DWORD g_iIconPassworded = 0;
+static DWORD g_iIconCertificated = 0;
+static DWORD g_iIconNeedPassword = 0;
+static DWORD g_iIconGLS1 = 0;
+static DWORD g_iIconGLS2 = 0;
 static bool g_bAlreadyOpen = false;
 static DWORD g_dwExistingProcess = 0;
 
@@ -209,10 +212,10 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 {
 	int i;
-	//char *pServerList[] = { "C", "PW", "GLS", "Server Name", "Map", "Players", "Ping", "Address" };
-	char *pServerList[] = { "Server Name", "Map", "Players", "Ping", "Address" };
-	//	int iaServerListWidths[] = { 25, 30, 35, 300, 150, 55, 40, -2 };
-	int iaServerListWidths[] = { 300, 150, 55, 40, -2 };
+	char *pServerList[] = { "C", "PW", "GLS", "Server Name", "Map", "Players", "Ping", "Address" };
+//	char *pServerList[] = { "Server Name", "Map", "Players", "Ping", "Address" };
+	int iaServerListWidths[] = { 18, 18, 18, 300, 150, 55, 40, -2 };
+//	int iaServerListWidths[] = { 350, 150, 55, 40, -2 };
 	char *pPlayerList[] = { "Player Name", "Kills", "Ping" };
 	int iaPlayerListWidths[] = { 200, 60, -2 };
 	char *pInfoList[] = { "Variable", "Value" };
@@ -238,7 +241,7 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 	g_hServerList = CreateWindowEx(0, WC_LISTVIEW, "",
 		WS_CHILD | WS_VISIBLE | LVS_REPORT | WS_BORDER | LVS_AUTOARRANGE | LVS_SINGLESEL,
 		0, 0, 300, 300, hWnd, NULL, g_hInst, NULL);
-	ListView_SetExtendedListViewStyle(g_hServerList, LVS_EX_FULLROWSELECT);
+	ListView_SetExtendedListViewStyle(g_hServerList, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
 
 	for (i = 0; i < SERVERLIST_OFFSET_MAX; i++)
 	{
@@ -260,8 +263,14 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 
     hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_BLANK));
     g_iIconBlank = ImageList_AddIcon(hImageList, hIcon);
-	hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_PASSWORDED));
-    g_iIconPassworded = ImageList_AddIcon(hImageList, hIcon);
+	hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_CERTIFICATED));
+    g_iIconCertificated = ImageList_AddIcon(hImageList, hIcon);
+	hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NEEDPASSWORD));
+    g_iIconNeedPassword = ImageList_AddIcon(hImageList, hIcon);
+	hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_GLS1));
+    g_iIconGLS1 = ImageList_AddIcon(hImageList, hIcon);
+	hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_GLS2));
+    g_iIconGLS2 = ImageList_AddIcon(hImageList, hIcon);
     ListView_SetImageList(g_hServerList, hImageList, LVSIL_SMALL);
 
 	// Player List
@@ -305,7 +314,7 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 	g_tTrayIcon.cbSize = sizeof(g_tTrayIcon);
 	g_tTrayIcon.hIcon = LoadIcon(g_hInst, (LPCTSTR)IDI_SMALL);
 	g_tTrayIcon.hWnd = hWnd;
-	strcpy_s(g_tTrayIcon.szTip, "Server Browser");
+	strcpy_s(g_tTrayIcon.szTip, "Digital Paint: Paintball 2 - Serverbrowser");
 	g_tTrayIcon.uCallbackMessage = WM_TRAY_ICON_NOTIFY_MESSAGE;
 	g_tTrayIcon.uFlags = NIF_ICON|NIF_TIP|NIF_MESSAGE;
 	g_tTrayIcon.uID = 0;
@@ -370,16 +379,16 @@ static BOOL CopyAddress (HWND hWnd, int nItem, copytype_t eCopyType)
 		break;
 	case COPYTYPE_FULL:
 		{
-			char szCertificatedServer[16];
-			char szNeedPassword[16];
-			char szGLS[16];
+//			char szCertificated[16];
+//			char szNeedPassword[16];
+//			char szGLS[16];
 			char szPing[16];
 			char szMap[32];
 			char szPlayers[16];
 
 #if 0
-			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_CERTIFICATEDSERVER_OFFSET,
-				szCertificatedServer, sizeof(szCertificatedServer));
+			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_CERTIFICATED_OFFSET,
+				szCertificated, sizeof(szCertificated));
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_NEEDPASSWORD_OFFSET,
 				szNeedPassword, sizeof(szNeedPassword));
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_GLS_OFFSET,
@@ -393,8 +402,10 @@ static BOOL CopyAddress (HWND hWnd, int nItem, copytype_t eCopyType)
 				szMap, sizeof(szMap));
 			ListView_GetItemText(g_hServerList, nItem, SERVERLIST_PLAYERS_OFFSET,
 				szPlayers, sizeof(szPlayers));
-			nLen = _snprintf_s(szFullText, sizeof(szFullText), "%s|%s|%s|%s|%s|%s|%s|%s",
-				szAddress, szCertificatedServer, szNeedPassword, szGLS, szHostname, szPing, szMap, szPlayers);
+//			nLen = _snprintf_s(szFullText, sizeof(szFullText), "%s|%s|%s|%s|%s|%s|%s|%s",
+//				szAddress, szCertificated, szNeedPassword, szGLS, szHostname, szPing, szMap, szPlayers);
+			nLen = _snprintf_s(szFullText, sizeof(szFullText), "%s|%s|%s|%s|%s",
+				szAddress, szHostname, szPing, szMap, szPlayers);
 			szFullText[sizeof(szFullText)-1] = 0;
 			break;
 		}
@@ -631,6 +642,18 @@ static LRESULT ProcessCustomDraw (LPARAM lParam)
 		{
 		case SERVERLIST_MAP_OFFSET:
 			lplvcd->clrText = ServerActive(lplvcd->nmcd.dwItemSpec) ? (MapExists(lplvcd->nmcd.dwItemSpec) ? g_dwDefaultTextColor : RGB(255, 0, 0)) : g_dwFadedTextColor;
+			lplvcd->clrTextBk = g_dwDefaultTextBackground;
+			return CDRF_NEWFONT;
+		case SERVERLIST_CERTIFICATED_OFFSET:
+			lplvcd->clrText = g_dwWhiteTextColor;
+			lplvcd->clrTextBk = g_dwDefaultTextBackground;
+			return CDRF_NEWFONT;
+		case SERVERLIST_NEEDPASSWORD_OFFSET:
+			lplvcd->clrText = g_dwWhiteTextColor;
+			lplvcd->clrTextBk = g_dwDefaultTextBackground;
+			return CDRF_NEWFONT;
+		case SERVERLIST_GLS_OFFSET:
+			lplvcd->clrText = g_dwWhiteTextColor;
 			lplvcd->clrTextBk = g_dwDefaultTextBackground;
 			return CDRF_NEWFONT;
 		default:
@@ -1016,11 +1039,26 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 	bool bFound = false;
 	bool bUpdated = false;
 	int nCount = ListView_GetItemCount(g_hServerList);
-	int iImage = g_iIconBlank;
+	int iImageCertificated = g_iIconBlank;
+	int iImageNeedPassword = g_iIconBlank;
+	int iImageGLS = g_iIconBlank;
 
+	
+	if (tServerInfo.nCertificated)
+	{
+		iImageCertificated = g_iIconCertificated;
+	}
 	if (tServerInfo.nNeedPassword)
 	{
-		iImage = g_iIconPassworded;
+		iImageNeedPassword = g_iIconNeedPassword;
+	}
+	if (tServerInfo.nGLS == 1)
+	{
+		iImageGLS = g_iIconGLS1;
+	}
+	else if (tServerInfo.nGLS == 2)
+	{
+		iImageGLS = g_iIconGLS2;
 	}
 
 	// Find a matching address to update
@@ -1032,13 +1070,30 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		LVITEM tLVItem;
 
 		memset(&tLVItem, 0, sizeof(tLVItem));
-		tLVItem.mask = LVIF_TEXT|LVIF_PARAM|LVIF_IMAGE;
+		tLVItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM | LVIF_STATE | LVIF_DI_SETITEM; 
+		tLVItem.state = 0; 
+		tLVItem.stateMask = 0;
+
 		tLVItem.iSubItem = 0;
 		tLVItem.iItem = nCount;
 		tLVItem.lParam = nCount;
+		tLVItem.iImage = iImageCertificated;
 		tLVItem.pszText = "";
-		tLVItem.iImage = iImage;
 		nID = ListView_InsertItem(g_hServerList, &tLVItem);
+
+		tLVItem.mask = LVIF_TEXT | LVIF_IMAGE; 
+		tLVItem.iSubItem = 1;
+		tLVItem.iItem = nCount;
+		tLVItem.iImage = iImageNeedPassword;
+		tLVItem.pszText = "";
+		ListView_SetItem(g_hServerList, &tLVItem);
+
+		tLVItem.mask = LVIF_TEXT | LVIF_IMAGE; 
+		tLVItem.iSubItem = 2;
+		tLVItem.iItem = nCount;
+		tLVItem.iImage = iImageGLS;
+		tLVItem.pszText = "";
+		ListView_SetItem(g_hServerList, &tLVItem);
 		TweakListviewWidths();
 	}
 
@@ -1050,9 +1105,8 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		nID = GetListIDFromAddress(sAddress);
 	}
 
-#if 0
-	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_CERTIFICATEDSERVER_OFFSET, _itoa(tServerInfo.nCertificatedServer, szTemp, 10)) &&
-		g_nServerlistSortColumn == SERVERLIST_CERTIFICATEDSERVER_OFFSET)
+	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_CERTIFICATED_OFFSET, _itoa(tServerInfo.nCertificated, szTemp, 10)) &&
+		g_nServerlistSortColumn == SERVERLIST_CERTIFICATED_OFFSET)
 	{
 		SortServerList();
 		nID = GetListIDFromAddress(sAddress);
@@ -1071,7 +1125,6 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		SortServerList();
 		nID = GetListIDFromAddress(sAddress);
 	}
-#endif
 
 	if (UpdateListviewText(g_hServerList, nID, SERVERLIST_HOSTNAME_OFFSET, tServerInfo.sHostName.c_str()) &&
 		g_nServerlistSortColumn == SERVERLIST_HOSTNAME_OFFSET)
