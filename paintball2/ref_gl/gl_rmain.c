@@ -203,12 +203,10 @@ cvar_t	*gl_picmip;
 cvar_t	*gl_skymip;
 cvar_t	*gl_skyedge; // jitsky
 cvar_t	*gl_showtris;
-cvar_t	*gl_ztrick;
 cvar_t	*gl_finish;
 cvar_t	*gl_clear;
 cvar_t	*gl_cull;
 cvar_t	*gl_flashblend;
-cvar_t	*gl_playermip;
 cvar_t  *gl_saturatelighting;
 cvar_t	*gl_swapinterval;
 cvar_t	*gl_texturemode;
@@ -1113,57 +1111,24 @@ extern qboolean have_stencil;
 
 void R_Clear (void)
 {
+	int clearbits = GL_DEPTH_BUFFER_BIT;
+
 	if (fogenabled)
 		qglClearColor(fogcolor[0], fogcolor[1], fogcolor[2], 0.5); // jitfog
 
-	if (gl_ztrick->value && !r_reflectivewater->value) // jitwater -- ztrick makes the screen flicker
+	if (gl_clear->value || fogenabled) // jitfog
+		clearbits |= GL_COLOR_BUFFER_BIT;
+
+	if (have_stencil && gl_shadows->value == 2) // Stencil shadows - MrG
 	{
-		static int trickframe;
-		int clearbits = 0;
-
-		if (gl_clear->value || fogenabled) // jitfog
-			clearbits = GL_COLOR_BUFFER_BIT;
-
-		if (have_stencil && gl_shadows->value == 2) // Stencil shadows - MrG
-		{
-			qglClearStencil(0);
-			clearbits |= GL_STENCIL_BUFFER_BIT;
-		}
-
-		qglClear(clearbits);
-		trickframe++;
-
-		if (trickframe & 1)
-		{
-			gldepthmin = 0;
-			gldepthmax = 0.49999;
-			qglDepthFunc(GL_LEQUAL);
-		}
-		else
-		{
-			gldepthmin = 1;
-			gldepthmax = 0.5;
-			qglDepthFunc(GL_GEQUAL);
-		}
+		qglClearStencil(0);
+		clearbits |= GL_STENCIL_BUFFER_BIT;
 	}
-	else
-	{
-		int clearbits = GL_DEPTH_BUFFER_BIT;
 
-		if (gl_clear->value || fogenabled) // jitfog
-			clearbits |= GL_COLOR_BUFFER_BIT;
-
-		if (have_stencil && gl_shadows->value == 2) // Stencil shadows - MrG
-		{
-			qglClearStencil(0);
-			clearbits |= GL_STENCIL_BUFFER_BIT;
-		}
-
-		qglClear(clearbits);
-		gldepthmin = 0;
-		gldepthmax = 1;
-		qglDepthFunc(GL_LEQUAL);
-	}
+	qglClear(clearbits);
+	gldepthmin = 0;
+	gldepthmax = 1;
+	qglDepthFunc(GL_LEQUAL);
 
 	qglDepthRange(gldepthmin, gldepthmax);
 }
@@ -1550,12 +1515,10 @@ void R_Register(void)
 	gl_skymip = ri.Cvar_Get("gl_skymip", "0", 0);
 	gl_skyedge = ri.Cvar_Get("gl_skyedge", "0", 0); // jitsky
 	gl_showtris = ri.Cvar_Get("gl_showtris", "0", 0);
-	gl_ztrick = ri.Cvar_Get("gl_ztrick", "0", 0);
 	gl_finish = ri.Cvar_Get("gl_finish", "0", CVAR_ARCHIVE);
 	gl_clear = ri.Cvar_Get("gl_clear", "0", 0);
 	gl_cull = ri.Cvar_Get("gl_cull", "1", 0);
 	gl_flashblend = ri.Cvar_Get("gl_flashblend", "0", 0);
-	gl_playermip = ri.Cvar_Get("gl_playermip", "0", 0);
 	gl_monolightmap = ri.Cvar_Get("gl_monolightmap", "0", 0);
 	gl_driver = ri.Cvar_Get("gl_driver", GL_DRIVER_LIB, CVAR_ARCHIVE);
 	gl_texturemode = ri.Cvar_Get("gl_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE); // jit

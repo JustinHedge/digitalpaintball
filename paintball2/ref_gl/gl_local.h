@@ -198,14 +198,12 @@ extern	cvar_t	*gl_skymip;
 extern	cvar_t	*gl_skyedge; // jitsky
 extern	cvar_t	*gl_showtris;
 extern	cvar_t	*gl_finish;
-extern	cvar_t	*gl_ztrick;
 extern	cvar_t	*gl_clear;
 extern	cvar_t	*gl_cull;
 extern	cvar_t	*gl_flashblend;
 extern	cvar_t	*gl_lightmaptype;
 //extern	cvar_t	*gl_modulate;
 extern	cvar_t	*gl_lightmapgamma;
-extern	cvar_t	*gl_playermip;
 extern	cvar_t	*gl_drawbuffer;
 extern	cvar_t	*gl_3dlabs_broken;
 extern  cvar_t  *gl_driver;
