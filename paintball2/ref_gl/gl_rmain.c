@@ -198,7 +198,6 @@ cvar_t	*gl_free_unused_textures; // jitfreeunused
 cvar_t	*gl_lightmapgamma; // jitgamma
 cvar_t	*cl_hudscale; // jithudscale
 cvar_t  *cl_crosshairscale;
-cvar_t	*gl_nobind;
 cvar_t	*gl_round_down;
 cvar_t	*gl_picmip;
 cvar_t	*gl_skymip;
@@ -208,7 +207,6 @@ cvar_t	*gl_ztrick;
 cvar_t	*gl_finish;
 cvar_t	*gl_clear;
 cvar_t	*gl_cull;
-cvar_t	*gl_polyblend;
 cvar_t	*gl_flashblend;
 cvar_t	*gl_playermip;
 cvar_t  *gl_saturatelighting;
@@ -1547,7 +1545,6 @@ void R_Register(void)
 	gl_lightmap = ri.Cvar_Get("gl_lightmap", "0", 0);
 	gl_shadows = ri.Cvar_Get("gl_shadows", "0", CVAR_ARCHIVE);
 	gl_dynamic = ri.Cvar_Get("gl_dynamic", "1", 0);
-	gl_nobind = ri.Cvar_Get("gl_nobind", "0", 0);
 	gl_round_down = ri.Cvar_Get("gl_round_down", "0", 0); // jit, was 1
 	gl_picmip = ri.Cvar_Get("gl_picmip", "0", 0);
 	gl_skymip = ri.Cvar_Get("gl_skymip", "0", 0);
@@ -1557,7 +1554,6 @@ void R_Register(void)
 	gl_finish = ri.Cvar_Get("gl_finish", "0", CVAR_ARCHIVE);
 	gl_clear = ri.Cvar_Get("gl_clear", "0", 0);
 	gl_cull = ri.Cvar_Get("gl_cull", "1", 0);
-	gl_polyblend = ri.Cvar_Get("gl_polyblend", "1", 0);
 	gl_flashblend = ri.Cvar_Get("gl_flashblend", "0", 0);
 	gl_playermip = ri.Cvar_Get("gl_playermip", "0", 0);
 	gl_monolightmap = ri.Cvar_Get("gl_monolightmap", "0", 0);

@@ -192,7 +192,6 @@ extern  cvar_t  *gl_monolightmap;
 extern	cvar_t	*gl_brightness; // jit
 extern	cvar_t	*gl_autobrightness; // jit
 extern	cvar_t	*gl_showbbox;  // jit / guy
-extern	cvar_t	*gl_nobind;
 extern	cvar_t	*gl_round_down;
 extern	cvar_t	*gl_picmip;
 extern	cvar_t	*gl_skymip;
@@ -202,9 +201,6 @@ extern	cvar_t	*gl_finish;
 extern	cvar_t	*gl_ztrick;
 extern	cvar_t	*gl_clear;
 extern	cvar_t	*gl_cull;
-extern	cvar_t	*gl_poly;
-extern	cvar_t	*gl_texsort;
-extern	cvar_t	*gl_polyblend;
 extern	cvar_t	*gl_flashblend;
 extern	cvar_t	*gl_lightmaptype;
 //extern	cvar_t	*gl_modulate;
