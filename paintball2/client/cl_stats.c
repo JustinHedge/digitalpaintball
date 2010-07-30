@@ -34,7 +34,7 @@ void Stats_Init()
 		if (statsfile)
 		{
 			Com_Printf("Created local statistics file %s.stat\n", profilename);
-			fprintf(statsfile, "0 0 0 0 0");
+			fprintf(statsfile, "0 0 0 0 0 eof");
 		}
 		else
 		{
@@ -49,7 +49,7 @@ void Stats_Init()
 	time_start = time(NULL);
 }
 
-void Stats_Clear()
+void Stats_Clear(void)
 {
 	time_start = time(NULL);
 	rewind(statsfile);
@@ -101,7 +101,7 @@ void Stats_AddEvent(int type)
 	}
 }
 
-void Stats_Query()
+void Stats_Query(void)
 {
 	Stats_UpdateTime();
 

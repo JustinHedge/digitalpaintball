@@ -647,11 +647,11 @@ void shutdown_cl_scores (void);
 void Stats_Init();
 void Stats_Shutdown();
 void Stats_AddEvent(int type);
-void Stats_Query();
+void Stats_Query(void);
 void Stats_LoadFromFile();
 void Stats_WriteToFile();
 void Stats_UpdateTime();
-void Stats_Clear();
+void Stats_Clear(void);
 
 #define STATS_KILL 0
 #define STATS_DEATH 1
