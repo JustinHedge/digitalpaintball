@@ -107,7 +107,7 @@ void SCR_DrawPaintballHUD1 (void) // todo version check
 			x = CO2BAR_X;
 
 			if (pic = cl.frame.playerstate.stats[STAT_CO2BAR])
-				re.DrawPic(x, CO2BAR_Y, cl.configstrings[CS_IMAGES+pic]);
+				re.DrawPic(x, CO2BAR_Y, cl.configstrings[CS_IMAGES + pic]);
 
 			// Gun temperature bar
 			if (value = cl.frame.playerstate.stats[STAT_GUNTEMP])
@@ -205,7 +205,7 @@ void SCR_DrawPaintballHUD1 (void) // todo version check
 	y = TEAMICON_Y;
 	if (pic = cl.frame.playerstate.stats[STAT_PB_TEAM1])
 	{
-		re.DrawPic(x, y, cl.configstrings[CS_IMAGES+pic]);
+		re.DrawPic(x, y, cl.configstrings[CS_IMAGES + pic]);
 		SCR_DrawField(x2, y, 0, 3, cl.frame.playerstate.stats[STAT_SCORE_TEAM1]);
 		y -= (30*hudscale);
 	}
@@ -239,7 +239,7 @@ void SCR_DrawPaintballHUD1 (void) // todo version check
 		re.DrawString(x, y, "Kills");
 		SCR_DrawField(x-11*hudscale, y+8*hudscale, 0, 3, cl.frame.playerstate.stats[STAT_FRAGS]);
 
-		re.DrawString(x, y+30*hudscale, "Streak:");
+		re.DrawString(x, y+30*hudscale, "Streak");
 		SCR_DrawField(x-11*hudscale, y+38*hudscale, 0, 3, cl.frame.playerstate.stats[STAT_STREAK]);
 	}
 
