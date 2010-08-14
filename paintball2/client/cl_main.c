@@ -99,7 +99,7 @@ cvar_t	*cl_language; // jittrans
 cvar_t	*cl_drawclock; // viciouz - real time clock
 cvar_t  *cl_swearfilter; // viciouz - swear filter
 cvar_t  *cl_blockedwords; // viciouz - swear filter
-cvar_t	*cl_passwordpopup; // viciouz - password popup`
+cvar_t	*cl_passwordpopup; // viciouz - password popup
 cvar_t	*r_oldmodels;
 cvar_t	*gl_highres_textures; // jit
 cvar_t	*serverlist_source; // jitserverlist / jitmenu
@@ -454,7 +454,7 @@ void CL_ARecord_f (void)
 
 	time(&now);
 	strftime(szTimeStamp, sizeof(szTimeStamp), "%Y%m%d_%H%M%S", localtime(&now));
-	Com_sprintf(szDemoName, sizeof(szDemoName), "%s_%s_%s", Cmd_Argv(1), szLevelName, szTimeStamp);
+	Com_sprintf(szDemoName, sizeof(szDemoName), "%s_%s_%i_%s", Cmd_Argv(1), szTimeStamp, cl.playernum, szLevelName);
 	CL_RecordFile(szDemoName);
 }
 // jitdemo ===
