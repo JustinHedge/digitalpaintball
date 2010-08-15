@@ -1551,8 +1551,6 @@ void SCR_UpdateScreen (void)
 
 				if (cl_drawclock->value) // viciouz - real time clock
 				{
-
-					int x, y;
 					time_t rawtime;
 					struct tm * timeinfo;
 					char buffer [80];
@@ -1562,10 +1560,14 @@ void SCR_UpdateScreen (void)
 
 					strftime(buffer, 80, "%H:%M:%S", timeinfo);
 
-					x = viddef.width/2 - 64;
-					y = 1 * hudscale;
-
-					re.DrawString(x, y, buffer);
+					if(cl_drawclockx->value == -1 && cl_drawclocky->value == -1)
+					{
+						re.DrawString(viddef.width/2 - 64,1 * hudscale, buffer);			// clock: default position
+					}
+					else
+					{
+						re.DrawString(cl_drawclockx->value,cl_drawclocky->value, buffer);	// clock: own position
+					}
 				}
 
 				if (cl_drawpps->value) // jitnetfps

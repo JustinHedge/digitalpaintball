@@ -335,6 +335,8 @@ extern	cvar_t	*cl_shownet;
 extern	cvar_t	*cl_showmiss;
 extern	cvar_t	*cl_showclamp;
 extern  cvar_t  *cl_drawclock; // viciouz - computer time clock
+extern  cvar_t  *cl_drawclockx; // T3RR0R15T: clock position
+extern  cvar_t  *cl_drawclocky; // T3RR0R15T: clock position
 
 extern	cvar_t	*lookspring;
 extern	cvar_t	*lookstrafe;
