@@ -4,6 +4,7 @@
 	Version="9.00"
 	Name="ref_gl"
 	ProjectGUID="{370B8ED7-2016-4F3D-B829-18804879A927}"
+	RootNamespace="ref_gl"
 	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
@@ -331,7 +332,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
-				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS"
+				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS,_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -985,11 +986,11 @@
 					>
 				</File>
 				<File
-					RelativePath="jpeg\jpeglib.h"
+					RelativePath=".\jpeglib.h"
 					>
 				</File>
 				<File
-					RelativePath=".\jpeglib.h"
+					RelativePath="jpeg\jpeglib.h"
 					>
 				</File>
 				<File
