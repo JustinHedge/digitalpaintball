@@ -565,6 +565,9 @@ void SV_ClipMoveToEntities ( moveclip_t *clip )
 
 			if (clip->passedict->owner == touch)
 				continue;	// don't clip against owner
+
+			if (clip->passedict->owner == touch->owner && touch->owner)
+				continue;	// jit - don't clip two objects against each other that have the same owner (ex: ball and interpolated hitbox)
 		}
 
 		if ( !(clip->contentmask & CONTENTS_DEADMONSTER)
