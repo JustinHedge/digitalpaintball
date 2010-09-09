@@ -2202,11 +2202,13 @@ CL_InitLocal
 */
 void CL_InitLocal (void)
 {
+	char szRandName[64];
 	memset(&cls, 0, sizeof(client_static_t)); // jitdownload -- didn't like that this wasn't initialized
 	memset(&cl, 0, sizeof(cl)); // jit
 	cls.state = ca_disconnected;
 	cls.realtime = Sys_Milliseconds();
 	CL_InitInput();
+	srand((unsigned)time(NULL)); // Randomize timer
 
 	// register our variables
 	cl_stereo_separation =	Cvar_Get("cl_stereo_separation", "0.4", CVAR_ARCHIVE );
@@ -2315,7 +2317,9 @@ void CL_InitLocal (void)
 	info_password =		Cvar_Get("password", "", CVAR_USERINFO);
 	build =				Cvar_Get("build", BUILD_S, CVAR_USERINFO | CVAR_NOSET | CVAR_SERVERINFO); // jitversion
 	info_spectator =	Cvar_Get("spectator", "0", CVAR_USERINFO);
-	name =				Cvar_Get("name", "newbie", CVAR_USERINFO | CVAR_ARCHIVE); // jit :D
+
+	Com_sprintf(szRandName, sizeof(szRandName), "noname%d", rand()); // was "newbie"
+	name =				Cvar_Get("name", szRandName, CVAR_USERINFO | CVAR_ARCHIVE);
 	skin =				Cvar_Get("skin", "male/pb2b", CVAR_USERINFO | CVAR_ARCHIVE); // jit
 	rate =				Cvar_Get("rate", "25000", CVAR_USERINFO | CVAR_ARCHIVE);	// FIXME
 	msg =				Cvar_Get("msg", "0", CVAR_USERINFO | CVAR_ARCHIVE);
