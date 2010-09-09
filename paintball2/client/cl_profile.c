@@ -291,6 +291,9 @@ qboolean CL_HasProfile ()
 	int filecount;
 	char **files = FS_ListFiles(BASEDIRNAME "/profiles/*.prf", &filecount, 0, 0, true);
 	
+	if (!files)
+		return false;
+
 	FS_FreeFileList(files, filecount);
 
 	return filecount > 0;
