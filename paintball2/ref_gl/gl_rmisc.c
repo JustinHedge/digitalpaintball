@@ -177,13 +177,14 @@ void GL_ScreenShot_JPG (void)
 	}
 	else
 	{
-		strcpy(picname, "sshot000.jpg"); // jitsshot
+		strcpy(picname, "sshot0000.jpg"); // jitsshot; T3RR0R15T: sshot# increased to 9999
 
-		for (i = 0; i <= 999; i++) 
+		for (i = 0; i <= 9999; i++)					// T3RR0R15T: sshot# increased to 9999
 		{
-			picname[5] = i / 100 + '0'; // jitsshot
-			picname[6] = (i % 100) / 10 + '0';  // jitsshot
-			picname[7] = i % 10 + '0'; // jitsshot
+			picname[5] = i / 1000 + '0';			// jitsshot; T3RR0R15T: sshot# increased to 9999
+			picname[6] = (i % 1000) / 100 + '0';	// jitsshot; T3RR0R15T: sshot# increased to 9999
+			picname[7] = (i % 100) / 10 + '0';		// jitsshot; T3RR0R15T: sshot# increased to 9999
+			picname[8] = i % 10 + '0';				// jitsshot; T3RR0R15T: sshot# increased to 9999
 			Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
 			file = fopen(checkname, "rb");
 			
@@ -193,7 +194,7 @@ void GL_ScreenShot_JPG (void)
 			fclose(file);
 		}
 
-		if (i > 999) 
+		if (i > 9999)   // T3RR0R15T: sshot# increased to 9999
 		{
 			ri.Con_Printf(PRINT_ALL, "SCR_JPGScreenShot_f: Too many files\n"); 
 			return;
@@ -300,13 +301,14 @@ void GL_ScreenShot_f (void)
 	}
 	else
 	{
-		strcpy(picname, "sshot000.tga"); // jitsshot
+		strcpy(picname, "sshot0000.tga"); // jitsshot; T3RR0R15T: sshot# increased to 9999
 
-		for (i = 0; i <= 999; i++) 
+		for (i = 0; i <= 9999; i++)					// T3RR0R15T: sshot# increased to 9999
 		{
-			picname[5] = i / 100 + '0'; // jitsshot
-			picname[6] = (i % 100) / 10 + '0';  // jitsshot
-			picname[7] = i % 10 + '0'; // jitsshot
+			picname[5] = i / 1000 + '0';			// jitsshot; T3RR0R15T: sshot# increased to 9999
+			picname[6] = (i % 1000) / 100 + '0';	// jitsshot; T3RR0R15T: sshot# increased to 9999
+			picname[7] = (i % 100) / 10 + '0';		// jitsshot; T3RR0R15T: sshot# increased to 9999
+			picname[8] = i % 10 + '0';				// jitsshot; T3RR0R15T: sshot# increased to 9999
 			Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
 			f = fopen(checkname, "rb");
 			
@@ -316,7 +318,7 @@ void GL_ScreenShot_f (void)
 			fclose(f);
 		}
 
-		if (i > 999) 
+		if (i > 9999)	// T3RR0R15T: sshot# increased to 9999
 		{
 			ri.Con_Printf(PRINT_ALL, "SCR_ScreenShot_f: Too many files.\n"); 
 			return;
