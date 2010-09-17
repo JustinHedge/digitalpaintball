@@ -1407,7 +1407,7 @@ void CL_ConnectionlessPacket (void)
 		if ((Q_streq(s, "Bad Password\nConnection refused.\n") || Q_streq(s, "Server is password protected.\nConnection refused.\n")) &&
 			(cl_passwordpopup->value == 1))
 		{
-			Cbuf_AddText("disconnect; menu get_password");
+			Cbuf_AddText("disconnect; menu get_password\n");
 		}
 
 		return;
