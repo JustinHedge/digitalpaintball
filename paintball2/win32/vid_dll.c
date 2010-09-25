@@ -652,6 +652,25 @@ LONG WINAPI MainWndProc (
 		Key_Event(Sys_MapKeyModified(wParam, lParam), false, sys_msg_time);
 		break;
 
+	case WM_APPCOMMAND:
+		if(Cvar_Get("ogg_enable","0",0)->value)
+			switch(GET_APPCOMMAND_LPARAM(lParam))
+			{
+			case APPCOMMAND_MEDIA_PLAY_PAUSE:
+				Cbuf_AddText("ogg_playpause\n");
+				return 1;
+			case APPCOMMAND_MEDIA_NEXTTRACK:
+				Cbuf_AddText("ogg_play >\n");
+				return 1;
+			case APPCOMMAND_MEDIA_PREVIOUSTRACK:
+				Cbuf_AddText("ogg_play <\n");
+				return 1;
+			case APPCOMMAND_MEDIA_STOP:
+				Cbuf_AddText("ogg_stop\n");
+				return 1;
+			}
+		break;
+
 	case MM_MCINOTIFY:
 		{
 			LONG CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

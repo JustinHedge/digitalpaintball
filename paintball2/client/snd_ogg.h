@@ -64,6 +64,7 @@ void		OGG_PlayCmd(void);
 void		OGG_ResumeCmd(void);
 void		OGG_SeekCmd(void);
 void		OGG_StatusCmd(void);
+void		OGG_PlayPauseCmd(void);
 
 #endif
 #endif

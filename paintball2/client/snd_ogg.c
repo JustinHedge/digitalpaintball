@@ -92,6 +92,7 @@ void OGG_Init(void)
 	Cmd_AddCommand("ogg_seek", OGG_SeekCmd);
 	Cmd_AddCommand("ogg_status", OGG_StatusCmd);
 	Cmd_AddCommand("ogg_stop", OGG_Stop);
+	Cmd_AddCommand("ogg_playpause", OGG_PlayPauseCmd);
 
 	/* Build list of files. */
 	ogg_numfiles = 0;
@@ -155,6 +156,7 @@ void OGG_Shutdown(void)
 	Cmd_RemoveCommand("ogg_seek");
 	Cmd_RemoveCommand("ogg_status");
 	Cmd_RemoveCommand("ogg_stop");
+	Cmd_RemoveCommand("ogg_playpause");
 
 	ogg_started = false;
 }
@@ -395,7 +397,7 @@ qboolean OGG_Open(ogg_seek_t type, int offset)
 	ogg_curfile = pos;
 	ogg_status = PLAY;
 
-	Com_Printf("Playing file %d '%s'\n", pos, ogg_filelist[pos]);
+	Com_Printf("Playing file %d '%s'\n", pos+1, ogg_filelist[pos]);
 
 	return (true);
 }
@@ -774,6 +776,28 @@ void OGG_StatusCmd(void)
 		else
 			Com_Printf("Stopped file %d (%s).\n",
 			    ogg_curfile+1, ogg_filelist[ogg_curfile]);
+		break;
+	}
+}
+
+/*
+==========
+OGG_PlayPauseCmd
+
+Play/pause toggle for media keyboards
+==========
+*/
+void OGG_PlayPauseCmd(void)
+{
+	switch (ogg_status) {
+	case PLAY:
+		ogg_status = PAUSE;
+		break;
+	case PAUSE:
+		ogg_status = PLAY;
+		break;
+	case STOP:
+		OGG_ParseCmd("#1");
 		break;
 	}
 }
