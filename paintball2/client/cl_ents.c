@@ -661,6 +661,24 @@ void CL_AddPacketEntities (frame_t *frame)
 		effects = s1->effects;
 		renderfx = s1->renderfx;
 
+		// ZH -- don't draw player model with chasecam inside
+		if (s1->modelindex2 != 0)
+		{
+			player_state_t *ps = &frame->playerstate;
+			short entpos[2], campos[2];
+
+			entpos[0] = cent->current.origin[0];
+			entpos[1] = cent->current.origin[1];
+			campos[0] = ps->pmove.origin[0] * 0.125f;
+			campos[1] = ps->pmove.origin[1] * 0.125f;
+
+			if (entpos[0] >= campos[0] - 10 && entpos[0] <= campos[0] + 10 &&
+				entpos[1] >= campos[1] - 10 && entpos[1] <= campos[1] + 10)
+			{
+				continue;
+			}
+		}
+
 		// set frame
 		if (effects & EF_ANIM01)
 			ent.frame = autoanim & 1;
