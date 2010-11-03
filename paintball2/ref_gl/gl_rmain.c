@@ -203,6 +203,7 @@ cvar_t	*gl_picmip;
 cvar_t	*gl_skymip;
 cvar_t	*gl_skyedge; // jitsky
 cvar_t	*gl_showtris;
+cvar_t	*gl_ztrick;
 cvar_t	*gl_finish;
 cvar_t	*gl_clear;
 cvar_t	*gl_cull;
@@ -1111,24 +1112,57 @@ extern qboolean have_stencil;
 
 void R_Clear (void)
 {
-	int clearbits = GL_DEPTH_BUFFER_BIT;
-
 	if (fogenabled)
 		qglClearColor(fogcolor[0], fogcolor[1], fogcolor[2], 0.5); // jitfog
 
-	if (gl_clear->value || fogenabled) // jitfog
-		clearbits |= GL_COLOR_BUFFER_BIT;
-
-	if (have_stencil && gl_shadows->value == 2) // Stencil shadows - MrG
+	if (gl_ztrick->value && !r_reflectivewater->value) // jitwater -- ztrick makes the screen flicker
 	{
-		qglClearStencil(0);
-		clearbits |= GL_STENCIL_BUFFER_BIT;
-	}
+		static int trickframe;
+		int clearbits = 0;
 
-	qglClear(clearbits);
-	gldepthmin = 0;
-	gldepthmax = 1;
-	qglDepthFunc(GL_LEQUAL);
+		if (gl_clear->value || fogenabled) // jitfog
+			clearbits = GL_COLOR_BUFFER_BIT;
+
+		if (have_stencil && gl_shadows->value == 2) // Stencil shadows - MrG
+		{
+			qglClearStencil(0);
+			clearbits |= GL_STENCIL_BUFFER_BIT;
+		}
+
+		qglClear(clearbits);
+		trickframe++;
+
+		if (trickframe & 1)
+		{
+			gldepthmin = 0;
+			gldepthmax = 0.49999;
+			qglDepthFunc(GL_LEQUAL);
+		}
+		else
+		{
+			gldepthmin = 1;
+			gldepthmax = 0.5;
+			qglDepthFunc(GL_GEQUAL);
+		}
+	}
+	else
+	{
+		int clearbits = GL_DEPTH_BUFFER_BIT;
+
+		if (gl_clear->value || fogenabled) // jitfog
+			clearbits |= GL_COLOR_BUFFER_BIT;
+
+		if (have_stencil && gl_shadows->value == 2) // Stencil shadows - MrG
+		{
+			qglClearStencil(0);
+			clearbits |= GL_STENCIL_BUFFER_BIT;
+		}
+
+		qglClear(clearbits);
+		gldepthmin = 0;
+		gldepthmax = 1;
+		qglDepthFunc(GL_LEQUAL);
+	}
 
 	qglDepthRange(gldepthmin, gldepthmax);
 }
@@ -1515,6 +1549,7 @@ void R_Register(void)
 	gl_skymip = ri.Cvar_Get("gl_skymip", "0", 0);
 	gl_skyedge = ri.Cvar_Get("gl_skyedge", "0", 0); // jitsky
 	gl_showtris = ri.Cvar_Get("gl_showtris", "0", 0);
+	gl_ztrick = ri.Cvar_Get("gl_ztrick", "0", 0);
 	gl_finish = ri.Cvar_Get("gl_finish", "0", CVAR_ARCHIVE);
 	gl_clear = ri.Cvar_Get("gl_clear", "0", 0);
 	gl_cull = ri.Cvar_Get("gl_cull", "1", 0);
@@ -2495,7 +2530,6 @@ void	Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl);
 void	Draw_Pic2 (int x, int y, image_t *gl);
 void	Draw_String (int x, int y, const char *str); // jit, shush little warning
 void	Draw_StringAlpha (int x, int y, const char *str, float alhpa); // jit
-int		Draw_GetStates (void);
 
 /*
 @@@@@@@@@@@@@@@@@@@@@
@@ -2530,7 +2564,6 @@ refexport_t GetRefAPI (refimport_t rimp)
 	re.DrawTileClear2 = Draw_TileClear2;
 	re.DrawString = Draw_String;
 	re.DrawStringAlpha = Draw_StringAlpha;
-	re.DrawGetStates = Draw_GetStates;
 	re.Init = R_Init;
 	re.Shutdown = R_Shutdown;
 	re.CinematicSetPalette = R_SetPalette;
