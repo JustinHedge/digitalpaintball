@@ -51,7 +51,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qgl.h"
 
-#define	REF_VERSION	"PB2GL 0.28" // jitversion / jitbuild
+#define	REF_VERSION	"PB2GL 0.31" // jitversion / jitbuild
 
 // up / down
 #define	PITCH	0
@@ -198,6 +198,7 @@ extern	cvar_t	*gl_skymip;
 extern	cvar_t	*gl_skyedge; // jitsky
 extern	cvar_t	*gl_showtris;
 extern	cvar_t	*gl_finish;
+extern	cvar_t	*gl_ztrick;
 extern	cvar_t	*gl_clear;
 extern	cvar_t	*gl_cull;
 extern	cvar_t	*gl_flashblend;
