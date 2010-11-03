@@ -665,15 +665,18 @@ void CL_AddPacketEntities (frame_t *frame)
 		if (s1->modelindex2 != 0)
 		{
 			player_state_t *ps = &frame->playerstate;
-			short entpos[2], campos[2];
+			short entpos[3], campos[3];
 
 			entpos[0] = cent->current.origin[0];
 			entpos[1] = cent->current.origin[1];
-			campos[0] = ps->pmove.origin[0] * 0.125f;
-			campos[1] = ps->pmove.origin[1] * 0.125f;
+			entpos[2] = cent->current.origin[2];
+			campos[0] = ps->pmove.origin[0] / 8;
+			campos[1] = ps->pmove.origin[1] / 8;
+			campos[2] = ps->pmove.origin[2] / 8 - 22;
 
 			if (entpos[0] >= campos[0] - 10 && entpos[0] <= campos[0] + 10 &&
-				entpos[1] >= campos[1] - 10 && entpos[1] <= campos[1] + 10)
+				entpos[1] >= campos[1] - 10 && entpos[1] <= campos[1] + 10 &&
+				entpos[2] >= campos[2] - 30 && entpos[2] <= campos[2] + 30)
 			{
 				continue;
 			}
