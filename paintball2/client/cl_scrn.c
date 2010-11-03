@@ -126,7 +126,8 @@ typedef struct
 } graphsamp_t;
 
 static	int			current;
-static	graphsamp_t	values[1024];
+#define MAX_GRAPH_VALUES 2048 // jit - so netgraph doesn't wrap around at high res. must be a power of 2
+static	graphsamp_t	values[MAX_GRAPH_VALUES];
 
 /*
 ==============
@@ -135,8 +136,8 @@ SCR_DebugGraph
 */
 void SCR_DebugGraph (float value, int color)
 {
-	values[current & 1023].value = value;
-	values[current & 1023].color = color;
+	values[current & (MAX_GRAPH_VALUES - 1)].value = value;
+	values[current & (MAX_GRAPH_VALUES - 1)].color = color;
 	current++;
 }
 
@@ -159,7 +160,7 @@ void SCR_DrawDebugGraph (void)
 
 	for (a = 0; a < w; a++)
 	{
-		i = (current - 1 - a + 1024) & 1023;
+		i = (current - 1 - a + MAX_GRAPH_VALUES) & (MAX_GRAPH_VALUES - 1);
 		v = values[i].value;
 		color = values[i].color;
 		v = v * scr_graphscale->value + scr_graphshift->value;
