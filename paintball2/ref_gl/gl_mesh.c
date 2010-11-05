@@ -243,6 +243,7 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 	lerp = s_lerped[0];
 	GL_LerpVerts(paliashdr->num_xyz, v, ov, verts, lerp, move, frontv, backv);
 	//qglEnableClientState(GL_COLOR_ARRAY);
+	assert(currententity->skinnum >= 0 && currententity->skinnum < MAX_MD2SKINS);
 	rs = (rscript_t*)currententity->model->script[currententity->skinnum];
 
 	if (!rs)
@@ -1181,8 +1182,9 @@ void R_DrawAliasModel (entity_t *e)
 	}
 	else
 	{
-		if (currententity->skinnum >= MAX_MD2SKINS)
+		if (((unsigned)currententity->skinnum) >= MAX_MD2SKINS) // jit - negative numbers = bad! (but how did this happen?!)
 		{
+			assert(0);
 			skin = currentmodel->skins[0];
 			currententity->skinnum = 0;
 		}
