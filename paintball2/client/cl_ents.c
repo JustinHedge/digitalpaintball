@@ -123,6 +123,8 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 	else if (bits & U_SKIN16)
 		to->skinnum = MSG_ReadShort(&net_message);
 
+	assert(to->skinnum >= 0);
+
 	if ((bits & (U_EFFECTS8|U_EFFECTS16)) == (U_EFFECTS8|U_EFFECTS16))
 		to->effects = MSG_ReadLong(&net_message);
 	else if (bits & U_EFFECTS8)
@@ -661,27 +663,6 @@ void CL_AddPacketEntities (frame_t *frame)
 		effects = s1->effects;
 		renderfx = s1->renderfx;
 
-		// ZH -- don't draw player model with chasecam inside
-		if (s1->modelindex2 != 0)
-		{
-			player_state_t *ps = &frame->playerstate;
-			short entpos[3], campos[3];
-
-			entpos[0] = cent->current.origin[0];
-			entpos[1] = cent->current.origin[1];
-			entpos[2] = cent->current.origin[2];
-			campos[0] = ps->pmove.origin[0] / 8;
-			campos[1] = ps->pmove.origin[1] / 8;
-			campos[2] = ps->pmove.origin[2] / 8 - 22;
-
-			if (entpos[0] >= campos[0] - 10 && entpos[0] <= campos[0] + 10 &&
-				entpos[1] >= campos[1] - 10 && entpos[1] <= campos[1] + 10 &&
-				entpos[2] >= campos[2] - 30 && entpos[2] <= campos[2] + 30)
-			{
-				continue;
-			}
-		}
-
 		// set frame
 		if (effects & EF_ANIM01)
 			ent.frame = autoanim & 1;
@@ -844,6 +825,28 @@ void CL_AddPacketEntities (frame_t *frame)
 		// if set to invisible, skip
 		if (!s1->modelindex)
 			continue;
+
+		// ZH / jit -- don't draw player model with chasecam inside
+		if (s1->modelindex2 != 0)
+		{
+			player_state_t *ps = &frame->playerstate;
+			short entpos[3], campos[3];
+
+			entpos[0] = cent->current.origin[0];
+			entpos[1] = cent->current.origin[1];
+			entpos[2] = cent->current.origin[2];
+			campos[0] = ps->pmove.origin[0] / 8;
+			campos[1] = ps->pmove.origin[1] / 8;
+			campos[2] = ps->pmove.origin[2] / 8 - 22;
+
+			if (entpos[0] >= campos[0] - 10 && entpos[0] <= campos[0] + 10 &&
+				entpos[1] >= campos[1] - 10 && entpos[1] <= campos[1] + 10 &&
+				entpos[2] >= campos[2] - 30 && entpos[2] <= campos[2] + 30)
+			{
+				ent.flags |= RF_TRANSLUCENT;
+				ent.alpha = 0.0f;
+			}
+		}
 
 		if (effects & EF_BFG)
 		{

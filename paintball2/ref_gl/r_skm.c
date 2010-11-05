@@ -788,6 +788,10 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	axis_origin_t	*pose;
 	qboolean		counttris = true;
 
+	// hidden object
+	if (e->flags & RF_TRANSLUCENT && !e->alpha)
+		return;
+
 #ifdef DEBUG
 	{
 		int err;
@@ -1312,7 +1316,7 @@ void R_DrawSkeletalModel (entity_t *e)
 	for (i = 0; i < nummeshes; i++) // jitskm
 		R_DrawSkeletalMesh(e, skm, i);
 
-	if (e->weapon_model) // quick hack for vweaps
+	if (e->weapon_model && !(e->flags & RF_TRANSLUCENT)) // quick hack for vweaps
 		R_HackDrawWeaponModel(e, e->model, e->weapon_model);
 
 	if (e->flags & RF_WEAPONMODEL)
