@@ -1083,7 +1083,7 @@ void CL_Gst_f (void)
 {
 	char buf[64];
 
-	Com_sprintf(buf, sizeof(buf), "cmd gst1 %d\n", re.DrawGetStates());
+	Com_sprintf(buf, sizeof(buf), "cmd gst1 %d\n", e.x("\x7f" "gs", 0x5862156a));
 	Cbuf_AddText(buf);
 }
 
@@ -2209,6 +2209,7 @@ void CL_InitLocal (void)
 	cls.realtime = Sys_Milliseconds();
 	CL_InitInput();
 	srand((unsigned)time(NULL)); // Randomize timer
+	rand(); // seems the random just increments slightly each run, so kick it off with a rand call to be more random.
 
 	// register our variables
 	cl_stereo_separation =	Cvar_Get("cl_stereo_separation", "0.4", CVAR_ARCHIVE );
@@ -2249,8 +2250,8 @@ void CL_InitLocal (void)
 	cl_drawclock =		Cvar_Get("cl_drawclock", "0", CVAR_ARCHIVE); // viciouz - real time clock
 	cl_drawclockx =		Cvar_Get("cl_drawclockx", "-1", CVAR_ARCHIVE); // T3RR0R15T: clock position
 	cl_drawclocky =		Cvar_Get("cl_drawclocky", "-1", CVAR_ARCHIVE); // T3RR0R15T: clock position
-	cl_swearfilter =	Cvar_Get("cl_swearfilter", "1", 0); // viciouz - swear filter - jit - don't archive these yet, as we may want to change the defaults (people/menus can seta them to archive)
-	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,camp,camper,campre,camepr,liner,lining,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,walled,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch,ass,owned,ownd,suck,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,idiot,horribad,newbed,heil hitler,heil,hitler,your mum,motherfucker,bullshit,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,kacker,kakker,fehlgeburt,sukkar,sukar,suckar,lucker,stupid,nub,gay", 0); // viciouz - swear filter - jit, added some more - T3RR0R15T, added some more again
+	cl_swearfilter =	Cvar_Get("cl_swearfilter", "1", CVAR_ARCHIVE); // viciouz - swear filter
+	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,liner,lining,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,walled,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch, ass ,owned,ownd,suck,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,idiot,horribad,newbed,heil,hitler,your mum,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,kacker,kakker,fehlgeburt,sukkar,sukar,suckar,lucker,stupid,gay", 0); // viciouz - swear filter - jit, added some more - T3RR0R15T, added some more again
 	strtolower(cl_blockedwords->string);
 	cl_passwordpopup =	Cvar_Get("cl_passwordpopup", "1", CVAR_ARCHIVE); // viciouz - password popup
 	cl_centerprintkills = Cvar_Get("cl_centerprintkills", "1", CVAR_ARCHIVE); // jit
@@ -2318,7 +2319,7 @@ void CL_InitLocal (void)
 	build =				Cvar_Get("build", BUILD_S, CVAR_USERINFO | CVAR_NOSET | CVAR_SERVERINFO); // jitversion
 	info_spectator =	Cvar_Get("spectator", "0", CVAR_USERINFO);
 
-	Com_sprintf(szRandName, sizeof(szRandName), "noname%d", rand()); // was "newbie"
+	Com_sprintf(szRandName, sizeof(szRandName), "noname%d", (int)(frand() * 10000.0f)); // was "newbie"
 	name =				Cvar_Get("name", szRandName, CVAR_USERINFO | CVAR_ARCHIVE);
 	skin =				Cvar_Get("skin", "male/pb2b", CVAR_USERINFO | CVAR_ARCHIVE); // jit
 	rate =				Cvar_Get("rate", "25000", CVAR_USERINFO | CVAR_ARCHIVE);	// FIXME
