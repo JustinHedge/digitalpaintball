@@ -1044,7 +1044,7 @@ static void translate_config_string (char *config_string) // jittrans
 		cl_language->modified = false;
 		Com_sprintf(lang_file, sizeof(lang_file), "configs/%s.lang", cl_language->string);
 		
-		if (FS_LoadFileZ(lang_file, &buff) > 0)
+		if (FS_LoadFileZ(lang_file, (void **)&buff) > 0)
 		{
 			char *key, *val;
 			
