@@ -660,7 +660,7 @@ void CL_WebLoad_f (void)
 
 	sURL = Cmd_Argv(1);
 	
-	if (strncmp(sURL, "http://", 7) != 0 && strncmp(sURL, "https://", 8) != 0)
+	if (strncmp(sURL, "http://", 7) != 0 && strncmp(sURL, "https://", 8) != 0 && strncmp(sURL, "ftp://", 6) != 0)
 	{
 		Com_Printf("Usage: webload http://<url>\n");
 		return;
