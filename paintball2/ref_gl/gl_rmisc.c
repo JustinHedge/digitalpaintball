@@ -282,6 +282,10 @@ void GL_ScreenShot_f (void)
 	int			i, c, temp;
 	FILE		*f;
 
+	// Don't do remote screenshots while watching a demo
+	if (ri.GetIntVarByID(VARID_G_COMMAND_STUFFED) && ri.GetIntVarByID(VARID_CL_ATTRACTLOOP))
+		return;
+
 	// Heffo - JPEG Screenshots
 	if (gl_screenshot_jpeg->value)
 	{
