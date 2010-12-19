@@ -986,6 +986,12 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 		buf->overflowed = true;
 	}
 
+	if (length > buf->maxsize) // jit - if we don't return null here, we could be overwriting memory
+	{
+		assert(0);
+		return NULL;
+	}
+
 	data = buf->data + buf->cursize;
 	buf->cursize += length;
 	
@@ -1481,7 +1487,9 @@ void Qcommon_Init (int argc, char **argv)
 	// init commands and vars
 	//
     Cmd_AddCommand("z_stats", Z_Stats_f);
+#ifdef _DEBUG
     Cmd_AddCommand("error", Com_Error_f);
+#endif
 
 	host_speeds = Cvar_Get("host_speeds", "0", 0);
 	log_stats = Cvar_Get("log_stats", "0", 0);
