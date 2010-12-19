@@ -2780,6 +2780,25 @@ void KB_Init (void)
 #endif
 // jit ===
 
+// jit - quick hack for getting values from the renderer
+extern qboolean g_command_stuffed;
+
+int GetIntVarByID (int id)
+{
+	switch (id)
+	{
+	case VARID_CL_ATTRACTLOOP:
+		return cl.attractloop;
+	case VARID_G_COMMAND_STUFFED:
+		return g_command_stuffed;
+	case VARID_BUILD:
+		return BUILD;
+	default:
+		assert(0);
+		return 0;
+	}
+}
+
 /*
 ====================
 CL_Init

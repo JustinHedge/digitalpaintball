@@ -305,6 +305,7 @@ typedef struct
 	void		(*Z_Free) (void *ptr); // jitmalloc
 	qboolean	(*M_MenuActive) (void); // jitmenu, jitlinux
 	void		(*M_MouseMove) (int, int); // jitmenu, jitlinux
+	int			(*GetIntVarByID) (int); // jit
 } refimport_t;
 
 typedef struct
@@ -315,6 +316,7 @@ typedef struct
 	cvar_t	*(*Cvar_Set) (char *name, char *value);
 	int		(*FS_LoadFileZ) (const char *path, void **buffer);
 	void	(*FS_FreeFile) (void *buffer);
+	int		(*GetIntVarByID) (int id);
 } testimport_t;
 
 // this is the only function actually exported at the linker level
