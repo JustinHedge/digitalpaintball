@@ -778,9 +778,11 @@ qboolean VID_LoadRefresh (char *name)
 	ri.Vid_NewWindow = VID_NewWindow;
 	ri.Z_Free = Z_Free; // jitmalloc
 	ri.Z_Malloc = Z_Malloc; // jitmalloc
+	ri.GetIntVarByID = GetIntVarByID;
 	ri.e = &e;
 	i.Com_Printf = Com_Printf;
 	i.Cbuf_ExecuteText = Cbuf_ExecuteText;
+	i.GetIntVarByID = GetIntVarByID;
 	i.Cvar_Get = Cvar_Get;
 	i.Cvar_Set = Cvar_Set;
 	i.FS_LoadFileZ = FS_LoadFileZ;
