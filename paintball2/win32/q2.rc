@@ -62,8 +62,8 @@ IDI_ICON1               ICON    DISCARDABLE     "paintball2.ico"
 
 1 VERSIONINFO
  // todo: set the current date automatically
- FILEVERSION BUILD,2010,6,3			 // (build#,year,month,day)
- PRODUCTVERSION BUILD,2010,6,3		 // (build#,year,month,day)
+ FILEVERSION BUILD,2010,12,21			 // (build#,year,month,day)
+ PRODUCTVERSION BUILD,2010,12,21		 // (build#,year,month,day)
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
