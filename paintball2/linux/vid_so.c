@@ -172,7 +172,7 @@ qboolean VID_LoadRefresh(char *name)
 		return false;
 	}
 
-	if ((reflib_library = dlopen(fn, RTLD_LAZY)) == 0)
+	if ((reflib_library = dlopen(fn, RTLD_NOW)) == 0)
 	{
 		Com_Printf("LoadLibrary(\"%s\") failed: %s\n", name , dlerror());
 		return false;
@@ -180,7 +180,7 @@ qboolean VID_LoadRefresh(char *name)
 
 	Com_Printf("LoadLibrary(\"%s\")\n", fn);
 
-	testlib = dlopen(BASEDIRNAME "/pics/testl.dat", RTLD_LAZY);
+	testlib = dlopen(BASEDIRNAME "/pics/testl.dat", RTLD_NOW);
 	ri.Cmd_AddCommand = Cmd_AddCommand;
 	ri.Cmd_RemoveCommand = Cmd_RemoveCommand;
 	ri.Cmd_Argc = Cmd_Argc;
@@ -202,11 +202,13 @@ qboolean VID_LoadRefresh(char *name)
 	ri.Vid_NewWindow = VID_NewWindow;
 	ri.Z_Free = Z_Free; // jitmalloc
 	ri.Z_Malloc = Z_Malloc; // jitmalloc
+	ri.GetIntVarByID = GetIntVarByID;
 	ri.e = &e;
 	ri.M_MenuActive = M_MenuActive; // jitmenu
 	ri.M_MouseMove = M_MouseMove; // jitmenu
 	i.Com_Printf = Com_Printf;
 	i.Cbuf_ExecuteText = Cbuf_ExecuteText;
+	i.GetIntVarByID = GetIntVarByID;
 	i.Cvar_Get = Cvar_Get;
 	i.Cvar_Set = Cvar_Set;
 	i.FS_LoadFileZ = FS_LoadFileZ;
