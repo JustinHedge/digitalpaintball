@@ -602,7 +602,7 @@ REF_GL_OBJS = \
 	$(BUILDDIR)/ref_gl/gl_refl.o   $(BUILDDIR)/ref_gl/gl_model.o  $(BUILDDIR)/ref_gl/gl_rmain.o \
 	$(BUILDDIR)/ref_gl/gl_rmisc.o  $(BUILDDIR)/ref_gl/gl_rsurf.o  $(BUILDDIR)/ref_gl/gl_warp.o \
 	$(BUILDDIR)/ref_gl/qgl_linux.o $(BUILDDIR)/ref_gl/q_shared.o  $(BUILDDIR)/ref_gl/q_shlinux.o \
-	$(BUILDDIR)/ref_gl/glob.o
+	$(BUILDDIR)/ref_gl/glob.o      $(BUILDDIR)/ref_gl/gl_cin.o
 
 REF_GLX_OBJS = \
 	$(BUILDDIR)/ref_gl/gl_glx.o    $(BUILDDIR)/ref_gl/rw_linux.o  $(BUILDDIR)/ref_gl/joystick.o
@@ -633,6 +633,7 @@ $(BINDIR)/ref_pbsdl.$(SHLIBEXT) : $(REF_GL_OBJS) $(REF_SDLGL_OBJS)
 $(BUILDDIR)/ref_gl/gl_script.o :  $(REF_GL_DIR)/gl_script.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/gl_draw.o :    $(REF_GL_DIR)/gl_draw.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/gl_image.o :   $(REF_GL_DIR)/gl_image.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_cin.o :     $(REF_GL_DIR)/gl_cin.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/gl_light.o :   $(REF_GL_DIR)/gl_light.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/gl_refl.o :    $(REF_GL_DIR)/gl_refl.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/r_skm.o :      $(REF_GL_DIR)/r_skm.c;	$(DO_SHLIB_CC)
