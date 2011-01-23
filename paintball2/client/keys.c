@@ -662,14 +662,14 @@ void Key_Unbind_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("unbind <key> : remove commands from a key\n");
+		Com_Printf ("Usage: unbind <key> : Remove commands from a key.\n");
 		return;
 	}
 	
 	b = Key_StringToKeynum (Cmd_Argv(1));
 	if (b==-1)
 	{
-		Com_Printf ("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+		Com_Printf ("\"%s\" isn't a valid key.\n", Cmd_Argv(1));
 		return;
 	}
 
@@ -700,13 +700,13 @@ void Key_Bind_f (void)
 
 	if (c < 2)
 	{
-		Com_Printf ("bind <key> [command] : attach a command to a key\n");
+		Com_Printf ("Usage: bind <key> [command] : Attach a command to a key.\n");
 		return;
 	}
 	b = Key_StringToKeynum (Cmd_Argv(1));
 	if (b==-1)
 	{
-		Com_Printf ("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+		Com_Printf ("\"%s\" isn't a valid key.\n", Cmd_Argv(1));
 		return;
 	}
 
@@ -715,7 +715,7 @@ void Key_Bind_f (void)
 		if (keybindings[b])
 			Com_Printf ("\"%s\" = \"%s\"\n", Cmd_Argv(1), keybindings[b] );
 		else
-			Com_Printf ("\"%s\" is not bound\n", Cmd_Argv(1) );
+			Com_Printf ("\"%s\" is not bound.\n", Cmd_Argv(1) );
 		return;
 	}
 	
@@ -992,7 +992,7 @@ void Key_Event (int key, qboolean down, unsigned time)
 			M_Menu_Main_f();
 			break;
 		default:
-			Com_Error(ERR_FATAL, "Bad cls.key_dest");
+			Com_Error(ERR_FATAL, "Bad cls.key_dest.");
 		}
 
 		return;
@@ -1045,7 +1045,7 @@ void Key_Event (int key, qboolean down, unsigned time)
 			Key_Console(key);
 			break;
 		default:
-			Com_Error (ERR_FATAL, "Bad cls.key_dest");
+			Com_Error (ERR_FATAL, "Bad cls.key_dest.");
 		}
 	}
 	else

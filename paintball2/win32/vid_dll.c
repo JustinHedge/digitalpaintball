@@ -719,7 +719,7 @@ void VID_UpdateWindowPosAndSize (int x, int y)
 void VID_FreeReflib (void)
 {
 	if (!FreeLibrary(reflib_library))
-		Com_Error(ERR_FATAL, "Reflib FreeLibrary failed");
+		Com_Error(ERR_FATAL, "Reflib FreeLibrary failed.");
 
 	memset(&re, 0, sizeof(re));
 	reflib_library = NULL;
@@ -749,8 +749,8 @@ qboolean VID_LoadRefresh (char *name)
 
 	if ((reflib_library = LoadLibrary(name)) == 0)
 	{
-		//Com_Printf("LoadLibrary(\"%s\") failed\n", name);
-		Com_Error(ERR_FATAL, "LoadLibrary(\"%s\") failed\n", name); // jit
+		//Com_Printf("LoadLibrary(\"%s\") failed.\n", name);
+		Com_Error(ERR_FATAL, "LoadLibrary(\"%s\") failed.\n", name); // jit
 		return false;
 	}
 
@@ -789,7 +789,7 @@ qboolean VID_LoadRefresh (char *name)
 	i.FS_FreeFile = FS_FreeFile;
 
 	if ((GetRefAPI = (void*)GetProcAddress(reflib_library, "GetRefAPI")) == 0)
-		Com_Error(ERR_FATAL, "GetProcAddress failed on %s", name);
+		Com_Error(ERR_FATAL, "GetProcAddress failed on %s.", name);
 
 	if (testlib && !e.i)
 	{
@@ -804,7 +804,7 @@ qboolean VID_LoadRefresh (char *name)
 	if (re.api_version != API_VERSION)
 	{
 		VID_FreeReflib();
-		Com_Error(ERR_FATAL, "%s has incompatible api_version", name);
+		Com_Error(ERR_FATAL, "%s has incompatible api_version.", name);
 	}
 
 	if (re.Init(global_hInstance, MainWndProc) == -1)

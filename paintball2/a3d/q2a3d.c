@@ -14,7 +14,7 @@ void S_Q2A3DPCMStream (int samples, int rate, int width, int channels, byte *dat
 void S_Q2A3DCloseLibrary(void)
 {
 	if (a3d.reflib) {
-		Com_Printf("Freeing q2a3d Module\n");
+		Com_Printf("Freeing q2a3d Module.\n");
 #ifdef __unix__
 		dlclose(a3d.reflib);
 #else
@@ -58,9 +58,9 @@ void S_Q2A3DInit (void)
 		Com_sprintf(name, sizeof(name), "%s", enginename);
 		a3d.reflib = LoadLibrary(name);
 		if (a3d.reflib)
-			Com_Printf("LoadLibrary (%s)\n", name);
+			Com_Printf("LoadLibrary (%s).\n", name);
 		else
-			Com_Printf("LoadLibrary (%s) Failed\n", name);
+			Com_Printf("LoadLibrary (%s) Failed.\n", name);
 
 		
 	#endif
@@ -121,9 +121,9 @@ void S_Q2A3DInit (void)
 	}
 
 	if (a3d.Init_A3D() > 1) //initialise A3D
-		Com_Printf("\nEAX Extenstions Available\nA3D initialised\n");//engine returned EAX available
+		Com_Printf("\nEAX Extenstions Available\nA3D initialised.\n");//engine returned EAX available
 	else
-		Com_Printf("\nA3D initialised\n");
+		Com_Printf("\nA3D initialised.\n");
 
 	a3dsound_started = 1;//set the enabled flag
 }//initialize the A3D engine

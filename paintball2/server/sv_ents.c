@@ -558,7 +558,7 @@ qboolean SV_InvisibleToClient(edict_t *viewer, edict_t *seen)
 			tr = SV_Trace (start, vec3_origin, vec3_origin, end, NULL, MASK_OPAQUE);
             if (tr.fraction == 1)// line hit the ent
 			{
-				Com_DPrintf (va("found ent in %i hits\n", i));
+				Com_DPrintf (va("Found ent in %i hits.\n", i));
                     return false;
 			}
         }

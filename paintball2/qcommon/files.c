@@ -211,7 +211,7 @@ int FS_FOpenFileLCase (const char *filename, FILE **file) // jitlinux
 		return FS_FOpenFile(filename_lcase, file);
 
 	// Give up.  It really doesn't exist.
-	Com_DPrintf("FindFile: can't find %s\n", filename);
+	Com_DPrintf("FindFile: Can't find %s.\n", filename);
 	*file = NULL;
 	return -1;
 }
@@ -249,7 +249,7 @@ int FS_FOpenFile (const char *filename, FILE **file)
 
 			if (*file)
 			{		
-				Com_DPrintf("link file: %s\n",netpath);
+				Com_DPrintf("Link file: %s\n",netpath);
 				return FS_filelength (*file);
 			}
 
@@ -276,7 +276,7 @@ int FS_FOpenFile (const char *filename, FILE **file)
 					*file = fopen(pak->filename, "rb");
 
 					if (!*file)
-						Com_Error(ERR_FATAL, "Couldn't reopen %s", pak->filename);	
+						Com_Error(ERR_FATAL, "Couldn't reopen %s.", pak->filename);	
 
 					fseek(*file, pak->files[i].filepos, SEEK_SET);
 					return pak->files[i].filelen;
@@ -317,7 +317,7 @@ void FS_Read (void *buffer, int len, FILE *f)
 	read = fread(buffer, 1, len, f); // jit - optimized code a little.
 
 	if (read < len)
-		Com_Error(ERR_FATAL, "FS_Read: %d bytes read, should have been %d", read, len);
+		Com_Error(ERR_FATAL, "FS_Read: %d bytes read, should have been %d.", read, len);
 
 #if 0 // old code
 	int		block, remaining;
@@ -539,14 +539,14 @@ pack_t *FS_LoadPackFile (char *packfile)
 
 	fread(&header, 1, sizeof(header), packhandle);
 	if (LittleLong(header.ident) != IDPAKHEADER)
-		Com_Error(ERR_FATAL, "%s is not a packfile", packfile);
+		Com_Error(ERR_FATAL, "%s is not a packfile.", packfile);
 	header.dirofs = LittleLong(header.dirofs);
 	header.dirlen = LittleLong(header.dirlen);
 
 	numpackfiles = header.dirlen / sizeof(dpackfile_t);
 
 	if (numpackfiles > MAX_FILES_IN_PACK)
-		Com_Error(ERR_FATAL, "%s has %i files", packfile, numpackfiles);
+		Com_Error(ERR_FATAL, "%s has %i files.", packfile, numpackfiles);
 
 	newfiles = Z_Malloc(numpackfiles * sizeof (packfile_t));
 	fseek(packhandle, header.dirofs, SEEK_SET);
@@ -567,7 +567,7 @@ pack_t *FS_LoadPackFile (char *packfile)
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;
-	Com_Printf("Added packfile %s(%i files)\n", packfile, numpackfiles);
+	Com_Printf("Added packfile %s(%i files).\n", packfile, numpackfiles);
 
 	return pack;
 }
@@ -654,7 +654,7 @@ void FS_AddHomeAsGameDirectory(char *dir)
 	if (homedir) {
 		int len = snprintf(gdir, sizeof(gdir), "%s/.paintball2/%s/", homedir, dir);
 
-		Com_Printf("Using %s for writing\n",gdir);
+		Com_Printf("Using %s for writing.\n",gdir);
 		FS_CreatePath (gdir);
 
 		if ((len > 0) && (len < sizeof(gdir)) && (gdir[len-1] == '/'))
@@ -749,7 +749,7 @@ void FS_SetGamedir (char *dir)
 	if (strstr(dir, "..") || strstr(dir, "/")
 		|| strstr(dir, "\\") || strstr(dir, ":"))
 	{
-		Com_Printf("Gamedir should be a single filename, not a path\n");
+		Com_Printf("Gamedir should be a single filename, not a path.\n");
 		return;
 	}
 
@@ -813,7 +813,7 @@ void FS_Link_f (void)
 
 	if (Cmd_Argc() != 3)
 	{
-		Com_Printf("USAGE: link <from> <to>\n");
+		Com_Printf("Usage: link <from> <to>\n");
 		return;
 	}
 

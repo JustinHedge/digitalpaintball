@@ -451,7 +451,7 @@ void Cmd_Exec_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf("exec <filename> : execute a script file\n");
+		Com_Printf("Usage: exec <filename> : Execute a script file.\n");
 		return;
 	}
 
@@ -460,12 +460,12 @@ void Cmd_Exec_f (void)
 
 	if (!f)
 	{
-		Com_Printf("couldn't exec %s\n", configfile);
+		Com_Printf("Couldn't exec %s.\n", configfile);
 		return;
 	}
 
 	if (!Q_streq(Cmd_Argv(1), "z"))
-		Com_Printf("execing %s\n", configfile);
+		Com_Printf("Execing %s.\n", configfile);
 	
 	// the file doesn't have a trailing 0, so we need to copy it off
 	f2 = Z_Malloc(len + 2);
@@ -526,7 +526,7 @@ void Cmd_Alias_f (void)
 
 	if (strlen(s) >= MAX_ALIAS_NAME)
 	{
-		Com_Printf("Alias name is too long\n");
+		Com_Printf("Alias name is too long.\n");
 		return;
 	}
 
@@ -1036,7 +1036,7 @@ void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
 	// fail if the command is a variable name
 	if (Cvar_VariableString(cmd_name)[0])
 	{
-		Com_Printf("Cmd_AddCommand: %s already defined as a var\n", cmd_name);
+		Com_Printf("Cmd_AddCommand: %s already defined as a var.\n", cmd_name);
 		return;
 	}
 	
@@ -1045,7 +1045,7 @@ void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
 	{
 		if (Q_streq(cmd_name, cmd->name))
 		{
-			Com_Printf("Cmd_AddCommand: %s already defined\n", cmd_name);
+			Com_Printf("Cmd_AddCommand: %s already defined.\n", cmd_name);
 			return;
 		}
 	}
@@ -1074,7 +1074,7 @@ void Cmd_RemoveCommand (char *cmd_name)
 
 		if (!cmd)
 		{
-			Com_Printf ("Cmd_RemoveCommand: %s not added\n", cmd_name);
+			Com_Printf ("Cmd_RemoveCommand: %s not added.\n", cmd_name);
 			return;
 		}
 
@@ -1218,7 +1218,7 @@ char *Cmd_CompleteCommand (char *partial)
 			p++;
 		}
 
-		Com_Printf("Found %i matches\n",i);
+		Com_Printf("Found %i matches.\n",i);
 
 		if (returnfullname) // jit
 			return returnfullname;
@@ -1327,7 +1327,7 @@ void Cmd_List_f (void)
 	for (cmd = cmd_functions; cmd; cmd = cmd->next, i++)
 		Com_Printf("%s\n", cmd->name);
 
-	Com_Printf("%i commands\n", i);
+	Com_Printf("%i commands.\n", i);
 }
 
 /*

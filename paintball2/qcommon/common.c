@@ -248,7 +248,7 @@ void Com_Error (int code, char *fmt, ...)
 //	assert(Q_streq(fmt, "Disconnected from server")); // jitdebug
 
 	if (recursive)
-		Sys_Error("recursive error after: %s", msg);
+		Sys_Error("Recursive error after: %s", msg);
 
 	recursive = true;
 	va_start(argptr,fmt);
@@ -551,7 +551,7 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 	int		bits;
 
 	if (!to->number)
-		Com_Error (ERR_FATAL, "Unset entity number");
+		Com_Error (ERR_FATAL, "Unset entity number.");
 	if (to->number >= MAX_EDICTS)
 		Com_Error (ERR_FATAL, "Entity number >= MAX_EDICTS");
 
@@ -1245,7 +1245,7 @@ Z_Stats_f
 */
 void Z_Stats_f (void)
 {
-	Com_Printf("%i bytes in %i blocks\n", z_bytes, z_count);
+	Com_Printf("%i bytes in %i blocks.\n", z_bytes, z_count);
 }
 
 /*
@@ -1391,7 +1391,7 @@ byte	COM_BlockSequenceCRCByte (byte *base, int length, int sequence)
 	unsigned short crc;
 
 	if (sequence < 0)
-		Sys_Error("sequence < 0, this shouldn't happen\n");
+		Sys_Error("Sequence < 0, this shouldn't happen.\n");
 
 	p = chktbl + (sequence % (sizeof(chktbl) - 4));
 
@@ -1453,7 +1453,7 @@ void Qcommon_Init (int argc, char **argv)
 	char *s;
 
 	if (setjmp (abortframe))
-		Sys_Error ("Error during initialization");
+		Sys_Error ("Error during initialization.");
 
 	z_chain.next = z_chain.prev = &z_chain;
 
@@ -1540,7 +1540,7 @@ void Qcommon_Init (int argc, char **argv)
 		SCR_EndLoadingPlaque();
 	}
 
-	Com_Printf ("====== Paintball II Initialized ======\n\n");
+	Com_Printf ("===== Paintball II Initialized =====\n\n");
 }
 
 /*

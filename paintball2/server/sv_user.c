@@ -45,7 +45,7 @@ void SV_BeginDemoserver (void)
 	FS_FOpenFile(name, &sv.demofile);
 
 	if (!sv.demofile)
-		Com_Error(ERR_DROP, "Couldn't open %s\n", name);
+		Com_Error(ERR_DROP, "Couldn't open %s.\n", name);
 }
 
 
@@ -80,11 +80,11 @@ void SV_New_f (void)
 	int			playernum;
 	edict_t		*ent;
 
-	Com_DPrintf("New() from %s\n", sv_client->name);
+	Com_DPrintf("New() from %s.\n", sv_client->name);
 
 	if (sv_client->state != cs_connected)
 	{
-		Com_Printf("New not valid -- already spawned\n");
+		Com_Printf("New not valid -- already spawned.\n");
 		return;
 	}
 
@@ -150,18 +150,18 @@ void SV_Configstrings_f (void)
 {
 	int start;
 
-	Com_DPrintf("Configstrings() from %s\n", sv_client->name);
+	Com_DPrintf("Configstrings() from %s.\n", sv_client->name);
 
 	if (sv_client->state != cs_connected)
 	{
-		Com_Printf("configstrings not valid -- already spawned\n");
+		Com_Printf("Configstrings not valid -- already spawned.\n");
 		return;
 	}
 
 	// handle the case of a level changing while a client was connecting
 	if (atoi(Cmd_Argv(1)) != svs.spawncount && !sv.attractloop) // jitdemo - multi-map demo support
 	{
-		Com_Printf("SV_Configstrings_f from different level\n");
+		Com_Printf("SV_Configstrings_f from different level.\n");
 		SV_New_f();
 		return;
 	}
@@ -209,18 +209,18 @@ void SV_Baselines_f (void)
 	entity_state_t	nullstate;
 	entity_state_t	*base;
 
-	Com_DPrintf ("Baselines() from %s\n", sv_client->name);
+	Com_DPrintf ("Baselines() from %s.\n", sv_client->name);
 
 	if (sv_client->state != cs_connected)
 	{
-		Com_Printf ("baselines not valid -- already spawned\n");
+		Com_Printf ("Baselines not valid -- already spawned.\n");
 		return;
 	}
 	
 	// handle the case of a level changing while a client was connecting
 	if (atoi(Cmd_Argv(1)) != svs.spawncount && !sv.attractloop) // jitdemo - multi-map support
 	{
-		Com_Printf("SV_Baselines_f from different level\n");
+		Com_Printf("SV_Baselines_f from different level.\n");
 		SV_New_f();
 		return;
 	}
@@ -267,12 +267,12 @@ SV_Begin_f
 */
 void SV_Begin_f (void)
 {
-	Com_DPrintf("Begin() from %s\n", sv_client->name);
+	Com_DPrintf("Begin() from %s.\n", sv_client->name);
 
 	// handle the case of a level changing while a client was connecting
 	if (atoi(Cmd_Argv(1)) != svs.spawncount)
 	{
-		Com_Printf("SV_Begin_f from different level\n");
+		Com_Printf("SV_Begin_f from different level.\n");
 		SV_New_f();
 		return;
 	}
@@ -407,7 +407,7 @@ void SV_BeginDownload_f (void)
 
 	if (!sv_client->download)
 	{
-		Com_DPrintf("Couldn't download %s to %s\n", name, sv_client->name);
+		Com_DPrintf("Couldn't download %s to %s.\n", name, sv_client->name);
 		MSG_WriteByte(&sv_client->netchan.message, svc_download);
 		MSG_WriteShort(&sv_client->netchan.message, -1);
 		MSG_WriteByte(&sv_client->netchan.message, 0);
@@ -415,7 +415,7 @@ void SV_BeginDownload_f (void)
 	}
 
 	SV_NextDownload_f();
-	Com_DPrintf("Downloading %s to %s\n", name, sv_client->name);
+	Com_DPrintf("Downloading %s to %s.\n", name, sv_client->name);
 }
 
 
@@ -505,7 +505,7 @@ void SV_BeginDownload3_f (void) // jitdownload
 
 	if (!sv_client->download)
 	{
-		Com_DPrintf("Couldn't download %s to %s\n", download_filename, sv_client->name);
+		Com_DPrintf("Couldn't download %s to %s.\n", download_filename, sv_client->name);
 		MSG_WriteByte(&sv_client->netchan.message, svc_download);
 		MSG_WriteShort(&sv_client->netchan.message, -1);
 		MSG_WriteByte(&sv_client->netchan.message, 0);
@@ -536,7 +536,7 @@ void SV_BeginDownload3_f (void) // jitdownload
 	MSG_WriteByte(&sv_client->netchan.message, 0); // tell client which compression algorithm to use (0 = none)
 	MSG_WriteString(&sv_client->netchan.message, download_filename); // tell client what filename should be.
 	MSG_WriteLong(&sv_client->netchan.message, md5sum); // md5 checksum of the file, for validation.
-	Com_DPrintf("Downloading %s to %s\n", download_filename, sv_client->name);
+	Com_DPrintf("Downloading %s to %s.\n", download_filename, sv_client->name);
 }
 
 
@@ -576,7 +576,7 @@ void SV_ConfirmDownload3_f (void)
 #ifdef WIN32
 		assert(client_fileid == sv_client->download3_fileid);
 #endif
-		Com_Printf("Client sent dl3ack for fileid %d when server was on fileid %d\n", client_fileid, sv_client->download3_fileid);
+		Com_Printf("Client sent dl3ack for fileid %d when server was on fileid %d.\n", client_fileid, sv_client->download3_fileid);
 		return;
 	}
 
@@ -714,11 +714,11 @@ to the next server,
 void SV_Nextserver_f (void)
 {
 	if ( atoi(Cmd_Argv(1)) != svs.spawncount ) {
-		Com_DPrintf ("Nextserver() from wrong level, from %s\n", sv_client->name);
+		Com_DPrintf ("Nextserver() from wrong level, from %s.\n", sv_client->name);
 		return;		// leftover from last server
 	}
 
-	Com_DPrintf ("Nextserver() from %s\n", sv_client->name);
+	Com_DPrintf ("Nextserver() from %s.\n", sv_client->name);
 
 	SV_Nextserver ();
 }
@@ -814,7 +814,7 @@ void SV_ClientThink (client_t *cl, usercmd_t *cmd)
 
 	if (cl->commandMsec < 0)
 	{
-		Com_DPrintf("commandMsec underflow from %s\n", cl->name);
+		Com_DPrintf("commandMsec underflow from %s.\n", cl->name);
 
 		if (sv_enforcetime->value == 1.0f)
 			return; // old-style sv_enforcetime
@@ -930,7 +930,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 
 			if (calculatedChecksum != checksum)
 			{
-				Com_DPrintf("Failed command checksum for %s (%d != %d)/%d\n", 
+				Com_DPrintf("Failed command checksum for %s (%d != %d)/%d.\n", 
 					cl->name, calculatedChecksum, checksum, 
 					cl->netchan.incoming_sequence);
 				return;

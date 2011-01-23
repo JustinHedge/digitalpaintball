@@ -224,7 +224,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 	if (chan->message.overflowed)
 	{
 		chan->fatal_error = true;
-		Com_Printf("%s:Outgoing message overflow\n", NET_AdrToString(chan->remote_address));
+		Com_Printf("%s:Outgoing message overflow.\n", NET_AdrToString(chan->remote_address));
 		return;
 	}
 
@@ -354,7 +354,7 @@ qboolean Netchan_Process (netchan_t *chan, sizebuf_t *msg)
 	if (sequence <= chan->incoming_sequence)
 	{
 		if (showdrop->value)
-			Com_Printf ("%s:Out of order packet %i at %i\n"
+			Com_Printf ("%s:Out of order packet %i at %i.\n"
 				, NET_AdrToString (chan->remote_address)
 				,  sequence
 				, chan->incoming_sequence);
@@ -368,7 +368,7 @@ qboolean Netchan_Process (netchan_t *chan, sizebuf_t *msg)
 	if (chan->dropped > 0)
 	{
 		if (showdrop->value)
-			Com_Printf ("%s:Dropped %i packets at %i\n"
+			Com_Printf ("%s:Dropped %i packets at %i.\n"
 			, NET_AdrToString (chan->remote_address)
 			, chan->dropped
 			, sequence);

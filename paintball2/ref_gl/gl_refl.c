@@ -110,14 +110,14 @@ void R_init_refl (int maxNoReflections)
 		g_refl_images[i] = GL_CreateBlankImage("_reflection", g_reflTexW, g_reflTexH, it_pic);
 
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "Reflection texture %d texnum = %d\n", i, g_refl_images[i]->texnum);
+			ri.Con_Printf(PRINT_ALL, "Reflection texture %d texnum = %d.\n", i, g_refl_images[i]->texnum);
 	}
 
 	if (gl_debug->value)
 	{
-		ri.Con_Printf(PRINT_ALL, "Initialising reflective textures\n");
-		ri.Con_Printf(PRINT_ALL, "...reflective texture size set at %d\n",g_reflTexH);
-		ri.Con_Printf(PRINT_ALL, "...maximum reflective textures %d\n", maxReflections);
+		ri.Con_Printf(PRINT_ALL, "Initialising reflective textures.\n");
+		ri.Con_Printf(PRINT_ALL, "...reflective texture size set at %d.\n",g_reflTexH);
+		ri.Con_Printf(PRINT_ALL, "...maximum reflective textures %d.\n", maxReflections);
 	}
 
 	// === jitwater - fragment program initializiation
@@ -135,7 +135,7 @@ void R_init_refl (int maxNoReflections)
 		}
 		else
 		{
-			ri.Con_Printf(PRINT_ALL, "Unable to find scripts/water1.arbf\n");
+			ri.Con_Printf(PRINT_ALL, "Unable to find scripts/water1.arbf.\n");
 		}
 		
 		// Make sure the program loaded correctly

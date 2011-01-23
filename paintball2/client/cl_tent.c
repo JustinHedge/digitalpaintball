@@ -412,7 +412,7 @@ int CL_ParseBeam (struct model_s *model)
 			return ent;
 		}
 	}
-	Com_Printf ("beam list overflow!\n");	
+	Com_Printf ("Beam list overflow!\n");	
 	return ent;
 }
 
@@ -464,7 +464,7 @@ int CL_ParseBeam2 (struct model_s *model)
 			return ent;
 		}
 	}
-	Com_Printf ("beam list overflow!\n");	
+	Com_Printf ("Beam list overflow!\n");	
 	return ent;
 }
 
@@ -529,7 +529,7 @@ int CL_ParsePlayerBeam (struct model_s *model)
 			return ent;
 		}
 	}
-	Com_Printf ("beam list overflow!\n");	
+	Com_Printf ("Beam list overflow!\n");	
 	return ent;
 }
 //rogue
@@ -583,7 +583,7 @@ int CL_ParseLightning (struct model_s *model)
 			return srcEnt;
 		}
 	}
-	Com_Printf ("beam list overflow!\n");	
+	Com_Printf ("Beam list overflow!\n");	
 	return srcEnt;
 }
 

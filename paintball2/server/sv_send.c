@@ -227,7 +227,7 @@ void SV_Multicast (vec3_t origin, multicast_t to)
 
 	default:
 		mask = NULL;
-		Com_Error (ERR_FATAL, "SV_Multicast: bad to:%i", to);
+		Com_Error (ERR_FATAL, "SV_Multicast: Bad to: %i", to);
 	}
 
 	// send the data to all relevent clients
@@ -297,16 +297,16 @@ void SV_StartSound (vec3_t origin, edict_t *entity, int channel,
 	qboolean	use_phs;
 
 	if (volume < 0 || volume > 1.0)
-		Com_Error (ERR_FATAL, "SV_StartSound: volume = %f", volume);
+		Com_Error (ERR_FATAL, "SV_StartSound: Volume = %f", volume);
 
 	if (attenuation < 0 || attenuation > 4)
-		Com_Error (ERR_FATAL, "SV_StartSound: attenuation = %f", attenuation);
+		Com_Error (ERR_FATAL, "SV_StartSound: Attenuation = %f", attenuation);
 
 //	if (channel < 0 || channel > 15)
-//		Com_Error (ERR_FATAL, "SV_StartSound: channel = %i", channel);
+//		Com_Error (ERR_FATAL, "SV_StartSound: Channel = %i", channel);
 
 	if (timeofs < 0 || timeofs > 0.255)
-		Com_Error (ERR_FATAL, "SV_StartSound: timeofs = %f", timeofs);
+		Com_Error (ERR_FATAL, "SV_StartSound: Timeofs = %f", timeofs);
 
 	ent = NUM_FOR_EDICT(entity);
 
@@ -430,14 +430,14 @@ qboolean SV_SendClientDatagram (client_t *client)
 	// it is necessary for this to be after the WriteEntities
 	// so that entity references will be current
 	if (client->datagram.overflowed)
-		Com_Printf ("WARNING: datagram overflowed for %s\n", client->name);
+		Com_Printf ("WARNING: Datagram overflowed for %s.\n", client->name);
 	else
 		SZ_Write (&msg, client->datagram.data, client->datagram.cursize);
 	SZ_Clear (&client->datagram);
 
 	if (msg.overflowed)
 	{	// must have room left for the packet header
-		Com_Printf ("WARNING: msg overflowed for %s\n", client->name);
+		Com_Printf ("WARNING: msg overflowed for %s.\n", client->name);
 		SZ_Clear (&msg);
 	}
 
@@ -576,7 +576,7 @@ void SV_SendClientMessages (void)
 		{
 			SZ_Clear(&c->netchan.message);
 			SZ_Clear(&c->datagram);
-			SV_BroadcastPrintf(PRINT_HIGH, "%s overflowed\n", c->name);
+			SV_BroadcastPrintf(PRINT_HIGH, "%s overflowed.\n", c->name);
 			SV_DropClient(c);
 			//caused too many zombies, removed. continue; // jitoverflow -- don't actually drop them, just lose the data.
 		}

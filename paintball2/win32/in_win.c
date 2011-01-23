@@ -554,7 +554,7 @@ void IN_StartupJoystick (void)
 	// verify joystick driver is present
 	if ((numdevs = joyGetNumDevs ()) == 0)
 	{
-//		Com_Printf ("\njoystick not found -- driver not present\n\n");
+//		Com_Printf ("\nJoystick not found:\nDriver not present.\n\n");
 		return;
 	}
 
@@ -572,7 +572,7 @@ void IN_StartupJoystick (void)
 	// abort startup if we didn't find a valid joystick
 	if (mmr != JOYERR_NOERROR)
 	{
-		Com_Printf ("\njoystick not found -- no valid joysticks (%x)\n\n", mmr);
+		Com_Printf ("\nJoystick not found:\nNo valid joysticks (%x).\n\n", mmr);
 		return;
 	}
 
@@ -581,7 +581,7 @@ void IN_StartupJoystick (void)
 	memset (&jc, 0, sizeof(jc));
 	if ((mmr = joyGetDevCaps (joy_id, &jc, sizeof(jc))) != JOYERR_NOERROR)
 	{
-		Com_Printf ("\njoystick not found -- invalid joystick capabilities (%x)\n\n", mmr); 
+		Com_Printf ("\nJoystick not found:\nInvalid joystick capabilities (%x).\n\n", mmr); 
 		return;
 	}
 
@@ -598,7 +598,7 @@ void IN_StartupJoystick (void)
 	joy_avail = true; 
 	joy_advancedinit = false;
 
-	Com_Printf ("\njoystick detected\n\n"); 
+	Com_Printf ("\nJoystick detected.\n\n"); 
 }
 
 
@@ -663,7 +663,7 @@ void Joy_AdvancedUpdate_f (void)
 		if (!Q_streq(joy_name->string, "joystick"))
 		{
 			// notify user of advanced controller
-			Com_Printf ("\n%s configured\n\n", joy_name->string);
+			Com_Printf ("\n%s configured.\n\n", joy_name->string);
 		}
 
 		// advanced initialization here

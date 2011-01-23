@@ -135,14 +135,15 @@ void CL_Toggle_f (void)
 {
 	cvar_t *var;
 
-	if (Cmd_Argc() != 2) {
-		Com_Printf ("cvar_toggle <cvar>\n");
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf ("Usage: cvar_toggle <cvar>\n");
 		return;
 	}
 
 	var = Cvar_FindVar(Cmd_Argv(1));
 	if (!var) {
-		Com_Printf ("Unknown cvar '%s'\n", Cmd_Argv(1));
+		Com_Printf ("Unknown cvar '%s'.\n", Cmd_Argv(1));
 		return;
 	}
 
@@ -160,7 +161,7 @@ void CL_Increase_f (void)
 
 	if (argc < 3)
 	{
-		Com_Printf("cvar_inc <cvar> <value> [min] [max]\n");
+		Com_Printf("Usage: cvar_inc <cvar> <value> [min] [max]\n");
 		return;
 	}
 
@@ -168,7 +169,7 @@ void CL_Increase_f (void)
 
 	if (!var)
 	{
-		Com_Printf("Unknown cvar '%s'\n", Cmd_Argv(1));
+		Com_Printf("Unknown cvar '%s'.\n", Cmd_Argv(1));
 		return;
 	}
 
@@ -195,7 +196,7 @@ void CL_CatCvar_f (void) // jitconfig
 
 	if (Cmd_Argc() < 2)
 	{
-		Com_Printf("cvar_cat <cvar> <string>\n");
+		Com_Printf("Usage: cvar_cat <cvar> <string>\n");
 		return;
 	}
 
@@ -203,7 +204,7 @@ void CL_CatCvar_f (void) // jitconfig
 
 	if (!var)
 	{
-		Com_Printf("Unknown cvar '%s'\n", Cmd_Argv(1));
+		Com_Printf("Unknown cvar '%s'.\n", Cmd_Argv(1));
 		return;
 	}
 
@@ -256,7 +257,7 @@ void CL_Stop_f (void)
 	fclose (cls.demofile);
 	cls.demofile = NULL;
 	cls.demorecording = false;
-	Com_Printf ("Stopped demo.\n");
+	Com_Printf ("Stopped recording a demo.\n");
 }
 
 
@@ -305,7 +306,7 @@ void CL_RecordFile (const char *sDemoName) // jitdemo
 		Com_sprintf(name, sizeof(name), "%s/demos/%s_%03d.dm2", FS_Gamedir(), sDemoName, ++i);
 	// jitdemo ===
 
-	Com_Printf("recording to %s.\n", name);
+	Com_Printf("Recording to %s.\n", name);
 	FS_CreatePath(name);
 	cls.demofile = fopen(name, "wb");
 
@@ -424,7 +425,7 @@ void CL_Record_f (void)
 {
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf("record <demoname>\n");
+		Com_Printf("Usage: record <demoname>\n");
 		return;
 	}
 
@@ -481,7 +482,7 @@ void Cmd_ForwardToServer (void)
 
 	if (cls.state <= ca_connected || *cmd == '-' || *cmd == '+')
 	{
-		Com_Printf ("Unknown command \"%s\"\n", cmd);
+		Com_Printf ("Unknown command \"%s\".\n", cmd);
 		return;
 	}
 
@@ -525,7 +526,7 @@ void CL_Setenv_f (void)
 		}
 		else
 		{
-			Com_Printf( "%s undefined\n", Cmd_Argv(1), env );
+			Com_Printf( "%s undefined.\n", Cmd_Argv(1), env );
 		}
 	}
 }
@@ -540,7 +541,7 @@ void CL_ForwardToServer_f (void)
 {
 	if (cls.state != ca_connected && cls.state != ca_active)
 	{
-		Com_Printf("Can't \"%s\", not connected\n", Cmd_Argv(0));
+		Com_Printf("Can't \"%s\", not connected.\n", Cmd_Argv(0));
 		return;
 	}
 	
@@ -725,13 +726,13 @@ void CL_Connect_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf("usage: connect <server>\n");
+		Com_Printf("Usage: connect <server>\n");
 		return;	
 	}
 	
 	// if running a local server, kill it and reissue
 	if (Com_ServerState())
-		SV_Shutdown("Server quit\n", false);
+		SV_Shutdown("Server quit.\n", false);
 	else
 		CL_Disconnect();
 
@@ -753,7 +754,7 @@ void CL_ParseURL_f (void) // jiturl
 
 	if (Cmd_Argc() < 2)
 	{
-		Com_Printf("usage: parse_url <url>\n");
+		Com_Printf("Usage: parse_url <url>\n");
 		return;
 	}
 
@@ -844,7 +845,7 @@ void CL_Rcon_f (void)
 		{
 			Com_Printf("You must either be connected,\n"
 						"or set the 'rcon_address' cvar\n"
-						"to issue rcon commands\n");
+						"to issue rcon commands.\n");
 			return;
 		}
 
@@ -934,7 +935,7 @@ void CL_Disconnect (void)
 
 void CL_Disconnect_f (void)
 {
-	Com_Error(ERR_DROP, "Disconnected from server");
+	Com_Error(ERR_DROP, "Disconnected from server.");
 }
 
 
@@ -956,7 +957,7 @@ void CL_Packet_f (void)
 
 	if (Cmd_Argc() != 3)
 	{
-		Com_Printf("packet <destination> <contents>\n");
+		Com_Printf("Usage: packet <destination> <contents>\n");
 		return;
 	}
 
@@ -964,7 +965,7 @@ void CL_Packet_f (void)
 
 	if (!NET_StringToAdr (Cmd_Argv(1), &adr))
 	{
-		Com_Printf("Bad address\n");
+		Com_Printf("Bad address.\n");
 		return;
 	}
 
@@ -1037,7 +1038,7 @@ void CL_Reconnect_f (void)
 
 	if (cls.state == ca_connected)
 	{
-		Com_Printf("reconnecting...\n");
+		Com_Printf("Reconnecting...\n");
 		cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 		cls.state = ca_connected;
 		MSG_WriteChar(&cls.netchan.message, clc_stringcmd);
@@ -1058,7 +1059,7 @@ void CL_Reconnect_f (void)
 		}
 
 		cls.state = ca_connecting;
-		Com_Printf("reconnecting...\n");
+		Com_Printf("Reconnecting...\n");
 		cl_scores_setinuse_all(false); // jitscores - clear scoreboard
 	}
 }
@@ -1172,7 +1173,7 @@ static void CL_ParseDownload3 (void)
 	if (md5sum_short != (unsigned short)(md5sum & 0xFFFF))
 	{
 		assert(md5sum_short == (unsigned short)(md5sum & 0xFFFF));
-		Com_Printf("MD5 sum failed for chunk %d\n", chunk);
+		Com_Printf("MD5 sum failed for chunk %d.\n", chunk);
 		return;
 	}
 
@@ -1367,7 +1368,7 @@ void CL_ConnectionlessPacket (void)
 		// server connection
 		if (cls.state == ca_connected)
 		{
-			Com_Printf("Dup connect received.  Ignored.\n");
+			Com_Printf("Dup connect received. Ignored.\n");
 			return;
 		}
 
@@ -1388,7 +1389,7 @@ void CL_ConnectionlessPacket (void)
 		// remote command from gui front end
 		if (!NET_IsLocalAddress(net_from))
 		{
-			Com_Printf("Command packet from remote host.  Ignored.\n");
+			Com_Printf("Command packet from remote host. Ignored.\n");
 			return;
 		}
 
@@ -1404,7 +1405,7 @@ void CL_ConnectionlessPacket (void)
 		s = MSG_ReadString(&net_message);
 		Com_Printf("%s", s);
 
-		if ((Q_streq(s, "Bad Password\nConnection refused.\n") || Q_streq(s, "Server is password protected.\nConnection refused.\n")) &&
+		if ((Q_streq(s, "Bad Password.\nConnection refused.\n") || Q_streq(s, "Server is password protected.\nConnection refused.\n")) &&
 			(cl_passwordpopup->value == 1))
 		{
 			Cbuf_AddText("disconnect; menu get_password\n");
@@ -1476,7 +1477,7 @@ when they overflow
 void CL_DumpPackets (void)
 {
 	while (NET_GetPacket(NS_CLIENT, &net_from, &net_message))
-		Com_Printf("dumnping a packet\n");
+		Com_Printf("Dumping a packet.\n");
 }
 
 
@@ -1508,14 +1509,14 @@ void CL_ReadPackets (void)
 
 		if (net_message.cursize < 8)
 		{
-			Com_Printf("%s: Runt packet\n", NET_AdrToString(net_from));
+			Com_Printf("%s: Runt packet.\n", NET_AdrToString(net_from));
 			continue;
 		}
 
 		// packet from server
 		if (!NET_CompareAdr (net_from, cls.netchan.remote_address))
 		{
-			Com_DPrintf("%s:sequenced packet without connection\n",
+			Com_DPrintf("%s: Sequenced packet without connection.\n",
 				NET_AdrToString(net_from));
 			continue;
 		}
@@ -2142,7 +2143,7 @@ void CL_AddLoc_f (void)
 {
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf("[FX Loc] Usage: loc_add <label/description>\n");
+		Com_Printf("Usage: loc_add <label/description>\n");
 		return;
 	}
 
@@ -2470,7 +2471,8 @@ void CL_WriteConfiguration (const char *filename) // jitconfig -- allow for writ
 
 void CL_WriteConfig_f (void) // jitconfig
 {
-	if (Cmd_Argc() != 2) {
+	if (Cmd_Argc() != 2)
+	{
 		Com_Printf("Usage: writeconfig <filename>\n");
 		return;
 	}
@@ -2872,7 +2874,7 @@ void CL_Shutdown (void)
 	
 	if (isdown)
 	{
-		printf("recursive shutdown\n");
+		printf("Recursive shutdown.\n");
 		return;
 	}
 

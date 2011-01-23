@@ -786,7 +786,7 @@ void RS_LoadScript (char *script)
 	if (!fbuf || len < 16) 
 	{
 		// jit -- removed -- don't want to confuse the newbies :)
-//		ri.Con_Printf(PRINT_ALL,"Could not load script %s\n",script);
+//		ri.Con_Printf(PRINT_ALL,"Could not load script %s.\n",script);
 		return;
 	}
 

@@ -196,7 +196,7 @@ void GL_ScreenShot_JPG (void)
 
 		if (i > 9999)   // T3RR0R15T: sshot# increased to 9999
 		{
-			ri.Con_Printf(PRINT_ALL, "SCR_JPGScreenShot_f: Too many files\n"); 
+			ri.Con_Printf(PRINT_ALL, "SCR_JPGScreenShot_f: Too many files.\n"); 
 			return;
  		}
 	}
@@ -206,7 +206,7 @@ void GL_ScreenShot_JPG (void)
 
 	if (!file)
 	{
-		ri.Con_Printf(PRINT_ALL, "SCR_JPGScreenShot_f: Couldn't create a file\n"); 
+		ri.Con_Printf(PRINT_ALL, "SCR_JPGScreenShot_f: Couldn't create a file.\n"); 
 		return;
  	}
 
@@ -266,7 +266,7 @@ void GL_ScreenShot_JPG (void)
 
 	// Done!
 	if (picname[0] != 'x' && picname[1] != '_')
-		ri.Con_Printf(PRINT_ALL, "Wrote %s\n", picname);
+		ri.Con_Printf(PRINT_ALL, "Wrote %s.\n", picname);
 }
 
 /* 
@@ -354,7 +354,7 @@ void GL_ScreenShot_f (void)
 
 	if (!f)
 	{
-		ri.Con_Printf(PRINT_ALL, "SCR_ScreenShot_f: Couldn't create a file\n"); 
+		ri.Con_Printf(PRINT_ALL, "SCR_ScreenShot_f: Couldn't create a file.\n"); 
 		return;
 	}
 
@@ -363,7 +363,7 @@ void GL_ScreenShot_f (void)
 	free(buffer);
 
 	if (picname[0] != 'x' && picname[1] != '_')
-		ri.Con_Printf(PRINT_ALL, "Wrote %s\n", picname);
+		ri.Con_Printf(PRINT_ALL, "Wrote %s.\n", picname);
 } 
 
 /*

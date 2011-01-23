@@ -1601,7 +1601,7 @@ qboolean R_SetMode (void)
 
 	if (vid_fullscreen->modified && !gl_config.allow_cds)
 	{
-		ri.Con_Printf(PRINT_ALL, "R_SetMode() - CDS not allowed with this driver\n");
+		ri.Con_Printf(PRINT_ALL, "R_SetMode() - CDS not allowed with this driver.\n");
 		ri.Cvar_SetValue("vid_fullscreen", !vid_fullscreen->value);
 		vid_fullscreen->modified = false;
 	}
@@ -1621,7 +1621,7 @@ qboolean R_SetMode (void)
 		{
 			ri.Cvar_SetValue("vid_fullscreen", 0);
 			vid_fullscreen->modified = false;
-			ri.Con_Printf(PRINT_ALL, "ref_gl::R_SetMode() - fullscreen unavailable in this mode\n");
+			ri.Con_Printf(PRINT_ALL, "ref_gl::R_SetMode() - Fullscreen unavailable in this mode.\n");
 
 			if ((err = GLimp_SetMode(&vid.width, &vid.height, gl_mode->value, false)) == rserr_ok)
 				return true;
@@ -1630,13 +1630,13 @@ qboolean R_SetMode (void)
 		{
 			ri.Cvar_SetValue("gl_mode", gl_state.prev_mode);
 			gl_mode->modified = false;
-			ri.Con_Printf(PRINT_ALL, "ref_gl::R_SetMode() - invalid mode\n");
+			ri.Con_Printf(PRINT_ALL, "ref_gl::R_SetMode() - Invalid mode.\n");
 		}
 
 		// try setting it back to something safe
 		if ((err = GLimp_SetMode(&vid.width, &vid.height, gl_state.prev_mode, false)) != rserr_ok)
 		{
-			ri.Con_Printf(PRINT_ALL, "ref_gl::R_SetMode() - could not revert to safe mode\n");
+			ri.Con_Printf(PRINT_ALL, "ref_gl::R_SetMode() - Could not revert to safe mode.\n");
 			return false;
 		}
 	}
@@ -1738,7 +1738,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	// initialize our QGL dynamic bindings
 	if (!QGL_Init(gl_driver->string))
 	{
-		ri.Con_Printf(PRINT_ALL, "ref_gl::R_Init() - could not load \"%s\"\n", gl_driver->string);
+		ri.Con_Printf(PRINT_ALL, "ref_gl::R_Init() - Could not load \"%s\".\n", gl_driver->string);
 
 		// if glide2x detects a voodoo present, switch modes to
 		// 3dfxgl, fullscreen, 640x480.
@@ -1781,7 +1781,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	if (!R_SetMode())
 	{
 		QGL_Shutdown();
-        ri.Con_Printf(PRINT_ALL, "ref_gl::R_Init() - could not R_SetMode()\n");
+        ri.Con_Printf(PRINT_ALL, "ref_gl::R_Init() - Could not R_SetMode().\n");
 		// ===
 		// jit -- error out if we can't load this, rather than crash!
 		Sys_Error("Error during initialization.\nMake sure you have an OpenGL capable video card and that the latest drivers are installed.");
@@ -1839,7 +1839,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	{
 		gl_config.renderer = GL_RENDERER_ATI;
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...ATi card workarounds will be used.\n");
+			ri.Con_Printf(PRINT_ALL, "...ATI card workarounds will be used.\n");
 	}
 	else
 		gl_config.renderer = GL_RENDERER_OTHER;
@@ -1849,7 +1849,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		if (gl_config.renderer == GL_RENDERER_PERMEDIA2)
 		{
 			ri.Cvar_Set("gl_monolightmap", "A");
-			ri.Con_Printf(PRINT_ALL, "...using gl_monolightmap 'a'\n");
+			ri.Con_Printf(PRINT_ALL, "...using gl_monolightmap 'a'.\n");
 		}
 		else if (gl_config.renderer & GL_RENDERER_POWERVR)
 		{
@@ -1897,9 +1897,9 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	if (gl_debug->value) // jit
 	{
 		if (gl_config.allow_cds)
-			ri.Con_Printf(PRINT_ALL, "...allowing CDS\n");
+			ri.Con_Printf(PRINT_ALL, "...allowing CDS.\n");
 		else
-			ri.Con_Printf(PRINT_ALL, "...disabling CDS\n");
+			ri.Con_Printf(PRINT_ALL, "...disabling CDS.\n");
 	}
 
 	/*
@@ -1909,14 +1909,14 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		 strstr(gl_config.extensions_string, "GL_SGI_compiled_vertex_array"))
 	{
 		if (gl_debug->value)// jit
-			ri.Con_Printf(PRINT_ALL, "...enabling GL_EXT_compiled_vertex_array\n");
+			ri.Con_Printf(PRINT_ALL, "...enabling GL_EXT_compiled_vertex_array.\n");
 
 		qglLockArraysEXT =(void*)qwglGetProcAddress("glLockArraysEXT");
 		qglUnlockArraysEXT =(void*)qwglGetProcAddress("glUnlockArraysEXT");
 	}
 	else if (gl_debug->value)
 	{
-		ri.Con_Printf(PRINT_ALL, "...GL_EXT_compiled_vertex_array not found\n");
+		ri.Con_Printf(PRINT_ALL, "...GL_EXT_compiled_vertex_array not found.\n");
 	}
 
 #ifdef _WIN32
@@ -1925,11 +1925,11 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		qwglSwapIntervalEXT =(BOOL(WINAPI*)(int))qwglGetProcAddress("wglSwapIntervalEXT");
 
 		if (gl_debug->value) // jit
-			ri.Con_Printf(PRINT_ALL, "...enabling WGL_EXT_swap_control\n");
+			ri.Con_Printf(PRINT_ALL, "...enabling WGL_EXT_swap_control.\n");
 	}
 	else if (gl_debug->value)
 	{
-		ri.Con_Printf(PRINT_ALL, "...WGL_EXT_swap_control not found\n");
+		ri.Con_Printf(PRINT_ALL, "...WGL_EXT_swap_control not found.\n");
 	}
 #endif
 
@@ -1941,16 +1941,16 @@ qboolean R_Init (void *hinstance, void *hWnd)
 			qglPointParameterfvEXT = (void(APIENTRY*)(GLenum, const GLfloat*))qwglGetProcAddress("glPointParameterfvEXT");
 
 			if (gl_debug->value)
-				ri.Con_Printf(PRINT_ALL, "...using GL_EXT_point_parameters\n");
+				ri.Con_Printf(PRINT_ALL, "...using GL_EXT_point_parameters.\n");
 		}
 		else if (gl_debug->value) // jit
 		{
-			ri.Con_Printf(PRINT_ALL, "...ignoring GL_EXT_point_parameters\n");
+			ri.Con_Printf(PRINT_ALL, "...ignoring GL_EXT_point_parameters.\n");
 		}
 	}
 	else if (gl_debug->value) // jit
 	{
-		ri.Con_Printf(PRINT_ALL, "...GL_EXT_point_parameters not found\n");
+		ri.Con_Printf(PRINT_ALL, "...GL_EXT_point_parameters not found.\n");
 	}
 
 	if (strstr(gl_config.extensions_string, "GL_ARB_multitexture"))
@@ -1958,7 +1958,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		if (gl_ext_multitexture->value)
 		{
 			if (gl_debug->value)
-				ri.Con_Printf(PRINT_ALL, "...using GL_ARB_multitexture\n");
+				ri.Con_Printf(PRINT_ALL, "...using GL_ARB_multitexture.\n");
 
 			qglMultiTexCoord2fARB = (void*)qwglGetProcAddress("glMultiTexCoord2fARB");
 			qglMultiTexCoord3fvARB = (void*)qwglGetProcAddress("glMultiTexCoord3fvARB");
@@ -1971,12 +1971,12 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		}
 		else if (gl_debug->value)
 		{
-			ri.Con_Printf(PRINT_ALL, "...ignoring GL_ARB_multitexture\n");
+			ri.Con_Printf(PRINT_ALL, "...ignoring GL_ARB_multitexture.\n");
 		}
 	}
 	else if (gl_debug->value)
 	{
-		ri.Con_Printf(PRINT_ALL, "...GL_ARB_multitexture not found\n");
+		ri.Con_Printf(PRINT_ALL, "...GL_ARB_multitexture not found.\n");
 	}
 
 	if (strstr(gl_config.extensions_string, "GL_SGIS_multitexture"))
@@ -1984,12 +1984,12 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		if (qglActiveTextureARB)
 		{
 			if (gl_debug->value)
-				ri.Con_Printf(PRINT_ALL, "...GL_SGIS_multitexture deprecated in favor of ARB_multitexture\n");
+				ri.Con_Printf(PRINT_ALL, "...GL_SGIS_multitexture deprecated in favor of ARB_multitexture.\n");
 		}
 		else if (gl_ext_multitexture->value)
 		{
 			if (gl_debug->value)
-				ri.Con_Printf(PRINT_ALL, "...using GL_SGIS_multitexture\n");
+				ri.Con_Printf(PRINT_ALL, "...using GL_SGIS_multitexture.\n");
 
 			qglMultiTexCoord2fARB = (void*)qwglGetProcAddress("glMTexCoord2fSGIS");
 			qglSelectTextureSGIS = (void*)qwglGetProcAddress("glSelectTextureSGIS");
@@ -1998,12 +1998,12 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		}
 		else if (gl_debug->value) // jit
 		{
-			ri.Con_Printf(PRINT_ALL, "...ignoring GL_SGIS_multitexture\n");
+			ri.Con_Printf(PRINT_ALL, "...ignoring GL_SGIS_multitexture.\n");
 		}
 	}
 	else if (gl_debug->value)
 	{
-		ri.Con_Printf(PRINT_ALL, "...GL_SGIS_multitexture not found\n");
+		ri.Con_Printf(PRINT_ALL, "...GL_SGIS_multitexture not found.\n");
 	}
 
 	// ===
@@ -2013,11 +2013,11 @@ qboolean R_Init (void *hinstance, void *hWnd)
 /*	if (strstr(gl_config.extensions_string, "GL_NV_texture_shader"))
 	{
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...using GL_NV_texture_shader\n");
+			ri.Con_Printf(PRINT_ALL, "...using GL_NV_texture_shader.\n");
 		gl_state.texshaders=true;
 	} else {
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...GL_NV_texture_shader not found\n");
+			ri.Con_Printf(PRINT_ALL, "...GL_NV_texture_shader not found.\n");
 		gl_state.texshaders=false;
 	}
 */
@@ -2029,14 +2029,14 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		if (gl_sgis_generate_mipmap->value)
 		{
 			if (gl_debug->value)
-				ri.Con_Printf(PRINT_ALL, "...using GL_SGIS_generate_mipmap\n");
+				ri.Con_Printf(PRINT_ALL, "...using GL_SGIS_generate_mipmap.\n");
 
 			gl_state.sgis_mipmap = true;
 		}
 		else
 		{
 			if (gl_debug->value)
-				ri.Con_Printf(PRINT_ALL, "...GL_SGIS_generate_mipmap found but disabled\n");
+				ri.Con_Printf(PRINT_ALL, "...GL_SGIS_generate_mipmap found but disabled.\n");
 
 			gl_state.sgis_mipmap = false;
 		}
@@ -2044,7 +2044,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	else
 	{
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...GL_SGIS_generate_mipmap not found\n");
+			ri.Con_Printf(PRINT_ALL, "...GL_SGIS_generate_mipmap not found.\n");
 
 		gl_state.sgis_mipmap = false;
 	}
@@ -2052,21 +2052,21 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	if (strstr(gl_config.extensions_string, "GL_NV_texture_rectangle"))
 	{
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...using GL_NV_texture_rectangle\n");
+			ri.Con_Printf(PRINT_ALL, "...using GL_NV_texture_rectangle.\n");
 
 		gl_state.tex_rectangle = GL_TEXTURE_RECTANGLE_NV; // jitblur
 	}
 	else if (strstr (gl_config.extensions_string, "GL_EXT_texture_rectangle"))
 	{
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...using GL_EXT_texture_rectangle\n");
+			ri.Con_Printf(PRINT_ALL, "...using GL_EXT_texture_rectangle.\n");
 
 		gl_state.tex_rectangle = GL_TEXTURE_RECTANGLE_NV; // jitodo(jitblur)
 	}
 	else
 	{
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...GL_EXT_texture_rectangle not found\n");
+			ri.Con_Printf(PRINT_ALL, "...GL_EXT_texture_rectangle not found.\n");
 
 		gl_state.tex_rectangle = 0; // jitblur
 	}
@@ -2077,14 +2077,14 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		if (!gl_ext_texture_compression->value)
 		{
 			if (gl_debug->value) // jit
-				ri.Con_Printf(PRINT_ALL, "...ignoring GL_ARB_texture_compression\n");
+				ri.Con_Printf(PRINT_ALL, "...ignoring GL_ARB_texture_compression.\n");
 
 			gl_state.texture_compression = false;
 		}
 		else
 		{
 			if (gl_debug->value)
-				ri.Con_Printf(PRINT_ALL, "...using GL_ARB_texture_compression\n");
+				ri.Con_Printf(PRINT_ALL, "...using GL_ARB_texture_compression.\n");
 
 			gl_state.texture_compression = true;
 		}
@@ -2092,7 +2092,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	else
 	{
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...GL_ARB_texture_compression not found\n");
+			ri.Con_Printf(PRINT_ALL, "...GL_ARB_texture_compression not found.\n");
 
 		gl_state.texture_compression = false;
 		ri.Cvar_Set("gl_ext_texture_compression", "0");
@@ -2116,7 +2116,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		gl_state.texture_combine = true;
 
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...using GL_ARB_texture_env_combine\n");
+			ri.Con_Printf(PRINT_ALL, "...using GL_ARB_texture_env_combine.\n");
 	}
 	else
 	{
@@ -2130,14 +2130,14 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		gl_state.fragment_program = false;
 
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...GL_ARB_fragment_program disabled\n");
+			ri.Con_Printf(PRINT_ALL, "...GL_ARB_fragment_program disabled.\n");
 	}
 	else if (strstr(gl_config.extensions_string, "GL_ARB_fragment_program"))
 	{
 		gl_state.fragment_program = true;
 
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...using GL_ARB_fragment_program\n");
+			ri.Con_Printf(PRINT_ALL, "...using GL_ARB_fragment_program.\n");
 
 		qglGenProgramsARB = (PFNGLGENPROGRAMSARBPROC)qwglGetProcAddress("glGenProgramsARB");
 		qglDeleteProgramsARB = (PFNGLDELETEPROGRAMSARBPROC)qwglGetProcAddress("glDeleteProgramsARB");
@@ -2154,7 +2154,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 			gl_state.fragment_program = false;
 
 			if (gl_debug->value)
-				ri.Con_Printf(PRINT_ALL, "... Failed!  Fragment programs disabled\n");
+				ri.Con_Printf(PRINT_ALL, "... Failed! Fragment programs disabled.\n");
 		}
 	}
 	else
@@ -2162,7 +2162,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		gl_state.fragment_program = false;
 
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...GL_ARB_fragment_program not found\n");
+			ri.Con_Printf(PRINT_ALL, "...GL_ARB_fragment_program not found.\n");
 	}
 	// jitwater ===
 
@@ -2183,13 +2183,13 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		gl_state.fbo = false;
 
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...GL_EXT_framebuffer_object not found\n");
+			ri.Con_Printf(PRINT_ALL, "...GL_EXT_framebuffer_object not found.\n");
 	}
 
 	if (strstr(gl_config.extensions_string, "GL_NV_register_combiners"))
 	{
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...using GL_NV_register_combiners\n");
+			ri.Con_Printf(PRINT_ALL, "...using GL_NV_register_combiners.\n");
 
 		qglCombinerParameterfvNV=(PFNGLCOMBINERPARAMETERFVNVPROC) qwglGetProcAddress("glCombinerParameterfvNV");
 		qglCombinerParameterfNV=(PFNGLCOMBINERPARAMETERFNVPROC) qwglGetProcAddress("glCombinerParameterfNV");
@@ -2208,7 +2208,7 @@ qboolean R_Init (void *hinstance, void *hWnd)
 		gl_state.reg_combiners=true;
 	} else {
 		if (gl_debug->value)
-			ri.Con_Printf(PRINT_ALL, "...ignoring GL_NV_register_combiners\n");
+			ri.Con_Printf(PRINT_ALL, "...ignoring GL_NV_register_combiners.\n");
 		gl_state.reg_combiners=false;
 	}
 

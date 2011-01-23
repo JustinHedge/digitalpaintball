@@ -243,7 +243,7 @@ void GL_TextureMode(const char *string )
 
 	if (i == NUM_GL_MODES)
 	{
-		ri.Con_Printf (PRINT_ALL, "bad filter name\n");
+		ri.Con_Printf (PRINT_ALL, "Bad filter name.\n");
 		return;
 	}
 
@@ -277,7 +277,7 @@ void GL_TextureAlphaMode( char *string )
 
 	if (i == NUM_GL_ALPHA_MODES)
 	{
-		ri.Con_Printf (PRINT_ALL, "bad alpha texture mode name\n");
+		ri.Con_Printf (PRINT_ALL, "Bad alpha texture mode name.\n");
 		return;
 	}
 
@@ -301,7 +301,7 @@ void GL_TextureSolidMode( char *string )
 
 	if (i == NUM_GL_SOLID_MODES)
 	{
-		ri.Con_Printf (PRINT_ALL, "bad solid texture mode name\n");
+		ri.Con_Printf (PRINT_ALL, "Bad solid texture mode name.\n");
 		return;
 	}
 
@@ -465,7 +465,7 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 	len = ri.FS_LoadFile(filename, &raw);
 	if (!raw)
 	{
-		//ri.Con_Printf (PRINT_DEVELOPER, "Bad pcx file %s\n", filename);
+		//ri.Con_Printf (PRINT_DEVELOPER, "Bad pcx file %s.\n", filename);
 		return;
 	}
 
@@ -496,7 +496,7 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 		|| pcx->xmax >= 640
 		|| pcx->ymax >= 480)
 	{
-		ri.Con_Printf(PRINT_ALL, "Bad pcx file %s\n", filename);
+		ri.Con_Printf(PRINT_ALL, "Bad pcx file %s.\n", filename);
 		return;
 	}
 
@@ -537,7 +537,7 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 
 	if ( raw - (byte *)pcx > len)
 	{
-		ri.Con_Printf (PRINT_DEVELOPER, "PCX file %s was malformed", filename);
+		ri.Con_Printf (PRINT_DEVELOPER, "PCX file %s was malformed.", filename);
 		free (*pic);
 		*pic = NULL;
 	}
@@ -752,7 +752,7 @@ void LoadTGA (char *name, byte **pic, int *width, int *height)
 
 	// jit - Knightmare- check for bad data
 	if (!targa_header.width || !targa_header.height) {
-		ri.Con_Printf (PRINT_ALL, "Bad tga file %s\n", name);
+		ri.Con_Printf (PRINT_ALL, "Bad tga file %s.\n", name);
 		ri.FS_FreeFile (buffer);
 		return;
 	}
@@ -947,7 +947,7 @@ void jpg_null(j_decompress_ptr cinfo)
 
 unsigned char jpg_fill_input_buffer(j_decompress_ptr cinfo)
 {
-    ri.Con_Printf(PRINT_ALL, "Premature end of JPEG data\n");
+    ri.Con_Printf(PRINT_ALL, "Premature end of JPEG data.\n");
     return 1;
 }
 
@@ -958,7 +958,7 @@ void jpg_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
     cinfo->src->bytes_in_buffer -= (size_t) num_bytes;
 
     if (cinfo->src->bytes_in_buffer < 0) 
-		ri.Con_Printf(PRINT_ALL, "Premature end of JPEG data\n");
+		ri.Con_Printf(PRINT_ALL, "Premature end of JPEG data.\n");
 }
 
 void jpeg_mem_src(j_decompress_ptr cinfo, byte *mem, int len)
@@ -995,7 +995,7 @@ void LoadJPG (char *filename, byte **pic, int *width, int *height)
 		||    rawdata[7] != 'F'
 		||    rawdata[8] != 'I'
 		||    rawdata[9] != 'F') {
-		ri.Con_Printf (PRINT_ALL, "Bad jpg file %s\n", filename);
+		ri.Con_Printf (PRINT_ALL, "Bad jpg file %s.\n", filename);
 		ri.FS_FreeFile(rawdata);
 		return;
 	}
@@ -1016,7 +1016,7 @@ void LoadJPG (char *filename, byte **pic, int *width, int *height)
 	// Check Colour Components
 	if (cinfo.output_components != 3)
 	{
-		ri.Con_Printf(PRINT_ALL, "Invalid JPEG colour components\n");
+		ri.Con_Printf(PRINT_ALL, "Invalid JPEG colour components.\n");
 		jpeg_destroy_decompress(&cinfo);
 		ri.FS_FreeFile(rawdata);
 		return;
@@ -1026,7 +1026,7 @@ void LoadJPG (char *filename, byte **pic, int *width, int *height)
 	rgbadata = malloc(cinfo.output_width * cinfo.output_height * 4);
 	if (!rgbadata)
 	{
-		ri.Con_Printf(PRINT_ALL, "Insufficient RAM for JPEG buffer\n");
+		ri.Con_Printf(PRINT_ALL, "Insufficient RAM for JPEG buffer.\n");
 		jpeg_destroy_decompress(&cinfo);
 		ri.FS_FreeFile(rawdata);
 		return;
@@ -1039,7 +1039,7 @@ void LoadJPG (char *filename, byte **pic, int *width, int *height)
 	scanline = malloc(cinfo.output_width * 3);
 	if (!scanline)
 	{
-		ri.Con_Printf(PRINT_ALL, "Insufficient RAM for JPEG scanline buffer\n");
+		ri.Con_Printf(PRINT_ALL, "Insufficient RAM for JPEG scanline buffer.\n");
 		free(rgbadata);
 		jpeg_destroy_decompress(&cinfo);
 		ri.FS_FreeFile(rawdata);
@@ -2115,7 +2115,7 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 
 			if (!image)
 			{
-				ri.Con_Printf(PRINT_ALL, "GL_FindImage: can't load %s\n", name_noext);
+				ri.Con_Printf(PRINT_ALL, "GL_FindImage: Can't load %s.\n", name_noext);
 				image = r_notexture;
 			}
 		}

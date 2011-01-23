@@ -427,7 +427,7 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 
 	if (!gl)
 	{
-		ri.Con_Printf (PRINT_ALL, "NULL pic in Draw_StretchPic\n");
+		ri.Con_Printf (PRINT_ALL, "NULL pic in Draw_StretchPic.\n");
 		return;
 	}
 
@@ -683,7 +683,7 @@ void Draw_TileClear2 (int x, int y, int w, int h, image_t *image)
 {
 	if (!image)
 	{
-		ri.Con_Printf (PRINT_ALL, "NULL pic in Draw_TileClear\n");
+		ri.Con_Printf (PRINT_ALL, "NULL pic in Draw_TileClear.\n");
 		return;
 	}
 

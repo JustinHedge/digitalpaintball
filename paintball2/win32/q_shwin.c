@@ -50,7 +50,7 @@ void *Hunk_Begin (int maxsize)
 	memset(membase, 0, maxsize);
 #endif
 	if (!membase)
-		Sys_Error("VirtualAlloc reserve failed");
+		Sys_Error("VirtualAlloc reserve failed.");
 
 	return (void *)membase;
 }
@@ -74,7 +74,7 @@ void *Hunk_Alloc (int size)
 #endif
 	cursize += size;
 	if (cursize > hunkmaxsize)
-		Sys_Error ("Hunk_Alloc overflow");
+		Sys_Error ("Hunk_Alloc overflow.");
 
 	return (void *)(membase+cursize-size);
 }
@@ -179,7 +179,7 @@ char *Sys_FindFirst (const char *path, unsigned musthave, unsigned canthave)
 	struct _finddata_t findinfo;
 
 	if (findhandle)
-		Sys_Error ("Sys_BeginFind without close");
+		Sys_Error ("Sys_BeginFind without close.");
 	findhandle = 0;
 
 	COM_FilePath((char *)path, findbase);

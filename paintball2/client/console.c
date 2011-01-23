@@ -216,7 +216,7 @@ void Con_Dump_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf("usage: condump <filename>\n");
+		Com_Printf("Usage: condump <filename>\n");
 		return;
 	}
 

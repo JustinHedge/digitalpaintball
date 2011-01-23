@@ -1754,7 +1754,7 @@ void Com_sprintf (char *dest, int size, char *fmt, ...)
 	NULLTERMINATE(bigbuffer); // jitsecurity -- make sure string is null terminated.
 
 	if (len >= size)
-		Com_Printf("Com_sprintf: overflow of %i in %i\n", len, size);
+		Com_Printf("Com_sprintf: overflow of %i in %i.\n", len, size);
 
 	assert(len < size); // jitdebug
 	Q_strncpyz(dest, bigbuffer, size); // jitsecurity - make sure string is terminated.
@@ -1850,7 +1850,7 @@ void Info_RemoveKey (char *s, const char *key)
 
 	if (strchr(key, '\\'))
 	{
-		//Com_Printf("Info_RemoveKey: Tried to remove illegal key '%s'\n", LOG_WARNING|LOG_GENERAL, key);
+		//Com_Printf("Info_RemoveKey: Tried to remove illegal key '%s'.\n", LOG_WARNING|LOG_GENERAL, key);
 		return;
 	}
 
@@ -1933,19 +1933,19 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 
 	if (strstr(key, "\\") || strstr(value, "\\"))
 	{
-		Com_Printf("Can't use keys or values with a \\\n");
+		Com_Printf("Can't use keys or values with a \\.\n");
 		return;
 	}
 
 	if (strstr(key, ";"))
 	{
-		Com_Printf("Can't use keys or values with a semicolon\n");
+		Com_Printf("Can't use keys or values with a semicolon.\n");
 		return;
 	}
 
 	if (strstr(key, "\"") || strstr(value, "\""))
 	{
-		Com_Printf("Can't use keys or values with a \"\n");
+		Com_Printf("Can't use keys or values with a \".\n");
 		return;
 	}
 

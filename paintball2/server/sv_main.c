@@ -204,12 +204,12 @@ SVC_Ack
 */
 void SVC_Ack (void)
 {
-	Com_Printf("Ping acknowledge from %s\n", NET_AdrToString(net_from));
+	Com_Printf("Ping acknowledge from %s.\n", NET_AdrToString(net_from));
 }
 
 void SVC_HeartbeatResponse (const char *sAddress) // jitheartbeat
 {
-	Com_Printf("Heartbeat acknowledged from %s\n", sAddress);
+	Com_Printf("Heartbeat acknowledged from %s.\n", sAddress);
 }
 
 
@@ -237,7 +237,7 @@ void SVC_Info (void)
 
 	if (version != PROTOCOL_VERSION)
 	{
-		Com_sprintf(string, sizeof(string), "%s: wrong version\n", hostname->string, sizeof(string));
+		Com_sprintf(string, sizeof(string), "%s: Wrong version.\n", hostname->string, sizeof(string));
 	}
 	else
 	{
@@ -338,7 +338,7 @@ void SVC_DirectConnect (void)
 	if (version != PROTOCOL_VERSION)
 	{
 		Netchan_OutOfBandPrint(NS_SERVER, adr, "print\nServer is version %4.2f.\n", VERSION);
-		Com_DPrintf("    rejected connect from version %i\n", version);
+		Com_DPrintf("    rejected connect from version %i.\n", version);
 		return;
 	}
 
@@ -355,7 +355,7 @@ void SVC_DirectConnect (void)
 	{
 		if (!NET_IsLocalAddress(adr))
 		{
-			Com_Printf("Remote connect in attract loop.  Ignored.\n");
+			Com_Printf("Remote connect in attract loop. Ignored.\n");
 			Netchan_OutOfBandPrint(NS_SERVER, adr, "print\nConnection refused.\n");
 			return;
 		}
@@ -386,7 +386,7 @@ void SVC_DirectConnect (void)
 	// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
 	if (sv_locked->value)
 	{
-		Com_DPrintf ("    server locked\n");
+		Com_DPrintf ("    server locked.\n");
 		Netchan_OutOfBandPrint (NS_SERVER, adr, "print\nServer is locked.\n");
 		return;
 	}
@@ -852,7 +852,7 @@ void SV_ConnectionlessPacket (void)
 	// 1024 is the absolute largest, but nothing should be over 600 unless it's malicious.
 	if (net_message.cursize > 800)
 	{
-		Com_Printf("Connectionless packet > 800 bytes from %s\n", NET_AdrToString(net_from));
+		Com_Printf("Connectionless packet > 800 bytes from %s.\n", NET_AdrToString(net_from));
 		return;
 	}
 
@@ -892,7 +892,7 @@ void SV_ConnectionlessPacket (void)
 		SVC_Download3Ack();
 #endif
 	else
-		Com_Printf("bad connectionless packet from %s:\n%s\n", NET_AdrToString(net_from), s);
+		Com_Printf("Bad connectionless packet from %s:\n%s\n", NET_AdrToString(net_from), s);
 }
 
 
@@ -1027,7 +1027,7 @@ void SV_ReadPackets (void)
 
 			if (cl->netchan.remote_address.port != net_from.port)
 			{
-				Com_Printf("SV_ReadPackets: fixing up a translated port\n");
+				Com_Printf("SV_ReadPackets: Fixing up a translated port.\n");
 				cl->netchan.remote_address.port = net_from.port;
 			}
 
@@ -1146,7 +1146,7 @@ void SV_CheckTimeouts (void)
 		if ((cl->state == cs_connected || cl->state == cs_spawned) 
 			&& cl->lastmessage < droppoint)
 		{
-			SV_BroadcastPrintf(PRINT_HIGH, "%s timed out\n", cl->name);
+			SV_BroadcastPrintf(PRINT_HIGH, "%s timed out.\n", cl->name);
 			SV_DropClient(cl); 
 			cl->state = cs_free;	// don't bother with zombie state
 		}
@@ -1324,7 +1324,7 @@ void Master_Heartbeat (void)
 	{
 		if (master_adr[i].port)
 		{
-			Com_Printf("Sending heartbeat to %s\n", NET_AdrToString(master_adr[i]));
+			Com_Printf("Sending heartbeat to %s.\n", NET_AdrToString(master_adr[i]));
 			Netchan_OutOfBandPrint(NS_SERVER, master_adr[i], "heartbeat\n%s", string);
 		}
 	}
@@ -1355,7 +1355,7 @@ void Master_Shutdown (void)
 		if (master_adr[i].port)
 		{
 			if (i > 0)
-				Com_Printf("Sending heartbeat to %s\n", NET_AdrToString(master_adr[i]));
+				Com_Printf("Sending heartbeat to %s.\n", NET_AdrToString(master_adr[i]));
 
 			Netchan_OutOfBandPrint(NS_SERVER, master_adr[i], "shutdown");
 		}

@@ -559,7 +559,7 @@ void Mod_LoadTexinfo (lump_t *l)
 
 		if (!out->image && !out->script)
 		{
-			ri.Con_Printf (PRINT_ALL, "Couldn't load %s\n", name);
+			ri.Con_Printf (PRINT_ALL, "Couldn't load %s.\n", name);
 			out->image = GL_FindImage ("pics/noimage.tga", it_pic);
 
 			if (!out->image)
@@ -1011,13 +1011,13 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	loadmodel->type = mod_brush;
 
 	if (loadmodel != mod_known)
-		ri.Sys_Error(ERR_DROP, "Loaded a brush model after the world");
+		ri.Sys_Error(ERR_DROP, "Loaded a brush model after the world.");
 
 	header = (dheader_t*)buffer;
 	i = LittleLong(header->version);
 
 	if (i != BSPVERSION)
-		ri.Sys_Error(ERR_DROP, "Mod_LoadBrushModel: %s has wrong version number (%i should be %i)", mod->name, i, BSPVERSION);
+		ri.Sys_Error(ERR_DROP, "Mod_LoadBrushModel: %s has wrong version number (%i should be %i).", mod->name, i, BSPVERSION);
 
 // swap all the lumps
 	mod_base = (byte*)header;

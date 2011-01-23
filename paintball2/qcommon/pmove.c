@@ -1250,7 +1250,7 @@ void PM_InitialSnapPosition (void)
 		}
 	}
 
-	Com_DPrintf("Bad InitialSnapPosition\n");
+	Com_DPrintf("Bad InitialSnapPosition.\n");
 }
 
 

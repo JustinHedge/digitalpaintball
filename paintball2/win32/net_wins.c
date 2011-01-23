@@ -237,7 +237,7 @@ qboolean NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 
 			if (err == WSAEMSGSIZE)
 			{
-				Com_Printf("Warning: Oversize packet from %s\n", NET_AdrToString(*net_from));
+				Com_Printf("WARNING: Oversize packet from %s.\n", NET_AdrToString(*net_from));
 				continue;
 			}
 
@@ -247,7 +247,7 @@ qboolean NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 
 		if (ret == net_message->maxsize)
 		{
-			Com_Printf("Oversize packet from %s\n", NET_AdrToString(*net_from));
+			Com_Printf("Oversize packet from %s.\n", NET_AdrToString(*net_from));
 			continue;
 		}
 
@@ -330,7 +330,7 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 		{
 			if (err == WSAEADDRNOTAVAIL)
 			{
-				Com_DPrintf("NET_SendPacket Warning: %s : %s\n", 
+				Com_DPrintf("NET_SendPacket WARNING: %s : %s\n", 
 						NET_ErrorString(), NET_AdrToString(to));
 			}
 			else
@@ -383,7 +383,7 @@ int NET_TCPConnect (SOCKET sockfd, char *net_remote_address, int port)
 
 	if (!net_remote_address || !net_remote_address[0])
 	{
-		Com_Printf("WARNING: TCP_Connect: No host specified\n");
+		Com_Printf("WARNING: TCP_Connect: No host specified.\n");
 		closesocket(sockfd);
 		return 0;
 	}
@@ -613,7 +613,7 @@ void NET_Init (void)
 	if (r)
 		Com_Error(ERR_FATAL,"Winsock initialization failed.");
 
-	Com_Printf("Winsock Initialized\n");
+	Com_Printf("Winsock Initialized.\n");
 	noudp = Cvar_Get("noudp", "0", CVAR_NOSET);
 	noipx = Cvar_Get("noipx", "1", CVAR_NOSET);
 	net_shownet = Cvar_Get("net_shownet", "0", 0);

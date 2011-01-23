@@ -121,7 +121,7 @@ void S_SoundInfo_f(void)
 {
 	if (!sound_started)
 	{
-		Com_Printf ("sound system not started\n");
+		Com_Printf ("Sound system not started!\n");
 		return;
 	}
 	
@@ -145,12 +145,12 @@ void S_Init (void)
 {
 	cvar_t	*cv;
 
-	Com_Printf("\n------- sound initialization -------\n");
+	Com_Printf("\n------- Sound initialization -------\n");
 	cv = Cvar_Get("s_initsound", "1", 0);
 
 	if (!cv->value)
 	{
-		Com_Printf("not initializing.\n");
+		Com_Printf("Not initializing.\n");
 	}
 	else
 	{
@@ -270,7 +270,7 @@ void S_Init (void)
 			S_InitScaletable ();
 
 			sound_started = 1;
-				Com_Printf ("sound sampling rate: %i\n", dma.speed);
+				Com_Printf ("Sound sampling rate: %i\n", dma.speed);
 		}
 #endif
 		num_sfx = 0;

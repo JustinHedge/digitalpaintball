@@ -95,7 +95,7 @@ void PF_cprintf (edict_t *ent, int level, char *fmt, ...)
 	{
 		n = NUM_FOR_EDICT(ent);
 		if (n < 1 || n > maxclients->value)
-			Com_Error(ERR_DROP, "cprintf to a non-client");
+			Com_Error(ERR_DROP, "cprintf to a non-client.");
 	}
 
 	va_start(argptr, fmt);
@@ -197,7 +197,7 @@ PF_Configstring
 void PF_Configstring (int index, char *val)
 {
 	if (index < 0 || index >= MAX_CONFIGSTRINGS)
-		Com_Error(ERR_DROP, "configstring: bad index %i\n", index);
+		Com_Error(ERR_DROP, "Configstring: Bad index %i.\n", index);
 
 	if (!val)
 		val = "";
@@ -389,10 +389,10 @@ void SV_InitGameProgs (void)
 	ge = (game_export_t *)Sys_GetGameAPI(&import);
 
 	if (!ge)
-		Com_Error(ERR_DROP, "failed to load game DLL");
+		Com_Error(ERR_DROP, "Failed to load game DLL.");
 
 	if (ge->apiversion != GAME_API_VERSION)
-		Com_Error(ERR_DROP, "game is version %i, not %i", ge->apiversion,
+		Com_Error(ERR_DROP, "Game is version %i, not %i.", ge->apiversion,
 		GAME_API_VERSION);
 
 	ge->Init();

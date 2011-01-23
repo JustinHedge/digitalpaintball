@@ -70,7 +70,7 @@ void SV_SetMaster_f (void)
 		if (master_adr[slot].port == 0)
 			master_adr[slot].port = BigShort(PORT_MASTER);
 
-		Com_Printf("Master server at %s\n", NET_AdrToString(master_adr[slot]));
+		Com_Printf("Master server at %s.\n", NET_AdrToString(master_adr[slot]));
 		Com_Printf("Sending a ping.\n");
 		Netchan_OutOfBandPrint(NS_SERVER, master_adr[slot], "ping");
 		slot++;
@@ -116,7 +116,7 @@ qboolean SV_SetPlayer (void)
 
 		if (!sv_client->state)
 		{
-			Com_Printf("Client %i is not active\n", idnum);
+			Com_Printf("Client %i is not active.\n", idnum);
 			return false;
 		}
 		return true;
@@ -136,7 +136,7 @@ qboolean SV_SetPlayer (void)
 		}
 	}
 
-	Com_Printf("Userid %s is not on the server\n", s);
+	Com_Printf("Userid %s is not on the server.\n", s);
 	return false;
 }
 
@@ -290,7 +290,7 @@ void SV_WriteLevelFile (void)
 	f = fopen(name, "wb");
 	if (!f)
 	{
-		Com_Printf ("Failed to open %s\n", name);
+		Com_Printf ("Failed to open %s.\n", name);
 		return;
 	}
 	fwrite (sv.configstrings, sizeof(sv.configstrings), 1, f);
@@ -319,7 +319,7 @@ void SV_ReadLevelFile (void)
 
 	if (!f)
 	{
-		Com_Printf ("Failed to open %s\n", name);
+		Com_Printf ("Failed to open %s.\n", name);
 		return;
 	}
 
@@ -352,7 +352,7 @@ void SV_WriteServerFile (qboolean autosave)
 	f = fopen (name, "wb");
 	if (!f)
 	{
-		Com_Printf ("Couldn't write %s\n", name);
+		Com_Printf ("Couldn't write %s.\n", name);
 		return;
 	}
 	// write the comment field
@@ -423,7 +423,7 @@ void SV_ReadServerFile (void)
 	f = fopen (name, "rb");
 	if (!f)
 	{
-		Com_Printf ("Couldn't read %s\n", name);
+		Com_Printf ("Couldn't read %s.\n", name);
 		return;
 	}
 	// read the comment field
@@ -501,7 +501,7 @@ void SV_GameMap_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("USAGE: gamemap <map>\n");
+		Com_Printf ("Usage: gamemap <map>\n");
 		return;
 	}
 
@@ -589,7 +589,7 @@ void SV_Map_f (void)
 		Com_sprintf (expanded, sizeof(expanded), "maps/%s.bsp", map);
 		if (FS_LoadFile (expanded, NULL) == -1)
 		{
-			Com_Printf ("Can't find %s\n", expanded);
+			Com_Printf ("Can't find %s.\n", expanded);
 			return;
 		}
 	}
@@ -622,7 +622,7 @@ void SV_Loadgame_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf("USAGE: loadgame <directory>\n");
+		Com_Printf("Usage: loadgame <directory>\n");
 		return;
 	}
 
@@ -673,19 +673,19 @@ void SV_Savegame_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("USAGE: savegame <directory>\n");
+		Com_Printf ("Usage: savegame <directory>\n");
 		return;
 	}
 
 	if (Cvar_VariableValue("deathmatch"))
 	{
-		Com_Printf ("Can't savegame in a deathmatch\n");
+		Com_Printf ("Can't savegame in a deathmatch.\n");
 		return;
 	}
 
 	if (Q_streq (Cmd_Argv(1), "current"))
 	{
-		Com_Printf ("Can't save to 'current'\n");
+		Com_Printf ("Can't save to 'current'.\n");
 		return;
 	}
 
@@ -743,10 +743,10 @@ void SV_Kick_f (void)
 	if (!SV_SetPlayer())
 		return;
 
-	SV_BroadcastPrintf(PRINT_HIGH, "%s was kicked\n", sv_client->name);
+	SV_BroadcastPrintf(PRINT_HIGH, "%s was kicked.\n", sv_client->name);
 	// print directly, because the dropped client won't get the
 	// SV_BroadcastPrintf message
-	SV_ClientPrintf(sv_client, PRINT_HIGH, "You were kicked from the game\n");
+	SV_ClientPrintf(sv_client, PRINT_HIGH, "You were kicked from the game!\n");
 	SV_DropClient(sv_client);
 	sv_client->lastmessage = svs.realtime;	// min case there is a funny zombie
 }
@@ -930,7 +930,7 @@ void SV_ServerRecord_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf("serverrecord <demoname>\n");
+		Com_Printf("Usage: serverrecord <demoname>\n");
 		return;
 	}
 
@@ -951,7 +951,7 @@ void SV_ServerRecord_f (void)
 	//
 	Com_sprintf(name, sizeof(name), "%s/demos/%s.dm2", FS_Gamedir(), Cmd_Argv(1));
 
-	Com_Printf("recording to %s.\n", name);
+	Com_Printf("Recording to %s.\n", name);
 	FS_CreatePath(name);
 	svs.demofile = fopen(name, "wb");
 	if (!svs.demofile)
@@ -994,7 +994,7 @@ void SV_ServerRecord_f (void)
 	}
 
 	// write it to the demo file
-	Com_DPrintf("signon message length: %i\n", buf.cursize);
+	Com_DPrintf("Signon message length: %i\n", buf.cursize);
 	len = LittleLong(buf.cursize);
 	fwrite(&len, 4, 1, svs.demofile);
 	fwrite(buf.data, buf.cursize, 1, svs.demofile);

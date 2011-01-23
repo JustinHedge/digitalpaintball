@@ -77,7 +77,7 @@ void SCR_LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *h
 	//
 	len = FS_LoadFile (filename, (void **)&raw);
 	if (!raw)
-		return;	// Com_Printf ("Bad pcx file %s\n", filename);
+		return;	// Com_Printf ("Bad pcx file %s.\n", filename);
 
 	//
 	// parse the PCX file
@@ -92,7 +92,7 @@ void SCR_LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *h
 		|| pcx->xmax >= 640
 		|| pcx->ymax >= 480)
 	{
-		Com_Printf ("Bad pcx file %s\n", filename);
+		Com_Printf ("Bad pcx file %s.\n", filename);
 		return;
 	}
 
@@ -135,7 +135,7 @@ void SCR_LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *h
 
 	if ( raw - (byte *)pcx > len)
 	{
-		Com_Printf ("PCX file %s was malformed", filename);
+		Com_Printf ("PCX file %s was malformed.", filename);
 		Z_Free (*pic);
 		*pic = NULL;
 	}
@@ -412,7 +412,7 @@ cblock_t Huff1Decompress (cblock_t in)
 
 	if (input - in.data != in.count && input - in.data != in.count+1)
 	{
-		Com_Printf ("Decompression overread by %i", (input - in.data) - in.count);
+		Com_Printf ("Decompression overread by %i.", (input - in.data) - in.count);
 	}
 	out.count = out_p - out.data;
 
@@ -456,7 +456,7 @@ byte *SCR_ReadNextFrame (void)
 	FS_Read (&size, 4, cl.cinematic_file);
 	size = LittleLong(size);
 	if (size > sizeof(compressed) || size < 1)
-		Com_Error (ERR_DROP, "Bad compressed frame size");
+		Com_Error (ERR_DROP, "Bad compressed frame size.");
 	FS_Read (compressed, size, cl.cinematic_file);
 
 	// read sound

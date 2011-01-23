@@ -539,13 +539,13 @@ void R_SkeletalModelBBox (entity_t *e, model_t *mod)
 
 	if ((e->frame >= skmodel->numframes) ||(e->frame < 0))
 	{
-		ri.Con_Printf(PRINT_DEVELOPER, "R_SkeletalModelBBox %s: no such frame %d\n", mod->name, e->frame);
+		ri.Con_Printf(PRINT_DEVELOPER, "R_SkeletalModelBBox %s: No such frame %d.\n", mod->name, e->frame);
 		e->frame = 0;
 	}
 
 	if ((e->oldframe >= skmodel->numframes) ||(e->oldframe < 0))
 	{
-		ri.Con_Printf(PRINT_DEVELOPER, "R_SkeletalModelBBox %s: no such oldframe %d\n", mod->name, e->oldframe);
+		ri.Con_Printf(PRINT_DEVELOPER, "R_SkeletalModelBBox %s: No such oldframe %d.\n", mod->name, e->oldframe);
 		e->oldframe = 0;
 	}
 

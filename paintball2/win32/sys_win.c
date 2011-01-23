@@ -146,20 +146,20 @@ void Sys_Init (void)
 	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
 
 	if (!GetVersionEx(&vinfo))
-		Sys_Error ("Couldn't get OS info");
+		Sys_Error ("Couldn't get OS info.");
 
 	if (vinfo.dwMajorVersion < 4)
-		Sys_Error ("Paintball2 requires windows version 4 or greater");
+		Sys_Error ("Paintball2 requires windows version 4 or greater.");
 
 	if (vinfo.dwPlatformId == VER_PLATFORM_WIN32s)
-		Sys_Error ("Paintball2 doesn't run on Win32s");
+		Sys_Error ("Paintball2 doesn't run on Win32s.");
 	else if ( vinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS )
 		s_win95 = true;
 
 	if (dedicated->value)
 	{
 		if (!AllocConsole ())
-			Sys_Error ("Couldn't create dedicated server console");
+			Sys_Error ("Couldn't create dedicated server console.");
 
 		hinput = GetStdHandle (STD_INPUT_HANDLE);
 		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
@@ -192,16 +192,16 @@ char *Sys_ConsoleInput (void)
 	for ( ;; )
 	{
 		if (!GetNumberOfConsoleInputEvents (hinput, &numevents))
-			Sys_Error ("Error getting # of console events");
+			Sys_Error ("Error getting # of console events.");
 
 		if (numevents <= 0)
 			break;
 
 		if (!ReadConsoleInput(hinput, recs, 1, &numread))
-			Sys_Error ("Error reading console input");
+			Sys_Error ("Error reading console input.");
 
 		if (numread != 1)
-			Sys_Error ("Couldn't read console input");
+			Sys_Error ("Couldn't read console input.");
 
 		if (recs[0].EventType == KEY_EVENT)
 		{
@@ -375,7 +375,7 @@ Sys_UnloadGame
 void Sys_UnloadGame (void)
 {
 	if (!FreeLibrary(game_library))
-		Com_Error(ERR_FATAL, "FreeLibrary failed for game library");
+		Com_Error(ERR_FATAL, "FreeLibrary failed for game library.");
 
 	game_library = NULL;
 }
@@ -416,7 +416,7 @@ void *Sys_GetGameAPI (void *parms)
 #endif
 
 	if (game_library)
-		Com_Error(ERR_FATAL, "Sys_GetGameAPI without Sys_UnloadingGame");
+		Com_Error(ERR_FATAL, "Sys_GetGameAPI without Sys_UnloadingGame.");
 
 	// check the current debug directory first for development purposes
 	_getcwd(cwd, sizeof(cwd));
@@ -425,7 +425,7 @@ void *Sys_GetGameAPI (void *parms)
 
 	if (game_library)
 	{
-		Com_DPrintf("LoadLibrary (%s)\n", name);
+		Com_DPrintf("LoadLibrary (%s).\n", name);
 	}
 	else
 	{
@@ -436,7 +436,7 @@ void *Sys_GetGameAPI (void *parms)
 
 		if (game_library)
 		{
-			Com_DPrintf("LoadLibrary (%s)\n", name);
+			Com_DPrintf("LoadLibrary (%s).\n", name);
 		}
 		else
 #endif
@@ -455,7 +455,7 @@ void *Sys_GetGameAPI (void *parms)
 
 				if (game_library)
 				{
-					Com_DPrintf("LoadLibrary (%s)\n",name);
+					Com_DPrintf("LoadLibrary (%s).\n",name);
 					break;
 				}
 			}

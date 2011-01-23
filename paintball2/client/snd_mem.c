@@ -194,7 +194,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 	if (!data)
 	{
-		Com_DPrintf ("Couldn't load %s\n", namebuffer);
+		Com_DPrintf ("Couldn't load %s.\n", namebuffer);
 		return NULL;
 	}
 
@@ -202,7 +202,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 	if (info.channels != 1)
 	{
-		Com_Printf ("%s is a stereo sample\n",s->name);
+		Com_Printf ("%s is a stereo sample.\n",s->name);
 		FS_FreeFile (data);
 		return NULL;
 	}
@@ -350,7 +350,7 @@ wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength)
 	FindChunk("RIFF");
 	if (!(data_p && !strncmp(data_p+8, "WAVE", 4)))
 	{
-		Com_Printf("Missing RIFF/WAVE chunks\n");
+		Com_Printf("Missing RIFF/WAVE chunks.\n");
 		return info;
 	}
 
@@ -361,14 +361,14 @@ wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength)
 	FindChunk("fmt ");
 	if (!data_p)
 	{
-		Com_Printf("Missing fmt chunk\n");
+		Com_Printf("Missing fmt chunk.\n");
 		return info;
 	}
 	data_p += 8;
 	format = GetLittleShort();
 	if (format != 1)
 	{
-		Com_Printf("Microsoft PCM format only\n");
+		Com_Printf("Microsoft PCM format only.\n");
 		return info;
 	}
 
@@ -405,7 +405,7 @@ wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength)
 	FindChunk("data");
 	if (!data_p)
 	{
-		Com_Printf("Missing data chunk\n");
+		Com_Printf("Missing data chunk.\n");
 		return info;
 	}
 
@@ -415,7 +415,7 @@ wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength)
 	if (info.samples)
 	{
 		if (samples < info.samples)
-			Com_Error (ERR_DROP, "Sound %s has a bad loop length", name);
+			Com_Error (ERR_DROP, "Sound %s has a bad loop length.", name);
 	}
 	else
 		info.samples = samples;

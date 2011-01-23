@@ -264,7 +264,7 @@ qboolean CL_CheckOrDownloadFile (const char *check_filename)
 	if (cl_fast_download->value && cls.download3supported)
 	{
 		// Forward this on to the download3 console command to avoid redundant code
-		Com_Printf("Requesting %s\n", cls.downloadname);
+		Com_Printf("Requesting %s.\n", cls.downloadname);
 		Cbuf_AddText(va("download3 %s\n", cls.downloadname));
 	}
 	else
@@ -281,12 +281,12 @@ qboolean CL_CheckOrDownloadFile (const char *check_filename)
 			cls.download = fp;
 
 			// give the server an offset to start the download
-			Com_Printf("Resuming %s\n", cls.downloadname);
+			Com_Printf("Resuming %s.\n", cls.downloadname);
 			MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
 			MSG_WriteString(&cls.netchan.message,
 				va("download %s %i", cls.downloadname, len));
 		} else {
-			Com_Printf("Downloading %s\n", cls.downloadname);
+			Com_Printf("Downloading %s.\n", cls.downloadname);
 			MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
 			MSG_WriteString(&cls.netchan.message,
 				va("download %s", cls.downloadname));
@@ -317,7 +317,8 @@ void CL_Download_f (void)
 	}
 #endif
 
-	if (Cmd_Argc() != 2) {
+	if (Cmd_Argc() != 2)
+	{
 		Com_Printf("Usage: download <filename>\n");
 		return;
 	}
@@ -337,7 +338,7 @@ void CL_Download_f (void)
 	}
 
 	strcpy(cls.downloadname, filename);
-	Com_Printf("Downloading %s\n", cls.downloadname);
+	Com_Printf("Downloading %s.\n", cls.downloadname);
 
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
@@ -548,7 +549,7 @@ void CL_ParseDownload (void)
 		if (!cls.download)
 		{
 			net_message.readcount += size;
-			Com_Printf("Failed to open %s\n", cls.downloadtempname);
+			Com_Printf("Failed to open %s.\n", cls.downloadtempname);
 			CL_RequestNextDownload();
 			return;
 		}
@@ -580,7 +581,7 @@ void CL_ParseDownload (void)
 		r = rename(oldn, newn);
 
 		if (r)
-			Com_Printf ("failed to rename.\n");
+			Com_Printf ("Failed to rename.\n");
 
 		cls.download = NULL;
 		cls.downloadpercent = 0;
@@ -724,7 +725,7 @@ static void CL_StartDownload3 (void)
 			cls.download3chunks[i] = DOWNLOAD3_CHUNKWRITTEN;
 
 		fseek(cls.download, chunk_offset * DOWNLOAD3_CHUNKSIZE, SEEK_SET);
-		Com_Printf("Resuming %s\n", cls.downloadname);
+		Com_Printf("Resuming %s.\n", cls.downloadname);
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
 		SZ_Print(&cls.netchan.message, va("dl3confirm %d %d\n", chunk_offset, cls.download3fileid));
 		cls.download3completechunks = chunk_offset;
@@ -735,7 +736,7 @@ static void CL_StartDownload3 (void)
 
 		if (!cls.download)
 		{
-			Com_Printf("Failed to open %s\n", cls.downloadtempname);
+			Com_Printf("Failed to open %s.\n", cls.downloadtempname);
 			MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
 			SZ_Print(&cls.netchan.message, va("dl3confirm -1 %d\n", cls.download3fileid));
 			cls.download3requested = false;
@@ -743,7 +744,7 @@ static void CL_StartDownload3 (void)
 			return;
 		}
 
-		Com_Printf("Downloading %s\n", cls.downloadname);
+		Com_Printf("Downloading %s.\n", cls.downloadname);
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
 		SZ_Print(&cls.netchan.message, va("dl3confirm 0 %d\n", cls.download3fileid));
 	}
@@ -784,7 +785,7 @@ void CL_ParseServerData (void)
 	}
 	else if (i != PROTOCOL_VERSION)
 	{
-		Com_Error(ERR_DROP, "Server returned version %i, not %i", i, PROTOCOL_VERSION);
+		Com_Error(ERR_DROP, "Server returned version %i, not %i.", i, PROTOCOL_VERSION);
 	}
 
 	cl.servercount = MSG_ReadLong(&net_message);
@@ -1384,11 +1385,11 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_disconnect:
-			Com_Error(ERR_DISCONNECT, "Server disconnected\n");
+			Com_Error(ERR_DISCONNECT, "Server disconnected.\n");
 			break;
 
 		case svc_reconnect:
-			Com_Printf("Server disconnected, reconnecting\n");
+			Com_Printf("Server disconnected, reconnecting.\n");
 
 #ifdef USE_DOWNLOAD3
 			CL_StopCurrentDownload();
@@ -1459,7 +1460,7 @@ void CL_ParseServerMessage (void)
 			
 		case svc_stufftext:
 			s = MSG_ReadString(&net_message);
-			Com_DPrintf("stufftext: %s\n", s);
+			Com_DPrintf("Stufftext: %s\n", s);
 			Cbuf_AddStuffText(s);
 			break;
 			
@@ -1516,7 +1517,7 @@ void CL_ParseServerMessage (void)
 		case svc_playerinfo:
 		case svc_packetentities:
 		case svc_deltapacketentities:
-			Com_Error(ERR_DROP, "Out of place frame data");
+			Com_Error(ERR_DROP, "Out of place frame data.");
 			break;
 		}
 	}

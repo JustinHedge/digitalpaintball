@@ -56,7 +56,7 @@ void NET_OpenIP (void)
 		ip_sockets[NS_SERVER] = NET_IPSocket(ip->string, port);
 
 		if (!ip_sockets[NS_SERVER] && dedicated)
-			Com_Error (ERR_FATAL, "Couldn't allocate dedicated server IP port");
+			Com_Error (ERR_FATAL, "Couldn't allocate dedicated server IP port.");
 	}
 
 
@@ -135,7 +135,7 @@ int GetHTTP (const char *url, char *received, int received_max)
 
 	if (bytes_sent < len)
 	{
-		Com_Printf("GetHTTP(): HTTP Server did not accept request, aborting\n");
+		Com_Printf("GetHTTP(): HTTP Server did not accept request, aborting.\n");
 		closesocket(socket);
 		return -1;
 	}
@@ -165,13 +165,13 @@ int GetHTTP (const char *url, char *received, int received_max)
 			else
 				*s1 = '\0';
 
-			Com_Printf("Redirect: %s to %s\n", url, newaddress);
+			Com_Printf("Redirect: %s to %s.\n", url, newaddress);
 			return GetHTTP(newaddress, received, received_max);
 		}
 		else
 		{
 			// Should never happen
-			Com_Printf("GetHTTP(): 301 redirect with no new location\n");
+			Com_Printf("GetHTTP(): 301 redirect with no new location.\n");
 			return -1;
 		}
 	}

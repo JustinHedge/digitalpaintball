@@ -25,7 +25,7 @@ void Stats_Init()
 	if(statsfile)
 	{
 		Stats_LoadFromFile();
-		Com_Printf("Loaded stats file %s.stat\n", profilename);
+		Com_Printf("Loaded stats file %s.stat.\n", profilename);
 	}
 	else
 	{
@@ -33,12 +33,12 @@ void Stats_Init()
 
 		if (statsfile)
 		{
-			Com_Printf("Created local statistics file %s.stat\n", profilename);
+			Com_Printf("Created local statistics file %s.stat.\n", profilename);
 			fprintf(statsfile, "0 0 0 0 0 eof");
 		}
 		else
 		{
-			Com_Printf("Error accessing stats file %s.stat\n", profilename);
+			Com_Printf("Error accessing stats file %s.stat.\n", profilename);
 			return;
 		}
 	}
@@ -116,7 +116,7 @@ void Stats_Query(void)
 		stats.gcratio = stats.grabs;
 
 	// this is split up to make it easier to read and change
-	Com_Printf("Local Profile Statistics\n");
+	Com_Printf("Local Profile Statistics:\n");
 	Com_Printf("Profile Name: %s\n", profilename);
 	Com_Printf("Kills: %d\n", stats.kills);
 	Com_Printf("Deaths: %d\n", stats.deaths);

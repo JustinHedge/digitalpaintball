@@ -108,7 +108,7 @@ void CL_LoadLoc(void)
 		locations[index].used = true;
 	}
 
-	Com_Printf("%s.loc found and loaded\n", mapname);
+	Com_Printf("%s.loc found and loaded.\n", mapname);
 
 	fclose(f);
 }
@@ -150,11 +150,11 @@ void CL_LocDelete(void)
 	if (index != -1)
 	{
 		locations[index].used = false;
-        Com_Printf("Location deleted==\n");                // Xile reworked.
+        Com_Printf("Location '%s' deleted.\n",locations[index].name);                // Xile reworked.
 	}  
 	else
 	{
-		Com_Printf("Warning; No location to delete\n");
+		Com_Printf("Warning: No location to delete!\n");
 	}
 }
 
@@ -168,7 +168,7 @@ void CL_LocAdd (char *name)
 	Q_strncpyz(locations[index].name, name, sizeof(locations[index].name));
 	locations[index].used = true;
 
-	Com_Printf("Location ' %s ' added at (%d %d %d) %d\n", locations[index].name, 
+	Com_Printf("Location '%s' added at (%d %d %d). Loc #%d.\n", locations[index].name, 
 		locations[index].origin[0],
 		locations[index].origin[1],
 		locations[index].origin[2]);
@@ -202,7 +202,7 @@ void CL_LocWrite(char *filename)
 
 	fclose(f);
 
-	Com_Printf("locs/%s.loc was successfully saved\n", mapname);
+	Com_Printf("locs/%s.loc was successfully saved.\n", mapname);
 }
 
 void CL_LocPlace (void)
@@ -280,13 +280,13 @@ void CL_LocHelp_f (void)
 {
     // Xile/jitspoe - simple help cmd for reference
 	Com_Printf(
-		"Loc Commands\n"
-		"-----------\n"
+		"Loc Commands:\n"
+		"-------------\n"
 		"loc_add <label/description>\n"
 		"loc_del\n"
 		"loc_save\n"
 		"cl_drawlocs\n"
 		"say_team $loc_here\n"
 		"say_team $loc_there\n"
-		"-----------\n");
+		"-------------\n");
 }

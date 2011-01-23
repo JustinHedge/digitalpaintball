@@ -461,14 +461,14 @@ void CL_VNInitResponse (netadr_t adr_from, sizebuf_t *ptData)
 		
 		if (atoi(s) != g_nVNInitUnique)
 		{
-			Com_Printf("uniqueid mismatch\n");
+			Com_Printf("Uniqueid mismatch.\n");
 			assert(0);
 			return;
 		}
 	}
 	else
 	{
-		Com_Printf("uniqueid missing\n");
+		Com_Printf("Uniqueid missing.\n");
 		assert(0);
 		return;
 	}
@@ -542,7 +542,7 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 		if (s = strstr(szDataBack, "ERROR:"))
 			Com_Printf("%s\n", s);
 		else if (s = strstr(szDataBack, "GameLoginStatus: FAILED"))
-			Com_Printf("Incorrect password for username %s\n", g_szUserName);
+			Com_Printf("Incorrect password for username %s.\n", g_szUserName);
 		else
 			Com_Printf("ERROR: Unknown response from login server.\n");
 
@@ -558,14 +558,14 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 		
 		if (atoi(s) != g_nVNInitUnique)
 		{
-			Com_Printf("uniqueid mismatch\n");
+			Com_Printf("Uniqueid mismatch.\n");
 			assert(0);
 			return;
 		}
 	}
 	else
 	{
-		Com_Printf("uniqueid missing\n");
+		Com_Printf("Uniqueid missing.\n");
 		assert(0);
 		return;
 	}

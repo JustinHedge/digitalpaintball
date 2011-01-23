@@ -103,7 +103,7 @@ cvar_t *Cvar_Get (char *var_name, char *var_value, int flags)
 	{
 		if (!Cvar_InfoValidate (var_name))
 		{
-			Com_Printf("invalid info cvar name\n");
+			Com_Printf("Invalid info cvar name.\n");
 			return NULL;
 		}
 	}
@@ -122,7 +122,7 @@ cvar_t *Cvar_Get (char *var_name, char *var_value, int flags)
 	{
 		if (!Cvar_InfoValidate (var_value))
 		{
-			Com_Printf("invalid info cvar value\n");
+			Com_Printf("Invalid info cvar value.\n");
 			return NULL;
 		}
 	}
@@ -195,7 +195,7 @@ cvar_t *Cvar_FullSet (char *var_name, char *value, int flags, qboolean force) //
 	{
 		if (!Cvar_InfoValidate(value))
 		{
-			Com_Printf("invalid info cvar value\n");
+			Com_Printf("Invalid info cvar value.\n");
 			return var;
 		}
 	}
@@ -360,7 +360,7 @@ void Cvar_Set_f (void)
 
 	if (c != 3 && c != 4)
 	{
-		Com_Printf("usage: set <variable> <value> [u / s]\n");
+		Com_Printf("Usage: set <variable> <value> [u / s]\n");
 		return;
 	}
 
@@ -372,7 +372,7 @@ void Cvar_Set_f (void)
 			flags = CVAR_SERVERINFO;
 		else
 		{
-			Com_Printf("flags can only be 'u' or 's'\n");
+			Com_Printf("Flags can only be 'u' or 's'.\n");
 			return;
 		}
 
@@ -394,7 +394,7 @@ void Cvar_Seta_f (void) // jitconfig
 
 	if (c != 3 && c != 4)
 	{
-		Com_Printf("usage: seta <variable> <value> [u / s]\n");
+		Com_Printf("Usage: seta <variable> <value> [u / s]\n");
 		return;
 	}
 
@@ -411,7 +411,7 @@ void Cvar_Seta_f (void) // jitconfig
 			flags |= CVAR_SERVERINFO;
 		else
 		{
-			Com_Printf("flags can only be 'u' or 's'\n");
+			Com_Printf("Flags can only be 'u' or 's'.\n");
 			return;
 		}
 
@@ -502,7 +502,7 @@ void Cvar_List_f (void)
 		Com_Printf(" %s \"%s\"\n", var->name, var->string);
 	}
 
-	Com_Printf("%i cvars\n", i);
+	Com_Printf("%i cvars.\n", i);
 }
 
 

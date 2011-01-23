@@ -1155,10 +1155,10 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 				token = COM_Parse (&s);
 				index = atoi(token);
 				if (index < 0 || index >= MAX_CONFIGSTRINGS)
-					Com_Error (ERR_DROP, "Bad stat_string index");
+					Com_Error (ERR_DROP, "Bad stat_string index.");
 				index = cl.frame.playerstate.stats[index];
 				if (index < 0 || index >= MAX_CONFIGSTRINGS)
-					Com_Error (ERR_DROP, "Bad stat_string index");
+					Com_Error (ERR_DROP, "Bad stat_string index.");
 				re.DrawString (x, y, cl.configstrings[index]);
 				continue;
 			}

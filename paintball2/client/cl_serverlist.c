@@ -28,7 +28,7 @@ static void ping_broadcast (void)
 	cvar_t		*noipx;
 
 	NET_Config(true);		// allow remote
-	Com_Printf("pinging broadcast...\n");
+	Com_Printf("Pinging broadcast...\n");
 	noudp = Cvar_Get("noudp", "0", CVAR_NOSET);
 	noipx = Cvar_Get("noipx", "1", CVAR_NOSET);
 
@@ -497,7 +497,7 @@ static void CL_PingServerlistServer (const char *pServerAddress)
 	char buff[64];
 	netadr_t adr;
 
-	Com_Printf("pinging %s...\n", pServerAddress);
+	Com_Printf("Pinging %s...\n", pServerAddress);
 
 	if (!NET_StringToAdr(pServerAddress, &adr))
 	{
@@ -606,7 +606,7 @@ static void M_ServerlistUpdate (char *sServerSource)
 	if (!*sServerSource)
 		return;
 
-	Com_Printf("Retrieving serverlist from %s\n", sServerSource);
+	Com_Printf("Retrieving serverlist from %s.\n", sServerSource);
 
 	if (strstr(sServerSource, "://"))
 	{

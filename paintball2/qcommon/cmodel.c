@@ -147,9 +147,9 @@ void CMod_LoadSubmodels (lump_t *l)
 	count = l->filelen / sizeof(*in);
 
 	if (count < 1)
-		Com_Error (ERR_DROP, "Map with no models");
+		Com_Error (ERR_DROP, "Map with no models.");
 	if (count > MAX_MAP_MODELS)
-		Com_Error (ERR_DROP, "Map has too many models");
+		Com_Error (ERR_DROP, "Map has too many models.");
 
 	numcmodels = count;
 
@@ -188,10 +188,10 @@ void CMod_LoadSurfaces (lump_t *l)
 	count = l->filelen / sizeof(*in);
 
 	if (count < 1)
-		Com_Error(ERR_DROP, "Map with no surfaces");
+		Com_Error(ERR_DROP, "Map with no surfaces.");
 
 	if (count > MAX_MAP_TEXINFO)
-		Com_Error(ERR_DROP, "Map has too many surfaces");
+		Com_Error(ERR_DROP, "Map has too many surfaces.");
 
 	numtexinfo = count;
 	out = map_surfaces;
@@ -338,9 +338,9 @@ void CMod_LoadNodes (lump_t *l)
 	count = l->filelen / sizeof(*in);
 
 	if (count < 1)
-		Com_Error (ERR_DROP, "Map has no nodes");
+		Com_Error (ERR_DROP, "Map has no nodes.");
 	if (count > MAX_MAP_NODES)
-		Com_Error (ERR_DROP, "Map has too many nodes");
+		Com_Error (ERR_DROP, "Map has too many nodes.");
 
 	out = map_nodes;
 
@@ -376,7 +376,7 @@ void CMod_LoadBrushes (lump_t *l)
 	count = l->filelen / sizeof(*in);
 
 	if (count > MAX_MAP_BRUSHES)
-		Com_Error (ERR_DROP, "Map has too many brushes");
+		Com_Error (ERR_DROP, "Map has too many brushes.");
 
 	out = map_brushes;
 
@@ -410,11 +410,11 @@ void CMod_LoadLeafs (lump_t *l)
 	count = l->filelen / sizeof(*in);
 
 	if (count < 1)
-		Com_Error (ERR_DROP, "Map with no leafs");
+		Com_Error (ERR_DROP, "Map with no leafs.");
 
 	// need to save space for box planes
 	if (count > MAX_MAP_PLANES)
-		Com_Error (ERR_DROP, "Map has too many planes");
+		Com_Error (ERR_DROP, "Map has too many planes.");
 
 	out = map_leafs;	
 	numleafs = count;
@@ -433,7 +433,7 @@ void CMod_LoadLeafs (lump_t *l)
 	}
 
 	if (map_leafs[0].contents != CONTENTS_SOLID)
-		Com_Error (ERR_DROP, "Map leaf 0 is not CONTENTS_SOLID");
+		Com_Error (ERR_DROP, "Map leaf 0 is not CONTENTS_SOLID.");
 
 	solidleaf = 0;
 	emptyleaf = -1;
@@ -448,7 +448,7 @@ void CMod_LoadLeafs (lump_t *l)
 	}
 
 	if (emptyleaf == -1)
-		Com_Error(ERR_DROP, "Map does not have an empty leaf");
+		Com_Error(ERR_DROP, "Map does not have an empty leaf.");
 }
 
 /*
@@ -470,10 +470,10 @@ void CMod_LoadPlanes (lump_t *l)
 	count = l->filelen / sizeof(*in);
 
 	if (count < 1)
-		Com_Error (ERR_DROP, "Map with no planes");
+		Com_Error (ERR_DROP, "Map with no planes.");
 	// need to save space for box planes
 	if (count > MAX_MAP_PLANES)
-		Com_Error (ERR_DROP, "Map has too many planes");
+		Com_Error (ERR_DROP, "Map has too many planes.");
 
 	out = map_planes;	
 	numplanes = count;
@@ -512,10 +512,10 @@ void CMod_LoadLeafBrushes (lump_t *l)
 	count = l->filelen / sizeof(*in);
 
 	if (count < 1)
-		Com_Error (ERR_DROP, "Map with no planes");
+		Com_Error (ERR_DROP, "Map with no planes.");
 	// need to save space for box planes
 	if (count > MAX_MAP_LEAFBRUSHES)
-		Com_Error (ERR_DROP, "Map has too many leafbrushes");
+		Com_Error (ERR_DROP, "Map has too many leafbrushes.");
 
 	out = map_leafbrushes;
 	numleafbrushes = count;
@@ -546,7 +546,7 @@ void CMod_LoadBrushSides (lump_t *l)
 
 	// need to save space for box planes
 	if (count > MAX_MAP_BRUSHSIDES)
-		Com_Error(ERR_DROP, "Map has too many planes");
+		Com_Error(ERR_DROP, "Map has too many planes.");
 
 	out = map_brushsides;	
 	numbrushsides = count;
@@ -558,7 +558,7 @@ void CMod_LoadBrushSides (lump_t *l)
 		j = LittleShort(in->texinfo);
 		
 		if (j >= numtexinfo)
-			Com_Error(ERR_DROP, "Bad brushside texinfo");
+			Com_Error(ERR_DROP, "Bad brushside texinfo.");
 
 		assert(j >= -1 && j < MAX_MAP_TEXINFO); // jit
 
@@ -587,7 +587,7 @@ void CMod_LoadAreas (lump_t *l)
 	count = l->filelen / sizeof(*in);
 
 	if (count > MAX_MAP_AREAS)
-		Com_Error (ERR_DROP, "Map has too many areas");
+		Com_Error (ERR_DROP, "Map has too many areas.");
 
 	out = map_areas;
 	numareas = count;
@@ -619,7 +619,7 @@ void CMod_LoadAreaPortals (lump_t *l)
 	count = l->filelen / sizeof(*in);
 
 	if (count > MAX_MAP_AREAS)
-		Com_Error (ERR_DROP, "Map has too many areas");
+		Com_Error (ERR_DROP, "Map has too many areas.");
 
 	out = map_areaportals;
 	numareaportals = count;
@@ -642,7 +642,7 @@ void CMod_LoadVisibility (lump_t *l)
 
 	numvisibility = l->filelen;
 	if (l->filelen > MAX_MAP_VISIBILITY)
-		Com_Error (ERR_DROP, "Map has too large visibility lump");
+		Com_Error (ERR_DROP, "Map has too large visibility lump.");
 
 	memcpy (map_visibility, cmod_base + l->fileofs, l->filelen);
 
@@ -665,7 +665,7 @@ void CMod_LoadEntityString (lump_t *l)
 	numentitychars = l->filelen;
 
 	if (l->filelen + 1 > sizeof(map_entitystring)) // jit
-		Com_Error(ERR_DROP, "Map has too large entity lump");
+		Com_Error(ERR_DROP, "Map has too large entity lump.");
 
 	memcpy(map_entitystring, cmod_base + l->fileofs, l->filelen);
 	map_entitystring[l->filelen] = 0; // jitentitybug - null terminate the entity string!
@@ -731,7 +731,7 @@ cmodel_t *CM_LoadMap (char *name, qboolean clientload, unsigned *checksum)
 	length = FS_LoadFile(name, (void **)&buf);
 
 	if (!buf)
-		Com_Error(ERR_DROP, "Couldn't load %s", name);
+		Com_Error(ERR_DROP, "Couldn't load %s.", name);
 
 	last_checksum = LittleLong(Com_BlockChecksum(buf, length));
 	*checksum = last_checksum;
@@ -855,7 +855,7 @@ void CM_InitBoxHull (void)
 		|| numleafbrushes+1 > MAX_MAP_LEAFBRUSHES
 		|| numbrushsides+6 > MAX_MAP_BRUSHSIDES
 		|| numplanes+12 > MAX_MAP_PLANES)
-		Com_Error (ERR_DROP, "Not enough room for box tree");
+		Com_Error (ERR_DROP, "Not enough room for box tree.");
 
 	box_brush = &map_brushes[numbrushes];
 	box_brush->numsides = 6;
@@ -1697,7 +1697,7 @@ void CM_DecompressVis (byte *in, byte *out)
 		if ((out_p - out) + c > row)
 		{
 			c = row - (out_p - out);
-			Com_DPrintf ("warning: Vis decompression overrun\n");
+			Com_DPrintf ("Warning: Vis decompression overrun.\n");
 		}
 		while (c)
 		{
