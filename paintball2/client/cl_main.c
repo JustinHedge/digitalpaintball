@@ -2088,17 +2088,18 @@ retry_mapload:
 		if (!s)
 			s = cl.configstrings[CS_REQUIREDFILES];
 
-		token = COM_Parse(&s);
+		do
+		{
+			token = COM_Parse(&s);
 
-		if (token && *token)
-		{
-			if (!CL_CheckOrDownloadFile(token))
-				return; // started download
-		}
-		else
-		{
-			precache_check++; // nothing to see here, move along.
-		}
+			if (token && *token)
+				if (!CL_CheckOrDownloadFile(token))
+					return; // started a download
+
+		} while (token && *token);
+
+		precache_check++;
+		s = NULL;
 	}
 	// -- jit end --
 
@@ -2252,7 +2253,7 @@ void CL_InitLocal (void)
 	cl_drawclockx =		Cvar_Get("cl_drawclockx", "-1", CVAR_ARCHIVE); // T3RR0R15T: clock position
 	cl_drawclocky =		Cvar_Get("cl_drawclocky", "-1", CVAR_ARCHIVE); // T3RR0R15T: clock position
 	cl_swearfilter =	Cvar_Get("cl_swearfilter", "1", CVAR_ARCHIVE); // viciouz - swear filter
-	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,liner,lining,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,walled,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch, ass ,owned,ownd,suck,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,idiot,horribad,newbed,heil,hitler,your mum,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,kacker,kakker,fehlgeburt,sukkar,sukar,suckar,lucker,stupid,gay", 0); // viciouz - swear filter - jit, added some more - T3RR0R15T, added some more again
+	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,liner,lining,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,walled,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch, ass ,owned,ownd,suck,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,idiot,horribad,newbed,heil,hitler,your mum,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,kacker,kakker,fehlgeburt,nazi,sukkar,sukar,suckar,lucker,stupid,gay", 0); // viciouz - swear filter - jit, added some more - T3RR0R15T, added some more again
 	strtolower(cl_blockedwords->string);
 	cl_passwordpopup =	Cvar_Get("cl_passwordpopup", "1", CVAR_ARCHIVE); // viciouz - password popup
 	cl_centerprintkills = Cvar_Get("cl_centerprintkills", "1", CVAR_ARCHIVE); // jit
@@ -2795,6 +2796,8 @@ int GetIntVarByID (int id)
 		return g_command_stuffed;
 	case VARID_BUILD:
 		return BUILD;
+	case VARID_GL_INSTANCE:
+		return re.DrawGetIntVarByID(VARID_GL_INSTANCE);
 	default:
 		assert(0);
 		return 0;
