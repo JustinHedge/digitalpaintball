@@ -1153,7 +1153,7 @@ void Fake_glColorTableEXT( GLenum target, GLenum internalformat,
 		temptable[i][0] = *intbl++;
 		temptable[i][3] = 255;
 	}
-	qgl3DfxSetPaletteEXT((GLuint *)temptable);
+	//qgl3DfxSetPaletteEXT((GLuint *)temptable);
 }
 
 #ifdef Joystick
