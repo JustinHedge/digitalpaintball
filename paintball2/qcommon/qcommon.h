@@ -944,6 +944,7 @@ void SV_Frame (int msec);
 #define VARID_CL_ATTRACTLOOP			1
 #define VARID_G_COMMAND_STUFFED			2
 #define VARID_BUILD						3
+#define VARID_GL_INSTANCE				4
 int GetIntVarByID (int id);
 
 

@@ -1009,7 +1009,7 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 			}
 		}
 			
-		com_token = COM_Parse(&text);
+		com_token = COM_Parse((char **)&text);
 
 		if (!text)
 			return;

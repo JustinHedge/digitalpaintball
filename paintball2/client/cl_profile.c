@@ -353,7 +353,7 @@ void CL_ProfileLogin_f (void)
 
 	Com_sprintf(szProfileFile, sizeof(szProfileFile), "profiles/%s.prf", Cmd_Argv(1));
 	
-	if (FS_LoadFile(szProfileFile, &pFileContents) > 0)
+	if (FS_LoadFile(szProfileFile, (void **)&pFileContents) > 0)
 	{
 		if (memcmp(pFileContents, "PB2PROFILE1.0\0", 14) == 0)
 		{
@@ -717,7 +717,7 @@ void CL_ProfileGetLogin_f (void)
 	pOutCvar = Cmd_Argv(2);
 	Com_sprintf(szProfilePath, sizeof(szProfilePath), "profiles/%s.prf", pProfileFile);
 	
-	if (FS_LoadFile(szProfilePath, &pFileData) > 0)
+	if (FS_LoadFile(szProfilePath, (void **)&pFileData) > 0)
 	{
 		if (memcmp(pFileData, "PB2PROFILE1.0\0", 14) == 0)
 		{

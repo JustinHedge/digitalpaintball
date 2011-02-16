@@ -669,7 +669,7 @@ static void M_ServerlistUpdate (char *sServerSource)
 	}
 	else // Local file?
 	{
-		numread = FS_LoadFileZ(sServerSource, &buffer);
+		numread = FS_LoadFileZ(sServerSource, (void **)&buffer);
 		file = true;
 		current = buffer;
 
@@ -755,6 +755,7 @@ void ServerlistBlacklistUpdate (const char *sURL)
 //	todo;
 }
 
+// Note: This is no longer used (we use UDP instead)
 void *M_ServerlistUpdate_multithreaded (void *ptr)
 {
 	grey_serverlist();

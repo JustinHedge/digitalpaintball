@@ -260,6 +260,8 @@ typedef struct
 
 	void	(*AppActivate)(qboolean activate);
 
+	int		(*DrawGetIntVarByID)(int id);
+
 } refexport_t;
 
 //
