@@ -349,7 +349,7 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 		{
 			// skip to the end of color sequence
 
-			strcpy (key_lines[edit_line] + key_linepos - 1, key_lines[edit_line] + key_linepos);
+			strcpy(key_lines[edit_line] + key_linepos - 1, key_lines[edit_line] + key_linepos);
 			key_linepos--;
 		}
 
@@ -390,18 +390,16 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 		return;
 	}
 
-	if ((key == K_UPARROW) || (key == K_KP_UPARROW) ||
-		 ((key == 'p') && keydown[K_CTRL]))
+	if ((key == K_UPARROW) || (key == K_KP_UPARROW) || ((key == 'p') && keydown[K_CTRL]))
 	{
 		do {
 			history_line = (history_line - 1) & 31;
-		} while (history_line != edit_line
-				&& !key_lines[history_line][1]);
+		} while (history_line != edit_line && !key_lines[history_line][1]);
 
 		if (history_line == edit_line)
-			history_line = (edit_line+1) & 31;
+			history_line = (edit_line + 1) & 31;
 
-		strcpy(key_lines[edit_line], key_lines[history_line]);
+		Q_strncpyz(key_lines[edit_line], key_lines[history_line], sizeof(key_lines[edit_line]));
 		key_linepos = strlen(key_lines[edit_line]);
 		return;
 	}
