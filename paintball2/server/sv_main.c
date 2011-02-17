@@ -442,6 +442,7 @@ gotnewcl:
 	sv_client = newcl;
 	edictnum = (newcl - svs.clients) + 1;
 	ent = EDICT_NUM(edictnum);
+	ent->inuse = false; // jit - sometimes we run into strange situations where a client reconnects, replaces his own slot, and inuse is true, causing things to execute that shouldn't before the connection finishes.
 	newcl->edict = ent;
 	newcl->challenge = challenge; // save challenge for checksumming
 #ifdef USE_DOWNLOAD3 // jitdownload
