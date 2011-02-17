@@ -300,10 +300,9 @@ typedef struct M_SERVERLIST_S {
 	int nummapped;
 	int actualsize;
 	m_serverlist_server_t *server;
-	//netadr_t *adr;
-	//int *remap;
 	char **ips;
 	char **info;
+	qboolean sortthisframe;
 } m_serverlist_t;
 
 extern cvar_t *cl_hudscale;

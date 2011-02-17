@@ -330,33 +330,40 @@ static qboolean adrs_equal (netadr_t adr1, netadr_t adr2)
 	return true;
 }
 
-void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
+
+static void NetAdrToString (netadr_t adr, char *strout, int sizeout)
 {
-	int i;
-	char addrip[32];
-	int ping;
-	qboolean added = false;
-	
 	if (adr.type == NA_IP)
 	{
-		Com_sprintf(addrip, sizeof(addrip), 
+		Com_sprintf(strout, sizeout,
 			"%d.%d.%d.%d:%d", adr.ip[0], adr.ip[1], adr.ip[2], adr.ip[3], ntohs(adr.port));
 	}
 	else if (adr.type == NA_IPX)
 	{
-		Com_sprintf(addrip, sizeof(addrip), 
+		Com_sprintf(strout, sizeout,
 			"%02x%02x%02x%02x:%02x%02x%02x%02x%02x%02x:%i", adr.ipx[0], adr.ipx[1],
 			adr.ipx[2], adr.ipx[3], adr.ipx[4], adr.ipx[5], adr.ipx[6], adr.ipx[7],
 			adr.ipx[8], adr.ipx[9], ntohs(adr.port));
 	}
 	else if (adr.type == NA_LOOPBACK)
 	{
-		strcpy(addrip, "loopback");
+		Q_strncpyz(strout, "loopback", sizeout);
 	}
 	else
 	{
 		return;
 	}
+}
+
+
+void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
+{
+	int i;
+	char addrip[32];
+	int ping;
+	qboolean added = false;
+
+	NetAdrToString(adr, addrip, sizeof(addrip));
 
 	pthread_mutex_lock(&m_mut_serverlist); // jitmultithreading -- todo, deadlock
 	pthread_mutex_lock(&m_mut_widgets);
@@ -460,6 +467,7 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 		m_serverlist.numservers++;
 	}
 
+	m_serverlist.sortthisframe = true;
 	// Tell the widget the serverlist has updated:
 	pthread_mutex_unlock(&m_mut_widgets);
 	//M_RefreshActiveMenu(); // jitodo - target serverlist window specifically.
@@ -529,11 +537,21 @@ static void M_ServerlistUpdateUDP (int nStart)
 
 void CL_Serverlist2Packet (netadr_t net_from, sizebuf_t *net_message)
 {
+	static qboolean firstupdate = true;
+
 	if (Q_streq(MSG_ReadString(net_message), "serverlist2"))
 	{
 		int num_servers, i, j;
 		int ip[4], port;
 		char szServer[256];
+
+		// Wait until we get a server list response to clear the list.  We don't want to wipe somebody's list
+		// if the server list server isn't responding.  Only clear the list once per run, as well (in case server sends multiple packets).
+		if (firstupdate)
+		{
+			firstupdate = false;
+			Serverlist_Clear_f();
+		}
 
 		num_servers = ntohl(MSG_ReadLong(net_message));
 
@@ -545,7 +563,7 @@ void CL_Serverlist2Packet (netadr_t net_from, sizebuf_t *net_message)
 				
 				if (ip[j] < 0)
 				{
-//					assert(ip[j] >= 0);
+					assert(ip[j] >= 0);
 					return; // end of packet -- corrupt or truncated, just bail out.  todo: handle > 164 servers.
 				}
 			}
@@ -987,5 +1005,60 @@ static void serverlist_save (void)
 void Serverlist_Shutdown (void)
 {
 	serverlist_save();
+}
+
+
+static int Serverlist_SortCompare (const void *a, const void *b)
+{
+	const m_serverlist_server_t *serverA = a;
+	const m_serverlist_server_t *serverB = b;
+
+	if (serverA && serverB)
+	{
+		int ret = ((serverB->players + 1) * 10000 / (serverB->ping + 1)) - ((serverA->players + 1) * 10000 / (serverA->ping + 1));
+		return ret;
+	}
+
+	assert(0);
+	return 0;
+}
+
+
+static void Serverlist_Sort (void)
+{
+	int i;
+	int remap = 0;
+	char addr[32];
+
+	qsort(m_serverlist.server, m_serverlist.numservers, sizeof(m_serverlist.server[0]), Serverlist_SortCompare);
+
+	for (i = 0; i < m_serverlist.nummapped; ++i)
+	{
+		if (m_serverlist.server[i].remap >= 0)
+		{
+			if (remap < m_serverlist.nummapped) // probably unnecessary to check, but just in case
+			{
+				NetAdrToString(m_serverlist.server[i].adr, addr, sizeof(addr));
+				m_serverlist.server[i].remap = remap;
+				Z_Free(m_serverlist.ips[remap]);
+				m_serverlist.ips[remap] = text_copy(addr);
+				Z_Free(m_serverlist.info[remap]);
+				m_serverlist.info[remap] = text_copy(format_info_from_serverlist_server(&m_serverlist.server[i]));
+				++remap;
+			}
+		}
+	}
+}
+
+
+void CL_Serverlist_RunFrame (void)
+{
+	// Don't sort while refreshing as refresh runs in a different thread and could mess things up
+	// (might be ok to remove this check later if determined to be thread safe, or add a lock)
+	if (m_serverlist.sortthisframe && !refreshing)
+	{
+		m_serverlist.sortthisframe = false;
+		Serverlist_Sort();
+	}
 }
 

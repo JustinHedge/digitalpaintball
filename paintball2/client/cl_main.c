@@ -130,6 +130,7 @@ extern	cvar_t *allow_download_maps;
 
 extern cvar_t *Cvar_FindVar (char *var_name);
 qboolean CL_HasProfile ();
+void CL_Serverlist_RunFrame ();
 
 void CL_Toggle_f (void)
 {
@@ -2691,6 +2692,9 @@ void CL_Frame (int msec)
 	// update audio
 	S_Update(cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);
 	CDAudio_Update();
+
+	// update server list
+	CL_Serverlist_RunFrame();
 
 	// advance local effects for next frame
 	CL_RunDLights();
