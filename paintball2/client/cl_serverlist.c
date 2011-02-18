@@ -500,6 +500,22 @@ void M_ServerlistRefresh_f (void)
 }
 
 
+static void CL_AddServerlistServer (const char *address)
+{
+	netadr_t adr;
+	char buff[64];
+	
+	if (!NET_StringToAdr(address, &adr))
+	{
+		Com_Printf("Bad address: %s\n", address);
+		return;
+	}
+
+	Com_sprintf(buff, sizeof(buff), "%s --- 0/0", address);
+	// Add to list as being pinged
+	M_AddToServerList(adr, buff, true);
+}
+
 static void CL_PingServerlistServer (const char *pServerAddress)
 {
 	char buff[64];
@@ -570,8 +586,10 @@ void CL_Serverlist2Packet (netadr_t net_from, sizebuf_t *net_message)
 
 			port = ntohs(MSG_ReadShort(net_message));
 			Com_sprintf(szServer, sizeof(szServer), "%d.%d.%d.%d:%d", ip[0], ip[1], ip[2], ip[3], port);
-			CL_PingServerlistServer(szServer);
+			CL_AddServerlistServer(szServer);
 		}
+
+		CL_PingServers_f();
 	}
 }
 
