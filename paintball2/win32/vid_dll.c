@@ -653,7 +653,7 @@ LONG WINAPI MainWndProc (
 		break;
 
 	case WM_APPCOMMAND:
-		if(Cvar_Get("ogg_enable","0",0)->value)
+		if(ogg_started)
 			switch(GET_APPCOMMAND_LPARAM(lParam))
 			{
 			case APPCOMMAND_MEDIA_PLAY_PAUSE:

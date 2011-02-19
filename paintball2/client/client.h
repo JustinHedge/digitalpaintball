@@ -778,6 +778,7 @@ void CL_Xfire (void);
 
 // snd_ogg.c
 #ifdef OGG_SUPPORT
+extern qboolean ogg_started;
 void OGG_Init (void);
 void OGG_Shutdown (void);
 void OGG_Stream (void);
