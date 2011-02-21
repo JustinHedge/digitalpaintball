@@ -36,6 +36,7 @@ static qboolean g_bPassHashed = false;
 static char g_szUserNameURL[256];
 static char g_szUserName[64];
 static int g_nUserID;
+qboolean g_notified_of_new_version = false;
 
 static const char *GetUniqueSystemString (void)
 {
@@ -626,12 +627,10 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 		
 		if (atoi(s) > BUILD)
 		{
-			static qboolean notified = false;
-
-			if (!notified) // only pop it up once.
+			if (!g_notified_of_new_version) // only pop it up once.
 			{
 				Cbuf_AddText("menu newversion\n");
-				notified = true;
+				g_notified_of_new_version = true;
 			}
 		}
 	}

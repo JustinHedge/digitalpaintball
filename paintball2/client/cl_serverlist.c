@@ -539,15 +539,24 @@ static void CL_PingServerlistServer (const char *pServerAddress)
 	M_AddToServerList(adr, buff, true);
 }
 
+extern qboolean g_notified_of_new_version;
 
 static void M_ServerlistUpdateUDP (int nStart)
 {
 	netadr_t adr;
+	static qboolean didUpdateCheck = false;
 
 	adr.port = htons(UDP_SERVERLIST_PORT);
 	NET_StringToAdr(serverlist_udp_source1->string, &adr);
 	//Netchan_OutOfBandPrint(NS_CLIENT, adr, "serverlist1 %d %s\n", nStart, g_szRandomServerlistString);
 	Netchan_OutOfBandPrint(NS_CLIENT, adr, "serverlist2\n");
+
+	if (!didUpdateCheck && !g_notified_of_new_version)
+	{
+		 // Not currently implemented on dplogin server, but it may work eventually:
+		Netchan_OutOfBandPrint(NS_CLIENT, adr, "updatecheck1 " BUILD_S "\n");
+		didUpdateCheck = true;
+	}
 }
 
 
@@ -594,7 +603,8 @@ void CL_Serverlist2Packet (netadr_t net_from, sizebuf_t *net_message)
 }
 
 
-void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *net_message) // unused function
+// unused function
+void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *net_message)
 {
 	char *sServerIP;
 	int i = 1;
@@ -620,9 +630,7 @@ void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *ne
 			continue; // not a serverlist ip, special line.
 		}
 
-		// todo: queue up a list and ping at intervals to get more accurate pings
 		CL_PingServerlistServer(sServerIP);
-		// todo: check for incomplete lists -- do we need to continue?
 	}
 }
 
@@ -630,6 +638,7 @@ void CL_ServerlistPacket (netadr_t net_from, const char *sRandStr, sizebuf_t *ne
 // Download list of ip's from a remote location and
 // add them to the local serverlist
 #define BUFFER_SIZE 32767
+// unused function
 static void M_ServerlistUpdate (char *sServerSource)
 {
 	char *buffer = NULL;

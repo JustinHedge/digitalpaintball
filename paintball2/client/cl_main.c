@@ -131,6 +131,7 @@ extern	cvar_t *allow_download_maps;
 extern cvar_t *Cvar_FindVar (char *var_name);
 qboolean CL_HasProfile ();
 void CL_Serverlist_RunFrame ();
+extern qboolean g_notified_of_new_version;
 
 void CL_Toggle_f (void)
 {
@@ -1442,6 +1443,15 @@ void CL_ConnectionlessPacket (void)
 	else if (Q_streq(c, "serverlist2response"))
 	{
 		CL_Serverlist2Packet(net_from, &net_message);
+		return;
+	}
+	else if (Q_streq(c, "updatecheck1newversion")) // Not currently implemented on dplogin server, but it may work eventually
+	{
+		if (!g_notified_of_new_version)
+		{
+			Cbuf_AddText("menu newversion\n");
+			g_notified_of_new_version = true;
+		}
 		return;
 	}
 	else if (Q_streq(c, "vninitresponse"))
