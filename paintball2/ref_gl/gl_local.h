@@ -51,7 +51,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qgl.h"
 
-#define	REF_VERSION	"PB2GL 0.31" // jitversion / jitbuild
+#define	REF_VERSION	"PB2GL 0.32" // jitversion / jitbuild
 
 // up / down
 #define	PITCH	0
