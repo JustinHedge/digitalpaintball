@@ -1616,7 +1616,10 @@ qboolean GL_Upload8 (byte *data, int width, int height, imagetype_t imagetype, q
 	s = width * height;
 
 	if (s > sizeof(trans)/4)
+	{
+		assert(0);
 		ri.Sys_Error(ERR_DROP, "GL_Upload8: too large");
+	}
 
 	for (i = 0; i < s; i++)
 	{

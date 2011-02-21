@@ -413,6 +413,7 @@ void Draw_GetPicSize (int *w, int *h, char *pic)
 	*h = gl->height;
 }
 
+
 /*
 =============
 Draw_StretchPic

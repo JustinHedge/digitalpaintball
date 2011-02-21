@@ -779,6 +779,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\linux\qgl_linux.c"
+				>
+			</File>
+			<File
 				RelativePath="..\win32\qgl_win.c"
 				>
 			</File>
@@ -986,11 +990,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\jpeglib.h"
+					RelativePath="jpeg\jpeglib.h"
 					>
 				</File>
 				<File
-					RelativePath="jpeg\jpeglib.h"
+					RelativePath=".\jpeglib.h"
 					>
 				</File>
 				<File
