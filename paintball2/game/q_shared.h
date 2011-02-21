@@ -349,7 +349,7 @@ char	*va(char *format, ...);
 //
 #define	MAX_INFO_KEY		64
 #define	MAX_INFO_VALUE		64
-#define	MAX_INFO_STRING		512
+#define	MAX_INFO_STRING		1024 // jit - allow for more server info (this must be the same in the game dll!)
 
 char *Info_ValueForKey (char *s, char *key);
 void Info_RemoveKey (char *s, const char *key);
