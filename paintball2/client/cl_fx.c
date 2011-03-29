@@ -2357,9 +2357,12 @@ void CL_EntityEvent (entity_state_t *ent)
 		CL_PlayFootstep(ent);
 		break;
 	case EV_FALLSHORT:
+		S_StartSound(NULL, ent->number, CHAN_AUTO, S_RegisterSound("player/land1.wav"), 0.5f, ATTN_NORM, 0);
+		CL_PlayFootstep(ent); // jitsound
+		break;
 	case EV_FALL:
 	case EV_FALLFAR:
-		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound("player/land1.wav"), 1, ATTN_NORM, 0);
+		S_StartSound(NULL, ent->number, CHAN_AUTO, S_RegisterSound("player/land1.wav"), 1.0f, ATTN_NORM, 0);
 		CL_PlayFootstep(ent); // jitsound
 		break;
 	/*case EV_FALL:
