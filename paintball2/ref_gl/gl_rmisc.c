@@ -236,7 +236,7 @@ void GL_ScreenShot_JPG (void)
 	jpeg_set_defaults(&cinfo);
 
 	if ((gl_screenshot_jpeg_quality->value >= 101) || (gl_screenshot_jpeg_quality->value <= 0))
-		ri.Cvar_Set("gl_screenshot_jpeg_quality", "85");
+		ri.Cvar_Set("gl_screenshot_jpeg_quality", "96");
 
 	jpeg_set_quality(&cinfo, gl_screenshot_jpeg_quality->value, TRUE);
 
