@@ -831,6 +831,8 @@ static void GenerateRandomServerlistString (void)
 
 void M_ServerlistUpdate_f (void)
 {
+	NET_Config(true); // Open up ports
+
 #if 1 // todo - cvar?
 	M_ServerlistUpdateUDP(0);
 #else
