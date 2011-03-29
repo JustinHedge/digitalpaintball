@@ -37,11 +37,11 @@ void Draw_StringLen (int x, int y, char *str, int len) // pooy
 	char saved_byte;
 
 	if (len < 0)
-		re.DrawString (x, y, str);
+		re.DrawString(x, y, str);
 
 	saved_byte = str[len];
 	str[len] = 0;
-	re.DrawString (x, y, str);
+	re.DrawString(x, y, str);
 	str[len] = saved_byte;
 }
 
@@ -90,17 +90,14 @@ int CharOffset (unsigned char *s, int charcount) // pooy
 	return offset;*/
 }
 
-int Con_GetLinePosNoFormat() // jittext / jitconsole
+int Con_GetLinePosNoFormat () // jittext / jitconsole
 {
 	char temp;
 	int colorlinepos;
 
 	temp = key_lines[edit_line][key_linepos];
-
 	key_lines[edit_line][key_linepos] = 0;
-
 	colorlinepos = strlen_noformat(key_lines[edit_line]);
-
 	key_lines[edit_line][key_linepos] = temp;
 
 	return colorlinepos;
@@ -110,8 +107,8 @@ void DrawAltString (int x, int y, char *s)
 {
 	while (*s)
 	{
-		re.DrawChar (x, y, *s ^ 0x80);
-		x+=8*hudscale;
+		re.DrawChar(x, y, *s ^ 0x80);
+		x += 8 * hudscale;
 		s++;
 	}
 }
@@ -122,6 +119,7 @@ void Key_ClearTyping (void)
 	key_lines[edit_line][1] = 0;	// clear any typing
 	key_linepos = 1;
 }
+
 
 /*
 ================
@@ -330,7 +328,9 @@ void Con_CheckResize (void)
 
 	if (!hudscale)
 		hudscale = 1;
-	width = (viddef.width/hudscale >> 3) - 2;
+
+	//width = (viddef.width/hudscale >> 3) - 2;
+	width = (int)(viddef.width / (hudscale * 8.0f)) - 2;
 
 	if (width == con.linewidth)
 		return;
@@ -564,7 +564,7 @@ Con_DrawInput
 The input line scrolls horizontally if typing goes beyond the right edge
 ================
 */
-void Con_DrawCursor(int x, int y) // jittext / jitmenu
+void Con_DrawCursor (int x, int y) // jittext / jitmenu
 {
 
 	if ((int)(cls.realtime>>8)&1)
@@ -590,7 +590,6 @@ void Con_DrawInput (void) // pooy, jittext
 
 	// convert byte offset to visible character count
 	colorlinepos = Con_GetLinePosNoFormat();
-	//colorlinepos = key_linepos;
 
 	// prestep if horizontally scrolling
 	if (colorlinepos >= con.linewidth + 1)
@@ -603,10 +602,10 @@ void Con_DrawInput (void) // pooy, jittext
 	// draw it
 	bytelen = CharOffset(text, con.linewidth);	
 		
-	Draw_StringLen(8*hudscale, con.vislines-22*hudscale, text, bytelen);
+	Draw_StringLen(8 * hudscale, con.vislines - 22 * hudscale, text, bytelen);
 
 	// add the cursor frame
-	Con_DrawCursor(8*hudscale+colorlinepos*8*hudscale, con.vislines-22*hudscale);
+	Con_DrawCursor(8 * hudscale + colorlinepos * 8 * hudscale, con.vislines - 22 * hudscale);
 }
 
 
@@ -668,11 +667,11 @@ void Con_DrawNotify (void)
 
 		s = chat_buffer;
 
-		if (chat_bufferlen > ((viddef.width/hudscale) >> 3) - (skip + 1))
-			s += chat_bufferlen - (((viddef.width/hudscale) >> 3) - (skip + 1));
+		if (chat_bufferlen > ((viddef.width / (hudscale * 8))) - (skip + 1))
+			s += chat_bufferlen - ((int)(viddef.width / (hudscale * 8)) - (skip + 1));
 
 		re.DrawString(skip << 3, v, s);
-		re.DrawChar((strlen(s) * hudscale+skip) << 3, v, 10 + ((cls.realtime >> 8) & 1));
+		re.DrawChar((strlen(s) * hudscale + skip) * 8, v, 10 + ((cls.realtime >> 8) & 1));
 		v += 8 * hudscale;
 	}
 
@@ -722,17 +721,17 @@ void Con_DrawConsole (float frac)
 
 // draw the text
 	con.vislines = lines;
-	rows = (lines-22*hudscale)>>3;		// rows of text to draw
-	y = lines - 30*hudscale;
+	rows = (lines - 22 * hudscale) / 8;		// rows of text to draw
+	y = lines - 30 * hudscale;
 
 // draw from the bottom up
 	if (con.display != con.current)
 	{
 	// draw arrows to show the buffer is backscrolled
-		for (x=0; x<con.linewidth; x+=4)
-			re.DrawChar ((x*hudscale+1)<<3, y, '^');
+		for (x = 0; x < con.linewidth; x += 4)
+			re.DrawChar((x * hudscale + 1.0f) * 8.0f, y, '^');
 	
-		y -= 8*hudscale;
+		y -= 8 * hudscale;
 		rows--;
 	}
 	

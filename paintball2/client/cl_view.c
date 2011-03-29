@@ -30,7 +30,7 @@ struct model_s	*gun_model;
 
 //=============
 
-int			hudscale; // jithudscale
+float		hudscale; // jithudscale
 
 cvar_t		*crosshair;
 cvar_t		*cl_testparticles;

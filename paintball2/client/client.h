@@ -843,7 +843,7 @@ extern image_t		*i_field1rs;
 extern image_t		*i_cursor;
 extern image_t		*i_cursor_text;
 
-extern int hudscale; // jithudscale
+extern float hudscale; // jithudscale
 
 #endif // CLIENT_H
 

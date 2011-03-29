@@ -91,9 +91,9 @@ void Draw_Char (int x, int y, int num) // jitodo -- try to remove all calls to t
 {
 	int				row, col;
 	float			frow, fcol, size;
-	int textscale;
+	float textscale;
 
-	textscale = (int)cl_hudscale->value; // jithudscale
+	textscale = cl_hudscale->value; // jithudscale
 	num &= 255;
 	
 	if ((num & 127) == 32)
@@ -145,7 +145,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 	int				px,py,row, col,num;
 	float			frow, fcol, size;
 	const char		*s = str; // jit, shush little warning
-	int				textscale; // jithudscale
+	float			textscale; // jithudscale
 	int				coloredtext = 0;
 	qboolean		nextiscolor = false;
 	qboolean		shadowpass = false;
@@ -156,7 +156,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 	if (!*s)
 		return;
 
-	textscale = (int)cl_hudscale->value;
+	textscale = cl_hudscale->value;
 
 	if (gl_state.currenttextures[gl_state.currenttmu] != draw_chars->texnum)
 		GL_Bind(draw_chars->texnum);
@@ -649,12 +649,12 @@ Draw_Pic
 void Draw_Pic2 (int x, int y, image_t *gl)
 {
 // jit - no sense in doing all the exact same stuff twice -- just call stretchpic.
-	int picscale;
+	float picscale;
 
-	picscale = (int)cl_hudscale->value; // jithudscale
+	picscale = cl_hudscale->value; // jithudscale
 
 	if (gl->is_crosshair) // find a better way to do this
-		picscale = (int)cl_crosshairscale->value; // viciouz - crosshair scale
+		picscale = cl_crosshairscale->value; // viciouz - crosshair scale
 
 	Draw_StretchPic2 (x, y, gl->width*picscale, gl->height*picscale, gl);
 }
