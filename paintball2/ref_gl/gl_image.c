@@ -2075,6 +2075,8 @@ image_t	*GL_FindImage (const char *name, imagetype_t type)
 				return image;
 			}
 		}
+
+		image = NULL; // image not found.
 	}
 
 	//
