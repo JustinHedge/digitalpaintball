@@ -38,7 +38,7 @@ typedef struct
 	int			baseframe;
 } explosion_t;
 
-#define	MAX_EXPLOSIONS	256 // was 64
+#define	MAX_EXPLOSIONS	8192 // was 64; T3RR0R15T: was 256
 explosion_t	cl_explosions[MAX_EXPLOSIONS];
 
 #define	MAX_BEAMS	32
