@@ -1261,11 +1261,9 @@ void CL_CalcViewValues (void)
 	if (cl_predict->value && !cl.attractloop && 	// jitdemo -- fixed jerky/choppy playback
 		!(cl.frame.playerstate.pmove.pm_flags & PMF_NO_PREDICTION))
 	{	// use predicted values
-		unsigned	delta;
+		backlerp = 1.0f - lerp;
 
-		backlerp = 1.0 - lerp;
-
-		for (i=0; i<3; i++)
+		for (i = 0; i < 3; i++)
 		{
 			cl.refdef.vieworg[i] = cl.predicted_origin[i] + ops->viewoffset[i] 
 				+ cl.lerpfrac * (ps->viewoffset[i] - ops->viewoffset[i])
@@ -1273,23 +1271,22 @@ void CL_CalcViewValues (void)
 		}
 
 		// smooth out stair climbing
-		delta = cls.realtime - cl.predicted_step_time;
-
-		if (delta < 100)
-			cl.refdef.vieworg[2] -= cl.predicted_step * (100 - delta) * 0.01;
+		cl.refdef.vieworg[2] -= (cl.predicted_step + cl.predicted_step_unsent); // jitmove - new stair smoothing
 	}
 	else
 	{	// just use interpolated values
-		for (i=0; i<3; i++)
-			cl.refdef.vieworg[i] = ops->pmove.origin[i]*0.125 + ops->viewoffset[i] 
-				+ lerp * (ps->pmove.origin[i]*0.125 + ps->viewoffset[i] 
-				- (ops->pmove.origin[i]*0.125 + ops->viewoffset[i]));
+		for (i = 0; i < 3; i++)
+		{
+			cl.refdef.vieworg[i] = ops->pmove.origin[i] * 0.125f + ops->viewoffset[i] 
+				+ lerp * (ps->pmove.origin[i] * 0.125f + ps->viewoffset[i] 
+				- (ops->pmove.origin[i] * 0.125f + ops->viewoffset[i]));
+		}
 	}
 
 	// if not running a demo or on a locked frame, add the local angle movement
-	if (cl.frame.playerstate.pmove.pm_type < PM_DEAD)
+	if (cl.frame.playerstate.pmove.pm_type < PM_DEAD && cl_predict->value)
 	{	// use predicted values
-		for (i=0; i<3; i++)
+		for (i = 0; i < 3; i++)
 			cl.refdef.viewangles[i] = cl.predicted_angles[i];
 	}
 	else
