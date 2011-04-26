@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qcommon.h"
 
-
+extern cvar_t *oldmovephysics;
 
 #define	STEPSIZE	18
 
@@ -47,7 +47,8 @@ typedef struct pml_s
 
 pmove_t		*pm;
 pml_t		pml;
-float	g_viewheight = 0; // jit
+float		g_viewheight = 0.0f; // jit
+extern float g_stepheight; // jitmove - for step smoothing
 
 // movement parameters
 float	pm_stopspeed = 100;
@@ -95,8 +96,6 @@ void PM_ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce)
 }
 
 
-
-
 /*
 ==================
 PM_StepSlideMove
@@ -123,34 +122,34 @@ void PM_StepSlideMove_ (void)
 	trace_t	trace;
 	vec3_t		end;
 	float		time_left;
+	qboolean	hitsky = false;
+	float		initial_z_vel = pml.velocity[2];
 	
 	numbumps = 4;
-	
 	VectorCopy(pml.velocity, primal_velocity);
 	numplanes = 0;
-	
 	time_left = pml.frametime;
 
-	for (bumpcount=0; bumpcount<numbumps; bumpcount++)
+	for (bumpcount = 0; bumpcount < numbumps; bumpcount++)
 	{
-		for (i=0; i<3; i++)
+		for (i = 0; i < 3; i++)
 			end[i] = pml.origin[i] + time_left * pml.velocity[i];
 
 		trace = pm->trace(pml.origin, pm->mins, pm->maxs, end);
 
 		if (trace.allsolid)
 		{	// entity is trapped in another solid
-			pml.velocity[2] = 0;	// don't build up falling damage
+			pml.velocity[2] = 0.0f;	// don't build up falling damage
 			return;
 		}
 
-		if (trace.fraction > 0)
+		if (trace.fraction > 0.0f)
 		{	// actually covered some distance
-			VectorCopy (trace.endpos, pml.origin);
+			VectorCopy(trace.endpos, pml.origin);
 			numplanes = 0;
 		}
 
-		if (trace.fraction == 1)
+		if (trace.fraction == 1.0f)
 			 break;		// moved the entire distance
 
 		// save entity for contact
@@ -165,61 +164,73 @@ void PM_StepSlideMove_ (void)
 		// slide along this plane
 		if (numplanes >= MAX_CLIP_PLANES)
 		{	// this shouldn't really happen
-			VectorCopy (vec3_origin, pml.velocity);
+			VectorCopy(vec3_origin, pml.velocity);
 			break;
 		}
 
 		VectorCopy(trace.plane.normal, planes[numplanes]);
 		numplanes++;
 
+		// modify original_velocity so it parallels all of the clip planes
+		for (i = 0; i < numplanes; i++)
+		{	
+			PM_ClipVelocity(pml.velocity, planes[i], pml.velocity, 1.01f);
 
-//
-// modify original_velocity so it parallels all of the clip planes
-//
-		for (i=0 ; i<numplanes ; i++)
-		{
-			PM_ClipVelocity (pml.velocity, planes[i], pml.velocity, 1.01);
-			for (j=0 ; j<numplanes ; j++)
+			for (j = 0; j < numplanes; j++)
+			{
 				if (j != i)
 				{
-					if (DotProduct (pml.velocity, planes[j]) < 0)
-						break;	// not ok
+					if (DotProduct(pml.velocity, planes[j]) < 0.0f)
+						break; // not ok
 				}
+			}
+
+			if (trace.surface->flags & SURF_SKY && trace.plane.normal[2] < -0.95f && !oldmovephysics->value) // jitmove - don't kill upward velocity if you hit your head on sky
+				hitsky = true;
+
 			if (j == numplanes)
 				break;
 		}
 		
 		if (i != numplanes)
-		{	// go along this plane
+		{
+			// go along this plane
 		}
 		else
-		{	// go along the crease
+		{
+			// go along the crease
 			if (numplanes != 2)
 			{
-//				Con_Printf ("clip velocity, numplanes == %i\n",numplanes);
-				VectorCopy (vec3_origin, pml.velocity);
+				VectorCopy(vec3_origin, pml.velocity);
 				break;
 			}
-			CrossProduct (planes[0], planes[1], dir);
-			d = DotProduct (dir, pml.velocity);
-			VectorScale (dir, d, pml.velocity);
+
+			CrossProduct(planes[0], planes[1], dir);
+			d = DotProduct(dir, pml.velocity);
+			VectorScale(dir, d, pml.velocity);
 		}
-		//
+
+#if 0 // jitmove / jitjump - removed - I don't think this even does anything useful
 		// if velocity is against the original velocity, stop dead
 		// to avoid tiny occilations in sloping corners
-		//
 		if (DotProduct(pml.velocity, primal_velocity) <= 0)
 		{
 			VectorCopy(vec3_origin, pml.velocity);
 			break;
 		}
+#endif
 	}
 
+	if (hitsky)
+		pml.velocity[2] = initial_z_vel; // jitmove - don't kill upward velocity if you hit your head on sky
+
+	// For jumping out of water, teleports, server corrected positions, etc.
 	if (pm->s.pm_time)
 	{
 		VectorCopy(primal_velocity, pml.velocity);
 	}
 }
+
 
 /*
 ==================
@@ -234,6 +245,8 @@ void PM_StepSlideMove (void)
 	trace_t		trace;
 	float		down_dist, up_dist;
 	vec3_t		up, down;
+	float		stepfraction = 1.0f; // jitmove
+	float		downmin;
 
 	VectorCopy(pml.origin, start_o);
 	VectorCopy(pml.velocity, start_v);
@@ -246,44 +259,70 @@ void PM_StepSlideMove (void)
 	VectorCopy(start_o, up);
 	up[2] += STEPSIZE;
 
-	trace = pm->trace(up, pm->mins, pm->maxs, up);
+	// jitmove - trace should start at the start, not at "up" (fix for not stepping in places with low ceilings)
+	trace = pm->trace(start_o, pm->mins, pm->maxs, up);
+	stepfraction = trace.fraction;
 
 	if (trace.allsolid)
-		return;		// can't step up
+	{
+		Com_DPrintf("Trace up all solid.\n");
+		return;		// can't step up (jit - probably obsolete with fix above and below this - I think this only hits when stuck in geometry)
+	}
 
 	// try sliding above
-	VectorCopy(up, pml.origin);
+	VectorCopy(trace.endpos, pml.origin); // jitmove - don't potentially start in something solid if we have steps with a low ceiling
 	VectorCopy(start_v, pml.velocity);
 
 	PM_StepSlideMove_();
 
 	// push down the final amount
 	VectorCopy(pml.origin, down);
-	down[2] -= STEPSIZE;
+	downmin = down[2] - STEPSIZE * stepfraction; // jitmove - don't step down further than we stepped up
+
+	if (start_o[2] - 1.0f < downmin && !oldmovephysics->value)
+		down[2] = start_o[2] - 1.0f; // jitmove / jitjump - cast down a little further, so we don't bounce off of steps while jumping
+	else
+		down[2] = downmin;
+
 	trace = pm->trace(pml.origin, pm->mins, pm->maxs, down);
 
 	if (!trace.allsolid)
 	{
 		VectorCopy(trace.endpos, pml.origin);
+
+		if (pml.origin[2] < downmin) // jitmove - since we cast down further, make sure we don't falsely move down too far
+			pml.origin[2] = downmin;
+	}
+	else
+	{
+		Com_DPrintf("Trace down all solid.\n");
 	}
 
 	VectorCopy(pml.origin, up);
 
 	// decide which one went farther
-    down_dist = (down_o[0] - start_o[0])*(down_o[0] - start_o[0])
-        + (down_o[1] - start_o[1])*(down_o[1] - start_o[1]);
-    up_dist = (up[0] - start_o[0])*(up[0] - start_o[0])
-        + (up[1] - start_o[1])*(up[1] - start_o[1]);
+    down_dist = (down_o[0] - start_o[0]) * (down_o[0] - start_o[0]) + (down_o[1] - start_o[1])*(down_o[1] - start_o[1]);
+    up_dist = (up[0] - start_o[0]) * (up[0] - start_o[0]) + (up[1] - start_o[1]) * (up[1] - start_o[1]);
 
+	// In almost all cases, up_dist is ~>= down_dist (much greater on up slopes and steps)
+	// down_dist only appears to be greater when falling down onto downward slopes.
 	if (down_dist > up_dist || trace.plane.normal[2] < MIN_STEP_NORMAL)
 	{
 		VectorCopy(down_o, pml.origin);
 		VectorCopy(down_v, pml.velocity);
-		return;
 	}
-	//!! Special case
-	// if we were walking along a plane, then we need to copy the Z over
-	pml.velocity[2] = down_v[2];
+	else
+	{
+		float stepdiff = up[2] - down_o[2];
+
+		// jitmove - save this for step smoothing later
+		if (stepdiff > 0.01f)
+			g_stepheight = stepdiff;
+
+		//!! Special case
+		// if we were walking along a plane, then we need to copy the Z over
+		pml.velocity[2] = down_v[2];
+	}
 }
 
 
@@ -528,7 +567,7 @@ void PM_WaterMove (void)
 /*
 ===================
 PM_AirMove
-
+Despite its name, this function gets called all the time, even if you're on the ground.
 ===================
 */
 void PM_AirMove (void)
@@ -551,67 +590,70 @@ void PM_AirMove (void)
 	VectorNormalize (pml.right);
 #endif
 
-	for (i=0 ; i<2 ; i++)
-		wishvel[i] = pml.forward[i]*fmove + pml.right[i]*smove;
-	wishvel[2] = 0;
+	for (i = 0; i < 2; i++)
+		wishvel[i] = pml.forward[i] * fmove + pml.right[i] * smove;
 
-	PM_AddCurrents (wishvel);
-
-	VectorCopy (wishvel, wishdir);
+	wishvel[2] = 0.0f;
+	PM_AddCurrents(wishvel);
+	VectorCopy(wishvel, wishdir);
 	wishspeed = VectorNormalizeRetLen(wishdir);
 
-	//
 	// clamp to server defined max speed
-	//
 	maxspeed = (pm->s.pm_flags & PMF_DUCKED) ? pm_duckspeed : pm_maxspeed;
 
 	if (wishspeed > maxspeed)
 	{
-		VectorScale (wishvel, maxspeed/wishspeed, wishvel);
+		VectorScale(wishvel, maxspeed / wishspeed, wishvel);
 		wishspeed = maxspeed;
 	}
 	
 	if (pml.ladder)
 	{
-		PM_Accelerate (wishdir, wishspeed, pm_accelerate);
+		PM_Accelerate(wishdir, wishspeed, pm_accelerate);
+
 		if (!wishvel[2])
 		{
-			if (pml.velocity[2] > 0)
+			if (pml.velocity[2] > 0.0f)
 			{
 				pml.velocity[2] -= pm->s.gravity * pml.frametime;
-				if (pml.velocity[2] < 0)
-					pml.velocity[2]  = 0;
+
+				if (pml.velocity[2] < 0.0f)
+					pml.velocity[2] = 0.0f;
 			}
 			else
 			{
 				pml.velocity[2] += pm->s.gravity * pml.frametime;
-				if (pml.velocity[2] > 0)
-					pml.velocity[2]  = 0;
+
+				if (pml.velocity[2] > 0.0f)
+					pml.velocity[2]  = 0.0f;
 			}
 		}
+
 		PM_StepSlideMove();
 	}
 	else if (pm->groundentity)
 	{
-#if 1 // jitslope - old code
-		// walking on ground
-		pml.velocity[2] = 0; //!!! this is before the accel
-		PM_Accelerate (wishdir, wishspeed, pm_accelerate);
+		if (oldmovephysics->value)
+		{
+			// walking on ground
+			pml.velocity[2] = 0; //!!! this is before the accel
+			PM_Accelerate(wishdir, wishspeed, pm_accelerate);
 
-// PGM	-- fix for negative trigger_gravity fields
-//		pml.velocity[2] = 0;
-		if (pm->s.gravity > 0)
-			pml.velocity[2] = 0;
+			// PGM	-- fix for negative trigger_gravity fields
+			//		pml.velocity[2] = 0;
+			if (pm->s.gravity > 0)
+				pml.velocity[2] = 0;
+			else
+				pml.velocity[2] -= pm->s.gravity * pml.frametime;
+			// PGM
+		}
 		else
+		{
+			// === jitslope / jitmove - apply gravity even when on a ground entity so we walk down slopes
 			pml.velocity[2] -= pm->s.gravity * pml.frametime;
-// PGM
-#else
-		// === jitslope - apply gravity even when on a ground entity so we walk down slopes (testing)
-		//pml.velocity[2] = 0; //!!! this is before the accel
-		pml.velocity[2] -= pm->s.gravity * pml.frametime;
-		PM_Accelerate(wishdir, wishspeed, pm_accelerate);
-		// jitslope ===
-#endif
+			PM_Accelerate(wishdir, wishspeed, pm_accelerate);
+			// jitslope ===
+		}
 
 		if (!pml.velocity[0] && !pml.velocity[1])
 			return;
@@ -651,7 +693,8 @@ void PM_CatagorizePosition (void)
 	point[0] = pml.origin[0];
 	point[1] = pml.origin[1];
 	point[2] = pml.origin[2] - 0.25;
-	if (pml.velocity[2] > 180) //!!ZOID changed from 100 to 180 (ramp accel)
+
+	if (pml.velocity[2] > 180.0f && (oldmovephysics->value || (pm->s.pm_flags & PMF_JUMP_HELD))) // jitmove / jitjump - don't slide uphill uncontrollably unless we're holding the jump button (or using old physics)
 	{
 		pm->s.pm_flags &= ~PMF_ON_GROUND;
 		pm->groundentity = NULL;
@@ -699,7 +742,7 @@ void PM_CatagorizePosition (void)
 			// hitting solid ground will end a waterjump
 			if (pm->s.pm_flags & PMF_TIME_WATERJUMP)
 			{
-				pm->s.pm_flags &= ~(PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT);
+				pm->s.pm_flags &= ~(PMF_TIME_WATERJUMP | /*jitmove PMF_TIME_LAND |*/ PMF_TIME_TELEPORT);
 				pm->s.pm_time = 0;
 			}
 
@@ -707,6 +750,7 @@ void PM_CatagorizePosition (void)
 			{	// just hit the ground
 				pm->s.pm_flags |= PMF_ON_GROUND;
 
+#if 0 // jitjump - we don't want to stop jumping after touching the ground (code doesn't work 99% of the time, anyway)
 				// don't do landing time if we were just going down a slope
 				if (pml.velocity[2] < -200) // jit -  this crap doesn't work, velocity[2] is almost never < 0.
 				{
@@ -718,6 +762,7 @@ void PM_CatagorizePosition (void)
 					else
 						pm->s.pm_time = 18;
 				}
+#endif
 			}
 		}
 
@@ -755,7 +800,6 @@ void PM_CatagorizePosition (void)
 				pm->waterlevel = 3;
 		}
 	}
-
 }
 
 
@@ -801,6 +845,7 @@ void PM_CheckJump (void)
 			pml.velocity[2] = 80;
 		else
 			pml.velocity[2] = 50;
+
 		return;
 	}
 
@@ -811,13 +856,12 @@ void PM_CheckJump (void)
 
 	pm->groundentity = NULL;
 
-	//jit:
-#define JUMPHEIGHT 270
+#define JUMPVELOCITY 270
 
-	pml.velocity[2] += JUMPHEIGHT; // jitjump
+	pml.velocity[2] += JUMPVELOCITY;
 
-	if (pml.velocity[2] < JUMPHEIGHT)
-		pml.velocity[2] = JUMPHEIGHT;
+	if (pml.velocity[2] < JUMPVELOCITY)
+		pml.velocity[2] = JUMPVELOCITY;
 }
 
 
@@ -1113,53 +1157,7 @@ On exit, the origin will have a value that is pre-quantized to the 0.125
 precision of the network channel and in a valid position.
 ================
 */
-void PM_SnapPosition_old (void)
-{
-	int		sign[3];
-	int		i, j, bits;
-	short	base[3];
-	// try all single bits first
-	static int jitterbits[8] = {0,4,1,2,3,5,6,7};
-
-	// snap velocity to eigths
-	for (i = 0; i < 3; i++)
-		pm->s.velocity[i] = (short)(pml.velocity[i] * 8.0f);
-
-	for (i = 0; i < 3; i++)
-	{
-		if (pml.origin[i] >= 0)
-			sign[i] = 1;
-		else 
-			sign[i] = -1;
-
-		pm->s.origin[i] = (short)(pml.origin[i] * 8.0f);
-		
-		if ((short)((float)pm->s.origin[i] * 0.125f) == pml.origin[i])
-			sign[i] = 0;
-	}
-
-	VectorCopy(pm->s.origin, base);
-
-	// try all combinations
-	for (j = 0; j < 8; j++)
-	{
-		bits = jitterbits[j];
-		VectorCopy(base, pm->s.origin);
-
-		for (i = 0; i < 3; i++)
-			if (bits & (1<<i))
-				pm->s.origin[i] += sign[i];
-
-		if (PM_GoodPosition())
-			return;
-	}
-
-	// go back to the last position
-	VectorCopy(pml.previous_origin, pm->s.origin);
-//	Com_DPrintf ("using previous_origin\n");
-}
-
-void PM_SnapPosition (void) // testing
+void PM_SnapPosition (void)
 {
 	int		sign[3];
 	int		i, j, bits;
@@ -1178,8 +1176,7 @@ void PM_SnapPosition (void) // testing
 		else 
 			sign[i] = -1;
 
-#ifdef QUAKE2
-#else
+#ifndef QUAKE2 // jitmove - round down on z axis so high framerate doesn't have an unfair advantage
 		if (i == 2 && pml.origin[i] < 0) // z-axis
 			pm->s.origin[i] = (short)((int)(pml.origin[i] * 8.0f + 32768.0f) - 32768);
 		else
@@ -1299,6 +1296,7 @@ Can be called by either the server or the client
 */
 void Pmove (pmove_t *pmove)
 {
+	g_stepheight = 0.0f; // jitmove
 	pm = pmove;
 
 	// clear results
@@ -1362,7 +1360,7 @@ void Pmove (pmove_t *pmove)
 	// drop timing counter
 	if (pm->s.pm_time)
 	{
-		int		msec;
+		int msec;
 
 		msec = pm->cmd.msec >> 3;
 
@@ -1371,7 +1369,7 @@ void Pmove (pmove_t *pmove)
 
 		if (msec >= pm->s.pm_time) 
 		{
-			pm->s.pm_flags &= ~(PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT);
+			pm->s.pm_flags &= ~(PMF_TIME_WATERJUMP | /*jitmove PMF_TIME_LAND |*/ PMF_TIME_TELEPORT);
 			pm->s.pm_time = 0;
 		}
 		else
@@ -1389,7 +1387,7 @@ void Pmove (pmove_t *pmove)
 
 		if (pml.velocity[2] < 0)
 		{	// cancel as soon as we are falling down again
-			pm->s.pm_flags &= ~(PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT);
+			pm->s.pm_flags &= ~(PMF_TIME_WATERJUMP | /*jitmove PMF_TIME_LAND |*/ PMF_TIME_TELEPORT);
 			pm->s.pm_time = 0;
 		}
 
