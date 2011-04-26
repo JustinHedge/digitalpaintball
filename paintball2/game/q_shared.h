@@ -240,6 +240,8 @@ void Matrix3_Transpose (mat3_t in, mat3_t out); // jit - from qfusion
 void R_ConcatRotations (float in1[3][3], float in2[3][3], float out[3][3]);
 void R_ConcatTransforms (float in1[3][4], float in2[3][4], float out[3][4]);
 
+float DampIIR (float src, float dest, float factor, float dt);
+
 void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
 int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *plane);
 float	anglemod(float a);
@@ -601,7 +603,7 @@ typedef enum
 #define	PMF_JUMP_HELD		2
 #define	PMF_ON_GROUND		4
 #define	PMF_TIME_WATERJUMP	8	// pm_time is waterjump
-#define	PMF_TIME_LAND		16	// pm_time is time before rejump
+//jitmove #define	PMF_TIME_LAND		16	// pm_time is time before rejump
 #define	PMF_TIME_TELEPORT	32	// pm_time is non-moving time
 #define PMF_NO_PREDICTION	64	// temporarily disables prediction (used for grappling hook)
 
@@ -642,12 +644,14 @@ typedef struct usercmd_s
 	byte	buttons;
 	short	angles[3];
 	short	forwardmove, sidemove, upmove;
-	byte	impulse;		// remove?
-	byte	lightlevel;		// light level the player is standing on
+	byte	impulse;
+	byte	lightlevel;		// light level the player is standing on (pointless, but needed for compatibility - might reuse this byte)
 } usercmd_t;
 
 
 #define	MAXTOUCH	32
+
+// WARNING! THIS STRUCTURE MUST REMAIN THE SAME TO BE COMPATIBLE WITH THE GAME DLL!
 typedef struct
 {
 	// state (in / out)

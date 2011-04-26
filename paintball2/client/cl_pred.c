@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 
 
+float g_stepheight = 0.0f; // jitmove - for step smoothing
+
+
 /*
 ===================
 CL_CheckPredictionError
@@ -57,8 +60,8 @@ void CL_CheckPredictionError (void)
 
 		VectorCopy (cl.frame.playerstate.pmove.origin, cl.predicted_origins[frame]);
 
-		// save for error itnerpolation
-		for (i=0 ; i<3 ; i++)
+		// save for error interpolation
+		for (i = 0; i < 3; i++)
 			cl.prediction_error[i] = delta[i]*0.125;
 	}
 }
@@ -201,13 +204,10 @@ void CL_PredictMovement (void)
 {
 	int			ack, current;
 	int			frame;
-//	int			oldframe;
-	usercmd_t	*cmd;
 	pmove_t		pm;
 	int			i;
-	int			step;
-//	int			oldz;
-//	usercmd_t	interp_cmd; // jitnetfps - cmd to interpolate movement
+	float		stepheight;
+	float		unsentstepheight = 0.0f;
 
 	if (cls.state != ca_active)
 		return;
@@ -215,21 +215,13 @@ void CL_PredictMovement (void)
 	if (cl_paused->value)
 		return;
 
-	for (i=0; i<3; i++) // jitnetfps -- just use the stinkin' view angles
+	for (i = 0; i < 3; i++) // jitnetfps -- just use the stinkin' view angles
 	{
-		cl.predicted_angles[i] = cl.viewangles[i] + 
-			SHORT2ANGLE(cl.frame.playerstate.pmove.delta_angles[i]);
+		cl.predicted_angles[i] = cl.viewangles[i] + SHORT2ANGLE(cl.frame.playerstate.pmove.delta_angles[i]);
 	}
 
 	if (!cl_predict->value || (cl.frame.playerstate.pmove.pm_flags & PMF_NO_PREDICTION))
-	{	// just set angles
-		//for (i=0; i<3; i++)
-		//{
-		//	cl.predicted_angles[i] = cl.viewangles[i] + 
-		//		SHORT2ANGLE(cl.frame.playerstate.pmove.delta_angles[i]);
-		//}
 		return;
-	}
 
 	ack = cls.netchan.incoming_acknowledged;
 	current = cls.netchan.outgoing_sequence;
@@ -238,7 +230,8 @@ void CL_PredictMovement (void)
 	if (current - ack >= CMD_BACKUP)
 	{
 		if (cl_showmiss->value)
-			Com_Printf ("Exceeded CMD_BACKUP.\n");
+			Com_Printf("Exceeded CMD_BACKUP.\n");
+
 		return;	
 	}
 
@@ -248,116 +241,50 @@ void CL_PredictMovement (void)
 	pm.pointcontents = CL_PMpointcontents;
 	pm_airaccelerate = atof(cl.configstrings[CS_AIRACCEL]);
 	pm.s = cl.frame.playerstate.pmove;
-
-//	SCR_DebugGraph (current - ack - 1, 0);
-
 	frame = 0;
 
-	if (ack >= current - 1) // jitnetfps -- jitodo interpolate between sent frames
+	// run frames
+	while (++ack < current)
 	{
-//		//frame = ack & (CMD_BACKUP-1);
-//		//cmd = &cl.cmds[frame];
-//
-//		//pm.cmd = *cmd;
-//		//Pmove(&pm);
-//
-//		//VectorCopy(pml.origin, cl.predicted_origin); // jitest
-//		//cl.predicted_origin[0] = pm.s.origin[0]*0.125; // jitest
-//		//cl.predicted_origin[1] = pm.s.origin[1]*0.125;
-//		//cl.predicted_origin[2] = pm.s.origin[2]*0.125;
-//
-//		//VectorCopy(cl.viewangles, pm.viewangles); // jitnetfps
-//		//cl.predicted_origin[0] = pm.s.origin[0]*0.125 + pm.s.velocity[0]*cl.frametime; // jitest
-//		//cl.predicted_origin[1] = pm.s.origin[1]*0.125 + pm.s.velocity[1]*cl.frametime;
-//		//cl.predicted_origin[2] = pm.s.origin[2]*0.125 + pm.s.velocity[2]*cl.frametime;
-////todo: get current cmd and use cmd.angles
-//		// test  angles with prediction off
-//		for (i=0 ; i<3 ; i++)
-//		{
-//			//cl.predicted_origin[i] = pm.s.origin[i]*0.125f + pm.s.velocity[i]*cl.frametime; // jitest
-//			cl.predicted_angles[i] = cl.viewangles[i];// + 
-//			//pm.viewangles[i] = cl.viewangles[i] + 
-//				//SHORT2ANGLE(cl.frame.playerstate.pmove.delta_angles[i]);
-//		}
-//		
-	//	//return;
-
-////		++ack;
-////		frame = ack & (CMD_BACKUP-1); // jitest
-//		frame = current & (CMD_BACKUP-1); // jitest
-
-		//cmd = &cl.cmds[frame];
-
-		//pm.cmd = *cmd;
-		//Pmove(&pm);
-		//
-		//// save for debug checking
-		//VectorCopy(pm.s.origin, cl.predicted_origins[frame]);
-	}
-	else
-	{
-		// run frames
-		while (++ack < current)
-		{
-			frame = ack & (CMD_BACKUP-1);
-			cmd = &cl.cmds[frame];
-			pm.cmd = *cmd;
-			Pmove(&pm);
-			
-			// save for debug checking
-			VectorCopy(pm.s.origin, cl.predicted_origins[frame]);
-		}
-
+		frame = ack & (CMD_BACKUP-1);
+		pm.cmd = cl.cmds[frame];
+		Pmove(&pm);
+		VectorCopy(pm.s.origin, cl.predicted_origins[frame]); // save for comparing against server results so we can smooth corrections
 	}
 
-#define INTERP // jitodo -- cvar?
+	stepheight = g_stepheight; // jitmove - take the step height from the last sent cmd
 
-#ifdef INTERP
 	// ===
-	// jitnetfps
-	// interpolate:
+	// jitnetfps - now that we're not sending a network packet for every frame rendered, we need to execute this pmove
+	// to fill in the gap between when we last transmitted a packet and the current time.
 	frame = current & (CMD_BACKUP-1);
-	cmd = &cl.cmds[frame];
-	pm.cmd = *cmd;
+	pm.cmd = cl.cmds[frame];
 	pm.cmd.msec = cls.realtime - cls.last_transmit_time;
-	Pmove(&pm);
 
-	// save for debug checking
-	VectorCopy(pm.s.origin, cl.predicted_origins[frame]);
+	if (pm.cmd.msec > 0)
+	{
+		Pmove(&pm);
+		VectorCopy(pm.s.origin, cl.predicted_origins[frame]);
+		unsentstepheight = g_stepheight;
+		stepheight = 0.0f; // in this case, we're between sent cmd frames, so we don't want to count the step multiple times
+	}
 	// jit
 	// ===
-#endif
-	
 
+	// === jitmove - new step smoothing
+	if (stepheight > 0.0f)
+		cl.predicted_step += stepheight;
 
-#ifdef INTERP
-	step = pm.s.origin[2] - cl.oldz;
+	cl.predicted_step = DampIIR(cl.predicted_step, 0.0f, 0.085f, cls.frametime);
 
-	if (step > 8 && step < 160 && (pm.s.pm_flags & PMF_ON_GROUND))
-	{
-		cl.predicted_step = step * 0.125f;
-		cl.predicted_step_time = cls.realtime - cls.frametime * 500.0f;
-	}
+	if (cl.predicted_step < 0.0f)
+		cl.predicted_step = 0.0f;
 
-	cl.oldz = pm.s.origin[2];
-#else
-	oldframe = (ack-2) & (CMD_BACKUP-1); // original q2 code
-	
-	oldz = cl.predicted_origins[oldframe][2];
-	step = pm.s.origin[2] - oldz;
-
-	if (step > 63 && step < 160 && (pm.s.pm_flags & PMF_ON_GROUND))
-	{
-		cl.predicted_step = step * 0.125;
-		cl.predicted_step_time = cls.realtime - cls.frametime * 500;
-	}
-#endif
+	cl.predicted_step_unsent = unsentstepheight;
+	// jitmove ===
 
 	// copy results out for rendering
-	cl.predicted_origin[0] = pm.s.origin[0]*0.125;
-	cl.predicted_origin[1] = pm.s.origin[1]*0.125;
-	cl.predicted_origin[2] = pm.s.origin[2]*0.125;
-
-	// jitnetfps -- what do we need to predict the angles for anyway?!
-	//VectorCopy (pm.viewangles, cl.predicted_angles);
+	cl.predicted_origin[0] = pm.s.origin[0] * 0.125f;
+	cl.predicted_origin[1] = pm.s.origin[1] * 0.125f;
+	cl.predicted_origin[2] = pm.s.origin[2] * 0.125f;
 }

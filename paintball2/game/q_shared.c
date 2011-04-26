@@ -97,6 +97,11 @@ void RotatePointAroundVector (vec3_t dst, const vec3_t dir, const vec3_t point, 
 	dst[2] = rot[2][0] * point[0] + rot[2][1] * point[1] + rot[2][2] * point[2];
 }
 
+float DampIIR (float src, float dest, float factor, float dt)
+{
+	return (src * factor + dest * dt) / (factor + dt);
+}
+
 
 void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 {
