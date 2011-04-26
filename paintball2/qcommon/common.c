@@ -40,6 +40,7 @@ cvar_t	*host_speeds;
 cvar_t	*log_stats;
 cvar_t	*developer;
 cvar_t	*timescale;
+cvar_t	*oldmovephysics; // jitmove - to enable old q2 style movement
 cvar_t	*logfile_active;	// 1 = buffer log, 2 = flush after each print
 cvar_t	*timestamp_console; // jittimestamp
 cvar_t	*showtrace;
@@ -496,8 +497,8 @@ void MSG_WriteDeltaUsercmd (sizebuf_t *buf, usercmd_t *from, usercmd_t *cmd)
  	if (bits & CM_IMPULSE)
 	    MSG_WriteByte (buf, cmd->impulse);
 
-    MSG_WriteByte (buf, cmd->msec);
-	MSG_WriteByte (buf, cmd->lightlevel);
+    MSG_WriteByte(buf, cmd->msec);
+	MSG_WriteByte(buf, cmd->lightlevel); // This is really pointless, but it can't be removed without breaking compatibility - maybe we could reuse it for something else?
 }
 
 
@@ -1495,6 +1496,7 @@ void Qcommon_Init (int argc, char **argv)
 	log_stats = Cvar_Get("log_stats", "0", 0);
 	developer = Cvar_Get("developer", "0", 0);
 	timescale = Cvar_Get("timescale", "1", 0);
+	oldmovephysics = Cvar_Get("oldmovephysics", "0", 0); // jitmove
 	splattime = Cvar_Get("splattime", "4", CVAR_ARCHIVE); // jit
 	logfile_active = Cvar_Get("logfile", "0", 0);
 	showtrace = Cvar_Get("showtrace", "0", 0);
