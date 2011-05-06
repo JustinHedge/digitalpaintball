@@ -1099,15 +1099,7 @@
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe"
 			>
 			<File
-				RelativePath=".\win32\icon2.ico"
-				>
-			</File>
-			<File
 				RelativePath=".\win32\paintball2.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\win32\q2.ico"
 				>
 			</File>
 			<File

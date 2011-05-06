@@ -2,9 +2,7 @@
 // Microsoft Developer Studio generated include file.
 // Used by q2.rc
 //
-#define IDI_ICON1                       101
-#define IDI_ICON2                       103
-#define IDI_ICON3                       105
+#define IDI_ICON1                       1
 
 // Next default values for new objects
 // 

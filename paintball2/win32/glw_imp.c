@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../ref_gl/gl_cin.h" //Heffo - Cin Textures
 #include "glw_win.h"
 #include "winquake.h"
+#include "resource.h"
 
 static qboolean GLimp_SwitchFullscreen (int width, int height);
 qboolean GLimp_InitGL (void);
@@ -88,7 +89,7 @@ qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
     wc.hInstance     = glw_state.hInstance;
-    wc.hIcon         = 0;
+    wc.hIcon         = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1));
     wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (void*)COLOR_GRAYTEXT;
     wc.lpszMenuName  = 0;
@@ -105,7 +106,7 @@ qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
 	else
 	{
 		exstyle = 0;
-		stylebits = WINDOW_STYLE;
+		stylebits = WS_OVERLAPPEDWINDOW;
 	}
 
 	r.left = 0;
@@ -155,11 +156,11 @@ qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
 		return false;
 	}
 
-	SetForegroundWindow( glw_state.hWnd );
-	SetFocus( glw_state.hWnd );
+	SetForegroundWindow(glw_state.hWnd);
+	SetFocus(glw_state.hWnd);
 
 	// let the sound and input subsystems know about the new window
-	ri.Vid_NewWindow (width, height);
+	ri.Vid_NewWindow(width, height);
 
 	return true;
 }
@@ -692,6 +693,7 @@ void GLimp_BeginFrame( float camera_separation )
 // frame dump - MrG
 // modified screenshot function
 int cl_anim_count = 0;
+void apply_gamma (byte *rgbdata, int w, int h); // jitgamma
 
 void CL_AnimDump (void) 
 {
@@ -700,7 +702,6 @@ void CL_AnimDump (void)
 	int			c, temp,o;
 	unsigned int i;
 	FILE		*f;
-	void apply_gamma(byte *rgbdata, int w, int h); // jitgamma
 
 	// create the scrnshots directory if it doesn't exist
 	Com_sprintf (checkname, sizeof(checkname), "%s/animdump", ri.FS_Gamedir());
@@ -709,26 +710,30 @@ void CL_AnimDump (void)
 // 
 // find a file name to save it to 
 // 
-	for (i=cl_anim_count ; i<=99999999 ; i++) 
+	for (i = cl_anim_count; i <= 99999999; i++) 
 	{ 
-		Com_sprintf (checkname, sizeof(checkname), "%s/animdump/anim%5i.tga", ri.FS_Gamedir(), i);
-		for (o=0;o<strlen(checkname);o++)
+		Com_sprintf(checkname, sizeof(checkname), "%s/animdump/anim%5i.tga", ri.FS_Gamedir(), i);
+
+		for (o = 0; o < strlen(checkname); o++)
 			if (checkname[o] == ' ')
 				checkname[o] = '0';
 
 		f = fopen (checkname, "rb");
+
 		if (!f)
 			break;	// file doesn't exist
-		fclose (f);
+
+		fclose(f);
 	} 
-	if (i==100000000) 
+
+	if (i == 100000000) 
 	{
-		ri.Cvar_Set("cl_animdump","0");
-		ri.Con_Printf (PRINT_ALL, "CL_AnimDump: Max frames exported.\n"); 
+		ri.Cvar_Set("cl_animdump", "0");
+		ri.Con_Printf(PRINT_ALL, "CL_AnimDump: Max frames exported.\n"); 
 		return;
  	}
-	cl_anim_count=i;
 
+	cl_anim_count = i;
 
 	buffer = malloc(vid.width*vid.height*3 + 18);
 	memset (buffer, 0, 18);
@@ -739,12 +744,12 @@ void CL_AnimDump (void)
 	buffer[15] = vid.height>>8;
 	buffer[16] = 24;	// pixel size
 
-	qglReadPixels (0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer+18 ); 
-	apply_gamma(buffer+18, vid.width, vid.height); // jitgamma -- apply video gammaramp to screenshot
+	qglReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer + 18); 
+	apply_gamma(buffer + 18, vid.width, vid.height); // jitgamma -- apply video gammaramp to screenshot
 	
 
 	// swap rgb to bgr
-	c = 18+vid.width*vid.height*3;
+	c = 18 + vid.width * vid.height * 3;
 	for (i=18 ; i<c ; i+=3)
 	{
 		temp = buffer[i];
