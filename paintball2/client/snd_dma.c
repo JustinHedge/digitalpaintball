@@ -844,17 +844,18 @@ if pos is NULL, the sound will be dynamically sourced from the entity
 Entchannel 0 will never override a playing sound
 ====================
 */
-void S_StartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float fvol, float attenuation, float timeofs)
+void S_StartSound (vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float fvol, float attenuation, float timeofs)
 {
 	sfxcache_t	*sc;
 	int			vol;
 	playsound_t	*ps, *sort;
 	int			start;
-	//A3D CHANGE
 
+	//A3D CHANGE
 	if (!sound_started && !a3dsound_started)
 		return;
-	//A3D CHANGE END 
+	//A3D CHANGE END
+
 	if (!sfx)
 		return;
 
@@ -870,6 +871,7 @@ void S_StartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float f
 				CL_PlayFootstep(&cl_entities[entnum].current); // play footstep instead
 			}
 		}
+
 		if (play)
 			sfx = S_RegisterSexedSound(&cl_entities[entnum].current, sfx->name);
 	}
@@ -881,25 +883,30 @@ void S_StartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float f
 		return;
 	}
 	//A3D END
+
 	// make sure the sound is loaded
-	sc = S_LoadSound (sfx);
+	sc = S_LoadSound(sfx);
+
 	if (!sc)
 		return;		// couldn't load the sound's data
 
-	vol = fvol*255;
+	vol = fvol * 255.0f;
 
 	// make the playsound_t
-	ps = S_AllocPlaysound ();
+	ps = S_AllocPlaysound();
+
 	if (!ps)
 		return;
 
 	if (origin)
 	{
-		VectorCopy (origin, ps->origin);
+		VectorCopy(origin, ps->origin);
 		ps->fixed_origin = true;
 	}
 	else
+	{
 		ps->fixed_origin = false;
+	}
 
 	ps->entnum = entnum;
 	ps->entchannel = entchannel;
@@ -930,14 +937,11 @@ void S_StartSound(vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float f
 		ps->begin = start + timeofs * dma.speed;
 
 	// sort into the pending sound list
-	for (sort = s_pendingplays.next ; 
-		sort != &s_pendingplays && sort->begin < ps->begin ;
-		sort = sort->next)
-			;
+	for (sort = s_pendingplays.next; sort != &s_pendingplays && sort->begin < ps->begin; sort = sort->next)
+		;
 
 	ps->next = sort;
 	ps->prev = sort->prev;
-
 	ps->next->prev = ps;
 	ps->prev->next = ps;
 }

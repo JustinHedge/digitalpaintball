@@ -172,7 +172,14 @@ void GL_ScreenShot_JPG (void)
 	// Find a file name to save it to
 	if (ri.Cmd_Argc() > 1 && ri.Cmd_Argv(1)[0]) // jitsshot -- named screenshots
 	{
+		char *s;
+
 		Com_sprintf(picname, sizeof(picname), "%s.jpg", ri.Cmd_Argv(1));
+		
+		for (s = picname; *s; ++s)
+			if (*s == '\\' || *s == '/' || *s == ' ')
+				*s = '_';
+
 		Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
 	}
 	else
@@ -300,7 +307,14 @@ void GL_ScreenShot_f (void)
 	// find a file name to save it to
 	if (ri.Cmd_Argc() > 1 && ri.Cmd_Argv(1)[0]) // jitsshot -- named screenshots
 	{
+		char *s;
+
 		Com_sprintf(picname, sizeof(picname), "%s.tga", ri.Cmd_Argv(1));
+
+		for (s = picname; *s; ++s)
+			if (*s == '\\' || *s == '/' || *s == ' ')
+				*s = '_';
+
 		Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/%s", ri.FS_Gamedir(), picname);
 	}
 	else
