@@ -87,7 +87,7 @@ It can be clipped to the top of the screen to allow the console to be
 smoothly scrolled off.
 ================
 */
-void Draw_Char (int x, int y, int num) // jitodo -- try to remove all calls to this, use draw_string
+void Draw_Char (float x, float y, int num) // jitodo -- try to remove all calls to this, use draw_string
 {
 	int				row, col;
 	float			frow, fcol, size;
@@ -140,9 +140,10 @@ void Draw_Char (int x, int y, int num) // jitodo -- try to remove all calls to t
 
 //float redtext[] = { 1.0f, .8f, .5f };
 //float whitetext[] = { 1.0f, 1.0f, 1.0f };
-void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
+void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 {
-	int				px,py,row, col,num;
+	float			px, py;
+	int				row, col, num;
 	float			frow, fcol, size;
 	const char		*s = str; // jit, shush little warning
 	float			textscale; // jithudscale
@@ -164,7 +165,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 	GLSTATE_DISABLE_ALPHATEST // jitconsole
 	GLSTATE_ENABLE_BLEND // jitconsole
 	GL_TexEnv(GL_COMBINE_EXT); // jittext (brighter text now)
-	size = 0.0625;
+	size = 0.0625f;
 
 	if (gl_textshadow->value)
 	{
@@ -359,7 +360,7 @@ void Draw_StringAlpha (int x, int y, const char *str, float alpha) // jit
 }
 
 
-void Draw_String (int x, int y, const char *str)
+void Draw_String (float x, float y, const char *str)
 {
 	Draw_StringAlpha(x, y, str, 1.0f); // jit
 }
@@ -420,7 +421,7 @@ Draw_StretchPic
 =============
 */
 void RS_SetTexcoords2D (rs_stage_t *stage, float *os, float *ot); // jit
-void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
+void Draw_StretchPic2 (float x, float y, float w, float h, image_t *gl)
 {
 	rscript_t *rs;
 	float	txm,tym, alpha,s,t;
@@ -433,7 +434,7 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 	}
 
 	if (scrap_dirty)
-		Scrap_Upload ();
+		Scrap_Upload();
 
 	if (((gl_config.renderer == GL_RENDERER_MCD) ||
 		(gl_config.renderer & GL_RENDERER_RENDITION)) && !gl->has_alpha)
@@ -456,16 +457,14 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 		GL_Bind(gl->texnum);
 
 		qglBegin(GL_QUADS);
-
 		qglTexCoord2f(gl->sl, gl->tl);
 		qglVertex2f(x, y);
 		qglTexCoord2f(gl->sh, gl->tl);
-		qglVertex2f(x+w, y);
+		qglVertex2f(x + w, y);
 		qglTexCoord2f(gl->sh, gl->th);
-		qglVertex2f(x+w, y+h);
+		qglVertex2f(x + w, y + h);
 		qglTexCoord2f(gl->sl, gl->th);
-		qglVertex2f(x, y+h);
-
+		qglVertex2f(x, y + h);
 		qglEnd();
 	}
 	else
@@ -627,17 +626,19 @@ void Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl)
 }
 
 
-void Draw_StretchPic (int x, int y, int w, int h, char *pic)
+void Draw_StretchPic (float x, float y, float w, float h, char *pic)
 {
 	image_t *gl;
 
-	gl = Draw_FindPic (pic);
+	gl = Draw_FindPic(pic);
+
 	if (!gl)
 	{
 		ri.Con_Printf (PRINT_ALL, "Can't find pic: %s\n", pic);
 		return;
 	}
-	Draw_StretchPic2(x,y,w,h,gl);
+
+	Draw_StretchPic2(x, y, w, h, gl);
 }
 
 /*
@@ -646,7 +647,7 @@ Draw_Pic
 =============
 */
 
-void Draw_Pic2 (int x, int y, image_t *gl)
+void Draw_Pic2 (float x, float y, image_t *gl)
 {
 // jit - no sense in doing all the exact same stuff twice -- just call stretchpic.
 	float picscale;
@@ -656,20 +657,22 @@ void Draw_Pic2 (int x, int y, image_t *gl)
 	if (gl->is_crosshair) // find a better way to do this
 		picscale = cl_crosshairscale->value; // viciouz - crosshair scale
 
-	Draw_StretchPic2 (x, y, gl->width*picscale, gl->height*picscale, gl);
+	Draw_StretchPic2(x, y, gl->width * picscale, gl->height * picscale, gl);
 }
 
-void Draw_Pic (int x, int y, char *pic)
+void Draw_Pic (float x, float y, char *pic)
 {
 	image_t *gl;
 
-	gl = Draw_FindPic (pic);
+	gl = Draw_FindPic(pic);
+
 	if (!gl)
 	{
-		ri.Con_Printf (PRINT_ALL, "Can't find pic: %s\n", pic);
+		ri.Con_Printf(PRINT_ALL, "Can't find pic: %s\n", pic);
 		return;
 	}
-	Draw_Pic2(x,y,gl);
+
+	Draw_Pic2(x, y, gl);
 }
 
 /*

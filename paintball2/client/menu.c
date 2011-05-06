@@ -34,8 +34,8 @@ static int				m_menudepth	= 0;
 static menu_screen_t	*root_menu	= NULL;
 static menu_screen_t	*m_menu_screens[MAX_MENU_SCREENS];
 static menu_mouse_t		m_mouse; // jitmouse
-static int				scale;
-static float			oldscale = 0;
+static float			scale;
+static float			oldscale = 0.0f;
 static menu_widget_t	*m_active_bind_widget = NULL;
 static char				*m_active_bind_command = NULL;
 static menu_screen_t	*m_current_menu;

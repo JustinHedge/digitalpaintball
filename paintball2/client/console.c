@@ -32,7 +32,7 @@ extern	int		edit_line;
 extern	int		key_linepos;
 		
 
-void Draw_StringLen (int x, int y, char *str, int len) // pooy
+void Draw_StringLen (float x, float y, char *str, int len) // pooy
 {
 	char saved_byte;
 

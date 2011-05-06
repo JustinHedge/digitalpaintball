@@ -232,24 +232,26 @@ typedef struct
 	void	(*RenderFrame) (refdef_t *fd);
 
 	void	(*DrawGetPicSize) (int *w, int *h, char *name);	// will return 0 0 if not found
-	void	(*DrawPic) (int x, int y, char *name);
-	void	(*DrawPic2) (int x, int y, image_t *gl);
-	void	(*DrawStretchPic) (int x, int y, int w, int h, char *name);
-	void	(*DrawStretchPic2) (int x, int y, int w, int h, image_t *gl);
-	void	(*DrawChar) (int x, int y, int c);
+	void	(*DrawPic) (float x, float y, char *name);
+	void	(*DrawPic2) (float x, float y, image_t *gl);
+	void	(*DrawStretchPic) (float x, float y, float w, float h, char *name);
+	void	(*DrawStretchPic2) (float x, float y, float w, float h, image_t *gl);
+	void	(*DrawChar) (float x, float y, int c);
 	void	(*DrawTileClear) (int x, int y, int w, int h, char *name);
 	void	(*DrawTileClear2) (int x, int y, int w, int h, image_t *image);
 	void	(*DrawFill) (int x, int y, int w, int h, int c);
 	void	(*DrawFadeScreen) (void);
 
-	void	(*DrawString) (int x, int y, const char *str); // jit, shush little warning
-	void	(*DrawStringAlpha) (int x, int y, const char *str, float alpha); // jit -- transparent strings (for fading out)
+	void	(*DrawString) (float x, float y, const char *str); // jit, shush little warning
+	void	(*DrawStringAlpha) (float x, float y, const char *str, float alpha); // jit -- transparent strings (for fading out)
 	int		(*DrawGetStates) (void);
 
 	image_t	*(*DrawFindPic) (const char *name);
 
 	// Draw images for cinematic rendering (which can have a different palette). Note that calls
 	void	(*DrawStretchRaw) (int x, int y, int w, int h, int cols, int rows, byte *data);
+
+	void	(*DrawResizeWindow) (int width, int height);
 
 	/*
 	** video mode and refresh state management entry points
