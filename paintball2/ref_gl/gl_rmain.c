@@ -4301,7 +4301,6 @@ int			c_brush_polys, c_alias_polys;
 float		v_blend[4];			// final blending color
 
 // === jitfog
-void Draw_String (int x, int y, const char *str);
 vec3_t fogcolor = { 0.408, 0.447, 0.584 };
 float fogdensity = 0.008;
 float fogdistance = 512;
@@ -5471,6 +5470,7 @@ void R_RenderView (refdef_t *fd)
 }
 
 unsigned int blurtex = 0;
+void	Draw_String (float x, float y, const char *str); // jit, shush little warning
 
 void R_SetGL2D (void)
 {
@@ -5548,7 +5548,7 @@ void R_SetGL2D (void)
 			CHAR_COLOR,
 			c_visible_textures,
 			c_visible_lightmaps);
-		Draw_String(0, r_newrefdef.height - 32*hudscale, s);
+		Draw_String(0.0f, r_newrefdef.height - 32.0f * hudscale, s);
 	}
 	// jit ===
 }
@@ -5761,7 +5761,7 @@ void R_Register(void)
 	gl_motionblur = ri.Cvar_Get("gl_motionblur", "0", CVAR_ARCHIVE);	// motionblur
 	vid_gamma_hw = ri.Cvar_Get("vid_gamma_hw", "0", CVAR_ARCHIVE);		// hardware gamma
 	gl_drawbuffer = ri.Cvar_Get("gl_drawbuffer", "GL_BACK", 0);
-	gl_swapinterval = ri.Cvar_Get("gl_swapinterval", "1", CVAR_ARCHIVE);
+	gl_swapinterval = ri.Cvar_Get("gl_swapinterval", "0", CVAR_ARCHIVE);
 	gl_saturatelighting = ri.Cvar_Get("gl_saturatelighting", "0", 0);
 	gl_3dlabs_broken = ri.Cvar_Get("gl_3dlabs_broken", "1", CVAR_ARCHIVE);
 	vid_fullscreen = ri.Cvar_Get("vid_fullscreen", "0", CVAR_ARCHIVE);
@@ -6710,16 +6710,15 @@ void	R_BeginRegistration (const char *map);
 void	R_SetSky (const char *name, float rotate, vec3_t axis);
 void	R_EndRegistration (void);
 void	R_RenderFrame (refdef_t *fd);
-void	Draw_Pic (int x, int y, char *name);
-void	Draw_Char (int x, int y, int c);
+void	Draw_Pic (float x, float y, char *name);
+void	Draw_Char (float x, float y, int c);
 void	Draw_TileClear (int x, int y, int w, int h, char *name);
 void	Draw_Fill (int x, int y, int w, int h, int c);
 void	Draw_FadeScreen (void);
 void	Draw_TileClear2 (int x, int y, int w, int h, image_t *image);
-void	Draw_StretchPic2 (int x, int y, int w, int h, image_t *gl);
-void	Draw_Pic2 (int x, int y, image_t *gl);
-void	Draw_String (int x, int y, const char *str); // jit, shush little warning
-void	Draw_StringAlpha (int x, int y, const char *str, float alhpa); // jit
+void	Draw_StretchPic2 (float x, float y, float w, float h, image_t *gl);
+void	Draw_Pic2 (float x, float y, image_t *gl);
+void	Draw_StringAlpha (float x, float y, const char *str, float alhpa); // jit
 
 
 int Draw_GetIntVarByID (int id)
@@ -6738,6 +6737,12 @@ int Draw_GetIntVarByID (int id)
 	}
 
 	return 0;
+}
+
+void Draw_ResizeWindow (int width, int height)
+{
+	vid.width = width;
+	vid.height = height;
 }
 
 /*
@@ -6768,6 +6773,7 @@ refexport_t GetRefAPI (refimport_t rimp)
 	re.DrawFill = Draw_Fill;
 	re.DrawFadeScreen= Draw_FadeScreen;
 	re.DrawStretchRaw = Draw_StretchRaw;
+	re.DrawResizeWindow = Draw_ResizeWindow;
 	re.DrawFindPic = Draw_FindPic;
 	re.DrawPic2 = Draw_Pic2;
 	re.DrawStretchPic2 = Draw_StretchPic2;

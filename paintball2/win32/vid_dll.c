@@ -531,8 +531,8 @@ LONG WINAPI MainWndProc (
         return DefWindowProc (hWnd, uMsg, wParam, lParam);
 
 	case WM_PAINT:
-		SCR_DirtyScreen ();	// force entire screen to update next frame
-        return DefWindowProc (hWnd, uMsg, wParam, lParam);
+		SCR_DirtyScreen();	// force entire screen to update next frame
+        return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 	case WM_DESTROY:
 		// let sound and input know about this?
@@ -614,7 +614,7 @@ LONG WINAPI MainWndProc (
 				temp |= 16;
 			// ===
 
-			IN_MouseEvent (temp);
+			IN_MouseEvent(temp);
 
 			// ++ ARTHUR [9/04/03] - Mouse movement emulates keystroke
 			Key_Event(K_MOUSEMOVE, true, sys_msg_time);
@@ -650,6 +650,19 @@ LONG WINAPI MainWndProc (
 	case WM_SYSKEYUP:
 	case WM_KEYUP:
 		Key_Event(Sys_MapKeyModified(wParam, lParam), false, sys_msg_time);
+		break;
+
+	case WM_SIZE:
+		if (lParam) // This is 0 when minimized?
+		{
+			re.DrawResizeWindow(LOWORD(lParam), HIWORD(lParam));
+			VID_NewWindow(LOWORD(lParam), HIWORD(lParam));
+		}
+		break;
+
+	case WM_CLOSE:
+	case WM_QUIT:
+		Com_Quit();
 		break;
 
 	case WM_APPCOMMAND:
