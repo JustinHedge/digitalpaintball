@@ -1589,7 +1589,7 @@ void SCR_UpdateScreen (void)
 					VectorCopy(cl.predicted_origin, start);
 					start[2] += g_viewheight;
 					VectorMA(start, 8192, cl.v_forward, end);
-					tr = CM_BoxTrace(start, end, vec3_origin, vec3_origin, 0, MASK_ALL);
+					tr = CM_BoxTrace(start, end, vec3_origin, vec3_origin, 0, cl_drawtexinfo->value > 1.0f ? MASK_ALL : MASK_SOLID);
 					Com_sprintf(texinfo, sizeof(texinfo), "%s %d 0x%x 0x%x", tr.surface->name, tr.surface->value, tr.surface->flags, tr.contents);
 					re.DrawString(0, viddef.height - 44 * hudscale, texinfo);
 				}
