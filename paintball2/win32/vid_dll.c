@@ -666,6 +666,8 @@ LONG WINAPI MainWndProc (
 		break;
 
 	case WM_APPCOMMAND:
+
+	#ifdef OGG_SUPPORT
 		if(ogg_started)
 			switch(GET_APPCOMMAND_LPARAM(lParam))
 			{
@@ -683,6 +685,7 @@ LONG WINAPI MainWndProc (
 				return 1;
 			}
 		break;
+	#endif
 
 	case MM_MCINOTIFY:
 		{
