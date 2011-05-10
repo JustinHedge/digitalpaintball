@@ -1057,6 +1057,34 @@ void SV_ServerCommand_f (void)
 	ge->ServerCommand();
 }
 
+/*
+===========
+SV_Certificatedinfo_f
+
+  Certificated server info
+===========
+*/
+void SV_Certificatedinfo_f (void)
+{
+	Com_Printf("Certificated server information:\n");
+	Com_Printf("--------------------------------\n");
+	Com_Printf("Change the server to this settings\n");
+	Com_Printf("to enable the certificated flag.\n");
+	Com_Printf("--------------------------------\n");
+	Com_Printf("maxclients: 16\n");
+	Com_Printf("elim: 60\n");
+	Com_Printf("fraglimit: 50\n");
+	Com_Printf("timelimit: 20\n");
+	Com_Printf("sv_minclientbuild: 28 (or higher)\n");
+	Com_Printf("guntemp_inc: 11\n");
+	Com_Printf("guntemp_dec: 4\n");
+	Com_Printf("flagmustbeatbase: 1\n");
+	Com_Printf("sv_forcesky: 1\n");
+	Com_Printf("sv_login: 1 or 2\n");
+	Com_Printf("public: 1\n");
+	Com_Printf("--------------------------------\n");
+}
+
 //===========================================================
 
 /*
@@ -1082,6 +1110,8 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand("load", SV_Loadgame_f);
 	Cmd_AddCommand("killserver", SV_KillServer_f);
 	Cmd_AddCommand("sv", SV_ServerCommand_f);
+	Cmd_AddCommand("certificated", SV_Certificatedinfo_f);
+	Cmd_AddCommand("certificatedinfo", SV_Certificatedinfo_f);
 	
 	if (dedicated->value)
 		Cmd_AddCommand("say", SV_ConSay_f);

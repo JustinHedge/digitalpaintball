@@ -303,6 +303,7 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 	cer_sv_login			= Cvar_Get("sv_login", "0", 0);
 	cer_public				= Cvar_Get("public", "0", 0);
 
+	// Don't forget to change the SV_Certificatedinfo_f (sv_ccmds.c), if you change something here !
 	if (cer_maxclients->value == 16 &&
 		cer_elim->value == 60 &&
 		cer_fraglimit->value == 50 &&
