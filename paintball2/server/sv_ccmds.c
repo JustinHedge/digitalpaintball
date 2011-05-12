@@ -835,7 +835,7 @@ void SV_ConSay_f(void)
 	if (Cmd_Argc () < 2)
 		return;
 
-	strcpy (text, "console: ");
+	strcpy (text, va("%s: ", sv_consolename->string));
 	p = Cmd_Args();
 
 	if (*p == '"')

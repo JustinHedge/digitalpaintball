@@ -63,6 +63,8 @@ cvar_t	*sv_locked;				// T3RR0R15T: Locked server. Prevent new players from conn
 
 cvar_t	*sv_certificated;		// T3RR0R15T: certificated server info
 
+cvar_t	*sv_consolename;		// T3RR0R15T: Name for console say messages
+
 void Master_Shutdown (void);
 
 
@@ -1443,6 +1445,7 @@ void SV_Init (void)
 	sv_cullentities= Cvar_Get("sv_cullentities", "0", 0);
 	sv_noextascii  = Cvar_Get("sv_noextascii", "1", 0); // jit
 	sv_locked	   = Cvar_Get("sv_locked", "0", 0);		// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
+	sv_consolename			= Cvar_Get("sv_consolename", "console", 0);			// T3RR0R15T: Name for console say messages
 	allow_download          = Cvar_Get("allow_download", "1", CVAR_ARCHIVE);
 	allow_download_players  = Cvar_Get("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1
 	allow_download_models   = Cvar_Get("allow_download_models", "1", CVAR_ARCHIVE);
