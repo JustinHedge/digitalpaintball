@@ -63,6 +63,9 @@ cvar_t	*sv_locked;				// T3RR0R15T: Locked server. Prevent new players from conn
 
 cvar_t	*sv_certificated;		// T3RR0R15T: certificated server info
 
+cvar_t	*sv_reserved_slots;		// T3RR0R15T: Reserved slots (from R1Q2)
+cvar_t	*sv_reserved_password;	// T3RR0R15T: Reserved slots (from R1Q2)
+
 cvar_t	*sv_consolename;		// T3RR0R15T: Name for console say messages
 
 void Master_Shutdown (void);
@@ -151,6 +154,7 @@ Builds the string that is sent as heartbeats and status replies
 */
 char	*SV_StatusString (void)
 {
+	char	*serverinfo;						// T3RR0R15T
 	char	player[1024];
 	static char	status[MAX_MSGLEN - 16];
 	int		i;
@@ -158,7 +162,12 @@ char	*SV_StatusString (void)
 	int		statusLength;
 	int		playerLength;
 
-	strcpy(status, Cvar_Serverinfo());
+	serverinfo = Cvar_Serverinfo();
+
+	// T3RR0R15T: hide reserved slots
+	Info_SetValueForKey(serverinfo, "maxclients", va("%d", (int)maxclients->value - (int)sv_reserved_slots->value));
+
+	strcpy(status, serverinfo);
 	strcat(status, "\n");
 	statusLength = strlen(status);
 
@@ -249,7 +258,7 @@ void SVC_Info (void)
 			if (svs.clients[i].state >= cs_connected)
 				count++;
 
-		Com_sprintf(string, sizeof(string), "%16s %8s %2i/%2i\n", hostname->string, sv.name, count, (int)maxclients->value);
+		Com_sprintf(string, sizeof(string), "%16s %8s %2i/%2i\n", hostname->string, sv.name, count, (int)maxclients->value - (int)sv_reserved_slots->value); // T3RR0R15T: hide reserved slots
 	}
 
 	Netchan_OutOfBandPrint(NS_SERVER, net_from, "info\n%s", string);
@@ -332,6 +341,8 @@ void SVC_DirectConnect (void)
 	int			version;
 	int			qport;
 	int			challenge;
+	char		*pass;			// T3RR0R15T: Reserved slots (from R1Q2)
+	int			reserved;		// T3RR0R15T: Reserved slots (from R1Q2)
 
 	adr = net_from;
 	Com_DPrintf("SVC_DirectConnect ()\n");
@@ -393,6 +404,22 @@ void SVC_DirectConnect (void)
 		return;
 	}
 
+	// T3RR0R15T: Reserved slots (from R1Q2)
+	pass = Info_ValueForKey(userinfo, "password");
+
+	if (sv_reserved_password->string[0] && !strcmp(pass, sv_reserved_password->string))
+	{
+		reserved = 0;
+		//r1: this prevents mod/admin dll from also checking password as some mods incorrectly
+		//refuse if password cvar exists and no password is set on the server. by definition a
+		//server with reserved slots should be public anyway.
+		Info_RemoveKey (userinfo, "password");
+	}
+	else
+	{
+		reserved = (int)sv_reserved_slots->value;
+	}
+
 	newcl = &temp;
 	memset(newcl, 0, sizeof(client_t));
 
@@ -420,7 +447,7 @@ void SVC_DirectConnect (void)
 	// find a client slot
 	newcl = NULL;
 
-	for (i = 0, cl = svs.clients; i < maxclients->value; i++, cl++)
+	for (i = 0, cl = svs.clients; i < ((int)maxclients->value-reserved); i++, cl++)
 	{
 		if (cl->state == cs_free)
 		{
@@ -429,10 +456,19 @@ void SVC_DirectConnect (void)
 		}
 	}
 
+	// T3RR0R15T: Added reserved slots (from R1Q2)
 	if (!newcl)
 	{
-		Netchan_OutOfBandPrint(NS_SERVER, adr, "print\nServer is full.\n");
-		Com_DPrintf("Rejected a connection.\n");
+		if ((int)sv_reserved_slots->value && !reserved)
+		{
+			Netchan_OutOfBandPrint(NS_SERVER, adr, "print\nServer and reserved slots are full.\n");
+			Com_DPrintf("Reserved slots full\n");
+		}
+		else
+		{
+			Netchan_OutOfBandPrint(NS_SERVER, adr, "print\nServer is full.\n");
+			Com_DPrintf("Server full\n");
+		}
 		return;
 	}
 
@@ -1445,6 +1481,8 @@ void SV_Init (void)
 	sv_cullentities= Cvar_Get("sv_cullentities", "0", 0);
 	sv_noextascii  = Cvar_Get("sv_noextascii", "1", 0); // jit
 	sv_locked	   = Cvar_Get("sv_locked", "0", 0);		// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
+	sv_reserved_slots		= Cvar_Get("sv_reserved_slots", "0", CVAR_LATCH);	// T3RR0R15T: Number of reserved player slots. (from R1Q2)
+	sv_reserved_password	= Cvar_Get("sv_reserved_password", "", 0);			// T3RR0R15T: Password required to access a reserved player slot. Clients should set their 'password' cvar to this. (from R1Q2)
 	sv_consolename			= Cvar_Get("sv_consolename", "console", 0);			// T3RR0R15T: Name for console say messages
 	allow_download          = Cvar_Get("allow_download", "1", CVAR_ARCHIVE);
 	allow_download_players  = Cvar_Get("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1
