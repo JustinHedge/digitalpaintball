@@ -696,25 +696,28 @@ void Con_DrawConsole (float frac)
 	int				rows;
 	char			*text;
 	int				row;
-	int				lines;
+	float			lines;
 	char			version[64];
 	char			dlbar[1024];
 	char			dlbar_fill[1024]; // jittext
+	float			height = viddef.height;
+	float			width = viddef.width;
 
-	lines = viddef.height * frac;
-	if (lines <= 0)
+	lines = height * frac;
+
+	if (lines <= 0.0f)
 		return;
 
-	if (lines > viddef.height)
-		lines = viddef.height;
+	if (lines > height)
+		lines = height;
 
 	// draw the background
-	re.DrawStretchPic(0, lines-viddef.height, viddef.width, viddef.height, "conback"); // jitodo, cl_conback->string
+	re.DrawStretchPic(0.0f, lines - height, width, height, "conback"); // jitodo, cl_conback->string
 	SCR_AddDirtyPoint(0,0);
 	SCR_AddDirtyPoint(viddef.width-1, lines-1);
 
-	Com_sprintf (version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
-	re.DrawString(viddef.width-176*hudscale, lines-12*hudscale, version);
+	Com_sprintf(version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
+	re.DrawString(width - 176.0f * hudscale, lines - 12.0f * hudscale, version);
 
 	if (cls.key_dest == key_menu)
 		return; // jitmenu
@@ -746,7 +749,7 @@ void Con_DrawConsole (float frac)
 			
 		text = con.text + (row % con.totallines)*con.linewidth;
 
-		Draw_StringLen(8*hudscale, y, text, con.linewidth); // jit, draw whole line at once
+		Draw_StringLen(8.0f * hudscale, y, text, con.linewidth); // jit, draw whole line at once
 	}
 
 	//ZOID
@@ -829,14 +832,14 @@ void Con_DrawConsole (float frac)
 
 		// draw it
 		y = con.vislines - 12 * hudscale;
-		re.DrawString(8 * hudscale, y, dlbar_fill);  // jit
-		re.DrawString(8 * hudscale, y, dlbar); // jit, draw whole line at once
+		re.DrawString(8.0f * hudscale, y, dlbar_fill);  // jit
+		re.DrawString(8.0f * hudscale, y, dlbar); // jit, draw whole line at once
 		// jittext ===
 	}
 //ZOID
 
 // draw the input prompt, user text, and cursor if desired
-	Con_DrawInput ();
+	Con_DrawInput();
 }
 
 
