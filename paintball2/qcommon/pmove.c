@@ -636,19 +636,22 @@ void PM_AirMove (void)
 		if (oldmovephysics->value)
 		{
 			// walking on ground
-			pml.velocity[2] = 0; //!!! this is before the accel
+			pml.velocity[2] = 0.0f; //!!! this is before the accel
 			PM_Accelerate(wishdir, wishspeed, pm_accelerate);
 
 			// PGM	-- fix for negative trigger_gravity fields
 			//		pml.velocity[2] = 0;
 			if (pm->s.gravity > 0)
-				pml.velocity[2] = 0;
+				pml.velocity[2] = 0.0f;
 			else
 				pml.velocity[2] -= pm->s.gravity * pml.frametime;
 			// PGM
 		}
 		else
 		{
+			if (pml.velocity[2] > 0.0f && pml.velocity[2] < 150.0f) // jitmove - don't fling the player up in the air over little bumps and such (and don't make ramp jumps significantly more uber than they were in old physics)
+				pml.velocity[2] = 0.0f;
+
 			// === jitslope / jitmove - apply gravity even when on a ground entity so we walk down slopes
 			pml.velocity[2] -= pm->s.gravity * pml.frametime;
 			PM_Accelerate(wishdir, wishspeed, pm_accelerate);
