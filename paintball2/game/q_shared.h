@@ -42,6 +42,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdlib.h>
 #include <time.h>
 
+#ifdef _WIN32
+#else
+#include <signal.h>
+
+#undef assert
+#define assert(expression)  \
+  ((void) ((expression) ? 0 : raise(SIGTRAP)))
+#endif
+
 #if (defined _M_IX86 || defined __i386__) && !defined C_ONLY && !defined __sun__
 #define id386	1
 #else
