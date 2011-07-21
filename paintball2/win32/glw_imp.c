@@ -743,7 +743,7 @@ void CL_AnimDump (void)
 	buffer[14] = vid.height&255;
 	buffer[15] = vid.height>>8;
 	buffer[16] = 24;	// pixel size
-
+	qglPixelStorei(GL_PACK_ALIGNMENT, 1);
 	qglReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer + 18); 
 	apply_gamma(buffer + 18, vid.width, vid.height); // jitgamma -- apply video gammaramp to screenshot
 	

@@ -218,7 +218,7 @@ void GL_ScreenShot_JPG (void)
  	}
 
 	// Allocate room for a copy of the framebuffer
-	rgbdata = malloc(vid.width * vid.height * 3);
+	rgbdata = Z_Malloc(vid.width * vid.height * 3);
 
 	if (!rgbdata)
 	{
@@ -227,6 +227,7 @@ void GL_ScreenShot_JPG (void)
 	}
 
 	// Read the framebuffer into our storage
+	qglPixelStorei(GL_PACK_ALIGNMENT, 1); // Make sure screenshots work with weird resolutions like 1366x768
 	qglReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, rgbdata);
 	apply_gamma(rgbdata, vid.width, vid.height); // jitgamma -- apply video gammaramp to screenshot
 
@@ -269,7 +270,7 @@ void GL_ScreenShot_JPG (void)
 	fclose(file);
 
 	// Free Temp Framebuffer
-	free(rgbdata);
+	Z_Free(rgbdata);
 
 	// Done!
 	if (picname[0] != 'x' && picname[1] != '_')
@@ -351,6 +352,7 @@ void GL_ScreenShot_f (void)
 	buffer[14] = vid.height & 255;
 	buffer[15] = vid.height >> 8;
 	buffer[16] = 24;	// pixel size
+	qglPixelStorei(GL_PACK_ALIGNMENT, 1);
 	qglReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer + 18); 
 	apply_gamma(buffer + 18, vid.width, vid.height); // jitgamma -- apply video gammaramp to screenshot
 
