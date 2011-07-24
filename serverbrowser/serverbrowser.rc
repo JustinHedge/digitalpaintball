@@ -35,9 +35,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -134,9 +134,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -233,9 +233,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -342,8 +342,8 @@ IDI_SMALL               ICON                    "small.ico"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,2010,04,02
- PRODUCTVERSION 0,2010,04,02
+ FILEVERSION 0,2011,07,24
+ PRODUCTVERSION 0,2011,07,24
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -361,9 +361,9 @@ BEGIN
             VALUE "Comments", "http://www.digitalpaint.org"
             VALUE "CompanyName", "Digital Paint"
 			VALUE "FileDescription", "Digital Paint: Paintball 2 - Serverbrowser"
-            VALUE "FileVersion", "0.2010.04.02"
+            VALUE "FileVersion", "0.2011.07.24"
             VALUE "InternalName", "serverbrowser"
-            VALUE "LegalCopyright", "Copyright (C) 2006-2010"
+            VALUE "LegalCopyright", "Copyright (C) 2006-2011"
             VALUE "OriginalFilename", "serverbrowser.exe"
             VALUE "ProductName", "Paintball 2 - Serverbrowser"
             VALUE "ProductVersion", "Release"
@@ -400,9 +400,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -499,9 +499,9 @@ FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,20,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -624,9 +624,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2010-04-02",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2010 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 

@@ -223,6 +223,7 @@ static void LoadListHttp (const char *sHttpSource)
 	if (!(pHostent = gethostbyname(szHostname)))
 	{
 		SetStatus("Failed to resolve hostname.");
+		UpdateList_Mirror();
 		return;
 	}
 
@@ -236,6 +237,7 @@ static void LoadListHttp (const char *sHttpSource)
 	if (connect(nSocket, (struct sockaddr *)&address, sizeof(struct sockaddr)) == -1)
 	{
 		SetStatus("Failed to connect.");
+		UpdateList_Mirror();
 		return;
 	}
 
@@ -246,6 +248,7 @@ static void LoadListHttp (const char *sHttpSource)
 	if (nSent < nLen)
 	{
 		SetStatus("HTTP connection rejected.");
+		UpdateList_Mirror();
 		return;
 	}
 
@@ -286,6 +289,12 @@ void UpdateList (void)
 {
 	SetStatus("Updating List...");
 	LoadList("http://dplogin.com/serverlist.php");
+}
+
+void UpdateList_Mirror (void)
+{
+	SetStatus("Updating List (Mirror)...");
+	LoadList("http://otb-server.de/serverlist.txt");
 }
 
 

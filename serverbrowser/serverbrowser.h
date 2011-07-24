@@ -31,6 +31,7 @@ using namespace std;
 #define PROTOCOL_VERSION_S "34"
 
 void UpdateList (void);
+void UpdateList_Mirror (void);
 void RefreshList (void);
 void SetStatus (const char *s);
 void InitApp (void);
