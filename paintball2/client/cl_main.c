@@ -93,6 +93,7 @@ cvar_t	*cl_drawtexinfo; // jit
 cvar_t	*cl_centerprintkills;
 cvar_t	*cl_timestamp; // jit
 cvar_t	*cl_hudscale; // jit
+cvar_t	*cl_consoleheight; // T3RR0R15T: console height
 cvar_t  *cl_crosshairscale; // viciouz - crosshair scale
 cvar_t	*cl_drawhud; // jithud
 cvar_t	*cl_language; // jittrans
@@ -2278,6 +2279,9 @@ void CL_InitLocal (void)
 		Cvar_Set("cl_hudscale", "1");
 
 	hudscale = cl_hudscale->value;
+
+	cl_consoleheight = Cvar_Get("cl_consoleheight", "0.5", CVAR_ARCHIVE);		// T3RR0R15T: console height
+
 	serverlist_source =		Cvar_Get("serverlist_source", 
 		"http://digitalpaint.planetquake.gamespy.com/servers.txt", 0); // jitserverlist / jitmenu
 	serverlist_source2 =	Cvar_Get("serverlist_source2", 

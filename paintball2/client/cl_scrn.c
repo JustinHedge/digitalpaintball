@@ -42,6 +42,7 @@ qboolean	scr_initialized;		// ready to draw
 int			scr_draw_loading;
 
 extern cvar_t	*cl_hudscale; //jithudscale
+extern cvar_t	*cl_consoleheight; // T3RR0R15T: console height
 
 vrect_t		scr_vrect;		// position of render window on screen
 
@@ -498,8 +499,14 @@ Scroll it up or down
 void SCR_RunConsole (void)
 {
 	// decide on the height of the console
+	if (cl_consoleheight->value > 1.0)			// not more than 1 (= 100% of the screen)
+		Cvar_Set("cl_consoleheight", "1.0");
+	if (cl_consoleheight->value < 0.5)			// not less than 0.5 (= 50% of the screen)
+		Cvar_Set("cl_consoleheight", "0.5");
+	consoleheight = cl_consoleheight->value;
+
 	if (cls.key_dest == key_console)
-		scr_conlines = 0.5f;		// half screen
+		scr_conlines = consoleheight;		// half screen --> T3RR0R15T: setting cl_consoleheight, default 0.5
 	else
 		scr_conlines = 0.0f;		// none visible
 	
@@ -538,8 +545,13 @@ void SCR_DrawConsole (void)
 
 		if (cls.state != ca_active || !cl.refresh_prepped)
 		{	// connected, but can't render
-			Con_DrawConsole(0.5);
-			re.DrawFill(0, viddef.height*0.5f, viddef.width, viddef.height*0.5f, 0);
+			if (cl_consoleheight->value > 1.0)			// not more than 1 (= 100% of the screen)
+				Cvar_Set("cl_consoleheight", "1.0");
+			if (cl_consoleheight->value < 0.5)			// not less than 0.5 (= 50% of the screen)
+				Cvar_Set("cl_consoleheight", "0.5");
+			consoleheight = cl_consoleheight->value;
+			Con_DrawConsole(consoleheight); // T3RR0R15T: was 0.5
+			re.DrawFill(0, viddef.height*consoleheight, viddef.width, viddef.height*consoleheight, 0);
 			return;
 		}
 	}

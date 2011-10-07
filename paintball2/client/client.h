@@ -843,6 +843,7 @@ extern image_t		*i_cursor;
 extern image_t		*i_cursor_text;
 
 extern float hudscale; // jithudscale
+extern float consoleheight; // T3RR0R15T: console height
 
 #endif // CLIENT_H
 

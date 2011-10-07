@@ -31,6 +31,7 @@ struct model_s	*gun_model;
 //=============
 
 float		hudscale; // jithudscale
+float		consoleheight; // T3RR0R15T: console height
 
 cvar_t		*crosshair;
 cvar_t		*cl_testparticles;
