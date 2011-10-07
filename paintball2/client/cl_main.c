@@ -2283,22 +2283,27 @@ void CL_InitLocal (void)
 	cl_consoleheight = Cvar_Get("cl_consoleheight", "0.5", CVAR_ARCHIVE);		// T3RR0R15T: console height
 
 	serverlist_source =		Cvar_Get("serverlist_source", 
-		"http://digitalpaint.planetquake.gamespy.com/servers.txt", 0); // jitserverlist / jitmenu
+		"http://dplogin.com/servers.txt", 0); // jitserverlist / jitmenu / T3RR0R15T: changed to dplogin.com
 	serverlist_source2 =	Cvar_Get("serverlist_source2", 
-		"http://digitalpaint.planetquake.gamespy.com/serverlist.php", 0); // jitserverlist / jitmenu
+		"http://dplogin.com/serverlist.php", 0); // jitserverlist / jitmenu / T3RR0R15T: changed to dplogin.com
 	serverlist_source3 =	Cvar_Get("serverlist_source3",
-		"http://dplogin.com/serverlist.php", 0); // jitserverlist / jitmenu
+		"http://www.otb-server.de/serverlist.txt", 0); // jitserverlist / jitmenu / T3RR0R15T: changed to otb-server.de as mirror (sync with udp serverlist every 5 minutes)
 	serverlist_blacklist =	Cvar_Get("serverlist_blacklist",
 		"http://dplogin.com/blacklist.php", 0);
 	serverlist_udp_source1 = Cvar_Get("serverlist_udp_source1", "dplogin.com:27900", 0); // jitserverlist
 
 	// fix up old serverlist settings now that the server has moved:
-	if (Q_streq(serverlist_source->string, "http://www.planetquake.com/digitalpaint/servers.txt"))
-		Cvar_Set("serverlist_source", "http://digitalpaint.planetquake.gamespy.com/servers.txt");
+	if (Q_streq(serverlist_source->string, "http://www.planetquake.com/digitalpaint/servers.txt") ||
+		Q_streq(serverlist_source->string, "http://digitalpaint.planetquake.gamespy.com/servers.txt")) // T3RR0R15T: added second old url
+		Cvar_Set("serverlist_source", "http://dplogin.com/servers.txt"); // T3RR0R15T: changed to dplogin.com
 
 	if (Q_streq(serverlist_source2->string, "http://dynamic5.gamespy.com/~digitalpaint/serverlist.php") ||
-		Q_streq(serverlist_source2->string, "http://dynamic.gamespy.com/~digitalpaint/serverlist.php"))
-		Cvar_Set("serverlist_source2", "http://digitalpaint.planetquake.gamespy.com/serverlist.php");
+		Q_streq(serverlist_source2->string, "http://dynamic.gamespy.com/~digitalpaint/serverlist.php") ||
+		Q_streq(serverlist_source2->string, "http://digitalpaint.planetquake.gamespy.com/serverlist.php")) // T3RR0R15T: added third old url
+		Cvar_Set("serverlist_source2", "http://dplogin.com/serverlist.php"); // T3RR0R15T: changed to dplogin.com
+
+	if (Q_streq(serverlist_source3->string, "http://dplogin.com/serverlist.php")) // T3RR0R15T: old url is now serverlist_source2
+		Cvar_Set("serverlist_source3", "http://www.otb-server.de/serverlist.txt");
 	// ===
 
 	cl_run =			Cvar_Get("cl_run", "1", CVAR_ARCHIVE); // jit, default to 1
