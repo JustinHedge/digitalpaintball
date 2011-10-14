@@ -312,6 +312,7 @@ void CDAudio_Stop (void);
 #define	MAX_READ	0x10000		// read in blocks of 64k
 void FS_Read (void *buffer, int len, FILE *f)
 {
+#if 0
 	int read;
 
 	read = fread(buffer, 1, len, f); // jit - optimized code a little.
@@ -319,7 +320,7 @@ void FS_Read (void *buffer, int len, FILE *f)
 	if (read < len)
 		Com_Error(ERR_FATAL, "FS_Read: %d bytes read, should have been %d.", read, len);
 
-#if 0 // old code
+#else // old code -- seems this is necessary on Linux for some dumb reason?
 	int		block, remaining;
 	int		read;
 	byte	*buf;
