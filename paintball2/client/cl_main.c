@@ -460,7 +460,14 @@ void CL_ARecord_f (void)
 
 	time(&now);
 	strftime(szTimeStamp, sizeof(szTimeStamp), "%Y%m%d_%H%M%S", localtime(&now));
-	Com_sprintf(szDemoName, sizeof(szDemoName), "%s_%s_%i_%s", Cmd_Argv(1), szTimeStamp, cl.playernum, szLevelName);
+	if (Cmd_Argc() != 2) 
+	{
+		Com_sprintf(szDemoName, sizeof(szDemoName), "auto_%s_%i_%s", szTimeStamp, cl.playernum, szLevelName);
+	}
+	else 
+	{
+		Com_sprintf(szDemoName, sizeof(szDemoName), "%s_%s_%i_%s", Cmd_Argv(1), szTimeStamp, cl.playernum, szLevelName);
+	}
 	CL_RecordFile(szDemoName);
 }
 // jitdemo ===
