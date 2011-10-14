@@ -185,7 +185,7 @@ void PM_StepSlideMove_ (void)
 				}
 			}
 
-			if (trace.surface->flags & SURF_SKY && trace.plane.normal[2] < -0.95f && !oldmovephysics->value) // jitmove - don't kill upward velocity if you hit your head on sky
+			if (trace.surface->flags & SURF_SKY && trace.plane.normal[2] < -0.95f && !oldmovephysics->value && (pm->s.pm_flags & PMF_JUMP_HELD)) // jitmove - don't kill upward velocity if you hit your head on sky while holding jump
 				hitsky = true;
 
 			if (j == numplanes)
@@ -279,7 +279,7 @@ void PM_StepSlideMove (void)
 	VectorCopy(pml.origin, down);
 	downmin = down[2] - STEPSIZE * stepfraction; // jitmove - don't step down further than we stepped up
 
-	if (start_o[2] - 1.0f < downmin && !oldmovephysics->value)
+	if (start_o[2] - 1.0f < downmin && stepfraction == 1.0f && !oldmovephysics->value)
 		down[2] = start_o[2] - 1.0f; // jitmove / jitjump - cast down a little further, so we don't bounce off of steps while jumping
 	else
 		down[2] = downmin;
@@ -633,7 +633,7 @@ void PM_AirMove (void)
 	}
 	else if (pm->groundentity)
 	{
-		if (oldmovephysics->value)
+		if (oldmovephysics->value || (pm->s.pm_flags & PMF_JUMP_HELD)) // use old bouncing down slopes when the jump button is held since some players want it.
 		{
 			// walking on ground
 			pml.velocity[2] = 0.0f; //!!! this is before the accel
