@@ -521,7 +521,7 @@ void Mod_LoadTexinfo (lump_t *l)
 		ri.Sys_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", loadmodel->name);
 
 	count = l->filelen / sizeof(*in);
-	out = Hunk_Alloc(count*sizeof(*out));	
+	out = Hunk_Alloc(count * sizeof(*out));	
 
 	loadmodel->texinfo = out;
 	loadmodel->numtexinfo = count;
@@ -555,12 +555,12 @@ void Mod_LoadTexinfo (lump_t *l)
 		if (easter_egg) // jit :D April fools!
 			Com_sprintf(name, sizeof(name), "textures/pball/banana.wal");
 
-		out->image = GL_FindImage (name, it_wall);
+		out->image = GL_FindImage(name, it_wall);
 
 		if (!out->image && !out->script)
 		{
-			ri.Con_Printf (PRINT_ALL, "Couldn't load %s.\n", name);
-			out->image = GL_FindImage ("pics/noimage.tga", it_pic);
+			ri.Con_Printf(PRINT_ALL, "Couldn't load %s.\n", name);
+			out->image = GL_FindImage("pics/noimage.tga", it_pic);
 
 			if (!out->image)
 				out->image = r_notexture;

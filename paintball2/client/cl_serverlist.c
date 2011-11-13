@@ -554,7 +554,7 @@ static void M_ServerlistUpdateUDP (int nStart)
 	if (!didUpdateCheck && !g_notified_of_new_version)
 	{
 		 // Not currently implemented on dplogin server, but it may work eventually:
-		Netchan_OutOfBandPrint(NS_CLIENT, adr, "updatecheck1 " BUILD_S "\n");
+		Netchan_OutOfBandPrint(NS_CLIENT, adr, "updatecheck1 " BUILD_S "\n"); // versioncheck / checkversion / buildcheck
 		didUpdateCheck = true;
 	}
 }
@@ -773,12 +773,10 @@ done:
 
 			if (latest_build > BUILD)
 			{
-				static qboolean notified = false;
-
-				if (!notified) // only pop it up once.
+				if (!g_notified_of_new_version) // only pop it up once.
 				{
 					Cbuf_AddTextThreadsafe("menu newversion\n");
-					notified = true;
+					g_notified_of_new_version = true;
 				}
 			}
 		}
