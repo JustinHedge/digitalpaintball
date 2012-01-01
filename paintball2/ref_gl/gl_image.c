@@ -267,7 +267,7 @@ void GL_TextureMode(const char *string )
 GL_TextureAlphaMode
 ===============
 */
-void GL_TextureAlphaMode( char *string )
+void GL_TextureAlphaMode (const char *string)
 {
 	int		i;
 
@@ -289,11 +289,11 @@ void GL_TextureAlphaMode( char *string )
 GL_TextureSolidMode
 ===============
 */
-void GL_TextureSolidMode( char *string )
+void GL_TextureSolidMode (const char *string)
 {
 	int		i;
 
-	for (i=0; i< NUM_GL_SOLID_MODES; i++)
+	for (i = 0; i < NUM_GL_SOLID_MODES; ++i)
 	{
 		if (!Q_strcasecmp(gl_solid_modes[i].name, string))
 			break;
@@ -307,6 +307,7 @@ void GL_TextureSolidMode( char *string )
 
 	gl_tex_solid_format = gl_solid_modes[i].mode;
 }
+
 
 /*
 ===============
@@ -1169,10 +1170,10 @@ void R_FloodFillSkin( byte *skin, int skinwidth, int skinheight )
 GL_ResampleTexture
 ================
 */
-void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight)
+void GL_ResampleTexture (const unsigned *in, int inwidth, int inheight, unsigned *out, int outwidth, int outheight)
 {
-	int		i, j;
-	unsigned	*inrow, *inrow2;
+	int			i, j;
+	const unsigned *inrow, *inrow2;
 	unsigned	frac, fracstep;
 	unsigned	p1[4096], p2[4096]; // jittex
 	byte		*pix1, *pix2, *pix3, *pix4;
@@ -1215,6 +1216,7 @@ void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,
 		}
 	}
 }
+
 
 /*
 ================

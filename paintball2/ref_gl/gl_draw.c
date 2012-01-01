@@ -400,7 +400,7 @@ image_t	*Draw_FindPic (const char *name)
 Draw_GetPicSize
 =============
 */
-void Draw_GetPicSize (int *w, int *h, char *pic)
+void Draw_GetPicSize (int *w, int *h, const char *pic)
 {
 	image_t *gl;
 
@@ -626,7 +626,7 @@ void Draw_StretchPic2 (float x, float y, float w, float h, image_t *gl)
 }
 
 
-void Draw_StretchPic (float x, float y, float w, float h, char *pic)
+void Draw_StretchPic (float x, float y, float w, float h, const char *pic)
 {
 	image_t *gl;
 
@@ -640,6 +640,7 @@ void Draw_StretchPic (float x, float y, float w, float h, char *pic)
 
 	Draw_StretchPic2(x, y, w, h, gl);
 }
+
 
 /*
 =============
@@ -660,7 +661,7 @@ void Draw_Pic2 (float x, float y, image_t *gl)
 	Draw_StretchPic2(x, y, gl->width * picscale, gl->height * picscale, gl);
 }
 
-void Draw_Pic (float x, float y, char *pic)
+void Draw_Pic (float x, float y, const char *pic)
 {
 	image_t *gl;
 
@@ -717,7 +718,7 @@ void Draw_TileClear2 (int x, int y, int w, int h, image_t *image)
 	}
 }
 
-void Draw_TileClear (int x, int y, int w, int h, char *pic)
+void Draw_TileClear (int x, int y, int w, int h, const char *pic)
 {
 	image_t	*image;
 

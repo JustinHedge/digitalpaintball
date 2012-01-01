@@ -305,31 +305,31 @@ char	*va(char *format, ...);
 
 void COM_StripExtension (const char *in, char *out, int out_size); // jitsecurity
 
-void	Draw_GetPicSize (int *w, int *h, char *name);
-void	Draw_Pic (float x, float y, char *name);
-void	Draw_StretchPic (float x, float y, float w, float h, char *name);
+void	Draw_GetPicSize (int *w, int *h, const char *name);
+void	Draw_Pic (float x, float y, const char *name);
+void	Draw_StretchPic (float x, float y, float w, float h, const char *name);
 void	Draw_Char (float x, float y, int c);
-void	Draw_TileClear (int x, int y, int w, int h, char *name);
+void	Draw_TileClear (int x, int y, int w, int h, const char *name);
 void	Draw_Fill (int x, int y, int w, int h, int c);
 void	Draw_FadeScreen (void);
 void	Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data);
 
-void	R_BeginFrame( float camera_separation );
-void	R_SwapBuffers( int );
-void	R_SetPalette ( const unsigned char *palette);
+void	R_BeginFrame (float camera_separation);
+void	R_SwapBuffers (int);
+void	R_SetPalette (const unsigned char *palette);
 
 int		Draw_GetPalette (void);
 
-void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight);
+void	GL_ResampleTexture (const unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight);
 
 //struct image_s *R_RegisterSkin(const char *name);
-void R_RegisterSkin (const char *name, struct model_s *model, struct image_s **skins);
+void	R_RegisterSkin (const char *name, struct model_s *model, struct image_s **skins);
 
-void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int *height);
+void	LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int *height);
 image_t *GL_LoadPic (const char *name, byte *pic, int width, int height, imagetype_t type, int bits);
 image_t	*GL_FindImage (const char *name, imagetype_t type);
 image_t *GL_CreateBlankImage (const char *name, int width, int height, imagetype_t type);
-void	GL_TextureMode(const char *string );
+void	GL_TextureMode (const char *string );
 void	GL_ImageList_f (void);
 
 void	GL_InitImages (void);
@@ -337,8 +337,8 @@ void	GL_ShutdownImages (void);
 
 void	GL_FreeUnusedImages (void);
 
-void GL_TextureAlphaMode( char *string );
-void GL_TextureSolidMode( char *string );
+void	GL_TextureAlphaMode (const char *string);
+void	GL_TextureSolidMode (const char *string);
 
 /*
 ** GL extension emulation functions

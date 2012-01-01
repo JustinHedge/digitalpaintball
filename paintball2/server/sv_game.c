@@ -194,7 +194,7 @@ void PF_setmodel (edict_t *ent, char *name)
 PF_Configstring
 ===============
 */
-void PF_Configstring (int index, char *val)
+void PF_Configstring (int index, const char *val)
 {
 	if (index < 0 || index >= MAX_CONFIGSTRINGS)
 		Com_Error(ERR_DROP, "Configstring: Bad index %i.\n", index);
@@ -205,7 +205,7 @@ void PF_Configstring (int index, char *val)
 	// change the string in sv
 	strcpy(sv.configstrings[index], val);
 
-	if (sv.state != ss_loading)
+	if (sv.state != ss_loading && sv.state != ss_dead) // jitmove - dead server trying to replicate settings.
 	{	// send the update to everyone
 		SZ_Clear(&sv.multicast);
 		MSG_WriteChar(&sv.multicast, svc_configstring);
