@@ -20,9 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qcommon.h"
 
-extern cvar_t *oldmovephysics;
-
-#define	STEPSIZE	18
+#define	STEPSIZE	18.0f
 
 // all of the locals will be zeroed before each
 // pmove, just to make damn sure we don't have
@@ -43,6 +41,8 @@ typedef struct pml_s
 
 	vec3_t		previous_origin;
 	qboolean	ladder;
+	qboolean	rampslide; // jitmove - special case ramp sliding so players can have control but air accel at the same time.
+	qboolean	crouchslide;
 } pml_t;
 
 pmove_t		*pm;
@@ -51,15 +51,19 @@ float		g_viewheight = 0.0f; // jit
 extern float g_stepheight; // jitmove - for step smoothing
 
 // movement parameters
-float	pm_stopspeed = 100;
-float	pm_maxspeed = 300;
-float	pm_duckspeed = 100;
-float	pm_accelerate = 10;
-float	pm_airaccelerate = 0;
-float	pm_wateraccelerate = 10;
-float	pm_friction = 6;
-float	pm_waterfriction = 1;
-float	pm_waterspeed = 400;
+float	pm_stopspeed = 100.0f;
+float	pm_maxspeed = 300.0f;
+float	pm_duckspeed = 100.0f;
+float	pm_accelerate = 10.0f;
+float	pm_airaccelerate = 0.0f;
+float	pm_wateraccelerate = 10.0f;
+float	pm_friction = 6.0f;
+float	pm_waterfriction = 1.0f;
+float	pm_waterspeed = 400.0f;
+float	pm_crouchslidefriction = 0.0f; // jitmove (initialized in sv_init.c)
+float	pm_skyglide_maxvel = 0.0f; // jitmove - set by sv_skyglide_maxvel
+float	pm_crouchslidestopspeed = 110.0f; // jitmove
+qboolean pm_oldmovephysics = false; // jitmove
 
 /*
 
@@ -185,7 +189,7 @@ void PM_StepSlideMove_ (void)
 				}
 			}
 
-			if (trace.surface->flags & SURF_SKY && trace.plane.normal[2] < -0.95f && !oldmovephysics->value && (pm->s.pm_flags & PMF_JUMP_HELD)) // jitmove - don't kill upward velocity if you hit your head on sky while holding jump
+			if (trace.surface->flags & SURF_SKY && trace.plane.normal[2] < -0.95f && (pm->s.pm_flags & PMF_JUMP_HELD)) // jitmove - don't kill upward velocity if you hit your head on sky while holding jump
 				hitsky = true;
 
 			if (j == numplanes)
@@ -221,8 +225,13 @@ void PM_StepSlideMove_ (void)
 #endif
 	}
 
-	if (hitsky)
+	if (hitsky && pm_skyglide_maxvel > 0.0f)
+	{
 		pml.velocity[2] = initial_z_vel; // jitmove - don't kill upward velocity if you hit your head on sky
+
+		if (pml.velocity[2] > pm_skyglide_maxvel) // ice jumps can be a bit extreme, so keep sky gliding to a minimum
+			pml.velocity[2] = pm_skyglide_maxvel;
+	}
 
 	// For jumping out of water, teleports, server corrected positions, etc.
 	if (pm->s.pm_time)
@@ -247,6 +256,10 @@ void PM_StepSlideMove (void)
 	vec3_t		up, down;
 	float		stepfraction = 1.0f; // jitmove
 	float		downmin;
+	float		stepsize = STEPSIZE;
+
+	if (pml.crouchslide)
+		stepsize = 5.0f;
 
 	VectorCopy(pml.origin, start_o);
 	VectorCopy(pml.velocity, start_v);
@@ -257,7 +270,7 @@ void PM_StepSlideMove (void)
 	VectorCopy(pml.velocity, down_v);
 
 	VectorCopy(start_o, up);
-	up[2] += STEPSIZE;
+	up[2] += stepsize;
 
 	// jitmove - trace should start at the start, not at "up" (fix for not stepping in places with low ceilings)
 	trace = pm->trace(start_o, pm->mins, pm->maxs, up);
@@ -277,9 +290,9 @@ void PM_StepSlideMove (void)
 
 	// push down the final amount
 	VectorCopy(pml.origin, down);
-	downmin = down[2] - STEPSIZE * stepfraction; // jitmove - don't step down further than we stepped up
+	downmin = down[2] - stepsize * stepfraction; // jitmove - don't step down further than we stepped up
 
-	if (start_o[2] - 1.0f < downmin && stepfraction == 1.0f && !oldmovephysics->value)
+	if (start_o[2] - 1.0f < downmin && stepfraction == 1.0f && !pm_oldmovephysics && !(pm->s.pm_flags & PMF_TIME_WATERJUMP))
 		down[2] = start_o[2] - 1.0f; // jitmove / jitjump - cast down a little further, so we don't bounce off of steps while jumping
 	else
 		down[2] = downmin;
@@ -339,32 +352,58 @@ void PM_Friction (void)
 	float	speed, newspeed, control;
 	float	friction;
 	float	drop;
-	
+	vec3_t	currentdir;
+
+	pml.crouchslide = false;
 	vel = pml.velocity;
-	
-	speed = sqrt(vel[0]*vel[0] +vel[1]*vel[1] + vel[2]*vel[2]);
-	if (speed < 1)
+	VectorCopy(vel, currentdir);
+	speed = VectorNormalizeRetLen(currentdir);
+
+	if (speed < 1.0f)
 	{
-		vel[0] = 0;
-		vel[1] = 0;
+		vel[0] = 0.0f;
+		vel[1] = 0.0f;
 		return;
 	}
 
-	drop = 0;
+	drop = 0.0f;
 
-// apply ground friction
-	if ((pm->groundentity && pml.groundsurface && !(pml.groundsurface->flags & SURF_SLICK)) || (pml.ladder))
+	// apply ground friction
+	if ((pm->groundentity && pml.groundsurface && !pml.rampslide && !(pml.groundsurface->flags & SURF_SLICK)) || (pml.ladder)) // jitmove
 	{
 		friction = pm_friction;
+
+		// === jitmove - crouchsliding
+		if (pm->cmd.upmove < 0 && pm_crouchslidefriction > 0.0f)
+		{
+			float speed2d = sqrt(vel[0] * vel[0] + vel[1] * vel[1]);
+
+			if (speed2d > pm_crouchslidestopspeed)
+			{
+				vec3_t wishvel;
+				int i;
+
+				for (i = 0; i < 3; ++i)
+					wishvel[i] = pml.forward[i] * pm->cmd.forwardmove + pml.right[i] * pm->cmd.sidemove;
+
+				if (DotProduct(currentdir, wishvel) > 0.001f) // user wants to go in the direction of the slide
+				{
+					friction = pm_crouchslidefriction;
+					pml.crouchslide = true;
+				}
+			}
+		}
+		// jitmove ===
+
 		control = speed < pm_stopspeed ? pm_stopspeed : speed;
-		drop += control*friction*pml.frametime;
+		drop += control * friction * pml.frametime;
 	}
 
-// apply water friction
+	// apply water friction
 	if (pm->waterlevel && !pml.ladder)
 		drop += speed*pm_waterfriction*pm->waterlevel*pml.frametime;
 
-// scale the velocity
+	// scale the velocity
 	newspeed = speed - drop;
 	
 	if (newspeed < 0)
@@ -390,10 +429,10 @@ void PM_Accelerate (vec3_t wishdir, float wishspeed, float accel)
 	int			i;
 	float		addspeed, accelspeed, currentspeed;
 
-	currentspeed = DotProduct (pml.velocity, wishdir);
+	currentspeed = DotProduct(pml.velocity, wishdir);
 	addspeed = wishspeed - currentspeed;
 
-	if (addspeed <= 0)
+	if (addspeed <= 0.0f)
 		return;
 
 	accelspeed = accel * pml.frametime * wishspeed;
@@ -405,18 +444,20 @@ void PM_Accelerate (vec3_t wishdir, float wishspeed, float accel)
 		pml.velocity[i] += accelspeed * wishdir[i];	
 }
 
+
+// Funky Quake1 style air acceleration:
 void PM_AirAccelerate (vec3_t wishdir, float wishspeed, float accel)
 {
 	int			i;
 	float		addspeed, accelspeed, currentspeed, wishspd = wishspeed;
 
-	if (wishspd > 30)
-		wishspd = 30;
+	if (wishspd > 30.0f)
+		wishspd = 30.0f;
 
 	currentspeed = DotProduct(pml.velocity, wishdir);
 	addspeed = wishspd - currentspeed;
 
-	if (addspeed <= 0)
+	if (addspeed <= 0.0f)
 		return;
 
 	accelspeed = accel * wishspeed * pml.frametime;
@@ -442,31 +483,33 @@ void PM_AddCurrents (vec3_t	wishvel)
 	// account for ladders
 	//
 
-	if (pml.ladder && fabs(pml.velocity[2]) <= 200)
+	if (pml.ladder && fabs(pml.velocity[2]) <= 200.0f)
 	{
-		if ((pm->viewangles[PITCH] <= -15) && (pm->cmd.forwardmove > 0))
-			wishvel[2] = 200;
-		else if ((pm->viewangles[PITCH] >= 15) && (pm->cmd.forwardmove > 0))
-			wishvel[2] = -200;
+		if ((pm->viewangles[PITCH] <= -15.0f) && (pm->cmd.forwardmove > 0))
+			wishvel[2] = 200.0f;
+		else if ((pm->viewangles[PITCH] >= 15.0f) && (pm->cmd.forwardmove > 0))
+			wishvel[2] = -200.0f;
 		else if (pm->cmd.upmove > 0)
-			wishvel[2] = 200;
+			wishvel[2] = 200.0f;
 		else if (pm->cmd.upmove < 0)
-			wishvel[2] = -200;
+			wishvel[2] = -200.0f;
 		else
-			wishvel[2] = 0;
+			wishvel[2] = 0.0f;
 
 		// limit horizontal speed when on a ladder
-		if (wishvel[0] < -25)
-			wishvel[0] = -25;
-		else if (wishvel[0] > 25)
-			wishvel[0] = 25;
+		if (pm_oldmovephysics || !pm->groundentity) // jitmove - if they're touching the ground, let them walk normally
+		{
+			if (wishvel[0] < -25.0f)
+				wishvel[0] = -25.0f;
+			else if (wishvel[0] > 25.0f)
+				wishvel[0] = 25.0f;
 
-		if (wishvel[1] < -25)
-			wishvel[1] = -25;
-		else if (wishvel[1] > 25)
-			wishvel[1] = 25;
+			if (wishvel[1] < -25.0f)
+				wishvel[1] = -25.0f;
+			else if (wishvel[1] > 25.0f)
+				wishvel[1] = 25.0f;
+		}
 	}
-
 
 	//
 	// add water currents
@@ -477,23 +520,24 @@ void PM_AddCurrents (vec3_t	wishvel)
 		VectorClear (v);
 
 		if (pm->watertype & CONTENTS_CURRENT_0)
-			v[0] += 1;
+			v[0] += 1.0f;
 		if (pm->watertype & CONTENTS_CURRENT_90)
-			v[1] += 1;
+			v[1] += 1.0f;
 		if (pm->watertype & CONTENTS_CURRENT_180)
-			v[0] -= 1;
+			v[0] -= 1.0f;
 		if (pm->watertype & CONTENTS_CURRENT_270)
-			v[1] -= 1;
+			v[1] -= 1.0f;
 		if (pm->watertype & CONTENTS_CURRENT_UP)
-			v[2] += 1;
+			v[2] += 1.0f;
 		if (pm->watertype & CONTENTS_CURRENT_DOWN)
-			v[2] -= 1;
+			v[2] -= 1.0f;
 
 		s = pm_waterspeed;
-		if ((pm->waterlevel == 1) && (pm->groundentity))
-			s /= 2;
 
-		VectorMA (wishvel, s, v, wishvel);
+		if ((pm->waterlevel == 1) && (pm->groundentity))
+			s *= 0.5f;
+
+		VectorMA(wishvel, s, v, wishvel);
 	}
 
 	//
@@ -502,22 +546,22 @@ void PM_AddCurrents (vec3_t	wishvel)
 
 	if (pm->groundentity)
 	{
-		VectorClear (v);
+		VectorClear(v);
 
 		if (pml.groundcontents & CONTENTS_CURRENT_0)
-			v[0] += 1;
+			v[0] += 1.0f;
 		if (pml.groundcontents & CONTENTS_CURRENT_90)
-			v[1] += 1;
+			v[1] += 1.0f;
 		if (pml.groundcontents & CONTENTS_CURRENT_180)
-			v[0] -= 1;
+			v[0] -= 1.0f;
 		if (pml.groundcontents & CONTENTS_CURRENT_270)
-			v[1] -= 1;
+			v[1] -= 1.0f;
 		if (pml.groundcontents & CONTENTS_CURRENT_UP)
-			v[2] += 1;
+			v[2] += 1.0f;
 		if (pml.groundcontents & CONTENTS_CURRENT_DOWN)
-			v[2] -= 1;
+			v[2] -= 1.0f;
 
-		VectorMA (wishvel, 100 /* pm->groundentity->speed */, v, wishvel);
+		VectorMA(wishvel, 100.0f /* pm->groundentity->speed */, v, wishvel);
 	}
 }
 
@@ -538,17 +582,16 @@ void PM_WaterMove (void)
 //
 // user intentions
 //
-	for (i=0 ; i<3 ; i++)
+	for (i = 0; i < 3; ++i)
 		wishvel[i] = pml.forward[i]*pm->cmd.forwardmove + pml.right[i]*pm->cmd.sidemove;
 
 	if (!pm->cmd.forwardmove && !pm->cmd.sidemove && !pm->cmd.upmove)
-		wishvel[2] -= 60;		// drift towards bottom
+		wishvel[2] -= 60.0f;		// drift towards bottom
 	else
 		wishvel[2] += pm->cmd.upmove;
 
-	PM_AddCurrents (wishvel);
-
-	VectorCopy (wishvel, wishdir);
+	PM_AddCurrents(wishvel);
+	VectorCopy(wishvel, wishdir);
 	wishspeed = VectorNormalizeRetLen(wishdir);
 
 	if (wishspeed > pm_maxspeed)
@@ -556,10 +599,9 @@ void PM_WaterMove (void)
 		VectorScale (wishvel, pm_maxspeed/wishspeed, wishvel);
 		wishspeed = pm_maxspeed;
 	}
-	wishspeed *= 0.5;
 
-	PM_Accelerate (wishdir, wishspeed, pm_wateraccelerate);
-
+	wishspeed *= 0.5f;
+	PM_Accelerate(wishdir, wishspeed, pm_wateraccelerate);
 	PM_StepSlideMove();
 }
 
@@ -633,7 +675,7 @@ void PM_AirMove (void)
 	}
 	else if (pm->groundentity)
 	{
-		if (oldmovephysics->value || (pm->s.pm_flags & PMF_JUMP_HELD)) // use old bouncing down slopes when the jump button is held since some players want it.
+		if (pm_oldmovephysics || (pm->s.pm_flags & PMF_JUMP_HELD)) // jitmove - use old bouncing down slopes when the jump button is held since some players want it.
 		{
 			// walking on ground
 			pml.velocity[2] = 0.0f; //!!! this is before the accel
@@ -647,19 +689,42 @@ void PM_AirMove (void)
 				pml.velocity[2] -= pm->s.gravity * pml.frametime;
 			// PGM
 		}
-		else
+		else // === jitslope / jitmove - new handling of slopes makes things smoother and gives players more control
 		{
-			if (pml.velocity[2] > 0.0f && pml.velocity[2] < 150.0f) // jitmove - don't fling the player up in the air over little bumps and such (and don't make ramp jumps significantly more uber than they were in old physics)
+			float accelerate = pm_accelerate;
+
+			if (pml.velocity[2] > 0.0f && pml.velocity[2] < 150.0f) // jitmove - don't fling the player up in the air over little bumps and such
 				pml.velocity[2] = 0.0f;
 
-			// === jitslope / jitmove - apply gravity even when on a ground entity so we walk down slopes
+			if (pml.rampslide)
+			{
+				vec3_t currentdir2D;
+				float dot;
+
+				VectorCopy(pml.velocity, currentdir2D);
+				currentdir2D[2] = 0.0f;
+				VectorNormalize(currentdir2D);
+				dot = DotProduct(currentdir2D, wishdir);
+
+				if (dot > 0.01f)
+				{
+					accelerate = /* 1.0f * */dot + accelerate * (1.0f - dot); // Air accel is 1.0f, so we lerp/blend between that (full forward) and ground accel (full strafe).
+				}
+				else
+				{
+					pml.rampslide = false; // desired direction is away from current velocity, so stop ramp sliding and return to normal control
+					PM_Friction(); // apply friction because it isn't normally applied when rampslide is active
+				}
+			}
+
+			// apply gravity even when on a ground entity so we walk down slopes smoothly instead of skipping.
 			pml.velocity[2] -= pm->s.gravity * pml.frametime;
-			PM_Accelerate(wishdir, wishspeed, pm_accelerate);
-			// jitslope ===
-		}
+			PM_Accelerate(wishdir, wishspeed, accelerate);
+		} // jitslope / jitmove ===
 
 		if (!pml.velocity[0] && !pml.velocity[1])
 			return;
+
 		PM_StepSlideMove();
 	}
 	else
@@ -668,6 +733,7 @@ void PM_AirMove (void)
 			PM_AirAccelerate(wishdir, wishspeed, pm_accelerate);
 		else
 			PM_Accelerate(wishdir, wishspeed, 1.0f);
+
 		// add gravity
 		pml.velocity[2] -= pm->s.gravity * pml.frametime;
 		PM_StepSlideMove();
@@ -678,10 +744,10 @@ void PM_AirMove (void)
 
 /*
 =============
-PM_CatagorizePosition
+PM_CategorizePosition
 =============
 */
-void PM_CatagorizePosition (void)
+void PM_CategorizePosition (void)
 {
 	vec3_t		point;
 	int			cont;
@@ -697,7 +763,9 @@ void PM_CatagorizePosition (void)
 	point[1] = pml.origin[1];
 	point[2] = pml.origin[2] - 0.25;
 
-	if (pml.velocity[2] > 180.0f && (oldmovephysics->value || (pm->s.pm_flags & PMF_JUMP_HELD))) // jitmove / jitjump - don't slide uphill uncontrollably unless we're holding the jump button (or using old physics)
+	pml.rampslide = false; // jitmove
+
+	if (pml.velocity[2] > 180.0f && (pm_oldmovephysics || (pm->s.pm_flags & PMF_JUMP_HELD))) // jitmove / jitjump - don't slide uphill uncontrollably unless we're holding the jump button (or using old physics)
 	{
 		pm->s.pm_flags &= ~PMF_ON_GROUND;
 		pm->groundentity = NULL;
@@ -743,7 +811,7 @@ void PM_CatagorizePosition (void)
 			pm->groundentity = trace.ent;
 
 			// hitting solid ground will end a waterjump
-			if (pm->s.pm_flags & PMF_TIME_WATERJUMP)
+			if ((pm->s.pm_flags & PMF_TIME_WATERJUMP) && (pm_oldmovephysics || pml.velocity[2] < 180.0f)) // jitmove - don't allow crazy double jumps out of the water with the new physics.
 			{
 				pm->s.pm_flags &= ~(PMF_TIME_WATERJUMP | /*jitmove PMF_TIME_LAND |*/ PMF_TIME_TELEPORT);
 				pm->s.pm_time = 0;
@@ -773,6 +841,11 @@ void PM_CatagorizePosition (void)
 		{
 			pm->touchents[pm->numtouch] = trace.ent;
 			pm->numtouch++;
+		}
+
+		if (!pm_oldmovephysics && pml.velocity[2] > 180.0f) // jitmove - special ramp handling
+		{
+			pml.rampslide = true;
 		}
 	}
 
@@ -806,6 +879,10 @@ void PM_CatagorizePosition (void)
 }
 
 
+#define JUMPVELOCITY 270.0f
+#define MAXJUMPVELOCITY 450.0f // With the old physics, this is the maximum velocity you could reach jumping (180 + 270)
+
+
 /*
 =============
 PM_CheckJump
@@ -813,6 +890,8 @@ PM_CheckJump
 */
 void PM_CheckJump (void)
 {
+	float jumpvelocity = JUMPVELOCITY;
+
 	// === jitjumphack -- don't kill people's strafe jumps
 #if 0 // doubt even Q2 players want this... #ifdef QUAKE2
 	if (pm->s.pm_flags & PMF_TIME_LAND)
@@ -839,15 +918,15 @@ void PM_CheckJump (void)
 	{	// swimming, not jumping
 		pm->groundentity = NULL;
 
-		if (pml.velocity[2] <= -300)
+		if (pml.velocity[2] <= -300.0f)
 			return;
 
 		if (pm->watertype == CONTENTS_WATER)
-			pml.velocity[2] = 100;
+			pml.velocity[2] = 100.0f;
 		else if (pm->watertype == CONTENTS_SLIME)
-			pml.velocity[2] = 80;
+			pml.velocity[2] = 80.0f;
 		else
-			pml.velocity[2] = 50;
+			pml.velocity[2] = 50.0f;
 
 		return;
 	}
@@ -856,15 +935,21 @@ void PM_CheckJump (void)
 		return;		// in air, so no effect
 
 	pm->s.pm_flags |= PMF_JUMP_HELD;
-
 	pm->groundentity = NULL;
 
-#define JUMPVELOCITY 270
+	if (!pm_oldmovephysics) // jitmove - cap velocity we jump at, since it was technically capped with old physics
+	{
+		if (pml.velocity[2] > MAXJUMPVELOCITY)
+			return;
 
-	pml.velocity[2] += JUMPVELOCITY;
+		if (pml.velocity[2] + jumpvelocity > MAXJUMPVELOCITY)
+			jumpvelocity = MAXJUMPVELOCITY - pml.velocity[2];
+	}
 
-	if (pml.velocity[2] < JUMPVELOCITY)
-		pml.velocity[2] = JUMPVELOCITY;
+	pml.velocity[2] += jumpvelocity;
+
+	if (pml.velocity[2] < jumpvelocity)
+		pml.velocity[2] = jumpvelocity;
 }
 
 
@@ -1058,37 +1143,40 @@ void PM_CheckDuck (void)
 {
 	trace_t	trace;
 
-	pm->mins[0] = -16;
-	pm->mins[1] = -16;
+	pm->mins[0] = -16.0f;
+	pm->mins[1] = -16.0f;
 
-	pm->maxs[0] = 16;
-	pm->maxs[1] = 16;
+	pm->maxs[0] = 16.0f;
+	pm->maxs[1] = 16.0f;
 
 	if (pm->s.pm_type == PM_GIB)
 	{
-		pm->mins[2] = 0;
-		pm->maxs[2] = 16;
-		pm->viewheight = 8;
+		pm->mins[2] = 0.0f;
+		pm->maxs[2] = 16.0f;
+		pm->viewheight = 8.0f;
 		return;
 	}
 
-	pm->mins[2] = -24;
+	pm->mins[2] = -24.0f;
 
 	if (pm->s.pm_type == PM_DEAD)
 	{
 		pm->s.pm_flags |= PMF_DUCKED;
 	}
-	else if (pm->cmd.upmove < 0 && (pm->s.pm_flags & PMF_ON_GROUND) )
-	{	// duck
+	else if (pm->cmd.upmove < 0 && (pm->s.pm_flags & PMF_ON_GROUND) && !pml.rampslide) // jitmove - don't allow crouching off ramps since we couldn't do that before
+	{
+		// duck
 		pm->s.pm_flags |= PMF_DUCKED;
 	}
 	else
-	{	// stand up if possible
+	{
+		// stand up if possible
 		if (pm->s.pm_flags & PMF_DUCKED)
 		{
 			// try to stand up
-			pm->maxs[2] = 32;
-			trace = pm->trace (pml.origin, pm->mins, pm->maxs, pml.origin);
+			pm->maxs[2] = 32.0f;
+			trace = pm->trace(pml.origin, pm->mins, pm->maxs, pml.origin);
+
 			if (!trace.allsolid)
 				pm->s.pm_flags &= ~PMF_DUCKED;
 		}
@@ -1096,13 +1184,13 @@ void PM_CheckDuck (void)
 
 	if (pm->s.pm_flags & PMF_DUCKED)
 	{
-		pm->maxs[2] = 4;
-		pm->viewheight = -2;
+		pm->maxs[2] = 4.0f;
+		pm->viewheight = -2.0f;
 	}
 	else
 	{
-		pm->maxs[2] = 32;
-		pm->viewheight = 22;
+		pm->maxs[2] = 32.0f;
+		pm->viewheight = 22.0f;
 	}
 }
 
@@ -1353,7 +1441,10 @@ void Pmove (pmove_t *pmove)
 		PM_InitialSnapPosition();
 
 	// set groundentity, watertype, and waterlevel
-	PM_CatagorizePosition();
+	PM_CategorizePosition();
+
+	if (!pm_oldmovephysics) // jitmove - call this after categorize position so the crouch checks take into account the current surface.
+		PM_CheckDuck();
 
 	if (pm->s.pm_type == PM_DEAD)
 		PM_DeadMove();
@@ -1421,7 +1512,7 @@ void Pmove (pmove_t *pmove)
 	}
 
 	// set groundentity, watertype, and waterlevel for final spot
-	PM_CatagorizePosition();
+	PM_CategorizePosition();
 	PM_SnapPosition();
 	g_viewheight = pm->viewheight; // jit
 }
