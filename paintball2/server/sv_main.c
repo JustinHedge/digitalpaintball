@@ -1215,6 +1215,19 @@ void SV_PrepWorldFrame (void)
 }
 
 
+void SV_ReplicatePhysicsSettings () // jitmovephysics
+{
+	pm_oldmovephysics = sv_oldmovephysics->value > 0.0f;
+	pm_skyglide_maxvel = sv_skyglide_maxvel->value;
+	pm_crouchslidefriction = sv_crouchslide->value ? 1.8f : 0.0f;
+	Com_sprintf(sv.configstrings[CS_MOVEPHYSICS], sizeof(sv.configstrings[CS_MOVEPHYSICS]), "MovePhysVer: %d CrouchSlide: %g SkyGlide: %g", pm_oldmovephysics ? 0 : 1, pm_crouchslidefriction, pm_skyglide_maxvel);
+	PF_Configstring(CS_MOVEPHYSICS, sv.configstrings[CS_MOVEPHYSICS]); 
+	sv_oldmovephysics->modified = false;
+	sv_skyglide_maxvel->modified = false;
+	sv_crouchslide->modified = false;
+}
+
+
 /*
 =================
 SV_RunGameFrame
@@ -1222,6 +1235,9 @@ SV_RunGameFrame
 */
 void SV_RunGameFrame (void)
 {
+	if (sv_oldmovephysics->modified || sv_skyglide_maxvel->modified || sv_crouchslide->modified) // jitmovephysics
+		SV_ReplicatePhysicsSettings();
+
 	if (host_speeds->value)
 		time_before_game = Sys_Milliseconds();
 
@@ -1251,7 +1267,6 @@ void SV_RunGameFrame (void)
 
 	if (host_speeds->value)
 		time_after_game = Sys_Milliseconds();
-
 }
 
 /*
@@ -1463,7 +1478,7 @@ void SV_Init (void)
 
 	rcon_password = Cvar_Get("rcon_password", "", 0);
 	Cvar_Get("skill", "1", 0);
-	Cvar_Get("deathmatch", "0", CVAR_LATCH);
+	Cvar_Get("deathmatch", "1", CVAR_LATCH);
 	Cvar_Get("coop", "0", CVAR_LATCH);
 	Cvar_Get("dmflags", va("%i", DF_INSTANT_ITEMS), 0); // jit, removed serverinfo flag
 	Cvar_Get("fraglimit", "50", CVAR_SERVERINFO); // jit, was 0

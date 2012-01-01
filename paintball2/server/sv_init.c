@@ -36,6 +36,7 @@ cvar_t	*cer_sv_forcesky;
 cvar_t	*cer_sv_login;
 cvar_t	*cer_public;
 
+
 /*
 ================
 SV_FindIndex
@@ -162,8 +163,9 @@ void SV_CheckForSavegame (void)
 
 		previousState = sv.state;				// PGM
 		sv.state = ss_loading;					// PGM
-		for (i=0 ; i<100 ; i++)
-			ge->RunFrame ();
+
+		for (i = 0; i < 100; i++)
+			ge->RunFrame();
 
 		sv.state = previousState;				// PGM
 	}
@@ -207,16 +209,10 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 	// save name for levels that don't set message
 	strcpy(sv.configstrings[CS_NAME], server);
 
-	if (Cvar_VariableValue("deathmatch"))
-	{
-		sprintf(sv.configstrings[CS_AIRACCEL], "%g", sv_airaccelerate->value);
-		pm_airaccelerate = sv_airaccelerate->value;
-	}
-	else
-	{
-		strcpy(sv.configstrings[CS_AIRACCEL], "0");
-		pm_airaccelerate = 0;
-	}
+	sprintf(sv.configstrings[CS_AIRACCEL], "%g", sv_airaccelerate->value);
+	pm_airaccelerate = sv_airaccelerate->value;
+
+	SV_ReplicatePhysicsSettings(); // jitmovephysics
 
 	sprintf(sv.configstrings[CS_SERVEREVERSION], "Enginever: %g Enginebuild: %d", VERSION, BUILD);
 	SZ_Init(&sv.multicast, sv.multicast_buf, sizeof(sv.multicast_buf));

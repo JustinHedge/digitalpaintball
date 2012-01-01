@@ -211,6 +211,9 @@ extern	cvar_t		*maxclients;
 extern	cvar_t		*sv_noreload;			// don't reload level state when reentering
 extern	cvar_t		*sv_airaccelerate;		// don't reload level state when reentering
 											// development tool
+extern	cvar_t		*sv_oldmovephysics;		// jitmove
+extern	cvar_t		*sv_skyglide_maxvel;	// jitmove
+extern	cvar_t		*sv_crouchslide;		// jitmove
 extern	cvar_t		*sv_enforcetime;
 extern	cvar_t		*sv_noextascii;			// jit
 extern  cvar_t		*sv_cullentities;		// viciouz - anti-wallhack
@@ -243,6 +246,7 @@ void SV_InitOperatorCommands (void);
 void SV_SendServerinfo (client_t *client);
 void SV_UserinfoChanged (client_t *cl);
 
+void SV_ReplicatePhysicsSettings ();
 
 void Force_Master_Heartbeat (int seconds);
 void Master_Heartbeat (void);
@@ -317,6 +321,7 @@ extern	game_export_t	*ge;
 void SV_InitGameProgs (void);
 void SV_ShutdownGameProgs (void);
 void SV_InitEdict (edict_t *e);
+void PF_Configstring (int index, const char *val);
 
 
 
