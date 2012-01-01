@@ -208,6 +208,7 @@ void CL_PredictMovement (void)
 	int			i;
 	float		stepheight;
 	float		unsentstepheight = 0.0f;
+	char		*s;
 
 	if (cls.state != ca_active)
 		return;
@@ -242,6 +243,31 @@ void CL_PredictMovement (void)
 	pm_airaccelerate = atof(cl.configstrings[CS_AIRACCEL]);
 	pm.s = cl.frame.playerstate.pmove;
 	frame = 0;
+
+	// === jitmove - get move settings from server
+	pm_oldmovephysics = true;
+	pm_crouchslidefriction = 0.0f; // 0 = disabled
+	pm_skyglide_maxvel = 0.0f;
+	s = strstr(cl.configstrings[CS_MOVEPHYSICS], "MovePhysVer: ");
+
+	if (s)
+	{
+		int ver = atoi(s + sizeof("MovePhysVer:")); // space left out because null is counted
+
+		if (ver >= 1)
+			pm_oldmovephysics = false;
+	}
+
+	s = strstr(cl.configstrings[CS_MOVEPHYSICS], "CrouchSlide: ");
+
+	if (s)
+		pm_crouchslidefriction = atof(s + sizeof("CrouchSlide:"));
+
+	s = strstr(cl.configstrings[CS_MOVEPHYSICS], "SkyGlide: ");
+
+	if (s)
+		pm_skyglide_maxvel = atof(s + sizeof("SkyGlide:"));
+	// jitmove ===
 
 	// run frames
 	while (++ack < current)

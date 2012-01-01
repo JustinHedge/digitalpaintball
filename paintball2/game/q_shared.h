@@ -1293,7 +1293,8 @@ ROGUE - VERSIONS
 #define CS_SERVEREVERSION	(CS_GENERAL+8) // jitversion
 #define CS_TEAMINDEXES		(CS_GENERAL+9) // jitscores
 #define CS_GAMETYPE			(CS_GENERAL+10) // jitscores
-#define CS_WHATEVERSNEXT	(CS_GENERAL+11) // use this for additional stuff
+#define CS_MOVEPHYSICS		(CS_GENERAL+11)
+#define CS_WHATEVERSNEXT	(CS_GENERAL+12) // use this for additional stuff
 
 #define CS_EVENTS			(CS_GENERAL+256) // jitevents
 

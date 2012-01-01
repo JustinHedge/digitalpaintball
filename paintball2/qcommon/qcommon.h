@@ -32,14 +32,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "md5.h"
 
 #ifdef QUAKE2
-#define VERSION		0.32 // jitversion
+#define VERSION		0.33 // jitversion
 #define BASEDIRNAME "baseq2"
 #define BUILD 0
 #define BUILD_S "0"
 #else
 #define	VERSION		2.0 // jitversion (was 3.21)
-#define BUILD		32 // jitversion / jitbuild -- Paintball2 build number
-#define BUILD_S		"32" // jitversion, for strings.
+#define BUILD		33 // jitversion / jitbuild -- Paintball2 build number
+#define BUILD_S		"33" // jitversion, for strings.
 #define	BASEDIRNAME	"pball" // jit, was "baseq2"
 #endif
 
@@ -127,7 +127,7 @@ void MSG_WriteByte (sizebuf_t *sb, int c);
 void MSG_WriteShort (sizebuf_t *sb, int c);
 void MSG_WriteLong (sizebuf_t *sb, int c);
 void MSG_WriteFloat (sizebuf_t *sb, float f);
-void MSG_WriteString (sizebuf_t *sb, char *s);
+void MSG_WriteString (sizebuf_t *sb, const char *s);
 void MSG_WriteCoord (sizebuf_t *sb, float f);
 void MSG_WritePos (sizebuf_t *sb, vec3_t pos);
 void MSG_WriteAngle (sizebuf_t *sb, float f);
@@ -787,6 +787,9 @@ Common between server and client so prediction matches
 */
 
 extern float pm_airaccelerate;
+extern qboolean pm_oldmovephysics;
+extern float pm_crouchslidefriction;
+extern float pm_skyglide_maxvel;
 
 void Pmove (pmove_t *pmove);
 

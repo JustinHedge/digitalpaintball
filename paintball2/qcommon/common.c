@@ -40,7 +40,9 @@ cvar_t	*host_speeds;
 cvar_t	*log_stats;
 cvar_t	*developer;
 cvar_t	*timescale;
-cvar_t	*oldmovephysics; // jitmove - to enable old q2 style movement
+cvar_t	*sv_oldmovephysics; // jitmove - to enable old q2 style movement
+cvar_t	*sv_skyglide_maxvel; // jitmove - separate setting for sky gliding
+cvar_t	*sv_crouchslide; // jitmove
 cvar_t	*logfile_active;	// 1 = buffer log, 2 = flush after each print
 cvar_t	*timestamp_console; // jittimestamp
 cvar_t	*showtrace;
@@ -420,7 +422,7 @@ void MSG_WriteFloat (sizebuf_t *sb, float f)
 	SZ_Write(sb, &dat.l, 4);
 }
 
-void MSG_WriteString (sizebuf_t *sb, char *s)
+void MSG_WriteString (sizebuf_t *sb, const char *s)
 {
 	if (!s)
 		SZ_Write(sb, "", 1);
@@ -1496,7 +1498,9 @@ void Qcommon_Init (int argc, char **argv)
 	log_stats = Cvar_Get("log_stats", "0", 0);
 	developer = Cvar_Get("developer", "0", 0);
 	timescale = Cvar_Get("timescale", "1", 0);
-	oldmovephysics = Cvar_Get("oldmovephysics", "0", 0); // jitmove
+	sv_oldmovephysics = Cvar_Get("sv_oldmovephysics", "0", 0); // jitmove
+	sv_skyglide_maxvel = Cvar_Get("sv_skyglide_maxvel", "200", 0); // jitmove
+	sv_crouchslide = Cvar_Get("sv_crouchslide", "0", 0); // jitmove
 	splattime = Cvar_Get("splattime", "4", CVAR_ARCHIVE); // jit
 	logfile_active = Cvar_Get("logfile", "0", 0);
 	showtrace = Cvar_Get("showtrace", "0", 0);
@@ -1506,7 +1510,7 @@ void Qcommon_Init (int argc, char **argv)
 #else
 	dedicated = Cvar_Get("dedicated", "0", CVAR_NOSET);
 #endif
-	deathmatch = Cvar_Get("deathmatch", "0", 0); // jit
+	deathmatch = Cvar_Get("deathmatch", "1", 0); // jit
 
 	timestamp_console = Cvar_Get("timestamp_console", dedicated->value ? "1" : "0", 0); // jittimestamp
 
