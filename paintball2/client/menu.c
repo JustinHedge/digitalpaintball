@@ -1668,12 +1668,48 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 }
 
 
+// flag widget and all of its children as modified
+static void refresh_menu_widget (menu_widget_t *widget)
+{
+	widget->modified = true;
+	widget = widget->subwidget;
+
+	while (widget)
+	{
+		refresh_menu_widget(widget);
+		widget = widget->next;
+	}
+}
+
+
+// flag widgets as modified:
+static void refresh_menu_screen (menu_screen_t *menu)
+{
+	menu_widget_t *widget;
+
+	if (!menu)
+		return;
+
+	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
+	widget = menu->widget;
+
+	while (widget)
+	{
+		refresh_menu_widget(widget);
+		widget = widget->next;
+	}
+	//pthread_mutex_unlock(&m_mut_widgets);
+}
+
+
 static void M_PushMenuScreen (menu_screen_t *menu, qboolean samelevel)
 {
 	MENU_SOUND_OPEN;
 
 	if (m_menudepth < MAX_MENU_SCREENS)
 	{
+		refresh_menu_screen(menu); // screen size may have changed or something, refresh it.
+
 		if (samelevel)
 		{
 			m_menu_screens[m_menudepth-1] = menu;
@@ -1687,6 +1723,7 @@ static void M_PushMenuScreen (menu_screen_t *menu, qboolean samelevel)
 		cls.key_dest = key_menu;
 	}
 }
+
 
 static void M_PopMenu (const char *sMenuName)
 {
@@ -2632,7 +2669,7 @@ static menu_screen_t* M_FindMenuScreen (const char *menu_name)
 	menu = root_menu;
 
 	// look through "cached" menus
-	while(menu)
+	while (menu)
 	{
 		if (Q_streq(menu_name, menu->name))
 			return menu;
@@ -2645,7 +2682,7 @@ static menu_screen_t* M_FindMenuScreen (const char *menu_name)
 }
 
 
-static void reload_menu_screen(menu_screen_t *menu)
+static void reload_menu_screen (menu_screen_t *menu)
 {
 	if (!menu)
 		return;
@@ -2656,37 +2693,6 @@ static void reload_menu_screen(menu_screen_t *menu)
 	//pthread_mutex_unlock(&m_mut_widgets);
 }
 
-// flag widget and all of its children as modified
-static void refresh_menu_widget(menu_widget_t *widget)
-{
-	widget->modified = true;
-	widget = widget->subwidget;
-
-	while(widget)
-	{
-		refresh_menu_widget(widget);
-		widget = widget->next;
-	}
-}
-
-// flag widgets as modified:
-static void refresh_menu_screen(menu_screen_t *menu)
-{
-	menu_widget_t *widget;
-
-	if (!menu)
-		return;
-
-	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
-	widget = menu->widget;
-
-	while(widget)
-	{
-		refresh_menu_widget(widget);
-		widget = widget->next;
-	}
-	//pthread_mutex_unlock(&m_mut_widgets);
-}
 
 // Flag all widgets as modified so they update
 void M_RefreshMenu (void)
@@ -2697,7 +2703,7 @@ void M_RefreshMenu (void)
 
 	menu = root_menu;
 
-	while(menu)
+	while (menu)
 	{
 		refresh_menu_screen(menu);
 		menu = menu->next;
@@ -2722,8 +2728,10 @@ void M_RefreshWidget (const char *name, qboolean lock)
 void M_RefreshActiveMenu (void)
 {
 	pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
+
 	if (m_menudepth)
 		refresh_menu_screen(m_menu_screens[m_menudepth-1]);
+
 	pthread_mutex_unlock(&m_mut_widgets);
 }
 
@@ -2738,7 +2746,7 @@ void M_ReloadMenu (void)
 		m_mouse.cursorpic = i_cursor;
 		menu = root_menu;
 
-		while(menu)
+		while (menu)
 		{
 			reload_menu_screen(menu);
 			menu = menu->next;
@@ -2777,24 +2785,27 @@ void M_Menu_f (void)
 		menu_screen_t *menu;
 		menu = M_FindMenuScreen(menuname);
 
-		if (menu->command)
+		if (menu)
 		{
-			Cbuf_AddText(Cmd_MacroExpandString(menu->command));
-			Cbuf_AddText("\n");
-		}
+			if (menu->command)
+			{
+				Cbuf_AddText(Cmd_MacroExpandString(menu->command));
+				Cbuf_AddText("\n");
+			}
 
-		// hardcoded hack so gamma image is correct:
-		if (Q_streq(menuname, "setup_gamma"))
-		{
-			oldscale = cl_hudscale->value;
-			Cvar_Set("cl_hudscale", "2");
-		}
-		else
-		{
-			oldscale = 0;
-		}
+			// hardcoded hack so gamma image is correct:
+			if (Q_streq(menuname, "setup_gamma"))
+			{
+				oldscale = cl_hudscale->value;
+				Cvar_Set("cl_hudscale", "2");
+			}
+			else
+			{
+				oldscale = 0;
+			}
 
-		M_PushMenuScreen(menu, samelevel);
+			M_PushMenuScreen(menu, samelevel);
+		}
 	}
 
 	pthread_mutex_unlock(&m_mut_widgets);
