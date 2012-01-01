@@ -221,23 +221,23 @@ typedef struct
 	// are flood filled to eliminate mip map edge errors, and pics have
 	// an implicit "pics/" prepended to the name. (a pic name that starts with a
 	// slash will not use the "pics/" prefix or the ".pcx" postfix)
-	void	(*BeginRegistration) (char *map);
-	struct model_s *(*RegisterModel) (char *name);
+	void	(*BeginRegistration) (const char *map);
+	struct model_s *(*RegisterModel) (const char *name);
 	//struct image_s *(*RegisterSkin) (char *name);
 	void	(*RegisterSkin) (const char *name, struct model_s *model, struct image_s **skins); // jitskm
-	struct image_s *(*RegisterPic) (char *name);
-	void	(*SetSky) (char *name, float rotate, vec3_t axis);
+	struct image_s *(*RegisterPic) (const char *name);
+	void	(*SetSky) (const char *name, float rotate, vec3_t axis);
 	void	(*EndRegistration) (void);
 
 	void	(*RenderFrame) (refdef_t *fd);
 
-	void	(*DrawGetPicSize) (int *w, int *h, char *name);	// will return 0 0 if not found
-	void	(*DrawPic) (float x, float y, char *name);
+	void	(*DrawGetPicSize) (int *w, int *h, const char *name);	// will return 0 0 if not found
+	void	(*DrawPic) (float x, float y, const char *name);
 	void	(*DrawPic2) (float x, float y, image_t *gl);
-	void	(*DrawStretchPic) (float x, float y, float w, float h, char *name);
+	void	(*DrawStretchPic) (float x, float y, float w, float h, const char *name);
 	void	(*DrawStretchPic2) (float x, float y, float w, float h, image_t *gl);
 	void	(*DrawChar) (float x, float y, int c);
-	void	(*DrawTileClear) (int x, int y, int w, int h, char *name);
+	void	(*DrawTileClear) (int x, int y, int w, int h, const char *name);
 	void	(*DrawTileClear2) (int x, int y, int w, int h, image_t *image);
 	void	(*DrawFill) (int x, int y, int w, int h, int c);
 	void	(*DrawFadeScreen) (void);
