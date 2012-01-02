@@ -38,7 +38,7 @@ typedef struct
 	int			baseframe;
 } explosion_t;
 
-#define	MAX_EXPLOSIONS	8192 // was 64; T3RR0R15T: was 256
+#define	MAX_EXPLOSIONS	512 // was 64
 explosion_t	cl_explosions[MAX_EXPLOSIONS];
 
 #define	MAX_BEAMS	32
@@ -1605,7 +1605,7 @@ void CL_AddExplosions (void) // jitsmoke
 	int			i;
 	int			j;
 
-	for (i=0, ex=cl_explosions; i < MAX_EXPLOSIONS; i++, ex++)
+	for (i = 0, ex = cl_explosions; i < MAX_EXPLOSIONS; i++, ex++)
 	{
 		time = (cl.time - ex->start)*0.001f;
 		ent = &ex->ent;
