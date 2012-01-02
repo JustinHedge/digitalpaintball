@@ -830,42 +830,53 @@ void SV_ConSay_f(void)
 	client_t *client;
 	int		j;
 	char	*p;
-	char	text[1024];
 	char	*consolename;
 
 	if (Cmd_Argc () < 2)
 		return;
 
-	if (sv_consolename->value == 1)
+	switch ((int)(sv_consolename->value))
+	{
+	case 1:
 		consolename = "Info";
-	else if (sv_consolename->value == 2)
+		break;
+	case 2:
 		consolename = "News";
-	else if (sv_consolename->value == 3)
+		break;
+	case 3:
 		consolename = "Help";
-	else if (sv_consolename->value == 4)
+		break;
+	case 4:
 		consolename = "Server";
-	else if (sv_consolename->value == 5)
+		break;
+	case 5:
 		consolename = "Admin";
-	else consolename = "console";
+		break;
+	default:
+		consolename = "console";
+		break;
+	}
 
-	strcpy (text, va("%s: ", consolename));
 	p = Cmd_Args();
 
 	if (*p == '"')
 	{
 		p++;
-		p[strlen(p)-1] = 0;
+		p[strlen(p) - 1] = 0;
 	}
 
-	strcat(text, p);
-
-	for (j = 0, client = svs.clients; j < maxclients->value; j++, client++)
+	if (svs.clients) // jit - fix crash if you try to say while no map is loaded.
 	{
-		if (client->state != cs_spawned)
-			continue;
+		for (j = 0, client = svs.clients; j < maxclients->value; j++, client++)
+		{
+			if (client->state != cs_spawned)
+				continue;
 
-		SV_ClientPrintf(client, PRINT_CHAT, "%s\n", text);
+			SV_ClientPrintf(client, PRINT_CHAT, "%s: %s\n", consolename, p);
+		}
 	}
+
+	Com_Printf("%s: %s\n", consolename, p); // jit - actually display server console chat.
 }
 
 

@@ -1498,7 +1498,7 @@ void SV_Init (void)
 	sv_locked	   = Cvar_Get("sv_locked", "0", 0);		// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
 	sv_reserved_slots		= Cvar_Get("sv_reserved_slots", "0", CVAR_LATCH);	// T3RR0R15T: Number of reserved player slots. (from R1Q2)
 	sv_reserved_password	= Cvar_Get("sv_reserved_password", "", 0);			// T3RR0R15T: Password required to access a reserved player slot. Clients should set their 'password' cvar to this. (from R1Q2)
-	sv_consolename			= Cvar_Get("sv_consolename", "0", 0);				// T3RR0R15T: Name for console say messages
+	sv_consolename			= Cvar_Get("sv_consolename", "5", 0);				// T3RR0R15T: Name for console say messages (jit - 5 = "Admin")
 	allow_download          = Cvar_Get("allow_download", "1", CVAR_ARCHIVE);
 	allow_download_players  = Cvar_Get("allow_download_players", "1", CVAR_ARCHIVE); // jit, default to 1
 	allow_download_models   = Cvar_Get("allow_download_models", "1", CVAR_ARCHIVE);
