@@ -831,11 +831,24 @@ void SV_ConSay_f(void)
 	int		j;
 	char	*p;
 	char	text[1024];
+	char	*consolename;
 
 	if (Cmd_Argc () < 2)
 		return;
 
-	strcpy (text, va("%s: ", sv_consolename->string));
+	if (sv_consolename->value == 1)
+		consolename = "Info";
+	else if (sv_consolename->value == 2)
+		consolename = "News";
+	else if (sv_consolename->value == 3)
+		consolename = "Help";
+	else if (sv_consolename->value == 4)
+		consolename = "Server";
+	else if (sv_consolename->value == 5)
+		consolename = "Admin";
+	else consolename = "console";
+
+	strcpy (text, va("%s: ", consolename));
 	p = Cmd_Args();
 
 	if (*p == '"')
