@@ -761,7 +761,7 @@ void PM_CategorizePosition (void)
 // see if standing on something solid	
 	point[0] = pml.origin[0];
 	point[1] = pml.origin[1];
-	point[2] = pml.origin[2] - 0.25;
+	point[2] = pml.origin[2] - 0.25f;
 
 	pml.rampslide = false; // jitmove
 
@@ -777,18 +777,18 @@ void PM_CategorizePosition (void)
 		pml.groundsurface = trace.surface;
 		pml.groundcontents = trace.contents;
 
-		if (trace.plane.normal[2] < 0.7f && !trace.startsolid) // jitclipbug
+		if (trace.ent && trace.plane.normal[2] < 0.7f && !trace.startsolid) // jitclipbug
 		{
 			trace_t		trace2;
 			vec3_t		mins, maxs;
 
 			// try a slightly smaller bounding box -- this is to fix getting stuck up
 			// on angled walls and not being able to move (like you're stuck in the air)
-			mins[0] = pm->mins[0] ? pm->mins[0] + 1 : 0;
-			mins[1] = pm->mins[1] ? pm->mins[1] + 1 : 0;
+			mins[0] = pm->mins[0] ? pm->mins[0] + 1.0f : 0.0f;
+			mins[1] = pm->mins[1] ? pm->mins[1] + 1.0f : 0.0f;
 			mins[2] = pm->mins[2];
-			maxs[0] = pm->maxs[0] ? pm->maxs[0] - 1 : 0;
-			maxs[1] = pm->maxs[1] ? pm->maxs[1] - 1 : 0;
+			maxs[0] = pm->maxs[0] ? pm->maxs[0] - 1.0f : 0.0f;
+			maxs[1] = pm->maxs[1] ? pm->maxs[1] - 1.0f : 0.0f;
 			maxs[2] = pm->maxs[2];
 			trace2 = pm->trace(pml.origin, mins, maxs, point);
 			
@@ -798,10 +798,11 @@ void PM_CategorizePosition (void)
 				pml.groundplane = trace.plane;
 				pml.groundsurface = trace.surface;
 				pml.groundcontents = trace.contents;
-				pm->groundentity = trace.ent;
+				//pm->groundentity = trace.ent;
 			}
 		}
-		else if (!trace.ent)
+		
+		if (!trace.ent || (trace.plane.normal[2] < 0.7f && !trace.startsolid))
 		{
 			pm->groundentity = NULL;
 			pm->s.pm_flags &= ~PMF_ON_GROUND;
@@ -1171,7 +1172,7 @@ void PM_CheckDuck (void)
 	else
 	{
 		// stand up if possible
-		if (pm->s.pm_flags & PMF_DUCKED)
+		if ((pm->s.pm_flags & PMF_DUCKED) && (pm->cmd.upmove >= 0 || fabs(pml.velocity[2]) > 150.0f)) // jitmove - allow people to stay ducked on slopes where they briefly catch air.  It was like this for a while due to another bug.
 		{
 			// try to stand up
 			pm->maxs[2] = 32.0f;
