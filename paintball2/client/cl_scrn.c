@@ -70,7 +70,7 @@ typedef struct
 dirty_t		scr_dirty, scr_old_dirty[2];
 
 char		crosshair_pic[MAX_QPATH];
-int			crosshair_width, crosshair_height;
+float		crosshair_width, crosshair_height;
 
 void SCR_TimeRefresh_f (void);
 void SCR_Loading_f (void);
@@ -970,19 +970,21 @@ void SCR_TouchPics (void)
 {
 	int		i, j;
 
-	for (i=0 ; i<2 ; i++)
-		for (j=0 ; j<11 ; j++)
+	for (i = 0; i < 2; ++i)
+		for (j = 0; j < 11; ++j)
 			re.RegisterPic(sb_nums[i][j]);
 
 	if (crosshair->value)
 	{
-		//if (crosshair->value > 3 || crosshair->value < 0) // jitcrosshair (removed)
-		//	crosshair->value = 3;
+		int crosshair_width_i, crosshair_height_i; // jithudscale / jitcrosshair - handle these as floating point later so we can use non-integer scaling.
+		Com_sprintf(crosshair_pic, sizeof(crosshair_pic), "ch%i", (int)(crosshair->value));
+		re.DrawGetPicSize(&crosshair_width_i, &crosshair_height_i, crosshair_pic);
 
-		Com_sprintf (crosshair_pic, sizeof(crosshair_pic), "ch%i", (int)(crosshair->value));
-		re.DrawGetPicSize (&crosshair_width, &crosshair_height, crosshair_pic);
-		if (!crosshair_width)
+		if (!crosshair_width_i)
 			crosshair_pic[0] = 0;
+
+		crosshair_width = (float)crosshair_width_i; // jithudscale
+		crosshair_height = (float)crosshair_height_i;
 	}
 }
 
