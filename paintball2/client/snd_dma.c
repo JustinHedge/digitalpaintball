@@ -167,7 +167,7 @@ void S_Init (void)
 		s_resamplequality = Cvar_Get("s_resamplequality", "2", CVAR_ARCHIVE);
 		s_resamplevolume = Cvar_Get("s_resamplevolume", "0.35", 0);
 		s_nojump = Cvar_Get("s_nojump", "1", CVAR_ARCHIVE);
-		s_disableonalttab = Cvar_Get("s_disableonalttab", "1", 0);
+		s_disableonalttab = Cvar_Get("s_disableonalttab", "0", 0);
 		// jitsound ===
 
 		s_volume = Cvar_Get("s_volume", "0.9", CVAR_ARCHIVE);
@@ -916,6 +916,7 @@ void S_StartSound (vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float 
 
 	// drift s_beginofs
 	start = cl.frame.servertime * 0.001 * dma.speed + s_beginofs;
+
 	if (start < paintedtime)
 	{
 		start = paintedtime;
@@ -928,7 +929,7 @@ void S_StartSound (vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float 
 	}
 	else
 	{
-		s_beginofs-=10;
+		s_beginofs -= 10;
 	}
 
 	if (!timeofs)
@@ -961,13 +962,15 @@ void S_StartLocalSound (const char *sound)
 		return;
 	//A3D CHANGE END
 		
-	sfx = S_RegisterSound (sound);
+	sfx = S_RegisterSound(sound);
+	
 	if (!sfx)
 	{
-		Com_Printf ("S_StartLocalSound: can't cache %s\n", sound);
+		Com_Printf("S_StartLocalSound: can't cache %s\n", sound);
 		return;
 	}
-	S_StartSound (NULL, cl.playernum+1, 0, sfx, 1, 1, 0);
+
+	S_StartSound(NULL, cl.playernum + 1, 0, sfx, 1, 1, 0);
 }
 
 
@@ -1281,19 +1284,21 @@ S_Update
 Called once each time through the main loop
 ============
 */
-void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
+void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 {
 	int			i;
 	int			total;
 	channel_t	*ch;
 	channel_t	*combine;
+
 	//A3D ADD
 	if (a3dsound_started)
 	{
-		S_Q2A3DUpdate(origin,forward,right,up);
+		S_Q2A3DUpdate(origin, forward, right, up);
 		return;
 	}
 	//A3D END
+
 	if (!sound_started)
 		return;
 
@@ -1319,19 +1324,23 @@ void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 
 	// update spatialization for dynamic sounds	
 	ch = channels;
-	for (i=0 ; i<MAX_CHANNELS; i++, ch++)
+
+	for (i = 0; i < MAX_CHANNELS; ++i, ++ch)
 	{
 		if (!ch->sfx)
 			continue;
+
 		if (ch->autosound)
 		{	// autosounds are regenerated fresh each frame
 			memset (ch, 0, sizeof(*ch));
 			continue;
 		}
+
 		S_Spatialize(ch);         // respatialize channel
+
 		if (!ch->leftvol && !ch->rightvol)
 		{
-			memset (ch, 0, sizeof(*ch));
+			memset(ch, 0, sizeof(*ch));
 			continue;
 		}
 	}
@@ -1393,7 +1402,7 @@ void GetSoundtime(void)
 }
 
 
-void S_Update_(void)
+void S_Update_ (void)
 {
 	unsigned        endtime;
 	int				samps;
@@ -1401,7 +1410,7 @@ void S_Update_(void)
 	if (!sound_started)
 		return;
 
-	SNDDMA_BeginPainting ();
+	SNDDMA_BeginPainting();
 
 	if (!dma.buffer)
 		return;
@@ -1421,15 +1430,14 @@ void S_Update_(void)
 //endtime = (soundtime + 4096) & ~4095;
 
 	// mix to an even submission block size
-	endtime = (endtime + dma.submission_chunk-1)
-		& ~(dma.submission_chunk-1);
-	samps = dma.samples >> (dma.channels-1);
+	endtime = (endtime + dma.submission_chunk - 1) & ~(dma.submission_chunk-1);
+	samps = dma.samples >> (dma.channels - 1);
+
 	if (endtime - soundtime > samps)
 		endtime = soundtime + samps;
 
-	S_PaintChannels (endtime);
-
-	SNDDMA_Submit ();
+	S_PaintChannels(endtime);
+	SNDDMA_Submit();
 }
 
 /*
