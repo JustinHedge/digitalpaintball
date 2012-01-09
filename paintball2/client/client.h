@@ -332,6 +332,7 @@ extern	cvar_t	*cl_drawtexinfo; // jit
 extern	cvar_t	*cl_centerprintkills; // jit
 extern	cvar_t	*cl_shownet;
 extern	cvar_t	*cl_showmiss;
+extern	cvar_t	*cl_shownamechange; // jit
 extern	cvar_t	*cl_showclamp;
 extern  cvar_t  *cl_drawclock; // viciouz - computer time clock
 extern  cvar_t  *cl_drawclockx; // T3RR0R15T: clock position
@@ -741,6 +742,7 @@ void M_ReloadMenu (void); // jitmenu
 void M_RefreshActiveMenu (void); // jitmenu
 void M_RefreshWidget (const char *name, qboolean lock); // jitmenu
 qboolean M_MenuActive (void); // jitmenu
+void M_PlayMenuSounds (); // jitmenu
 
 // cl_serverlist.c
 void Serverlist_Init (void);
