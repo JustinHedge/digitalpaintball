@@ -75,11 +75,11 @@ HINSTANCE hInstDS;
 qboolean SNDDMA_InitDirect (void);
 qboolean SNDDMA_InitWav (void);
 
-void FreeSound( void );
+void FreeSound (void);
 
-static const char *DSoundError( int error )
+static const char *DSoundError (int error)
 {
-	switch ( error )
+	switch (error)
 	{
 	case DSERR_BUFFERLOST:
 		return "DSERR_BUFFERLOST";
@@ -97,14 +97,15 @@ static const char *DSoundError( int error )
 /*
 ** DS_CreateBuffers
 */
-static qboolean DS_CreateBuffers( void )
+static qboolean DS_CreateBuffers (void)
 {
 	DSBUFFERDESC	dsbuf;
 	DSBCAPS			dsbcaps;
 	WAVEFORMATEX	pformat, format;
 	DWORD			dwWrite;
+	DWORD			dwLevel = DSSCL_EXCLUSIVE;
 
-	memset (&format, 0, sizeof(format));
+	memset(&format, 0, sizeof(format));
 	format.wFormatTag = WAVE_FORMAT_PCM;
     format.nChannels = dma.channels;
     format.wBitsPerSample = dma.samplebits;
@@ -113,20 +114,25 @@ static qboolean DS_CreateBuffers( void )
     format.cbSize = 0;
     format.nAvgBytesPerSec = format.nSamplesPerSec*format.nBlockAlign; 
 
-	Com_Printf( "Creating DS buffers.\n" );
+	Com_Printf("Creating DS buffers.\n");
 
-	Com_DPrintf("...setting EXCLUSIVE coop level: " );
-	if ( DS_OK != pDS->lpVtbl->SetCooperativeLevel( pDS, cl_hwnd, DSSCL_EXCLUSIVE ) )
+	if (!s_disableonalttab->value)
+		dwLevel = DSSCL_PRIORITY; // jitsound - allow it to have sound when alt-tabbing.
+
+	Com_DPrintf("...setting %s coop level: ", dwLevel == DSSCL_EXCLUSIVE ? "EXCLUSIVE" : "NORMAL");
+
+	if (DS_OK != pDS->lpVtbl->SetCooperativeLevel(pDS, cl_hwnd, dwLevel)) // jitsound
 	{
-		Com_Printf ("failed\n");
-		FreeSound ();
+		Com_Printf("failed.\n");
+		FreeSound();
 		return false;
 	}
-	Com_DPrintf("ok\n" );
 
-// get access to the primary buffer, if possible, so we can set the
-// sound hardware format
-	memset (&dsbuf, 0, sizeof(dsbuf));
+	Com_DPrintf("ok.\n");
+
+	// get access to the primary buffer, if possible, so we can set the
+	// sound hardware format
+	memset(&dsbuf, 0, sizeof(dsbuf));
 	dsbuf.dwSize = sizeof(DSBUFFERDESC);
 	dsbuf.dwFlags = DSBCAPS_PRIMARYBUFFER;
 	dsbuf.dwBufferBytes = 0;
@@ -136,78 +142,86 @@ static qboolean DS_CreateBuffers( void )
 	dsbcaps.dwSize = sizeof(dsbcaps);
 	primary_format_set = false;
 
-	Com_DPrintf( "...creating primary buffer: " );
+	Com_DPrintf("...creating primary buffer: ");
+
 	if (DS_OK == pDS->lpVtbl->CreateSoundBuffer(pDS, &dsbuf, &pDSPBuf, NULL))
 	{
 		pformat = format;
+		Com_DPrintf("ok.\n");
 
-		Com_DPrintf( "ok\n" );
-		if (DS_OK != pDSPBuf->lpVtbl->SetFormat (pDSPBuf, &pformat))
+		if (DS_OK != pDSPBuf->lpVtbl->SetFormat(pDSPBuf, &pformat))
 		{
 			if (snd_firsttime)
-				Com_DPrintf ("...setting primary sound format: failed\n");
+				Com_DPrintf("...setting primary sound format: failed.\n");
 		}
 		else
 		{
 			if (snd_firsttime)
-				Com_DPrintf ("...setting primary sound format: ok\n");
+				Com_DPrintf("...setting primary sound format: ok.\n");
 
 			primary_format_set = true;
 		}
 	}
 	else
-		Com_Printf( "failed\n" );
-
-	if ( !primary_format_set || !s_primary->value)
 	{
-	// create the secondary buffer we'll actually work with
-		memset (&dsbuf, 0, sizeof(dsbuf));
+		Com_Printf("failed.\n");
+	}
+
+	if (!primary_format_set || !s_primary->value)
+	{
+		// create the secondary buffer we'll actually work with
+		memset(&dsbuf, 0, sizeof(dsbuf));
 		dsbuf.dwSize = sizeof(DSBUFFERDESC);
 		dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCSOFTWARE;
 		dsbuf.dwBufferBytes = SECONDARY_BUFFER_SIZE;
 		dsbuf.lpwfxFormat = &format;
 
+		if (!s_disableonalttab->value) // jitsound - allow sound to play when window is not in focus
+			dsbuf.dwFlags |= DSBCAPS_GLOBALFOCUS;
+
 		memset(&dsbcaps, 0, sizeof(dsbcaps));
 		dsbcaps.dwSize = sizeof(dsbcaps);
 
-		Com_DPrintf( "...creating secondary buffer: " );
+		Com_DPrintf("...creating secondary buffer: ");
+
 		if (DS_OK != pDS->lpVtbl->CreateSoundBuffer(pDS, &dsbuf, &pDSBuf, NULL))
 		{
-			Com_Printf( "failed\n" );
-			FreeSound ();
+			Com_Printf("failed.\n");
+			FreeSound();
 			return false;
 		}
-		Com_DPrintf( "ok\n" );
 
+		Com_DPrintf("ok.\n");
 		dma.channels = format.nChannels;
 		dma.samplebits = format.wBitsPerSample;
 		dma.speed = format.nSamplesPerSec;
 
-		if (DS_OK != pDSBuf->lpVtbl->GetCaps (pDSBuf, &dsbcaps))
+		if (DS_OK != pDSBuf->lpVtbl->GetCaps(pDSBuf, &dsbcaps))
 		{
-			Com_Printf ("*** GetCaps failed ***\n");
-			FreeSound ();
+			Com_Printf("*** GetCaps failed. ***\n");
+			FreeSound();
 			return false;
 		}
 
-		Com_Printf ("...using secondary sound buffer.\n");
+		Com_Printf("...using secondary sound buffer.\n");
 	}
 	else
 	{
-		Com_Printf( "...using primary buffer.\n" );
+		Com_Printf("...using primary buffer.\n");
+		Com_DPrintf("...setting WRITEPRIMARY coop level: ");
 
-		Com_DPrintf( "...setting WRITEPRIMARY coop level: " );
-		if (DS_OK != pDS->lpVtbl->SetCooperativeLevel (pDS, cl_hwnd, DSSCL_WRITEPRIMARY))
+		if (DS_OK != pDS->lpVtbl->SetCooperativeLevel(pDS, cl_hwnd, DSSCL_WRITEPRIMARY))
 		{
-			Com_Printf( "failed\n" );
-			FreeSound ();
+			Com_Printf("failed.\n");
+			FreeSound();
 			return false;
 		}
-		Com_DPrintf( "ok\n" );
 
-		if (DS_OK != pDSPBuf->lpVtbl->GetCaps (pDSPBuf, &dsbcaps))
+		Com_DPrintf("ok.\n");
+
+		if (DS_OK != pDSPBuf->lpVtbl->GetCaps(pDSPBuf, &dsbcaps))
 		{
-			Com_Printf ("*** GetCaps failed ***\n");
+			Com_Printf("*** GetCaps failed ***\n");
 			return false;
 		}
 
@@ -218,10 +232,12 @@ static qboolean DS_CreateBuffers( void )
 	pDSBuf->lpVtbl->Play(pDSBuf, 0, 0, DSBPLAY_LOOPING);
 
 	if (snd_firsttime)
+	{
 		Com_Printf("   %d channel(s)\n"
-		               "   %d bits/sample\n"
-					   "   %d bytes/sec\n",
-					   dma.channels, dma.samplebits, dma.speed);
+		           "   %d bits/sample\n"
+				   "   %d bytes/sec\n",
+				   dma.channels, dma.samplebits, dma.speed);
+	}
 	
 	gSndBufSize = dsbcaps.dwBufferBytes;
 
@@ -232,11 +248,11 @@ static qboolean DS_CreateBuffers( void )
 	pDSBuf->lpVtbl->GetCurrentPosition(pDSBuf, &mmstarttime.u.sample, &dwWrite);
 	pDSBuf->lpVtbl->Play(pDSBuf, 0, 0, DSBPLAY_LOOPING);
 
-	dma.samples = gSndBufSize/(dma.samplebits/8);
+	dma.samples = gSndBufSize / (dma.samplebits / 8);
 	dma.samplepos = 0;
 	dma.submission_chunk = 1;
-	dma.buffer = (unsigned char *) lpData;
-	sample16 = (dma.samplebits/8) - 1;
+	dma.buffer = (unsigned char *)lpData;
+	sample16 = (dma.samplebits / 8) - 1;
 
 	return true;
 }
@@ -273,6 +289,7 @@ static void DS_DestroyBuffers (void)
 	dma.buffer = NULL;
 }
 
+
 /*
 ==================
 FreeSound
@@ -280,54 +297,54 @@ FreeSound
 */
 void FreeSound (void)
 {
-	int		i;
+	int i;
 
-	Com_DPrintf( "Shutting down sound system.\n" );
+	Com_DPrintf("Shutting down sound system.\n");
 
-	if ( pDS )
+	if (pDS)
 		DS_DestroyBuffers();
 
-	if ( hWaveOut )
+	if (hWaveOut)
 	{
-		Com_DPrintf( "...resetting waveOut.\n" );
-		waveOutReset (hWaveOut);
+		Com_DPrintf("...resetting waveOut.\n");
+		waveOutReset(hWaveOut);
 
 		if (lpWaveHdr)
 		{
-			Com_DPrintf( "...unpreparing headers.\n" );
-			for (i=0 ; i< WAV_BUFFERS ; i++)
-				waveOutUnprepareHeader (hWaveOut, lpWaveHdr+i, sizeof(WAVEHDR));
+			Com_DPrintf("...unpreparing headers.\n");
+
+			for (i = 0; i < WAV_BUFFERS; ++i)
+				waveOutUnprepareHeader(hWaveOut, lpWaveHdr + i, sizeof(WAVEHDR));
 		}
 
-		Com_DPrintf( "...closing waveOut.\n" );
-		waveOutClose (hWaveOut);
+		Com_DPrintf("...closing waveOut.\n");
+		waveOutClose(hWaveOut);
 
 		if (hWaveHdr)
 		{
-			Com_DPrintf( "...freeing WAV header.\n" );
+			Com_DPrintf("...freeing WAV header.\n");
 			GlobalUnlock(hWaveHdr);
 			GlobalFree(hWaveHdr);
 		}
 
 		if (hData)
 		{
-			Com_DPrintf( "...freeing WAV buffer.\n" );
+			Com_DPrintf("...freeing WAV buffer.\n");
 			GlobalUnlock(hData);
 			GlobalFree(hData);
 		}
-
 	}
 
-	if ( pDS )
+	if (pDS)
 	{
-		Com_DPrintf( "...releasing DS object.\n" );
-		pDS->lpVtbl->Release( pDS );
+		Com_DPrintf("...releasing DS object.\n");
+		pDS->lpVtbl->Release(pDS);
 	}
 
-	if ( hInstDS )
+	if (hInstDS)
 	{
-		Com_DPrintf( "...freeing DSOUND.DLL.\n" );
-		FreeLibrary( hInstDS );
+		Com_DPrintf("...freeing DSOUND.DLL.\n");
+		FreeLibrary(hInstDS);
 		hInstDS = NULL;
 	}
 
@@ -342,6 +359,7 @@ void FreeSound (void)
 	dsound_init = false;
 	wav_init = false;
 }
+
 
 /*
 ==================
