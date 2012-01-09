@@ -221,21 +221,20 @@ CHANNEL MIXING
 void S_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int endtime, int offset);
 void S_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int endtime, int offset);
 
-void S_PaintChannels(int endtime)
+void S_PaintChannels (int endtime)
 {
-	int 	i;
-	int 	end;
-	channel_t *ch;
+	int			i;
+	int			end;
+	channel_t	*ch;
 	sfxcache_t	*sc;
-	int		ltime, count;
+	int			ltime, count;
 	playsound_t	*ps;
 
-	snd_vol = s_volume->value*256;
+	snd_vol = s_volume->value * 256.0f;
 
-//Com_Printf ("%i to %i\n", paintedtime, endtime);
 	while (paintedtime < endtime)
 	{
-	// if paintbuffer is smaller than DMA buffer
+		// if paintbuffer is smaller than DMA buffer
 		end = endtime;
 		if (endtime - paintedtime > PAINTBUFFER_SIZE)
 			end = paintedtime + PAINTBUFFER_SIZE;
@@ -257,10 +256,9 @@ void S_PaintChannels(int endtime)
 			break;
 		}
 
-	// clear the paint buffer
+		// clear the paint buffer
 		if (s_rawend < paintedtime)
 		{
-//			Com_Printf ("clear\n");
 			memset(paintbuffer, 0, (end - paintedtime) * sizeof(portable_samplepair_t));
 		}
 		else
@@ -270,32 +268,31 @@ void S_PaintChannels(int endtime)
 
 			stop = (end < s_rawend) ? end : s_rawend;
 
-			for (i=paintedtime ; i<stop ; i++)
+			for (i = paintedtime; i < stop; ++i)
 			{
 				s = i&(MAX_RAW_SAMPLES-1);
 				paintbuffer[i-paintedtime] = s_rawsamples[s];
 			}
-//		if (i != end)
-//			Com_Printf ("partial stream\n");
-//		else
-//			Com_Printf ("full stream\n");
-			for ( ; i<end ; i++)
+
+
+			for ( ; i < end; i++)
 			{
-				paintbuffer[i-paintedtime].left =
+				paintbuffer[i-paintedtime].left = 0;
 				paintbuffer[i-paintedtime].right = 0;
 			}
 		}
 
 
-	// paint in the channels.
+		// paint in the channels.
 		ch = channels;
-		for (i=0; i<MAX_CHANNELS ; i++, ch++)
+
+		for (i = 0; i < MAX_CHANNELS; ++i, ++ch)
 		{
 			ltime = paintedtime;
 		
 			while (ltime < end)
 			{
-				if (!ch->sfx || (!ch->leftvol && !ch->rightvol) )
+				if (!ch->sfx || (!ch->leftvol && !ch->rightvol))
 					break;
 
 				// max painting is to the end of the buffer
@@ -305,7 +302,8 @@ void S_PaintChannels(int endtime)
 				if (ch->end - ltime < count)
 					count = ch->end - ltime;
 		
-				sc = S_LoadSound (ch->sfx);
+				sc = S_LoadSound(ch->sfx);
+
 				if (!sc)
 					break;
 
@@ -319,7 +317,7 @@ void S_PaintChannels(int endtime)
 					ltime += count;
 				}
 
-			// if at end of loop, restart
+				// if at end of loop, restart
 				if (ltime >= ch->end)
 				{
 					if (ch->autosound)
@@ -341,11 +339,12 @@ void S_PaintChannels(int endtime)
 															  
 		}
 
-	// transfer out according to DMA format
+		// transfer out according to DMA format
 		S_TransferPaintBuffer(end);
 		paintedtime = end;
 	}
 }
+
 
 void S_InitScaletable (void)
 {
