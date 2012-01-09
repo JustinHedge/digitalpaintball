@@ -257,8 +257,9 @@ void PM_StepSlideMove (void)
 	float		stepfraction = 1.0f; // jitmove
 	float		downmin;
 	float		stepsize = STEPSIZE;
+	float		up_end_Z;
 
-	if (pml.crouchslide)
+	if (pml.crouchslide) // jitmove - don't crouch slide up stairs
 		stepsize = 5.0f;
 
 	VectorCopy(pml.origin, start_o);
@@ -297,7 +298,24 @@ void PM_StepSlideMove (void)
 	else
 		down[2] = downmin;
 
+	up_end_Z = pml.origin[2];
 	trace = pm->trace(pml.origin, pm->mins, pm->maxs, down);
+
+	if (trace.allsolid && !pm_oldmovephysics)
+	{
+		// jitmove - bring everything in 1 unit and re-cast to fix weird bouncing issue along some angled walls along ramps
+		vec3_t mins, maxs;
+
+		VectorCopy(pm->mins, mins);
+		VectorCopy(pm->maxs, maxs);
+		++mins[0];
+		++mins[1];
+		--maxs[0];
+		--maxs[1];
+		--maxs[2];
+
+		trace = pm->trace(pml.origin, mins, maxs, down);
+	}
 
 	if (!trace.allsolid)
 	{
@@ -305,6 +323,16 @@ void PM_StepSlideMove (void)
 
 		if (pml.origin[2] < downmin) // jitmove - since we cast down further, make sure we don't falsely move down too far
 			pml.origin[2] = downmin;
+
+		// jitmove - Sometimes the "down" cast ends up higher since we may have hit a sloped ceiling
+		if (!pm_oldmovephysics && pml.origin[2] < down_o[2])
+		{
+			// up_end_Z check might not be necessary, but I don't want to put the player in solid geometry
+			if (up_end_Z > down_o[2])
+				pml.origin[2] = down_o[2];
+			else
+				pml.origin[2] = up_end_Z; // (Happens rarely, and they're almost equal, but better safe than stuck)
+		}
 	}
 	else
 	{
@@ -708,7 +736,7 @@ void PM_AirMove (void)
 
 				if (dot > 0.01f)
 				{
-					accelerate = /* 1.0f * */dot + accelerate * (1.0f - dot); // Air accel is 1.0f, so we lerp/blend between that (full forward) and ground accel (full strafe).
+					accelerate = 1.0f; // Air acceleration value (used with old Q2 ramp sliding as it categorized you as being in the air)
 				}
 				else
 				{
