@@ -855,26 +855,40 @@ CL_LoadClientinfo
 */
 void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 {
-	int i;
+	int			i;
 	char		*t;
 	char		model_name[MAX_QPATH];
 	char		skin_name[MAX_QPATH];
 	char		model_filename[MAX_QPATH];
 	char		skin_filename[MAX_QPATH];
 	char		weapon_filename[MAX_QPATH];
+	char		oldname[MAX_QPATH];
 
 	Q_strncpyz(ci->cinfo, s, sizeof(ci->cinfo));
-	ci->cinfo[sizeof(ci->cinfo)-1] = 0;
+	Q_strncpyz(oldname, ci->name, sizeof(oldname)); // jit - save previous name for name change comparison
 
 	// isolate the player's name
 	Q_strncpyz(ci->name, s, sizeof(ci->name));
-	ci->name[sizeof(ci->name)-1] = 0;
 	t = strstr(s, "\\");
 
 	if (t)
 	{
-		ci->name[t-s] = 0;
-		s = t+1;
+		ci->name[t - s] = 0;
+		s = t + 1;
+	}
+
+	if (cl_shownamechange->value) // jit - show name changes on the client
+	{
+		char oldname_noformat[MAX_QPATH];
+		char newname_noformat[MAX_QPATH];
+
+		strip_garbage(oldname_noformat, oldname);
+		strip_garbage(newname_noformat, ci->name);
+
+		if (*oldname_noformat && *newname_noformat && Q_strcasecmp(newname_noformat, oldname_noformat))
+		{
+			Com_Printf("%s changed name to %s.\n", oldname, ci->name);
+		}
 	}
 
 	if (cl_noskins->value || *s == 0)
@@ -916,7 +930,7 @@ void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 	else
 	{
 		// isolate the model name
-		strcpy (model_name, s);
+		strcpy(model_name, s);
 		t = strstr(model_name, "/");
 
 		if (!t)
