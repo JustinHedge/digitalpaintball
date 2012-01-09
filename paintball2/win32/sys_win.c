@@ -353,8 +353,8 @@ Sys_AppActivate
 */
 void Sys_AppActivate (void)
 {
-	ShowWindow ( cl_hwnd, SW_RESTORE);
-	SetForegroundWindow ( cl_hwnd );
+	ShowWindow(cl_hwnd, SW_RESTORE);
+	SetForegroundWindow(cl_hwnd);
 }
 
 /*

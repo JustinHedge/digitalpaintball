@@ -589,7 +589,7 @@ qboolean GLimp_InitGL (void)
 	/*
 	** print out PFD specifics 
 	*/
-	ri.Con_Printf(PRINT_ALL, "GL PFD: Colour(%dbits) Depth(%dbits) Stencil(%dbits)\n", 
+	ri.Con_Printf(PRINT_ALL, "GL PFD: Color(%dbits) Depth(%dbits) Stencil(%dbits)\n", 
 		(int)pfd.cColorBits, (int)pfd.cDepthBits, (int)pfd.cStencilBits);
 
 	{
