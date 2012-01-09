@@ -54,7 +54,7 @@ HINSTANCE	reflib_library;		// Handle to refresh DLL
 HINSTANCE	testlib = NULL;
 qboolean	reflib_active = 0;
 
-HWND        cl_hwnd;            // Main window handle for life of program
+HWND        cl_hwnd = NULL;		// Main window handle for life of program
 
 LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -478,6 +478,36 @@ int Sys_MapKeyModified (int vk, int key)
 	}
 }
 
+
+void CheckActive (HWND hWnd) // jit - for some reason, we sometimes don't get events for the window becaming active/inactive, so just check the forground window all the time...
+{
+	HWND foreground = GetForegroundWindow();
+	static qboolean newwindow = true;
+	static qboolean lastactive = false;
+	qboolean active = false;
+	qboolean minimized = false; // foreground should be null when minimized?
+
+	if (!hWnd)
+		return;
+
+	if (foreground == hWnd)
+	{
+		active = true;
+	}
+
+	if (lastactive != active)
+	{
+		AppActivate(active, minimized, newwindow);
+
+		if (reflib_active)
+			re.AppActivate(active);
+
+		newwindow = false;
+		lastactive = active;
+	}
+}
+
+
 LONG WINAPI MainWndProc (
     HWND    hWnd,
     UINT    uMsg,
@@ -486,6 +516,7 @@ LONG WINAPI MainWndProc (
 {
 	LONG		lRet = 0;
 	static qboolean newwindow = true;
+	static qboolean minimized = false;
 
 	if (uMsg == MSH_MOUSEWHEEL)
 	{
@@ -502,6 +533,8 @@ LONG WINAPI MainWndProc (
         return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
+	//Com_Printf("%x\n", uMsg);
+
 	switch (uMsg)
 	{
 	case WM_MOUSEWHEEL:
@@ -511,13 +544,13 @@ LONG WINAPI MainWndProc (
 		*/
 		if ((short)HIWORD(wParam) > 0)
 		{
-			Key_Event( K_MWHEELUP, true, sys_msg_time );
-			Key_Event( K_MWHEELUP, false, sys_msg_time );
+			Key_Event(K_MWHEELUP, true, sys_msg_time);
+			Key_Event(K_MWHEELUP, false, sys_msg_time);
 		}
 		else
 		{
-			Key_Event( K_MWHEELDOWN, true, sys_msg_time );
-			Key_Event( K_MWHEELDOWN, false, sys_msg_time );
+			Key_Event(K_MWHEELDOWN, true, sys_msg_time);
+			Key_Event(K_MWHEELDOWN, false, sys_msg_time);
 		}
 		break;
 
@@ -538,23 +571,74 @@ LONG WINAPI MainWndProc (
 		// let sound and input know about this?
 		cl_hwnd = NULL;
         return DefWindowProc(hWnd, uMsg, wParam, lParam);
+/*
+	case WM_KILLFOCUS: // jit - make sure mouse is deactivated if another window takes focus
+		AppActivate(false, minimized, newwindow);
 
+		if (reflib_active)
+			re.AppActivate(false);
+
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+
+	case WM_NCACTIVATE:
+		AppActivate(wParam, minimized, newwindow);
+
+		if (reflib_active)
+			re.AppActivate(wParam);
+
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+*/
+	/*case WM_ACTIVATEAPP:
+		AppActivate(wParam, minimized, newwindow);
+
+		if (reflib_active)
+			re.AppActivate(wParam);
+
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);*/
+/* jit - disabled this because we run CheckActive() every frame because we aren't getting appropriate events when the game loses focus/foreground, sometimes.
 	case WM_ACTIVATE:
 		{
-			int	fActive, fMinimized;
+			int	fActive;
+			qboolean active;
+			HWND foregroundWindow = GetForegroundWindow();
 
 			// KJB: Watch this for problems in fullscreen modes with Alt-tabbing.
 			fActive = LOWORD(wParam);
-			fMinimized = (BOOL)HIWORD(wParam);
-			AppActivate(fActive != WA_INACTIVE, fMinimized, newwindow);
+			minimized = (BOOL)HIWORD(wParam); 
+			active = (fActive != WA_INACTIVE);
+
+			//if (foregroundWindow != hWnd)
+			//	active = false;
+
+			Com_Printf("\nForeground: %d hWnd: %d\n\n", foregroundWindow, hWnd);
+			AppActivate(active, minimized, newwindow);
 
 			if (reflib_active)
-				re.AppActivate(fActive != WA_INACTIVE);
+				re.AppActivate(active);
 
 			newwindow = false;
 			return DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
+/*
+	case WM_WINDOWPOSCHANGED: // jit - handle another case of losing app focus
+		{
+			LPWINDOWPOS windowpos = (LPWINDOWPOS)lParam;
 
+			if (windowpos->flags & 0x800) // SWP_STATECHANGED
+			{
+				HWND foregroundWindow = GetForegroundWindow();
+				qboolean active = (foregroundWindow == hWnd);
+
+				AppActivate(active, minimized, newwindow);
+
+				if (reflib_active)
+					re.AppActivate(active);
+			}
+
+			Com_Printf("\nWindowposchanged flags %x\n", windowpos->flags);
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
+		}
+*/
 	case WM_MOVE:
 		{
 			int		xPos, yPos;
@@ -658,6 +742,11 @@ LONG WINAPI MainWndProc (
 			re.DrawResizeWindow(LOWORD(lParam), HIWORD(lParam));
 			VID_NewWindow(LOWORD(lParam), HIWORD(lParam));
 		}
+
+		if (wParam == SIZE_MINIMIZED) // jit
+			minimized = true;
+		else
+			minimized = false;
 		break;
 
 	case WM_CLOSE:
@@ -697,6 +786,8 @@ LONG WINAPI MainWndProc (
 	default:	// pass all unhandled messages to DefWindowProc
         return DefWindowProc(hWnd, uMsg, wParam, lParam);
     }
+
+	//CheckActive(hWnd);
 
     // return 0 if handled message, 1 if not
     return DefWindowProc(hWnd, uMsg, wParam, lParam);

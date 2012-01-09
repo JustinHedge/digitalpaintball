@@ -453,14 +453,14 @@ void IN_Activate (qboolean active)
 	in_appactive = active;
 
 	if (!(cls.key_dest == key_console && 
-		Cvar_VariableValue ("vid_fullscreen") == 0)) // jitmouse -- stop mouse from recentering when quake2 not active!
+		Cvar_VariableValue("vid_fullscreen") == 0)) // jitmouse -- stop mouse from recentering when quake2 not active!
 	{
 		mouseactive = !active;		// force a new window check or turn off
 	}
-	//mouseactive = false; 
-	
 }
 
+
+void CheckActive (HWND hWnd);
 
 /*
 ==================
@@ -471,12 +471,14 @@ Called every frame, even if not generating commands
 */
 void IN_Frame (void)
 {
+	CheckActive(cl_hwnd);
+
 	if (!mouseinitialized)
 		return;
 
 	if (!in_mouse || !in_appactive)
 	{
-		IN_DeactivateMouse ();
+		IN_DeactivateMouse();
 		return;
 	}
 
@@ -492,8 +494,9 @@ void IN_Frame (void)
 		}
 	}
 
-	IN_ActivateMouse ();
+	IN_ActivateMouse();
 }
+
 
 /*
 ===========
