@@ -53,6 +53,7 @@ cvar_t	*cl_add_entities;
 cvar_t	*cl_shownet;
 cvar_t	*cl_showmiss;
 cvar_t	*cl_showclamp;
+cvar_t	*cl_shownamechange; // jit
 
 cvar_t	*cl_paused;
 cvar_t	*cl_timedemo;
@@ -80,6 +81,7 @@ cvar_t	*build; // jitversion
 cvar_t	*info_password;
 cvar_t	*info_spectator;
 cvar_t	*name;
+cvar_t	*menu_tempname; // jit
 cvar_t	*skin;
 cvar_t	*rate;
 cvar_t	*fov;
@@ -2328,6 +2330,7 @@ void CL_InitLocal (void)
 
 	cl_shownet =		Cvar_Get("cl_shownet", "0", 0);
 	cl_showmiss =		Cvar_Get("cl_showmiss", "0", 0);
+	cl_shownamechange =	Cvar_Get("cl_shownamechange", "1", 0); // jit
 	cl_showclamp =		Cvar_Get("showclamp", "0", 0);
 	cl_timeout =		Cvar_Get("cl_timeout", "120", 0);
 	cl_paused =			Cvar_Get("paused", "0", 0);
@@ -2350,6 +2353,7 @@ void CL_InitLocal (void)
 
 	Com_sprintf(szRandName, sizeof(szRandName), "noname%d", (int)(frand() * 10000.0f)); // was "newbie"
 	name =				Cvar_Get("name", szRandName, CVAR_USERINFO | CVAR_ARCHIVE);
+	menu_tempname =		Cvar_Get("menu_tempname", szRandName, 0); // jit
 	skin =				Cvar_Get("skin", "male/pb2b", CVAR_USERINFO | CVAR_ARCHIVE); // jit
 	rate =				Cvar_Get("rate", "25000", CVAR_USERINFO | CVAR_ARCHIVE);	// FIXME
 	msg =				Cvar_Get("msg", "0", CVAR_USERINFO | CVAR_ARCHIVE);
@@ -2603,6 +2607,27 @@ void CL_SendCommand (void)
 }
 
 
+ // jit - don't allow people to use names that are too long and will get truncated on the server
+static void CL_LimitNameLength ()
+{
+	if (name->modified)
+	{
+		if (strlen(name->string) > 30)
+			name->string[30] = 0;
+
+		name->modified = false;
+	}
+
+	if (menu_tempname->modified)
+	{
+		if (strlen(menu_tempname->string) > 30)
+			menu_tempname->string[30] = 0;
+
+		menu_tempname->modified = false;
+	}
+}
+
+
 /*
 ==================
 CL_Frame
@@ -2624,6 +2649,8 @@ void CL_Frame (int msec)
 
 	if (cl_sleep->value) // jitsleep - allow users to reduce CPU usage.
 		Sleep(cl_sleep->value);
+
+	CL_LimitNameLength();
 
 #ifdef XFIRE
 	CL_Xfire(); // jitxfire
@@ -2670,7 +2697,7 @@ void CL_Frame (int msec)
 
 	// if in the debugger last frame, don't timeout
 	if (msec > 5000)
-		cls.netchan.last_received = Sys_Milliseconds ();
+		cls.netchan.last_received = Sys_Milliseconds();
 
 	// fetch results from server
 	CL_ReadPackets();
@@ -2716,6 +2743,7 @@ void CL_Frame (int msec)
 		time_after_ref = Sys_Milliseconds();
 
 	// update audio
+	M_PlayMenuSounds(); // Play menu sounds (relocated here so we only play 1 menu sound per frame)
 	S_Update(cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);
 	CDAudio_Update();
 
