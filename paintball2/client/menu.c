@@ -42,6 +42,7 @@ static menu_screen_t	*m_current_menu;
 static hash_table_t		named_widgets_hash;
 static qboolean			m_initialized = false;
 static qboolean			m_vscrollbar_tray_selected = false;
+static int				m_menu_sound_flags = 0;
 
 // Globals
 pthread_mutex_t			m_mut_widgets;
@@ -1749,7 +1750,7 @@ static void M_PopMenu (const char *sMenuName)
 		return;
 
 	MENU_SOUND_CLOSE;
-	m_menudepth--;
+	--m_menudepth;
 	widget = menu->widget;
 
 	while (widget)
@@ -3231,6 +3232,33 @@ void M_MouseMove(int mx, int my)
 qboolean M_MenuActive()
 {
 	return (m_menudepth != 0);
+}
+
+void M_PlayMenuSounds ()
+{
+	static qboolean first_frame = true;
+
+	//  Don't play a menu sound on the first frame (since it's always going to open a menu on init)
+	if (first_frame)
+	{
+		first_frame = false;
+	}
+	else
+	{
+		if (m_menu_sound_flags & MENU_SOUND_FLAG_OPEN)
+			S_StartLocalSound("misc/menu1.wav");
+
+		if (m_menu_sound_flags & MENU_SOUND_FLAG_SELECT)
+			S_StartLocalSound("misc/menu2.wav");
+
+		if (m_menu_sound_flags & MENU_SOUND_FLAG_CLOSE)
+			S_StartLocalSound("misc/menu3.wav");
+
+		if (m_menu_sound_flags & MENU_SOUND_FLAG_SLIDER)
+			S_StartLocalSound("misc/menu4.wav");
+	}
+
+	m_menu_sound_flags = 0;
 }
 
 // jitmenu

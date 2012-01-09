@@ -307,10 +307,15 @@ typedef struct M_SERVERLIST_S {
 
 extern cvar_t *cl_hudscale;
 
-#define MENU_SOUND_OPEN S_StartLocalSound("misc/menu1.wav");
-#define MENU_SOUND_SELECT S_StartLocalSound("misc/menu2.wav");
-#define MENU_SOUND_CLOSE S_StartLocalSound("misc/menu3.wav");
-#define MENU_SOUND_SLIDER S_StartLocalSound("misc/menu4.wav");
+#define MENU_SOUND_FLAG_OPEN	(1 << 0)
+#define MENU_SOUND_FLAG_SELECT	(1 << 1)
+#define MENU_SOUND_FLAG_CLOSE	(1 << 2)
+#define MENU_SOUND_FLAG_SLIDER	(1 << 3)
+
+#define MENU_SOUND_OPEN		(m_menu_sound_flags |= MENU_SOUND_FLAG_OPEN);
+#define MENU_SOUND_SELECT	(m_menu_sound_flags |= MENU_SOUND_FLAG_SELECT);
+#define MENU_SOUND_CLOSE	(m_menu_sound_flags |= MENU_SOUND_FLAG_CLOSE);
+#define MENU_SOUND_SLIDER	(m_menu_sound_flags |= MENU_SOUND_FLAG_SLIDER);
 
 void *free_string_array(char *array[], int size);
 char *text_copy(const char *in);
