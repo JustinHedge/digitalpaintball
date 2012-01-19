@@ -234,9 +234,10 @@ static void set_serverlist_server_pingtime (m_serverlist_server_t *server, int p
 #define MAP_NAME_MAXLENGTH 8
 static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 {
-	static char info[128];
+	static char info[131];
 	//char stemp=0, mtemp=0;
 	int ping = 999;
+	char pingcolor = 'A';
 	int i, len;
 
 	if (server->ping < 999)
@@ -284,7 +285,12 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 		strncat(info, server->servername, pos);
 	}
 
-	Com_sprintf(info, sizeof(info), "%s %-3d ", info, ping);
+	if(ping < 125)
+		pingcolor = 'J'; // green
+	else if(ping < 250)
+		pingcolor = 'E'; // yellow
+	// else red by initialisation
+	Com_sprintf(info, sizeof(info), "%s %c%c%-3d%c ", info, CHAR_COLOR, pingcolor, ping, CHAR_ENDFORMAT);
 
 	if ((len = strlen_noformat(server->mapname)) <= MAP_NAME_MAXLENGTH)
 	{
@@ -1103,7 +1109,10 @@ static int Serverlist_SortCompare_Mapname (const void *a, const void *b)
 		// cope with unknown maps
 		char* aname = ((unsigned char)serverA->mapname[0] == CHAR_ITALICS) ? &serverA->mapname[1] : serverA->mapname;
 		char* bname = ((unsigned char)serverB->mapname[0] == CHAR_ITALICS) ? &serverB->mapname[1] : serverB->mapname;
-		return stricmp(aname, bname);
+		int result = stricmp(aname, bname);
+		if(Cvar_Get("serverlist_order_invert","0",0)->value)
+			result = -result;
+		return result;
 	}
 	assert(0);
 	return 0;

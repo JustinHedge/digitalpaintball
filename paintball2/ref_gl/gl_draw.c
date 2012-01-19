@@ -308,9 +308,9 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 				qglTexCoord2f (fcol, frow);
 				qglVertex2f (px+2*textscale, py);
 				qglTexCoord2f (fcol + size, frow);
-				qglVertex2f (px+6*textscale, py); // jithudscale...
+				qglVertex2f (px+10*textscale, py); // jithudscale...
 				qglTexCoord2f (fcol + size, frow + size);
-				qglVertex2f (px+2*textscale, py+8*textscale);
+				qglVertex2f (px+6*textscale, py+8*textscale);
 				qglTexCoord2f (fcol, frow + size);
 				qglVertex2f (px-2*textscale, py+8*textscale);
 			}
