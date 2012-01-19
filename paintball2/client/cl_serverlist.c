@@ -285,7 +285,7 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 		strncat(info, server->servername, pos);
 	}
 
-	if(ping < 125)
+	if(ping < 100)
 		pingcolor = 'J'; // green
 	else if(ping < 250)
 		pingcolor = 'E'; // yellow
