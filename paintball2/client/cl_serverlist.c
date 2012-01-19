@@ -100,6 +100,15 @@ void M_ServerlistPrint_f (void)
 		Com_Printf("%2d) %s\n    %s\n", i+1, m_serverlist.ips[i],
 			m_serverlist.info[i]);
 }
+
+// Queue up a sort
+static void Serverlist_Sort (void);
+void M_ServerlistSort_f (void)
+{
+	if(!refreshing)
+		Serverlist_Sort();
+}
+
 #if 0
 static void free_menu_serverlist (void) // jitodo -- eh, something should call this?
 {
@@ -967,6 +976,7 @@ void Serverlist_Init (void)
 	Cmd_AddCommand("serverlist_refresh", M_ServerlistRefresh_f);
 	Cmd_AddCommand("serverlist_print", M_ServerlistPrint_f);
 	Cmd_AddCommand("serverlist_clear", Serverlist_Clear_f);
+	Cmd_AddCommand("serverlist_sort", M_ServerlistSort_f);
 }
 
 
@@ -1034,7 +1044,7 @@ void Serverlist_Shutdown (void)
 	serverlist_save();
 }
 
-
+// Weighted by ping & players
 static int Serverlist_SortCompare (const void *a, const void *b)
 {
 	const m_serverlist_server_t *serverA = a;
@@ -1050,6 +1060,54 @@ static int Serverlist_SortCompare (const void *a, const void *b)
 	return 0;
 }
 
+// Weighted solely by ping
+static int Serverlist_SortCompare_Ping (const void *a, const void *b)
+{
+	const m_serverlist_server_t *serverA = a;
+	const m_serverlist_server_t *serverB = b;
+	if (serverA && serverB)
+		return (serverA->ping - serverB->ping);
+	assert(0);
+	return 0;
+}
+
+// Weighted solely by players
+static int Serverlist_SortCompare_Players (const void *a, const void *b)
+{
+	const m_serverlist_server_t *serverA = a;
+	const m_serverlist_server_t *serverB = b;
+	if (serverA && serverB)
+		return (serverB->players - serverA->players);
+	assert(0);
+	return 0;
+}
+
+// Sort by alphabetical name
+static int Serverlist_SortCompare_Name (const void *a, const void *b)
+{
+	const m_serverlist_server_t *serverA = a;
+	const m_serverlist_server_t *serverB = b;
+	if (serverA && serverB)
+		return stricmp(serverA->servername, serverB->servername);
+	assert(0);
+	return 0;
+}
+
+// Sort by alphabetical mapname
+static int Serverlist_SortCompare_Mapname (const void *a, const void *b)
+{
+	const m_serverlist_server_t *serverA = a;
+	const m_serverlist_server_t *serverB = b;
+	if (serverA && serverB)
+	{
+		// cope with unknown maps
+		char* aname = ((unsigned char)serverA->mapname[0] == CHAR_ITALICS) ? &serverA->mapname[1] : serverA->mapname;
+		char* bname = ((unsigned char)serverB->mapname[0] == CHAR_ITALICS) ? &serverB->mapname[1] : serverB->mapname;
+		return stricmp(aname, bname);
+	}
+	assert(0);
+	return 0;
+}
 
 static void Serverlist_Sort (void)
 {
@@ -1057,9 +1115,32 @@ static void Serverlist_Sort (void)
 	int remap = 0;
 	char addr[32];
 
-	qsort(m_serverlist.server, m_serverlist.numservers, sizeof(m_serverlist.server[0]), Serverlist_SortCompare);
+	int (*comparefunc)(const void *, const void *) = NULL;
 
-	for (i = 0; i < m_serverlist.nummapped; ++i)
+	switch((int)Cvar_Get("serverlist_order","0",0)->value)
+	{
+	case 1:
+		comparefunc = &Serverlist_SortCompare_Name;
+		break;
+	case 2:
+		comparefunc = &Serverlist_SortCompare_Ping;
+		break;
+	case 3:
+		comparefunc = &Serverlist_SortCompare_Mapname;
+		break;
+	case 4:
+		comparefunc = &Serverlist_SortCompare_Players;
+		break;
+	default:
+		comparefunc = &Serverlist_SortCompare;
+	}
+
+	qsort(m_serverlist.server, m_serverlist.numservers, sizeof(m_serverlist.server[0]), comparefunc);
+
+	// viciouz - apparently the following doesn't work for alphabetical sorting. how odd.
+	// anyway, as it's only running one frame the small efficiency saving isn't really necessary.
+	// for (i = 0; i < m_serverlist.nummapped; ++i)
+	for (i = 0; i < m_serverlist.numservers; ++i)
 	{
 		if (m_serverlist.server[i].remap >= 0)
 		{
