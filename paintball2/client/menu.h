@@ -44,7 +44,7 @@ extern cvar_t *serverlist_source3; // jitserverlist
 extern cvar_t *serverlist_blacklist;
 extern cvar_t *serverlist_udp_source1; // jitserverlist
 
-#define TEXT_WIDTH_UNSCALED		8
+#define TEXT_WIDTH_UNSCALED		CHARWIDTH
 #define TEXT_HEIGHT_UNSCALED	8
 
 #define TEXT_WIDTH		(TEXT_WIDTH_UNSCALED*scale)
@@ -78,10 +78,10 @@ extern cvar_t *serverlist_udp_source1; // jitserverlist
 #define CURSOR_WIDTH	(16*scale)
 
 #define FIELD_HEIGHT	(12*scale)
-#define FIELD_LWIDTH	(10*scale)
-#define FIELD_RWIDTH	(10*scale)
+#define FIELD_LWIDTH	((2+TEXT_WIDTH_UNSCALED)*scale)
+#define FIELD_RWIDTH	((2+TEXT_WIDTH_UNSCALED)*scale)
 
-#define SELECT_HSPACING_UNSCALED	2
+#define SELECT_HSPACING_UNSCALED	1
 #define SELECT_VSPACING_UNSCALED	2
 
 #define SELECT_HSPACING		(SELECT_HSPACING_UNSCALED*scale)

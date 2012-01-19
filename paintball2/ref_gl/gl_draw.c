@@ -99,7 +99,7 @@ void Draw_Char (float x, float y, int num) // jitodo -- try to remove all calls 
 	if ((num & 127) == 32)
 		return;		// space
 
-	if (y <= -8)
+	if (y <= -CHARWIDTH)
 		return;			// totally off screen
 
 	row = num >> 4;
@@ -126,9 +126,9 @@ void Draw_Char (float x, float y, int num) // jitodo -- try to remove all calls 
 	qglTexCoord2f(fcol, frow);
 	qglVertex2f(x, y);
 	qglTexCoord2f(fcol + size, frow);
-	qglVertex2f(x + 8 * textscale, y); // jithudscale...
+	qglVertex2f(x + CHARWIDTH * textscale, y); // jithudscale...
 	qglTexCoord2f(fcol + size, frow + size);
-	qglVertex2f(x + 8 * textscale, y+8*textscale);
+	qglVertex2f(x + CHARWIDTH * textscale, y+8*textscale);
 	qglTexCoord2f(fcol, frow + size);
 	qglVertex2f(x, y + 8 * textscale);
 	qglEnd();
@@ -268,10 +268,10 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 			}
 			// ]==
 
-			if (py <= -8 * textscale)
+			if (py <= -CHARWIDTH * textscale)
 			{	// totally off screen
 				s++;
-				px += 8 * textscale; //jithudscale
+				px += CHARWIDTH * textscale; //jithudscale
 				continue;
 			}
 
@@ -284,9 +284,9 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 				qglTexCoord2f(fcol, frow);
 				qglVertex2f(px, py + 4 * textscale);
 				qglTexCoord2f(fcol + size, frow);
-				qglVertex2f(px + 8 * textscale, py + 4 * textscale); // jithudscale...
+				qglVertex2f(px + CHARWIDTH * textscale, py + 4 * textscale); // jithudscale...
 				qglTexCoord2f(fcol + size, frow + size);
-				qglVertex2f(px + 8 * textscale, py + 12 * textscale);
+				qglVertex2f(px + CHARWIDTH * textscale, py + 12 * textscale);
 				qglTexCoord2f(fcol, frow + size);
 				qglVertex2f(px, py + 12 * textscale);
 			}
@@ -294,7 +294,7 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 			if ((num & 127) == 32)		// space
 			{
 				s++;
-				px += 8 * textscale; //jithudscale
+				px += CHARWIDTH * textscale; //jithudscale
 				continue;
 			}
 
@@ -308,9 +308,9 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 				qglTexCoord2f (fcol, frow);
 				qglVertex2f (px+2*textscale, py);
 				qglTexCoord2f (fcol + size, frow);
-				qglVertex2f (px+10*textscale, py); // jithudscale...
+				qglVertex2f (px+6*textscale, py); // jithudscale...
 				qglTexCoord2f (fcol + size, frow + size);
-				qglVertex2f (px+6*textscale, py+8*textscale);
+				qglVertex2f (px+2*textscale, py+8*textscale);
 				qglTexCoord2f (fcol, frow + size);
 				qglVertex2f (px-2*textscale, py+8*textscale);
 			}
@@ -319,15 +319,15 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 				qglTexCoord2f (fcol, frow);
 				qglVertex2f (px, py);
 				qglTexCoord2f (fcol + size, frow);
-				qglVertex2f (px+8*textscale, py); // jithudscale...
+				qglVertex2f (px+CHARWIDTH*textscale, py); // jithudscale...
 				qglTexCoord2f (fcol + size, frow + size);
-				qglVertex2f (px+8*textscale, py+8*textscale);
+				qglVertex2f (px+CHARWIDTH*textscale, py+8*textscale);
 				qglTexCoord2f (fcol, frow + size);
 				qglVertex2f (px, py+8*textscale);
 			}
 
 			s++;
-			px += 8 * textscale; //jithudscale
+			px += CHARWIDTH * textscale; //jithudscale
 		}
 
 		if (shadowpass)

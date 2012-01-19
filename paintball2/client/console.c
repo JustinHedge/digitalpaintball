@@ -108,7 +108,7 @@ void DrawAltString (int x, int y, char *s)
 	while (*s)
 	{
 		re.DrawChar(x, y, *s ^ 0x80);
-		x += 8 * hudscale;
+		x += CHARWIDTH * hudscale;
 		s++;
 	}
 }
@@ -330,7 +330,7 @@ void Con_CheckResize (void)
 		hudscale = 1;
 
 	//width = (viddef.width/hudscale >> 3) - 2;
-	width = (int)(viddef.width / (hudscale * 8.0f)) - 2;
+	width = (int)(viddef.width / (hudscale * CHARWIDTH)) - 2;
 
 	if (width == con.linewidth)
 		return;
@@ -602,10 +602,10 @@ void Con_DrawInput (void) // pooy, jittext
 	// draw it
 	bytelen = CharOffset(text, con.linewidth);	
 		
-	Draw_StringLen(8 * hudscale, con.vislines - 22 * hudscale, text, bytelen);
+	Draw_StringLen(CHARWIDTH * hudscale, con.vislines - 22 * hudscale, text, bytelen);
 
 	// add the cursor frame
-	Con_DrawCursor(8 * hudscale + colorlinepos * 8 * hudscale, con.vislines - 22 * hudscale);
+	Con_DrawCursor(CHARWIDTH * hudscale + colorlinepos * CHARWIDTH * hudscale, con.vislines - 22 * hudscale);
 }
 
 
@@ -643,36 +643,36 @@ void Con_DrawNotify (void)
 			continue;
 
 		text = con.text + (i % con.totallines) * (con.linewidth);
-		Draw_StringLen(8 * hudscale, v, text, con.linewidth); // jit, draw whole line at once
-		v += 8 * hudscale; // jithudscale
+		Draw_StringLen(CHARWIDTH * hudscale, v, text, con.linewidth); // jit, draw whole line at once
+		v += CHARWIDTH * hudscale; // jithudscale
 	}
 
 	if (cls.key_dest == key_message)
 	{
 		if (2 == chat_team) // jitlogin
 		{
-			re.DrawString(8*hudscale, v, "Login:");
+			re.DrawString(CHARWIDTH*hudscale, v, "Login:");
 			skip = 8*hudscale;
 		}
 		else if (1 == chat_team) // jitlogin
 		{
-			re.DrawString (8*hudscale, v, "Say_team:");
+			re.DrawString (CHARWIDTH*hudscale, v, "Say_team:");
 			skip = 11*hudscale;
 		}
 		else
 		{
-			re.DrawString (8*hudscale, v, "Say:");
+			re.DrawString (CHARWIDTH*hudscale, v, "Say:");
 			skip = 6*hudscale;
 		}
 
 		s = chat_buffer;
 
-		if (chat_bufferlen > ((viddef.width / (hudscale * 8))) - (skip + 1))
-			s += chat_bufferlen - ((int)(viddef.width / (hudscale * 8)) - (skip + 1));
+		if (chat_bufferlen > ((viddef.width / (hudscale * CHARWIDTH))) - (skip + 1))
+			s += chat_bufferlen - ((int)(viddef.width / (hudscale * CHARWIDTH)) - (skip + 1));
 
 		re.DrawString(skip << 3, v, s);
 		re.DrawChar((strlen(s) * hudscale + skip) * 8, v, 10 + ((cls.realtime >> 8) & 1));
-		v += 8 * hudscale;
+		v += CHARWIDTH * hudscale;
 	}
 
 	if (v)
@@ -724,7 +724,7 @@ void Con_DrawConsole (float frac)
 
 // draw the text
 	con.vislines = lines;
-	rows = (lines - 22 * hudscale) / 8;		// rows of text to draw
+	rows = (lines - 22 * hudscale) / CHARWIDTH;		// rows of text to draw
 	y = lines - 30 * hudscale;
 
 // draw from the bottom up
@@ -732,7 +732,7 @@ void Con_DrawConsole (float frac)
 	{
 	// draw arrows to show the buffer is backscrolled
 		for (x = 0; x < con.linewidth; x += 4)
-			re.DrawChar((x * hudscale + 1.0f) * 8.0f, y, '^');
+			re.DrawChar((x * hudscale + 1.0f) * CHARWIDTH, y, '^');
 	
 		y -= 8 * hudscale;
 		rows--;
@@ -749,7 +749,7 @@ void Con_DrawConsole (float frac)
 			
 		text = con.text + (row % con.totallines)*con.linewidth;
 
-		Draw_StringLen(8.0f * hudscale, y, text, con.linewidth); // jit, draw whole line at once
+		Draw_StringLen(CHARWIDTH * hudscale, y, text, con.linewidth); // jit, draw whole line at once
 	}
 
 	//ZOID
@@ -832,8 +832,8 @@ void Con_DrawConsole (float frac)
 
 		// draw it
 		y = con.vislines - 12 * hudscale;
-		re.DrawString(8.0f * hudscale, y, dlbar_fill);  // jit
-		re.DrawString(8.0f * hudscale, y, dlbar); // jit, draw whole line at once
+		re.DrawString(CHARWIDTH * hudscale, y, dlbar_fill);  // jit
+		re.DrawString(CHARWIDTH * hudscale, y, dlbar); // jit, draw whole line at once
 		// jittext ===
 	}
 //ZOID

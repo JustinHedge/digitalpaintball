@@ -767,18 +767,18 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 		{
 		case WIDGET_HALIGN_CENTER:
 			widget->widgetCorner.x -= widget->widgetSize.x/2;
-			widget->textCorner.x -= (strlen_noformat(text)*8*scale)/2;
+			widget->textCorner.x -= (strlen_noformat(text)*CHARWIDTH*scale)/2;
 			break;
 		case WIDGET_HALIGN_RIGHT:
 			widget->widgetCorner.x -= widget->widgetSize.x;
-			widget->textCorner.x -= (strlen_noformat(text)*8*scale);
+			widget->textCorner.x -= (strlen_noformat(text)*CHARWIDTH*scale);
 			switch(widget->type)
 			{
 			case WIDGET_TYPE_SLIDER:
 			case WIDGET_TYPE_CHECKBOX:
 			case WIDGET_TYPE_FIELD:
 			case WIDGET_TYPE_SELECT:
-				widget->textCorner.x -= (8*scale + widget->widgetSize.x);
+				widget->textCorner.x -= (CHARWIDTH*scale + widget->widgetSize.x);
 				break;
 			default:
 				break;
@@ -792,7 +792,7 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			case WIDGET_TYPE_CHECKBOX:
 			case WIDGET_TYPE_FIELD:
 			case WIDGET_TYPE_SELECT:
-				widget->textCorner.x += (8*scale + widget->widgetSize.x);
+				widget->textCorner.x += (CHARWIDTH*scale + widget->widgetSize.x);
 				break;
 			default:
 				break;
@@ -972,7 +972,7 @@ static void update_select_subwidgets (menu_widget_t *widget)
 		new_widget->next = widget->subwidget;
 		widget->subwidget = new_widget;
 		
-		width--; // make text not overlap scrollbar
+		width -= (SCROLL_ARROW_WIDTH_UNSCALED/TEXT_WIDTH_UNSCALED); // make text not overlap scrollbar
 	}
 	else
 	{
