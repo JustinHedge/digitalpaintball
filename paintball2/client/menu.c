@@ -2332,11 +2332,11 @@ static void M_DialogBox_f (void)
 	M_PushMenuScreen(menu,false);
 }
 
-static void M_PrintDialog (char* text)
+void M_PrintDialog (char* text)
 {
 	menu_screen_t *menu;
 	menu = M_GetNewMenuScreen("dialog","conback");
-	M_DialogBox(menu,test);
+	M_DialogBox(menu,text);
 	M_PushMenuScreen(menu,false);
 }
 
