@@ -1458,5 +1458,6 @@ void Q_strncatz (char *dest, const char *src, size_t size);
 #endif
 void Q_strncpyzna (char *dest, const char *src, size_t size); // jit
 void strip_garbage (char *out, const char *in); // jit
+void strip_garbage_n (char *out, const char *in, int n); // viciouz
 
 #endif

@@ -276,9 +276,9 @@ void SCR_DrawCenterString (void)
 		for (l=0 ; l<40 ; l++)
 			if (start[l] == '\n' || !start[l])
 				break;
-		x = (viddef.width - l*8*hudscale)*0.5; // jithudscale
+		x = (viddef.width - l*CHARWIDTH*hudscale)*0.5; // jithudscale
 		SCR_AddDirtyPoint (x, y);
-		for (j=0 ; j<l ; j++, x+=8*hudscale) // jithudscale
+		for (j=0 ; j<l ; j++, x+=CHARWIDTH*hudscale) // jithudscale
 		{
 			re.DrawChar (x, y, start[j]);	
 			if (!remaining--)

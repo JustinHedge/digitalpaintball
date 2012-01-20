@@ -743,6 +743,7 @@ void M_RefreshActiveMenu (void); // jitmenu
 void M_RefreshWidget (const char *name, qboolean lock); // jitmenu
 qboolean M_MenuActive (void); // jitmenu
 void M_PlayMenuSounds (); // jitmenu
+void M_PrintDialog(char* text);
 
 // cl_serverlist.c
 void Serverlist_Init (void);

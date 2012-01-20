@@ -2252,6 +2252,93 @@ static void M_ErrorMenu (menu_screen_t* menu, const char *text)
 			NULL, "menu pop", 8, 224, true, false);
 }
 
+static void M_DialogBox (menu_screen_t* menu, const char *text)
+{
+#define CPL (240 / CHARWIDTH - 1) // chars per line
+	menu_widget_t *widget;
+	char newbuf[2048]; //maxpacketstring
+	char linebuf[CPL+1];
+	int rows, row;
+	const char *s, *s2;
+	int startx = 160-CPL*(CHARWIDTH/2);
+	int starty;
+	int i;
+
+	strip_garbage(newbuf, text);
+	newbuf[strlen_noformat(text)] = '\0';
+
+	menu->type = MENU_TYPE_DIALOG;
+	menu->widget = M_GetNewBlankMenuWidget();
+
+	// it's 4 o clock in the morning and i can't be bothered to explain this fuckign piece of shit, just replace it with something better later (TODO)
+	if(strlen(newbuf) < CPL)
+		rows = 1;
+	else
+	{
+		rows = 0;
+		s = newbuf;
+		while(s < newbuf + strlen(newbuf))
+		{
+			s2 = s+CPL;
+			while(*s2 != ' ' && s2 > s && *s2 != '\0')
+				s2--;
+			i = (int)(s2-s);
+			if(i)
+				s = s2;
+			else
+				s += CPL;
+			rows++;
+		}
+	}
+	//Com_Printf("%d rows\n",rows);
+	starty = 120-rows*(CHARHEIGHT/2);
+
+	widget = menu->widget;
+	s2 = newbuf;
+	for(i = 0; i < rows; i++)
+	{
+		s = s2;
+		s2 = s + CPL;
+		while(*s2 != ' ' && s2 > s)
+			s2--;
+		if(i == rows-1)
+			row = strlen(s);
+		else if(s2-s)
+		{
+			s2++;
+			row = (int)(s2-s);
+		}
+		else
+		{
+			s2 += CPL;
+			row = CPL;
+		}
+		strncpy(linebuf,s,row);
+		linebuf[row] = '\0';
+		//Com_Printf("%s\n", linebuf);
+		widget->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, linebuf, NULL, NULL, startx, starty+i*CHARHEIGHT, true, false);
+		widget = widget->next;
+	}
+
+	menu->widget->subwidget = create_background(startx-CHARWIDTH,starty-CHARHEIGHT,(CPL+2)*CHARWIDTH,(rows+4)*CHARHEIGHT,menu->widget->subwidget);
+	widget->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, "[OK]", NULL, "menu pop", 160-2*CHARWIDTH, starty+(rows+1)*CHARHEIGHT, true, false);
+}
+
+static void M_DialogBox_f (void)
+{
+	menu_screen_t *menu;
+	menu = M_GetNewMenuScreen("dialog","conback");
+	M_DialogBox(menu,Cmd_Argv(1));
+	M_PushMenuScreen(menu,false);
+}
+
+static void M_PrintDialog (char* text)
+{
+	menu_screen_t *menu;
+	menu = M_GetNewMenuScreen("dialog","conback");
+	M_DialogBox(menu,test);
+	M_PushMenuScreen(menu,false);
+}
 
 static int M_WidgetGetType (const char *s)
 {
@@ -2826,6 +2913,7 @@ void M_Init (void)
     // Add commands
 	Cmd_AddCommand("menu", M_Menu_f);
 	Cmd_AddCommand("menu_reload", M_ReloadMenu);
+	Cmd_AddCommand("testdialog", M_DialogBox_f);
 	m_initialized = true;
 }
 
