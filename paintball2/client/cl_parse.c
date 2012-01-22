@@ -1459,6 +1459,7 @@ void CL_ParseServerMessage (void)
 				break;
 			case PRINT_DIALOG:
 				M_PrintDialog(MSG_ReadString(&net_message));
+				break;
 			default:
 				if (cl_timestamp->value) // jit:
 					Com_Printf("[%s] %s", timestamp, MSG_ReadString(&net_message));
