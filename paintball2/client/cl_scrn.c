@@ -253,7 +253,7 @@ void SCR_CenterPrint (char *str)
 
 void SCR_DrawCenterString (void)
 {
-	char	*start;
+	char	*start, line[40];
 	int		l;
 	int		j;
 	int		x, y;
@@ -278,13 +278,12 @@ void SCR_DrawCenterString (void)
 				break;
 		x = (viddef.width - l*CHARWIDTH*hudscale)*0.5; // jithudscale
 		SCR_AddDirtyPoint (x, y);
-		for (j=0 ; j<l ; j++, x+=CHARWIDTH*hudscale) // jithudscale
-		{
-			re.DrawChar (x, y, start[j]);	
-			if (!remaining--)
-				return;
-		}
-		SCR_AddDirtyPoint (x, y+8*hudscale); // jithudscale
+
+		strncpy(line, start, l);
+		line[l] = '\0';
+		re.DrawString(x,y,line);
+			
+		SCR_AddDirtyPoint (x+l*CHARWIDTH*hudscale, y+8*hudscale); // jithudscale
 			
 		y += 8*hudscale; // jithudscale
 
