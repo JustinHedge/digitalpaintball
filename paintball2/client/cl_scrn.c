@@ -255,7 +255,7 @@ void SCR_DrawCenterString (void)
 {
 	char	*start, line[40];
 	int		l;
-	int		j;
+	int		j = 0;
 	int		x, y;
 	int		remaining;
 
@@ -274,9 +274,13 @@ void SCR_DrawCenterString (void)
 	{
 	// scan the width of the line
 		for (l=0 ; l<40 ; l++)
+		{
 			if (start[l] == '\n' || !start[l])
 				break;
-		x = (viddef.width - l*CHARWIDTH*hudscale)*0.5; // jithudscale
+			else if(start[l] == CHAR_COLOR)
+				j++;
+		}
+		x = (viddef.width - (l-j)*CHARWIDTH*hudscale)*0.5; // jithudscale
 		SCR_AddDirtyPoint (x, y);
 
 		strncpy(line, start, l);
