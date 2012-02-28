@@ -2232,7 +2232,7 @@ static menu_screen_t* M_GetNewMenuScreen (const char *menu_name, const char *bac
 	menu = Z_Malloc(sizeof(menu_screen_t));
 	memset(menu, 0, sizeof(menu_screen_t));
 	menu->name = text_copy(menu_name);
-	menu->background = re.DrawFindPic(background);
+	menu->background = background ? re.DrawFindPic(background) : NULL;
 	menu->next = root_menu;
 	root_menu = menu;
 
@@ -2264,15 +2264,21 @@ static void M_DialogBox (menu_screen_t* menu, const char *text)
 	int starty;
 	int i;
 
+	// Should never happen, but just to be safe...
+	if (strlen_noformat(text) >= sizeof(newbuf))
+		text = "TEXT STRING TOO LONG";
+
 	strip_garbage(newbuf, text);
-	newbuf[strlen_noformat(text)] = '\0';
+	//newbuf[strlen_noformat(text)] = '\0';
 
 	menu->type = MENU_TYPE_DIALOG;
 	menu->widget = M_GetNewBlankMenuWidget();
 
 	// it's 4 o clock in the morning and i can't be bothered to explain this fuckign piece of shit, just replace it with something better later (TODO)
-	if(strlen(newbuf) < CPL)
+	if (strlen(newbuf) < CPL)
+	{
 		rows = 1;
+	}
 	else
 	{
 		rows = 0;
@@ -2290,8 +2296,8 @@ static void M_DialogBox (menu_screen_t* menu, const char *text)
 			rows++;
 		}
 	}
-	//Com_Printf("%d rows\n",rows);
-	starty = 120-rows*(CHARHEIGHT/2);
+
+	starty = 120 - rows * (CHARHEIGHT / 2);
 
 	widget = menu->widget;
 	s2 = newbuf;
@@ -2313,10 +2319,9 @@ static void M_DialogBox (menu_screen_t* menu, const char *text)
 			s2 += CPL;
 			row = CPL;
 		}
-		strncpy(linebuf,s,row);
-		linebuf[row] = '\0';
-		//Com_Printf("%s\n", linebuf);
-		widget->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, linebuf, NULL, NULL, startx, starty+i*CHARHEIGHT, true, false);
+
+		Q_strncpyzna(linebuf, s, min(row + 1, sizeof(linebuf)));
+		widget->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, linebuf, NULL, NULL, startx, starty + i * CHARHEIGHT, true, false);
 		widget = widget->next;
 	}
 
@@ -2326,16 +2331,13 @@ static void M_DialogBox (menu_screen_t* menu, const char *text)
 
 static void M_DialogBox_f (void)
 {
-	menu_screen_t *menu;
-	menu = M_GetNewMenuScreen("dialog","conback");
-	M_DialogBox(menu,Cmd_Argv(1));
-	M_PushMenuScreen(menu,false);
+	M_PrintDialog(Cmd_Args());
 }
 
 void M_PrintDialog (char* text)
 {
 	menu_screen_t *menu;
-	menu = M_GetNewMenuScreen("dialog","conback");
+	menu = M_GetNewMenuScreen("dialog", NULL);
 	M_DialogBox(menu,text);
 	M_PushMenuScreen(menu,false);
 }
@@ -2913,7 +2915,7 @@ void M_Init (void)
     // Add commands
 	Cmd_AddCommand("menu", M_Menu_f);
 	Cmd_AddCommand("menu_reload", M_ReloadMenu);
-	Cmd_AddCommand("testdialog", M_DialogBox_f);
+	Cmd_AddCommand("dialog", M_DialogBox_f);
 	m_initialized = true;
 }
 
