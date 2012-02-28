@@ -99,7 +99,7 @@ void Draw_Char (float x, float y, int num) // jitodo -- try to remove all calls 
 	if ((num & 127) == 32)
 		return;		// space
 
-	if (y <= -CHARWIDTH)
+	if (y <= -CHARHEIGHT)
 		return;			// totally off screen
 
 	row = num >> 4;

@@ -100,25 +100,3 @@ void CL_ParseInventory (void)
 }
 
 
-/*
-================
-Inv_DrawString
-================
-*/
-void Inv_DrawString (int x, int y, char *string)
-{
-	while (*string)
-	{
-		re.DrawChar(x, y, *string);
-		x += 8 * hudscale; // jithudscale
-		string++;
-	}
-}
-
-void SetStringHighBit (char *s)
-{
-	while (*s)
-		*s++ |= 128;
-}
-
-
