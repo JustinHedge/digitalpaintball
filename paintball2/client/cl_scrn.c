@@ -257,45 +257,55 @@ void SCR_DrawCenterString (void)
 	int		l;
 	int		j = 0;
 	int		x, y;
-	int		remaining;
-
-// the finale prints the characters one at a time
-	remaining = 9999;
 
 	scr_erase_center = 0;
 	start = scr_centerstring;
 
 	if (scr_center_lines <= 4)
-		y = viddef.height*0.35;
+		y = viddef.height * 0.35f;
 	else
 		y = 48;
 
 	do	
 	{
-	// scan the width of the line
-		for (l=0 ; l<40 ; l++)
+		// scan the width of the line
+		for (l = 0; l < sizeof(line); l++)
 		{
 			if (start[l] == '\n' || !start[l])
 				break;
-			else if(start[l] == CHAR_COLOR)
-				j++;
-		}
-		x = (viddef.width - (l-j)*CHARWIDTH*hudscale)*0.5; // jithudscale
-		SCR_AddDirtyPoint (x, y);
 
-		strncpy(line, start, l);
-		line[l] = '\0';
-		re.DrawString(x,y,line);
-			
-		SCR_AddDirtyPoint (x+l*CHARWIDTH*hudscale, y+8*hudscale); // jithudscale
-			
-		y += 8*hudscale; // jithudscale
+			// jittext - basically like strlen_noformat, except we haave to take into account the \n above.
+			switch (start[l])
+			{
+			case CHAR_COLOR:
+				j += 2;
+				break;
+			case CHAR_UNDERLINE:
+			case CHAR_ITALICS:
+			case CHAR_ENDFORMAT:
+				j++;
+				break;
+			}
+		}
+
+		x = (viddef.width - (l - j) * CHARWIDTH * hudscale) * 0.5f; // jithudscale
+		SCR_AddDirtyPoint(x, y);
+
+		if (l)
+		{
+			Q_strncpyzna(line, start, min(l + 1, sizeof(line))); // We use l + 1 because we need 1 char for the null
+			re.DrawString(x, y, line);
+			SCR_AddDirtyPoint(x + l * CHARWIDTH * hudscale, y + CHARHEIGHT * hudscale); // jithudscale	
+		}
+
+		y += CHARHEIGHT * hudscale; // jithudscale
 
 		while (*start && *start != '\n')
 			start++;
 
 		if (!*start)
 			break;
+
 		start++;		// skip the \n
 	} while (1);
 }
