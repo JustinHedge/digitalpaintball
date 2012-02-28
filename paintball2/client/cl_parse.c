@@ -1458,8 +1458,12 @@ void CL_ParseServerMessage (void)
 				CL_ParseChat(i, MSG_ReadString(&net_message));
 				break;
 			case PRINT_DIALOG:
-				M_PrintDialog(MSG_ReadString(&net_message));
-				break;
+				if (cls.key_dest != key_console) // Only pop up the dialog when out of the console.
+				{
+					M_PrintDialog(MSG_ReadString(&net_message));
+					break;
+				}
+				// If the console is down, fall through to the default case:
 			default:
 				if (cl_timestamp->value) // jit:
 					Com_Printf("[%s] %s", timestamp, MSG_ReadString(&net_message));
