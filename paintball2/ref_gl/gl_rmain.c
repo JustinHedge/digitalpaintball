@@ -5761,7 +5761,7 @@ void R_Register(void)
 	gl_motionblur = ri.Cvar_Get("gl_motionblur", "0", CVAR_ARCHIVE);	// motionblur
 	vid_gamma_hw = ri.Cvar_Get("vid_gamma_hw", "0", CVAR_ARCHIVE);		// hardware gamma
 	gl_drawbuffer = ri.Cvar_Get("gl_drawbuffer", "GL_BACK", 0);
-	gl_swapinterval = ri.Cvar_Get("gl_swapinterval", "0", CVAR_ARCHIVE);
+	gl_swapinterval = ri.Cvar_Get("gl_swapinterval", "1", CVAR_ARCHIVE);
 	gl_saturatelighting = ri.Cvar_Get("gl_saturatelighting", "0", 0);
 	gl_3dlabs_broken = ri.Cvar_Get("gl_3dlabs_broken", "1", CVAR_ARCHIVE);
 	vid_fullscreen = ri.Cvar_Get("vid_fullscreen", "0", CVAR_ARCHIVE);
