@@ -48,7 +48,7 @@ typedef struct pml_s
 pmove_t		*pm;
 pml_t		pml;
 float		g_viewheight = 0.0f; // jit
-extern float g_stepheight; // jitmove - for step smoothing
+float		g_stepheight = 0.0f; // jitmove - for step smoothing
 
 // movement parameters
 float	pm_stopspeed = 100.0f;
