@@ -841,9 +841,9 @@ void CL_AddPacketEntities (frame_t *frame)
 
 			if (entpos[0] >= campos[0] - 10 && entpos[0] <= campos[0] + 10 &&
 				entpos[1] >= campos[1] - 10 && entpos[1] <= campos[1] + 10 &&
-				entpos[2] >= campos[2] - 30 && entpos[2] <= campos[2] + 30)
+				entpos[2] >= campos[2] - 5 && entpos[2] <= campos[2] + 30)
 			{
-				ent.flags |= RF_TRANSLUCENT;
+				ent.flags |= RF_TRANSLUCENT; // hide players when you're inside of them
 				ent.alpha = 0.0f;
 			}
 		}
