@@ -98,47 +98,59 @@ void CL_ClipMoveToEntities ( vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end,
 		if (ent->solid == 31)
 		{	// special value for bmodel
 			cmodel = cl.model_clip[ent->modelindex];
+
 			if (!cmodel)
 				continue;
+
 			headnode = cmodel->headnode;
 			angles = ent->angles;
 		}
 		else
 		{	// encoded bbox
-			x = 8*(ent->solid & 31);
-			zd = 8*((ent->solid>>5) & 31);
-			zu = 8*((ent->solid>>10) & 63) - 32;
+			x = 8 * (ent->solid & 31);
+			zd = 8 * ((ent->solid >> 5) & 31);
+			zu = 8 * ((ent->solid >> 10) & 63) - 32;
+
+			// Massive hack - when the player is crouched, he's actually -24 and 4 mins/maxs,
+			// but since it gets encoded as multiples of 8, 4 gets rounded down to 0.
+			// This causes the prediction to be "bouncy", so we'll just hardcode -24 and 0 to be -24 and 4.
+			if (zd == 24 && zu == 0)
+				zu = 4;
 
 			bmins[0] = bmins[1] = -x;
 			bmaxs[0] = bmaxs[1] = x;
 			bmins[2] = -zd;
 			bmaxs[2] = zu;
 
-			headnode = CM_HeadnodeForBox (bmins, bmaxs);
+			headnode = CM_HeadnodeForBox(bmins, bmaxs);
 			angles = vec3_origin;	// boxes don't rotate
 		}
 
 		if (tr->allsolid)
 			return;
 
-		trace = CM_TransformedBoxTrace (start, end,
-			mins, maxs, headnode,  MASK_PLAYERSOLID,
+		trace = CM_TransformedBoxTrace(start, end,
+			mins, maxs, headnode, MASK_PLAYERSOLID,
 			ent->origin, angles);
 
-		if (trace.allsolid || trace.startsolid ||
-		trace.fraction < tr->fraction)
+		if (trace.allsolid || trace.startsolid || trace.fraction < tr->fraction)
 		{
 			trace.ent = (struct edict_s *)ent;
+
 		 	if (tr->startsolid)
 			{
 				*tr = trace;
 				tr->startsolid = true;
 			}
 			else
+			{
 				*tr = trace;
+			}
 		}
 		else if (trace.startsolid)
+		{
 			tr->startsolid = true;
+		}
 	}
 }
 
