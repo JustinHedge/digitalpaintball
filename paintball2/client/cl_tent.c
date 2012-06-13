@@ -819,7 +819,7 @@ void CL_ParseTEnt (void)
 		
 		V_AddStain(pos, rgbcolour, cnt / 3); // stain size depends on cnt
 		
-		if (cnt != 16) // grenade splatter
+		if (cnt != 16 && cnt != 15) // grenade splatter
 		{
 			cnt = rand() & 7; // don't do it for every splatter!
 
@@ -837,17 +837,21 @@ void CL_ParseTEnt (void)
 			trace_t tr;
 			vec3_t end, start, back, forward;
 			surface_sound_type_t surface_sound = SURFACE_SOUND_UNKNOWN;
+			qboolean make_splat = (cnt == 16);
 
 			// generate a splat model:
-			ex = CL_AllocExplosion();
-			VectorCopy(pos, ex->ent.origin);
-			VectorCopy(pos, ex->ent.startorigin);
+			if (make_splat)
+			{
+				ex = CL_AllocExplosion();
+				VectorCopy(pos, ex->ent.origin);
+				VectorCopy(pos, ex->ent.startorigin);
+			}
 
 			// check the closest wall for an exact angle
 			VectorScale(dir, 1.0f, back);
 			VectorScale(dir, -8.0f, forward);
-			VectorAdd(ex->ent.origin, back, start);
-			VectorAdd(ex->ent.origin, forward, end);
+			VectorAdd(pos, back, start);
+			VectorAdd(pos, forward, end);
 			tr = CM_BoxTrace(start, end, vec3_origin, vec3_origin, 0, MASK_SOLID);
 
 			if (tr.fraction < 1.0f)
@@ -857,26 +861,29 @@ void CL_ParseTEnt (void)
 			}
 
 			// Convert vector to angles
-			ex->ent.angles[0] = (float)acos(dir[2]) / (float)M_PI * 180.0f;
+			if (make_splat)
+			{
+				ex->ent.angles[0] = (float)acos(dir[2]) / (float)M_PI * 180.0f;
 
-			if (dir[0])
-				ex->ent.angles[1] = atan2(dir[1], dir[0]) / (float)M_PI * 180.0f;
-			else if (dir[1] > 0)
-				ex->ent.angles[1] = 90.0f;
-			else if (dir[1] < 0)
-				ex->ent.angles[1] = 270.0f;
-			else
-				ex->ent.angles[1] = 0.0f;
+				if (dir[0])
+					ex->ent.angles[1] = atan2(dir[1], dir[0]) / (float)M_PI * 180.0f;
+				else if (dir[1] > 0)
+					ex->ent.angles[1] = 90.0f;
+				else if (dir[1] < 0)
+					ex->ent.angles[1] = 270.0f;
+				else
+					ex->ent.angles[1] = 0.0f;
 
-			ex->type = ex_misc;
-			ex->ent.flags = RF_TRANSLUCENT;
-			ex->ent.alpha = 1.0f;
-			ex->ent.alphavel = -1.0f / (splattime->value + frand()*.5);
-			ex->start = (float)cl.frame.servertime - 100.0f;
-			ex->ent.skinnum = texnum;
-			ex->ent.scale = ex->ent.startscale = (0.7f + frand() * 0.6f);
-			ex->frames = 1; // doesn't matter
-			ex->ent.model = cl_mod_splat;
+				ex->type = ex_misc;
+				ex->ent.flags = RF_TRANSLUCENT;
+				ex->ent.alpha = 1.0f;
+				ex->ent.alphavel = -1.0f / (splattime->value + frand()*.5);
+				ex->start = (float)cl.frame.servertime - 100.0f;
+				ex->ent.skinnum = texnum;
+				ex->ent.scale = ex->ent.startscale = (0.7f + frand() * 0.6f);
+				ex->frames = 1; // doesn't matter
+				ex->ent.model = cl_mod_splat;
+			}
 
 			// randomly choose 1 of 2 splat sounds:
 			if (frand() > 0.5f)
