@@ -237,7 +237,7 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 	static char info[131];
 	//char stemp=0, mtemp=0;
 	int ping = 999;
-	char pingcolor = 'A';
+	char pingcolor;
 	int i, len;
 
 	if (server->ping < 999)
@@ -285,11 +285,21 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 		strncat(info, server->servername, pos);
 	}
 
-	if(ping < 100)
-		pingcolor = 'J'; // green
-	else if(ping < 250)
-		pingcolor = 'E'; // yellow
-	// else red by initialisation
+	// Fade ping color from white to orange (like co2 bar colors)
+	{
+		const int pingcolormin = 222; // white
+		const int pingcolormax = 208; // orange
+		const int pingmin = 40;
+		const int pingmax = 250;
+
+		if (ping < pingmin)
+			pingcolor = pingcolormin;
+		else if (ping > pingmax)
+			pingcolor = pingcolormax;
+		else
+			pingcolor = pingcolormin - (pingcolormin - pingcolormax) * (ping - pingmin) / (pingmax - pingmin);
+	}
+
 	Com_sprintf(info, sizeof(info), "%s %c%c%-3d%c ", info, CHAR_COLOR, pingcolor, ping, CHAR_ENDFORMAT);
 
 	if ((len = strlen_noformat(server->mapname)) <= MAP_NAME_MAXLENGTH)
