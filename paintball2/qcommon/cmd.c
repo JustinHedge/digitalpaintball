@@ -805,7 +805,7 @@ char *Cmd_MacroExpandString (const char *text) // from q2pro by [SkulleR] - jitc
 		// allow $var$ scripting
 		token = temporary;
 
-		while ((c = *start) > 32  && c != ';')
+		while ((c = *start) > 32  && c != ';' && c != '(' && c != ')') // Might want to make a big case statement or something...
 		{
 			*token++ = *start++;
 
@@ -828,12 +828,40 @@ char *Cmd_MacroExpandString (const char *text) // from q2pro by [SkulleR] - jitc
 		token = buffer;
 		} else {*/
 		//var = Cvar_FindVar( temporary );
-		var = Cvar_Get(temporary, 0, 0); // jit (don't have that func)
 
-		if (var) //&& !(var->flags & CVAR_PRIVATE)) {
-			token = var->string;
+#ifndef DEDICATED_ONLY
+		// String in the format of $bind(command) will return the key bound to that command.
+		if (Q_streq(temporary, "bind") && *start == '(') // jit - special case bind display.
+		{
+			char *string_for_bind (char *bind); // being lazy.
+			char bind_name[256];
+			char *bind_ptr = bind_name;
+
+			++start; // skip '('
+
+			while ((c = *start))
+			{
+				++start;
+
+				if (c == ')')
+					break;
+
+				*bind_ptr++ = c;
+			}
+
+			*bind_ptr = 0; // null terminate
+			token = string_for_bind(bind_name);
+		}
 		else
-			token = "";
+#endif
+		{
+			var = Cvar_Get(temporary, 0, 0); // jit (don't have that func)
+
+			if (var) //&& !(var->flags & CVAR_PRIVATE)) {
+				token = var->string;
+			else
+				token = "";
+		}
 		//}
 
 		j = strlen(token);

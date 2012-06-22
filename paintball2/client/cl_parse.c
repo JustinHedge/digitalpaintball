@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
+char *Cmd_MacroExpandString (const char *text);
+
 #ifndef WIN32
 #define _strtime(a) sprintf(a, "TODO")
 #endif
@@ -1335,6 +1337,41 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 }
 
 
+static void CL_PrintDefault (const char *text) // jit
+{
+	if (cl_timestamp->value)
+		Com_Printf("[%s] %s", timestamp, text);
+	else
+		Com_Printf("%s", text);
+}
+
+
+static void CL_ParsePrintDefault (const char *text) // jit
+{
+	char translated[2048];
+	translate_string(translated, sizeof(translated), text);
+	CL_PrintDefault(translated);
+}
+
+
+static void CL_ParsePrintDialog (const char *text) // jit
+{
+	char translated[2048];
+	char *expanded;
+	
+	translate_string(translated, sizeof(translated), text);
+	expanded = Cmd_MacroExpandString(translated);
+
+	if (cls.key_dest != key_console) // Only pop up the dialog when out of the console.
+	{
+		M_PrintDialog(expanded);
+	}
+	else
+	{
+		CL_PrintDefault(expanded);
+	}
+}
+
 /*
 =====================
 CL_ParseServerMessage
@@ -1458,17 +1495,10 @@ void CL_ParseServerMessage (void)
 				CL_ParseChat(i, MSG_ReadString(&net_message));
 				break;
 			case PRINT_DIALOG:
-				if (cls.key_dest != key_console) // Only pop up the dialog when out of the console.
-				{
-					M_PrintDialog(MSG_ReadString(&net_message));
-					break;
-				}
-				// If the console is down, fall through to the default case:
+				CL_ParsePrintDialog(MSG_ReadString(&net_message));
+				break;
 			default:
-				if (cl_timestamp->value) // jit:
-					Com_Printf("[%s] %s", timestamp, MSG_ReadString(&net_message));
-				else
-					Com_Printf("%s", MSG_ReadString(&net_message));
+				CL_ParsePrintDefault(MSG_ReadString(&net_message));
 				break;
 			}
 
