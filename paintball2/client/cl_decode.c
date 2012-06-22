@@ -184,7 +184,7 @@ static int index_array[MAX_DECODE_ARRAY];
 static int num_elements;
 static int current_element;
 
-static int translate_string (char *out_str, int max_len, const char *in_str)
+int translate_string (char *out_str, int max_len, const char *in_str)
 {
 	char *out_str_start = out_str;
 	const char *in_str_start = in_str;

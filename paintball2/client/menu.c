@@ -50,7 +50,7 @@ pthread_mutex_t			m_mut_widgets;
 extern m_serverlist_t	m_serverlist;
 
 static void M_UpdateDrawingInformation (menu_widget_t *widget);
-extern char *Cmd_MacroExpandString (const char *text);
+char *Cmd_MacroExpandString (const char *text);
 
 // same thing as strdup, only uses Z_Malloc
 char *text_copy (const char *in)
@@ -627,7 +627,7 @@ static void M_UnbindCommand (char *command)
 	}
 }
 
-static char *string_for_bind(char *bind)
+char *string_for_bind (char *bind)
 {
 	int keys[2];
 	static char str[64];
