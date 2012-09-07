@@ -576,17 +576,22 @@ the K_* names are matched up.
 int Key_StringToKeynum (char *str)
 {
 	keyname_t	*kn;
-	
+
+	// Null string
 	if (!str || !str[0])
 		return -1;
-	if (!str[1])
-		return str[0];
 
-	for (kn=keynames ; kn->name ; kn++)
+	// Single character
+	if (!str[1])
+		return tolower(str[0]); // jit - case insensitive key binding.
+
+	// Named key (SPACE, MOUSE1, etc.)
+	for (kn = keynames; kn->name; kn++)
 	{
-		if (!Q_strcasecmp(str,kn->name))
+		if (!Q_strcasecmp(str, kn->name))
 			return kn->keynum;
 	}
+
 	return -1;
 }
 
@@ -602,18 +607,19 @@ FIXME: handle quote special (general escape sequence?)
 char *Key_KeynumToString (int keynum)
 {
 	keyname_t	*kn;	
-	static	char	tinystr[2];
+	static char	tinystr[2];
 	
 	if (keynum == -1)
 		return "<KEY NOT FOUND>";
+
 	if (keynum > 32 && keynum < 127)
 	{	// printable ascii
-		tinystr[0] = keynum;
+		tinystr[0] = toupper(keynum); // jit - display key bindings as uppercase
 		tinystr[1] = 0;
 		return tinystr;
 	}
 	
-	for (kn=keynames ; kn->name ; kn++)
+	for (kn = keynames; kn->name; ++kn)
 		if (keynum == kn->keynum)
 			return kn->name;
 
@@ -698,35 +704,40 @@ void Key_Bind_f (void)
 
 	if (c < 2)
 	{
-		Com_Printf ("Usage: bind <key> [command] : Attach a command to a key.\n");
+		Com_Printf("Usage: bind <key> [command] : Attach a command to a key.\n");
 		return;
 	}
-	b = Key_StringToKeynum (Cmd_Argv(1));
-	if (b==-1)
+
+	b = Key_StringToKeynum(Cmd_Argv(1));
+
+	if (b == -1)
 	{
-		Com_Printf ("\"%s\" isn't a valid key.\n", Cmd_Argv(1));
+		Com_Printf("\"%s\" isn't a valid key.\n", Cmd_Argv(1));
 		return;
 	}
 
 	if (c == 2)
 	{
 		if (keybindings[b])
-			Com_Printf ("\"%s\" = \"%s\"\n", Cmd_Argv(1), keybindings[b] );
+			Com_Printf("\"%s\" = \"%s\"\n", Cmd_Argv(1), keybindings[b]);
 		else
-			Com_Printf ("\"%s\" is not bound.\n", Cmd_Argv(1) );
+			Com_Printf("\"%s\" is not bound.\n", Cmd_Argv(1));
+
 		return;
 	}
 	
-// copy the rest of the command line
-	cmd[0] = 0;		// start out with a null string
-	for (i=2 ; i< c ; i++)
+	// copy the rest of the command line
+	cmd[0] = 0; // start out with a null string
+
+	for (i = 2; i < c; ++i)
 	{
-		strcat (cmd, Cmd_Argv(i));
+		Q_strncatz(cmd, Cmd_Argv(i), sizeof(cmd)); // jitsecurity
+
 		if (i != (c-1))
-			strcat (cmd, " ");
+			Q_strncatz(cmd, " ", sizeof(cmd)); // jitsecurity
 	}
 
-	Key_SetBinding (b, cmd);
+	Key_SetBinding(b, cmd);
 }
 
 /*
