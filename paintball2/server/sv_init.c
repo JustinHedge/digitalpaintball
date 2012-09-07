@@ -23,19 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 server_static_t	svs;				// persistant server info
 server_t		sv;					// local server
 
-// T3RR0R15T: certificated server info
-cvar_t	*cer_maxclients;
-cvar_t	*cer_elim;
-cvar_t	*cer_fraglimit;
-cvar_t	*cer_timelimit;
-cvar_t	*cer_sv_minclientbuild;
-cvar_t	*cer_guntemp_inc;
-cvar_t	*cer_guntemp_dec;
-cvar_t	*cer_flagmustbeatbase;
-cvar_t	*cer_sv_forcesky;
-cvar_t	*cer_sv_login;
-cvar_t	*cer_public;
-
 
 /*
 ================
@@ -186,6 +173,14 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 {
 	int			i;
 	unsigned	checksum;
+	float		cer_public;
+	float		cer_sv_login;
+	float		cer_sv_forcesky;
+	float		cer_guntemp_inc;
+	float		cer_guntemp_dec;
+	float		cer_elim;
+	float		cer_fraglimit;
+	float		cer_timelimit;
 
 	if (attractloop)
 		Cvar_Set("paused", "0");
@@ -287,30 +282,28 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 	Cvar_FullSet("mapname", sv.name, CVAR_SERVERINFO | CVAR_NOSET, true);
 
 	// T3RR0R15T: certificated server info (default settings atm)
-	cer_maxclients			= Cvar_Get("maxclients", "0", 0);
-	cer_elim				= Cvar_Get("elim", "0", 0);
-	cer_fraglimit			= Cvar_Get("fraglimit", "0", 0);
-	cer_timelimit			= Cvar_Get("timelimit", "0", 0);
-	cer_sv_minclientbuild   = Cvar_Get("sv_minclientbuild", "0", 0);
-	cer_guntemp_inc			= Cvar_Get("guntemp_inc", "0", 0);
-	cer_guntemp_dec			= Cvar_Get("guntemp_dec", "0", 0);
-	cer_flagmustbeatbase	= Cvar_Get("flagmustbeatbase", "0", 0);
-	cer_sv_forcesky			= Cvar_Get("sv_forcesky", "0", 0);
-	cer_sv_login			= Cvar_Get("sv_login", "0", 0);
-	cer_public				= Cvar_Get("public", "0", 0);
+	//cer_maxclients			= Cvar_VariableValue("maxclients");
+	cer_elim				= Cvar_VariableValue("elim");
+	cer_fraglimit			= Cvar_VariableValue("fraglimit");
+	cer_timelimit			= Cvar_VariableValue("timelimit");
+	//cer_sv_minclientbuild   = Cvar_VariableValue("sv_minclientbuild");
+	cer_guntemp_inc			= Cvar_VariableValue("guntemp_inc");
+	cer_guntemp_dec			= Cvar_VariableValue("guntemp_dec");
+	cer_sv_forcesky			= Cvar_VariableValue("sv_forcesky");
+	cer_sv_login			= Cvar_VariableValue("sv_login");
+	cer_public				= Cvar_VariableValue("public");
 
 	// Don't forget to change the SV_Certificatedinfo_f (sv_ccmds.c), if you change something here !
-	if (cer_maxclients->value == 16 &&
-		cer_elim->value == 60 &&
-		cer_fraglimit->value == 50 &&
-		cer_timelimit->value == 20 &&
-		cer_sv_minclientbuild->value >= 28 &&
-		cer_guntemp_inc->value == 11 &&
-		cer_guntemp_dec->value == 4 &&
-		cer_flagmustbeatbase->value == 1 &&
-		cer_sv_forcesky->value == 1 &&
-		(cer_sv_login->value == 1 || cer_sv_login->value == 2) &&
-		cer_public->value == 1)
+	if (//cer_maxclients->value == 16 &&
+		(cer_elim >= 60.0f || cer_elim == 0.0f) &&
+		cer_fraglimit == 50.0f &&
+		cer_timelimit == 20.0f &&
+		//cer_sv_minclientbuild >= 28.0f &&
+		cer_guntemp_inc >= 10.5f && // 11 + some leeway
+		cer_guntemp_dec <= 4.2f && // 4 + some leeway
+		cer_sv_forcesky &&
+		cer_sv_login &&
+		cer_public)
 	{
 		Cvar_FullSet("sv_certificated", "1", CVAR_SERVERINFO | CVAR_NOSET, true);
 	} else {
