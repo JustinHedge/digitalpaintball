@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2003-2004 Nathan Wulf (jitspoe)
+Copyright (C) 2003-2012 Nathan Wulf (jitspoe)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -43,6 +43,8 @@ static hash_table_t		named_widgets_hash;
 static qboolean			m_initialized = false;
 static qboolean			m_vscrollbar_tray_selected = false;
 static int				m_menu_sound_flags = 0;
+static int				m_stored_menu_depth = 0;
+static menu_screen_t	*m_stored_menu_screens[MAX_MENU_SCREENS];
 
 // Globals
 pthread_mutex_t			m_mut_widgets;
@@ -131,6 +133,7 @@ static void M_DrawBackground (image_t *background)
 	Com_sprintf(version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
 	re.DrawStringAlpha(viddef.width - 176 * hudscale, viddef.height - 12 * hudscale, version, 1.0f);
 }
+
 
 void M_ForceMenuOff (void)
 {
@@ -2902,6 +2905,25 @@ void M_Menu_f (void)
 }
 
 
+// Save the current menu state so it can be restored later (used for tutorial map)
+void M_MenuStore_f (void)
+{
+	m_stored_menu_depth = m_menudepth;
+	memcpy(m_stored_menu_screens, m_menu_screens, sizeof(m_stored_menu_screens));
+}
+
+
+// Restore stored menu state
+void M_MenuRestore_f (void)
+{
+	m_menudepth = m_stored_menu_depth;
+	// Note: This may be unsafe if something happens to the menu screens that are being pointed to.
+	// They should currently stay cached, though.
+	memcpy(m_menu_screens, m_stored_menu_screens, sizeof(m_menu_screens));
+	cls.key_dest = key_menu;
+}
+
+
 void M_Init (void)
 {
 	memset(&m_mouse, 0, sizeof(m_mouse));
@@ -2916,6 +2938,8 @@ void M_Init (void)
 	Cmd_AddCommand("menu", M_Menu_f);
 	Cmd_AddCommand("menu_reload", M_ReloadMenu);
 	Cmd_AddCommand("dialog", M_DialogBox_f);
+	Cmd_AddCommand("menu_store", M_MenuStore_f);
+	Cmd_AddCommand("menu_restore", M_MenuRestore_f);
 	m_initialized = true;
 }
 
