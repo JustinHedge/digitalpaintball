@@ -1353,6 +1353,7 @@ static void CL_ParsePrintDefault (const char *text) // jit
 	CL_PrintDefault(translated);
 }
 
+extern cvar_t *cl_dialogprint;
 
 static void CL_ParsePrintDialog (const char *text) // jit
 {
@@ -1362,7 +1363,7 @@ static void CL_ParsePrintDialog (const char *text) // jit
 	translate_string(translated, sizeof(translated), text);
 	expanded = Cmd_MacroExpandString(translated);
 
-	if (cls.key_dest != key_console) // Only pop up the dialog when out of the console.
+	if (cls.key_dest != key_console && cl_dialogprint->value) // Only pop up the dialog when out of the console.
 	{
 		M_PrintDialog(expanded);
 	}
