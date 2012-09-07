@@ -94,6 +94,7 @@ cvar_t	*cl_drawpps; // jitnetfps
 cvar_t	*cl_drawtexinfo; // jit
 cvar_t	*cl_centerprintkills;
 cvar_t	*cl_timestamp; // jit
+cvar_t	*cl_dialogprint; // jit
 cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_consoleheight; // T3RR0R15T: console height
 cvar_t  *cl_crosshairscale; // viciouz - crosshair scale
@@ -1088,7 +1089,7 @@ void CL_ParseStatusMessage (void)
 	char	*s;
 
 	s = MSG_ReadString(&net_message);
-	Com_Printf("%s\n", s);
+	Com_DPrintf("%s\n", s);
 	M_AddToServerList(net_from, s, false);
 }
 
@@ -1369,7 +1370,7 @@ void CL_ConnectionlessPacket (void)
 	c = Cmd_Argv(0);
 
 #ifdef USE_DOWNLOAD3
-	if (!Q_streq(c, "dl3")) // jitdownload - don't spam download3 packets.
+	if (!Q_streq(c, "dl3") && !Q_streq(c, "info") && !Q_streq(c, "serverlist2response")) // jitdownload - don't spam download3 packets.  Don't spam server info, either.
 		Com_Printf("%s: %s\n", NET_AdrToString(net_from), c);
 #else
 	Com_Printf("%s: %s\n", NET_AdrToString(net_from), c);
@@ -2267,6 +2268,7 @@ void CL_InitLocal (void)
 	cl_drawtexinfo =	Cvar_Get("cl_drawtexinfo", "0", CVAR_ARCHIVE); // jit
 	cl_drawhud =		Cvar_Get("cl_drawhud", "1", 0); // jithud
 	cl_timestamp =		Cvar_Get("cl_timestamp", "0", CVAR_ARCHIVE); // jit
+	cl_dialogprint =	Cvar_Get("cl_dialogprint", "1", 0); // jit
 	cl_hudscale =		Cvar_Get("cl_hudscale", "2", CVAR_ARCHIVE); // jithudscale /viciouz - changed to 2 to match setting in gl_rmain.c
 	cl_crosshairscale = Cvar_Get("cl_crosshairscale", "2", CVAR_ARCHIVE); // viciouz - crosshair scale
 	cl_language =		Cvar_Get("cl_language", "english", CVAR_ARCHIVE); // jittrans
@@ -2274,7 +2276,7 @@ void CL_InitLocal (void)
 	cl_drawclockx =		Cvar_Get("cl_drawclockx", "-1", CVAR_ARCHIVE); // T3RR0R15T: clock position
 	cl_drawclocky =		Cvar_Get("cl_drawclocky", "-1", CVAR_ARCHIVE); // T3RR0R15T: clock position
 	cl_swearfilter =	Cvar_Get("cl_swearfilter", "1", CVAR_ARCHIVE); // viciouz - swear filter
-	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,liner,lining,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,walled,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch, ass ,owned,ownd,suck,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,idiot,horribad,newbed,heil,hitler,your mum,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,kacker,kakker,fehlgeburt,nazi,sukkar,sukar,suckar,lucker,stupid,gay", 0); // viciouz - swear filter - jit, added some more - T3RR0R15T, added some more again
+	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,liner,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,walled,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch, ass ,owned,ownd,suck,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,idiot,horribad,newbed,heil,hitler,your mum,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,kacker,kakker,fehlgeburt,nazi,sukkar,sukar,suckar,lucker,stupid,gay", 0); // viciouz - swear filter - jit, added some more - T3RR0R15T, added some more again
 	strtolower(cl_blockedwords->string);
 	cl_passwordpopup =	Cvar_Get("cl_passwordpopup", "1", CVAR_ARCHIVE); // viciouz - password popup
 	cl_centerprintkills = Cvar_Get("cl_centerprintkills", "1", CVAR_ARCHIVE); // jit
