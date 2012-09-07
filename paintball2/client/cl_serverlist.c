@@ -28,7 +28,7 @@ static void ping_broadcast (void)
 	cvar_t		*noipx;
 
 	NET_Config(true);		// allow remote
-	Com_Printf("Pinging broadcast...\n");
+	Com_DPrintf("Pinging broadcast...\n");
 	noudp = Cvar_Get("noudp", "0", CVAR_NOSET);
 	noipx = Cvar_Get("noipx", "1", CVAR_NOSET);
 
