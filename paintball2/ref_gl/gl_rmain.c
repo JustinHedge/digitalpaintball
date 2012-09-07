@@ -4994,8 +4994,11 @@ void R_PolyBlend (void)
 
 	if (gl_brightness->value)
 	{
-		if (gl_autobrightness->value > 1.0f || gl_autobrightness->value < 0.0f)
+		if (gl_autobrightness->value > 1.0f || gl_autobrightness->value < 0.5f)
 			ri.Cvar_SetValue("gl_autobrightness", 1.0f);
+
+		if (gl_brightness->value > 1.0f || gl_brightness->value < 0.0f)
+			ri.Cvar_SetValue("gl_brightness", 0.0f);
 
 		R_LightPoint(r_newrefdef.vieworg, shadelight);
 		shadeavg = max(0.0f, min(1.0f, (shadelight[0] + shadelight[1] + shadelight[2]) / 1.5f - 0.2f));
