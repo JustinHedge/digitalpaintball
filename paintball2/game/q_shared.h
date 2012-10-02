@@ -108,7 +108,7 @@ typedef enum {false, true}	qboolean;
 #define	PRINT_HIGH			2		// critical messages
 #define	PRINT_CHAT			3		// chat messages
 // paintball2 stuff:
-#define PRINT_DIALOG		11		// pops up a dailog on the client
+#define PRINT_POPUP		11		// pops up a dailog on the client
 #define PRINT_ITEM			12		// for item pickup notifications.
 #define PRINT_EVENT			13		// for events (such as flag captures)
 #define PRINT_SCOREDATA		14		// for server sending ping, kills, deaths, etc of a client.

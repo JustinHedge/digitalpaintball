@@ -192,7 +192,16 @@ typedef struct image_s
 	qboolean is_crosshair;				// viciouz - crosshair scale
 } image_t;
 
-#define	API_VERSION		3
+typedef struct bordered_pic_data_s
+{
+	float	screencoords[2 * 4 * 4];
+	float	texcoords[2 * 4 * 4];
+	image_t	*image;
+	char	*image_name; // Optional, if you don't want to set the image
+} bordered_pic_data_t;
+
+
+#define	API_VERSION		4
 
 //
 // these are the functions exported by the refresh module
@@ -263,6 +272,10 @@ typedef struct
 	void	(*AppActivate)(qboolean activate);
 
 	int		(*DrawGetIntVarByID)(int id);
+
+	// Like DrawPic2, but lets you specify the texture coordinates
+	void	(*DrawSubPic) (float x, float y, float w, float h, float tx1, float ty1, float tx2, float ty2, image_t *image);
+	void	(*DrawBorderedPic) (bordered_pic_data_t *data);
 
 } refexport_t;
 

@@ -314,10 +314,190 @@ void SCR_CheckDrawCenterString (void)
 {
 	scr_centertime_off -= cl.frametime; // jitnetfps
 	
-	if (scr_centertime_off <= 0)
+	if (scr_centertime_off <= 0.0f)
 		return;
 
-	SCR_DrawCenterString ();
+	SCR_DrawCenterString();
+}
+
+
+/*
+===============================================================================
+
+POPUP PRINTING - used for tutorials and whatnot - jitspoe
+
+===============================================================================
+*/
+
+#define MAX_POPUPS 3
+#define POPUP_DISPLAY_TIME 3.0f
+#define POPUP_FADE_TIME 0.5f
+#define POPUP_POS_Y 20.0f
+#define POPUP_WIDTH 256.0f // 80% at 640px, hudscale 2.
+#define POPUP_PADDING 8.0f // space between border and text
+
+float scr_popup_time_left[MAX_POPUPS];
+char scr_popup_text[MAX_POPUPS][1024];
+
+int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t size_out)
+{
+	register const char *in = text_in;
+	register char *out = text_out;
+	register int i_out = 0;
+	register char c = *in;
+	register const char *wrappable_in = NULL;
+	register int wrappable_out = 0;
+	register int linecount = 1;
+	register int charsize = CHARWIDTH * hudscale; // this will vary depending on character if/when variable sized fonts are supported.
+	register int current_line_width = 0;
+
+	assert(size_out > 0);
+
+	while (c && i_out < size_out)
+	{
+		switch (c)
+		{
+		case ' ':
+		case '[':
+		case '-':
+		case '(':
+		case ':':
+		case ';':
+		case '/':
+		case '+':
+			wrappable_in = in;
+			wrappable_out = i_out;
+			break;
+		case '\r':
+			// Probably won't happen, but just in case we do something like try to wordwrap a windows text file, ignore cr's.
+			continue;
+		}
+
+		current_line_width += charsize;
+
+		if (current_line_width > width)
+		{
+			// Wrap the line at a whitespace, if we have one.
+			if (wrappable_in)
+			{
+				in = wrappable_in;
+
+				// Get rid of any multi-spaces so they don't wrap to the next line.
+				while (*in == ' ')
+					++in;
+
+				text_out[wrappable_out] = '\n';
+				i_out = wrappable_out + 1;
+				wrappable_in = NULL;
+			}
+			else
+			{
+				text_out[i_out++] = '\n';
+			}
+
+			current_line_width = 0;
+			++linecount;
+		}
+		else
+		{
+			text_out[i_out++] = c;
+			++in;
+		}
+
+		c = *in;
+	}
+
+	text_out[i_out] = 0; // null terminate
+	return linecount;
+}
+
+// Returns the offset of the popup
+float SCR_DrawPopup (int popup_index, float offset)
+{
+	float alpha = scr_popup_time_left[popup_index] / POPUP_FADE_TIME;
+	int linecount = 1;
+
+	if (alpha > 1.0f)
+		alpha = 1.0f;
+
+	if (alpha > 0.0f)
+	{
+		float xpos = viddef.width - POPUP_WIDTH * hudscale;
+		float ypos = POPUP_POS_Y * hudscale + offset;
+		char wordwrappedtext[1024];
+
+		linecount = SCR_WordWrapText(scr_popup_text[popup_index], POPUP_WIDTH * hudscale - POPUP_PADDING * 2.0f, wordwrappedtext, sizeof(wordwrappedtext));
+		re.DrawStretchPic(xpos, ypos, POPUP_WIDTH * hudscale, POPUP_PADDING * 2 + linecount * hudscale * CHARHEIGHT, "select1bs"); // temp
+		re.DrawStringAlpha(xpos + POPUP_PADDING * hudscale, ypos + POPUP_PADDING, wordwrappedtext, alpha);
+
+		return hudscale * (CHARHEIGHT * linecount + POPUP_PADDING * 2) * alpha;
+	}
+
+	return 0.0f;
+}
+
+
+void SCR_CheckDrawPopups (void) // jitpopup
+{
+	int i;
+	float offset = 0.0f;
+
+	for (i = 0; i < MAX_POPUPS; ++i)
+	{
+		if (scr_popup_time_left[i] > 0.0f)
+		{
+			scr_popup_time_left[i] -= cl.frametime;
+			offset += SCR_DrawPopup(i, offset);
+		}
+	}
+}
+
+
+void SCR_PrintPopup (const char *str)
+{
+	int min_index = 0;
+	float min_time = 9999.9f;
+	int i;
+	qboolean do_shift = true;
+
+	// Shift existing ones up if ones above have timed out
+	while (do_shift) // crappy bubble sort type thing, but it doesn't need to be fancy
+	{
+		do_shift = false;
+
+		for (i = 0; i < MAX_POPUPS; ++i)
+		{
+			// Shift existing popups up as the one above may have faded out.
+			if (scr_popup_time_left[i] <= 0.0f && i + 1 < MAX_POPUPS && scr_popup_time_left[i + 1] > 0.0f)
+			{
+				scr_popup_time_left[i] = scr_popup_time_left[i + 1];
+				Q_strncpyz(scr_popup_text[i], scr_popup_text[i + 1], sizeof(scr_popup_text[i]));
+
+				scr_popup_time_left[i + 1] = 0.0f;
+				scr_popup_text[i + 1][0] = 0;
+				do_shift = true;
+			}
+		}
+	}
+
+	for (i = 0; i < MAX_POPUPS; ++i)
+	{
+		// If we get the same string multiple times, just reset the timer on it so it continues to display.
+		if (Q_streq(str, scr_popup_text[i]))
+		{
+			scr_popup_time_left[i] = POPUP_DISPLAY_TIME + POPUP_FADE_TIME;
+			return;
+		}
+
+		if (scr_popup_time_left[i] < min_time)
+		{
+			min_index = i;
+			min_time = scr_popup_time_left[i];
+		}
+	}
+
+	Q_strncpyz(scr_popup_text[min_index], str, sizeof(scr_popup_text[min_index]));
+	scr_popup_time_left[min_index] = POPUP_DISPLAY_TIME + POPUP_FADE_TIME; // Display for 3 seconds for now.
 }
 
 //=============================================================================
@@ -1635,21 +1815,21 @@ void SCR_UpdateScreen (void)
 
 				if (Cvar_VariableValue("snazbot"))
 				{
-					re.DrawString(viddef.width/2-76*hudscale, viddef.height-8*hudscale,
+					re.DrawString(viddef.width / 2 - 76 * hudscale, viddef.height - 8 * hudscale,
 						"SnaZ-BoT v3 Enabled");
 				}
 
-				SCR_DrawNet ();
-				SCR_CheckDrawCenterString ();
+				SCR_DrawNet();
+				SCR_CheckDrawCenterString();
+				SCR_CheckDrawPopups(); // jit
 
 				if (scr_timegraph->value)
-					//SCR_DebugGraph (cls.frametime*300, 0);
-					SCR_DebugGraph (cl.frametime*1000, 0); // jitnetgraph
+					SCR_DebugGraph(cl.frametime * 1000.0f, 0); // jitnetgraph
 
 				if (scr_debuggraph->value || scr_timegraph->value || scr_netgraph->value)
-					SCR_DrawDebugGraph ();
+					SCR_DrawDebugGraph();
 
-				SCR_DrawPause ();
+				SCR_DrawPause();
 			}
 
 			SCR_DrawConsole();

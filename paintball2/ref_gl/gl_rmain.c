@@ -5543,7 +5543,7 @@ void R_SetGL2D (void)
 	{
 		char s[256];
 
-		Com_sprintf(s, sizeof(s), "%c%c%4i wpoly %c%c%4i epoly %c9%i tex %i lmaps\n",
+		Com_sprintf(s, sizeof(s), "%c%c%4i wpoly %c%c%4i epoly %c9%i tex %i lmaps",
 			CHAR_COLOR, c_brush_polys > 1024 ? c_brush_polys > 2048 ? c_brush_polys > 4096 ? 'A' : 'C' : 'E' : '9',
 			c_brush_polys,
 			CHAR_COLOR, c_alias_polys > 2048 ? c_alias_polys > 4096 ? c_alias_polys > 8192 ? 'A' : 'C' : 'E' : '9',
@@ -6722,7 +6722,8 @@ void	Draw_TileClear2 (int x, int y, int w, int h, image_t *image);
 void	Draw_StretchPic2 (float x, float y, float w, float h, image_t *gl);
 void	Draw_Pic2 (float x, float y, image_t *gl);
 void	Draw_StringAlpha (float x, float y, const char *str, float alhpa); // jit
-
+void	Draw_SubPic (float x, float y, float w, float h, float tx1, float ty1, float tx2, float ty2, image_t *image); // jit
+void	Draw_BorderedPic (bordered_pic_data_t *bp_data);
 
 int Draw_GetIntVarByID (int id)
 {
@@ -6789,6 +6790,8 @@ refexport_t GetRefAPI (refimport_t rimp)
 	re.BeginFrame = R_BeginFrame;
 	re.EndFrame = GLimp_EndFrame;
 	re.AppActivate = GLimp_AppActivate;
+	re.DrawSubPic = Draw_SubPic;
+	re.DrawBorderedPic = Draw_BorderedPic;
 	Swap_Init();
 
 	return re;
