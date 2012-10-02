@@ -2918,6 +2918,11 @@ void CL_Init (void)
 	else
 		Cbuf_AddText("menu noprofile\n");
 	// jitprofile ===
+
+	if (!Cvar_VariableValue("cl_tutorialcomplete")) // jittutorial
+	{
+		Cbuf_AddText("menu_store;map tutorials/tutorial1\n");
+	}
 #endif
 	Cbuf_Execute();
 }
