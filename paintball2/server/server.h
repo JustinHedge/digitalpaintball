@@ -139,6 +139,8 @@ typedef struct client_s
 
 	netchan_t		netchan;
 	int				commandMsec2;		// jitspeedhackcheck
+	int				commandMsecTotal;	// jitspeedhackcheck
+	int				commandMsecServerTotal;
 #ifdef USE_DOWNLOAD3 // jitdownload
 	int				*download3_chunks;	// array containing status of chunks that have been sent
 	byte			download3_fileid;
@@ -215,6 +217,7 @@ extern	cvar_t		*sv_oldmovephysics;		// jitmove
 extern	cvar_t		*sv_skyglide_maxvel;	// jitmove
 extern	cvar_t		*sv_crouchslide;		// jitmove
 extern	cvar_t		*sv_enforcetime;
+extern	cvar_t		*sv_enforcetime2;		// jitspeedhackcheck
 extern	cvar_t		*sv_noextascii;			// jit
 extern  cvar_t		*sv_cullentities;		// viciouz - anti-wallhack
 extern	cvar_t		*sv_consolename;		// T3RR0R15T: Name for console say messages
@@ -296,6 +299,7 @@ void SV_BroadcastCommand (char *fmt, ...);
 //
 void SV_Nextserver (void);
 void SV_ExecuteClientMessage (client_t *cl);
+void SV_AddServerMsecToClients (int msec);
 
 //
 // sv_ccmds.c

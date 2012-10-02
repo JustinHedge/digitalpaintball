@@ -213,7 +213,7 @@ void SV_Baselines_f (void)
 
 	if (sv_client->state != cs_connected)
 	{
-		Com_Printf ("Baselines not valid -- already spawned.\n");
+		Com_Printf("Baselines not valid -- already spawned.\n");
 		return;
 	}
 	
@@ -713,14 +713,14 @@ to the next server,
 */
 void SV_Nextserver_f (void)
 {
-	if ( atoi(Cmd_Argv(1)) != svs.spawncount ) {
-		Com_DPrintf ("Nextserver() from wrong level, from %s.\n", sv_client->name);
+	if (atoi(Cmd_Argv(1)) != svs.spawncount)
+	{
+		Com_DPrintf("Nextserver() from wrong level, from %s.\n", sv_client->name);
 		return;		// leftover from last server
 	}
 
-	Com_DPrintf ("Nextserver() from %s.\n", sv_client->name);
-
-	SV_Nextserver ();
+	Com_DPrintf("Nextserver() from %s.\n", sv_client->name);
+	SV_Nextserver();
 }
 
 typedef struct
@@ -795,6 +795,20 @@ void SV_ClientThink (client_t *cl, usercmd_t *cmd)
 	cl->commandMsec -= cmd->msec;
 
 	// === jitspeedhackcheck
+	if (cl->state == cs_spawned)
+		cl->commandMsecTotal += cmd->msec;
+
+	if (sv_enforcetime2->value)
+	{
+		// If the accumulated msecs from the client is greater than the accumulated msecs from the server (+ some configurable leeway),
+		// he's probably using some sort of speed cheat.
+		if (cl->commandMsecTotal > cl->commandMsecServerTotal + (int)(sv_enforcetime2->value * 1000.0f))
+		{
+			SV_BroadcastPrintf(PRINT_HIGH, "%s kicked for time discrepancy 2.\n", cl->name);
+			SV_DropClient(cl);
+		}
+	}
+
 	if (cl->commandMsec2) // wait 'til this value gets initialized before subtracting
 	{
 		cl->commandMsec2 -= cmd->msec;
@@ -866,7 +880,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 	{
 		if (net_message.readcount > net_message.cursize)
 		{
-			Com_Printf ("SV_ReadClientMessage: badread\n");
+			Com_Printf("SV_ReadClientMessage: badread\n");
 			SV_DropClient (cl);
 			return;
 		}	
@@ -975,3 +989,21 @@ void SV_ExecuteClientMessage (client_t *cl)
 	}
 }
 
+// === jitspeedhackcheck
+void SV_AddServerMsecToClients (int msec)
+{
+	int			i;
+	client_t	*cl;
+	int			max = maxclients->value; // todo: better way to do this?
+
+	for (i = 0; i < max; ++i)
+	{
+		cl = svs.clients + i;
+
+		if (cl->state != cs_spawned)
+			continue;
+
+		cl->commandMsecServerTotal += msec;
+	}
+}
+// jitspeedhackcheck ===

@@ -29,6 +29,7 @@ cvar_t	*sv_paused;
 cvar_t	*sv_timedemo;
 
 cvar_t	*sv_enforcetime;
+cvar_t	*sv_enforcetime2;		// jitspeedhackcheck
 cvar_t  *sv_cullentities;
 
 cvar_t	*timeout;				// seconds without any message
@@ -1291,6 +1292,9 @@ void SV_Frame (int msec)
 	// check timeouts
 	SV_CheckTimeouts();
 
+	// jitspeedhackcheck - accumulate server msec on each client
+	SV_AddServerMsecToClients(msec);
+
 	// get packets from clients
 	SV_ReadPackets();
 #ifdef USE_DOWNLOAD3
@@ -1493,6 +1497,7 @@ void SV_Init (void)
 	sv_paused      = Cvar_Get("paused", "0", 0);
 	sv_timedemo    = Cvar_Get("timedemo", "0", 0);
 	sv_enforcetime = Cvar_Get("sv_enforcetime", "0", 0); // 1.831 - disabled because of problems. "240", 0); // jitspeedhackcheck
+	sv_enforcetime2= Cvar_Get("sv_enforcetime2", "1", 0); // jitspeedhackcheck - threshold, in seconds, before somebody is kicked for time discrepancy
 	sv_cullentities= Cvar_Get("sv_cullentities", "0", 0);
 	sv_noextascii  = Cvar_Get("sv_noextascii", "1", 0); // jit
 	sv_locked	   = Cvar_Get("sv_locked", "0", 0);		// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
