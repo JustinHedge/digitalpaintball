@@ -79,8 +79,7 @@ cvar_t	*joy_yawsensitivity;
 cvar_t	*joy_upthreshold;
 cvar_t	*joy_upsensitivity;
 
-// NiceAss:
-cvar_t *m_xp;
+cvar_t *m_noaccel; // jitmouse
 
 qboolean	joy_avail, joy_advancedinit, joy_haspov;
 DWORD		joy_oldbuttonstate, joy_oldpovstate;
@@ -135,8 +134,7 @@ qboolean	mouseactive;	// false when not focus app
 qboolean	restore_spi;
 qboolean	mouseinitialized;
 int			originalmouseparms[3];
-int			newmouseparms[3]	= { 0, 0, 1 };
-int			newmouseparmsXP[3]	= { 0, 0, 0 }; // m_xp -- xp mouse acceleration fix
+int			newmouseparms_noaccel[3] = { 0, 0, 0 }; // jitmouse
 qboolean	mouseparmsvalid;
 
 int			window_center_x, window_center_y;
@@ -150,17 +148,15 @@ IN_ActivateMouse
 Called when the window gains focus or changes in some way
 ===========
 */
-void IN_ActivateMouse (void)
+void IN_ActivateMouse (qboolean clipcursor)
 {
 	int		width, height;
-	BOOL success;
-	OSVERSIONINFO osver;
 
-	// NiceAss: reset mouse settings if m_xp changes
-	if (m_xp->modified)
+	// NiceAss: reset mouse settings if m_noaccel (formerly m_xp) changes
+	if (m_noaccel->modified)
 	{
 		mouseactive = false;
-		m_xp->modified = false;
+		m_noaccel->modified = false;
 	}
 
 	if (!mouseinitialized)
@@ -177,29 +173,17 @@ void IN_ActivateMouse (void)
 
 	mouseactive = true;
 
-	//if (mouseparmsvalid)
-	//	restore_spi = SystemParametersInfo (SPI_SETMOUSE, 0, newmouseparms, 0);
-
-	// -- xp accel fix
-	memset(&osver, 0, sizeof(OSVERSIONINFO));
-	osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	success = GetVersionEx(&osver);
-
 	if (mouseparmsvalid)
 	{
-		// WinXP is NT and version 5.1
-		if ((success && osver.dwPlatformId == VER_PLATFORM_WIN32_NT &&
-		    osver.dwMajorVersion == 5 && osver.dwMinorVersion == 1 && m_xp->value == 1) || 
-			m_xp->value == 2)
+		if (m_noaccel->value) // jitmouse - ignore windows version checks so this works for Windows 7 and hopefully future versions.
 		{
-			restore_spi = SystemParametersInfo(SPI_SETMOUSE, 0, newmouseparmsXP, 0);
+			restore_spi = SystemParametersInfo(SPI_SETMOUSE, 0, newmouseparms_noaccel, 0);
 		}
 		else
 		{
-			restore_spi = SystemParametersInfo(SPI_SETMOUSE, 0, newmouseparms, 0);
+			restore_spi = SystemParametersInfo(SPI_SETMOUSE, 0, originalmouseparms, 0);
 		}
 	}
-	// xp accel fix --
 
 	width = GetSystemMetrics(SM_CXSCREEN);
 	height = GetSystemMetrics(SM_CYSCREEN);
@@ -224,9 +208,14 @@ void IN_ActivateMouse (void)
 	old_y = window_center_y;
 
 	SetCapture(cl_hwnd);
-	ClipCursor(&window_rect);
 
-	while (ShowCursor (FALSE) >= 0)
+	// jitmenu - in windowed mode, don't clip the cursor for the menu.
+	if (clipcursor)
+		ClipCursor(&window_rect);
+	else
+		ClipCursor(NULL);
+
+	while (ShowCursor(FALSE) >= 0)
 		;
 }
 
@@ -242,6 +231,7 @@ void IN_DeactivateMouse (void)
 {
 	if (!mouseinitialized)
 		return;
+
 	if (!mouseactive)
 		return;
 
@@ -249,10 +239,9 @@ void IN_DeactivateMouse (void)
 		SystemParametersInfo (SPI_SETMOUSE, 0, originalmouseparms, 0);
 
 	mouseactive = false;
-
-	ClipCursor (NULL);
-	ReleaseCapture ();
-	while (ShowCursor (TRUE) < 0)
+	ClipCursor(NULL);
+	ReleaseCapture();
+	while (ShowCursor(TRUE) < 0)
 		;
 }
 
@@ -267,14 +256,14 @@ void IN_StartupMouse (void)
 {
 	cvar_t		*cv;
 
-	cv = Cvar_Get ("in_initmouse", "1", CVAR_NOSET);
-	if ( !cv->value ) 
+	cv = Cvar_Get("in_initmouse", "1", CVAR_NOSET);
+
+	if (!cv->value) 
 		return; 
 
 	mouseinitialized = true;
-	mouseparmsvalid = SystemParametersInfo (SPI_GETMOUSE, 0, originalmouseparms, 0);
-	//mouse_buttons = 3;
-	mouse_buttons = 9; // jitmouse
+	mouseparmsvalid = SystemParametersInfo(SPI_GETMOUSE, 0, originalmouseparms, 0);
+	mouse_buttons = 9; // jitmouse (was 3)
 }
 
 /*
@@ -391,8 +380,7 @@ void IN_Init (void)
 	// mouse variables
 	m_filter				= Cvar_Get ("m_filter",					"0",		CVAR_ARCHIVE);
     in_mouse				= Cvar_Get ("in_mouse",					"1",		CVAR_ARCHIVE);
-	// NiceAss:
-	m_xp					= Cvar_Get ("m_xp",						"1",		CVAR_ARCHIVE);
+	m_noaccel				= Cvar_Get ("m_noaccel",				"1",		CVAR_ARCHIVE);
 
 	// joystick variables
 	in_joystick				= Cvar_Get ("in_joystick",				"0",		CVAR_ARCHIVE);
@@ -435,7 +423,7 @@ IN_Shutdown
 */
 void IN_Shutdown (void)
 {
-	IN_DeactivateMouse ();
+	IN_DeactivateMouse();
 }
 
 
@@ -471,6 +459,8 @@ Called every frame, even if not generating commands
 */
 void IN_Frame (void)
 {
+	qboolean windowed = false;
+
 	CheckActive(cl_hwnd);
 
 	if (!mouseinitialized)
@@ -482,19 +472,21 @@ void IN_Frame (void)
 		return;
 	}
 
+	windowed = Cvar_VariableValue("vid_fullscreen") == 0.0f;
+
 	if (!cl.refresh_prepped
 		|| cls.key_dest == key_console
-		/*|| cls.key_dest == key_menu*/) // jitmenu
+		)//|| cls.key_dest == key_menu) // jitmenu
 	{
 		// temporarily deactivate if in fullscreen
-		if (Cvar_VariableValue("vid_fullscreen") == 0 && !M_MenuActive()) // jitmenu / jitmouse
+		if (windowed && !M_MenuActive()) // jitmenu / jitmouse
 		{
-			IN_DeactivateMouse ();
+			IN_DeactivateMouse();
 			return;
 		}
 	}
 
-	IN_ActivateMouse();
+	IN_ActivateMouse(!(M_MenuActive() && windowed)); // jitmenu - don't clip the cursor when we're on the menu in windowed mode.
 }
 
 
