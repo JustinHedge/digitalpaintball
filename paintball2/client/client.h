@@ -667,7 +667,7 @@ int decode_unsigned (const unsigned char *in, unsigned int *out, int max);
 void encode_unsigned (unsigned int count, unsigned int *in, unsigned char *out);
 void CL_ParsePrintEvent (const char *str);
 void CL_DrawEventStrings (void);
-int translate_string (char *out_str, int max_len, const char *in_str);
+int format_string (char *out_str, int max_len, const char *in_str);
 #define name_from_index(a) cl.clientinfo[(a)].name
 //
 // cl_profile.c
@@ -752,6 +752,9 @@ void Serverlist_Shutdown (void);
 
 int strlen_noformat (const unsigned char *s); // jitmenu
 int strpos_noformat (const unsigned char *in_str, int pos); // jitmenu
+
+// cl_scrn.c
+void SCR_PrintPopup (const char *s); // jit
 
 //
 // cl_inv.c

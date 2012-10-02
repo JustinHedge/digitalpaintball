@@ -1040,7 +1040,7 @@ void CL_ParseClientinfo (int player)
 }
 
 
-static void translate_config_string (char *config_string) // jittrans
+static void translate_string (char *out, size_t size, const char *in) // jittrans
 {
 	extern cvar_t			*cl_language;
 	static qboolean			loaded = false;
@@ -1080,8 +1080,10 @@ static void translate_config_string (char *config_string) // jittrans
 	}
 
 	// If the string is in the translation table, copy it over the original
-	if (s = hash_get(&string_trans_hash, config_string))
-		strcpy(config_string, s);
+	if (s = hash_get(&string_trans_hash, in))
+		Q_strncpyz(out, s, size);
+	else
+		Q_strncpyz(out, in, size);
 }
 
 /*
@@ -1150,9 +1152,9 @@ void CL_ParseConfigString (void)
 		else
 			cls.server_gamebuild = 0;
 	}
-	else
+	else if (i >= CS_EVENTS)
 	{
-		translate_config_string(cl.configstrings[i]); // jittrans
+		translate_string(cl.configstrings[i], MAX_QPATH, cl.configstrings[i]); // jittrans
 	}
 }
 
@@ -1355,7 +1357,7 @@ static void CL_ParsePrintDefault (const char *text) // jit
 
 extern cvar_t *cl_dialogprint;
 
-static void CL_ParsePrintDialog (const char *text) // jit
+static void CL_ParsePrintPopup (const char *text) // jit
 {
 	char translated[2048];
 	char *expanded;
@@ -1365,7 +1367,8 @@ static void CL_ParsePrintDialog (const char *text) // jit
 
 	if (cls.key_dest != key_console && cl_dialogprint->value) // Only pop up the dialog when out of the console.
 	{
-		M_PrintDialog(expanded);
+		//M_PrintDialog(expanded);
+		SCR_PrintPopup(expanded);
 	}
 	else
 	{
@@ -1495,8 +1498,8 @@ void CL_ParseServerMessage (void)
 			case PRINT_CHATN_ACTION:
 				CL_ParseChat(i, MSG_ReadString(&net_message));
 				break;
-			case PRINT_DIALOG:
-				CL_ParsePrintDialog(MSG_ReadString(&net_message));
+			case PRINT_POPUP:
+				CL_ParsePrintPopup(MSG_ReadString(&net_message));
 				break;
 			default:
 				CL_ParsePrintDefault(MSG_ReadString(&net_message));

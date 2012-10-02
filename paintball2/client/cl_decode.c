@@ -184,7 +184,7 @@ static int index_array[MAX_DECODE_ARRAY];
 static int num_elements;
 static int current_element;
 
-int translate_string (char *out_str, int max_len, const char *in_str)
+int format_event_string (char *out_str, int max_len, const char *in_str)
 {
 	char *out_str_start = out_str;
 	const char *in_str_start = in_str;
@@ -217,7 +217,7 @@ int translate_string (char *out_str, int max_len, const char *in_str)
 				switch(*in_str)
 				{
 				case 's': // event string
-					max_len -= translate_string(out_str, max_len, cl.configstrings[CS_EVENTS+index_array[current_element++]]);
+					max_len -= format_event_string(out_str, max_len, cl.configstrings[CS_EVENTS + index_array[current_element++]]);
 					break;
 				case 'i': // item
 					Q_strncpyz(out_str, item_from_index(index_array[current_element++]), max_len);
@@ -337,7 +337,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 	if (num_elements > 1)
 	{
 		current_element = 2;
-		translate_string(event_text, sizeof(event_text), cl.configstrings[CS_EVENTS+index_array[1]]);
+		format_event_string(event_text, sizeof(event_text), cl.configstrings[CS_EVENTS + index_array[1]]);
 	}
 	else
 	{
