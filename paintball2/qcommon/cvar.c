@@ -108,7 +108,7 @@ cvar_t *Cvar_Get (char *var_name, char *var_value, int flags)
 		}
 	}
 
-	var = Cvar_FindVar (var_name);
+	var = Cvar_FindVar(var_name);
 	if (var)
 	{
 		var->flags |= flags;

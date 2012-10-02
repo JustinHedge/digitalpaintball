@@ -275,7 +275,7 @@ void Con_ClearNotify (void)
 {
 	int		i;
 	
-	for (i=0 ; i<NUM_CON_TIMES ; i++)
+	for (i = 0; i < NUM_CON_TIMES; ++i)
 		con.times[i] = 0;
 }
 
@@ -537,13 +537,15 @@ void Con_CenteredPrint (char *text)
 	char	buffer[1024];
 
 	l = strlen(text);
-	l = (con.linewidth-l)*0.5;
+	l = (con.linewidth - l) / 2;
+
 	if (l < 0)
 		l = 0;
-	memset (buffer, ' ', l);
-	strcpy (buffer+l, text);
-	strcat (buffer, "\n");
-	Con_Print (buffer);
+
+	memset(buffer, ' ', l);
+	strcpy(buffer + l, text);
+	strcat(buffer, "\n");
+	Con_Print(buffer);
 }
 
 /*
@@ -627,7 +629,7 @@ void Con_DrawNotify (void)
 
 	v = 0;
 
-	for (i = con.current-NUM_CON_TIMES + 1 ; i <= con.current; i++)
+	for (i = con.current - NUM_CON_TIMES + 1; i <= con.current; i++)
 	{
 		if (i < 0)
 			continue;
@@ -639,7 +641,7 @@ void Con_DrawNotify (void)
 
 		time = cls.realtime - time;
 
-		if (time > con_notifytime->value*1000)
+		if (time > con_notifytime->value * 1000.0f)
 			continue;
 
 		text = con.text + (i % con.totallines) * (con.linewidth);

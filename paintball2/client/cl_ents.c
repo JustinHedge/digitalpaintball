@@ -114,7 +114,9 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 		to->frame = MSG_ReadByte(&net_message);
 
 	if (bits & U_FRAME16)
-		to->frame = MSG_ReadShort (&net_message);
+		to->frame = MSG_ReadShort(&net_message);
+
+	assert(to->skinnum >= 0); // jitdebug
 
 	if ((bits & U_SKIN8) && (bits & U_SKIN16))		//used for laser colors
 		to->skinnum = MSG_ReadLong(&net_message);
@@ -140,13 +142,13 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 		to->renderfx = MSG_ReadShort(&net_message);
 
 	if (bits & U_ORIGIN1)
-		to->origin[0] = MSG_ReadCoord (&net_message);
+		to->origin[0] = MSG_ReadCoord(&net_message);
 
 	if (bits & U_ORIGIN2)
-		to->origin[1] = MSG_ReadCoord (&net_message);
+		to->origin[1] = MSG_ReadCoord(&net_message);
 
 	if (bits & U_ORIGIN3)
-		to->origin[2] = MSG_ReadCoord (&net_message);
+		to->origin[2] = MSG_ReadCoord(&net_message);
 		
 	if (bits & U_ANGLE1)
 		to->angles[0] = MSG_ReadAngle(&net_message);
@@ -158,7 +160,7 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 		to->angles[2] = MSG_ReadAngle(&net_message);
 
 	if (bits & U_OLDORIGIN)
-		MSG_ReadPos (&net_message, to->old_origin);
+		MSG_ReadPos(&net_message, to->old_origin);
 
 	if (bits & U_SOUND)
 		to->sound = MSG_ReadByte(&net_message);
@@ -169,7 +171,7 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 		to->event = 0;
 
 	if (bits & U_SOLID)
-		to->solid = MSG_ReadShort (&net_message);
+		to->solid = MSG_ReadShort(&net_message);
 }
 
 /*
