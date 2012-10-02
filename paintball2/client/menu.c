@@ -2341,8 +2341,8 @@ void M_PrintDialog (char* text)
 {
 	menu_screen_t *menu;
 	menu = M_GetNewMenuScreen("dialog", NULL);
-	M_DialogBox(menu,text);
-	M_PushMenuScreen(menu,false);
+	M_DialogBox(menu, text);
+	M_PushMenuScreen(menu, false);
 }
 
 static int M_WidgetGetType (const char *s)
@@ -2921,6 +2921,11 @@ void M_MenuRestore_f (void)
 	// They should currently stay cached, though.
 	memcpy(m_menu_screens, m_stored_menu_screens, sizeof(m_menu_screens));
 	cls.key_dest = key_menu;
+
+	if (!m_menudepth) // if there's no menu to restore, just default to the main menu.
+	{
+		Cbuf_AddText("menu main\n");
+	}
 }
 
 
