@@ -5733,7 +5733,7 @@ void R_Register(void)
 	cl_crosshairscale = ri.Cvar_Get("cl_crosshairscale", "2", CVAR_ARCHIVE); // viciouz - crosshair scale
 	gl_log = ri.Cvar_Get("gl_log", "0", 0);
 	gl_bitdepth = ri.Cvar_Get("gl_bitdepth", "0", 0);
-	gl_mode = ri.Cvar_Get("gl_mode", "3", CVAR_ARCHIVE);
+	gl_mode = ri.Cvar_Get("gl_mode", "4", CVAR_ARCHIVE); // default to 800x600 now instead of mode 3, 640x480
 	gl_lightmap = ri.Cvar_Get("gl_lightmap", "0", 0);
 	gl_shadows = ri.Cvar_Get("gl_shadows", "0", CVAR_ARCHIVE);
 	gl_dynamic = ri.Cvar_Get("gl_dynamic", "1", 0);
