@@ -1122,17 +1122,31 @@ int	memsearch (byte *start, int count, int search)
 }
 
 
-char *CopyString (char *in) // same as strdup, only with Z_Malloc
+char *CopyString (const char *in) // same as strdup, only with Z_Malloc
 {
 	char	*out;
 	
-	out = Z_Malloc(strlen(in)+1);
+	out = Z_Malloc(strlen(in) + 1);
 	strcpy(out, in);
 	return out;
 }
 
 
-void Info_Print (char *s)
+// Same as CopyString, but adds a newline character to the end.
+char *CopyStringAddNewline (const char *in)
+{
+	char *out;
+	register int length = strlen(in);
+
+	out = Z_Malloc(length + 2);
+	strcpy(out, in);
+	out[length] = '\n';
+	out[length + 1] = 0;
+	return out;
+}
+
+
+void Info_Print (const char *s)
 {
 	char	key[512];
 	char	value[512];
@@ -1430,6 +1444,7 @@ float crand (void)
 }
 
 void Key_Init (void);
+void Key_Shutdown (void);
 void SCR_EndLoadingPlaque (void);
 
 /*
@@ -1456,35 +1471,34 @@ void Qcommon_Init (int argc, char **argv)
 	char *s;
 
 	if (setjmp (abortframe))
-		Sys_Error ("Error during initialization.");
+		Sys_Error("Error during initialization.");
 
 	z_chain.next = z_chain.prev = &z_chain;
 
 	// prepare enough of the subsystems to handle
 	// cvar and command buffer management
-	COM_InitArgv (argc, argv);
+	COM_InitArgv(argc, argv);
 
-	Swap_Init ();
-	Cbuf_Init ();
+	Swap_Init();
+	Cbuf_Init();
 
-	Cmd_Init ();
-	Cvar_Init ();
-
-	Key_Init ();
+	Cmd_Init();
+	Cvar_Init();
 
 	// we need to add the early commands twice, because
 	// a basedir or cddir needs to be set before execing
 	// config files, but we want other parms to override
 	// the settings of the config files
-	Cbuf_AddEarlyCommands (false);
-	Cbuf_Execute ();
+	Cbuf_AddEarlyCommands(false);
+	Cbuf_Execute();
 
-	FS_InitFilesystem ();
+	FS_InitFilesystem();
+	Key_Init(); // jit - moved to after the filesystem init because we need to load the key history
 
 	FS_ExecConfig(); // jit
 
-	Cbuf_AddEarlyCommands (true);
-	Cbuf_Execute ();
+	Cbuf_AddEarlyCommands(true);
+	Cbuf_Execute();
 
 	//
 	// init commands and vars
@@ -1612,17 +1626,17 @@ void Qcommon_Frame (int msec)
 	Cbuf_Execute();
 
 	if (host_speeds->value)
-		time_before = Sys_Milliseconds ();
+		time_before = Sys_Milliseconds();
 
 	SV_Frame(msec);
 
 	if (host_speeds->value)
-		time_between = Sys_Milliseconds ();		
+		time_between = Sys_Milliseconds();		
 
 	CL_Frame(msec);
 
 	if (host_speeds->value)
-		time_after = Sys_Milliseconds ();		
+		time_after = Sys_Milliseconds();		
 
 	if (host_speeds->value)
 	{
@@ -1646,6 +1660,7 @@ Qcommon_Shutdown
 */
 void Qcommon_Shutdown (void)
 {
+	Key_Shutdown();
 }
 
 

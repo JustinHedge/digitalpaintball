@@ -176,23 +176,30 @@ void CompleteCommand (void)
 {
 	char	*cmd, *s;
 
-	s = key_lines[edit_line]+1;
+	s = key_lines[edit_line] + 1;
+
 	if (*s == '\\' || *s == '/')
 		s++;
 
-	cmd = Cmd_CompleteCommand (s);
+	cmd = Cmd_CompleteCommand(s);
+
 	if (cmd)
 	{
 		key_lines[edit_line][1] = '/';
-		strcpy (key_lines[edit_line]+2, cmd);
-		key_linepos = strlen(cmd)+2;
-		if (Cmd_IsComplete(cmd)) {
+		strcpy (key_lines[edit_line] + 2, cmd);
+		key_linepos = strlen(cmd) + 2;
+
+		if (Cmd_IsComplete(cmd))
+		{
 			key_lines[edit_line][key_linepos] = ' ';
 			key_linepos++;
 			key_lines[edit_line][key_linepos] = 0;
-		} else {
+		}
+		else
+		{
 			key_lines[edit_line][key_linepos] = 0;
 		}
+
 		return;
 	}
 }
@@ -385,7 +392,7 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 			int charcount;
 			// jump over invisible color sequences
 			charcount = key_linepos;
-			key_linepos = CharOffset (key_lines[edit_line], charcount + 1);
+			key_linepos = CharOffset(key_lines[edit_line], charcount + 1);
 		}
 		return;
 	}
@@ -781,6 +788,7 @@ Key_Init
 void Key_Init (void)
 {
 	int		i;
+	char	*keyhistory;
 
 	for (i = 0; i < 32; i++)
 	{
@@ -868,6 +876,34 @@ void Key_Init (void)
 	Cmd_AddCommand("unbind", Key_Unbind_f);
 	Cmd_AddCommand("unbindall", Key_Unbindall_f);
 	Cmd_AddCommand("bindlist", Key_Bindlist_f);
+
+	// Load the key line history - jit
+	if (FS_LoadFile("configs/keyhistory.dat", &keyhistory) > 0)
+	{
+		size_t size = *(size_t *)keyhistory;
+
+		if (size == sizeof(key_lines))
+		{
+			memcpy(key_lines, keyhistory + sizeof(size_t), sizeof(key_lines));
+		}
+	}
+}
+
+
+void Key_Shutdown (void) // jit
+{
+	char filename[MAX_QPATH];
+	FILE *fp;
+
+	Com_sprintf(filename, sizeof(filename), "%s/configs/keyhistory.dat", FS_Gamedir());
+
+	if ((fp = fopen(filename, "wb")))
+	{
+		size_t size = sizeof(key_lines);
+		fwrite(&size, sizeof(size_t), 1, fp);
+		fwrite(key_lines, sizeof(key_lines), 1, fp);
+		fclose(fp);
+	}
 }
 
 
