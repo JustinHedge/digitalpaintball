@@ -2316,7 +2316,7 @@ static char char_remap[256] = {
 };
 
 // strip out the garbage characters such as color codes
-// and map extendegggd ascii to something readable...
+// and map extended ascii to something readable...
 void strip_garbage (char *cout, const char *cin) // jit
 {
 	register const unsigned char *s;

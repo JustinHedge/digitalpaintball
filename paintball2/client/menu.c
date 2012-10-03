@@ -54,15 +54,10 @@ extern m_serverlist_t	m_serverlist;
 static void M_UpdateDrawingInformation (menu_widget_t *widget);
 char *Cmd_MacroExpandString (const char *text);
 
-// same thing as strdup, only uses Z_Malloc
+// same thing as strdup, only uses Z_Malloc - todo: replace with CopyString, which is exactly the same thing.
 char *text_copy (const char *in)
 {
-	char *out;
-
-	out = Z_Malloc(sizeof(char) * (strlen(in) + 1));
-	strcpy(out, in);
-
-	return out;
+	return CopyString(in);
 }
 
 // these two functions are for the "listsource"
