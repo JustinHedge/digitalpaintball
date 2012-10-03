@@ -160,6 +160,7 @@ void Serverlist_Clear_f (void)
 static void update_serverlist_server (m_serverlist_server_t *server, char *info, int ping)
 {
 	char *s;
+	const char *servername;
 
 	// start at end of string:
 	s = strlen(info) + info; 
@@ -179,20 +180,22 @@ static void update_serverlist_server (m_serverlist_server_t *server, char *info,
 	// find map name:
 	while(s > info && *s == 32) // clear whitespace;
 		s--;
-	*(s+1) = 0;
+
+	*(s + 1) = 0;
+
 	while(s > info && *s > 32)
 		s--;
 
 	if (!server->mapname)
 	{
-		server->mapname = text_copy(s+1);
+		server->mapname = text_copy(s + 1);
 	}
-	else if (!Q_streq(server->mapname, s+1))
+	else if (!Q_streq(server->mapname, s + 1))
 	{
 		char buf[MAX_QPATH];
 
 		Z_Free(server->mapname);
-		sprintf(buf, "%s/maps/%s.bsp", FS_Gamedir(), s+1);
+		sprintf(buf, "%s/maps/%s.bsp", FS_Gamedir(), s + 1);
 
 		if (!FileExists(buf))
 		{
@@ -208,18 +211,20 @@ static void update_serverlist_server (m_serverlist_server_t *server, char *info,
 
 	// servername is what's left over:
 	*s = 0;
+	servername = info;
 
-	if (!server->servername)
+	while (*servername == ' ') // skip leading spaces
+		++servername;
+
+	if (!server->servername || strlen(server->servername) < strlen(servername))
 	{
-		server->servername = text_copy(info);
-		strip_garbage(server->servername, info);
+		if (server->servername)
+			Z_Free(server->servername);
+
+		server->servername = text_copy(servername);
 	}
-	else if (!Q_streq(server->servername, info))
-	{
-		Z_Free(server->servername);
-		server->servername = text_copy(info);
-		strip_garbage(server->servername, info);
-	}
+
+	strip_garbage(server->servername, servername);
 
 	// and the ping
 	server->ping = ping;
