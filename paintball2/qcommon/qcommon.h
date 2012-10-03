@@ -194,11 +194,12 @@ void COM_AddParm (char *parm);
 void COM_Init (void);
 void COM_InitArgv (int argc, char **argv);
 
-char *CopyString (char *in);
+char *CopyString (const char *in);
+char *CopyStringAddNewline (const char *in);
 
 //============================================================================
 
-void Info_Print (char *s);
+void Info_Print (const char *s);
 
 
 /* crc.h */

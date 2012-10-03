@@ -1070,7 +1070,10 @@ static void translate_string (char *out, size_t size, const char *in) // jittran
 
 			while (key && val)
 			{
+				char *key_newline = CopyStringAddNewline(key);
 				hash_add(&string_trans_hash, key, CopyString(val));
+				hash_add(&string_trans_hash, key_newline, CopyStringAddNewline(val)); // Not a great solution, but most prints include a \n at the end, so add this to the table as well.
+				Z_Free(key_newline);
 				key = strtok(NULL, "\r\n");
 				val = strtok(NULL, "\r\n");
 			}
