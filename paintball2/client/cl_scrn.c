@@ -329,7 +329,7 @@ POPUP PRINTING - used for tutorials and whatnot - jitspoe
 ===============================================================================
 */
 
-#define MAX_POPUPS 3
+#define MAX_POPUPS 4
 #define POPUP_DISPLAY_TIME 3.0f
 #define POPUP_FADE_TIME 0.5f
 #define POPUP_POS_Y 20.0f
@@ -350,6 +350,7 @@ int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t s
 	register int linecount = 1;
 	register int charsize = CHARWIDTH * hudscale; // this will vary depending on character if/when variable sized fonts are supported.
 	register int current_line_width = 0;
+	qboolean colorchar = false;
 
 	assert(size_out > 0);
 
@@ -373,7 +374,23 @@ int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t s
 			continue;
 		}
 
-		current_line_width += charsize;
+		// Don't count formatting toward the size.
+		if (c == (char)CHAR_COLOR)
+		{
+			colorchar = true;
+		}
+		else if (colorchar)
+		{
+			colorchar = false;
+		}
+		else if (c == (char)CHAR_ITALICS || c == (char)CHAR_ENDFORMAT || c == (char)CHAR_UNDERLINE)
+		{
+			// don't count these.
+		}
+		else
+		{
+			current_line_width += charsize;
+		}
 
 		if (current_line_width > width)
 		{
