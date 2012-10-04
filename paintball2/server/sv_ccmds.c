@@ -492,25 +492,29 @@ Clears the archived maps, plays the inter.cin cinematic, then
 goes to map jail.bsp.
 ==================
 */
+void SV_GameMap (const char *map);
+
 void SV_GameMap_f (void)
 {
-	char		*map;
-	int			i;
-	client_t	*cl;
-	qboolean	*savedInuse;
-
 	if (Cmd_Argc() != 2)
 	{
 		Com_Printf ("Usage: gamemap <map>\n");
 		return;
 	}
 
-	Com_DPrintf("SV_GameMap(%s)\n", Cmd_Argv(1));
+	SV_GameMap(Cmd_Argv(1));
+}
+
+
+void SV_GameMap (const char *map) // jitmap - broke this into a separate function
+{
+	int			i;
+	client_t	*cl;
+	qboolean	*savedInuse;
+
+	Com_DPrintf("SV_GameMap(%s)\n", map);
 
 	FS_CreatePath(va("%s/save/current/", FS_Gamedir()));
-
-	// check for clearing the current savegame
-	map = Cmd_Argv(1);
 
 	if (map[0] == '*')
 	{
@@ -525,23 +529,25 @@ void SV_GameMap_f (void)
 			// when the level is re-entered, the clients will spawn
 			// at spawn points instead of occupying body shells
 			savedInuse = malloc(maxclients->value * sizeof(qboolean));
-			for (i=0,cl=svs.clients ; i<maxclients->value; i++,cl++)
+
+			for (i = 0, cl = svs.clients; i < maxclients->value; i++, cl++)
 			{
 				savedInuse[i] = cl->edict->inuse;
 				cl->edict->inuse = false;
 			}
 
-			SV_WriteLevelFile ();
+			SV_WriteLevelFile();
 
 			// we must restore these for clients to transfer over correctly
-			for (i=0,cl=svs.clients ; i<maxclients->value; i++,cl++)
+			for (i = 0, cl = svs.clients; i < maxclients->value; i++, cl++)
 				cl->edict->inuse = savedInuse[i];
-			free (savedInuse);
+
+			free(savedInuse);
 		}
 	}
 
 	// start up the next map
-	SV_Map (false, Cmd_Argv(1), false );
+	SV_Map(false, map, false );
 
 	// archive server state
 	Q_strncpyz(svs.mapcmd, Cmd_Argv(1), sizeof(svs.mapcmd)-1);
@@ -550,7 +556,7 @@ void SV_GameMap_f (void)
 	if (!deathmatch->value) // jit -- don't try to save during deathmatch...
 	{
 		SV_WriteServerFile (true);
-		SV_CopySaveGame ("current", "save0");
+		SV_CopySaveGame("current", "save0");
 	}
 }
 //*/
@@ -565,14 +571,14 @@ For development work
 */
 void SV_Map_f (void)
 {
-	char	*map;
+	const char	*map, *originalmap;
 	char	expanded[MAX_QPATH];
 #ifndef DEDICATED_ONLY
 	void	M_ForceMenuOff(); // jitmenu
 #endif
 	
 	// if not a pcx, demo, or cinematic, check to make sure the level exists
-	map = Cmd_Argv(1);
+	originalmap = map = Cmd_Argv(1);
 
 #ifndef DEDICATED_ONLY
 	M_ForceMenuOff(); // jitmenu
@@ -584,19 +590,39 @@ void SV_Map_f (void)
 		return;
 	}
 
-	if (!strstr (map, "."))
+	if (!strstr(map, "."))
 	{
-		Com_sprintf (expanded, sizeof(expanded), "maps/%s.bsp", map);
-		if (FS_LoadFile (expanded, NULL) == -1)
+		Com_sprintf(expanded, sizeof(expanded), "maps/%s.bsp", map);
+
+		if (FS_LoadFile(expanded, NULL) == -1)
 		{
-			Com_Printf ("Can't find %s.\n", expanded);
-			return;
+			// === jitmap - make it so people don't have to type out the beta and inprogress paths
+			char altmap[MAX_QPATH];
+			char expanded2[MAX_QPATH];
+
+			Com_sprintf(altmap, sizeof(altmap), "beta/%s", originalmap);
+			map = altmap;
+			Com_sprintf(expanded2, sizeof(expanded2), "maps/%s.bsp", map);
+
+			if (FS_LoadFile(expanded2, NULL) == -1)
+			{
+				Com_sprintf(altmap, sizeof(altmap), "inprogress/%s", originalmap);
+				map = altmap;
+				Com_sprintf(expanded2, sizeof(expanded2), "maps/%s.bsp", map);
+
+				if (FS_LoadFile(expanded2, NULL) == -1)
+				{
+					Com_Printf("Can't find %s.\n", expanded);
+					return;
+				}
+			}
+			// jitmap ===
 		}
 	}
 
 	sv.state = ss_dead;		// don't save current level when changing
 	SV_WipeSavegame("current");
-	SV_GameMap_f();
+	SV_GameMap(map); // jitmap
 }
 
 /*
