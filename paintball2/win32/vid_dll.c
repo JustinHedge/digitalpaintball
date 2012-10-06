@@ -659,10 +659,11 @@ LONG WINAPI MainWndProc (
 				Cvar_SetValue("vid_ypos", yPos + r.top);
 				vid_xpos->modified = false;
 				vid_ypos->modified = false;
-
-				if (ActiveApp)
-					IN_Activate (true);
 			}
+
+			// jitmouse - force mouse to recenter properly
+			if (ActiveApp)
+				IN_Activate(true);
 		}
 
         return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -739,7 +740,7 @@ LONG WINAPI MainWndProc (
 	case WM_SIZE:
 		if (lParam) // This is 0 when minimized?
 		{
-			M_ReloadMenu();
+			M_RefreshMenu(); // jitmenu
 			re.DrawResizeWindow(LOWORD(lParam), HIWORD(lParam));
 			VID_NewWindow(LOWORD(lParam), HIWORD(lParam));
 		}
@@ -1005,7 +1006,7 @@ void VID_CheckChanges (void)
 		{
 			cls.disable_screen = false;
 			CL_InitImages();
-			M_ReloadMenu(); // jitmenu
+			M_ReloadMenu(); // jitmenu (need to do a full reload beacuse pic indexes can change)
 		}
 	}
 
