@@ -439,12 +439,12 @@ float SCR_DrawPopup (int popup_index, float offset)
 
 	if (alpha > 0.0f)
 	{
-		float xpos = viddef.width - POPUP_WIDTH * hudscale;
+		float xpos = viddef.width - (POPUP_WIDTH + POPUP_PADDING) * hudscale;
 		float ypos = POPUP_POS_Y * hudscale + offset;
 		char wordwrappedtext[1024];
 
-		linecount = SCR_WordWrapText(scr_popup_text[popup_index], POPUP_WIDTH * hudscale - POPUP_PADDING * 2.0f, wordwrappedtext, sizeof(wordwrappedtext));
-		re.DrawStretchPic(xpos, ypos, POPUP_WIDTH * hudscale, POPUP_PADDING * 2 + linecount * hudscale * CHARHEIGHT, "select1bs"); // temp
+		linecount = SCR_WordWrapText(scr_popup_text[popup_index], (POPUP_WIDTH - POPUP_PADDING * 2.0f) * hudscale, wordwrappedtext, sizeof(wordwrappedtext));
+		re.DrawStretchPic(xpos, ypos, POPUP_WIDTH * hudscale, (POPUP_PADDING * 2.0f + linecount * CHARHEIGHT) * hudscale, "select1bs"); // temp
 		re.DrawStringAlpha(xpos + POPUP_PADDING * hudscale, ypos + POPUP_PADDING, wordwrappedtext, alpha);
 
 		return hudscale * (CHARHEIGHT * linecount + POPUP_PADDING * 2) * alpha;
@@ -1744,14 +1744,7 @@ void SCR_UpdateScreen (void)
 					static int framecount = 0;
 					static int lasttime = 0;
 
-					if (cl_drawfps->value > 1) // per-frame display, not averaged
-					{
-						register float framerate;
-
-						framerate = 1.0f / cls.frametime;
-						Com_sprintf(s, sizeof(s), "%3.0ffps", framerate);
-					}
-					else // average framerate over a few frames
+					if ((int)cl_drawfps->value == 1) // average framerate over a few frames
 					{
 						if (!(framecount & 0xF)) // once every 16 frames
 						{
@@ -1768,6 +1761,31 @@ void SCR_UpdateScreen (void)
 							lasttime = curtime;
 							framecount = 0;
 						}
+					}
+					else if ((int)cl_drawfps->value == 2) // per-frame display, not averaged
+					{
+						register float framerate;
+
+						framerate = 1.0f / cls.frametime;
+						Com_sprintf(s, sizeof(s), "%3.0ffps", framerate);
+					}
+					else // Display the lowest framerate every .5 seconds
+					{
+						static float minframerate = 999999.9f;
+						register float framerate;
+
+						framerate = 1.0f / cls.frametime;
+
+						if (curtime - lasttime > 500) // 500ms = .5s
+						{
+							lasttime = curtime;
+							minframerate = framerate;
+						}
+
+						if (framerate < minframerate)
+							minframerate = framerate;
+
+						Com_sprintf(s, sizeof(s), "%3.0ffps", minframerate);
 					}
 
 					framecount++;
