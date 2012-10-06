@@ -2438,16 +2438,23 @@ static void menu_from_file (menu_screen_t *menu)
 	char *buf;
 	int file_len;
 	extern cvar_t *cl_language;
+	extern cvar_t *cl_menu;
 
 	scale = cl_hudscale->value;
 
-	sprintf(menu_filename, "menus/%s/%s.txt", cl_language->string, menu->name);
+	sprintf(menu_filename, "menus/%s/%s/%s.txt", cl_language->string, cl_menu->string, menu->name);
 	file_len = FS_LoadFile(menu_filename, (void **)&buf);
 
 	if (file_len < 0)
 	{
-		sprintf(menu_filename, "menus/%s.txt", menu->name);
+		sprintf(menu_filename, "menus/%s/%s.txt", cl_language->string, menu->name);
 		file_len = FS_LoadFile(menu_filename, (void **)&buf);
+
+		if (file_len < 0)
+		{
+			sprintf(menu_filename, "menus/%s.txt", menu->name);
+			file_len = FS_LoadFile(menu_filename, (void **)&buf);
+		}
 	}
 
 	menu->background = re.DrawFindPic("conback"); // jitodo - customizebale backgrounds

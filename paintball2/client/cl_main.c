@@ -101,6 +101,7 @@ cvar_t	*cl_consoleheight; // T3RR0R15T: console height
 cvar_t  *cl_crosshairscale; // viciouz - crosshair scale
 cvar_t	*cl_drawhud; // jithud
 cvar_t	*cl_language; // jittrans
+cvar_t	*cl_menu; // T3RR0R15T: custom menu files
 cvar_t	*cl_drawclock; // viciouz - real time clock
 cvar_t	*cl_drawclockx; // T3RR0R15T: clock position
 cvar_t	*cl_drawclocky; // T3RR0R15T: clock position
@@ -405,7 +406,7 @@ void CL_RecordFile (const char *sDemoName) // jitdemo
 		fwrite(buf.data, buf.cursize, 1, cls.demofile);
 	} while ((i = CL_ScoresDemoData(i, &scorestr)));
 
-	
+
 	// viciouz - timestamp demos
 	SZ_Init(&buf, buf_data, sizeof(buf_data));
 	time(&rawtime);
@@ -2273,6 +2274,7 @@ void CL_InitLocal (void)
 	cl_hudscale =		Cvar_Get("cl_hudscale", "2", CVAR_ARCHIVE); // jithudscale /viciouz - changed to 2 to match setting in gl_rmain.c
 	cl_crosshairscale = Cvar_Get("cl_crosshairscale", "2", CVAR_ARCHIVE); // viciouz - crosshair scale
 	cl_language =		Cvar_Get("cl_language", "english", CVAR_ARCHIVE); // jittrans
+	cl_menu =			Cvar_Get("cl_menu", "default", CVAR_ARCHIVE); // T3RR0R15T: custom menu files
 	cl_drawclock =		Cvar_Get("cl_drawclock", "0", CVAR_ARCHIVE); // viciouz - real time clock
 	cl_drawclockx =		Cvar_Get("cl_drawclockx", "-1", CVAR_ARCHIVE); // T3RR0R15T: clock position
 	cl_drawclocky =		Cvar_Get("cl_drawclocky", "-1", CVAR_ARCHIVE); // T3RR0R15T: clock position
@@ -2963,5 +2965,4 @@ void CL_Shutdown (void)
 		Serverlist_Shutdown();
 	}
 }
-
 
