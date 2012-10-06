@@ -91,6 +91,8 @@ DWORD		joy_numbuttons;
 static JOYINFOEX	ji;
 
 qboolean	in_appactive;
+static qboolean	g_windowed = false;
+
 
 // forward-referenced functions
 void IN_StartupJoystick (void);
@@ -125,9 +127,7 @@ void IN_MLookUp (void)
 int			mouse_buttons;
 int			mouse_oldbuttonstate;
 POINT		current_pos;
-int			mouse_x, mouse_y, old_mouse_x, old_mouse_y, mx_accum, my_accum;
-
-int			old_x, old_y;
+float		mouse_x, mouse_y, old_mouse_x, old_mouse_y, mx_accum, my_accum; // jitmouse - use float, so we don't lose as much precision
 
 qboolean	mouseactive;	// false when not focus app
 
@@ -139,6 +139,33 @@ qboolean	mouseparmsvalid;
 
 int			window_center_x, window_center_y;
 RECT		window_rect;
+
+
+void IN_ShowCursor () // jitmouse
+{
+	// So windows has this crazy thing where it increments each time you call this.  We want to keep it at 0 for normal showing.
+	int showval;
+
+	while ((showval = ShowCursor(TRUE)) < 0)
+		;
+
+	if (showval > 0)
+		ShowCursor(FALSE);
+}
+
+
+void IN_HideCursor () // jitmouse
+{
+	// All this crazy stuff is to keep the cursor counter from decrementing too much when we hide it (since it's called every frame in some cases).
+	// Not sure if it's actually necessary, but might as well do it to be safe
+	int showval;
+
+	while ((showval = ShowCursor(FALSE)) >= 0)
+		;
+
+	if (showval < -1)
+		ShowCursor(TRUE);
+}
 
 
 /*
@@ -189,34 +216,22 @@ void IN_ActivateMouse (qboolean clipcursor)
 	height = GetSystemMetrics(SM_CYSCREEN);
 
 	GetWindowRect(cl_hwnd, &window_rect);
-	/* jitmouse -- keep from screwing up on dual monitors
-	if (window_rect.left < 0)
-		window_rect.left = 0;
-	if (window_rect.top < 0)
-		window_rect.top = 0;
-	if (window_rect.right >= width)
-		window_rect.right = width-1;
-	if (window_rect.bottom >= height-1)
-		window_rect.bottom = height-1;*/
-
-	window_center_x = (window_rect.right + window_rect.left)/2;
-	window_center_y = (window_rect.top + window_rect.bottom)/2;
-
-	SetCursorPos(window_center_x, window_center_y);
-
-	old_x = window_center_x;
-	old_y = window_center_y;
-
-	SetCapture(cl_hwnd);
+	window_center_x = (window_rect.right + window_rect.left) / 2;
+	window_center_y = (window_rect.top + window_rect.bottom) / 2;
 
 	// jitmenu - in windowed mode, don't clip the cursor for the menu.
 	if (clipcursor)
+	{
+		SetCursorPos(window_center_x, window_center_y);
+		SetCapture(cl_hwnd);
 		ClipCursor(&window_rect);
+	}
 	else
+	{
 		ClipCursor(NULL);
+	}
 
-	while (ShowCursor(FALSE) >= 0)
-		;
+	IN_HideCursor();
 }
 
 
@@ -241,8 +256,7 @@ void IN_DeactivateMouse (void)
 	mouseactive = false;
 	ClipCursor(NULL);
 	ReleaseCapture();
-	while (ShowCursor(TRUE) < 0)
-		;
+	IN_ShowCursor();
 }
 
 
@@ -298,6 +312,7 @@ void IN_MouseEvent (int mstate)
 }
 
 
+
 /*
 ===========
 IN_MouseMove
@@ -306,6 +321,7 @@ IN_MouseMove
 void IN_MouseMove (usercmd_t *cmd)
 {
 	int		mx, my;
+	float	fovscale = 1.0f; // jitmouse
 
 	if (!mouseactive)
 		return;
@@ -313,6 +329,25 @@ void IN_MouseMove (usercmd_t *cmd)
 	// find mouse movement
 	if (!GetCursorPos(&current_pos))
 		return;
+
+	// jitmenu - if we're in windowed mode in the menu, use the actual Windows mouse coordinates for the cursor position.
+	if (g_windowed && M_MenuActive())
+	{
+		ScreenToClient(cl_hwnd, &current_pos);
+		M_MouseSet(current_pos.x, current_pos.y);
+
+		// If we're outside of the actual game area of the window, show the cursor again, so people can see it to resize/close/etc. the window
+		if (current_pos.x < 0 || current_pos.y < 0 || current_pos.x > viddef.width || current_pos.y > viddef.height)
+		{
+			IN_ShowCursor();
+		}
+		else
+		{
+			IN_HideCursor();
+		}
+
+		return;
+	}
 
 	mx = current_pos.x - window_center_x;
 	my = current_pos.y - window_center_y;
@@ -323,8 +358,8 @@ void IN_MouseMove (usercmd_t *cmd)
 
 	if (m_filter->value)
 	{
-		mouse_x = (mx + old_mouse_x) / 2;
-		mouse_y = (my + old_mouse_y) / 2;
+		mouse_x = (mx + old_mouse_x) * 0.5f;
+		mouse_y = (my + old_mouse_y) * 0.5f;
 	}
 	else
 	{
@@ -336,14 +371,17 @@ void IN_MouseMove (usercmd_t *cmd)
 	old_mouse_y = my;
 
 	// If the menu is visible, move the menu cursor
-	if (M_MenuActive()) // todo - linux support
+	if (M_MenuActive())
 	{
 		M_MouseMove(mx, my);
 		return;
 	}
 
-	mouse_x *= sensitivity->value;
-	mouse_y *= sensitivity->value;
+	if (m_fovscale->value)
+		fovscale = fov->value / 90.0f; // jitmouse - scale turn speed based of FOV
+
+	mouse_x *= sensitivity->value * fovscale;
+	mouse_y *= sensitivity->value * fovscale;
 
 // add mouse X/Y movement to cmd
 	if ((in_strafe.state & 1) || (lookstrafe->value && mlooking))
@@ -459,8 +497,6 @@ Called every frame, even if not generating commands
 */
 void IN_Frame (void)
 {
-	qboolean windowed = false;
-
 	CheckActive(cl_hwnd);
 
 	if (!mouseinitialized)
@@ -472,21 +508,21 @@ void IN_Frame (void)
 		return;
 	}
 
-	windowed = Cvar_VariableValue("vid_fullscreen") == 0.0f;
+	g_windowed = Cvar_VariableValue("vid_fullscreen") == 0.0f;
 
 	if (!cl.refresh_prepped
 		|| cls.key_dest == key_console
 		)//|| cls.key_dest == key_menu) // jitmenu
 	{
 		// temporarily deactivate if in fullscreen
-		if (windowed && !M_MenuActive()) // jitmenu / jitmouse
+		if (g_windowed && !M_MenuActive()) // jitmenu / jitmouse
 		{
 			IN_DeactivateMouse();
 			return;
 		}
 	}
 
-	IN_ActivateMouse(!(M_MenuActive() && windowed)); // jitmenu - don't clip the cursor when we're on the menu in windowed mode.
+	IN_ActivateMouse(!(M_MenuActive() && g_windowed)); // jitmenu - don't clip the cursor when we're on the menu in windowed mode.
 }
 
 

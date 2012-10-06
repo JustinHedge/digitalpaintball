@@ -3327,10 +3327,11 @@ void M_Draw (void)
 	}
 }
 
-void M_MouseMove(int mx, int my)
+
+void M_MouseSet (int mx, int my)
 {
-	m_mouse.x += mx;
-	m_mouse.y += my;
+	m_mouse.x = mx;
+	m_mouse.y = my;
 
 	if (m_mouse.x < 0)
 		m_mouse.x = 0;
@@ -3343,10 +3344,18 @@ void M_MouseMove(int mx, int my)
 		m_mouse.y = viddef.height;
 }
 
+
+void M_MouseMove (int mx, int my)
+{
+	M_MouseSet(m_mouse.x + mx, m_mouse.y + my);
+}
+
+
 qboolean M_MenuActive()
 {
 	return (m_menudepth != 0);
 }
+
 
 void M_PlayMenuSounds ()
 {

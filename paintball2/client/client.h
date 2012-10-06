@@ -341,13 +341,14 @@ extern  cvar_t  *cl_drawclocky; // T3RR0R15T: clock position
 extern	cvar_t	*lookspring;
 extern	cvar_t	*lookstrafe;
 extern	cvar_t	*sensitivity;
-
+extern	cvar_t	*fov; // jit
 extern	cvar_t	*m_pitch;
 extern	cvar_t	*m_yaw;
 extern	cvar_t	*m_forward;
 extern	cvar_t	*m_side;
 extern	cvar_t	*m_invert; // jitmouse
 extern	cvar_t	*m_doubleclickspeed; // jitmenu
+extern	cvar_t	*m_fovscale; // jit
 
 extern	cvar_t	*freelook;
 
@@ -737,7 +738,8 @@ void M_Draw (void);
 void M_Menu_Main_f (void);
 void M_ForceMenuOff (void);
 void M_AddToServerList (netadr_t adr, char *info, qboolean pinging);
-void M_MouseMove(int mx, int my); // jitmenu
+void M_MouseSet (int mx, int my); // jitmenu
+void M_MouseMove (int mx, int my); // jitmenu
 void M_RefreshMenu (void); // jitmenu
 void M_ReloadMenu (void); // jitmenu
 void M_RefreshActiveMenu (void); // jitmenu
