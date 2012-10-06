@@ -739,6 +739,7 @@ LONG WINAPI MainWndProc (
 	case WM_SIZE:
 		if (lParam) // This is 0 when minimized?
 		{
+			M_ReloadMenu();
 			re.DrawResizeWindow(LOWORD(lParam), HIWORD(lParam));
 			VID_NewWindow(LOWORD(lParam), HIWORD(lParam));
 		}
