@@ -17,6 +17,8 @@ static cvar_t *m_yaw;
 static cvar_t *m_pitch;
 static cvar_t *m_forward;
 static cvar_t *freelook;
+static cvar_t *fov;
+static cvar_t *m_fovscale;
 
 cvar_t *m_filter;
 static cvar_t	*in_mouse;
@@ -55,6 +57,8 @@ void RW_IN_Init(in_state_t *in_state_p)
   m_filter = ri.Cvar_Get("m_filter", "0", 0);
   in_mouse = ri.Cvar_Get("in_mouse", "1", CVAR_ARCHIVE);
   freelook = ri.Cvar_Get("freelook", "1", 0);
+  fov = ri.Cvar_Get("fov", "90", CVAR_ARCHIVE);
+  m_fovscale = ri.Cvar_Get("m_fovscale", "1", CVAR_ARCHIVE);
   lookstrafe = ri.Cvar_Get("lookstrafe", "0", 0);
   sensitivity = ri.Cvar_Get ("sensitivity", "3", 0);
   exponential_speedup = ri.Cvar_Get("exponential_speedup", "0", 
@@ -70,7 +74,7 @@ void RW_IN_Init(in_state_t *in_state_p)
   
   ri.Cmd_AddCommand ("force_centerview", Force_CenterView_f);
   
-  mouse_x = mouse_y = 0.0;  
+  mouse_x = mouse_y = 0;
   mouse_avail = true;	
   
   RW_IN_PlatformInit();
@@ -149,70 +153,81 @@ IN_Move
 */
 void RW_IN_Move (usercmd_t *cmd)
 {
-  if (mouse_avail) {
-    getMouse(&mouse_x, &mouse_y, &mouse_buttonstate);
-
-    //if (mouse_x || mouse_y)
-    	//ri.Con_Printf(PRINT_ALL, "mx: %3d my: %3d\n", mouse_x, mouse_y);
-
-    if (m_filter->value)
-      {
-	mouse_x = (mouse_x + old_mouse_x) * 0.5;
-	mouse_y = (mouse_y + old_mouse_y) * 0.5;
-      }
-    
-    old_mouse_x = mouse_x;
-    old_mouse_y = mouse_y;
-
-    if (ri.M_MenuActive()) // jitmenu
-    {
-	    ri.M_MouseMove(mouse_x, mouse_y);
-	    doneMouse();
-	    return;
-    }
-    
-    if (mouse_x || mouse_y) {
-      if (!exponential_speedup->value) {
-	mouse_x *= sensitivity->value;
-	mouse_y *= sensitivity->value;
-      }
-      else {
-	if (mouse_x > MOUSE_MIN || mouse_y > MOUSE_MIN || 
-	    mouse_x < -MOUSE_MIN || mouse_y < -MOUSE_MIN) {
-	  mouse_x = (mouse_x*mouse_x*mouse_x)/4;
-	  mouse_y = (mouse_y*mouse_y*mouse_y)/4;
-	  if (mouse_x > MOUSE_MAX)
-	    mouse_x = MOUSE_MAX;
-	  else if (mouse_x < -MOUSE_MAX)
-	    mouse_x = -MOUSE_MAX;
-	  if (mouse_y > MOUSE_MAX)
-	    mouse_y = MOUSE_MAX;
-	  else if (mouse_y < -MOUSE_MAX)
-	    mouse_y = -MOUSE_MAX;
-	}
-      }
-      // add mouse X/Y movement to cmd
-      if ( (*in_state->in_strafe_state & 1) || 
-	   (lookstrafe->value && mlooking ))
-	cmd->sidemove += m_side->value * mouse_x;
-      else
-	in_state->viewangles[YAW] -= m_yaw->value * mouse_x;
-      
-      if ( (mlooking || freelook->value) && 
-	   !(*in_state->in_strafe_state & 1))
+	if (mouse_avail)
 	{
-	  in_state->viewangles[PITCH] += m_pitch->value * mouse_y;
+		getMouse(&mouse_x, &mouse_y, &mouse_buttonstate);
+
+		if (m_filter->value)
+		{
+			mouse_x = (mouse_x + old_mouse_x) / 2;
+			mouse_y = (mouse_y + old_mouse_y) / 2;
+		}
+
+		old_mouse_x = mouse_x;
+		old_mouse_y = mouse_y;
+
+		if (ri.M_MenuActive()) // jitmenu
+		{
+			ri.M_MouseMove(mouse_x, mouse_y);
+			doneMouse();
+			return;
+		}
+
+		if (mouse_x || mouse_y)
+		{
+			if (!exponential_speedup->value)
+			{
+				mouse_x *= sensitivity->value;
+				mouse_y *= sensitivity->value;
+			}
+			else
+			{
+				if (mouse_x > MOUSE_MIN || mouse_y > MOUSE_MIN || mouse_x < -MOUSE_MIN || mouse_y < -MOUSE_MIN)
+				{
+						mouse_x = (mouse_x * mouse_x * mouse_x) / 4;
+						mouse_y = (mouse_y * mouse_y * mouse_y) / 4;
+
+						if (mouse_x > MOUSE_MAX)
+							mouse_x = MOUSE_MAX;
+						else if (mouse_x < -MOUSE_MAX)
+							mouse_x = -MOUSE_MAX;
+						if (mouse_y > MOUSE_MAX)
+							mouse_y = MOUSE_MAX;
+						else if (mouse_y < -MOUSE_MAX)
+							mouse_y = -MOUSE_MAX;
+				}
+			}
+			
+			if (m_fovscale->value)
+			{
+				float fovscale = fovscale = fov->value / 90.0f; // jitmouse - scale turn speed based of FOV
+
+				mouse_x *= fovscale;
+				mouse_y *= fovscale;
+			}
+
+			// add mouse X/Y movement to cmd
+			if ( (*in_state->in_strafe_state & 1) || 
+				(lookstrafe->value && mlooking ))
+				cmd->sidemove += m_side->value * mouse_x;
+			else
+				in_state->viewangles[YAW] -= m_yaw->value * mouse_x;
+
+			if ( (mlooking || freelook->value) && 
+				!(*in_state->in_strafe_state & 1))
+			{
+				in_state->viewangles[PITCH] += m_pitch->value * mouse_y;
+			}
+			else
+			{
+				cmd->forwardmove -= m_forward->value * mouse_y;
+			}
+			mouse_x = mouse_y = 0;
+			doneMouse();
+		}
 	}
-      else
-	{
-	  cmd->forwardmove -= m_forward->value * mouse_y;
-	}
-      mouse_x = mouse_y = 0;
-      doneMouse();
-    }
-  }
 #ifdef Joystick
-  RW_IN_JoystickMove(cmd, mlooking, lookstrafe, m_pitch);
+	RW_IN_JoystickMove(cmd, mlooking, lookstrafe, m_pitch);
 #endif
 }
 

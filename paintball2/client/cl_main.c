@@ -85,6 +85,7 @@ cvar_t	*menu_tempname; // jit
 cvar_t	*skin;
 cvar_t	*rate;
 cvar_t	*fov;
+cvar_t	*m_fovscale; // jitmouse
 cvar_t	*msg;
 cvar_t	*hand;
 cvar_t	*gender;
@@ -2361,6 +2362,7 @@ void CL_InitLocal (void)
 	msg =				Cvar_Get("msg", "0", CVAR_USERINFO | CVAR_ARCHIVE);
 	hand =				Cvar_Get("hand", "0", CVAR_USERINFO | CVAR_ARCHIVE);
 	fov =				Cvar_Get("fov", "90", CVAR_USERINFO | CVAR_ARCHIVE);
+	m_fovscale =		Cvar_Get("m_fovscale", "1", CVAR_ARCHIVE);
 	gender =			Cvar_Get("gender", "male", CVAR_USERINFO | CVAR_ARCHIVE);
 	gender->modified =	false; // clear this so we know when user sets it manually
 	cl_vwep =			Cvar_Get("cl_vwep", "1", CVAR_ARCHIVE);
