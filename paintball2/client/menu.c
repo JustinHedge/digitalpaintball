@@ -2792,19 +2792,22 @@ static void reload_menu_screen (menu_screen_t *menu)
 // Flag all widgets as modified so they update
 void M_RefreshMenu (void)
 {
-	menu_screen_t *menu;
-
-	pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
-
-	menu = root_menu;
-
-	while (menu)
+	if (m_initialized)
 	{
-		refresh_menu_screen(menu);
-		menu = menu->next;
-	}
+		menu_screen_t *menu;
 
-	pthread_mutex_unlock(&m_mut_widgets);
+		pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
+
+		menu = root_menu;
+
+		while (menu)
+		{
+			refresh_menu_screen(menu);
+			menu = menu->next;
+		}
+
+		pthread_mutex_unlock(&m_mut_widgets);
+	}
 }
 
 void M_RefreshWidget (const char *name, qboolean lock)
@@ -2943,7 +2946,8 @@ void M_Init (void)
 
     // Add commands
 	Cmd_AddCommand("menu", M_Menu_f);
-	Cmd_AddCommand("menu_reload", M_ReloadMenu);
+	Cmd_AddCommand("menu_reload", M_ReloadMenu); // Probably not a good reason to use this, but leaving it for backward compatibility
+	Cmd_AddCommand("menu_refresh", M_RefreshActiveMenu);
 	Cmd_AddCommand("dialog", M_DialogBox_f);
 	Cmd_AddCommand("menu_store", M_MenuStore_f);
 	Cmd_AddCommand("menu_restore", M_MenuRestore_f);
