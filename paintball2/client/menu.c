@@ -162,7 +162,7 @@ int strlen_noformat (const unsigned char *s)
 	if (!s)
 		return 0;
 
-	while(*s)
+	while (*s)
 	{
 		if (*s != CHAR_UNDERLINE && *s != CHAR_ITALICS && *s != CHAR_ENDFORMAT)
 		{
@@ -1239,6 +1239,7 @@ static void M_HilightNextWidget (menu_screen_t *menu)
 	if (!widget)
 	{
 		widget = menu->widget;
+
 		while (widget && !widget_is_selectable(widget))
 			widget = widget->next;
 
@@ -1252,10 +1253,11 @@ static void M_HilightNextWidget (menu_screen_t *menu)
 	{
 		widget->hover = false;
 		widget->selected = false;
-
 		widget = widget->next;
+
 		if (!widget)
 			widget = menu->widget;
+
 		while (!widget_is_selectable(widget))
 		{
 			widget = widget->next;
@@ -1327,7 +1329,7 @@ static void M_HilightPreviousWidget (menu_screen_t *menu)
 
 static void field_adjustCursor (menu_widget_t *widget)
 {
-	int pos, string_len=0;
+	int pos, string_len = 0;
 	
 	pos = widget->field_cursorpos;
 
@@ -2139,7 +2141,7 @@ static void select_begin_list (menu_widget_t *widget, char *buf)
 		token = COM_Parse(&buf);
 	
 		// read in map pair
-		while (token && strlen(token) && !Q_streq(token, "end"))
+		while (token && *token && !Q_streq(token, "end"))
 		{
 			strcpy(cvar_string, token);
 			token = COM_Parse(&buf);
@@ -2172,7 +2174,7 @@ static void select_begin_list (menu_widget_t *widget, char *buf)
 		// read in list
 		token = COM_Parse(&buf);
 
-		while (token && strlen(token) && !Q_streq(token, "end"))
+		while (token && *token && !Q_streq(token, "end"))
 		{	
 			new_map = get_new_select_map_list(NULL, token);
 			new_map->next = list_start;
@@ -2435,25 +2437,25 @@ static void widget_complete (menu_widget_t *widget)
 static void menu_from_file (menu_screen_t *menu)
 {
 	char menu_filename[MAX_QPATH];
-	char *buf;
+	char *filebuf;
 	int file_len;
 	extern cvar_t *cl_language;
 	extern cvar_t *cl_menu;
 
 	scale = cl_hudscale->value;
 
-	sprintf(menu_filename, "menus/%s/%s/%s.txt", cl_language->string, cl_menu->string, menu->name);
-	file_len = FS_LoadFile(menu_filename, (void **)&buf);
+	Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s/%s/%s.txt", cl_language->string, cl_menu->string, menu->name);
+	file_len = FS_LoadFileZ(menu_filename, (void **)&filebuf);
 
 	if (file_len < 0)
 	{
-		sprintf(menu_filename, "menus/%s/%s.txt", cl_language->string, menu->name);
-		file_len = FS_LoadFile(menu_filename, (void **)&buf);
+		Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s/%s.txt", cl_language->string, menu->name);
+		file_len = FS_LoadFileZ(menu_filename, (void **)&filebuf);
 
 		if (file_len < 0)
 		{
-			sprintf(menu_filename, "menus/%s.txt", menu->name);
-			file_len = FS_LoadFile(menu_filename, (void **)&buf);
+			Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s.txt", menu->name);
+			file_len = FS_LoadFileZ(menu_filename, (void **)&filebuf);
 		}
 	}
 
@@ -2462,14 +2464,7 @@ static void menu_from_file (menu_screen_t *menu)
 	if (file_len != -1)
 	{
 		char *token;
-		char *buf2;
-
-		// put null terminator at end:
-		buf2 = Z_Malloc(sizeof(char)*(file_len+1));
-		memcpy(buf2, buf, file_len);
-		buf2[file_len] = '\0';
-		FS_FreeFile(buf);
-		buf = buf2;
+		char *buf = filebuf;
 
 		// check for header: "pb2menu 1"
 		token = COM_Parse(&buf); // "pb2menu"
@@ -2736,7 +2731,7 @@ static void menu_from_file (menu_screen_t *menu)
 			M_ErrorMenu(menu, "Invalid menu file.");
 		}
 
-		Z_Free(buf2);
+		FS_FreeFile(filebuf);
 	}
 	else
 	{

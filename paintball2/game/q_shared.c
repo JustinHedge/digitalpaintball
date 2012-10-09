@@ -869,6 +869,21 @@ int Q_log2 (int val)
 	return answer;
 }
 
+
+int Q_Round (float val) // jit
+{
+	if (val >= 0.0f)
+	{
+		val += 0.5f;
+		return (int)val;
+	}
+	else
+	{
+		val -= 0.5f;
+		return (int)val;
+	}
+}
+
 //============================================================================
 // jitskm
 // taken from qfusion
@@ -1697,7 +1712,6 @@ int Q_strncasecmp (const char *s1, const char *s2, int n)
 
 int Q_strcasecmp (const char *s1, const char *s2)
 {
-	//return Q_strncasecmp (s1, s2, 99999); // 1.774
 	register int c1, c2;
 	
 	do
@@ -1720,7 +1734,7 @@ int Q_strcasecmp (const char *s1, const char *s2)
 }
 
 
-int Q_streq (const char *s1, const char *s2) // 1.774 -- faster than !strcmp
+int Q_streq (const char *s1, const char *s2) // jit -- faster than !strcmp
 {
 	register int c1, c2;
 
@@ -1743,6 +1757,42 @@ int Q_streq (const char *s1, const char *s2) // 1.774 -- faster than !strcmp
 			return 0;
 		else
 			return 1;
+	}
+}
+
+
+int Q_strcaseeq (const char *s1, const char *s2) // jit
+{
+	register int c1, c2;
+
+	if (s1 && s2)
+	{
+		do
+		{
+			c1 = *s1++;
+			c2 = *s2++;
+
+			if (c1 != c2)
+			{
+				if (c1 >= 'a' && c1 <= 'z')
+					c1 -= ('a' - 'A');
+
+				if (c2 >= 'a' && c2 <= 'z')
+					c2 -= ('a' - 'A');
+
+				if (c1 != c2)
+					return 0; // strings not equal
+			}
+		} while (c1);
+		
+		return 1; // strings are equal
+	}
+	else
+	{
+		if (s1 || s2)
+			return 0; // one null, one not, not equal.
+		else
+			return 1; // both null, "equal".
 	}
 }
 

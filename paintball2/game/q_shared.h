@@ -225,7 +225,7 @@ extern long Q_ftol( float f );
 
 void _VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc);
 
-// just in case you do't want to use the macros
+// just in case you don't want to use the macros
 vec_t _DotProduct (vec3_t v1, vec3_t v2);
 void _VectorSubtract (vec3_t veca, vec3_t vecb, vec3_t out);
 void _VectorAdd (vec3_t veca, vec3_t vecb, vec3_t out);
@@ -242,7 +242,8 @@ vec_t VectorNormalize2RetLen (vec3_t v, vec3_t out);
 void _VectorInverse (vec3_t v);
 void _VectorScale (vec3_t in, vec_t scale, vec3_t out);
 float Q_rsqrt (float number); // jit - from qfusion
-int Q_log2(int val);
+int Q_log2 (int val);
+int Q_Round (float val); // jit
 
 void Matrix3_Transpose (mat3_t in, mat3_t out); // jit - from qfusion
 
@@ -331,6 +332,7 @@ void Com_PageInMemory (byte *buffer, int size);
 int Q_strcasecmp (const char *s1, const char *s2);
 int Q_strncasecmp (const char *s1, const char *s2, int n);
 int Q_streq (const char *s1, const char *s2); // jitopt -- faster than !strcmp
+int Q_strcaseeq (const char *s1, const char *s2); // jitstricmp
 //#ifdef WIN32 // jitstricmp -- don't use these, _stricmp is like 5x's slower!
 //#define Q_strcasecmp(a,b) _stricmp(a,b)
 //#define Q_stricmp(a,b) _stricmp(a,b)
