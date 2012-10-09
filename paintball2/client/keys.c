@@ -880,11 +880,17 @@ void Key_Init (void)
 	// Load the key line history - jit
 	if (FS_LoadFile("configs/keyhistory.dat", &keyhistory) > 0)
 	{
+		const char *p;
 		size_t size = *(size_t *)keyhistory;
 
-		if (size == sizeof(key_lines))
+		if (size == sizeof(key_lines) + sizeof(edit_line) + sizeof(history_line))
 		{
-			memcpy(key_lines, keyhistory + sizeof(size_t), sizeof(key_lines));
+			p = keyhistory + sizeof(size);
+			memcpy(key_lines, p, sizeof(key_lines));
+			p += sizeof(key_lines);
+			memcpy(&history_line, p, sizeof(history_line));
+			p += sizeof(history_line);
+			memcpy(&edit_line, p, sizeof(edit_line));
 		}
 	}
 }
@@ -899,9 +905,11 @@ void Key_Shutdown (void) // jit
 
 	if ((fp = fopen(filename, "wb")))
 	{
-		size_t size = sizeof(key_lines);
+		size_t size = sizeof(key_lines) + sizeof(history_line) + sizeof(edit_line);
 		fwrite(&size, sizeof(size_t), 1, fp);
 		fwrite(key_lines, sizeof(key_lines), 1, fp);
+		fwrite(&history_line, sizeof(history_line), 1, fp);
+		fwrite(&edit_line, sizeof(edit_line), 1, fp);
 		fclose(fp);
 	}
 }
