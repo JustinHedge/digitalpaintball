@@ -634,7 +634,7 @@ char *string_for_bind (char *bind)
 
 	if (keys[0] == -1)
 	{
-		sprintf(str, "%cNot Bound", CHAR_ITALICS);
+		sprintf(str, "%cNot Bound%c", CHAR_ITALICS, CHAR_ITALICS);
 	}
 	else
 	{
