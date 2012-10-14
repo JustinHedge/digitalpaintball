@@ -693,10 +693,88 @@ void Draw_SubPic (float x, float y, float w, float h, float tx1, float ty1, floa
 	// todo.
 }
 
-void Draw_BorderedPic (bordered_pic_data_t *bp_data)
+void Draw_BorderedPic (bordered_pic_data_t *data, float x, float y, float w, float h, float scale, float alpha)
 {
+	// TODO: Support rscripts?
+	image_t *gl = data->image;
+	int i;
+	float xdiff = 0.0f, ydiff = 0.0f;
+	float ytotal, xtotal;
 
-//	todo;
+	if (!gl)
+	{
+		ri.Con_Printf(PRINT_ALL, "NULL pic in Draw_BorderedPic.\n");
+		return;
+	}
+
+	ytotal =
+		(data->screencoords[3][3] - data->screencoords[3][1] +
+		data->screencoords[4][3] - data->screencoords[4][1] +
+		data->screencoords[2][3] - data->screencoords[2][1]) * scale;
+
+	if (ytotal < h)
+		ydiff = h - ytotal;
+
+	xtotal =
+		(data->screencoords[1][2] - data->screencoords[1][0] +
+		data->screencoords[2][2] - data->screencoords[2][0] +
+		data->screencoords[0][2] - data->screencoords[0][0]) * scale;
+
+	if (xtotal < w)
+		xdiff = w - xtotal;
+
+	GLSTATE_DISABLE_ALPHATEST;
+	GLSTATE_ENABLE_BLEND;
+	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	if (alpha < 1.0f)
+		qglColor4f(1.0f, 1.0f, 1.0f, alpha);
+
+	GL_Bind(gl->texnum);
+
+	qglBegin(GL_QUADS);
+
+	// bordered pics are drawn in a spiral from upper left and around clockwise.
+	for (i = 0; i < BORDERED_PIC_COORD_COUNT; ++i)
+	{
+		float xstretch = 0.0f, ystretch = 0.0f;
+		float xoff = 0.0f, yoff = 0.0f;
+
+		if (i > 1 && i < 5) // right 3 parts
+			xoff = xdiff;
+
+		if (i > 3 && i < 7) // bottom 3 parts
+			yoff = ydiff;
+
+		// odd indexes (areas between the corners) get stretched to fit.
+		if (i & 1)
+		{
+			if (i & 2) // every other one gets stretched vertically.
+				ystretch = ydiff;
+			else
+				xstretch = xdiff;
+		}
+
+		if (i == 8) // last one gets stretched both ways
+		{
+			xstretch = xdiff;
+			ystretch = ydiff;
+		}
+
+		qglTexCoord2f(data->texcoords[i][0], data->texcoords[i][1]);
+		qglVertex2f(x + xoff + data->screencoords[i][0] * scale, y + yoff + data->screencoords[i][1] * scale);
+		qglTexCoord2f(data->texcoords[i][2], data->texcoords[i][1]);
+		qglVertex2f(x + xoff + (data->screencoords[i][2] + xstretch) * scale, y + yoff + data->screencoords[i][1] * scale);
+		qglTexCoord2f(data->texcoords[i][2], data->texcoords[i][3]);
+		qglVertex2f(x + xoff + data->screencoords[i][2] * scale + xstretch, y + yoff + (data->screencoords[i][3] + ystretch) * scale);
+		qglTexCoord2f(data->texcoords[i][0], data->texcoords[i][3]);
+		qglVertex2f(x + xoff + data->screencoords[i][0] * scale, y + yoff + data->screencoords[i][3] * scale + ystretch);
+	}
+
+	qglEnd();
+
+	if (alpha < 1.0f)
+		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 

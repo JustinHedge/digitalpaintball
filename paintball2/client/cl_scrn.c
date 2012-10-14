@@ -334,7 +334,9 @@ POPUP PRINTING - used for tutorials and whatnot - jitspoe
 #define POPUP_FADE_TIME 0.5f
 #define POPUP_POS_Y 20.0f
 #define POPUP_WIDTH 256.0f // 80% at 640px, hudscale 2.
-#define POPUP_PADDING 8.0f // space between border and text
+#define POPUP_PADDING_Y 10.0f // space between border and text
+#define POPUP_PADDING_X 8.0f // space between border and text
+#define POPUP_SPACING_Y 8.0f // space between one popup and the next
 
 float scr_popup_time_left[MAX_POPUPS];
 char scr_popup_text[MAX_POPUPS][1024];
@@ -439,15 +441,15 @@ float SCR_DrawPopup (int popup_index, float offset)
 
 	if (alpha > 0.0f)
 	{
-		float xpos = viddef.width - (POPUP_WIDTH + POPUP_PADDING) * hudscale;
+		float xpos = viddef.width - (POPUP_WIDTH + POPUP_PADDING_X) * hudscale;
 		float ypos = POPUP_POS_Y * hudscale + offset;
 		char wordwrappedtext[1024];
 
-		linecount = SCR_WordWrapText(scr_popup_text[popup_index], (POPUP_WIDTH - POPUP_PADDING * 2.0f) * hudscale, wordwrappedtext, sizeof(wordwrappedtext));
-		re.DrawStretchPic(xpos, ypos, POPUP_WIDTH * hudscale, (POPUP_PADDING * 2.0f + linecount * CHARHEIGHT) * hudscale, "select1bs"); // temp
-		re.DrawStringAlpha(xpos + POPUP_PADDING * hudscale, ypos + POPUP_PADDING, wordwrappedtext, alpha);
+		linecount = SCR_WordWrapText(scr_popup_text[popup_index], (POPUP_WIDTH - POPUP_PADDING_X * 2.0f) * hudscale, wordwrappedtext, sizeof(wordwrappedtext));
+		re.DrawBorderedPic(&bpdata_popup1, xpos, ypos, POPUP_WIDTH * hudscale, (POPUP_PADDING_Y * 2.0f + linecount * CHARHEIGHT) * hudscale, hudscale / 2.0f, alpha);
+		re.DrawStringAlpha(xpos + POPUP_PADDING_X * hudscale, ypos + POPUP_PADDING_Y * hudscale, wordwrappedtext, alpha);
 
-		return hudscale * (CHARHEIGHT * linecount + POPUP_PADDING * 2) * alpha;
+		return hudscale * (CHARHEIGHT * linecount + POPUP_PADDING_Y * 2.0f + POPUP_SPACING_Y) * alpha;
 	}
 
 	return 0.0f;

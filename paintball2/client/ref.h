@@ -192,12 +192,13 @@ typedef struct image_s
 	qboolean is_crosshair;				// viciouz - crosshair scale
 } image_t;
 
+#define BORDERED_PIC_COORD_COUNT 9
+
 typedef struct bordered_pic_data_s
 {
-	float	screencoords[2 * 4 * 4];
-	float	texcoords[2 * 4 * 4];
+	float	screencoords[BORDERED_PIC_COORD_COUNT][4];
+	float	texcoords[BORDERED_PIC_COORD_COUNT][4];
 	image_t	*image;
-	char	*image_name; // Optional, if you don't want to set the image
 } bordered_pic_data_t;
 
 
@@ -275,7 +276,7 @@ typedef struct
 
 	// Like DrawPic2, but lets you specify the texture coordinates
 	void	(*DrawSubPic) (float x, float y, float w, float h, float tx1, float ty1, float tx2, float ty2, image_t *image);
-	void	(*DrawBorderedPic) (bordered_pic_data_t *data);
+	void	(*DrawBorderedPic) (bordered_pic_data_t *data, float x, float y, float w, float h, float scale, float alpha);
 
 } refexport_t;
 

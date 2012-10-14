@@ -6723,7 +6723,7 @@ void	Draw_StretchPic2 (float x, float y, float w, float h, image_t *gl);
 void	Draw_Pic2 (float x, float y, image_t *gl);
 void	Draw_StringAlpha (float x, float y, const char *str, float alhpa); // jit
 void	Draw_SubPic (float x, float y, float w, float h, float tx1, float ty1, float tx2, float ty2, image_t *image); // jit
-void	Draw_BorderedPic (bordered_pic_data_t *bp_data);
+void	Draw_BorderedPic (bordered_pic_data_t *data, float x, float y, float w, float h, float scale, float alpha); // jit
 
 int Draw_GetIntVarByID (int id)
 {
