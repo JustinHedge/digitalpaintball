@@ -598,31 +598,34 @@ void CalcSurfaceExtents (msurface_t *s)
 
 	tex = s->texinfo;
 
-	for (i=0 ; i<s->numedges ; i++)
+	for (i = 0; i < s->numedges; ++i)
 	{
-		e = loadmodel->surfedges[s->firstedge+i];
+		e = loadmodel->surfedges[s->firstedge + i];
+
 		if (e >= 0)
 			v = &loadmodel->vertexes[loadmodel->edges[e].v[0]];
 		else
 			v = &loadmodel->vertexes[loadmodel->edges[-e].v[1]];
-		
-		for (j=0 ; j<2 ; j++)
+
+		for (j = 0; j < 2; ++j)
 		{
 			val = v->position[0] * tex->vecs[j][0] + 
 				v->position[1] * tex->vecs[j][1] +
 				v->position[2] * tex->vecs[j][2] +
 				tex->vecs[j][3];
+
 			if (val < mins[j])
 				mins[j] = val;
+
 			if (val > maxs[j])
 				maxs[j] = val;
 		}
 	}
 
-	for (i=0 ; i<2 ; i++)
+	for (i = 0; i < 2; ++i)
 	{	
-		bmins[i] = floor(mins[i]/16);
-		bmaxs[i] = ceil(maxs[i]/16);
+		bmins[i] = floor(mins[i] / 16.0f);
+		bmaxs[i] = ceil(maxs[i] / 16.0f);
 
 		s->texturemins[i] = bmins[i] * 16;
 		s->extents[i] = (bmaxs[i] - bmins[i]) * 16;
@@ -736,22 +739,22 @@ void Mod_LoadFaces (lump_t *l)
 			else
 			{
 				rscript_t *rs = (rscript_t *)out->texinfo->script;
+
 				if (rs->subdivide)
 				{
 					GL_SubdivideLightmappedSurface(out, rs->subdivide);
 				}
 				else
 				{
-					rscript_t *rs = (rscript_t *)out->texinfo->script;
 					if (rs->stage->texture != NULL)
 						out->texinfo->image = rs->stage->texture;
 					else if (rs->stage->anim_stage != NULL)
 						out->texinfo->image = rs->stage->anim_stage->texture;
+
 					GL_BuildPolygonFromSurface(out);
 				}
 			}
 		}
-	
 	}
 
 	GL_EndBuildingLightmaps ();
@@ -766,10 +769,12 @@ Mod_SetParent
 void Mod_SetParent (mnode_t *node, mnode_t *parent)
 {
 	node->parent = parent;
+
 	if (node->contents != -1)
 		return;
-	Mod_SetParent (node->children[0], node);
-	Mod_SetParent (node->children[1], node);
+
+	Mod_SetParent(node->children[0], node);
+	Mod_SetParent(node->children[1], node);
 }
 
 /*
@@ -789,7 +794,7 @@ void Mod_LoadNodes (lump_t *l)
 		ri.Sys_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", loadmodel->name);
 
 	count = l->filelen / sizeof(*in);
-	out = Hunk_Alloc(count*sizeof(*out));	
+	out = Hunk_Alloc(count * sizeof(*out));	
 	loadmodel->nodes = out;
 	loadmodel->numnodes = count;
 
@@ -807,9 +812,10 @@ void Mod_LoadNodes (lump_t *l)
 		out->numsurfaces = LittleShort (in->numfaces);
 		out->contents = -1;	// differentiate from leafs
 
-		for (j=0 ; j<2 ; j++)
+		for (j = 0; j < 2; ++j)
 		{
-			p = LittleLong (in->children[j]);
+			p = LittleLong(in->children[j]);
+
 			if (p >= 0)
 				out->children[j] = loadmodel->nodes + p;
 			else
@@ -817,7 +823,7 @@ void Mod_LoadNodes (lump_t *l)
 		}
 	}
 	
-	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
+	Mod_SetParent(loadmodel->nodes, NULL);	// sets nodes and leafs
 }
 
 /*

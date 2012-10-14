@@ -442,7 +442,7 @@ void R_BlendLightmaps (void)
 			if (gl_overbright->value)
 				qglBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);// jitbright
 			else
-				qglBlendFunc(GL_ZERO, GL_SRC_COLOR );
+				qglBlendFunc(GL_ZERO, GL_SRC_COLOR);
 		}
 	}
 
@@ -454,13 +454,14 @@ void R_BlendLightmaps (void)
 	*/
 	for (i = 1; i < MAX_LIGHTMAPS; i++)
 	{
-		if ( gl_lms.lightmap_surfaces[i] )
+		if (gl_lms.lightmap_surfaces[i])
 		{
 			if (currentmodel == r_worldmodel)
 				c_visible_lightmaps++;
-			GL_Bind( gl_state.lightmap_textures + i);
 
-			for ( surf = gl_lms.lightmap_surfaces[i]; surf != 0; surf = surf->lightmapchain )
+			GL_Bind(gl_state.lightmap_textures + i);
+
+			for (surf = gl_lms.lightmap_surfaces[i]; surf != 0; surf = surf->lightmapchain)
 			{
 				if ( surf->polys )
 					DrawGLPolyChain( surf->polys, 0, 0 );
@@ -1833,7 +1834,7 @@ static qboolean LM_AllocBlock (int w, int h, int *x, int *y)
 GL_BuildPolygonFromSurface
 ================
 */
-void GL_BuildPolygonFromSurface(msurface_t *fa)
+void GL_BuildPolygonFromSurface (msurface_t *fa)
 {
 	int			i, lindex, lnumverts;
 	medge_t		*pedges, *r_pedge;
@@ -1848,17 +1849,17 @@ void GL_BuildPolygonFromSurface(msurface_t *fa)
 	lnumverts = fa->numedges;
 	vertpage = 0;
 
-	VectorClear (total);
+	VectorClear(total);
 	//
 	// draw texture
 	//
-	poly = Hunk_Alloc (sizeof(glpoly_t) + (lnumverts-4) * VERTEXSIZE*sizeof(float));
+	poly = Hunk_Alloc(sizeof(glpoly_t) + (lnumverts - 4) * VERTEXSIZE * sizeof(float));
 	poly->next = fa->polys;
 	poly->flags = fa->flags;
 	fa->polys = poly;
 	poly->numverts = lnumverts;
 
-	for (i=0 ; i<lnumverts ; i++)
+	for (i = 0; i < lnumverts; i++)
 	{
 		lindex = currentmodel->surfedges[fa->firstedge + i];
 
@@ -1872,44 +1873,41 @@ void GL_BuildPolygonFromSurface(msurface_t *fa)
 			r_pedge = &pedges[-lindex];
 			vec = currentmodel->vertexes[r_pedge->v[1]].position;
 		}
-		s = DotProduct (vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
+
+		s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
 		s /= fa->texinfo->image->width;
 
-		t = DotProduct (vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
+		t = DotProduct(vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
 		t /= fa->texinfo->image->height;
 
-		VectorAdd (total, vec, total);
-		VectorCopy (vec, poly->verts[i]);
+		VectorAdd(total, vec, total);
+		VectorCopy(vec, poly->verts[i]);
 		poly->verts[i][3] = s;
 		poly->verts[i][4] = t;
 
 		//
 		// lightmap texture coordinates
 		//
-		s = DotProduct (vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
+		s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
 		s -= fa->texturemins[0];
-		s += fa->light_s*16;
+		s += fa->light_s * 16;
 		s += 8;
-		s /= BLOCK_WIDTH*16; //fa->texinfo->texture->width;
+		s /= BLOCK_WIDTH * 16; //fa->texinfo->texture->width;
 
-		t = DotProduct (vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
+		t = DotProduct(vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
 		t -= fa->texturemins[1];
-		t += fa->light_t*16;
+		t += fa->light_t * 16;
 		t += 8;
-		t /= BLOCK_HEIGHT*16; //fa->texinfo->texture->height;
+		t /= BLOCK_HEIGHT * 16; //fa->texinfo->texture->height;
 
 		poly->verts[i][5] = s;
 		poly->verts[i][6] = t;
 	}
 
 	poly->numverts = lnumverts;
-
-	VectorScale (total, 1.0f/(float)lnumverts, total);
-
-	fa->c_s = (DotProduct (total, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3])
-				/ fa->texinfo->image->width;
-	fa->c_t = (DotProduct (total, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3])
-				/ fa->texinfo->image->height;
+	VectorScale(total, 1.0f / (float)lnumverts, total);
+	fa->c_s = (DotProduct(total, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3]) / fa->texinfo->image->width;
+	fa->c_t = (DotProduct(total, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3]) / fa->texinfo->image->height;
 }
 
 /*
@@ -1925,8 +1923,8 @@ void GL_CreateSurfaceLightmap (msurface_t *surf)
 	if (surf->flags & (SURF_DRAWSKY|SURF_DRAWTURB))
 		return;
 
-	smax = (surf->extents[0]>>4)+1;
-	tmax = (surf->extents[1]>>4)+1;
+	smax = (surf->extents[0] >> 4) + 1;
+	tmax = (surf->extents[1] >> 4) + 1;
 
 	if (!LM_AllocBlock(smax, tmax, &surf->light_s, &surf->light_t))
 	{
