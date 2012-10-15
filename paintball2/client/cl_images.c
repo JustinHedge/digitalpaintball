@@ -67,6 +67,7 @@ void CL_LoadBorderedPic (bordered_pic_data_t *bpdata, const char *name)
 	{
 		char filename[MAX_QPATH];
 		char *filedata;
+		float xoffset = 0.0f, yoffset = 0.0f;
 
 		Com_sprintf(filename, sizeof(filename), "pics/%s.bpic", name);
 
@@ -111,6 +112,37 @@ void CL_LoadBorderedPic (bordered_pic_data_t *bpdata, const char *name)
 						imageHeight = bpdata->image->height;
 					}
 				}
+				else if (Q_strcaseeq(token, "xoffset"))
+				{
+					token = COM_Parse(&buf);
+					xoffset = (float)atof(token);
+				}
+				else if (Q_strcaseeq(token, "yoffset"))
+				{
+					token = COM_Parse(&buf);
+					yoffset = (float)atof(token);
+				}
+				else if (Q_strcaseeq(token, "import"))
+				{
+					token = COM_Parse(&buf);
+					Com_sprintf(filename, sizeof(filename), "pics/%s.bpic", token);
+					FS_FreeFile(filedata);
+
+					if (FS_LoadFileZ(filename, &filedata) <= 0)
+					{
+						Com_Printf("Could not load imported bpic: %s\n", filename);
+						return;
+					}
+
+					buf = filedata;
+					token = COM_Parse(&buf);
+
+					if (Q_strcasecmp(token, "dpborderedpic1.0"))
+					{
+						Com_Printf("First line of imported %s should be \"dpborderedpic1.0\"\n", filename);
+						goto FreeBorderPic;
+					}
+				}
 				else
 				{
 					const char *s = strchr(token, ',');
@@ -128,6 +160,18 @@ void CL_LoadBorderedPic (bordered_pic_data_t *bpdata, const char *name)
 								float divideBy = imageWidth;
 								float base = xbase;
 
+								// Evens are X coords, odds are Y coords, so divide by witdh and height accordingly to get a texture coord from 0 to 1.
+								if (subindex & 1)
+								{
+									divideBy = imageHeight;
+									base = ybase;
+									f += yoffset;
+								}
+								else
+								{
+									f += xoffset;
+								}
+
 								// Use the first entry as the base offset for everything else (in case we don't start at 0,0)
 								if (index == 0)
 								{
@@ -135,13 +179,6 @@ void CL_LoadBorderedPic (bordered_pic_data_t *bpdata, const char *name)
 										base = xbase = f;
 									else if (subindex == 1)
 										base = ybase = f;
-								}
-
-								// Evens are X coords, odds are Y coords, so divide by witdh and height accordingly to get a texture coord from 0 to 1.
-								if (subindex & 1)
-								{
-									divideBy = imageHeight;
-									base = ybase;
 								}
 
 								bpdata->screencoords[index][subindex] = f - base;
@@ -213,6 +250,6 @@ void CL_InitImages (void)
 	i_cursor_text = re.DrawFindPic("cursor_text");
 	CL_LoadBorderedPic(&bpdata_popup1, "popup1");
 	CL_LoadBorderedPic(&bpdata_button1, "button1");
-	CL_LoadBorderedPic(&bpdata_button1, "button1_hover");
-	CL_LoadBorderedPic(&bpdata_button1, "button1_select");
+	CL_LoadBorderedPic(&bpdata_button1_hover, "button1_hover");
+	CL_LoadBorderedPic(&bpdata_button1_select, "button1_select");
 }

@@ -852,6 +852,9 @@ extern image_t		*i_cursor;
 extern image_t		*i_cursor_text;
 
 extern bordered_pic_data_t	bpdata_popup1;
+extern bordered_pic_data_t	bpdata_button1;
+extern bordered_pic_data_t	bpdata_button1_hover;
+extern bordered_pic_data_t	bpdata_button1_select;
 
 extern float hudscale; // jithudscale
 extern float consoleheight; // T3RR0R15T: console height
