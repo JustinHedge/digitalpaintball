@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAPLIST_FLAGS_FIRST_MAP  0x01
 #define MAPLIST_FLAGS_TEMP       0x02
 #define MAPLIST_FLAGS_UNPLAYABLE 0x04
+#define MAPLIST_FLAGS_LAST_MAP   0x08
 
 typedef struct CL_MAPLIST_ITEM_S {
 	unsigned int votes;
@@ -147,7 +148,12 @@ static void clear_maplist (void)
 	cl_maplist_root = cl_maplist_tail = NULL;
 }
 
-// format: variable reserved, null, variable mapname, null, gamemode flags, votes
+#define MAPLIST_FLAGS_FIRST_MAP  0x01
+#define MAPLIST_FLAGS_TEMP       0x02
+#define MAPLIST_FLAGS_UNPLAYABLE 0x04
+#define MAPLIST_FLAGS_LAST_MAP   0x08
+
+// format: variable reserved, null, variable mapname, null, gamemode flags, votes, maplist flags
 void CL_ParseMaplistData (const unsigned char *data)
 {
 	register unsigned int i=0, j, count, len;
@@ -173,7 +179,29 @@ void CL_ParseMaplistData (const unsigned char *data)
 		len -= 3;
 
 		if (newnode->maplist_flags & MAPLIST_FLAGS_FIRST_MAP)
+		{
+			// Print to console if user manually typed the command
+			if (cls.key_dest == key_console)
+				Com_Printf("-------------------------------\n"); // arbitrary length - adjust if needed.
+
 			clear_maplist();
+		}
+
+		
+		// Print to console if user manually typed the command
+		if (cls.key_dest == key_console)
+		{
+			if (newnode->maplist_flags & MAPLIST_FLAGS_UNPLAYABLE)
+				Com_Printf("%c5", CHAR_COLOR);
+
+			if (newnode->maplist_flags & MAPLIST_FLAGS_TEMP)
+				Com_Printf("(%3d %s)\n", newnode->votes, newnode->mapname);
+			else
+				Com_Printf("%4d %s\n", newnode->votes, newnode->mapname);
+
+			if (newnode->maplist_flags & MAPLIST_FLAGS_LAST_MAP)
+				Com_Printf("-------------------------------\n"); // arbitrary length - adjust if needed.
+		}
 
 		// skip past any extra data (leave room for future expansion)
 		while (len > 0)
@@ -194,7 +222,10 @@ void CL_ParseMaplistData (const unsigned char *data)
 
 static void getmaplist (void)
 {
-	Cbuf_AddText("cmd getmaplist\n");
+	if (Cmd_Argc() >= 2)
+		Cbuf_AddText(va("cmd getmaplist %s\n", Cmd_Argv(1)));
+	else
+		Cbuf_AddText("cmd getmaplist\n");
 }
 
 void init_cl_vote (void)
@@ -208,6 +239,7 @@ void init_cl_vote (void)
 	memset(cl_maplist_modes, 0, sizeof(char*)*MAX_MAPLIST_MODES);
 	cl_maplist_modes[0] = "------";
 	Cmd_AddCommand("getmaplist", getmaplist);
+	Cmd_AddCommand("maplist", getmaplist);
 }
 
 void shutdown_cl_vote (void)
