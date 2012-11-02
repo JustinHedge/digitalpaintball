@@ -599,6 +599,7 @@ void CL_Download_f (void);
 void CL_Download3_f (void); // jitdownload
 #endif
 void CL_WriteConfig_f (void); // jitconfig
+void translate_string (char *out, size_t size, const char *in); // jit
 
 //
 // cl_scores.c
@@ -798,6 +799,14 @@ void FS_FreeList (char **list, int nfiles);
 // cl_pred.c
 //
 void CL_PredictMovement (void);
+
+
+//
+// cl_images.c
+//
+CL_ShutdownImages (void);
+bordered_pic_data_t *CL_FindBPic (const char *name);
+
 
 #if id386
 void x86_TimerStart( void );
