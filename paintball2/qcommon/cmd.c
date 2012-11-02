@@ -636,7 +636,7 @@ static cmd_macro_t *Cmd_MacroFind(const char *name)
 	hash = Com_HashString( name, MACROHASH_SIZE );
 	for(macro=cmd_macroHash[hash]; macro; macro=macro->hashNext)
 	{
-		if (!Q_strcasecmp(macro->name, name))
+		if (Q_strcaseeq(macro->name, name))
 		{
 			return macro;
 		}
@@ -983,7 +983,7 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 	// clear the args from the last string
 	for (i = 0; i < cmd_argc; i++)
 		Z_Free(cmd_argv[i]);
-		
+
 	cmd_argc = 0;
 	cmd_args[0] = 0;
 	
@@ -1044,7 +1044,7 @@ void Cmd_TokenizeString (unsigned char *text, qboolean macroExpand)
 
 		if (cmd_argc < MAX_STRING_TOKENS)
 		{
-			cmd_argv[cmd_argc] = Z_Malloc(strlen(com_token)+1);
+			cmd_argv[cmd_argc] = Z_Malloc(strlen(com_token) + 1);
 			strcpy(cmd_argv[cmd_argc], com_token);
 			cmd_argc++;
 		}
@@ -1305,7 +1305,7 @@ void Cmd_ExecuteString (char *text)
 	// check functions
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
 	{
-		if (!Q_strcasecmp(cmd_argv[0], cmd->name))
+		if (Q_strcaseeq(cmd_argv[0], cmd->name))
 		{
 			if (!cmd->function)
 				Cmd_ExecuteString(va("cmd %s", text)); // forward to server command
@@ -1319,7 +1319,7 @@ void Cmd_ExecuteString (char *text)
 	// check alias
 	for (a = cmd_alias; a; a = a->next)
 	{
-		if (!Q_strcasecmp(cmd_argv[0], a->name))
+		if (Q_strcaseeq(cmd_argv[0], a->name))
 		{
 			if (++alias_count == ALIAS_LOOP_COUNT)
 			{

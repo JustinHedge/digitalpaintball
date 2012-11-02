@@ -268,7 +268,7 @@ int FS_FOpenFile (const char *filename, FILE **file)
 
 			for (i = 0; i < pak->numfiles; i++)
 			{
-				if (!Q_strcasecmp(pak->files[i].name, filename))
+				if (Q_strcaseeq(pak->files[i].name, filename))
 				{	// found it!
 					file_from_pak = 1;
 					Com_DPrintf("PackFile: %s : %s\n", pak->filename, filename);

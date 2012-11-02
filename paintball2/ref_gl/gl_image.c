@@ -238,7 +238,7 @@ void GL_TextureMode(const char *string )
 	image_t	*glt;
 
 	for (i = 0; i < NUM_GL_MODES; i++)
-		if (!Q_strcasecmp(modes[i].name, string))
+		if (Q_strcaseeq(modes[i].name, string))
 			break;
 
 	if (i == NUM_GL_MODES)
@@ -272,7 +272,7 @@ void GL_TextureAlphaMode (const char *string)
 	int		i;
 
 	for (i = 0; i < NUM_GL_ALPHA_MODES; i++)
-		if (!Q_strcasecmp(gl_alpha_modes[i].name, string))
+		if (Q_strcaseeq(gl_alpha_modes[i].name, string))
 			break;
 
 	if (i == NUM_GL_ALPHA_MODES)
@@ -295,7 +295,7 @@ void GL_TextureSolidMode (const char *string)
 
 	for (i = 0; i < NUM_GL_SOLID_MODES; ++i)
 	{
-		if (!Q_strcasecmp(gl_solid_modes[i].name, string))
+		if (Q_strcaseeq(gl_solid_modes[i].name, string))
 			break;
 	}
 
@@ -1785,15 +1785,15 @@ image_t *GL_LoadPic (const char *name, byte *pic, int width, int height, imagety
 	// ===
 	// jit -- paintball2 texture fix
 	// jitodo -- move these to rscripts, this is an ugly hack.
-	if ( !Q_strcasecmp(name, "textures/pball/b_flag1") ||
-		!Q_strcasecmp(name, "textures/pball/y_flag1") || 
-		!Q_strcasecmp(name, "textures/pball/p_flag1") || 
-		!Q_strcasecmp(name, "textures/pball/r_flag1"))
+	if ( Q_strcaseeq(name, "textures/pball/b_flag1") ||
+		Q_strcaseeq(name, "textures/pball/y_flag1") || 
+		Q_strcaseeq(name, "textures/pball/p_flag1") || 
+		Q_strcaseeq(name, "textures/pball/r_flag1"))
 	{
 		image->width = 96;
 		image->height = 96;
 	}
-	else if (!Q_strcasecmp(name,"textures/pball/ksplat2"))
+	else if (Q_strcaseeq(name,"textures/pball/ksplat2"))
 	{
 		image->width = 288;
 		image->height = 128;
@@ -2413,5 +2413,5 @@ void GL_ShutdownImages (void)
 
 void init_image_hash_tables (void) // jithash
 {
-	hash_table_init(&gltextures_hash, 0x1FF, GL_ShutdownImage);
+	hash_table_init(&gltextures_hash, 0x200, GL_ShutdownImage);
 }

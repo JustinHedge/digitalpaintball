@@ -595,7 +595,7 @@ int Key_StringToKeynum (char *str)
 	// Named key (SPACE, MOUSE1, etc.)
 	for (kn = keynames; kn->name; kn++)
 	{
-		if (!Q_strcasecmp(str, kn->name))
+		if (Q_strcaseeq(str, kn->name))
 			return kn->keynum;
 	}
 

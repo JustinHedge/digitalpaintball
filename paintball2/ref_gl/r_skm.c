@@ -358,7 +358,7 @@ void Mod_LoadSkeletalModel (model_t *mod, model_t *parent, void *buffer)
 				if (!token)
 					break;
 
-				if (!Q_strcasecmp(token, "import"))
+				if (Q_strcaseeq(token, "import"))
 				{
 					token = COM_ParseExt(&ptr, false);
 					COM_StripExtension(token, temp, sizeof(temp));
