@@ -178,6 +178,7 @@ Called when the window gains focus or changes in some way
 void IN_ActivateMouse (qboolean clipcursor)
 {
 	int		width, height;
+	static qboolean was_menu_active = false;
 
 	// NiceAss: reset mouse settings if m_noaccel (formerly m_xp) changes
 	if (m_noaccel->modified)
@@ -193,6 +194,13 @@ void IN_ActivateMouse (qboolean clipcursor)
 	{
 		mouseactive = false;
 		return;
+	}
+
+	// Check for a menu state change
+	if (M_MenuActive() != was_menu_active)
+	{
+		mouseactive = false;
+		was_menu_active = M_MenuActive();
 	}
 
 	if (mouseactive)
