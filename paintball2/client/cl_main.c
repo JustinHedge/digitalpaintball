@@ -2956,6 +2956,7 @@ void CL_Shutdown (void)
 	CDAudio_Shutdown();
 	S_Shutdown();
 	IN_Shutdown();
+	CL_ShutdownImages();
 	VID_Shutdown();
 	Stats_Shutdown();
 

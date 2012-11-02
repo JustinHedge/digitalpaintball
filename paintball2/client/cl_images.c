@@ -61,6 +61,8 @@ bordered_pic_data_t		bpdata_button1;
 bordered_pic_data_t		bpdata_button1_hover;
 bordered_pic_data_t		bpdata_button1_select;
 
+hash_table_t			g_bpic_hash;
+
 void CL_LoadBorderedPic (bordered_pic_data_t *bpdata, const char *name)
 {
 	if (bpdata)
@@ -248,8 +250,44 @@ void CL_InitImages (void)
 
 	i_cursor = re.DrawFindPic("cursor");
 	i_cursor_text = re.DrawFindPic("cursor_text");
+
+	// jit - borderpic stuff:
 	CL_LoadBorderedPic(&bpdata_popup1, "popup1");
 	CL_LoadBorderedPic(&bpdata_button1, "button1");
 	CL_LoadBorderedPic(&bpdata_button1_hover, "button1_hover");
 	CL_LoadBorderedPic(&bpdata_button1_select, "button1_select");
+
+	// This function is called every time there is a vid_restart, so we need to make sure any already-loaded bpics get freed up.
+	hash_table_free(&g_bpic_hash);
+	hash_table_init(&g_bpic_hash, 0x20, Z_Free);
+}
+
+
+CL_ShutdownImages (void)
+{
+	hash_table_free(&g_bpic_hash);
+}
+
+
+bordered_pic_data_t *CL_FindBPic (const char *name)
+{
+	if (name)
+	{
+		bordered_pic_data_t *bpdata = hash_get(&g_bpic_hash, name);
+
+		if (!bpdata)
+		{
+			bpdata = Z_Malloc(sizeof(bordered_pic_data_t));
+
+			if (bpdata)
+			{
+				CL_LoadBorderedPic(bpdata, name);
+				hash_add(&g_bpic_hash, name, bpdata);
+			}
+		}
+
+		return bpdata;
+	}
+
+	return NULL;
 }
