@@ -1040,7 +1040,7 @@ void CL_ParseClientinfo (int player)
 }
 
 
-static void translate_string (char *out, size_t size, const char *in) // jittrans
+void translate_string (char *out, size_t size, const char *in) // jittrans
 {
 	extern cvar_t			*cl_language;
 	static qboolean			loaded = false;
@@ -1056,7 +1056,7 @@ static void translate_string (char *out, size_t size, const char *in) // jittran
 		if (loaded)
 			hash_table_free(&string_trans_hash); // wipe out the old hash table
         
-		hash_table_init(&string_trans_hash, 0xFF, Z_Free);
+		hash_table_init(&string_trans_hash, 0x100, Z_Free);
 		loaded = true;
 		cl_language->modified = false;
 		Com_sprintf(lang_file, sizeof(lang_file), "configs/%s.lang", cl_language->string);
@@ -1360,7 +1360,7 @@ static void CL_ParsePrintDefault (const char *text) // jit
 
 extern cvar_t *cl_dialogprint;
 
-static void CL_ParsePrintPopup (const char *text) // jit
+static void CL_ParsePrintPopup (const char *text, qboolean printconsole) // jit
 {
 	char translated[2048];
 	char *expanded;
@@ -1368,7 +1368,7 @@ static void CL_ParsePrintPopup (const char *text) // jit
 	translate_string(translated, sizeof(translated), text);
 	expanded = Cmd_MacroExpandString(translated);
 
-	if (cls.key_dest != key_console && cl_dialogprint->value) // Only pop up the dialog when out of the console.
+	if (!printconsole || (cls.key_dest != key_console && cl_dialogprint->value)) // Only pop up the dialog when out of the console.
 	{
 		//M_PrintDialog(expanded);
 		SCR_PrintPopup(expanded);
@@ -1502,7 +1502,10 @@ void CL_ParseServerMessage (void)
 				CL_ParseChat(i, MSG_ReadString(&net_message));
 				break;
 			case PRINT_POPUP:
-				CL_ParsePrintPopup(MSG_ReadString(&net_message));
+				CL_ParsePrintPopup(MSG_ReadString(&net_message), true);
+				break;
+			case PRINT_POPUP_NOCON:
+				CL_ParsePrintPopup(MSG_ReadString(&net_message), false);
 				break;
 			default:
 				CL_ParsePrintDefault(MSG_ReadString(&net_message));
