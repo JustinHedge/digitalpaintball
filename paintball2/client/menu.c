@@ -764,19 +764,19 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 		switch(widget->halign)
 		{
 		case WIDGET_HALIGN_CENTER:
-			widget->widgetCorner.x -= widget->widgetSize.x/2;
-			widget->textCorner.x -= (strlen_noformat(text)*CHARWIDTH*scale)/2;
+			widget->widgetCorner.x -= widget->widgetSize.x * 0.5f;
+			widget->textCorner.x -= strlen_noformat(text) * CHARWIDTH * scale * 0.5f;
 			break;
 		case WIDGET_HALIGN_RIGHT:
 			widget->widgetCorner.x -= widget->widgetSize.x;
-			widget->textCorner.x -= (strlen_noformat(text)*CHARWIDTH*scale);
+			widget->textCorner.x -= strlen_noformat(text) * CHARWIDTH * scale;
 			switch(widget->type)
 			{
 			case WIDGET_TYPE_SLIDER:
 			case WIDGET_TYPE_CHECKBOX:
 			case WIDGET_TYPE_FIELD:
 			case WIDGET_TYPE_SELECT:
-				widget->textCorner.x -= (CHARWIDTH*scale + widget->widgetSize.x);
+				widget->textCorner.x -= CHARWIDTH * scale + widget->widgetSize.x;
 				break;
 			default:
 				break;
@@ -790,7 +790,7 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			case WIDGET_TYPE_CHECKBOX:
 			case WIDGET_TYPE_FIELD:
 			case WIDGET_TYPE_SELECT:
-				widget->textCorner.x += (CHARWIDTH*scale + widget->widgetSize.x);
+				widget->textCorner.x += CHARWIDTH * scale + widget->widgetSize.x;
 				break;
 			default:
 				break;
@@ -801,8 +801,8 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 		switch(widget->valign)
 		{
 		case WIDGET_VALIGN_MIDDLE:
-			widget->widgetCorner.y -= (widget->widgetSize.y/2);
-			widget->textCorner.y -= TEXT_HEIGHT/2.0f;
+			widget->widgetCorner.y -= widget->widgetSize.y * 0.5f;
+			widget->textCorner.y -= TEXT_HEIGHT * 0.5f;
 			break;
 		case WIDGET_VALIGN_BOTTOM:
 			widget->widgetCorner.y -= widget->widgetSize.y;
@@ -827,25 +827,28 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 
 		if (text)
 		{
-			widget->textSize.x = (strlen_noformat(text)*TEXT_HEIGHT);
+			widget->textSize.x = strlen_noformat(text) * TEXT_HEIGHT;
 			widget->textSize.y = TEXT_HEIGHT;
 
 			switch(widget->type)
 			{
 			case WIDGET_TYPE_CHECKBOX:
-				widget->textCorner.y = widget->widgetCorner.y + (CHECKBOX_HEIGHT - TEXT_HEIGHT)/2;
+				widget->textCorner.y = widget->widgetCorner.y + (CHECKBOX_HEIGHT - TEXT_HEIGHT) * 0.5f;
 				break;
 			case WIDGET_TYPE_SLIDER:
-				widget->textCorner.y = widget->widgetCorner.y + (SLIDER_TOTAL_HEIGHT - TEXT_HEIGHT)/2;
+				widget->textCorner.y = widget->widgetCorner.y + (SLIDER_TOTAL_HEIGHT - TEXT_HEIGHT) * 0.5f;
 				break;
 			}
 
 			if (widget->mouseBoundaries.left > widget->textCorner.x)
 				widget->mouseBoundaries.left = widget->textCorner.x;
+
 			if (widget->mouseBoundaries.right < widget->textCorner.x + widget->textSize.x)
 				widget->mouseBoundaries.right = widget->textCorner.x + widget->textSize.x;
+
 			if (widget->mouseBoundaries.top > widget->textCorner.y)
 				widget->mouseBoundaries.top = widget->textCorner.y;
+
 			if (widget->mouseBoundaries.bottom < widget->textCorner.y + widget->textSize.y)
 				widget->mouseBoundaries.bottom = widget->textCorner.y + widget->textSize.y;
 		}
@@ -856,6 +859,14 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			widget->mouseBoundaries.right = widget->widgetCorner.x + widget->widgetSize.x;
 			widget->mouseBoundaries.top = widget->widgetCorner.y;
 			widget->mouseBoundaries.bottom = widget->widgetCorner.y + widget->widgetSize.y;
+		}
+
+		if (widget->type == WIDGET_TYPE_BUTTON)
+		{
+			widget->mouseBoundaries.left -= BUTTON_H_PADDING * scale;
+			widget->mouseBoundaries.right += BUTTON_H_PADDING * scale;
+			widget->mouseBoundaries.top -= BUTTON_V_PADDING * scale;
+			widget->mouseBoundaries.bottom += BUTTON_V_PADDING * scale;
 		}
 	}
 }
@@ -2420,13 +2431,30 @@ static void widget_complete (menu_widget_t *widget)
 			widget->field_width = 3; // can't have fields shorter than this!
 		break;
 	case WIDGET_TYPE_UNKNOWN:
+	case WIDGET_TYPE_BUTTON:
 	case WIDGET_TYPE_TEXT:
-		if (widget->text && widget_is_selectable(widget) && !widget->pic && !widget->hoverpic && !widget->selectedpic)
+		if (widget->text && widget_is_selectable(widget) && !widget->pic && !widget->hoverpic && !widget->selectedpic && !(widget->flags & WIDGET_FLAG_NOBG))
 		{
+#if 1
+			// Buttons.
+			widget->bpic = &bpdata_button1;
+			widget->hoverbpic = &bpdata_button1_hover;
+			widget->selectedbpic = &bpdata_button1_select;
+
+			if (!widget->picwidth)
+				widget->picwidth = strlen_noformat(widget->text) * TEXT_WIDTH_UNSCALED; // TODO: Handle variable-width font.
+
+			if (!widget->picheight)
+				widget->picheight = TEXT_HEIGHT_UNSCALED;
+
+			widget->type = WIDGET_TYPE_BUTTON;
+#else
+			// Old text hover behavior
 			widget->selectedpic = re.DrawFindPic("text1bg");
 			widget->hoverpic = re.DrawFindPic("text1bgh");
 			widget->picwidth = strlen_noformat(widget->text) * TEXT_WIDTH_UNSCALED;
 			widget->picheight = TEXT_HEIGHT_UNSCALED;
+#endif
 		}
 		break;
 	}
@@ -2434,33 +2462,35 @@ static void widget_complete (menu_widget_t *widget)
 }
 
 
-static void menu_from_file (menu_screen_t *menu)
+static void menu_from_file (menu_screen_t *menu, qboolean include, const char *loadname)
 {
 	char menu_filename[MAX_QPATH];
 	char *filebuf;
 	int file_len;
 	extern cvar_t *cl_language;
 	extern cvar_t *cl_menu;
+	const char *name = menu->name;
+
+	if (loadname)
+		name = loadname;
 
 	scale = cl_hudscale->value;
 
-	Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s/%s/%s.txt", cl_language->string, cl_menu->string, menu->name);
+	Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s/%s/%s.txt", cl_language->string, cl_menu->string, name);
 	file_len = FS_LoadFileZ(menu_filename, (void **)&filebuf);
 
 	if (file_len < 0)
 	{
-		Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s/%s.txt", cl_language->string, menu->name);
+		Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s/%s.txt", cl_language->string, name);
 		file_len = FS_LoadFileZ(menu_filename, (void **)&filebuf);
 
 		if (file_len < 0)
 		{
-			Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s.txt", menu->name);
+			Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s.txt", name);
 			file_len = FS_LoadFileZ(menu_filename, (void **)&filebuf);
 		}
 	}
 
-	menu->background = re.DrawFindPic("conback"); // jitodo - customizebale backgrounds
-	
 	if (file_len != -1)
 	{
 		char *token;
@@ -2475,8 +2505,16 @@ static void menu_from_file (menu_screen_t *menu)
 
 			if (atoi(token) == 1)
 			{
-				menu_widget_t *widget=NULL;
+				menu_widget_t *widget = NULL;
 				int x = 0, y = 0;
+
+				if (include && menu->widget) // if this is included/imported, pick up where we left off.
+				{
+					widget = menu->widget;
+
+					while (widget->next)
+						widget = widget->next;
+				}
 
 				token = COM_Parse(&buf); 
 
@@ -2517,6 +2555,23 @@ static void menu_from_file (menu_screen_t *menu)
 						widget->x = x;
 						//y += 8;
 					}
+
+					if (Q_streq(token, "include") || Q_streq(token, "import"))
+					{
+						menu_from_file(menu, true, COM_Parse(&buf));
+
+						// We may have added new widgets, so move to the end of the list.
+						if (widget)
+						{
+							while (widget->next)
+								widget = widget->next;
+						}
+						else
+						{
+							widget = menu->widget;
+						}
+					}
+
 					// widget properties:
 					else if (Q_streq(token, "type"))
 					{
@@ -2541,11 +2596,13 @@ static void menu_from_file (menu_screen_t *menu)
 					else if (Q_streq(token, "text") && widget)
 					{
 						char *text = COM_Parse(&buf);
+						char translated_text[1024];
 
 						if (strchr(text, '$'))
 							widget->dynamic = true;
 
-						widget->text = text_copy(text);
+						translate_string(translated_text, sizeof(translated_text), text);
+						widget->text = text_copy(translated_text);
 					}
 					else if (Q_streq(token, "hovertext") && widget)
 					{
@@ -2610,6 +2667,24 @@ static void menu_from_file (menu_screen_t *menu)
 
 						if (!widget->picheight)
 							widget->picheight = widget->pic->height / 2.0f;
+					}
+					else if ((Q_streq(token, "bpic") || Q_streq(token, "borderpic")) && widget)
+					{
+						char picname[256];
+						Q_strncpyz(picname, COM_Parse(&buf), sizeof(picname)); // we have to copy this here, because COM_Parse gets used later and screws up this string.
+						widget->bpic = CL_FindBPic(picname);
+					}
+					else if ((Q_streq(token, "hoverbpic") || Q_streq(token, "hoverborderpic")) && widget)
+					{
+						char picname[256];
+						Q_strncpyz(picname, COM_Parse(&buf), sizeof(picname)); // we have to copy this here, because COM_Parse gets used later and screws up this string.
+						widget->hoverbpic = CL_FindBPic(picname);
+					}
+					else if ((Q_streq(token, "selectedbpic") || Q_streq(token, "selectedborderpic")) && widget)
+					{
+						char picname[256];
+						Q_strncpyz(picname, COM_Parse(&buf), sizeof(picname)); // we have to copy this here, because COM_Parse gets used later and screws up this string.
+						widget->selectedbpic = CL_FindBPic(picname);
 					}
 					else if (Q_streq(token, "picwidth") && widget)
 						widget->picwidth = atoi(COM_Parse(&buf));
@@ -2708,7 +2783,7 @@ static void menu_from_file (menu_screen_t *menu)
 					}
 					else if (strstr(token, "strip") && widget)
 						select_strip_from_list(widget, COM_Parse(&buf));
-					else if ((Q_streq(token, "nobg") || Q_streq(token, "nobackground")) && widget)
+					else if ((Q_streq(token, "nobg") || Q_streq(token, "nobackground") || Q_streq(token, "nobutton")) && widget)
 						widget->flags |= WIDGET_FLAG_NOBG;
 
 					token = COM_Parse(&buf);
@@ -2747,7 +2822,7 @@ static menu_screen_t* M_LoadMenuScreen (const char *menu_name)
 	menu_screen_t *menu;
 
 	menu = M_GetNewMenuScreen(menu_name, "conback"); // todo - customizeable backgrounds
-	menu_from_file(menu);
+	menu_from_file(menu, false, NULL);
 
 	return menu;
 }
@@ -2779,7 +2854,7 @@ static void reload_menu_screen (menu_screen_t *menu)
 
 	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 	menu->widget = free_widgets(menu->widget);
-	menu_from_file(menu); // reload data from file
+	menu_from_file(menu, false, NULL); // reload data from file
 	//pthread_mutex_unlock(&m_mut_widgets);
 }
 
@@ -2937,7 +3012,7 @@ void M_Init (void)
 	pthread_mutex_init(&m_mut_widgets, NULL);
 
 	// Init hash table:
-	hash_table_init(&named_widgets_hash, 0xFF, NULL);
+	hash_table_init(&named_widgets_hash, 0x40, NULL);
 
     // Add commands
 	Cmd_AddCommand("menu", M_Menu_f);
@@ -3130,6 +3205,7 @@ static void M_DrawWidget (menu_widget_t *widget)
 	const char *text = NULL;
 	char *cvar_val = "";
 	image_t *pic = NULL;
+	bordered_pic_data_t *bpic = NULL;
 	qboolean checkbox_checked;
 
 	M_UpdateDrawingInformation(widget);
@@ -3143,6 +3219,9 @@ static void M_DrawWidget (menu_widget_t *widget)
 			else
 				pic = widget->pic;
 		}
+
+		if (widget->bpic)
+			bpic = widget->bpic;
 
 		if (widget->text)
 		{
@@ -3191,6 +3270,11 @@ static void M_DrawWidget (menu_widget_t *widget)
 				else
 					pic = widget->pic;
 			}
+
+			if (widget->selectedbpic)
+				bpic = widget->selectedbpic;
+			else if (widget->hoverbpic)
+				bpic = widget->hoverbpic;
 		}
 		else if (widget->hover)
 		{
@@ -3223,6 +3307,9 @@ static void M_DrawWidget (menu_widget_t *widget)
 				else
 					pic = widget->pic;
 			}
+
+			if (widget->hoverbpic)
+				bpic = widget->hoverbpic;
 		}
 
 		switch (widget->type) 
@@ -3255,6 +3342,21 @@ static void M_DrawWidget (menu_widget_t *widget)
 								widget->widgetSize.x,
 								widget->widgetSize.y,
 								pic);
+
+		if (bpic)
+		{
+			if (widget->type == WIDGET_TYPE_BUTTON)
+			{
+				re.DrawBorderedPic(bpic, widget->widgetCorner.x - BUTTON_H_PADDING * scale, widget->widgetCorner.y - BUTTON_V_PADDING * scale,
+					widget->widgetSize.x + BUTTON_H_PADDING * scale * 2.0f, widget->widgetSize.y + BUTTON_V_PADDING * scale * 2.0f, 1.0f, 1.0f);
+			}
+			else
+			{
+				re.DrawBorderedPic(bpic, widget->widgetCorner.x, widget->widgetCorner.y,
+					widget->widgetSize.x + BUTTON_H_PADDING * scale * 2.0f, widget->widgetSize.y + BUTTON_V_PADDING * scale * 2.0f, 1.0f, 1.0f);
+			}
+		}
+
 		if (text)
 			re.DrawString(widget->textCorner.x, widget->textCorner.y, text);
 	}

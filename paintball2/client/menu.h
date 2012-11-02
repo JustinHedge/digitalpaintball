@@ -45,7 +45,9 @@ extern cvar_t *serverlist_blacklist;
 extern cvar_t *serverlist_udp_source1; // jitserverlist
 
 #define TEXT_WIDTH_UNSCALED		CHARWIDTH
-#define TEXT_HEIGHT_UNSCALED	8
+#define TEXT_HEIGHT_UNSCALED	CHARHEIGHT
+#define BUTTON_V_PADDING		4
+#define BUTTON_H_PADDING		10
 
 #define TEXT_WIDTH		(TEXT_WIDTH_UNSCALED*scale)
 #define TEXT_HEIGHT		(TEXT_HEIGHT_UNSCALED*scale)
@@ -105,10 +107,11 @@ extern cvar_t *serverlist_udp_source1; // jitserverlist
 #define WIDGET_FLAG_INT			128
 #define WIDGET_FLAG_FILELIST	256
 #define WIDGET_FLAG_LISTSOURCE	512
-#define WIDGET_FLAG_NOBG		1024 // no background for select widget
+#define WIDGET_FLAG_NOBG		1024 // no background for select widget OR no button image for text widget
 #define WIDGET_FLAG_BIND		2048 // key binding
 #define WIDGET_FLAG_PASSWORD	4096
 #define WIDGET_FLAG_NOSPACE		8192 // No spaces allowed in this edit box
+
 
 typedef enum {
 	WIDGET_TYPE_UNKNOWN	= 0,
@@ -151,20 +154,20 @@ typedef enum {
 } SLIDER_SELECTED;
 
 typedef struct POINT_S {
-	int x;
-	int y;
+	float x;
+	float y;
 } point_t;
 
 typedef struct RECT_S {
-	int bottom;
-	int right;
-	int left;
-	int top;
+	float bottom;
+	float right;
+	float left;
+	float top;
 } rect_t;
 
 typedef struct MENU_MOUSE_S {
-	int x;
-	int y;
+	float x;
+	float y;
 	image_t *cursorpic;
 	qboolean button_down[8];
 } menu_mouse_t;
@@ -197,8 +200,8 @@ typedef struct MENU_WIDGET_S {
 	char *doubleclick;	// command exceuted on double click.
 	char *cvar;			// cvar widget reads and/or modifies
 	char *cvar_default;	// set cvar to this value if unset
-	int x;				// position from 0 (left) to 320 (right)
-	int y;				// position from 0 (top) to 240 (bottom)
+	float x;			// position from 0 (left) to 320 (right)
+	float y;			// position from 0 (top) to 240 (bottom)
 	int limit;			// max number of characters for edit fields (0 for no limit)
 	WIDGET_HALIGN halign;	// horizontal alignment relative to x, y coords
 	WIDGET_VALIGN valign;	// vertical alignment relative to x, y coords
@@ -206,12 +209,15 @@ typedef struct MENU_WIDGET_S {
 	char *hovertext;	// text when mouse over widget
 	char *selectedtext;	// text when mouse clicked on widget
 	image_t *pic;		// image displayed by widget
+	bordered_pic_data_t *bpic; // Bordered pic (for buttons)
 	char *picname;		// text name of pic
 	image_t *hoverpic;	// image displayed when mouse over widget
+	bordered_pic_data_t *hoverbpic;
 	char *hoverpicname;
 	int hoverpicwidth;
 	int hoverpicheight;
 	image_t *selectedpic;// image displayed when mouse clicked on widget
+	bordered_pic_data_t *selectedbpic;
 	char *selectedpicname;
 	qboolean enabled;	// for greying out widgets
 	qboolean hover;		// mouse is over widget
