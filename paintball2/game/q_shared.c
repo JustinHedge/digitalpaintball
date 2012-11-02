@@ -2040,15 +2040,17 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 }
 
 //====================================================================
-// Hash Functions (c) 2004 Nathan Wulf
+// Hash Functions (c) 2004-2012 Nathan "jitspoe" Wulf
 // jithash:
-void hash_table_init (hash_table_t *table, unsigned int sizemask, void *free_func)
+void hash_table_init (hash_table_t *table, unsigned int size, void *free_func)
 {
-	table->sizemask = sizemask;
+	table->size = size;
+	table->mask = size - 1;
+	assert((size & table->mask) == 0); // size must be a power of 2.
 	table->free_func = free_func;
 	//table->table = Z_Malloc(sizeof(hash_node_t)*sizemask);
-	table->table = malloc(sizeof(hash_node_t)*sizemask);
-	memset(table->table, 0, sizeof(hash_node_t)*sizemask);
+	table->table = malloc(sizeof(hash_node_t) * size);
+	memset(table->table, 0, sizeof(hash_node_t) * size);
 }
 
 static void hash_node_free (hash_node_t *node, hash_table_t *table)
@@ -2073,9 +2075,10 @@ static void hash_node_free_recursive (hash_node_t *node, hash_table_t *table)
 
 void hash_table_free (hash_table_t *table)
 {
-	int i;
+	register int i;
+	register int size = table->size;
 	
-	for (i = 0; i < table->sizemask; i++)
+	for (i = 0; i < size; i++)
 	{
 		hash_node_free_recursive(table->table[i], table);
 		table->table[i] = NULL;
@@ -2085,20 +2088,21 @@ void hash_table_free (hash_table_t *table)
 	free(table->table);
 	table->table = 0;
 	table->free_func = NULL;
-	table->sizemask = 0;
+	table->size = 0;
+	table->mask = 0;
 }
 
 void hash_print (hash_table_t *table)
 {
-	int i, j;
+	register int i, j, size = table->size;
 	hash_node_t *node;
 
-	for (i = 0; i < table->sizemask; i++)
+	for (i = 0; i < size; i++)
 	{
 		j = 0;
 		node = table->table[i];
 
-		while(node)
+		while (node)
 		{
 			j++;
 			node = node->next;
@@ -2176,7 +2180,7 @@ void hash_add (hash_table_t *table, const unsigned char *key, void *data)
 	newnode = malloc(sizeof(hash_node_t));
 	newnode->key = strdup(key);
 	HASHALG;
-	hashval &= table->sizemask;
+	hashval &= table->mask;
 	newnode->data = data;
 
 #if 0 // jittest
@@ -2204,7 +2208,7 @@ void *hash_get (hash_table_t *table, const unsigned char *key)
 	const unsigned char *s;
 
 	HASHALG;
-	hashval &= table->sizemask;
+	hashval &= table->mask;
 	node = table->table[hashval];
 
 	while (node)
@@ -2227,7 +2231,7 @@ void hash_delete (hash_table_t *table, const unsigned char *key)
 	const unsigned char *s;
 
 	HASHALG;
-	hashval &= table->sizemask;
+	hashval &= table->mask;
 	prevnode = node = table->table[hashval];
 
 	while(node)

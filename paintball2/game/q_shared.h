@@ -107,6 +107,7 @@ typedef enum {false, true}	qboolean;
 #define	PRINT_MEDIUM		1		// death messages
 #define	PRINT_HIGH			2		// critical messages
 #define	PRINT_CHAT			3		// chat messages
+
 // paintball2 stuff:
 #define PRINT_POPUP		11		// pops up a dailog on the client
 #define PRINT_ITEM			12		// for item pickup notifications.
@@ -114,6 +115,7 @@ typedef enum {false, true}	qboolean;
 #define PRINT_SCOREDATA		14		// for server sending ping, kills, deaths, etc of a client.
 #define PRINT_PINGDATA		15		// for client-side scoreboard
 #define PRINT_MAPLISTDATA	16		// for client-side vote menu
+#define PRINT_POPUP_NOCON	17		// same as PRINT_POPUP, but always uses a popup and never prints to the console.
 
 #define PRINT_CHATN			20		// chat with name index encoded into first character(s)
 #define PRINT_CHATN_TEAM	21
@@ -1407,7 +1409,8 @@ typedef struct hash_node_s {
 } hash_node_t;
 
 typedef struct hash_table_s {
-	int sizemask; // number of nodes in table, also doubles as a mask, so should be something like 0xFF
+	int mask; // should be size - 1
+	int size; // should be a power of 2
 	void (*free_func)(void *data); // function to call when freeing elements
 	hash_node_t **table;
 } hash_table_t;
