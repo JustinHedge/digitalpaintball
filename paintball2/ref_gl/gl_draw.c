@@ -703,22 +703,27 @@ void Draw_BorderedPic (bordered_pic_data_t *data, float x, float y, float w, flo
 
 	if (!gl)
 	{
-		ri.Con_Printf(PRINT_ALL, "NULL pic in Draw_BorderedPic.\n");
-		return;
+		gl = r_notexture;
+
+		if (!gl)
+		{
+			ri.Con_Printf(PRINT_ALL, "NULL pic in Draw_BorderedPic.\n");
+			return;
+		}
 	}
 
 	ytotal =
-		(data->screencoords[3][3] - data->screencoords[3][1] +
-		data->screencoords[4][3] - data->screencoords[4][1] +
-		data->screencoords[2][3] - data->screencoords[2][1]) * scale;
+		(data->screencoords[2][3] - data->screencoords[2][1] +
+		data->screencoords[3][3] - data->screencoords[3][1] +
+		data->screencoords[4][3] - data->screencoords[4][1]) * scale;
 
 	if (ytotal < h)
 		ydiff = h - ytotal;
 
 	xtotal =
-		(data->screencoords[1][2] - data->screencoords[1][0] +
-		data->screencoords[2][2] - data->screencoords[2][0] +
-		data->screencoords[0][2] - data->screencoords[0][0]) * scale;
+		(data->screencoords[0][2] - data->screencoords[0][0] +
+		data->screencoords[1][2] - data->screencoords[1][0] +
+		data->screencoords[2][2] - data->screencoords[2][0]) * scale;
 
 	if (xtotal < w)
 		xdiff = w - xtotal;
