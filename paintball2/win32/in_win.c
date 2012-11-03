@@ -236,6 +236,7 @@ void IN_ActivateMouse (qboolean clipcursor)
 	}
 	else
 	{
+		ReleaseCapture();
 		ClipCursor(NULL);
 	}
 
