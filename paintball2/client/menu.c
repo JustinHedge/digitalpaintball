@@ -3353,7 +3353,7 @@ static void M_DrawWidget (menu_widget_t *widget)
 			else
 			{
 				re.DrawBorderedPic(bpic, widget->widgetCorner.x, widget->widgetCorner.y,
-					widget->widgetSize.x + BUTTON_H_PADDING * scale * 2.0f, widget->widgetSize.y + BUTTON_V_PADDING * scale * 2.0f, scale / 2.0f, 1.0f);
+					widget->widgetSize.x, widget->widgetSize.y, scale / 2.0f, 1.0f);
 			}
 		}
 
