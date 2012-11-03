@@ -1858,7 +1858,6 @@ void SCR_UpdateScreen (void)
 
 				SCR_DrawNet();
 				SCR_CheckDrawCenterString();
-				SCR_CheckDrawPopups(); // jit
 
 				if (scr_timegraph->value)
 					SCR_DebugGraph(cl.frametime * 1000.0f, 0); // jitnetgraph
@@ -1872,6 +1871,7 @@ void SCR_UpdateScreen (void)
 			SCR_DrawConsole();
 			M_Draw();
 			SCR_DrawLoading();
+			SCR_CheckDrawPopups(); // jit
 		}
 	}
 
