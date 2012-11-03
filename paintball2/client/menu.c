@@ -3348,12 +3348,12 @@ static void M_DrawWidget (menu_widget_t *widget)
 			if (widget->type == WIDGET_TYPE_BUTTON)
 			{
 				re.DrawBorderedPic(bpic, widget->widgetCorner.x - BUTTON_H_PADDING * scale, widget->widgetCorner.y - BUTTON_V_PADDING * scale,
-					widget->widgetSize.x + BUTTON_H_PADDING * scale * 2.0f, widget->widgetSize.y + BUTTON_V_PADDING * scale * 2.0f, 1.0f, 1.0f);
+					widget->widgetSize.x + BUTTON_H_PADDING * scale * 2.0f, widget->widgetSize.y + BUTTON_V_PADDING * scale * 2.0f, scale / 2.0f, 1.0f);
 			}
 			else
 			{
 				re.DrawBorderedPic(bpic, widget->widgetCorner.x, widget->widgetCorner.y,
-					widget->widgetSize.x + BUTTON_H_PADDING * scale * 2.0f, widget->widgetSize.y + BUTTON_V_PADDING * scale * 2.0f, 1.0f, 1.0f);
+					widget->widgetSize.x + BUTTON_H_PADDING * scale * 2.0f, widget->widgetSize.y + BUTTON_V_PADDING * scale * 2.0f, scale / 2.0f, 1.0f);
 			}
 		}
 
