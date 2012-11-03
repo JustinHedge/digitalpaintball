@@ -764,9 +764,9 @@ void Draw_BorderedPic (bordered_pic_data_t *data, float x, float y, float w, flo
 		qglTexCoord2f(data->texcoords[i][0], data->texcoords[i][1]);
 		qglVertex2f(x + xoff + data->screencoords[i][0] * scale, y + yoff + data->screencoords[i][1] * scale);
 		qglTexCoord2f(data->texcoords[i][2], data->texcoords[i][1]);
-		qglVertex2f(x + xoff + (data->screencoords[i][2] + xstretch) * scale, y + yoff + data->screencoords[i][1] * scale);
+		qglVertex2f(x + xoff + data->screencoords[i][2] * scale + xstretch, y + yoff + data->screencoords[i][1] * scale);
 		qglTexCoord2f(data->texcoords[i][2], data->texcoords[i][3]);
-		qglVertex2f(x + xoff + data->screencoords[i][2] * scale + xstretch, y + yoff + (data->screencoords[i][3] + ystretch) * scale);
+		qglVertex2f(x + xoff + data->screencoords[i][2] * scale + xstretch, y + yoff + data->screencoords[i][3] * scale + ystretch);
 		qglTexCoord2f(data->texcoords[i][0], data->texcoords[i][3]);
 		qglVertex2f(x + xoff + data->screencoords[i][0] * scale, y + yoff + data->screencoords[i][3] * scale + ystretch);
 	}
