@@ -340,6 +340,7 @@ POPUP PRINTING - used for tutorials and whatnot - jitspoe
 
 float scr_popup_time_left[MAX_POPUPS];
 char scr_popup_text[MAX_POPUPS][1024];
+qboolean scr_popup_behindmenu;
 
 int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t size_out)
 {
@@ -472,12 +473,14 @@ void SCR_CheckDrawPopups (void) // jitpopup
 }
 
 
-void SCR_PrintPopup (const char *str)
+void SCR_PrintPopup (const char *str, qboolean behindmenu)
 {
 	int min_index = 0;
 	float min_time = 9999.9f;
 	int i;
 	qboolean do_shift = true;
+
+	scr_popup_behindmenu = behindmenu; // a bit of a hack, but for the tutorial, we want the popups to appear behind the menu so they don't get in the way.  Normally we want them in front (I think...)
 
 	// Shift existing ones up if ones above have timed out
 	while (do_shift) // crappy bubble sort type thing, but it doesn't need to be fancy
@@ -1868,10 +1871,15 @@ void SCR_UpdateScreen (void)
 				SCR_DrawPause();
 			}
 
+			if (scr_popup_behindmenu)
+				SCR_CheckDrawPopups(); // jit
+
 			SCR_DrawConsole();
 			M_Draw();
 			SCR_DrawLoading();
-			SCR_CheckDrawPopups(); // jit
+
+			if (!scr_popup_behindmenu)
+				SCR_CheckDrawPopups(); // jit
 		}
 	}
 

@@ -757,7 +757,7 @@ int strlen_noformat (const unsigned char *s); // jitmenu
 int strpos_noformat (const unsigned char *in_str, int pos); // jitmenu
 
 // cl_scrn.c
-void SCR_PrintPopup (const char *s); // jit
+void SCR_PrintPopup (const char *s, qboolean behindmenu); // jit
 
 //
 // cl_inv.c
