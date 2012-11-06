@@ -747,7 +747,7 @@ void M_RefreshActiveMenu (void); // jitmenu
 void M_RefreshWidget (const char *name, qboolean lock); // jitmenu
 qboolean M_MenuActive (void); // jitmenu
 void M_PlayMenuSounds (); // jitmenu
-void M_PrintDialog(char* text);
+void M_PrintDialog (const char *text);
 
 // cl_serverlist.c
 void Serverlist_Init (void);
@@ -758,6 +758,7 @@ int strpos_noformat (const unsigned char *in_str, int pos); // jitmenu
 
 // cl_scrn.c
 void SCR_PrintPopup (const char *s, qboolean behindmenu); // jit
+int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t size_out); // jit
 
 //
 // cl_inv.c
