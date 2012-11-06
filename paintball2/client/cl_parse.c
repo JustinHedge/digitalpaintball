@@ -1370,7 +1370,6 @@ static void CL_ParsePrintPopup (const char *text, qboolean printconsole) // jit
 
 	if (!printconsole || (cls.key_dest != key_console && cl_dialogprint->value)) // Only pop up the dialog when out of the console.
 	{
-		//M_PrintDialog(expanded);
 		SCR_PrintPopup(expanded, !printconsole);
 	}
 	else
