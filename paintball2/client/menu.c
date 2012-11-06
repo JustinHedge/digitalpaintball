@@ -2404,6 +2404,17 @@ static void widget_complete (menu_widget_t *widget)
 	case WIDGET_TYPE_UNKNOWN:
 	case WIDGET_TYPE_BUTTON:
 	case WIDGET_TYPE_TEXT:
+		
+		if (widget->field_width && widget->text)
+		{
+			char wrapped_text[1024];
+			char *old_text = widget->text;
+
+			SCR_WordWrapText(widget->text, widget->field_width * hudscale, wrapped_text, sizeof(wrapped_text));
+			widget->text = text_copy(wrapped_text);
+			Z_Free(old_text);
+		}
+
 		if (widget->text && widget_is_selectable(widget) && !widget->pic && !widget->hoverpic && !widget->selectedpic && !(widget->flags & WIDGET_FLAG_NOBG))
 		{
 #if 1
