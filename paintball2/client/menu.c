@@ -53,6 +53,7 @@ extern m_serverlist_t	m_serverlist;
 
 static void M_UpdateDrawingInformation (menu_widget_t *widget);
 char *Cmd_MacroExpandString (const char *text);
+static void widget_complete (menu_widget_t *widget);
 
 // same thing as strdup, only uses Z_Malloc - todo: replace with CopyString, which is exactly the same thing.
 char *text_copy (const char *in)
@@ -1451,7 +1452,21 @@ static void field_activate (menu_widget_t *widget)
 }
 
 
-static void widget_execute (menu_widget_t *widget, qboolean doubleclick)
+static void M_DeselectAllWidgets (menu_widget_t *widget)
+{
+	while (widget)
+	{
+		M_DeselectWidget(widget);
+
+		if (widget->subwidget)
+			M_DeselectAllWidgets(widget->subwidget);
+
+		widget = widget->next;
+	}
+}
+
+
+static qboolean widget_execute (menu_widget_t *widget, qboolean doubleclick)
 {
 	if (widget->selected || widget->hover)
 	{
@@ -1504,20 +1519,12 @@ static void widget_execute (menu_widget_t *widget, qboolean doubleclick)
 			widget = widget->parent;
 			widget->hover = true;
 		}
+
+		return true;
 	}
-}
-
-
-static void M_DeselectAllWidgets (menu_widget_t *widget)
-{
-	while (widget)
+	else
 	{
-		M_DeselectWidget(widget);
-
-		if (widget->subwidget)
-			M_DeselectAllWidgets(widget->subwidget);
-
-		widget = widget->next;
+		return false;
 	}
 }
 
@@ -1633,10 +1640,12 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 			newSelection->selected = true;
 			break;
 		case M_ACTION_EXECUTE:
-			widget_execute(newSelection, false);
+			if (!widget_execute(newSelection, false))
+				M_DeselectAllWidgets(menu->widget);
 			break;
 		case M_ACTION_DOUBLECLICK:
-			widget_execute(newSelection, true);
+			if (!widget_execute(newSelection, true))
+				M_DeselectAllWidgets(menu->widget);
 			break;
 		case M_ACTION_SCROLLUP:
 			if (widget_is_select(newSelection, &widget))
@@ -1674,7 +1683,13 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 		default:
 			break;
 		}
-	}		
+	}
+	else
+	{
+		// If we're not over anything when we release the mouse button, deselect everything
+		if (action == M_ACTION_EXECUTE)
+			M_DeselectAllWidgets(menu->widget);
+	}
 
 	return true;
 }
@@ -1959,7 +1974,6 @@ qboolean M_Keyup (int key)
 
 	if (gamekeydown[key])
 		return false;
-
 
 	if (m_active_bind_command)
 	{
@@ -2263,95 +2277,52 @@ static void M_ErrorMenu (menu_screen_t* menu, const char *text)
 			NULL, "menu pop", 8, 224, true, false);
 }
 
+
+#define DIALOG_WIDTH 260
+#define DIALOG_X_PAD 10 // space between border and text
+#define DIALOG_Y_PAD 12
+
 static void M_DialogBox (menu_screen_t* menu, const char *text)
 {
-#define CPL (240 / CHARWIDTH - 1) // chars per line
+	char text_wrapped[1024];
 	menu_widget_t *widget;
-	char newbuf[2048]; //maxpacketstring
-	char linebuf[CPL+1];
-	int rows, row;
-	const char *s, *s2;
-	int startx = 160-CPL*(CHARWIDTH/2);
-	int starty;
-	int i;
+	int linecount = SCR_WordWrapText(text, (DIALOG_WIDTH - (DIALOG_X_PAD * 2)) * hudscale, text_wrapped, sizeof(text_wrapped));
 
-	// Should never happen, but just to be safe...
-	if (strlen_noformat(text) >= sizeof(newbuf))
-		text = "TEXT STRING TOO LONG";
-
-	strip_garbage(newbuf, text);
-	//newbuf[strlen_noformat(text)] = '\0';
+	assert(menu->widget == NULL); // Only a blank menu should be passed in here.
 
 	menu->type = MENU_TYPE_DIALOG;
-	menu->widget = M_GetNewBlankMenuWidget();
-
-	// it's 4 o clock in the morning and i can't be bothered to explain this fuckign piece of shit, just replace it with something better later (TODO)
-	if (strlen(newbuf) < CPL)
-	{
-		rows = 1;
-	}
-	else
-	{
-		rows = 0;
-		s = newbuf;
-		while(s < newbuf + strlen(newbuf))
-		{
-			s2 = s+CPL;
-			while(*s2 != ' ' && s2 > s && *s2 != '\0')
-				s2--;
-			i = (int)(s2-s);
-			if(i)
-				s = s2;
-			else
-				s += CPL;
-			rows++;
-		}
-	}
-
-	starty = 120 - rows * (CHARHEIGHT / 2);
-
-	widget = menu->widget;
-	s2 = newbuf;
-	for(i = 0; i < rows; i++)
-	{
-		s = s2;
-		s2 = s + CPL;
-		while(*s2 != ' ' && s2 > s)
-			s2--;
-		if(i == rows-1)
-			row = strlen(s);
-		else if(s2-s)
-		{
-			s2++;
-			row = (int)(s2-s);
-		}
-		else
-		{
-			s2 += CPL;
-			row = CPL;
-		}
-
-		Q_strncpyzna(linebuf, s, min(row + 1, sizeof(linebuf)));
-		widget->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, linebuf, NULL, NULL, startx, starty + i * CHARHEIGHT, true, false);
-		widget = widget->next;
-	}
-
-	menu->widget->subwidget = create_background(startx-CHARWIDTH,starty-CHARHEIGHT,(CPL+2)*CHARWIDTH,(rows+4)*CHARHEIGHT,menu->widget->subwidget);
-	widget->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, "[OK]", NULL, "menu pop", 160-2*CHARWIDTH, starty+(rows+1)*CHARHEIGHT, true, false);
+	widget = menu->widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL, 160, 120, true, false);
+	widget->bpic = &bpdata_popup1;
+	widget->picwidth = DIALOG_WIDTH;
+	widget->picheight = (linecount + 2) * CHARHEIGHT + (DIALOG_Y_PAD * 2); // + 3 to compensate for the OK button
+	widget->halign = WIDGET_HALIGN_CENTER;
+	widget->valign = WIDGET_VALIGN_MIDDLE;
+	widget->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, text_wrapped, NULL, NULL, 160 - (DIALOG_WIDTH / 2) + DIALOG_X_PAD, 120 - (CHARHEIGHT * (linecount + 2)) / 2, true, false); // + 3 to compensate for the OK button
+	widget = widget->next;
+	widget->next = M_GetNewMenuWidget(WIDGET_TYPE_BUTTON, "OK", NULL, "menu pop", 160, 120 + (CHARHEIGHT * (linecount + 2)) / 2 - (CHARHEIGHT * 1), true, false);
+	widget = widget->next;
+	widget->halign = WIDGET_HALIGN_CENTER;
+	widget_complete(widget); // initialize the button bpic.
+	widget->hover = true;
 }
+
 
 static void M_DialogBox_f (void)
 {
 	M_PrintDialog(Cmd_Args());
 }
 
-void M_PrintDialog (char* text)
+
+void M_PrintDialog (const char *text)
 {
+	char translated_text[1024];
 	menu_screen_t *menu;
 	menu = M_GetNewMenuScreen("dialog", NULL);
-	M_DialogBox(menu, text);
+	translate_string(translated_text, sizeof(translated_text), text);
+	M_DialogBox(menu, translated_text);
 	M_PushMenuScreen(menu, false);
 }
+
 
 static int M_WidgetGetType (const char *s)
 {
@@ -2384,7 +2355,7 @@ static int M_WidgetGetAlign (const char *s)
 	if (Q_streq(s, "left"))
 		return WIDGET_HALIGN_LEFT;
 	if (Q_streq(s, "center"))
-		return WIDGET_HALIGN_CENTER;
+		return WIDGET_HALIGN_CENTER; // Note: Sometimes "center" is used for valign, so WIDGET_HALIGN_CENTER should always == WIDGET_VALIGN_MIDDLE.
 	if (Q_streq(s, "right"))
 		return WIDGET_HALIGN_RIGHT;
 
