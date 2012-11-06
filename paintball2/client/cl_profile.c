@@ -278,7 +278,9 @@ void CL_ProfileSelect_f (void)
 
 		if (Cvar_Get("menu_profile_autologin", "0", CVAR_ARCHIVE)->value && autologin)
 		{
-			Cbuf_AddText("profile_login $menu_profile_file $menu_profile_pass\n");
+			if (*Cvar_VariableString("menu_profile_file") && *Cvar_VariableString("menu_profile_pass"))
+				Cbuf_AddText("profile_login $menu_profile_file $menu_profile_pass\n");
+
 			autologin = false; // only autologin when the menu is first loaded
 		}
 	}
