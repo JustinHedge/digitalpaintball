@@ -1752,7 +1752,7 @@ static void M_PushMenuScreen (menu_screen_t *menu, qboolean samelevel)
 }
 
 
-static void M_PopMenu (const char *sMenuName)
+void M_PopMenu (const char *sMenuName)
 {
 	menu_widget_t *widget;
 	menu_screen_t *menu;

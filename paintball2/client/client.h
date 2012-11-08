@@ -730,7 +730,7 @@ void CL_EntityEvent (entity_state_t *ent);
 void CL_TrapParticles (entity_t *ent);
 
 //
-// menus
+// menu.c
 //
 void M_Init (void);
 qboolean M_Keydown (int key);
@@ -748,6 +748,7 @@ void M_RefreshWidget (const char *name, qboolean lock); // jitmenu
 qboolean M_MenuActive (void); // jitmenu
 void M_PlayMenuSounds (); // jitmenu
 void M_PrintDialog (const char *text);
+void M_PopMenu (const char *menu_name); // jitmenu
 
 // cl_serverlist.c
 void Serverlist_Init (void);

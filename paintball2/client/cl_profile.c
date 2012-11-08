@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PROFILE_LOGIN_NAME_LEN 64
 #define PROFILE_PASSWORD_LEN 64
 
+#define VISITFORUMS "Visit the forums at digitalpaint.org for help."
+
 cvar_t *menu_profile_pass;
 static char g_szPassHash[256] = "";
 static char g_szRandomString[64] = "";
@@ -88,11 +90,18 @@ static const char *GetUniqueSystemString (void)
 	return szString;
 }
 
+
+static void CL_ProfileMustSelectDialog (void)
+{
+	M_PrintDialog("You must select a profile and type your password!");
+}
+
+
 void CL_ProfileEdit_f (void)
 {
 	if (Cmd_Argc() < 2)
 	{
-		Cbuf_AddText("menu profile_mustselect\n");
+		CL_ProfileMustSelectDialog();
 	}
 	else
 	{
@@ -101,7 +110,7 @@ void CL_ProfileEdit_f (void)
 		Com_sprintf(szProfilePath, sizeof(szProfilePath), BASEDIRNAME "/profiles/%s.prf", Cmd_Argv(1));
 
 		if (!FileExists(szProfilePath))
-			Cbuf_AddText("menu profile_mustselect\n");
+			CL_ProfileMustSelectDialog();
 		else
 			Cbuf_AddText("menu profile_edit\n");
 	}
@@ -350,7 +359,7 @@ void CL_ProfileLogin_f (void)
 
 	if (Cmd_Argc() < 3)
 	{
-		Cbuf_AddText("menu profile_mustselect\n");
+		CL_ProfileMustSelectDialog();
 		return;
 	}
 
@@ -365,7 +374,7 @@ void CL_ProfileLogin_f (void)
 		else
 		{
 			Com_Printf("Invalid profile file: %s\n", szProfileFile);
-			Cbuf_AddText("menu profile_loginfailed\n");
+			M_PrintDialog(va("Invalid profile file: %s", szProfileFile));
 			FS_FreeFile(pFileContents);
 			return;
 		}
@@ -375,7 +384,7 @@ void CL_ProfileLogin_f (void)
 	else
 	{
 		Com_Printf("Failed to read profile file: %s\n", szProfileFile);
-		Cbuf_AddText("menu profile_loginfailed\n");
+		M_PrintDialog(va("Failed to read profile file: %s\n", szProfileFile));
 		return;
 	}
 
@@ -384,7 +393,7 @@ void CL_ProfileLogin_f (void)
 
 	if (!*g_szUserName || !*sPassword)
 	{
-		Cbuf_AddText("menu profile_mustselect\n");
+		CL_ProfileMustSelectDialog();
 		return; // blank value (shouldn't happen)
 	}
 
@@ -411,9 +420,9 @@ void CL_ProfileLogin_f (void)
 	}
 	else
 	{
-		Com_Printf("ERROR: CL_ProfileLogin_f(): Failed to resolve login server domain.\n"
-			"Visit Digital Paint forums for support.\n");
-		Cbuf_AddText("menu profile_loginfailed\n");
+		const char *error = "Failed to resolve login server domain.  Make sure nothing is blocking Paintball 2's access to dplogin.com:27900.  " VISITFORUMS;
+		Com_Printf("%s\n", error);
+		M_PrintDialog(error);
 	}
 
 	Stats_Shutdown();
@@ -482,17 +491,20 @@ void CL_VNInitResponse (netadr_t adr_from, sizebuf_t *ptData)
 
 	if (!s || !s2)
 	{
+		M_PopMenu("profile_login"); // Remove "Connecting to login server..." screen.
+
 		if (s = strstr(szDataBack, "ERROR:"))
 		{
 			Com_Printf("%s\n", s);
+			M_PrintDialog(s);
 		}
 		else
 		{
 			Com_Printf("ERROR: CL_VNInitResponse(): Unknown response from login server.\n");
+			M_PrintDialog("Unknown response from login server.  " VISITFORUMS);
 			assert(0);
 		}
 
-		Cbuf_AddText("menu pop profile_login;menu profile_loginfailed\n");
 		return;
 	}
 
@@ -539,17 +551,30 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 	SizebuffCopyZ(szDataBack, sizeof(szDataBack), ptData);
 	s = strstr(szDataBack, "GameLoginStatus: PASSED");
 
+	M_PopMenu("profile_login"); // Remove "Connecting to login server..." screen.
+
 	if (!s)
 	{
 		// breakpoint
 		if (s = strstr(szDataBack, "ERROR:"))
+		{
 			Com_Printf("%s\n", s);
+			M_PrintDialog(s);
+		}
 		else if (s = strstr(szDataBack, "GameLoginStatus: FAILED"))
-			Com_Printf("Incorrect password for username %s.\n", g_szUserName);
+		{
+			char translated_format[1024];
+			char translated_text[1024];
+			translate_string(translated_format, sizeof(translated_format), "Incorrect password for username %s.");
+			Com_sprintf(translated_text, sizeof(translated_text), translated_format, g_szUserName);
+			Com_Printf("%s\n", translated_text);
+			M_PrintDialog(translated_text);
+		}
 		else
+		{
 			Com_Printf("ERROR: Unknown response from login server.\n");
-
-		Cbuf_AddText("menu pop profile_login;menu profile_loginfailed\n");
+			M_PrintDialog("Unknown response from login server.  " VISITFORUMS);
+		}
 
 		return;
 	}
@@ -562,6 +587,7 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 		if (atoi(s) != g_nVNInitUnique)
 		{
 			Com_Printf("Uniqueid mismatch.\n");
+			M_PrintDialog("Uniqueid mismatch.  " VISITFORUMS);
 			assert(0);
 			return;
 		}
@@ -569,6 +595,7 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 	else
 	{
 		Com_Printf("Uniqueid missing.\n");
+		M_PrintDialog("Uniqueid missing.  " VISITFORUMS);
 		assert(0);
 		return;
 	}
@@ -578,11 +605,16 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 	if (!s)
 	{
 		if (s = strstr(szDataBack, "ERROR:"))
+		{
 			Com_Printf("%s\n", s);
+			M_PrintDialog(s);
+		}
 		else
+		{
 			Com_Printf("ERROR: Unknown response from login server.\n");
+			M_PrintDialog("Unknown response from login server.  " VISITFORUMS);
+		}
 
-		Cbuf_AddText("menu profile_loginfailed\n");
 		assert(0);
 		return;
 	}
@@ -619,7 +651,6 @@ void CL_VNResponse (netadr_t adr_from, sizebuf_t *ptData)
 			Cvar_Get("menu_profile_remember_pass", "0", 0)->value ? g_szPassHash : "", false);
 	}
 
-	Cbuf_AddText("menu pop profile_login\n");
 	Cbuf_AddText("menu pop profile\n");
 
 	// Check for new versions
