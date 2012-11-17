@@ -239,6 +239,7 @@ typedef struct
 // screen rendering information
 	float		disable_screen;		// showing loading plaque between levels
 									// or changing rendering dlls
+	qboolean	loading_screen;		// viciouz - loading screen as opposed to video change
 									// if time gets > 30 seconds ahead, break it
 	int			disable_servercount;	// when we receive a frame and cl.servercount
 									// > cls.disable_servercount, clear disable_screen
@@ -644,6 +645,9 @@ void shutdown_cl_scores (void);
 #define GAMETYPE_PONG	6
 #define GAMETYPE_TDM	7
 #define MAX_SCOREBOARD_STRING 128
+
+// console.c client only
+void Con_DrawDownloadBar (qboolean inConsole);
 
 //
 // cl_stats.c

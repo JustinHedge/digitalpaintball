@@ -699,7 +699,9 @@ void SCR_DrawLoading (void)
 		return;
 
 	scr_draw_loading = false;
-	re.DrawPic2((viddef.width - i_loading->width * hudscale) * 0.5f, (viddef.height - i_loading->height * hudscale) * 0.5f, i_loading);
+	//re.DrawPic2((viddef.width - i_loading->width * hudscale) * 0.5f, (viddef.height - i_loading->height * hudscale) * 0.5f, i_loading);
+	Cbuf_ExecuteText(EXEC_NOW, "menu loading\n");
+	M_Draw();
 }
 
 //=============================================================================
@@ -795,7 +797,7 @@ void SCR_BeginLoadingPlaque (void)
 	cl.sound_prepped = false;		// don't play ambients
 	CDAudio_Stop();
 
-	if (cls.disable_screen)
+	if (cls.disable_screen || cls.loading_screen)
 		return;
 
 	if (developer->value)
@@ -814,6 +816,8 @@ void SCR_BeginLoadingPlaque (void)
 
 	SCR_UpdateScreen();
 	cls.disable_screen = Sys_Milliseconds();
+	cls.loading_screen = true;
+	Cvar_ForceSet("cs_loadingstatus", "Loading...");
 	cls.disable_servercount = cl.servercount;
 }
 
@@ -824,8 +828,12 @@ SCR_EndLoadingPlaque
 */
 void SCR_EndLoadingPlaque (void)
 {
+	if (cls.key_dest == key_console)
+		return;
 	cls.disable_screen = 0;
+	cls.loading_screen = false;
 	Con_ClearNotify();
+	M_PopMenu("loading");
 }
 
 /*
@@ -1611,9 +1619,9 @@ void SCR_UpdateScreen (void)
 	extern cvar_t *cl_hudscale;
 	extern cvar_t *cl_crosshairscale;
 
-	// if the screen is disabled (loading plaque is up, or vid mode changing)
+	// if the screen is disabled (vid mode changing)
 	// do nothing at all
-	if (cls.disable_screen)
+	if (cls.disable_screen && !cls.loading_screen)
 	{
 		if (Sys_Milliseconds() - cls.disable_screen > 10000) // jit - dropped from 2 mins to 10 seconds
 		{
@@ -1682,10 +1690,13 @@ void SCR_UpdateScreen (void)
 		re.BeginFrame(separation[i]);
 
 		if (scr_draw_loading == 2)
-		{	//  loading plaque over black screen
+		{	
+			//  loading plaque over black screen
 			re.CinematicSetPalette(NULL);
-			scr_draw_loading = false;
-			re.DrawPic2((viddef.width - i_loading->width) * 0.5f, (viddef.height - i_loading->height) * 0.5f, i_loading);
+			//scr_draw_loading = false;
+			//Cbuf_ExecuteText(EXEC_NOW, "menu loading\n");
+			//M_Draw();
+			//re.DrawPic2((viddef.width - i_loading->width) * 0.5f, (viddef.height - i_loading->height) * 0.5f, i_loading);
 //			re.EndFrame();
 //			return;
 		} 

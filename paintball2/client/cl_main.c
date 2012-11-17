@@ -1022,7 +1022,6 @@ void CL_Changing_f (void)
 	//if we are downloading, we don't change!  This so we don't suddenly stop downloading a map
 	if (cls.download) // jitodo -- we SHOULD make it stop downloading and switch to the next map!
 		return;
-
 	SCR_BeginLoadingPlaque();
 	cls.state = ca_connected; // not active anymore, but not disconnected
 	Com_Printf("\nChanging map...\n");
@@ -1255,6 +1254,12 @@ static void CL_ParseDownload3 (void)
 	if (timediff > 1000) // check every second
 	{
 		float rate;
+
+		Con_DrawDownloadBar(false);
+		if(cls.loading_screen)
+		{
+			Cbuf_AddText("menu_refresh"); // loading screen
+		}
 
 		rate = 1000.0f * (float)cls.download3bytessincelastratecheck / (float)timediff;
 
@@ -2143,9 +2148,13 @@ before allowing the client into the server
 */
 void CL_Precache_f (void)
 {
+	// loading screen info
+	char mapname[64];
+	strncpy(mapname, cl.configstrings[CS_MODELS+1]+5, strlen(cl.configstrings[CS_MODELS+1]+5)-4);
+	Cvar_ForceSet("mapname",mapname);
+
 	//Yet another hack to let old demos work
 	//the old precache sequence
-
 	if (Cmd_Argc() < 2)
 	{
 		unsigned	map_checksum;		// for detecting cheater maps

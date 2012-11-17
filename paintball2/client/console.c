@@ -700,8 +700,6 @@ void Con_DrawConsole (float frac)
 	int				row;
 	float			lines;
 	char			version[64];
-	char			dlbar[1024];
-	char			dlbar_fill[1024]; // jittext
 	float			height = viddef.height;
 	float			width = viddef.width;
 
@@ -754,35 +752,76 @@ void Con_DrawConsole (float frac)
 		Draw_StringLen(CHARWIDTH * hudscale, y, text, con.linewidth); // jit, draw whole line at once
 	}
 
+	Con_DrawDownloadBar(true);
+// draw the input prompt, user text, and cursor if desired
+	Con_DrawInput();
+}
+
+void Con_DrawDownloadBar (qboolean inConsole)
+{
+	int x, y, i, j, n;
+	char			*text;
+	char			dlbar[1024];
+	char			dlbar_fill[1024]; // jittext
+	char			translated_text[64];
 	//ZOID
 	// draw the download bar
 	// figure out width
 	if (cls.download)
 	{
+		
+		cvar_t* cs_loadingbarback;
+		cvar_t* cs_loadingbarfront;
+		cvar_t* cs_downloadspeed;
 		int len;
+
+		if(!inConsole)
+		{
+			cs_loadingbarback = Cvar_Get("cs_loadingbarback", "0", CVAR_NOSET);
+			cs_loadingbarfront = Cvar_Get("cs_loadingbarfront", "0", CVAR_NOSET);
+			cs_downloadspeed = Cvar_Get("cs_downloadspeed", "0", CVAR_NOSET);
+		}
 
 		if ((text = strrchr(cls.downloadname, '/')) != NULL)
 			text++;
 		else
 			text = cls.downloadname;
 
-		x = con.linewidth - ((con.linewidth * 7)*0.025);
-		y = x - strlen(text) - 8;
-		i = con.linewidth*0.3333333333;
-		
-		if (strlen(text) > i)
+		if(inConsole)
 		{
-			y = x - i - 11;
-			Q_strncpyzna(dlbar, text, i);
-			dlbar[i] = 0;
-			strcat(dlbar, "...");
+			x = con.linewidth - ((con.linewidth * 7)*0.025);
+			y = x - strlen(text) - 8;
+			i = con.linewidth*0.3333333333;
 		}
 		else
 		{
-			strcpy(dlbar, text);
+			x = 34; // let the compiler bother with that
+			y = x;
 		}
-
-		strcat(dlbar, ": ");
+		
+		dlbar[0] = 0;
+		
+		if(inConsole)
+		{
+			if (strlen(text) > i)
+			{
+				y = x - i - 11;
+				Q_strncpyzna(dlbar, text, i);
+				dlbar[i] = 0;
+				strcat(dlbar, "...");
+			}
+			else
+			{
+				strcpy(dlbar, text);
+			}
+			strcat(dlbar, ": ");
+		}
+		else
+		{
+			translate_string(translated_text, sizeof(translated_text), "Downloading");
+			Cvar_ForceSet("cs_loadingstatus",va("%s %s",translated_text,text));
+		}
+		
 		i = strlen(dlbar);
 		dlbar[i++] = '\x80';
 
@@ -820,28 +859,43 @@ void Con_DrawConsole (float frac)
 		if (cls.download3rate)
 		{
 			if (cls.download3rate > 1048576.0f)
-				Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fMB/s", cls.downloadpercent, cls.download3rate / 1048576.0f);
+				if (inConsole)
+					Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fMB/s", cls.downloadpercent, cls.download3rate / 1048576.0f);
+				else
+					Cvar_ForceSet("cs_downloadspeed",va("%02d%% %1.2fMB/s", cls.downloadpercent, cls.download3rate / 1048576.0f));
 			else if (cls.download3rate > 1024.0f)
-				Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fKB/s", cls.downloadpercent, cls.download3rate / 1024.0f);
+				if (inConsole)
+					Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fKB/s", cls.downloadpercent, cls.download3rate / 1024.0f);
+				else
+					Cvar_ForceSet("cs_downloadspeed",va("%02d%% %1.2fKB/s", cls.downloadpercent, cls.download3rate / 1024.0f));
 			else
-				Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fB/s", cls.downloadpercent, cls.download3rate);
+				if	(inConsole)
+					Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fB/s", cls.downloadpercent, cls.download3rate);
+				else
+					Cvar_ForceSet("cs_downloadspeed",va("%02d%% %1.2fB/s", cls.downloadpercent, cls.download3rate));
 		}
 		else
 #endif
 		{
-			Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%%", cls.downloadpercent);
+			if (inConsole)
+				Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%%", cls.downloadpercent);
+			else
+				Cvar_ForceSet("cs_downloadspeed",va("%02d%%", cls.downloadpercent));
 		}
 
 		// draw it
 		y = con.vislines - 12 * hudscale;
-		re.DrawString(CHARWIDTH * hudscale, y, dlbar_fill);  // jit
-		re.DrawString(CHARWIDTH * hudscale, y, dlbar); // jit, draw whole line at once
+		if(!inConsole)
+		{
+			Cvar_ForceSet("cs_loadingbarback", dlbar_fill);
+			Cvar_ForceSet("cs_loadingbarfront", dlbar);
+		}
+		else
+		{
+			re.DrawString(CHARWIDTH * hudscale, y, dlbar_fill);  // jit
+			re.DrawString(CHARWIDTH * hudscale, y, dlbar); // jit, draw whole line at once
+		}
 		// jittext ===
 	}
 //ZOID
-
-// draw the input prompt, user text, and cursor if desired
-	Con_DrawInput();
 }
-
-

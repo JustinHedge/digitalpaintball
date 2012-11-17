@@ -1305,7 +1305,7 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 	// if the laoding plaque is up, clear everything
 	// out to make sure we aren't looping a dirty
 	// dma buffer while loading
-	if (cls.disable_screen)
+	if (cls.disable_screen || cls.loading_screen)
 	{
 		S_ClearBuffer ();
 		return;

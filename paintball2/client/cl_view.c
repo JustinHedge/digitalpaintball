@@ -272,6 +272,9 @@ void CL_PrepRefresh (void)
 	float		rotate;
 	vec3_t		axis;
 	char		*s;
+	char		translated_text[1024];
+
+	cvar_t* cs_loadingstatus = Cvar_Get("cs_loadingstatus", "loading", CVAR_NOSET);
 
 	if (!cl.configstrings[CS_MODELS+1][0])
 		return;		// no map loaded
@@ -307,18 +310,27 @@ void CL_PrepRefresh (void)
 	COM_StripExtension(mapname, mapname, sizeof(mapname));
 
 	// register models, pics, and skins
-	Com_Printf("Map: %s\r", mapname); 
+	translate_string(translated_text, sizeof(translated_text), "Loading map...");
+	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
+	Com_Printf("Map: %s\r", mapname);
+	M_RefreshMenu();
 	SCR_UpdateScreen();
 	re.BeginRegistration(mapname);
 	Com_Printf("                                     \r");
 
 	// precache status bar pics
+	translate_string(translated_text, sizeof(translated_text), "Loading images...");
+	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
 	Com_Printf("pics\r");
+	M_RefreshMenu();
 	SCR_UpdateScreen();
 	SCR_TouchPics();
 	Com_Printf("                                     \r");
 
+	translate_string(translated_text, sizeof(translated_text), "Loading models...");
+	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
 	Com_Printf("models\r"); // jit (so if it crashes, we know it's when loading models, not pics)
+	M_RefreshMenu();
 	SCR_UpdateScreen(); // jit
 	Com_Printf("                                     \r"); // jit
 	CL_RegisterTEntModels();
@@ -361,8 +373,11 @@ void CL_PrepRefresh (void)
 			Com_Printf("                                     \r");
 	}
 
+	translate_string(translated_text, sizeof(translated_text), "Loading textures...");
+	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
 	Sys_SendKeyEvents(); // jit, moved
 	Com_Printf("images\r", i); 
+	M_RefreshMenu();
 	SCR_UpdateScreen();
 
 	for (i = 1; i < MAX_IMAGES && cl.configstrings[CS_IMAGES+i][0]; i++)
@@ -375,6 +390,9 @@ void CL_PrepRefresh (void)
 	Sys_SendKeyEvents(); // jit, moved	
 	Com_Printf("                                     \r");
 
+	translate_string(translated_text, sizeof(translated_text), "Loading players...");
+	M_RefreshMenu();
+	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
 	for (i=0; i<MAX_CLIENTS; i++)
 	{
 		if (!cl.configstrings[CS_PLAYERSKINS+i][0])
@@ -391,8 +409,11 @@ void CL_PrepRefresh (void)
 	Sys_SendKeyEvents(); // jit, moved
 	CL_LoadClientinfo(&cl.baseclientinfo, "unnamed\\male/pb2y");
 
+	translate_string(translated_text, sizeof(translated_text), "Loading sky...");
+	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
 	// set sky textures and speed
 	Com_Printf("sky\r");
+	M_RefreshMenu();
 	SCR_UpdateScreen();
 	rotate = atof(cl.configstrings[CS_SKYROTATE]);
 	sscanf(cl.configstrings[CS_SKYAXIS], "%f %f %f", 
@@ -400,9 +421,12 @@ void CL_PrepRefresh (void)
 
 	re.SetSky(cl.configstrings[CS_SKY], rotate, axis);
 
+	translate_string(translated_text, sizeof(translated_text), "Loading texture scripts...");
+	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
 	// === jit
 	Com_Printf("                                     \r");
 	Com_Printf("texture scripts\r");
+	M_RefreshMenu();
 	SCR_UpdateScreen();
 	Com_Printf("                                     \r");
 	// jit ===
@@ -411,6 +435,12 @@ void CL_PrepRefresh (void)
 	re.EndRegistration();
 
 	CL_LoadLoc(); // Xile/NiceAss LOC
+
+	translate_string(translated_text, sizeof(translated_text), "Loading complete");
+	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
+	Cvar_ForceSet("cs_downloadbarback", "");
+	Cvar_ForceSet("cs_downloadbarfront", "");
+	M_RefreshMenu();
 
 	// clear any lines of console text
 	Con_ClearNotify();
