@@ -671,7 +671,7 @@ Also draws menu background (for now).
 */
 void Con_DrawConsole (float frac)
 {
-	int				i, j, x, y, n;
+	int				i, x, y;
 	int				rows;
 	char			*text;
 	int				row;
