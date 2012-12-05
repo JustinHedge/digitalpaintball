@@ -1392,10 +1392,14 @@ extern int vidref_val;
 
 
 // jittext / jitconsole
-#define CHAR_ENDFORMAT	133
-#define CHAR_UNDERLINE	134
-#define CHAR_ITALICS	135
-#define CHAR_COLOR		136
+#define UCHAR_ENDFORMAT	133
+#define UCHAR_UNDERLINE	134
+#define UCHAR_ITALICS	135
+#define UCHAR_COLOR		136
+#define SCHAR_ENDFORMAT	((char)133)
+#define SCHAR_UNDERLINE	((char)134)
+#define SCHAR_ITALICS	((char)135)
+#define SCHAR_COLOR		((char)136)
 
 #define COLOR_CHAT		('z'+16)
 #define COLOR_MAPNAME	']'

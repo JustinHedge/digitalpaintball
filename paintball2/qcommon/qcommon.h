@@ -942,7 +942,7 @@ void CL_Init (void);
 void CL_Drop (void);
 void CL_Shutdown (void);
 void CL_Frame (int msec);
-void Con_Print (unsigned char *text); // jittext
+void Con_Print (const char *text); // jittext
 void SCR_BeginLoadingPlaque (void);
 
 void SV_Init (void);

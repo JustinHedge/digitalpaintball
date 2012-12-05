@@ -758,8 +758,8 @@ void M_PopMenu (const char *menu_name); // jitmenu
 void Serverlist_Init (void);
 void Serverlist_Shutdown (void);
 
-int strlen_noformat (const unsigned char *s); // jitmenu
-int strpos_noformat (const unsigned char *in_str, int pos); // jitmenu
+int strlen_noformat (const char *s); // jitmenu
+int strpos_noformat (const char *in_str, int pos); // jitmenu
 
 // cl_scrn.c
 void SCR_PrintPopup (const char *s, qboolean behindmenu); // jit
@@ -810,7 +810,7 @@ void CL_PredictMovement (void);
 //
 // cl_images.c
 //
-CL_ShutdownImages (void);
+void CL_ShutdownImages (void);
 bordered_pic_data_t *CL_FindBPic (const char *name);
 
 

@@ -73,7 +73,7 @@ void CL_LoadBorderedPic (bordered_pic_data_t *bpdata, const char *name)
 
 		Com_sprintf(filename, sizeof(filename), "pics/%s.bpic", name);
 
-		if (FS_LoadFileZ(filename, &filedata) > 0)
+		if (FS_LoadFileZ(filename, (void **)&filedata) > 0)
 		{
 			char *buf = filedata;
 			char *token = COM_Parse(&buf);
@@ -130,7 +130,7 @@ void CL_LoadBorderedPic (bordered_pic_data_t *bpdata, const char *name)
 					Com_sprintf(filename, sizeof(filename), "pics/%s.bpic", token);
 					FS_FreeFile(filedata);
 
-					if (FS_LoadFileZ(filename, &filedata) <= 0)
+					if (FS_LoadFileZ(filename, (void **)&filedata) <= 0)
 					{
 						Com_Printf("Could not load imported bpic: %s\n", filename);
 						return;
@@ -263,7 +263,7 @@ void CL_InitImages (void)
 }
 
 
-CL_ShutdownImages (void)
+void CL_ShutdownImages (void)
 {
 	hash_table_free(&g_bpic_hash);
 }

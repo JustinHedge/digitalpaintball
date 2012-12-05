@@ -126,7 +126,7 @@ static void M_DrawBackground (image_t *background)
 	re.DrawStretchPic2(0, 0, viddef.width, viddef.height, background);
 	SCR_AddDirtyPoint(0, 0);
 	SCR_AddDirtyPoint(viddef.width - 1, viddef.height - 1);
-	Com_sprintf(version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
+	Com_sprintf(version, sizeof(version), "%c]v%4.2f Alpha (build %d)", SCHAR_COLOR, VERSION, BUILD); // jit 
 	re.DrawStringAlpha(viddef.width - 176 * hudscale, viddef.height - 12 * hudscale, version, 1.0f);
 }
 
@@ -156,7 +156,7 @@ void M_Menu_Main_f (void)
    strlen_noformat
    Returns the length of strings ignoring formatting (underlines, colors, etc)
 */
-int strlen_noformat (const unsigned char *s)
+int strlen_noformat (const char *s)
 {
 	int count = 0;
 
@@ -165,9 +165,9 @@ int strlen_noformat (const unsigned char *s)
 
 	while (*s)
 	{
-		if (*s != CHAR_UNDERLINE && *s != CHAR_ITALICS && *s != CHAR_ENDFORMAT)
+		if (*s != SCHAR_UNDERLINE && *s != SCHAR_ITALICS && *s != SCHAR_ENDFORMAT)
 		{
-			if (*s == CHAR_COLOR && *(s+1))
+			if (*s == SCHAR_COLOR && *(s+1))
 				s++; // skip two characters.
 			else
 				count++;
@@ -614,15 +614,15 @@ static void M_UnbindCommand (char *command)
 
 	l = strlen(command);
 
-	for (j=0; j<256; j++)
+	for (j = 0; j < 256; ++j)
 	{
 		b = keybindings[j];
 
 		if (!b)
 			continue;
 
-		if (!strncmp (b, command, l))
-			Key_SetBinding (j, "");
+		if (!strncmp(b, command, l))
+			Key_SetBinding(j, "");
 	}
 }
 
@@ -635,7 +635,7 @@ char *string_for_bind (char *bind)
 
 	if (keys[0] == -1)
 	{
-		sprintf(str, "%cNot Bound%c", CHAR_ITALICS, CHAR_ITALICS);
+		sprintf(str, "%cNot Bound%c", SCHAR_ITALICS, SCHAR_ITALICS);
 	}
 	else
 	{
@@ -1912,13 +1912,13 @@ static qboolean M_InsertField (int key)
 		if (keydown[K_CTRL]) // jitconsole / jittext
 		{
 			if (toupper(key) == 'K')
-				key = CHAR_COLOR;
+				key = SCHAR_COLOR;
 			else if (toupper(key) == 'U')
-				key = CHAR_UNDERLINE;
+				key = SCHAR_UNDERLINE;
 			else if (toupper(key) == 'I')
-				key = CHAR_ITALICS;
+				key = SCHAR_ITALICS;
 			else if (toupper(key) == 'O')
-				key = CHAR_ENDFORMAT;
+				key = SCHAR_ENDFORMAT;
 		}
 
 		// normal text
@@ -2268,7 +2268,7 @@ static menu_screen_t* M_GetNewMenuScreen (const char *menu_name, const char *bac
 static void M_ErrorMenu (menu_screen_t* menu, const char *text)
 {
 	char err[16];
-	sprintf(err, "%c%c%cERROR:", CHAR_UNDERLINE, CHAR_COLOR, 'A');
+	sprintf(err, "%c%c%cERROR:", SCHAR_UNDERLINE, SCHAR_COLOR, 'A');
 	menu->widget = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, err,
 			NULL, NULL, 60, 116, true, false);
 	menu->widget->next = M_GetNewMenuWidget(WIDGET_TYPE_TEXT, text,
@@ -3226,9 +3226,9 @@ static void M_DrawWidget (menu_widget_t *widget)
 			else if (widget->text)
 			{
 				if (widget->dynamic)
-					text = va("%c%c%s", CHAR_COLOR, 214, Cmd_MacroExpandString(widget->text));
+					text = va("%c%c%s", SCHAR_COLOR, 214, Cmd_MacroExpandString(widget->text));
 				else
-					text = va("%c%c%s", CHAR_COLOR, 214, widget->text);
+					text = va("%c%c%s", SCHAR_COLOR, 214, widget->text);
 			}
 
 			if (widget->selectedpic)
@@ -3270,9 +3270,9 @@ static void M_DrawWidget (menu_widget_t *widget)
 			else if (widget->text)
 			{
 				if (widget->dynamic)
-					text = va("%c%c%s", CHAR_COLOR, 218, Cmd_MacroExpandString(widget->text));
+					text = va("%c%c%s", SCHAR_COLOR, 218, Cmd_MacroExpandString(widget->text));
 				else
-					text = va("%c%c%s", CHAR_COLOR, 218, widget->text);
+					text = va("%c%c%s", SCHAR_COLOR, 218, widget->text);
 			}
 			
 			if (widget->hoverpic)

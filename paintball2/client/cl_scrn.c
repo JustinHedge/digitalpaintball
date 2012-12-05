@@ -277,12 +277,12 @@ void SCR_DrawCenterString (void)
 			// jittext - basically like strlen_noformat, except we haave to take into account the \n above.
 			switch (start[l])
 			{
-			case CHAR_COLOR:
+			case SCHAR_COLOR:
 				j += 2;
 				break;
-			case CHAR_UNDERLINE:
-			case CHAR_ITALICS:
-			case CHAR_ENDFORMAT:
+			case SCHAR_UNDERLINE:
+			case SCHAR_ITALICS:
+			case SCHAR_ENDFORMAT:
 				j++;
 				break;
 			}
@@ -378,7 +378,7 @@ int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t s
 		}
 
 		// Don't count formatting toward the size.
-		if (c == (char)CHAR_COLOR)
+		if (c == SCHAR_COLOR)
 		{
 			colorchar = true;
 		}
@@ -386,7 +386,7 @@ int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t s
 		{
 			colorchar = false;
 		}
-		else if (c == (char)CHAR_ITALICS || c == (char)CHAR_ENDFORMAT || c == (char)CHAR_UNDERLINE)
+		else if (c == SCHAR_ITALICS || c == SCHAR_ENDFORMAT || c == SCHAR_UNDERLINE)
 		{
 			// don't count these.
 		}
@@ -1093,10 +1093,10 @@ void SizeHUDString (char *string, int *w, int *h)
 void DrawHUDString (int x, int y, int centerwidth, int xor, unsigned char *string, ...)
 {
 	int		margin;
-	unsigned char	line[1024];
+	char	line[1024];
 	int		width;
 	va_list	argptr;
-	unsigned char	msg[2048], *strp = msg;
+	char	msg[2048], *strp = msg;
 	int		formatwidth;
 
 	va_start(argptr, string);
@@ -1111,15 +1111,17 @@ void DrawHUDString (int x, int y, int centerwidth, int xor, unsigned char *strin
 		// scan out one line of text from the string
 		width = 0;
 		formatwidth = 0;
+
 		while (*strp && *strp != '\n')
 		{
-			if (*strp == CHAR_COLOR) // jittext
+			if (*strp == SCHAR_COLOR) // jittext
 				formatwidth += 2;
-			else if (*strp == CHAR_UNDERLINE || *strp == CHAR_ITALICS)
+			else if (*strp == SCHAR_UNDERLINE || *strp == SCHAR_ITALICS)
 				formatwidth ++;
 			
 			line[width++] = *strp++;
 		}
+
 		line[width] = 0;
 
 		if (centerwidth)
@@ -1305,12 +1307,12 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 				continue;
 			}
 			//if (Q_streq(token, "cstring2"))
-			else if (token[7]=='2')
+			else if (token[7] == '2')
 			{
 				//char local_s[MAX_TOKEN_CHARS];
-				token = COM_Parse (&s);
+				token = COM_Parse(&s);
 				//sprintf(local_s, "%c%c%s", CHAR_COLOR, ']', token); // jittext
-				DrawHUDString (x, y, 320, 0, "%c%c%s", CHAR_COLOR, ']', token); // jittext
+				DrawHUDString(x, y, 320, 0, "%c%c%s", SCHAR_COLOR, ']', token); // jittext
 				//re.DrawString (x, y, local_s); // jittext
 				continue;
 			}			
@@ -1404,7 +1406,7 @@ void SCR_ExecuteLayoutString (char *s) // jit: optimized somewhat
 			{
 				char local_s[MAX_TOKEN_CHARS];
 				token = COM_Parse (&s);
-				sprintf(local_s, "%c%c%s", CHAR_COLOR, ']', token); // jittext
+				sprintf(local_s, "%c%c%s", SCHAR_COLOR, ']', token); // jittext
 				//re.DrawString (x, y, token);
 				re.DrawString (x, y, local_s); // jittext
 				continue;

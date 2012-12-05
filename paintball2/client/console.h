@@ -54,10 +54,9 @@ extern qboolean	key_insert;
 void Con_CheckResize (void);
 void Con_Init (void);
 void Con_DrawConsole (float frac);
-void Con_Print (unsigned char *txt);
-void Con_CenteredPrint (char *text);
+void Con_Print (const char *txt);
 void Con_Clear_f (void);
 void Con_DrawNotify (void);
 void Con_ClearNotify (void);
 void Con_ToggleConsole_f (void);
-void Con_DrawCursor(int x, int y); // jittext / jitmenu
+void Con_DrawCursor (int x, int y); // jittext / jitmenu

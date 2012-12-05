@@ -200,7 +200,7 @@ static void update_serverlist_server (m_serverlist_server_t *server, char *info,
 		if (!FileExists(buf))
 		{
 			// put maps clients don't have in italics
-			sprintf(buf, "%c%s%c", CHAR_ITALICS, s+1, CHAR_ITALICS);
+			sprintf(buf, "%c%s%c", SCHAR_ITALICS, s + 1, SCHAR_ITALICS);
 			server->mapname = text_copy(buf);
 		}
 		else
@@ -274,7 +274,7 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 	if (ping < 999)
 		info[0] = 0;
 	else
-		sprintf(info, "%c4", CHAR_COLOR);
+		sprintf(info, "%c4", SCHAR_COLOR);
 
 	if ((len = strlen_noformat(server->servername)) <= SERVER_NAME_MAXLENGTH)
 	{
@@ -305,7 +305,7 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 			pingcolor = pingcolormin - (pingcolormin - pingcolormax) * (ping - pingmin) / (pingmax - pingmin);
 	}
 
-	Com_sprintf(info, sizeof(info), "%s %c%c%-3d%c ", info, CHAR_COLOR, pingcolor, ping, CHAR_ENDFORMAT);
+	Com_sprintf(info, sizeof(info), "%s %c%c%-3d%c ", info, SCHAR_COLOR, pingcolor, ping, SCHAR_ENDFORMAT);
 
 	if ((len = strlen_noformat(server->mapname)) <= MAP_NAME_MAXLENGTH)
 	{
@@ -320,10 +320,10 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 		strncat(info, server->mapname, pos);
 		
 		// handle italics (map player doesn't have)
-		if ((unsigned char)server->mapname[0] == CHAR_ITALICS)
+		if ((unsigned char)server->mapname[0] == SCHAR_ITALICS)
 		{
 			char buf[2];
-			sprintf(buf, "%c", CHAR_ITALICS);
+			sprintf(buf, "%c", SCHAR_ITALICS);
 			strcat(info, buf);
 		}
 	}
@@ -513,9 +513,9 @@ static void grey_serverlist (void)
 
 	for(i=0; i<m_serverlist.nummapped; i++)
 	{
-		if ((unsigned char)m_serverlist.info[i][0] != CHAR_COLOR)
+		if ((unsigned char)m_serverlist.info[i][0] != SCHAR_COLOR)
 		{
-			str = text_copy(va("%c4%s", CHAR_COLOR, m_serverlist.info[i]));
+			str = text_copy(va("%c4%s", SCHAR_COLOR, m_serverlist.info[i]));
 			Z_Free(m_serverlist.info[i]);
 			m_serverlist.info[i] = str;
 		}
@@ -1122,8 +1122,8 @@ static int Serverlist_SortCompare_Mapname (const void *a, const void *b)
 	if (serverA && serverB)
 	{
 		// cope with unknown maps
-		char* aname = ((unsigned char)serverA->mapname[0] == CHAR_ITALICS) ? &serverA->mapname[1] : serverA->mapname;
-		char* bname = ((unsigned char)serverB->mapname[0] == CHAR_ITALICS) ? &serverB->mapname[1] : serverB->mapname;
+		char* aname = ((unsigned char)serverA->mapname[0] == SCHAR_ITALICS) ? &serverA->mapname[1] : serverA->mapname;
+		char* bname = ((unsigned char)serverB->mapname[0] == SCHAR_ITALICS) ? &serverB->mapname[1] : serverB->mapname;
 		int result = stricmp(aname, bname);
 		if(Cvar_Get("serverlist_order_invert","0",0)->value)
 			result = -result;

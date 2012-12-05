@@ -44,11 +44,11 @@ void CL_ParsePrintItem (char *s) // jit
 	char buff[MAX_QPATH];
 
 	if (*s == '+') // item pickup
-		Com_sprintf(buff, sizeof(buff), "%s", cl.configstrings[CS_ITEMS+s[1]]);
+		Com_sprintf(buff, sizeof(buff), "%s", cl.configstrings[CS_ITEMS + s[1]]);
 	else if (*s == '-') // item drop
-		Com_sprintf(buff, sizeof(buff), "%c%ca%s", CHAR_ITALICS, CHAR_COLOR, cl.configstrings[CS_ITEMS+s[1]]);
+		Com_sprintf(buff, sizeof(buff), "%c%ca%s", SCHAR_ITALICS, SCHAR_COLOR, cl.configstrings[CS_ITEMS + s[1]]);
 	else // unknown? (shouldn't happen)
-		Com_sprintf(buff, sizeof(buff), "UNKNOWN %s", cl.configstrings[CS_ITEMS+s[1]]);
+		Com_sprintf(buff, sizeof(buff), "UNKNOWN %s", cl.configstrings[CS_ITEMS + s[1]]);
 
 	item_print(buff);
 }

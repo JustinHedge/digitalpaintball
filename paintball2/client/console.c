@@ -45,13 +45,13 @@ void Draw_StringLen (float x, float y, char *str, int len) // pooy
 	str[len] = saved_byte;
 }
 
-int CharOffset (unsigned char *s, int charcount) // pooy
+int CharOffset (const char *s, int charcount) // pooy
 {
-	unsigned char *start = s;
+	const char *start = s;
 
-	for ( ; *s && charcount; s++)
+	for ( ; *s && charcount; ++s)
 	{
-		charcount--;
+		--charcount;
 	}
 
 	return s - start;
@@ -425,16 +425,16 @@ All console printing must go through this in order to be logged to disk
 If no console is visible, the text will appear at the top of the game window
 ================
 */
-void Con_Print (unsigned char *txt) // jittext
+void Con_Print (const char *txt) // jittext
 {
 	int		y;
 	int		l;
-	unsigned char c; // jittext
+	char c; // jittext
 	static int	cr;
 	qboolean isitalics = false;
 	qboolean isunderlined = false;
 	qboolean iscolored = false;
-	unsigned char	color;
+	char	color;
 
 	if (!con.initialized)
 		return;
@@ -465,22 +465,22 @@ void Con_Print (unsigned char *txt) // jittext
 			if (isunderlined) // jittext, continue formatting or wordwrapped lines
 			{
 				y = con.current % con.totallines;
-				con.text[y*con.linewidth+con.x] = CHAR_UNDERLINE;
+				con.text[y * con.linewidth + con.x] = SCHAR_UNDERLINE;
 				con.x++;
 			}
 
 			if (isitalics)
 			{
 				y = con.current % con.totallines;
-				con.text[y*con.linewidth+con.x] = CHAR_ITALICS;
+				con.text[y * con.linewidth + con.x] = SCHAR_ITALICS;
 				con.x++;
 			}
 
 			if (iscolored)
 			{
 				y = con.current % con.totallines;
-				con.text[y*con.linewidth+con.x] = CHAR_COLOR;
-				con.text[y*con.linewidth+con.x+1] = color;
+				con.text[y * con.linewidth + con.x] = SCHAR_COLOR;
+				con.text[y * con.linewidth + con.x + 1] = color;
 				con.x += 2;
 			}
 
@@ -489,16 +489,16 @@ void Con_Print (unsigned char *txt) // jittext
 				con.times[con.current % NUM_CON_TIMES] = cls.realtime;
 		}
 
-		if (c == CHAR_COLOR) // jittext
+		if (c == SCHAR_COLOR) // jittext
 		{
 			iscolored = true;
 			color = *txt;
 		}
-		else if (c == CHAR_UNDERLINE)
+		else if (c == SCHAR_UNDERLINE)
 		{
 			isunderlined = !isunderlined;
 		}
-		else if (c == CHAR_ITALICS)
+		else if (c == SCHAR_ITALICS)
 		{
 			isitalics = !isitalics;
 		}
@@ -523,29 +523,6 @@ void Con_Print (unsigned char *txt) // jittext
 			break;
 		}
 	}
-}
-
-
-/*
-==============
-Con_CenteredPrint
-==============
-*/
-void Con_CenteredPrint (char *text)
-{
-	int		l;
-	char	buffer[1024];
-
-	l = strlen(text);
-	l = (con.linewidth - l) / 2;
-
-	if (l < 0)
-		l = 0;
-
-	memset(buffer, ' ', l);
-	strcpy(buffer + l, text);
-	strcat(buffer, "\n");
-	Con_Print(buffer);
 }
 
 /*
@@ -716,7 +693,7 @@ void Con_DrawConsole (float frac)
 	SCR_AddDirtyPoint(0,0);
 	SCR_AddDirtyPoint(viddef.width-1, lines-1);
 
-	Com_sprintf(version, sizeof(version), "%c]v%4.2f Alpha (build %d)", CHAR_COLOR, VERSION, BUILD); // jit 
+	Com_sprintf(version, sizeof(version), "%c]v%4.2f Alpha (build %d)", SCHAR_COLOR, VERSION, BUILD); // jit 
 	re.DrawString(width - 176.0f * hudscale, lines - 12.0f * hudscale, version);
 
 	if (cls.key_dest == key_menu)
@@ -832,23 +809,26 @@ void Con_DrawDownloadBar (qboolean inConsole)
 			n = ((float)(y+2) * (float)(cls.downloadpercent) / 100.0f + 0.5f); // jit (round properly)
 			
 		// === jittext -- new download bar:
-		dlbar_fill[0] = CHAR_COLOR;
+		dlbar_fill[0] = SCHAR_COLOR;
 		dlbar_fill[1] = 'Q'; // jittext
-		for (j=2; j<=i; j++) // jittext
+
+		for (j = 2; j <= i; ++j) // jittext
 			dlbar_fill[j] = ' ';
-		for (j=0; j<n; j++) // jittext
+
+		for (j = 0; j < n; ++j) // jittext
 		{
 			if (j == n-1)
-				dlbar_fill[j+i+1] = '\x1f'; // end bar
+				dlbar_fill[j + i + 1] = '\x1f'; // end bar
 			else
-				dlbar_fill[j+i+1] = '\x1e'; // middle bar
+				dlbar_fill[j + i + 1] = '\x1e'; // middle bar
 
 			if (j == 0)
-				dlbar_fill[j+i+1] = '\x1d'; // start bar
+				dlbar_fill[j + i + 1] = '\x1d'; // start bar
 		}
-		dlbar_fill[j+i+1] = '\0';
 
-		for (j = 0; j < y; j++)
+		dlbar_fill[j + i + 1] = '\0';
+
+		for (j = 0; j < y; ++j)
 			dlbar[i++] = '\x81';
 
 		dlbar[i++] = '\x82';

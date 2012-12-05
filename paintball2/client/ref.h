@@ -303,7 +303,7 @@ typedef struct
 	int		(*FS_LoadFile) (const char *name, void **buf);
 	int		(*FS_LoadFileZ) (const char *name, void **buf); // jit
 	void	(*FS_FreeFile) (void *buf);
-	char	**(*FS_ListFiles) (char*, int*, unsigned, unsigned, qboolean); // jitrscript
+	char	**(*FS_ListFiles) (const char *findname, int *numfiles, unsigned musthave, unsigned canthave, qboolean sort); // jitrscript
 	void	(*FS_FreeFileList) (char **list, int n); // jit
 	char	*(*FS_NextPath) (char*); // jitrscript
 

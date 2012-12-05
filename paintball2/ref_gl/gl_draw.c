@@ -200,7 +200,7 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 			{
 				switch (num)
 				{
-				case CHAR_COLOR:
+				case UCHAR_COLOR:
 
 					if (!(*(s+1))) // end of string
 					{
@@ -215,7 +215,7 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 					}
 
 					break;
-				case CHAR_UNDERLINE:
+				case UCHAR_UNDERLINE:
 					s++;
 					underlined = !underlined;
 
@@ -225,7 +225,7 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 					//	s--;
 
 					break;
-				case CHAR_ITALICS:
+				case UCHAR_ITALICS:
 					s++;
 					italicized = !italicized;
 
@@ -235,7 +235,7 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 					//	s--;
 
 					break;
-				case CHAR_ENDFORMAT:
+				case UCHAR_ENDFORMAT:
 					s++;
 					italicized = false;
 					underlined = false;

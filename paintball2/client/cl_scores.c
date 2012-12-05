@@ -310,26 +310,26 @@ static void SortScores (void)
 	}
 }
 
-int strpos_noformat (const unsigned char *in_str, int pos)
+int strpos_noformat (const char *in_str, int pos)
 {
 	int count = 0;
-	const unsigned char *s;
+	const char *s;
 
 	s = in_str;
 
-	while(*s)
+	while (*s)
 	{
-		if (*(s+1) && (*s == CHAR_UNDERLINE || *s == CHAR_ENDFORMAT || *s == CHAR_ITALICS))
+		if (*(s + 1) && (*s == SCHAR_UNDERLINE || *s == SCHAR_ENDFORMAT || *s == SCHAR_ITALICS))
 			{ } // don't count character
-		else if (*(s+1) && *s == CHAR_COLOR)
-			s++; // skip two characters.
+		else if (*(s + 1) && *s == SCHAR_COLOR)
+			++s; // skip two characters.
 		else
-			count++;
+			++count;
 
 		if (count >= pos)
-			return (s-in_str);
+			return (s - in_str);
 
-		s++;
+		++s;
 	}
 
 	return -1;
@@ -367,8 +367,8 @@ qboolean cl_scores_prep_select_widget (void)
 				int pos;
 
 				pos = strpos_noformat(cl_scores_info[i], MAX_NAME_WIDTH+1);
-				cl_scores_info[i][pos] = CHAR_ENDFORMAT;
-				cl_scores_info[i][pos+1] = '\0';
+				cl_scores_info[i][pos] = SCHAR_ENDFORMAT;
+				cl_scores_info[i][pos + 1] = '\0';
 			}
 			else
 			{

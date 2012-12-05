@@ -119,10 +119,10 @@ static void update_maplist_widget_arrays (void)
 			Z_Free(cl_maplist_info[i]);
 
 		if (finger->maplist_flags & MAPLIST_FLAGS_UNPLAYABLE)
-			sprintf(buf, "%c4", CHAR_COLOR);
+			sprintf(buf, "%c4", SCHAR_COLOR);
 
 		if (finger->maplist_flags & MAPLIST_FLAGS_TEMP)
-			sprintf(buf, "%s%c", buf, CHAR_ITALICS);
+			sprintf(buf, "%s%c", buf, SCHAR_ITALICS);
 
 		sprintf(buf, "%s%2d %s", buf, finger->votes, finger->mapname);
 		cl_maplist_info[i] = CopyString(buf);
@@ -192,7 +192,7 @@ void CL_ParseMaplistData (const unsigned char *data)
 		if (cls.key_dest == key_console)
 		{
 			if (newnode->maplist_flags & MAPLIST_FLAGS_UNPLAYABLE)
-				Com_Printf("%c5", CHAR_COLOR);
+				Com_Printf("%c5", SCHAR_COLOR);
 
 			if (newnode->maplist_flags & MAPLIST_FLAGS_TEMP)
 				Com_Printf("(%3d %s)\n", newnode->votes, newnode->mapname);

@@ -274,7 +274,7 @@ void SCR_DrawPaintballHUD1 (void) // todo version check
 	{
 		x = TIMELEFT_X;
 		y = TIMELEFT_Y;
-		re.DrawString(x, y, va("%c%cTime:", CHAR_COLOR, ']'));
+		re.DrawString(x, y, va("%c%cTime:", SCHAR_COLOR, ']'));
 		
 		if (value >= 0 && value < MAX_CONFIGSTRINGS)
 			re.DrawString(x, y+8*hudscale, cl.configstrings[value]);

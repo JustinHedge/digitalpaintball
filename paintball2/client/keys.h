@@ -139,7 +139,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define K_MWHEELDOWN	239
 #define K_MWHEELUP		240
 
-extern unsigned char		*keybindings[256];
+extern	char	*keybindings[256];
 extern	int		key_repeats[256];
 
 extern	int	anykeydown;
@@ -151,9 +151,9 @@ extern qboolean	keydown[256];
 void Key_Event (int key, qboolean down, unsigned time);
 void Key_Init (void);
 void Key_WriteBindings (FILE *f);
-void Key_SetBinding (int keynum, char *binding);
+void Key_SetBinding (int keynum, const char *binding);
 void Key_ClearStates (void);
 int Key_GetKey (void);
-int KeyPadKey(int key); // jit
-int CharOffset (unsigned char *s, int charcount); // pooy
+int KeyPadKey (int key); // jit
+int CharOffset (const char *s, int charcount); // pooy
 

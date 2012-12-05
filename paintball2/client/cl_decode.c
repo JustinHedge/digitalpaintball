@@ -462,7 +462,7 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 		cl_scores_setisalive(index_array[3], false);
 
 		if (index_array[2] == cl.playernum)
-			Com_sprintf(event_text, sizeof(event_text), "%cYou eliminated your teammate!", CHAR_ITALICS);
+			Com_sprintf(event_text, sizeof(event_text), "%cYou eliminated your teammate!", SCHAR_ITALICS);
 		else if (index_array[3] == cl.playernum)
 			Com_sprintf(event_text, sizeof(event_text), "Your teammate (%s) eliminated you.", name_from_index(index_array[2]));
 		else

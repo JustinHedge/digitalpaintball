@@ -27,7 +27,7 @@ key up events are sent even if in console mode
 
 
 #define		MAXCMDLINE	256
-unsigned char	key_lines[32][MAXCMDLINE]; // jittext
+char		key_lines[32][MAXCMDLINE]; // jittext
 int			key_linepos;
 int			shift_down = false;
 int			ctrl_down = false; // jitkeyboard
@@ -38,7 +38,7 @@ int			edit_line=0;
 int			history_line=0;
 
 int			key_waiting;
-unsigned char	*keybindings[256]; // jittext
+char		*keybindings[256]; // jittext
 qboolean	consolekeys[256];	// if true, can't be rebound while in console
 byte		keyshift[256];		// key to map to if shift held down in console
 int			key_repeats[256];	// if > 1, it is autorepeating
@@ -478,13 +478,13 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 	if (keydown[K_CTRL]) // jitconsole / jittext
 	{
 		if (toupper(key) == 'K')
-			key = CHAR_COLOR;
+			key = SCHAR_COLOR;
 		else if (toupper(key) == 'U')
-			key = CHAR_UNDERLINE;
+			key = SCHAR_UNDERLINE;
 		else if (toupper(key) == 'I')
-			key = CHAR_ITALICS;
+			key = SCHAR_ITALICS;
 		else if (toupper(key) == 'O')
-			key = CHAR_ENDFORMAT;
+			key = SCHAR_ENDFORMAT;
 	}
 
 	if (key_linepos < MAXCMDLINE-1)
@@ -509,6 +509,7 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 		i = key_lines[edit_line][key_linepos];
 		key_lines[edit_line][key_linepos] = key;
 		key_linepos++;
+
 		if (!i)
 			key_lines[edit_line][key_linepos] = 0;	
 	}
@@ -639,27 +640,20 @@ char *Key_KeynumToString (int keynum)
 Key_SetBinding
 ===================
 */
-void Key_SetBinding (int keynum, char *binding)
+void Key_SetBinding (int keynum, const char *binding)
 {
-	char	*new;
-	int		l;
-			
 	if (keynum == -1)
 		return;
 
-// free old bindings
+	// free old bindings
 	if (keybindings[keynum])
 	{
-		Z_Free (keybindings[keynum]);
+		Z_Free(keybindings[keynum]);
 		keybindings[keynum] = NULL;
 	}
 			
-// allocate memory for new binding
-	l = strlen (binding);	
-	new = Z_Malloc (l+1);
-	strcpy (new, binding);
-	new[l] = 0;
-	keybindings[keynum] = new;	
+	// allocate memory for new binding
+	keybindings[keynum] = CopyString(binding);	
 }
 
 /*
@@ -673,27 +667,28 @@ void Key_Unbind_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("Usage: unbind <key> : Remove commands from a key.\n");
+		Com_Printf("Usage: unbind <key> : Remove commands from a key.\n");
 		return;
 	}
 	
-	b = Key_StringToKeynum (Cmd_Argv(1));
-	if (b==-1)
+	b = Key_StringToKeynum(Cmd_Argv(1));
+
+	if (b == -1)
 	{
 		Com_Printf ("\"%s\" isn't a valid key.\n", Cmd_Argv(1));
 		return;
 	}
 
-	Key_SetBinding (b, "");
+	Key_SetBinding(b, "");
 }
 
 void Key_Unbindall_f (void)
 {
 	int		i;
 	
-	for (i=0 ; i<256 ; i++)
+	for (i = 0; i < 256; ++i)
 		if (keybindings[i])
-			Key_SetBinding (i, "");
+			Key_SetBinding(i, "");
 }
 
 
@@ -878,7 +873,7 @@ void Key_Init (void)
 	Cmd_AddCommand("bindlist", Key_Bindlist_f);
 
 	// Load the key line history - jit
-	if (FS_LoadFile("configs/keyhistory.dat", &keyhistory) > 0)
+	if (FS_LoadFile("configs/keyhistory.dat", (void **)&keyhistory) > 0)
 	{
 		const char *p;
 		size_t size = *(size_t *)keyhistory;

@@ -813,16 +813,15 @@ void CL_ParseServerData (void)
 	str = MSG_ReadString(&net_message);
 
 	if (cl.playernum == -1)
-	{	// playing a cinematic or showing a pic, not a level
-		SCR_PlayCinematic (str);
+	{
+		// playing a cinematic or showing a pic, not a level
+		SCR_PlayCinematic(str);
 	}
 	else
 	{
 		// seperate the printfs so the server message can have a color
-		//Com_Printf("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
-		Com_Printf("\n\n %c%c\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n", CHAR_COLOR, ';'); // jittext
-		//Com_Printf ("%c%s\n", 2, str);
-		Com_Printf ("%c%c%s\n\n", CHAR_COLOR, COLOR_MAPNAME, str); // jittext
+		Com_Printf("\n\n %c%c\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n", SCHAR_COLOR, ';'); // jittext
+		Com_Printf("%c%c%s\n\n", SCHAR_COLOR, COLOR_MAPNAME, str); // jittext
 
 		// need to prep refresh at next oportunity
 		cl.refresh_prepped = false;
@@ -1319,11 +1318,11 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 	if (cl_timestamp->value)
 	{
 		Com_Printf("%c%c[%s] %c%s%s%s%c%c%s%s %s%s",
-			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
+			SCHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
 			timestamp, cl_scores_get_team_splat(idx), 
 			cl_scores_get_isalive(idx) ? "" : "[ELIM] ",
 			(isteam || isprivate) ? "(" : "", name_from_index(idx),
-			CHAR_COLOR, darken_text ? '0' : (isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT), 
+			SCHAR_COLOR, darken_text ? '0' : (isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT), 
 			(isteam || isprivate) ? ")" : "", 
 			level == PRINT_CHATN_ACTION ? "" : ":",
 			s, (s[strlen(s)-1] == '\n') ? "" : "\n");
@@ -1331,10 +1330,10 @@ static void CL_ParseChat (int level, const char *s) // jitchat / jitenc
 	else
 	{
 		Com_Printf("%c%c%c%s%s%s%c%c%s%s %s%s", cl_scores_get_team_splat(idx),
-			CHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
+			SCHAR_COLOR, isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT, 
 			cl_scores_get_isalive(idx) ? "" : "[ELIM] ", // jitodo - [OBS]
 			(isteam || isprivate) ? "(" : "", name_from_index(idx),
-			CHAR_COLOR, darken_text ? '0' : (isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT), 
+			SCHAR_COLOR, darken_text ? '0' : (isteam ? cl_scores_get_team_textcolor(idx) : COLOR_CHAT), 
 			(isteam || isprivate) ? ")" : "", 
 			level == PRINT_CHATN_ACTION ? "" : ":",
 			s, (s[strlen(s)-1] == '\n') ? "" : "\n");
@@ -1472,9 +1471,9 @@ void CL_ParseServerMessage (void)
 				S_StartLocalSound("misc/talk.wav");
 
 				if (cl_timestamp->value) // jittext / jitcolor
-					Com_Printf("%c%c[%s] %s", CHAR_COLOR, COLOR_CHAT, timestamp, MSG_ReadString(&net_message));
+					Com_Printf("%c%c[%s] %s", SCHAR_COLOR, COLOR_CHAT, timestamp, MSG_ReadString(&net_message));
 				else
-					Com_Printf("%c%c%s", CHAR_COLOR, COLOR_CHAT, MSG_ReadString(&net_message));
+					Com_Printf("%c%c%s", SCHAR_COLOR, COLOR_CHAT, MSG_ReadString(&net_message));
 
 				break;
 			case PRINT_ITEM: // jit

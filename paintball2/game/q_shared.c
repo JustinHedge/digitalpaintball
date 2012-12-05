@@ -2377,22 +2377,25 @@ void strip_garbage (char *cout, const char *cin) // jit
 	register unsigned char *sbuf;
 	unsigned char *out = (unsigned char *)cout; // stupid gcc warnings
 	unsigned char *in = (unsigned char *)cin;
+	int index;
 
-	for (sbuf = out, s = in; *s; s++)
+	for (sbuf = out, s = in; *s; ++s)
 	{
 		switch (*s)
 		{
-		case CHAR_COLOR:
-			if (*(s+1))
-				s++;
+		case UCHAR_COLOR:
+			if (*(s + 1))
+				++s;
 			break;
-		case CHAR_ITALICS:
-		case CHAR_UNDERLINE:
-		case CHAR_ENDFORMAT:
+		case UCHAR_ITALICS:
+		case UCHAR_UNDERLINE:
+		case UCHAR_ENDFORMAT:
 			break;
 		default:
-			*sbuf = char_remap[*s];
-			sbuf++;
+			index = *s;
+			assert(index >= 0 && index < 256);
+			*sbuf = char_remap[index];
+			++sbuf;
 		}
 	}
 

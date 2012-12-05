@@ -463,7 +463,7 @@ void LoadPCX (const char *filename, byte **pic, byte **palette, int *width, int 
 	//
 	// load the file
 	//
-	len = ri.FS_LoadFile(filename, &raw);
+	len = ri.FS_LoadFile(filename, (void **)&raw);
 	if (!raw)
 	{
 		//ri.Con_Printf (PRINT_DEVELOPER, "Bad pcx file %s.\n", filename);
@@ -946,7 +946,7 @@ void jpg_null(j_decompress_ptr cinfo)
 {
 }
 
-unsigned char jpg_fill_input_buffer(j_decompress_ptr cinfo)
+boolean jpg_fill_input_buffer(j_decompress_ptr cinfo)
 {
     ri.Con_Printf(PRINT_ALL, "Premature end of JPEG data.\n");
     return 1;
@@ -2175,7 +2175,7 @@ void R_RegisterSkin (const char *name, struct model_s *model, struct image_s **s
 
 	COM_StripExtension(name, skinname, sizeof(skinname));
 	strcat(skinname, ".skin");
-	len = ri.FS_LoadFileZ(skinname, &skindata);
+	len = ri.FS_LoadFileZ(skinname, (void **)&skindata);
 
 	if (len < 0)
 	{
