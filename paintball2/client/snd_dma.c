@@ -170,7 +170,7 @@ void S_Init (void)
 		s_disableonalttab = Cvar_Get("s_disableonalttab", "0", 0);
 		// jitsound ===
 
-		s_volume = Cvar_Get("s_volume", "0.9", CVAR_ARCHIVE);
+		s_volume = Cvar_Get("s_volume", "0.5", CVAR_ARCHIVE); // jit - changed default volume (was .9)
 		s_khz = Cvar_Get("s_khz", "48", CVAR_ARCHIVE); // jit, default to 48 (was 11)
 		s_loadas8bit = Cvar_Get("s_loadas8bit", "0", CVAR_ARCHIVE); // jit, was 1
 		s_mixahead = Cvar_Get("s_mixahead", "0.2", CVAR_ARCHIVE);
