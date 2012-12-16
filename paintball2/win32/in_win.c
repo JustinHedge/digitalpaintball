@@ -386,8 +386,8 @@ void IN_MouseMove (usercmd_t *cmd)
 		return;
 	}
 
-	if (m_fovscale->value)
-		fovscale = fov->value / 90.0f; // jitmouse - scale turn speed based of FOV
+	if (m_fovscale->value && cl.refdef.fov_x > 0)
+		fovscale = cl.refdef.fov_x / 90.0f; // jitmouse - scale turn speed based of FOV
 
 	mouse_x *= sensitivity->value * fovscale;
 	mouse_y *= sensitivity->value * fovscale;
