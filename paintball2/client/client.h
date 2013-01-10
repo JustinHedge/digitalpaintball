@@ -637,9 +637,9 @@ void init_cl_scores (void);
 void shutdown_cl_scores (void);
 #define GAMETYPE_NONE	-1
 #define GAMETYPE_DM		0
-#define GAMETYPE_1FLAG	1	
+#define GAMETYPE_1FLAG	1
 #define GAMETYPE_2FLAG	2
-#define GAMETYPE_SIEGE	3	
+#define GAMETYPE_SIEGE	3
 #define GAMETYPE_KOTH	4
 #define GAMETYPE_ELIM	5
 #define GAMETYPE_PONG	6
@@ -709,7 +709,7 @@ void V_AddLightStyle (int style, float r, float g, float b);
 void CL_RegisterTEntSounds (void);
 void CL_RegisterTEntModels (void);
 void CL_SmokeAndFlash(vec3_t origin);
-
+#define MAX_STEP_VARIATIONS 4
 
 //
 // cl_pred.c

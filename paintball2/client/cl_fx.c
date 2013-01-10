@@ -2274,6 +2274,11 @@ struct sfx_s *get_step_sound (entity_state_t *ent, int stepnumber)
 	extern float g_viewheight;
 	vec3_t mins, maxs;
 
+	assert(stepnumber < MAX_STEP_VARIATIONS);
+
+	if (stepnumber >= MAX_STEP_VARIATIONS || stepnumber < 0)
+		stepnumber = 0;
+
 	VectorCopy(ent->origin, end);
 	VectorSet(mins, -16, -16, -2);
 	VectorSet(maxs, 16, 16, 2);
@@ -2323,9 +2328,9 @@ void CL_PlayFootstep (entity_state_t *ent)
 		if (stepnumber == laststepnumber) // jitsound - ensure step sound doesn't repeat, as that sounds weird
 		{
 			stepnumber += 1;
-			stepnumber &= 3;
 		}
-
+		
+		stepnumber &= 3;
 		laststepnumber = stepnumber;
 		S_StartSound(NULL, ent->number, CHAN_AUTO, get_step_sound(ent, stepnumber), 1, ATTN_NORM, 0);
 	}

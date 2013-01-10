@@ -136,15 +136,15 @@ struct sfx_s	*cl_sfx_grensplat1;
 struct sfx_s	*cl_sfx_grensplat2;
 struct sfx_s	*cl_sfx_grensplat3;
 struct sfx_s	*cl_sfx_paintfly[3];
-struct sfx_s	*cl_sfx_footsteps[4];
-struct sfx_s	*cl_sfx_footsteps_snow[4]; // jitsound
-struct sfx_s	*cl_sfx_footsteps_grass[4]; // jitsound
-struct sfx_s	*cl_sfx_footsteps_asphalt[4]; // jitsound
-struct sfx_s	*cl_sfx_footsteps_wood_plank[4]; // jitsound
-struct sfx_s	*cl_sfx_footsteps_metal[4]; // jitsound
-struct sfx_s	*cl_sfx_footsteps_sand[4]; // jitsound
-struct sfx_s	*cl_sfx_footsteps_metalt[4]; // jitsound
-struct sfx_s	*cl_sfx_footsteps_barrel[4]; // jitsound
+struct sfx_s	*cl_sfx_footsteps[MAX_STEP_VARIATIONS];
+struct sfx_s	*cl_sfx_footsteps_snow[MAX_STEP_VARIATIONS]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_grass[MAX_STEP_VARIATIONS]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_asphalt[MAX_STEP_VARIATIONS]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_wood_plank[MAX_STEP_VARIATIONS]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_metal[MAX_STEP_VARIATIONS]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_sand[MAX_STEP_VARIATIONS]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_metalt[MAX_STEP_VARIATIONS]; // jitsound
+struct sfx_s	*cl_sfx_footsteps_barrel[MAX_STEP_VARIATIONS]; // jitsound
 struct model_s	*cl_mod_smoke;
 struct model_s	*cl_mod_splat;
 struct model_s	*cl_mod_paintball;
