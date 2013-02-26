@@ -347,61 +347,61 @@ void SV_WriteServerFile (qboolean autosave)
 	struct tm	*newtime;
 
 	Com_DPrintf("SV_WriteServerFile(%s)\n", autosave ? "true" : "false");
+	Com_sprintf(name, sizeof(name), "%s/save/current/server.ssv", FS_Gamedir());
+	f = fopen(name, "wb");
 
-	Com_sprintf (name, sizeof(name), "%s/save/current/server.ssv", FS_Gamedir());
-	f = fopen (name, "wb");
 	if (!f)
 	{
-		Com_Printf ("Couldn't write %s.\n", name);
+		Com_Printf("Couldn't write %s.\n", name);
 		return;
 	}
+
 	// write the comment field
-	memset (comment, 0, sizeof(comment));
+	memset(comment, 0, sizeof(comment));
 
 	if (!autosave)
 	{
-		time (&aclock);
-		newtime = localtime (&aclock);
-		Com_sprintf (comment,sizeof(comment), "%2i:%i%i %2i/%2i  ", newtime->tm_hour
-			, newtime->tm_min/10, newtime->tm_min%10,
-			newtime->tm_mon+1, newtime->tm_mday);
-		strncat (comment, sv.configstrings[CS_NAME], sizeof(comment)-1-strlen(comment) );
+		time(&aclock);
+		newtime = localtime(&aclock);
+		Com_sprintf(comment, sizeof(comment), "%2i:%i%i %2i/%2i  ", newtime->tm_hour, newtime->tm_min / 10, newtime->tm_min % 10, newtime->tm_mon + 1, newtime->tm_mday);
+		strncat(comment, sv.configstrings[CS_NAME], sizeof(comment) - 1 - strlen(comment));
 	}
 	else
 	{	// autosaved
 //		Com_sprintf (comment, sizeof(comment), "ENTERING %s", sv.configstrings[CS_NAME]);
 	}
 
-	fwrite (comment, 1, sizeof(comment), f);
+	fwrite(comment, 1, sizeof(comment), f);
 
 	// write the mapcmd
-	fwrite (svs.mapcmd, 1, sizeof(svs.mapcmd), f);
+	fwrite(svs.mapcmd, 1, sizeof(svs.mapcmd), f);
 
 	// write all CVAR_LATCH cvars
 	// these will be things like coop, skill, deathmatch, etc
-	for (var = cvar_vars ; var ; var=var->next)
+	for (var = cvar_vars; var; var = var->next)
 	{
 		if (!(var->flags & CVAR_LATCH))
 			continue;
-		if (strlen(var->name) >= sizeof(name)-1
-			|| strlen(var->string) >= sizeof(string)-1)
+
+		if (strlen(var->name) >= sizeof(name) - 1 || strlen(var->string) >= sizeof(string) - 1)
 		{
-			Com_Printf ("Cvar too long: %s = %s\n", var->name, var->string);
+			Com_Printf("Cvar too long: %s = %s\n", var->name, var->string);
 			continue;
 		}
-		memset (name, 0, sizeof(name));
-		memset (string, 0, sizeof(string));
-		strcpy (name, var->name);
-		strcpy (string, var->string);
-		fwrite (name, 1, sizeof(name), f);
-		fwrite (string, 1, sizeof(string), f);
+
+		memset(name, 0, sizeof(name));
+		memset(string, 0, sizeof(string));
+		strcpy(name, var->name);
+		strcpy(string, var->string);
+		fwrite(name, 1, sizeof(name), f);
+		fwrite(string, 1, sizeof(string), f);
 	}
 
-	fclose (f);
+	fclose(f);
 
 	// write game state
-	Com_sprintf (name, sizeof(name), "%s/save/current/game.ssv", FS_Gamedir());
-	ge->WriteGame (name, autosave);
+	Com_sprintf(name, sizeof(name), "%s/save/current/game.ssv", FS_Gamedir());
+	ge->WriteGame(name, autosave);
 }
 
 /*

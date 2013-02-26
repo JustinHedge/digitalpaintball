@@ -116,7 +116,7 @@ void SV_New_f (void)
 	else
 		playernum = sv_client - svs.clients;
 
-	MSG_WriteShort (&sv_client->netchan.message, playernum);
+	MSG_WriteShort(&sv_client->netchan.message, playernum);
 
 	// send full levelname
 	MSG_WriteString(&sv_client->netchan.message, sv.configstrings[CS_NAME]);

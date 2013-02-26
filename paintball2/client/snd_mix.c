@@ -336,7 +336,6 @@ void S_PaintChannels (int endtime)
 					}
 				}
 			}
-															  
 		}
 
 		// transfer out according to DMA format
@@ -352,10 +351,11 @@ void S_InitScaletable (void)
 	int		scale;
 
 	s_volume->modified = false;
-	for (i=0 ; i<32 ; i++)
+
+	for (i = 0; i < 32; ++i)
 	{
 		scale = i * 8 * 256 * s_volume->value;
-		for (j=0 ; j<256 ; j++)
+		for (j = 0; j < 256; ++j)
 			snd_scaletable[i][j] = ((signed char)j) * scale;
 	}
 }
@@ -472,23 +472,23 @@ LDone:
 
 void S_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count, int offset)
 {
-	int data;
-	int left, right;
-	int leftvol, rightvol;
+	register int data;
+	register int left, right;
+	register int leftvol, rightvol;
 	signed short *sfx;
-	int	i;
+	register int i;
 	portable_samplepair_t	*samp;
 
-	leftvol = ch->leftvol*snd_vol;
-	rightvol = ch->rightvol*snd_vol;
+	leftvol = ch->leftvol * snd_vol;
+	rightvol = ch->rightvol * snd_vol;
 	sfx = (signed short *)sc->data + ch->pos;
-
 	samp = &paintbuffer[offset];
-	for (i=0 ; i<count ; i++, samp++)
+
+	for (i = 0; i < count; ++i, ++samp)
 	{
 		data = sfx[i];
-		left = (data * leftvol)>>8;
-		right = (data * rightvol)>>8;
+		left = (data * leftvol) >> 8;
+		right = (data * rightvol) >> 8;
 		samp->left += left;
 		samp->right += right;
 	}

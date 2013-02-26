@@ -615,7 +615,7 @@ void CL_Serverlist2Packet (netadr_t net_from, sizebuf_t *net_message)
 			for (j = 0; j < 4; ++j)
 			{
 				ip[j] = MSG_ReadByte(net_message);
-				
+
 				if (ip[j] < 0)
 				{
 					assert(ip[j] >= 0);

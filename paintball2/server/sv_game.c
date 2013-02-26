@@ -287,12 +287,12 @@ qboolean PF_inPHS (vec3_t p1, vec3_t p2)
 	return true;
 }
 
-void PF_StartSound (edict_t *entity, int channel, int sound_num, float volume,
-    float attenuation, float timeofs)
+void PF_StartSound (edict_t *entity, int channel, int sound_num, float volume, float attenuation, float timeofs)
 {
 	if (!entity)
 		return;
-	SV_StartSound (NULL, entity, channel, sound_num, volume, attenuation, timeofs);
+
+	SV_StartSound(NULL, entity, channel, sound_num, volume, attenuation, timeofs);
 }
 
 //==============================================

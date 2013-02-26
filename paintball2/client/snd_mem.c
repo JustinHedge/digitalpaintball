@@ -175,7 +175,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	
 	// see if still in memory
 	sc = s->cache;
-	
+
 	if (sc)
 		return sc;
 
@@ -188,9 +188,9 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	if (name[0] == '#')
 		strcpy(namebuffer, &name[1]);
 	else
-		Com_sprintf (namebuffer, sizeof(namebuffer), "sound/%s", name);
+		Com_sprintf(namebuffer, sizeof(namebuffer), "sound/%s", name);
 
-	size = FS_LoadFile (namebuffer, (void **)&data);
+	size = FS_LoadFile(namebuffer, (void **)&data);
 
 	if (!data)
 	{
@@ -198,7 +198,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return NULL;
 	}
 
-	info = GetWavinfo (s->name, data, size);
+	info = GetWavinfo(s->name, data, size);
 
 	if (info.channels != 1)
 	{

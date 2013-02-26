@@ -32,28 +32,28 @@ SV_FindIndex
 */
 int SV_FindIndex (char *name, int start, int max, qboolean create)
 {
-	int		i;
+	int i;
 	
 	if (!name || !name[0])
 		return 0;
 
-	for (i = 1; i < max && sv.configstrings[start+i][0]; i++)
-		if (Q_streq(sv.configstrings[start+i], name))
+	for (i = 1; i < max && sv.configstrings[start + i][0]; ++i)
+		if (Q_streq(sv.configstrings[start + i], name))
 			return i;
 
 	if (!create)
 		return 0;
 
 	if (i == max)
-		Com_Error (ERR_DROP, "*Index: overflow");
+		Com_Error(ERR_DROP, "*Index: overflow");
 
-	Q_strncpyz(sv.configstrings[start+i], name, sizeof(sv.configstrings[i]));
+	Q_strncpyz(sv.configstrings[start + i], name, sizeof(sv.configstrings[i]));
 
 	if (sv.state != ss_loading)
 	{	// send the update to everyone
 		SZ_Clear(&sv.multicast);
 		MSG_WriteChar(&sv.multicast, svc_configstring);
-		MSG_WriteShort(&sv.multicast, start+i);
+		MSG_WriteShort(&sv.multicast, start + i);
 		MSG_WriteString(&sv.multicast, name);
 		SV_Multicast(vec3_origin, MULTICAST_ALL_R);
 	}
@@ -69,12 +69,12 @@ int SV_ModelIndex (char *name)
 
 int SV_SoundIndex (char *name)
 {
-	return SV_FindIndex (name, CS_SOUNDS, MAX_SOUNDS, true);
+	return SV_FindIndex(name, CS_SOUNDS, MAX_SOUNDS, true);
 }
 
 int SV_ImageIndex (char *name)
 {
-	return SV_FindIndex (name, CS_IMAGES, MAX_IMAGES, true);
+	return SV_FindIndex(name, CS_IMAGES, MAX_IMAGES, true);
 }
 
 
@@ -186,7 +186,7 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 		Cvar_Set("paused", "0");
 
 	Com_Printf("------- Server Initialization -------\n");
-	Com_DPrintf("SpawnServer: %s\n",server);
+	Com_DPrintf("SpawnServer: %s\n", server);
 
 	if (sv.demofile)
 		fclose(sv.demofile);
@@ -233,8 +233,7 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 	}
 	else
 	{
-		Com_sprintf(sv.configstrings[CS_MODELS+1], sizeof(sv.configstrings[CS_MODELS+1]),
-			"maps/%s.bsp", server);
+		Com_sprintf(sv.configstrings[CS_MODELS + 1], sizeof(sv.configstrings[CS_MODELS + 1]), "maps/%s.bsp", server);
 		sv.models[1] = CM_LoadMap(sv.configstrings[CS_MODELS + 1], false, &checksum);
 	}
 

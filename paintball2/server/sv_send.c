@@ -297,16 +297,16 @@ void SV_StartSound (vec3_t origin, edict_t *entity, int channel,
 	qboolean	use_phs;
 
 	if (volume < 0 || volume > 1.0)
-		Com_Error (ERR_FATAL, "SV_StartSound: Volume = %f", volume);
+		Com_Error(ERR_FATAL, "SV_StartSound: Volume = %f", volume);
 
 	if (attenuation < 0 || attenuation > 4)
-		Com_Error (ERR_FATAL, "SV_StartSound: Attenuation = %f", attenuation);
+		Com_Error(ERR_FATAL, "SV_StartSound: Attenuation = %f", attenuation);
 
 //	if (channel < 0 || channel > 15)
-//		Com_Error (ERR_FATAL, "SV_StartSound: Channel = %i", channel);
+//		Com_Error(ERR_FATAL, "SV_StartSound: Channel = %i", channel);
 
 	if (timeofs < 0 || timeofs > 0.255)
-		Com_Error (ERR_FATAL, "SV_StartSound: Timeofs = %f", timeofs);
+		Com_Error(ERR_FATAL, "SV_StartSound: Timeofs = %f", timeofs);
 
 	ent = NUM_FOR_EDICT(entity);
 
@@ -318,19 +318,19 @@ void SV_StartSound (vec3_t origin, edict_t *entity, int channel,
 	else
 		use_phs = true;
 
-	sendchan = (ent<<3) | (channel&7);
+	sendchan = (ent << 3) | (channel & 7);
 
 	flags = 0;
+
 	if (volume != DEFAULT_SOUND_PACKET_VOLUME)
 		flags |= SND_VOLUME;
+
 	if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION)
 		flags |= SND_ATTENUATION;
 
 	// the client doesn't know that bmodels have weird origins
 	// the origin can also be explicitly set
-	if ( (entity->svflags & SVF_NOCLIENT)
-		|| (entity->solid == SOLID_BSP) 
-		|| origin )
+	if ((entity->svflags & SVF_NOCLIENT) || (entity->solid == SOLID_BSP) || origin)
 		flags |= SND_POS;
 
 	// always send the entity number for channel overrides
@@ -346,12 +346,12 @@ void SV_StartSound (vec3_t origin, edict_t *entity, int channel,
 
 		if (entity->solid == SOLID_BSP)
 		{
-			for (i = 0; i < 3; i++)
-				origin_v[i] = entity->s.origin[i]+0.5*(entity->mins[i]+entity->maxs[i]);
+			for (i = 0; i < 3; ++i)
+				origin_v[i] = entity->s.origin[i] + 0.5f * (entity->mins[i] + entity->maxs[i]);
 		}
 		else
 		{
-			VectorCopy (entity->s.origin, origin_v);
+			VectorCopy(entity->s.origin, origin_v);
 		}
 	}
 
@@ -382,16 +382,16 @@ void SV_StartSound (vec3_t origin, edict_t *entity, int channel,
 	if (channel & CHAN_RELIABLE)
 	{
 		if (use_phs)
-			SV_Multicast (origin, MULTICAST_PHS_R);
+			SV_Multicast(origin, MULTICAST_PHS_R);
 		else
-			SV_Multicast (origin, MULTICAST_ALL_R);
+			SV_Multicast(origin, MULTICAST_ALL_R);
 	}
 	else
 	{
 		if (use_phs)
-			SV_Multicast (origin, MULTICAST_PHS);
+			SV_Multicast(origin, MULTICAST_PHS);
 		else
-			SV_Multicast (origin, MULTICAST_ALL);
+			SV_Multicast(origin, MULTICAST_ALL);
 	}
 }           
 
