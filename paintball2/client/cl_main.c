@@ -1256,7 +1256,8 @@ static void CL_ParseDownload3 (void)
 		float rate;
 
 		Con_DrawDownloadBar(false);
-		if(cls.loading_screen)
+
+		if (cls.loading_screen)
 		{
 			Cbuf_AddText("menu_refresh"); // loading screen
 		}
@@ -1279,6 +1280,11 @@ static void CL_ParseDownload3 (void)
 		unsigned int md5sum;
 		int file_length;
 		char *file_data;
+		
+		// Clear the loading screen progress bar:
+		Cvar_ForceSet("cs_loadingbarback", "");
+		Cvar_ForceSet("cs_loadingbarfront", "");
+		Cvar_ForceSet("cs_downloadspeed", "");
 
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString(&cls.netchan.message, va("dl3complete %d", cls.download3fileid));

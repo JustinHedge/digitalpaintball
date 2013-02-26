@@ -397,12 +397,12 @@ void CL_RegisterSounds (void)
 	S_BeginRegistration();
 	CL_RegisterTEntSounds();
 
-	for (i = 1; i < MAX_SOUNDS; i++)
+	for (i = 1; i < MAX_SOUNDS; ++i)
 	{
 		if (!cl.configstrings[CS_SOUNDS + i][0])
 			break;
 
-		cl.sound_precache[i] = S_RegisterSound (cl.configstrings[CS_SOUNDS + i]);
+		cl.sound_precache[i] = S_RegisterSound(cl.configstrings[CS_SOUNDS + i]);
 		Sys_SendKeyEvents();	// pump message loop
 	}
 
@@ -809,7 +809,7 @@ void CL_ParseServerData (void)
 	// parse player entity number
 	cl.playernum = MSG_ReadShort(&net_message);
 
-	// get the full level name
+	// get the full level name (CS_NAME)
 	str = MSG_ReadString(&net_message);
 
 	if (cl.playernum == -1)
@@ -826,6 +826,8 @@ void CL_ParseServerData (void)
 		// need to prep refresh at next oportunity
 		cl.refresh_prepped = false;
 	}
+
+	Cvar_Set("cs_fullmapname", str);
 }
 
 /*
@@ -1174,7 +1176,7 @@ ACTION MESSAGES
 CL_ParseStartSoundPacket
 ==================
 */
-void CL_ParseStartSoundPacket(void)
+void CL_ParseStartSoundPacket (void)
 {
     vec3_t  pos_v;
 	float	*pos;
@@ -1206,9 +1208,10 @@ void CL_ParseStartSoundPacket(void)
 	if (flags & SND_ENT)
 	{	// entity reletive
 		channel = MSG_ReadShort(&net_message); 
-		ent = channel>>3;
+		ent = channel >> 3;
+
 		if (ent > MAX_EDICTS)
-			Com_Error (ERR_DROP,"CL_ParseStartSoundPacket: ent = %i", ent);
+			Com_Error(ERR_DROP, "CL_ParseStartSoundPacket: ent = %i", ent);
 
 		channel &= 7;
 	}
@@ -1220,7 +1223,7 @@ void CL_ParseStartSoundPacket(void)
 
 	if (flags & SND_POS)
 	{	// positioned in space
-		MSG_ReadPos (&net_message, pos_v);
+		MSG_ReadPos(&net_message, pos_v);
  
 		pos = pos_v;
 	}
@@ -1230,7 +1233,7 @@ void CL_ParseStartSoundPacket(void)
 	if (!cl.sound_precache[sound_num])
 		return;
 
-	S_StartSound (pos, ent, channel, cl.sound_precache[sound_num], volume, attenuation, ofs);
+	S_StartSound(pos, ent, channel, cl.sound_precache[sound_num], volume, attenuation, ofs);
 }       
 
 

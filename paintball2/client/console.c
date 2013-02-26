@@ -746,13 +746,12 @@ void Con_DrawDownloadBar (qboolean inConsole)
 	// figure out width
 	if (cls.download)
 	{
-		
-		cvar_t* cs_loadingbarback;
-		cvar_t* cs_loadingbarfront;
-		cvar_t* cs_downloadspeed;
+		cvar_t *cs_loadingbarback;
+		cvar_t *cs_loadingbarfront;
+		cvar_t *cs_downloadspeed;
 		int len;
 
-		if(!inConsole)
+		if (!inConsole)
 		{
 			cs_loadingbarback = Cvar_Get("cs_loadingbarback", "0", CVAR_NOSET);
 			cs_loadingbarfront = Cvar_Get("cs_loadingbarfront", "0", CVAR_NOSET);
@@ -760,15 +759,15 @@ void Con_DrawDownloadBar (qboolean inConsole)
 		}
 
 		if ((text = strrchr(cls.downloadname, '/')) != NULL)
-			text++;
+			++text;
 		else
 			text = cls.downloadname;
 
-		if(inConsole)
+		if (inConsole)
 		{
-			x = con.linewidth - ((con.linewidth * 7)*0.025);
+			x = con.linewidth - ((con.linewidth * 7) * 0.025);
 			y = x - strlen(text) - 8;
-			i = con.linewidth*0.3333333333;
+			i = con.linewidth * 0.3333333333;
 		}
 		else
 		{
@@ -778,7 +777,7 @@ void Con_DrawDownloadBar (qboolean inConsole)
 		
 		dlbar[0] = 0;
 		
-		if(inConsole)
+		if (inConsole)
 		{
 			if (strlen(text) > i)
 			{
@@ -796,7 +795,7 @@ void Con_DrawDownloadBar (qboolean inConsole)
 		else
 		{
 			translate_string(translated_text, sizeof(translated_text), "Downloading");
-			Cvar_ForceSet("cs_loadingstatus",va("%s %s",translated_text,text));
+			Cvar_ForceSet("cs_loadingstatus", va("%s %s",translated_text,text));
 		}
 		
 		i = strlen(dlbar);

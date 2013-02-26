@@ -273,10 +273,9 @@ void CL_PrepRefresh (void)
 	vec3_t		axis;
 	char		*s;
 	char		translated_text[1024];
+	cvar_t		*cs_loadingstatus = Cvar_Get("cs_loadingstatus", "loading", CVAR_NOSET);
 
-	cvar_t* cs_loadingstatus = Cvar_Get("cs_loadingstatus", "loading", CVAR_NOSET);
-
-	if (!cl.configstrings[CS_MODELS+1][0])
+	if (!cl.configstrings[CS_MODELS + 1][0])
 		return;		// no map loaded
 
 	// jitversion:
@@ -298,20 +297,20 @@ void CL_PrepRefresh (void)
 	s = strstr(cl.configstrings[CS_GAMETYPE], "Gametype:");
 
 	if (s)
-		cls.gametype = atoi(s+9);
+		cls.gametype = atoi(s + 9);
 	else
 		cls.gametype = -1;
 
 	SCR_AddDirtyPoint(0, 0);
-	SCR_AddDirtyPoint(viddef.width-1, viddef.height-1);
+	SCR_AddDirtyPoint(viddef.width - 1, viddef.height - 1);
 
 	// let the render dll load the map
-	Q_strncpyz(mapname, cl.configstrings[CS_MODELS+1] + 5, sizeof(mapname));	// skip "maps/"
+	Q_strncpyz(mapname, cl.configstrings[CS_MODELS + 1] + 5, sizeof(mapname));	// skip "maps/"
 	COM_StripExtension(mapname, mapname, sizeof(mapname));
 
 	// register models, pics, and skins
 	translate_string(translated_text, sizeof(translated_text), "Loading map...");
-	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
+	Cvar_ForceSet("cs_loadingstatus", translated_text);
 	Com_Printf("Map: %s\r", mapname);
 	M_RefreshMenu();
 	SCR_UpdateScreen();
@@ -320,7 +319,7 @@ void CL_PrepRefresh (void)
 
 	// precache status bar pics
 	translate_string(translated_text, sizeof(translated_text), "Loading images...");
-	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
+	Cvar_ForceSet("cs_loadingstatus", translated_text);
 	Com_Printf("pics\r");
 	M_RefreshMenu();
 	SCR_UpdateScreen();
@@ -328,7 +327,7 @@ void CL_PrepRefresh (void)
 	Com_Printf("                                     \r");
 
 	translate_string(translated_text, sizeof(translated_text), "Loading models...");
-	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
+	Cvar_ForceSet("cs_loadingstatus", translated_text);
 	Com_Printf("models\r"); // jit (so if it crashes, we know it's when loading models, not pics)
 	M_RefreshMenu();
 	SCR_UpdateScreen(); // jit
@@ -374,7 +373,7 @@ void CL_PrepRefresh (void)
 	}
 
 	translate_string(translated_text, sizeof(translated_text), "Loading textures...");
-	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
+	Cvar_ForceSet("cs_loadingstatus", translated_text);
 	Sys_SendKeyEvents(); // jit, moved
 	Com_Printf("images\r", i); 
 	M_RefreshMenu();
@@ -392,8 +391,9 @@ void CL_PrepRefresh (void)
 
 	translate_string(translated_text, sizeof(translated_text), "Loading players...");
 	M_RefreshMenu();
-	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
-	for (i=0; i<MAX_CLIENTS; i++)
+	Cvar_ForceSet("cs_loadingstatus", translated_text);
+
+	for (i = 0; i < MAX_CLIENTS; ++i)
 	{
 		if (!cl.configstrings[CS_PLAYERSKINS+i][0])
 			continue;
@@ -410,7 +410,7 @@ void CL_PrepRefresh (void)
 	CL_LoadClientinfo(&cl.baseclientinfo, "unnamed\\male/pb2y");
 
 	translate_string(translated_text, sizeof(translated_text), "Loading sky...");
-	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
+	Cvar_ForceSet("cs_loadingstatus", translated_text);
 	// set sky textures and speed
 	Com_Printf("sky\r");
 	M_RefreshMenu();
@@ -422,7 +422,7 @@ void CL_PrepRefresh (void)
 	re.SetSky(cl.configstrings[CS_SKY], rotate, axis);
 
 	translate_string(translated_text, sizeof(translated_text), "Loading texture scripts...");
-	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
+	Cvar_ForceSet("cs_loadingstatus", translated_text);
 	// === jit
 	Com_Printf("                                     \r");
 	Com_Printf("texture scripts\r");
@@ -437,7 +437,7 @@ void CL_PrepRefresh (void)
 	CL_LoadLoc(); // Xile/NiceAss LOC
 
 	translate_string(translated_text, sizeof(translated_text), "Loading complete");
-	Cvar_ForceSet("cs_loadingstatus", va("%s", translated_text));
+	Cvar_ForceSet("cs_loadingstatus", translated_text);
 	Cvar_ForceSet("cs_downloadbarback", "");
 	Cvar_ForceSet("cs_downloadbarfront", "");
 	M_RefreshMenu();
