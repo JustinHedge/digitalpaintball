@@ -94,6 +94,7 @@ cvar_t		*s_resamplequality;
 cvar_t		*s_resamplevolume;
 cvar_t		*s_nojump;
 cvar_t		*s_disableonalttab;
+cvar_t		*s_preload;
 // jitsound ===
 
 int		s_rawend;
@@ -168,6 +169,7 @@ void S_Init (void)
 		s_resamplevolume = Cvar_Get("s_resamplevolume", "0.35", 0);
 		s_nojump = Cvar_Get("s_nojump", "1", CVAR_ARCHIVE);
 		s_disableonalttab = Cvar_Get("s_disableonalttab", "0", 0);
+		s_preload = Cvar_Get("s_preload", "1", 0);
 		// jitsound ===
 
 		s_volume = Cvar_Get("s_volume", "0.5", CVAR_ARCHIVE); // jit - changed default volume (was .9)
@@ -464,18 +466,20 @@ S_RegisterSound
 sfx_t *S_RegisterSound (const char *name)
 {
 	sfx_t	*sfx;
+
 	//A3D ADD
 	if (a3dsound_started)
-		return S_Q2A3DRegisterSound (name);
+		return S_Q2A3DRegisterSound(name);
 	//A3D END
+
 	if (!sound_started)
 		return NULL;
 
-	sfx = S_FindName (name, true);
+	sfx = S_FindName(name, true);
 	sfx->registration_sequence = s_registration_sequence;
 
-	if (!s_registering)
-		S_LoadSound (sfx);
+	if (!s_registering || s_preload->value) // jitsound - I think we always want to preload sounds so the game doesn't hitch when they first play.
+		S_LoadSound(sfx);
 
 	return sfx;
 }
