@@ -3183,6 +3183,7 @@ static void M_DrawWidget (menu_widget_t *widget)
 	image_t *pic = NULL;
 	bordered_pic_data_t *bpic = NULL;
 	qboolean checkbox_checked;
+	char wordwrappedtext[1024];
 
 	M_UpdateDrawingInformation(widget);
 
@@ -3205,6 +3206,12 @@ static void M_DrawWidget (menu_widget_t *widget)
 				text = Cmd_MacroExpandString(widget->text);
 			else
 				text = widget->text;
+
+			if (widget->text_width)
+			{
+				SCR_WordWrapText(text, (float)widget->text_width * hudscale, wordwrappedtext, sizeof(wordwrappedtext));
+				text = wordwrappedtext;
+			}
 		}
 
 		// Update text/pic for hovering/selection

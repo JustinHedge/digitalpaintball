@@ -240,6 +240,7 @@ typedef struct MENU_WIDGET_S {
 		int	select_width;
 		int picwidth;		// width to scale image to
 		int scrollbar_width;
+		int text_width;
 	};
 	union {
 		int	field_start;
