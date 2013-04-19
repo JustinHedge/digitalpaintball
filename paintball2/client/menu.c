@@ -2405,7 +2405,7 @@ static void widget_complete (menu_widget_t *widget)
 	case WIDGET_TYPE_BUTTON:
 	case WIDGET_TYPE_TEXT:
 		
-		if (widget->field_width && widget->text)
+		if (widget->text_width && widget->text)
 		{
 			char wrapped_text[1024];
 			char *old_text = widget->text;
@@ -3203,14 +3203,18 @@ static void M_DrawWidget (menu_widget_t *widget)
 		if (widget->text)
 		{
 			if (widget->dynamic)
-				text = Cmd_MacroExpandString(widget->text);
-			else
-				text = widget->text;
-
-			if (widget->text_width)
 			{
-				SCR_WordWrapText(text, (float)widget->text_width * hudscale, wordwrappedtext, sizeof(wordwrappedtext));
-				text = wordwrappedtext;
+				text = Cmd_MacroExpandString(widget->text);
+
+				if (widget->text_width)
+				{
+					SCR_WordWrapText(text, (float)widget->text_width * hudscale, wordwrappedtext, sizeof(wordwrappedtext));
+					text = wordwrappedtext;
+				}
+			}
+			else
+			{
+				text = widget->text;
 			}
 		}
 
