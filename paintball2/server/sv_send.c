@@ -187,8 +187,8 @@ void SV_Multicast (vec3_t origin, multicast_t to)
 
 	if (to != MULTICAST_ALL_R && to != MULTICAST_ALL)
 	{
-		leafnum = CM_PointLeafnum (origin);
-		area1 = CM_LeafArea (leafnum);
+		leafnum = CM_PointLeafnum(origin);
+		area1 = CM_LeafArea(leafnum);
 	}
 	else
 	{
@@ -198,7 +198,7 @@ void SV_Multicast (vec3_t origin, multicast_t to)
 
 	// if doing a serverrecord, store everything
 	if (svs.demofile)
-		SZ_Write (&svs.demo_multicast, sv.multicast.data, sv.multicast.cursize);
+		SZ_Write(&svs.demo_multicast, sv.multicast.data, sv.multicast.cursize);
 	
 	switch (to)
 	{
@@ -212,17 +212,17 @@ void SV_Multicast (vec3_t origin, multicast_t to)
 	case MULTICAST_PHS_R:
 		reliable = true;	// intentional fallthrough
 	case MULTICAST_PHS:
-		leafnum = CM_PointLeafnum (origin);
-		cluster = CM_LeafCluster (leafnum);
-		mask = CM_ClusterPHS (cluster);
+		leafnum = CM_PointLeafnum(origin);
+		cluster = CM_LeafCluster(leafnum);
+		mask = CM_ClusterPHS(cluster);
 		break;
 
 	case MULTICAST_PVS_R:
 		reliable = true;	// intentional fallthrough
 	case MULTICAST_PVS:
-		leafnum = CM_PointLeafnum (origin);
-		cluster = CM_LeafCluster (leafnum);
-		mask = CM_ClusterPVS (cluster);
+		leafnum = CM_PointLeafnum(origin);
+		cluster = CM_LeafCluster(leafnum);
+		mask = CM_ClusterPVS(cluster);
 		break;
 
 	default:
@@ -231,31 +231,34 @@ void SV_Multicast (vec3_t origin, multicast_t to)
 	}
 
 	// send the data to all relevent clients
-	for (j = 0, client = svs.clients; j < maxclients->value; j++, client++)
+	for (j = 0, client = svs.clients; j < maxclients->value; ++j, ++client)
 	{
 		if (client->state == cs_free || client->state == cs_zombie)
 			continue;
+
 		if (client->state != cs_spawned && !reliable)
 			continue;
 
 		if (mask)
 		{
-			leafnum = CM_PointLeafnum (client->edict->s.origin);
-			cluster = CM_LeafCluster (leafnum);
-			area2 = CM_LeafArea (leafnum);
-			if (!CM_AreasConnected (area1, area2))
+			leafnum = CM_PointLeafnum(client->edict->s.origin);
+			cluster = CM_LeafCluster(leafnum);
+			area2 = CM_LeafArea(leafnum);
+
+			if (!CM_AreasConnected(area1, area2))
 				continue;
-			if ( mask && (!(mask[cluster>>3] & (1<<(cluster&7)) ) ) )
+
+			if (mask && (!(mask[cluster>>3] & (1 << (cluster & 7)))))
 				continue;
 		}
 
 		if (reliable)
-			SZ_Write (&client->netchan.message, sv.multicast.data, sv.multicast.cursize);
+			SZ_Write(&client->netchan.message, sv.multicast.data, sv.multicast.cursize);
 		else
-			SZ_Write (&client->datagram, sv.multicast.data, sv.multicast.cursize);
+			SZ_Write(&client->datagram, sv.multicast.data, sv.multicast.cursize);
 	}
 
-	SZ_Clear (&sv.multicast);
+	SZ_Clear(&sv.multicast);
 }
 
 

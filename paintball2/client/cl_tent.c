@@ -599,18 +599,18 @@ void CL_ParseLaser (int colors)
 	laser_t	*l;
 	int		i;
 
-	MSG_ReadPos (&net_message, start);
-	MSG_ReadPos (&net_message, end);
+	MSG_ReadPos(&net_message, start);
+	MSG_ReadPos(&net_message, end);
 
-	for (i=0, l=cl_lasers ; i< MAX_LASERS ; i++, l++)
+	for (i = 0, l = cl_lasers; i < MAX_LASERS; ++i, ++l)
 	{
 		if (l->endtime < cl.time)
 		{
 			l->ent.flags = RF_TRANSLUCENT | RF_BEAM;
-			VectorCopy (start, l->ent.origin);
-			VectorCopy (end, l->ent.oldorigin);
-			l->ent.alpha = 0.30;
-			l->ent.skinnum = (colors >> ((rand() % 4)*8)) & 0xff;
+			VectorCopy(start, l->ent.origin);
+			VectorCopy(end, l->ent.oldorigin);
+			l->ent.alpha = 0.30f;
+			l->ent.skinnum = (colors >> ((rand() % 4) * 8)) & 0xff;
 			l->ent.model = NULL;
 			l->ent.frame = 4;
 			l->endtime = cl.time + 100;
@@ -1612,25 +1612,25 @@ void CL_AddExplosions (void) // jitsmoke
 	int			i;
 	int			j;
 
-	for (i = 0, ex = cl_explosions; i < MAX_EXPLOSIONS; i++, ex++)
+	for (i = 0, ex = cl_explosions; i < MAX_EXPLOSIONS; ++i, ++ex)
 	{
-		time = (cl.time - ex->start)*0.001f;
+		time = (cl.time - ex->start) * 0.001f;
 		ent = &ex->ent;
 
 		if (ex->type != ex_free)
 		{
-			if (ent->alpha <= 0)
+			if (ent->alpha <= 0.0f)
 			{
 				ex->type = ex_free;
 				continue;
 			}
 			else
 			{
-				ent->alpha = 1.0f + time*ent->alphavel;
+				ent->alpha = 1.0f + time * ent->alphavel;
 				ent->scale = ent->startscale + time*ent->scalevel;
 
-				for (j=0; j<3; j++)
-					ent->origin[j] = ent->startorigin[j] + time*ent->vel[j] + time*time*ent->accel[j];
+				for (j = 0; j < 3; ++j)
+					ent->origin[j] = ent->startorigin[j] + (time * ent->vel[j]) + (time * time * ent->accel[j]);
 
 				VectorCopy(ent->origin, ent->oldorigin);
 			}

@@ -119,11 +119,11 @@ void GL_DrawAliasFrameLerpShell (dmdl_t *paliashdr, float backlerp)
 	// PMM - added double shell
 	qglDisable(GL_TEXTURE_2D);
 
-	frontlerp = 1.0 - backlerp;
+	frontlerp = 1.0f - backlerp;
 
 	// move should be the delta back to the previous frame * backlerp
-	VectorSubtract (currententity->oldorigin, currententity->origin, delta);
-	AngleVectors (currententity->angles, vectors[0], vectors[1], vectors[2]);
+	VectorSubtract(currententity->oldorigin, currententity->origin, delta);
+	AngleVectors(currententity->angles, vectors[0], vectors[1], vectors[2]);
 
 	move[0] = DotProduct(delta, vectors[0]);	// forward
 	move[1] = -DotProduct(delta, vectors[1]);	// left
@@ -131,15 +131,15 @@ void GL_DrawAliasFrameLerpShell (dmdl_t *paliashdr, float backlerp)
 
 	VectorAdd (move, oldframe->translate, move);
 
-	for (i=0; i<3; i++)
+	for (i = 0; i < 3; ++i)
 	{
 		move[i] = backlerp*move[i] + frontlerp*frame->translate[i];
 	}
 
-	for (i=0; i<3; i++)
+	for (i = 0; i < 3; ++i)
 	{
-		frontv[i] = frontlerp*frame->scale[i];
-		backv[i] = backlerp*oldframe->scale[i];
+		frontv[i] = frontlerp * frame->scale[i];
+		backv[i] = backlerp * oldframe->scale[i];
 	}
 
 	lerp = s_lerped[0];
@@ -150,8 +150,10 @@ void GL_DrawAliasFrameLerpShell (dmdl_t *paliashdr, float backlerp)
 	{
 		// get the vertex count and primitive type
 		count = *order++;
+
 		if (!count)
 			break;		// done
+
 		if (count < 0)
 		{
 			count = -count;
@@ -215,29 +217,29 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 	if (currententity->flags & RF_TRANSLUCENT)
 		alpha = currententity->alpha;
 	else
-		alpha = 1.0;
+		alpha = 1.0f;
 
-	frontlerp = 1.0 - backlerp;
+	frontlerp = 1.0f - backlerp;
 
 	// move should be the delta back to the previous frame * backlerp
-	VectorSubtract (currententity->oldorigin, currententity->origin, delta);
-	AngleVectors (currententity->angles, vectors[0], vectors[1], vectors[2]);
+	VectorSubtract(currententity->oldorigin, currententity->origin, delta);
+	AngleVectors(currententity->angles, vectors[0], vectors[1], vectors[2]);
 
-	move[0] = DotProduct (delta, vectors[0]);	// forward
-	move[1] = -DotProduct (delta, vectors[1]);	// left
-	move[2] = DotProduct (delta, vectors[2]);	// up
+	move[0] = DotProduct(delta, vectors[0]);	// forward
+	move[1] = -DotProduct(delta, vectors[1]);	// left
+	move[2] = DotProduct(delta, vectors[2]);	// up
 
-	VectorAdd (move, oldframe->translate, move);
+	VectorAdd(move, oldframe->translate, move);
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 3; ++i)
 	{
-		move[i] = backlerp*move[i] + frontlerp*frame->translate[i];
+		move[i] = backlerp * move[i] + frontlerp * frame->translate[i];
 	}
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 3; ++i)
 	{
-		frontv[i] = frontlerp*frame->scale[i];
-		backv[i] = backlerp*oldframe->scale[i];
+		frontv[i] = frontlerp * frame->scale[i];
+		backv[i] = backlerp * oldframe->scale[i];
 	}
 
 	lerp = s_lerped[0];

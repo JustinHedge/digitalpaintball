@@ -189,11 +189,11 @@ void CL_DeltaEntity (frame_t *frame, int newnum, entity_state_t *old, int bits)
 
 	ent = &cl_entities[newnum];
 
-	state = &cl_parse_entities[cl.parse_entities & (MAX_PARSE_ENTITIES-1)];
+	state = &cl_parse_entities[cl.parse_entities & (MAX_PARSE_ENTITIES - 1)];
 	cl.parse_entities++;
 	frame->num_entities++;
 
-	CL_ParseDelta (old, state, newnum, bits);
+	CL_ParseDelta(old, state, newnum, bits);
 
 	// some data changes will force no lerping
 	if (state->modelindex != ent->current.modelindex
@@ -649,16 +649,16 @@ void CL_AddPacketEntities (frame_t *frame)
 	unsigned int		effects, renderfx;
 
 	// bonus items rotate at a fixed rate
-	autorotate = anglemod(cl.time/10);
+	autorotate = anglemod(cl.time / 10);
 
 	// brush models can auto animate their frames
-	autoanim = 2*cl.time/1000;
+	autoanim = 2 * cl.time / 1000;
 
 	memset(&ent, 0, sizeof(ent));
 
 	for (pnum = 0; pnum < frame->num_entities; pnum++)
 	{
-		s1 = &cl_parse_entities[(frame->parse_entities+pnum)&(MAX_PARSE_ENTITIES-1)];
+		s1 = &cl_parse_entities[(frame->parse_entities + pnum) & (MAX_PARSE_ENTITIES - 1)];
 
 		cent = &cl_entities[s1->number];
 
@@ -709,7 +709,7 @@ void CL_AddPacketEntities (frame_t *frame)
 // pmm
 //======
 		ent.oldframe = cent->prev.frame;
-		ent.backlerp = 1.0 - cl.lerpfrac;
+		ent.backlerp = 1.0f - cl.lerpfrac;
 
 		if (renderfx & (RF_FRAMELERP|RF_BEAM))
 		{	// step origin discretely, because the frames
@@ -719,10 +719,11 @@ void CL_AddPacketEntities (frame_t *frame)
 		}
 		else
 		{	// interpolate origin
-			for (i = 0; i < 3; i++)
+			for (i = 0; i < 3; ++i)
 			{
 				ent.origin[i] = ent.oldorigin[i] = cent->prev.origin[i] + cl.lerpfrac * 
 					(cent->current.origin[i] - cent->prev.origin[i]);
+				//ent.origin[i] = ent.oldorigin[i] = cent->current.origin[i] + cl.lerpfrac * (cent->current.origin[i] - cent->prev.origin[i]); // testing extrapolation (super crappy!)
 			}
 		}
 
@@ -731,8 +732,8 @@ void CL_AddPacketEntities (frame_t *frame)
 		// tweak the color of beams
 		if (renderfx & RF_BEAM)
 		{	// the four beam colors are encoded in 32 bits of skinnum (hack)
-			ent.alpha = 0.30;
-			ent.skinnum = (s1->skinnum >> ((rand() % 4)*8)) & 0xff;
+			ent.alpha = 0.30f;
+			ent.skinnum = (s1->skinnum >> ((rand() % 4) * 8)) & 0xff;
 			ent.model = NULL;
 		}
 		else
@@ -1109,58 +1110,61 @@ void CL_AddPacketEntities (frame_t *frame)
 				{
 					float intensity;
 
-					intensity = 50 + (500 * (sin(cl.time/500.0) + 1.0));
+					intensity = 50.0f + (500.0f * ((float)sin(cl.time / 500.0f) + 1.0f));
+
 					// FIXME - check out this effect in rendition
 					if (vidref_val == VIDREF_GL)
-						V_AddLight (ent.origin, intensity, -1.0, -1.0, -1.0);
+						V_AddLight(ent.origin, intensity, -1.0f, -1.0f, -1.0f);
 					else
-						V_AddLight (ent.origin, -1.0 * intensity, 1.0, 1.0, 1.0);
+						V_AddLight(ent.origin, -1.0f * intensity, 1.0f, 1.0f, 1.0f);
 					}
 				else
 				{
-					CL_Tracker_Shell (cent->lerp_origin);
-					V_AddLight (ent.origin, 155, -1.0, -1.0, -1.0);
+					CL_Tracker_Shell(cent->lerp_origin);
+					V_AddLight(ent.origin, 155.0f, -1.0f, -1.0f, -1.0f);
 				}
 			}
 			else if (effects & EF_TRACKER)
 			{
-				CL_TrackerTrail (cent->lerp_origin, ent.origin, 0);
+				CL_TrackerTrail(cent->lerp_origin, ent.origin, 0);
+
 				// FIXME - check out this effect in rendition
 				if (vidref_val == VIDREF_GL)
-					V_AddLight (ent.origin, 200, -1, -1, -1);
+					V_AddLight(ent.origin, 200.0f, -1.0f, -1.0f, -1.0f);
 				else
-					V_AddLight (ent.origin, -200, 1, 1, 1);
+					V_AddLight(ent.origin, -200.0f, 1.0f, 1.0f, 1.0f);
 			}
 //ROGUE
 //======
 			// RAFAEL
 			else if (effects & EF_GREENGIB)
 			{
-				CL_DiminishingTrail (cent->lerp_origin, ent.origin, cent, effects);				
+				CL_DiminishingTrail(cent->lerp_origin, ent.origin, cent, effects);				
 			}
 			// RAFAEL
 			else if (effects & EF_IONRIPPER)
 			{
-				CL_IonripperTrail (cent->lerp_origin, ent.origin);
-				V_AddLight (ent.origin, 100, 1, 0.5, 0.5);
+				CL_IonripperTrail(cent->lerp_origin, ent.origin);
+				V_AddLight(ent.origin, 100.0f, 1.0f, 0.5f, 0.5f);
 			}
 			// RAFAEL
 			else if (effects & EF_BLUEHYPERBLASTER)
 			{
-				V_AddLight (ent.origin, 200, 0, 0, 1);
+				V_AddLight(ent.origin, 200.0f, 0.0f, 0.0f, 1.0f);
 			}
 			// RAFAEL
 			else if (effects & EF_PLASMA)
 			{
 				if (effects & EF_ANIM_ALLFAST)
 				{
-					CL_BlasterTrail (cent->lerp_origin, ent.origin);
+					CL_BlasterTrail(cent->lerp_origin, ent.origin);
 				}
-				V_AddLight (ent.origin, 130, 1, 0.5, 0.5);
+
+				V_AddLight(ent.origin, 130.0f, 1.0f, 0.5f, 0.5f);
 			}
 		}
 
-		VectorCopy (ent.origin, cent->lerp_origin);
+		VectorCopy(ent.origin, cent->lerp_origin);
 	}
 }
 
@@ -1219,9 +1223,9 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 	}
 
 	gun.flags = RF_MINLIGHT | RF_DEPTHHACK | RF_WEAPONMODEL;
-	gun.backlerp = 1.0 - cl.lerpfrac;
-	VectorCopy (gun.origin, gun.oldorigin);	// don't lerp at all
-	V_AddEntity (&gun);
+	gun.backlerp = 1.0f - cl.lerpfrac;
+	VectorCopy(gun.origin, gun.oldorigin);	// don't lerp at all
+	V_AddEntity(&gun);
 }
 
 
@@ -1369,10 +1373,10 @@ void CL_GetEntitySoundOrigin (int ent, vec3_t org)
 	centity_t	*old;
 
 	if (ent < 0 || ent >= MAX_EDICTS)
-		Com_Error (ERR_DROP, "CL_GetEntitySoundOrigin: bad ent");
+		Com_Error(ERR_DROP, "CL_GetEntitySoundOrigin: bad ent");
 
 	old = &cl_entities[ent];
-	VectorCopy (old->lerp_origin, org);
+	VectorCopy(old->lerp_origin, org);
 
 	// FIXME: bmodel issues...
 }

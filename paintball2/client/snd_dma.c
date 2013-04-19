@@ -668,7 +668,7 @@ void S_Spatialize(channel_t *ch)
 	vec3_t		origin;
 
 	// anything coming from the view entity will always be full volume
-	if (ch->entnum == cl.playernum+1)
+	if (ch->entnum == cl.playernum + 1)
 	{
 		ch->leftvol = ch->master_vol;
 		ch->rightvol = ch->master_vol;
@@ -676,13 +676,11 @@ void S_Spatialize(channel_t *ch)
 	}
 
 	if (ch->fixed_origin)
-	{
-		VectorCopy (ch->origin, origin);
-	}
+		VectorCopy(ch->origin, origin);
 	else
-		CL_GetEntitySoundOrigin (ch->entnum, origin);
+		CL_GetEntitySoundOrigin(ch->entnum, origin);
 
-	S_SpatializeOrigin (origin, ch->master_vol, ch->dist_mult, &ch->leftvol, &ch->rightvol);
+	S_SpatializeOrigin(origin, ch->master_vol, ch->dist_mult, &ch->leftvol, &ch->rightvol);
 }           
 
 
@@ -1459,7 +1457,8 @@ void S_Play(void)
 	sfx_t	*sfx;
 	
 	i = 1;
-	while (i<Cmd_Argc())
+
+	while (i < Cmd_Argc())
 	{
 		if (!strrchr(Cmd_Argv(i), '.'))
 		{
@@ -1467,10 +1466,13 @@ void S_Play(void)
 			strcat(name, ".wav");
 		}
 		else
+		{
 			strcpy(name, Cmd_Argv(i));
+		}
+
 		sfx = S_RegisterSound(name);
-		S_StartSound(NULL, cl.playernum+1, 0, sfx, 1.0, 1.0, 0);
-		i++;
+		S_StartSound(NULL, cl.playernum + 1, 0, sfx, 1.0f, 1.0f, 0.0f);
+		++i;
 	}
 }
 
