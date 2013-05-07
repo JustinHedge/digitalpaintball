@@ -573,12 +573,15 @@ void SV_Map_f (void)
 {
 	const char	*map, *originalmap;
 	char	expanded[MAX_QPATH];
+	char	mapcopy[MAX_QPATH]; // jitloading
+	char	altmap[MAX_QPATH];
 #ifndef DEDICATED_ONLY
 	void	M_ForceMenuOff(); // jitmenu
 #endif
 	
 	// if not a pcx, demo, or cinematic, check to make sure the level exists
-	originalmap = map = Cmd_Argv(1);
+	Q_strncpyz(mapcopy, Cmd_Argv(1), sizeof(mapcopy)); // jitloading - another command gets used later, which changes this argv, so make a local copy.
+	originalmap = map = mapcopy;
 
 #ifndef DEDICATED_ONLY
 	M_ForceMenuOff(); // jitmenu
@@ -597,7 +600,6 @@ void SV_Map_f (void)
 		if (FS_LoadFile(expanded, NULL) == -1)
 		{
 			// === jitmap - make it so people don't have to type out the beta and inprogress paths
-			char altmap[MAX_QPATH];
 			char expanded2[MAX_QPATH];
 
 			Com_sprintf(altmap, sizeof(altmap), "beta/%s", originalmap);

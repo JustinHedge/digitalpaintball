@@ -827,7 +827,7 @@ void CL_ParseServerData (void)
 		cl.refresh_prepped = false;
 	}
 
-	Cvar_Set("cs_fullmapname", str);
+	Cvar_Set("menu_fullmapname", str);
 }
 
 /*
@@ -1122,6 +1122,14 @@ void CL_ParseConfigString (void)
 	}
 	else if (i >= CS_MODELS && i < CS_MODELS + MAX_MODELS)
 	{
+		// Update the map name on the loading screen as soon as we have it
+		if (i == CS_MODELS + 1)
+		{
+			char mapname[64];
+			COM_StripExtension(cl.configstrings[CS_MODELS + 1] + 5, mapname, sizeof(mapname));
+			Cvar_Set("menu_mapname", mapname);
+		}
+
 		if (cl.refresh_prepped)
 		{
 			cl.model_draw[i-CS_MODELS] = re.RegisterModel(cl.configstrings[i]);

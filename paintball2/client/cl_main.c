@@ -597,6 +597,7 @@ void CL_Quit_f (void)
 	Com_Quit();
 }
 
+
 void CL_ShowTex_f (void) // jitshowtex
 {
 	trace_t tr;
@@ -1022,7 +1023,13 @@ void CL_Changing_f (void)
 	//if we are downloading, we don't change!  This so we don't suddenly stop downloading a map
 	if (cls.download) // jitodo -- we SHOULD make it stop downloading and switch to the next map!
 		return;
-	SCR_BeginLoadingPlaque();
+
+	if (Cmd_Argc() > 1) // jitloading - server specificed map name, so we can show it immediately on the loading screen (build 38 or higher server)
+		SCR_BeginLoadingPlaque(Cmd_Argv(1));
+	else
+		SCR_BeginLoadingPlaque(NULL);
+
+	
 	cls.state = ca_connected; // not active anymore, but not disconnected
 	Com_Printf("\nChanging map...\n");
 	cl_scores_setinuse_all(false); // jitscores - clear scoreboard
@@ -2154,11 +2161,6 @@ before allowing the client into the server
 */
 void CL_Precache_f (void)
 {
-	// loading screen info
-	char mapname[64];
-	COM_StripExtension(cl.configstrings[CS_MODELS + 1] + 5, mapname, sizeof(mapname));
-	Cvar_ForceSet("mapname", mapname);
-
 	//Yet another hack to let old demos work
 	//the old precache sequence
 	if (Cmd_Argc() < 2)

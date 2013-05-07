@@ -28,7 +28,7 @@ void	SCR_ExecuteLayoutString(char *s); // jithud
 void	SCR_SizeUp (void);
 void	SCR_SizeDown (void);
 void	SCR_CenterPrint (char *str);
-void	SCR_BeginLoadingPlaque (void);
+void	SCR_BeginLoadingPlaque (const char *mapname); // jitloading
 void	SCR_EndLoadingPlaque (void);
 
 void	SCR_DebugGraph (float value, int color);

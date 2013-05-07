@@ -506,25 +506,30 @@ void SCR_RunCinematic (void)
 		return;
 	}
 
-	frame = (cls.realtime - cl.cinematictime)*14.0/1000;
+	frame = (cls.realtime - cl.cinematictime) * 14 / 1000;
+
 	if (frame <= cl.cinematicframe)
 		return;
+
 	if (frame > cl.cinematicframe+1)
 	{
 		Com_Printf ("Dropped frame: %i > %i\n", frame, cl.cinematicframe+1);
-		cl.cinematictime = cls.realtime - cl.cinematicframe*1000/14;
+		cl.cinematictime = cls.realtime - cl.cinematicframe * 1000 / 14;
 	}
+
 	if (cin.pic)
-		Z_Free (cin.pic);
+		Z_Free(cin.pic);
+
 	cin.pic = cin.pic_pending;
 	cin.pic_pending = NULL;
-	cin.pic_pending = SCR_ReadNextFrame ();
+	cin.pic_pending = SCR_ReadNextFrame();
+
 	if (!cin.pic_pending)
 	{
-		SCR_StopCinematic ();
-		SCR_FinishCinematic ();
+		SCR_StopCinematic();
+		SCR_FinishCinematic();
 		cl.cinematictime = 1;	// hack to get the black screen behind loading
-		SCR_BeginLoadingPlaque ();
+		SCR_BeginLoadingPlaque(NULL);
 		cl.cinematictime = 0;
 		return;
 	}

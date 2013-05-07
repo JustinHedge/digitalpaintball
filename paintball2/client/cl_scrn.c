@@ -390,6 +390,12 @@ int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t s
 		{
 			// don't count these.
 		}
+		else if (c == '\n') // text already has newlines.
+		{
+			current_line_width = 0;
+			++linecount;
+			wrappable_in = NULL;
+		}
 		else
 		{
 			current_line_width += charsize;
@@ -791,11 +797,16 @@ void SCR_DrawConsole (void)
 SCR_BeginLoadingPlaque
 ================
 */
-void SCR_BeginLoadingPlaque (void)
+void SCR_BeginLoadingPlaque (const char *mapname)
 {
 	S_StopAllSounds();
 	cl.sound_prepped = false;		// don't play ambients
 	CDAudio_Stop();
+
+	if (mapname)
+		Cvar_Set("menu_mapname", mapname);
+	else
+		Cvar_Set("menu_mapname", "");
 
 	if (cls.disable_screen || cls.loading_screen)
 		return;
@@ -803,8 +814,8 @@ void SCR_BeginLoadingPlaque (void)
 	if (developer->value)
 		return;
 
-	if (cls.state == ca_disconnected)
-		return;	// if at console, don't bring up the plaque
+	//if (cls.state == ca_disconnected)
+	//	return;	// if at console, don't bring up the plaque
 
 	if (cls.key_dest == key_console)
 		return;
@@ -843,7 +854,7 @@ SCR_Loading_f
 */
 void SCR_Loading_f (void)
 {
-	SCR_BeginLoadingPlaque ();
+	SCR_BeginLoadingPlaque(NULL);
 }
 
 /*

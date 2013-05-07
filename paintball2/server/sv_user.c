@@ -209,7 +209,7 @@ void SV_Baselines_f (void)
 	entity_state_t	nullstate;
 	entity_state_t	*base;
 
-	Com_DPrintf ("Baselines() from %s.\n", sv_client->name);
+	Com_DPrintf("Baselines() from %s.\n", sv_client->name);
 
 	if (sv_client->state != cs_connected)
 	{
@@ -250,13 +250,13 @@ void SV_Baselines_f (void)
 
 	if (start == MAX_EDICTS)
 	{
-		MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
-		MSG_WriteString (&sv_client->netchan.message, va("precache %i\n", svs.spawncount) );
+		MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
+		MSG_WriteString(&sv_client->netchan.message, va("precache %i\n", svs.spawncount));
 	}
 	else
 	{
-		MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
-		MSG_WriteString (&sv_client->netchan.message, va("cmd baselines %i %i\n",svs.spawncount, start) );
+		MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
+		MSG_WriteString(&sv_client->netchan.message, va("cmd baselines %i %i\n", svs.spawncount, start));
 	}
 }
 

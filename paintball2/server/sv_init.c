@@ -328,17 +328,17 @@ void SV_InitGame (void)
 	if (svs.initialized)
 	{
 		// cause any connected clients to reconnect
-		SV_Shutdown ("Server restarted\n", true);
+		SV_Shutdown("Server restarted\n", true);
 	}
 	else
 	{
 		// make sure the client is down
-		CL_Drop ();
-		SCR_BeginLoadingPlaque ();
+		CL_Drop();
+		SCR_BeginLoadingPlaque(NULL);
 	}
 
 	// get any latched variable changes (maxclients, etc)
-	Cvar_GetLatchedVars ();
+	Cvar_GetLatchedVars();
 
 	svs.initialized = true;
 
@@ -355,14 +355,14 @@ void SV_InitGame (void)
 			Cvar_FullSet("deathmatch", "1", CVAR_LATCH, true); // jit, removed serverinfo flag
 
 	// init clients
-	if (Cvar_VariableValue ("deathmatch"))
+	if (Cvar_VariableValue("deathmatch"))
 	{
 		if (maxclients->value <= 1)
 			Cvar_FullSet("maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, true);
 		else if (maxclients->value > MAX_CLIENTS)
 			Cvar_FullSet("maxclients", va("%i", MAX_CLIENTS), CVAR_SERVERINFO | CVAR_LATCH, true);
 	}
-	else if (Cvar_VariableValue ("coop"))
+	else if (Cvar_VariableValue("coop"))
 	{
 		if (maxclients->value <= 1 || maxclients->value > 8)
 			Cvar_FullSet("maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, true);
@@ -431,13 +431,16 @@ void SV_Map (qboolean attractloop, const char *levelstring, qboolean loadgame)
 
 	// if there is a + in the map, set nextserver to the remainder
 	ch = strstr(level, "+");
+
 	if (ch)
 	{
 		*ch = 0;
 		Cvar_Set("nextserver", va("gamemap \"%s\"", ch + 1));
 	}
 	else
+	{
 		Cvar_Set("nextserver", "");
+	}
 
 	//ZOID special hack for end game screen in coop mode
 	if (Cvar_VariableValue("coop") && Q_strcaseeq(level, "victory.pcx"))
@@ -445,41 +448,48 @@ void SV_Map (qboolean attractloop, const char *levelstring, qboolean loadgame)
 
 	// if there is a $, use the remainder as a spawnpoint
 	ch = strstr(level, "$");
+
 	if (ch)
 	{
 		*ch = 0;
-		strcpy (spawnpoint, ch+1);
+		strcpy(spawnpoint, ch + 1);
 	}
 	else
+	{
 		spawnpoint[0] = 0;
+	}
 
 	// skip the end-of-unit flag if necessary
 	if (level[0] == '*')
 		strcpy (level, level+1);
 
 	l = strlen(level);
+
 	if (l > 4 && Q_streq(level + l - 4, ".cin"))
 	{
-		SCR_BeginLoadingPlaque();			// for local system
+		SCR_BeginLoadingPlaque(NULL);			// for local system
 		SV_BroadcastCommand("changing\n");
 		SV_SpawnServer(level, spawnpoint, ss_cinematic, attractloop, loadgame);
 	}
 	else if (l > 4 && Q_streq(level + l - 4, ".dm2"))
 	{
-		SCR_BeginLoadingPlaque();			// for local system
+		SCR_BeginLoadingPlaque(NULL);			// for local system
 		SV_BroadcastCommand("changing\n");
 		SV_SpawnServer(level, spawnpoint, ss_demo, attractloop, loadgame);
 	}
 	else if (l > 4 && Q_streq(level + l - 4, ".pcx"))
 	{
-		SCR_BeginLoadingPlaque();			// for local system
+		SCR_BeginLoadingPlaque(NULL);			// for local system
 		SV_BroadcastCommand("changing\n");
 		SV_SpawnServer(level, spawnpoint, ss_pic, attractloop, loadgame);
 	}
 	else
 	{
-		SCR_BeginLoadingPlaque();			// for local system
-		SV_BroadcastCommand("changing\n");
+		char changing_cmd[1024];
+
+		SCR_BeginLoadingPlaque(level);			// for local system
+		Com_sprintf(changing_cmd, sizeof(changing_cmd), "changing \"%s\"\n", level);
+		SV_BroadcastCommand(changing_cmd);
 		SV_SendClientMessages();
 		SV_SpawnServer(level, spawnpoint, ss_game, attractloop, loadgame);
 		Cbuf_CopyToDefer();
