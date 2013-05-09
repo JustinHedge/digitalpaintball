@@ -159,16 +159,12 @@ typedef float vec_t;
 typedef vec_t vec2_t[2];
 typedef vec_t vec3_t[3];
 typedef vec_t vec4_t[4];
-typedef vec_t vec5_t[5];
 
 typedef vec_t quat_t[4]; // jitskm
 extern quat_t quat_identity; // jitskm
 
 typedef vec3_t mat3_t[3];
 
-typedef	int	fixed4_t;
-typedef	int	fixed8_t;
-typedef	int	fixed16_t;
 
 typedef union {
 	float			f;
@@ -176,7 +172,7 @@ typedef union {
 } float_int_t;
 
 #ifndef M_PI
-#define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
+#define M_PI		3.14159265358979323846f	// matches value in gcc v2 math.h
 #endif
 
 struct cplane_s;

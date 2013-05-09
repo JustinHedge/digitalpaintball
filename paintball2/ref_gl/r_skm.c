@@ -902,12 +902,13 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	indexes = mesh->indexes;
 
 	// translate vertexes.
-	for (j = 0, skmverts = mesh->vertexes; j < numverts; j++, skmverts++)
+	// jitodo: optimize
+	for (j = 0, skmverts = mesh->vertexes; j < numverts; ++j, ++skmverts)
 	{
 		VectorClear(inVertsArray[j]);
 		VectorClear(inNormalsArray[j]);
 
-		for (l = 0, boneverts = skmverts->verts; l < skmverts->numbones; l++, boneverts++)
+		for (l = 0, boneverts = skmverts->verts; l < skmverts->numbones; ++l, ++boneverts)
 		{
 			pose = skmbonepose + boneverts->bonenum;
 

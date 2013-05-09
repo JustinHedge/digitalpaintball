@@ -862,16 +862,14 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 
 	qglDisable(GL_TEXTURE_2D);
 	color.c = d_8to24table[c];
-	qglColor3f(color.v[0]/255.0,
-		color.v[1]/255.0,
-		color.v[2]/255.0);
+	qglColor3f(color.v[0] / 255.0f, color.v[1] / 255.0f, color.v[2] / 255.0f);
 	qglBegin(GL_QUADS);
-	qglVertex2f(x,y);
-	qglVertex2f(x+w, y);
-	qglVertex2f(x+w, y+h);
-	qglVertex2f(x, y+h);
+	qglVertex2f(x, y);
+	qglVertex2f(x + w, y);
+	qglVertex2f(x + w, y + h);
+	qglVertex2f(x, y + h);
 	qglEnd();
-	qglColor3f(1,1,1);
+	qglColor3f(1.0f, 1.0f, 1.0f);
 	qglEnable(GL_TEXTURE_2D);
 }
 
