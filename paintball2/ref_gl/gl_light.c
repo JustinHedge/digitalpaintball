@@ -200,7 +200,135 @@ int round16 (float val) // jit - rounds to the nearest multiple of 16
 vec3_t			pointcolor;
 vec3_t			lightspot;
 
-int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
+
+// Taken from LordHavok's DarkPlaces, slightly modified by jitspoe to be compatible with Quake2
+static int LightPoint_RecursiveBSPNode (model_t *model, vec3_t ambientcolor, const mnode_t *node, float x, float y, float startz, float endz)
+{
+	int side;
+	float front, back;
+	float mid, distz = endz - startz;
+
+loc0:
+	//if (!node->plane)
+	if (node->contents != -1)
+		return false;		// didn't hit anything
+
+	switch (node->plane->type)
+	{
+	case PLANE_X:
+		node = node->children[x < node->plane->dist];
+		goto loc0;
+	case PLANE_Y:
+		node = node->children[y < node->plane->dist];
+		goto loc0;
+	case PLANE_Z:
+		side = startz < node->plane->dist;
+		if ((endz < node->plane->dist) == side)
+		{
+			node = node->children[side];
+			goto loc0;
+		}
+		// found an intersection
+		mid = node->plane->dist;
+		break;
+	default:
+		back = front = x * node->plane->normal[0] + y * node->plane->normal[1];
+		front += startz * node->plane->normal[2];
+		back += endz * node->plane->normal[2];
+		side = front < node->plane->dist;
+		if ((back < node->plane->dist) == side)
+		{
+			node = node->children[side];
+			goto loc0;
+		}
+		// found an intersection
+		mid = startz + distz * (front - node->plane->dist) / (front - back);
+		break;
+	}
+
+	// go down front side
+	if (node->children[side]->plane && LightPoint_RecursiveBSPNode(model, ambientcolor, node->children[side], x, y, startz, mid))
+	{
+		return true;	// hit something
+	}
+	else
+	{
+		// check for impact on this node
+		if (node->numsurfaces)
+		{
+			unsigned int i;
+			int dsi, dti, lmwidth, lmheight;
+			float ds, dt;
+			msurface_t *surface;
+			unsigned char *lightmap;
+			int maps, line3, size3;
+			float dsfrac;
+			float dtfrac;
+			float w00, w01, w10, w11;
+
+			surface = model->surfaces + node->firstsurface;
+
+			for (i = 0; i < node->numsurfaces; ++i, ++surface)
+			{
+				if (surface->flags & (SURF_DRAWTURB|SURF_DRAWSKY))
+					continue;	// no lightmaps
+
+				// location we want to sample in the lightmap
+				ds = ((x * surface->texinfo->vecs[0][0] + y * surface->texinfo->vecs[0][1] + mid * surface->texinfo->vecs[0][2] + surface->texinfo->vecs[0][3]) - surface->texturemins[0]) * 0.0625f;
+				dt = ((x * surface->texinfo->vecs[1][0] + y * surface->texinfo->vecs[1][1] + mid * surface->texinfo->vecs[1][2] + surface->texinfo->vecs[1][3]) - surface->texturemins[1]) * 0.0625f;
+
+				// check the bounds
+				dsi = (int)ds;
+				dti = (int)dt;
+				lmwidth = ((surface->extents[0] >> 4) + 1);
+				lmheight = ((surface->extents[1] >> 4) + 1);
+
+				// is it in bounds?
+				if (dsi >= 0 && dsi < lmwidth - 1 && dti >= 0 && dti < lmheight - 1)
+				{
+					// calculate bilinear interpolation factors
+					// and also multiply by fixedpoint conversion factors
+					dsfrac = ds - dsi;
+					dtfrac = dt - dti;
+					w00 = (1 - dsfrac) * (1 - dtfrac) * (1.0f / 255.0f);
+					w01 = (    dsfrac) * (1 - dtfrac) * (1.0f / 255.0f);
+					w10 = (1 - dsfrac) * (    dtfrac) * (1.0f / 255.0f);
+					w11 = (    dsfrac) * (    dtfrac) * (1.0f / 255.0f);
+
+					// values for pointer math
+					line3 = lmwidth * 3;
+					size3 = lmwidth * lmheight * 3;
+
+					// look up the pixel
+					//lightmap = surface->samples + dti * line3 + dsi * 3;
+					lightmap = surface->stain_samples + dti * line3 + dsi * 3; // Note: comment this line out and use the one above if you do not have stainmaps
+
+					// bilinear filter each lightmap style, and sum them
+					for (maps = 0; maps < MAXLIGHTMAPS && surface->styles[maps] != 255; maps++)
+					{
+						VectorMA(ambientcolor, w00, lightmap            , ambientcolor);
+						VectorMA(ambientcolor, w01, lightmap + 3        , ambientcolor);
+						VectorMA(ambientcolor, w10, lightmap + line3    , ambientcolor);
+						VectorMA(ambientcolor, w11, lightmap + line3 + 3, ambientcolor);
+
+						lightmap += size3;
+					}
+
+					return true; // success
+				}
+			}
+		}
+
+		// go down back side
+		node = node->children[side ^ 1];
+		startz = mid;
+		distz = endz - startz;
+		goto loc0;
+	}
+}
+
+
+static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 {
 	float		front, back, frac;
 	int			side;
@@ -247,7 +375,7 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	surf = r_worldmodel->surfaces + node->firstsurface;
 	VectorCopy(vec3_origin, pointcolor);
 
-	for (i = 0; i < node->numsurfaces; i++, surf++)
+	for (i = 0; i < node->numsurfaces; ++i, ++surf)
 	{
 		if (surf->flags & (SURF_DRAWTURB|SURF_DRAWSKY)) 
 			continue;	// no lightmaps
@@ -305,7 +433,6 @@ R_LightPoint
 */
 void R_LightPoint (vec3_t p, vec3_t color) // jitodo -- light points on average of 4 or so points, rather than just straight down.
 {
-	vec3_t		end;
 	float		r;
 	int			lnum;
 	dlight_t	*dl;
@@ -319,12 +446,28 @@ void R_LightPoint (vec3_t p, vec3_t color) // jitodo -- light points on average 
 		return;
 	}
 	
-	end[0] = p[0];
-	end[1] = p[1];
-	end[2] = p[2] - 2048.0f;
-	r = RecursiveLightPoint(r_worldmodel->nodes, p, end);
+	if (r_oldlightpoint->value)
+	{	
+		vec3_t		end;
+		end[0] = p[0];
+		end[1] = p[1];
+		end[2] = p[2] - 2048.0f;
+		r = RecursiveLightPoint(r_worldmodel->nodes, p, end);
+	}
+	else
+	{
+		int i;
 
-	if (r == -1)
+		VectorClear(pointcolor);
+		r = LightPoint_RecursiveBSPNode(r_worldmodel, pointcolor, r_worldmodel->nodes, p[0], p[1], p[2] + 10.0f, p[2] - 2048.0f);
+
+		for (i = 0; i < 3; ++i)
+		{
+			pointcolor[i] = pow(pointcolor[i], gl_lightmapgamma->value);
+		}
+	}
+
+	if (r <= 0)
 	{
 		VectorCopy(vec3_origin, color);
 	}
