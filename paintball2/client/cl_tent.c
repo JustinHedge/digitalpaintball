@@ -53,8 +53,7 @@ typedef struct
 } beam_t;
 
 beam_t		cl_beams[MAX_BEAMS];
-//PMM - added this for player-linked beams.  Currently only used by the plasma beam
-beam_t		cl_playerbeams[MAX_BEAMS];
+
 
 #define	MAX_LASERS	32
 typedef struct
@@ -281,7 +280,6 @@ void CL_ClearTEnts (void)
 	memset(cl_beams, 0, sizeof(cl_beams));
 	memset(cl_explosions, 0, sizeof(cl_explosions));
 	memset(cl_lasers, 0, sizeof(cl_lasers));
-	memset(cl_playerbeams, 0, sizeof(cl_playerbeams));
 	memset(cl_sustains, 0, sizeof(cl_sustains));
 }
 
@@ -468,71 +466,6 @@ int CL_ParseBeam2 (struct model_s *model)
 	return ent;
 }
 
-// ROGUE
-/*
-=================
-CL_ParsePlayerBeam
-  - adds to the cl_playerbeam array instead of the cl_beams array
-=================
-*/
-int CL_ParsePlayerBeam (struct model_s *model)
-{
-	int		ent;
-	vec3_t	start, end, offset;
-	beam_t	*b;
-	int		i;
-	
-	ent = MSG_ReadShort (&net_message);
-	
-	MSG_ReadPos (&net_message, start);
-	MSG_ReadPos (&net_message, end);
-	// PMM - network optimization
-//	if (model == cl_mod_heatbeam)
-//		VectorSet(offset, 2, 7, -3);
-/*	else if (model == cl_mod_monster_heatbeam)
-	{
-		model = cl_mod_heatbeam;
-		VectorSet(offset, 0, 0, 0);
-	}*/
-//	else
-		MSG_ReadPos (&net_message, offset);
-
-//	Com_Printf ("end- %f %f %f\n", end[0], end[1], end[2]);
-
-// override any beam with the same entity
-// PMM - For player beams, we only want one per player (entity) so..
-	for (i=0, b=cl_playerbeams ; i< MAX_BEAMS ; i++, b++)
-	{
-		if (b->entity == ent)
-		{
-			b->entity = ent;
-			b->model = model;
-			b->endtime = cl.time + 200;
-			VectorCopy (start, b->start);
-			VectorCopy (end, b->end);
-			VectorCopy (offset, b->offset);
-			return ent;
-		}
-	}
-
-// find a free beam
-	for (i=0, b=cl_playerbeams ; i< MAX_BEAMS ; i++, b++)
-	{
-		if (!b->model || b->endtime < cl.time)
-		{
-			b->entity = ent;
-			b->model = model;
-			b->endtime = cl.time + 100;		// PMM - this needs to be 100 to prevent multiple heatbeams
-			VectorCopy (start, b->start);
-			VectorCopy (end, b->end);
-			VectorCopy (offset, b->offset);
-			return ent;
-		}
-	}
-	Com_Printf ("Beam list overflow!\n");	
-	return ent;
-}
-//rogue
 
 /*
 =================
@@ -835,17 +768,9 @@ void CL_ParseTEnt (void)
 			struct sfx_s *sound;
 			int n;
 			trace_t tr;
-			vec3_t end, start, back, forward;
+			vec3_t end, start, back, forward, entpos;
 			surface_sound_type_t surface_sound = SURFACE_SOUND_UNKNOWN;
 			qboolean make_splat = (cnt == 16);
-
-			// generate a splat model:
-			if (make_splat)
-			{
-				ex = CL_AllocExplosion();
-				VectorCopy(pos, ex->ent.origin);
-				VectorCopy(pos, ex->ent.startorigin);
-			}
 
 			// check the closest wall for an exact angle
 			VectorScale(dir, 1.0f, back);
@@ -858,11 +783,24 @@ void CL_ParseTEnt (void)
 			{
 				VectorCopy(tr.plane.normal, dir);
 				surface_sound = tr.surface->surface_sound;
+
+				// Set the entity pos to be 0.1 units away from the surface (to avoid any potential floating point issues/z fighting, etc.
+				VectorScale(dir, 0.1f, back);
+				VectorAdd(tr.endpos, back, entpos);
+			}
+			else
+			{
+				VectorCopy(pos, entpos);
 			}
 
-			// Convert vector to angles
+			// Generate splat model
 			if (make_splat)
 			{
+				ex = CL_AllocExplosion();
+				VectorCopy(entpos, ex->ent.origin);
+				VectorCopy(entpos, ex->ent.startorigin);
+
+				// Convert vector to angles
 				ex->ent.angles[0] = (float)acos(dir[2]) / (float)M_PI * 180.0f;
 
 				if (dir[0])
@@ -1479,127 +1417,6 @@ void CL_AddBeams (void)
 
 
 /*
-//				Com_Printf ("Endpoint:  %f %f %f\n", b->end[0], b->end[1], b->end[2]);
-//				Com_Printf ("Pred View Angles:  %f %f %f\n", cl.predicted_angles[0], cl.predicted_angles[1], cl.predicted_angles[2]);
-//				Com_Printf ("Act View Angles: %f %f %f\n", cl.refdef.viewangles[0], cl.refdef.viewangles[1], cl.refdef.viewangles[2]);
-//				VectorCopy (cl.predicted_origin, b->start);
-//				b->start[2] += 22;	// adjust for view height
-//				if (fabs(cl.refdef.vieworg[2] - b->start[2]) >= 10) {
-//					b->start[2] = cl.refdef.vieworg[2];
-//				}
-
-//				Com_Printf ("Time:  %d %d %f\n", cl.time, cls.realtime, cls.frametime);
-*/
-
-extern cvar_t *hand;
-
-/*
-=================
-ROGUE - draw player locked beams
-CL_AddPlayerBeams
-=================
-*/
-void CL_AddPlayerBeams (void)
-{
-	int			i,j;
-	beam_t		*b;
-	vec3_t		dist, org;
-	float		d;
-	entity_t	ent;
-	float		yaw, pitch;
-	float		forward;
-	float		len, steps;
-//	int			framenum;
-	float		model_length;
-	
-	float		hand_multiplier;
-//	frame_t		*oldframe;
-//	player_state_t	*ps, *ops;
-
-	VectorSet(org, 0, 0, 0); // jit -- dunno what's going on here, but this isn't init'd.
-//PMM
-	if (hand)
-	{
-		if (hand->value == 2)
-			hand_multiplier = 0;
-		else if (hand->value == 1)
-			hand_multiplier = -1;
-		else
-			hand_multiplier = 1;
-	}
-	else 
-	{
-		hand_multiplier = 1;
-	}
-//PMM
-
-// update beams
-	for (i=0, b=cl_playerbeams ; i< MAX_BEAMS ; i++, b++)
-	{
-//		vec3_t		f,r,u;
-		if (!b->model || b->endtime < cl.time)
-			continue;
-
-	// calculate pitch and yaw
-		VectorSubtract (b->end, org, dist);
-
-		if (dist[1] == 0 && dist[0] == 0)
-		{
-			yaw = 0;
-			if (dist[2] > 0)
-				pitch = 90;
-			else
-				pitch = 270;
-		}
-		else
-		{
-	// PMM - fixed to correct for pitch of 0
-			if (dist[0])
-				yaw = (atan2(dist[1], dist[0]) * 180 / M_PI);
-			else if (dist[1] > 0)
-				yaw = 90;
-			else
-				yaw = 270;
-			if (yaw < 0)
-				yaw += 360;
-	
-			forward = sqrt (dist[0]*dist[0] + dist[1]*dist[1]);
-			pitch = (atan2(dist[2], forward) * -180.0 / M_PI);
-			if (pitch < 0)
-				pitch += 360.0;
-		}
-	
-	// add new entities for the beams
-		d = VectorNormalizeRetLen(dist);
-
-		memset(&ent, 0, sizeof(ent));
-
-		{
-			model_length = 30.0;
-		}
-		steps = ceil(d/model_length);
-		len = (d-model_length)/(steps-1);
-
-		while (d > 0)
-		{
-			VectorCopy (org, ent.origin);
-
-			{
-				ent.angles[0] = pitch;
-				ent.angles[1] = yaw;
-				ent.angles[2] = rand()%360;
-			}
-			
-			V_AddEntity (&ent);
-
-			for (j=0 ; j<3 ; j++)
-				org[j] += dist[j]*len;
-			d -= model_length;
-		}
-	}
-}
-
-/*
 =================
 CL_AddExplosions
 =================
@@ -1685,8 +1502,6 @@ CL_AddTEnts
 void CL_AddTEnts (void)
 {
 	CL_AddBeams();
-	// PMM - draw plasma beams
-	CL_AddPlayerBeams();
 	CL_AddExplosions(); // jit, actually they're "smoke explosions" now :)
 	CL_AddLasers();
 	// PMM - set up sustain
