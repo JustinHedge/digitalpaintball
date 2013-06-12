@@ -311,9 +311,9 @@ typedef struct
 	// files should be stored to, ie: "f:\quake\id1"
 	char	*(*FS_Gamedir) (void);
 
-	cvar_t	*(*Cvar_Get) (char *name, char *value, int flags);
-	cvar_t	*(*Cvar_Set) (char *name, char *value);
-	void	 (*Cvar_SetValue) (char *name, float value);
+	cvar_t	*(*Cvar_Get) (const char *name, const char *value, int flags);
+	cvar_t	*(*Cvar_Set) (const char *name, const char *value);
+	void	 (*Cvar_SetValue) (const char *name, float value);
 
 	qboolean	(*Vid_GetModeInfo) (int *width, int *height, int mode);
 	testexport_t *e;
@@ -330,8 +330,8 @@ typedef struct
 {
 	void	(*Com_Printf) (char *str, ...);
 	void	(*Cbuf_ExecuteText) (int exec_when, char *text);
-	cvar_t	*(*Cvar_Get) (char *name, char *value, int flags);
-	cvar_t	*(*Cvar_Set) (char *name, char *value);
+	cvar_t	*(*Cvar_Get) (const char *name, const char *value, int flags);
+	cvar_t	*(*Cvar_Set) (const char *name, const char *value);
 	int		(*FS_LoadFileZ) (const char *path, void **buffer);
 	void	(*FS_FreeFile) (void *buffer);
 	int		(*GetIntVarByID) (int id);
