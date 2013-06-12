@@ -1038,7 +1038,6 @@ void SCR_TileClear (void)
 			clear.x2-i+1, clear.y2 - clear.y1 + 1, i_backtile);
 		clear.x2 = right;
 	}
-
 }
 
 
@@ -1058,6 +1057,8 @@ char		*sb_nums[2][11] =
 	{"anum_0", "anum_1", "anum_2", "anum_3", "anum_4", "anum_5",
 	"anum_6", "anum_7", "anum_8", "anum_9", "anum_minus"}
 };
+
+struct image_s *sb_nums_img[2][11]; // jitopt
 
 #define	ICON_WIDTH	24
 #define	ICON_HEIGHT	24
@@ -1170,16 +1171,19 @@ void SCR_DrawField (int x, int y, int color, int width, int value)
 	if (width > 5)
 		width = 5;
 
-	SCR_AddDirtyPoint (x, y);
-	SCR_AddDirtyPoint (x+width*CHAR_WIDTH*hudscale+2, y+23*hudscale);
+	SCR_AddDirtyPoint(x, y);
+	SCR_AddDirtyPoint(x + width * CHAR_WIDTH * hudscale + 2, y + 23 * hudscale);
 
-	Com_sprintf (num, sizeof(num), "%i", value);
+	Com_sprintf(num, sizeof(num), "%i", value);
 	l = strlen(num);
+
 	if (l > width)
 		l = width;
-	x += 2 + CHAR_WIDTH*(width - l)*hudscale;
+
+	x += 2 + CHAR_WIDTH * (width - l) * hudscale;
 
 	ptr = num;
+
 	while (*ptr && l)
 	{
 		if (*ptr == '-')
@@ -1187,8 +1191,9 @@ void SCR_DrawField (int x, int y, int color, int width, int value)
 		else
 			frame = *ptr -'0';
 
-		re.DrawPic (x,y,sb_nums[color][frame]);
-		x += CHAR_WIDTH*hudscale;
+		//re.DrawPic(x, y, sb_nums[color][frame]);
+		re.DrawPic2(x, y, sb_nums_img[color][frame]);
+		x += CHAR_WIDTH * hudscale;
 		ptr++;
 		l--;
 	}
@@ -1208,7 +1213,7 @@ void SCR_TouchPics (void)
 
 	for (i = 0; i < 2; ++i)
 		for (j = 0; j < 11; ++j)
-			re.RegisterPic(sb_nums[i][j]);
+			sb_nums_img[i][j] = re.RegisterPic(sb_nums[i][j]); // jitopt - cache the img pointer so we don't have to look it up by string later
 
 	if (crosshair->value)
 	{
@@ -1652,7 +1657,7 @@ void SCR_UpdateScreen (void)
 	if (cl_hudscale->value < 1.0 || cl_hudscale->value > viddef.width / 320.0f) // jithudscale
 		Cvar_SetValue("cl_hudscale", viddef.width / 320.0f); // jithudscale
 
-	if (cl_crosshairscale->value < 1.0 || cl_crosshairscale->value > viddef.width / 320.0f)
+	if (cl_crosshairscale->value <= 0.0 || cl_crosshairscale->value > viddef.width / 320.0f)
 		Cvar_SetValue("cl_crosshairscale", viddef.width / 320.0f);
 
 	hudscale = cl_hudscale->value;
