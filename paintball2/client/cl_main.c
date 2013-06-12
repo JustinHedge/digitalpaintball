@@ -2844,7 +2844,7 @@ static void CL_VerifyContent (void)
 
 // === jitkeyboard
 #ifdef _WIN32
-extern byte *scantokey[128];
+extern byte scantokey[128];
 void KB_Init (void)
 {
 	char	path[MAX_QPATH];
