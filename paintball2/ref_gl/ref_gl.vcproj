@@ -325,13 +325,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/J /Op-"
-				Optimization="4"
+				AdditionalOptions="/fp:fast"
+				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
+				WholeProgramOptimization="true"
 				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS,_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -990,11 +991,11 @@
 					>
 				</File>
 				<File
-					RelativePath="jpeg\jpeglib.h"
+					RelativePath=".\jpeglib.h"
 					>
 				</File>
 				<File
-					RelativePath=".\jpeglib.h"
+					RelativePath="jpeg\jpeglib.h"
 					>
 				</File>
 				<File
