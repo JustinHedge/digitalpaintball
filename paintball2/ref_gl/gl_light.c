@@ -201,7 +201,7 @@ vec3_t			pointcolor;
 vec3_t			lightspot;
 
 
-// Taken from LordHavok's DarkPlaces, slightly modified by jitspoe to be compatible with Quake2
+// Taken from LordHavoc's DarkPlaces, slightly modified by jitspoe to be compatible with Quake2
 static int LightPoint_RecursiveBSPNode (model_t *model, vec3_t ambientcolor, const mnode_t *node, float x, float y, float startz, float endz)
 {
 	int side;
@@ -223,11 +223,13 @@ loc0:
 		goto loc0;
 	case PLANE_Z:
 		side = startz < node->plane->dist;
+
 		if ((endz < node->plane->dist) == side)
 		{
 			node = node->children[side];
 			goto loc0;
 		}
+
 		// found an intersection
 		mid = node->plane->dist;
 		break;
@@ -236,11 +238,13 @@ loc0:
 		front += startz * node->plane->normal[2];
 		back += endz * node->plane->normal[2];
 		side = front < node->plane->dist;
+
 		if ((back < node->plane->dist) == side)
 		{
 			node = node->children[side];
 			goto loc0;
 		}
+
 		// found an intersection
 		mid = startz + distz * (front - node->plane->dist) / (front - back);
 		break;
@@ -284,12 +288,13 @@ loc0:
 				lmheight = ((surface->extents[1] >> 4) + 1);
 
 				// is it in bounds?
-				if (dsi >= 0 && dsi < lmwidth - 1 && dti >= 0 && dti < lmheight - 1)
+				if (dsi >= 0 && dsi <= lmwidth - 1 && dti >= 0 && dti <= lmheight - 1) // jit - fix for black models right on brush splits.
 				{
 					// calculate bilinear interpolation factors
 					// and also multiply by fixedpoint conversion factors
 					dsfrac = ds - dsi;
 					dtfrac = dt - dti;
+
 					w00 = (1 - dsfrac) * (1 - dtfrac) * (1.0f / 255.0f);
 					w01 = (    dsfrac) * (1 - dtfrac) * (1.0f / 255.0f);
 					w10 = (1 - dsfrac) * (    dtfrac) * (1.0f / 255.0f);
@@ -448,7 +453,8 @@ void R_LightPoint (vec3_t p, vec3_t color) // jitodo -- light points on average 
 	
 	if (r_oldlightpoint->value)
 	{	
-		vec3_t		end;
+		vec3_t end;
+
 		end[0] = p[0];
 		end[1] = p[1];
 		end[2] = p[2] - 2048.0f;
@@ -459,7 +465,7 @@ void R_LightPoint (vec3_t p, vec3_t color) // jitodo -- light points on average 
 		int i;
 
 		VectorClear(pointcolor);
-		r = LightPoint_RecursiveBSPNode(r_worldmodel, pointcolor, r_worldmodel->nodes, p[0], p[1], p[2] + 10.0f, p[2] - 2048.0f);
+		r = LightPoint_RecursiveBSPNode(r_worldmodel, pointcolor, r_worldmodel->nodes, p[0], p[1], p[2], p[2] - 2048.0f);
 
 		for (i = 0; i < 3; ++i)
 		{
