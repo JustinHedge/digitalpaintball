@@ -508,7 +508,7 @@ void EmitWaterPolys (msurface_t *fa)
 						if (vAngle[2] > 0.55f)
 							vAngle[2] = 0.55f;
 
-						qglColor4f(1, 1, 1, 0.9f - (vAngle[2] * 1.0f));
+						qglColor4f(1.0f, 1.0f, 1.0f, 0.9f - (vAngle[2] * 1.0f));
 					}
 				}
 
@@ -531,28 +531,28 @@ void EmitWaterPolys (msurface_t *fa)
 
 //===================================================================
 
-
 vec3_t	skyclip[6] = {
-	{1,1,0},
-	{1,-1,0},
-	{0,-1,1},
-	{0,1,1},
-	{1,0,1},
-	{-1,0,1}
+	{ 1.0f, 1.0f, 0.0f },
+	{ 1.0f,-1.0f, 0.0f },
+	{ 0.0f,-1.0f, 1.0f },
+	{ 0.0f, 1.0f, 1.0f },
+	{ 1.0f, 0.0f, 1.0f },
+	{-1.0f, 0.0f, 1.0f }
 };
+
 int	c_sky;
 
 // 1 = s, 2 = t, 3 = 2048
 int	st_to_vec[6][3] =
 {
-	{3,-1,2},
-	{-3,1,2},
+	{ 3.0f,-1.0f, 2.0f },
+	{-3.0f, 1.0f, 2.0f },
 
-	{1,3,2},
-	{-1,-3,2},
+	{ 1.0f, 3.0f, 2.0f },
+	{-1.0f,-3.0f, 2.0f },
 
-	{-2,-1,3},		// 0 degrees yaw, look straight up
-	{2,-1,-3}		// look straight down
+	{-2.0f,-1.0f, 3.0f },		// 0 degrees yaw, look straight up
+	{ 2.0f,-1.0f,-3.0f }		// look straight down
 
 //	{-1,2,3},
 //	{1,2,-3}
@@ -561,14 +561,14 @@ int	st_to_vec[6][3] =
 // s = [0]/[2], t = [1]/[2]
 int	vec_to_st[6][3] =
 {
-	{-2,3,1},
-	{2,3,-1},
+	{-2.0f, 3.0f, 1.0f },
+	{ 2.0f, 3.0f,-1.0f },
 
-	{1,3,2},
-	{-1,3,-2},
+	{ 1.0f, 3.0f, 2.0f },
+	{-1.0f, 3.0f,-2.0f },
 
-	{-2,-1,3},
-	{-2,1,-3}
+	{-2.0f,-1.0f, 3.0f },
+	{-2.0f, 1.0f,-3.0f }
 
 //	{-1,2,3},
 //	{1,2,-3}
@@ -798,11 +798,11 @@ void MakeSkyVec (float s, float t, int axis)
 	int			j, k;
 
 	// jitodo: fix this so it works for REALLY big maps...
-	b[0] = s*8192/*2300*/; // jit -- bigger skybox
-	b[1] = t*8192/*2300*/; // jit -- bigger skybox
-	b[2] = 8192/*2300*/;   // jit -- bigger sky box
+	b[0] = s * 8192.0f/*2300*/; // jit -- bigger skybox
+	b[1] = t * 8192.0f/*2300*/; // jit -- bigger skybox
+	b[2] = 8192.0f/*2300*/;   // jit -- bigger sky box
 
-	for (j=0; j<3; j++)
+	for (j = 0; j < 3; ++j)
 	{
 		k = st_to_vec[axis][j];
 
@@ -813,8 +813,8 @@ void MakeSkyVec (float s, float t, int axis)
 	}
 
 	// avoid bilerp seam
-	s = (s+1)*0.5;
-	t = (t+1)*0.5;
+	s = (s + 1.0f) * 0.5f;
+	t = (t + 1.0f) * 0.5f;
 
 	if (s < sky_min)
 		s = sky_min;
