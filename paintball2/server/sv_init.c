@@ -421,13 +421,12 @@ void SV_Map (qboolean attractloop, const char *levelstring, qboolean loadgame)
 	int		l;
 	char	spawnpoint[MAX_QPATH];
 
+	strcpy(level, levelstring); // jit - copy level string before it gets modified by other commands (since it's a command argument)
 	sv.loadgame = loadgame;
 	sv.attractloop = attractloop;
 
 	if (sv.state == ss_dead && !sv.loadgame)
 		SV_InitGame();	// the game is just starting
-
-	strcpy(level, levelstring);
 
 	// if there is a + in the map, set nextserver to the remainder
 	ch = strstr(level, "+");
