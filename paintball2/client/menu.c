@@ -2449,8 +2449,8 @@ static void menu_from_file (menu_screen_t *menu, qboolean include, const char *l
 	char menu_filename[MAX_QPATH];
 	char *filebuf;
 	int file_len;
-	extern cvar_t *cl_language;
 	extern cvar_t *cl_menu;
+	extern cvar_t *cl_language;
 	const char *name = menu->name;
 
 	if (loadname)
@@ -2458,13 +2458,19 @@ static void menu_from_file (menu_screen_t *menu, qboolean include, const char *l
 
 	scale = cl_hudscale->value;
 
-	Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s/%s.txt", cl_menu->string, name);
+	Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s/%s/%s.txt", cl_menu->string, cl_language->string, name);
 	file_len = FS_LoadFileZ(menu_filename, (void **)&filebuf);
 
 	if (file_len < 0)
 	{
-		Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s.txt", name);
+		Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s/%s.txt", cl_menu->string, name);
 		file_len = FS_LoadFileZ(menu_filename, (void **)&filebuf);
+
+		if (file_len < 0)
+		{
+			Com_sprintf(menu_filename, sizeof(menu_filename), "menus/%s.txt", name);
+			file_len = FS_LoadFileZ(menu_filename, (void **)&filebuf);
+		}
 	}
 
 	if (file_len != -1)
