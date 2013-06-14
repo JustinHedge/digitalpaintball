@@ -61,6 +61,7 @@ cvar_t	*sv_reconnect_limit;	// minimum seconds between connect messages
 cvar_t	*sv_noextascii = NULL;	// jit
 
 cvar_t	*sv_locked;				// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
+cvar_t	*sv_blockednames;		// T3RR0R15T: Blocked player names. Prevent players with bad names from connecting.
 
 cvar_t	*sv_certificated;		// T3RR0R15T: certificated server info
 
@@ -342,6 +343,9 @@ void SVC_DirectConnect (void)
 	int			version;
 	int			qport;
 	int			challenge;
+	char		blockednames_list[1024];	// T3RR0R15T: Blocked player names.
+	char		lowercase_name[1024];		// T3RR0R15T: Blocked player names.
+	char		*pname, *badname;			// T3RR0R15T: Blocked player names.
 	char		*pass;			// T3RR0R15T: Reserved slots (from R1Q2)
 	int			reserved;		// T3RR0R15T: Reserved slots (from R1Q2)
 
@@ -403,6 +407,26 @@ void SVC_DirectConnect (void)
 		Com_DPrintf ("    server locked.\n");
 		Netchan_OutOfBandPrint (NS_SERVER, adr, "print\nServer is locked.\n");
 		return;
+	}
+
+	// T3RR0R15T: Blocked player names. Prevent players with bad names from connecting.
+	Q_strncpyz(blockednames_list, sv_blockednames->string, sizeof(blockednames_list));
+	Q_strncpyz(lowercase_name, Info_ValueForKey(userinfo, "name"), sizeof(lowercase_name));
+	strtolower(lowercase_name);
+	pname = strtok(blockednames_list, ",");
+
+	while (pname != NULL)
+	{
+		badname = strstr(lowercase_name, pname);
+		
+		while(badname != NULL)
+		{
+			Com_DPrintf ("    bad name.\n");
+			Netchan_OutOfBandPrint (NS_SERVER, adr, "print\nDisallowed characters in your name: %s\n", pname);
+			return;
+		}
+			
+		pname = strtok(NULL, ",");
 	}
 
 	// T3RR0R15T: Reserved slots (from R1Q2)
@@ -1501,6 +1525,7 @@ void SV_Init (void)
 	sv_cullentities= Cvar_Get("sv_cullentities", "0", 0);
 	sv_noextascii  = Cvar_Get("sv_noextascii", "1", 0); // jit
 	sv_locked	   = Cvar_Get("sv_locked", "0", 0);		// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
+	sv_blockednames         = Cvar_Get("sv_blockednames", "rape,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,nigg,pussy,cunt,slut,asshole,prick,sieg heil,hitler,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,fehlgeburt,nazi,gay,bastard", 0);			// T3RR0R15T: Blocked player names. Prevent players with bad names from connecting.
 	sv_reserved_slots		= Cvar_Get("sv_reserved_slots", "0", CVAR_LATCH);	// T3RR0R15T: Number of reserved player slots. (from R1Q2)
 	sv_reserved_password	= Cvar_Get("sv_reserved_password", "", 0);			// T3RR0R15T: Password required to access a reserved player slot. Clients should set their 'password' cvar to this. (from R1Q2)
 	sv_consolename			= Cvar_Get("sv_consolename", "5", 0);				// T3RR0R15T: Name for console say messages (jit - 5 = "Admin")
