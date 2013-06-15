@@ -1525,7 +1525,7 @@ void SV_Init (void)
 	sv_cullentities= Cvar_Get("sv_cullentities", "0", 0);
 	sv_noextascii  = Cvar_Get("sv_noextascii", "1", 0); // jit
 	sv_locked	   = Cvar_Get("sv_locked", "0", 0);		// T3RR0R15T: Locked server. Prevent new players from connecting. (from R1Q2)
-	sv_blockednames         = Cvar_Get("sv_blockednames", "rape,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,nigg,pussy,cunt,slut,asshole,prick,sieg heil,hitler,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,fehlgeburt,nazi,gay,bastard", 0);			// T3RR0R15T: Blocked player names. Prevent players with bad names from connecting.
+	sv_blockednames         = Cvar_Get("sv_blockednames", "rape,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,nigg,pussy,cunt,slut,asshole,prick,sieg heil,hitler,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,fehlgeburt,nazi,gay,bastard,hure,nutte", 0);			// T3RR0R15T: Blocked player names. Prevent players with bad names from connecting.
 	sv_reserved_slots		= Cvar_Get("sv_reserved_slots", "0", CVAR_LATCH);	// T3RR0R15T: Number of reserved player slots. (from R1Q2)
 	sv_reserved_password	= Cvar_Get("sv_reserved_password", "", 0);			// T3RR0R15T: Password required to access a reserved player slot. Clients should set their 'password' cvar to this. (from R1Q2)
 	sv_consolename			= Cvar_Get("sv_consolename", "5", 0);				// T3RR0R15T: Name for console say messages (jit - 5 = "Admin")
