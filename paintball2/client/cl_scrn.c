@@ -1791,7 +1791,11 @@ void SCR_UpdateScreen (void)
 							else
 								t /= 1000.0f;
 
-							Com_sprintf(s, sizeof(s), "%3.0ffps", framecount / t);
+							if (t > 0.0f)
+								Com_sprintf(s, sizeof(s), "%3.0ffps", framecount / t);
+							else
+								Q_strncpyz(s, "???.?fps", sizeof(s));
+
 							lasttime = curtime;
 							framecount = 0;
 						}
