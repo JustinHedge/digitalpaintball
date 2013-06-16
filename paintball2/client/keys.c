@@ -311,15 +311,21 @@ void Key_Console (int key) // pooy -- rewritten for text insert mode.
 	}
 
 	if (key == K_ENTER || key == K_KP_ENTER)
-	{	// backslash text are commands, else chat
+	{
+		// backslash text are commands, else chat
 		if (key_lines[edit_line][1] == '\\' || key_lines[edit_line][1] == '/')
-			Cbuf_AddText(key_lines[edit_line]+2);	// skip the >
+			Cbuf_AddText(key_lines[edit_line] + 2);	// skip the >
 		else
-			Cbuf_AddText(key_lines[edit_line]+1);	// valid command
+			Cbuf_AddText(key_lines[edit_line] + 1);	// valid command
 
 		Cbuf_AddText("\n");
-		Com_Printf("%s\n",key_lines[edit_line]);
-		edit_line = (edit_line + 1) & 31;
+		Com_Printf("%s\n", key_lines[edit_line]);
+
+		if (!Q_streq(key_lines[edit_line], key_lines[(edit_line - 1) & 31])) // jit - don't add a line to the history if it's exactly the same as the last one
+		{
+			edit_line = (edit_line + 1) & 31;
+		}
+
 		history_line = edit_line;
 		key_lines[edit_line][0] = ']';
 		key_lines[edit_line][1] = 0;
