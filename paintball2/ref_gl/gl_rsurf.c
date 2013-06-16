@@ -199,10 +199,6 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
                     for (j = 2; j < p->numverts; j++)
                     {
                         qglBegin(GL_LINE_STRIP);
-                            //qglColor4f(1, 1, 1, 1);
-							//distcolor=(p->verts[0][0] + 4096.0f)/8192.0f;
-							//distcolor=fabs(p->verts[0][0])/4096.0f; // jitest
-							//qglColor4f(distcolor,1,distcolor,1);
                             qglVertex3fv(p->verts[0]);
                             qglVertex3fv(p->verts[j - 1]);
                             qglVertex3fv(p->verts[j]);
@@ -872,6 +868,20 @@ void R_DrawAlphaSurfaces (void)
 	{
 		GL_Bind(s->texinfo->image->texnum);
 
+		// moving trans brushes - spaz
+		if (s->entity)
+		{
+			qglLoadMatrixf(r_world_matrix);
+
+			s->entity->angles[0] = -s->entity->angles[0];	// stupid quake bug
+			s->entity->angles[2] = -s->entity->angles[2];	// stupid quake bug
+
+			R_RotateForEntity(s->entity);
+
+			s->entity->angles[0] = -s->entity->angles[0];	// stupid quake bug
+			s->entity->angles[2] = -s->entity->angles[2];	// stupid quake bug
+		}
+
 		if (!(s->flags & SURF_DRAWTURB)) // jitrspeeds -- these get counted elsewhere
 			c_brush_polys++;
 
@@ -930,6 +940,11 @@ void R_DrawAlphaSurfaces (void)
 			{
 				DrawGLPoly(s->polys);
 			}
+		}
+
+		if (s->entity)
+		{
+			qglLoadMatrixf(r_world_matrix);
 		}
 	}
 
@@ -1222,7 +1237,7 @@ dynamic:
 R_DrawInlineBModel
 =================
 */
-void R_DrawInlineBModel (void)
+void R_DrawInlineBModel (entity_t *e)
 {
 	int			i, k;
 	cplane_t	*pplane;
@@ -1272,6 +1287,7 @@ void R_DrawInlineBModel (void)
 			{	// add to the translucent chain
 				psurf->texturechain = r_alpha_surfaces;
 				r_alpha_surfaces = psurf;
+				psurf->entity = e; // From Quake2Max - fix transparent brush entities not moving.
 			}
 			else if (qglMultiTexCoord2fARB && !(psurf->flags & SURF_DRAWTURB))
 			{
@@ -1398,7 +1414,7 @@ void R_DrawBrushModel (entity_t *e)
 //	GL_TexEnv(GL_MODULATE);
 	GL_TexEnv(GL_COMBINE_EXT); // jitbright
 
-	R_DrawInlineBModel();
+	R_DrawInlineBModel(e);
 	GL_EnableMultitexture(false);
 
 	qglPopMatrix();
