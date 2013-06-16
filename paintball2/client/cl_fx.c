@@ -65,7 +65,7 @@ CL_ClearLightStyles
 */
 void CL_ClearLightStyles (void)
 {
-	memset (cl_lightstyle, 0, sizeof(cl_lightstyle));
+	memset(cl_lightstyle, 0, sizeof(cl_lightstyle));
 	lastofs = -1;
 }
 
@@ -76,26 +76,28 @@ CL_RunLightStyles
 */
 void CL_RunLightStyles (void)
 {
-	int		ofs;
-	int		i;
-	clightstyle_t	*ls;
+	int i, ofs;
+	clightstyle_t *ls;
 
 	ofs = cl.time / 100;
+
 	if (ofs == lastofs)
 		return;
+
 	lastofs = ofs;
 
-	for (i=0,ls=cl_lightstyle ; i<MAX_LIGHTSTYLES ; i++, ls++)
+	for (i = 0, ls = cl_lightstyle; i < MAX_LIGHTSTYLES; ++i, ++ls)
 	{
 		if (!ls->length)
 		{
-			ls->value[0] = ls->value[1] = ls->value[2] = 1.0;
+			ls->value[0] = ls->value[1] = ls->value[2] = 1.0f;
 			continue;
 		}
+
 		if (ls->length == 1)
 			ls->value[0] = ls->value[1] = ls->value[2] = ls->map[0];
 		else
-			ls->value[0] = ls->value[1] = ls->value[2] = ls->map[ofs%ls->length];
+			ls->value[0] = ls->value[1] = ls->value[2] = ls->map[ofs % ls->length];
 	}
 }
 
@@ -124,11 +126,11 @@ CL_AddLightStyles
 */
 void CL_AddLightStyles (void)
 {
-	int		i;
-	clightstyle_t	*ls;
+	int i;
+	clightstyle_t *ls;
 
-	for (i=0,ls=cl_lightstyle ; i<MAX_LIGHTSTYLES ; i++, ls++)
-		V_AddLightStyle (i, ls->value[0], ls->value[1], ls->value[2]);
+	for (i = 0, ls = cl_lightstyle; i < MAX_LIGHTSTYLES; ++i, ++ls)
+		V_AddLightStyle(i, ls->value[0], ls->value[1], ls->value[2]);
 }
 
 /*

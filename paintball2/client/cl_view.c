@@ -147,13 +147,14 @@ V_AddLightStyle
 */
 void V_AddLightStyle (int style, float r, float g, float b)
 {
-	lightstyle_t	*ls;
+	lightstyle_t *ls;
 
 	if (style < 0 || style > MAX_LIGHTSTYLES)
-		Com_Error (ERR_DROP, "Bad light style %i.", style);
+		Com_Error(ERR_DROP, "Bad light style %i.", style);
+
 	ls = &r_lightstyles[style];
 
-	ls->white = r+g+b;
+	ls->white = r + g + b;
 	ls->rgb[0] = r;
 	ls->rgb[1] = g;
 	ls->rgb[2] = b;
