@@ -4385,6 +4385,8 @@ cvar_t	*gl_hash_textures; // jithash
 cvar_t	*gl_free_unused_textures; // jitfreeunused
 //cvar_t	*gl_modulate;
 cvar_t	*gl_lightmapgamma; // jitgamma
+cvar_t	*r_oldlightpoint; // jit
+cvar_t	*r_hardware_light; // jitlight
 cvar_t	*cl_hudscale; // jithudscale
 cvar_t  *cl_crosshairscale;
 cvar_t	*gl_round_down;
@@ -5726,6 +5728,8 @@ void R_Register(void)
 	gl_showbbox = ri.Cvar_Get("gl_showbbox", "0", 0);  // jit / Guy
 //	gl_modulate = ri.Cvar_Get("gl_modulate", "1.6", CVAR_ARCHIVE); // jit, default to 1.6
 	gl_lightmapgamma = ri.Cvar_Get("gl_lightmapgamma", ".6", CVAR_ARCHIVE); // jitgamma
+	r_oldlightpoint = ri.Cvar_Get("r_oldlightpoint", "0", 0); // jit
+	r_hardware_light = ri.Cvar_Get("r_hardware_light", "1", 0); // jitlight
 	gl_textshadow = ri.Cvar_Get("gl_textshadow", "1", CVAR_ARCHIVE); // jittext
 	gl_hash_textures = ri.Cvar_Get("gl_hash_textures", "1", CVAR_ARCHIVE); // jithash
 	gl_free_unused_textures = ri.Cvar_Get("gl_free_unused_textures", "1", CVAR_ARCHIVE); // jitfreeunused

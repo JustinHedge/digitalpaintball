@@ -40,12 +40,15 @@ static float	shadelight[3]; // jitskm
 static vec3_t	inVertsArray[4096]; // jitskm
 static vec3_t	inNormalsArray[4096]; // jitskm
 static vec3_t	colorArray[4096]; // jitskm
+#ifdef ENABLE_SIMD_INTRINSICS
+static float	overflowDONOTUSE; // jitskm - possible for the simd store to overflow into this if there are 4096 verts... crappy temp solution for now.  Should ultimately make the arrays simd structures.
+#endif
 
 static void SKM_TransformBoneposes (mskmodel_t *model, bonepose_t *boneposes,
 									bonepose_t *sourceboneposes, vec3_t angle, vec3_t origin)
 {
 	register int	j;
-	bonepose_t		temppose;
+	//bonepose_t		temppose;
 	register int	numbones = (int)model->numbones;
 	register int	parent;
 	quat_t			q_rot;
@@ -53,7 +56,6 @@ static void SKM_TransformBoneposes (mskmodel_t *model, bonepose_t *boneposes,
 	vec3_t			q2axis = { 90.0f, 0.0f, 90.0f };
 	vec3_t			q2invaxis = { -90.0f, -90.0f, 0.0f };
 
-	// todo - optimize
 	Quat_FromEulerAngle(q2axis, q_q2axis);
 	Quat_FromEulerAngle(q2invaxis, q_q2invaxis);
 	Quat_FromEulerAngle(angle, q_temp);
@@ -70,17 +72,28 @@ static void SKM_TransformBoneposes (mskmodel_t *model, bonepose_t *boneposes,
 
 			// todo - rotate around origin instead of parent bone
 			// vectorsubtract base bone position from origin and rotate vector around axis or whatever.
+#if 0
 			memcpy(&temppose, &sourceboneposes[j], sizeof(bonepose_t));
 			Quat_ConcatTransforms(q_rot, origin, temppose.quat,
 				temppose.origin, boneposes[j].quat, boneposes[j].origin);
+#else // jit -  don't think the temp is necessary
+			Quat_ConcatTransforms(q_rot, origin, sourceboneposes[j].quat,
+				sourceboneposes[j].origin, boneposes[j].quat, boneposes[j].origin);
+#endif
 		}
 		else
 		{
+#if 0
 			memcpy(&temppose, &sourceboneposes[j], sizeof(bonepose_t));
 
 			Quat_ConcatTransforms(boneposes[parent].quat,
 				boneposes[parent].origin, temppose.quat,
 				temppose.origin, boneposes[j].quat, boneposes[j].origin);
+#else
+			Quat_ConcatTransforms(boneposes[parent].quat,
+				boneposes[parent].origin, sourceboneposes[j].quat,
+				sourceboneposes[j].origin, boneposes[j].quat, boneposes[j].origin);
+#endif
 		}
 	}
 }
@@ -93,7 +106,7 @@ static bonepose_t oldboneposescache[SKM_MAX_BONES];
 Mod_LoadSkeletalPose
 =================
 */
-void Mod_LoadSkeletalPose (char *name, model_t *mod, void *buffer)
+static void Mod_LoadSkeletalPose (char *name, model_t *mod, void *buffer)
 {
 	int				i, j, k;
 	mskmodel_t		*poutmodel;
@@ -257,20 +270,26 @@ void Mod_LoadSkeletalModel (model_t *mod, model_t *parent, void *buffer)
 		pinskmvert = (dskmvertex_t *)((byte *)pinmodel + LittleLong(pinmesh->ofs_verts));
 		poutskmvert = poutmesh->vertexes = Mod_Malloc(mod, sizeof(mskvertex_t) * poutmesh->numverts);
 
-		for (j = 0; j < poutmesh->numverts; j++, poutskmvert++)
+		for (j = 0; j < poutmesh->numverts; ++j, ++poutskmvert)
 		{
 			poutskmvert->numbones = LittleLong(pinskmvert->numbones);
 
 			pinbonevert = (dskmbonevert_t *)((byte *)pinskmvert + sizeof(poutskmvert->numbones));
 			poutbonevert = poutskmvert->verts = Mod_Malloc(mod, sizeof(mskbonevert_t) * poutskmvert->numbones);
 
-			for (l = 0; l < poutskmvert->numbones; l++, pinbonevert++, poutbonevert++)
+			for (l = 0; l < poutskmvert->numbones; ++l, ++pinbonevert, ++poutbonevert)
 			{
-				for (k = 0; k < 3; k++)
+				for (k = 0; k < 3; ++k)
 				{
 					poutbonevert->origin[k] = LittleFloat(pinbonevert->origin[k]);
+#ifndef ENABLE_SIMD_INTRINSICS
 					poutbonevert->normal[k] = LittleFloat(pinbonevert->normal[k]);
+#endif
 				}
+
+#ifdef ENABLE_SIMD_INTRINSICS
+				poutbonevert->normal = _mm_loadu_ps(pinbonevert->normal);
+#endif
 
 				poutbonevert->influence = LittleFloat(pinbonevert->influence);
 				poutbonevert->bonenum = LittleLong(pinbonevert->bonenum);
@@ -407,7 +426,9 @@ void Mod_LoadSkeletalModel (model_t *mod, model_t *parent, void *buffer)
 					poutbonepose = curboneposescache + poutbonevert->bonenum; // jit
 					Quat_TransformVector(poutbonepose->quat, poutbonevert->origin, vtemp);
 					VectorMA(vtemp, poutbonevert->influence, poutbonepose->origin, vtemp);
-					v[0] += vtemp[0]; v[1] += vtemp[1]; v[2] += vtemp[2];
+					v[0] += vtemp[0];
+					v[1] += vtemp[1];
+					v[2] += vtemp[2];
 				}
 
 				AddPointToBounds(v, poutframe->mins, poutframe->maxs);
@@ -431,6 +452,7 @@ void Mod_LoadSkeletalModel (model_t *mod, model_t *parent, void *buffer)
 	mod->type = mod_skeletal;
 }
 
+#if 0 // unused?
 /*
 ================
 R_SkeletalGetNumBones
@@ -493,6 +515,8 @@ void R_SkeletalGetBonePose(model_t *mod, int bonenum, int frame, bonepose_t *bon
 		*bonepose = mod->skmodel->frames[frame].boneposes[bonenum];
 }
 
+#endif
+
 /*
 ================
 R_SkeletalModelLODForDistance
@@ -530,7 +554,7 @@ static model_t *R_SkeletalModelLODForDistance (entity_t *e)
 R_SkeletalModelBBox
 ================
 */
-void R_SkeletalModelBBox (entity_t *e, model_t *mod)
+static void R_SkeletalModelBBox (entity_t *e, model_t *mod)
 {
 	int			i;
 	mskframe_t	*pframe, *poldframe;
@@ -711,11 +735,16 @@ qboolean R_CullSkeletalModel (entity_t *e)
 }
 
 typedef struct {
+#ifdef ENABLE_SIMD_INTRINSICS
+	__m128 axis[3];
+	__m128 origin;
+#else
 	vec3_t axis[3];
 	vec3_t origin;
+#endif
 } axis_origin_t;
 
-axis_origin_t skmbonepose[SKM_MAX_BONES];
+axis_origin_t g_skmbonepose[SKM_MAX_BONES];
 
 /*
 ================
@@ -723,7 +752,7 @@ R_PositionBonesLerp
 Position the and lerp the skeleton.
 ================
 */
-void R_PositionBonesLerp (entity_t *e, model_t *mod, float backlerp) // jitskm
+static void R_PositionBonesLerp (entity_t *e, model_t *mod, float backlerp) // jitskm
 {
 	mskmodel_t		*skmodel = mod->skmodel;
 	float			frontlerp = 1.0 - backlerp;
@@ -751,18 +780,60 @@ void R_PositionBonesLerp (entity_t *e, model_t *mod, float backlerp) // jitskm
 
 	for (i = 0; i < total; i++)
 	{
-		out = skmbonepose + i;
+		out = g_skmbonepose + i;
 		bonepose = curboneposescache + i;
 		oldbonepose = oldboneposescache + i;
 
 		// interpolate quaternions and origins
 		Quat_Lerp(oldbonepose->quat, bonepose->quat, frontlerp, quaternion);
 		Quat_Matrix(quaternion, out->axis);
+#ifdef ENABLE_SIMD_INTRINSICS
+		{
+			float origin[4];
+
+			// todo: SIMD this?
+			origin[0] = oldbonepose->origin[0] + (bonepose->origin[0] - oldbonepose->origin[0]) * frontlerp;
+			origin[1] = oldbonepose->origin[1] + (bonepose->origin[1] - oldbonepose->origin[1]) * frontlerp;
+			origin[2] = oldbonepose->origin[2] + (bonepose->origin[2] - oldbonepose->origin[2]) * frontlerp;
+			origin[3] = 0.0f;
+			out->origin = _mm_loadu_ps(origin);
+		}
+#else
 		out->origin[0] = oldbonepose->origin[0] + (bonepose->origin[0] - oldbonepose->origin[0]) * frontlerp;
 		out->origin[1] = oldbonepose->origin[1] + (bonepose->origin[1] - oldbonepose->origin[1]) * frontlerp;
 		out->origin[2] = oldbonepose->origin[2] + (bonepose->origin[2] - oldbonepose->origin[2]) * frontlerp;
+#endif
 	}
 }
+
+static void R_EnableLighting (vec_t *lightdir_in)
+{
+	float lightdir[4];
+	float diffuse[4] = { shadelight[0] * 0.7f, shadelight[1] * 0.7f, shadelight[2] * 0.7f, 1.0f };
+	float ambient[4] = { shadelight[0] * 0.5f, shadelight[1] * 0.5f, shadelight[2] * 0.5f, 1.0f };
+	static float zero[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	VectorCopy(lightdir_in, lightdir);
+	lightdir[3] = 0.0f;
+	qglEnableClientState(GL_NORMAL_ARRAY);
+	qglNormalPointer(GL_FLOAT, 0, inNormalsArray);
+	qglEnable(GL_LIGHTING);
+	qglEnable(GL_COLOR_MATERIAL);
+	qglMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, shadelight);
+	qglLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+	qglEnable(GL_LIGHT0);
+	qglLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+	qglLightfv(GL_LIGHT0, GL_AMBIENT, zero);
+	qglLightfv(GL_LIGHT0, GL_POSITION, lightdir);
+}
+
+
+static void R_DisableLighting (void)
+{
+	qglDisable(GL_LIGHTING);
+	qglDisableClientState(GL_NORMAL_ARRAY);
+}
+
 
 /*
 ================
@@ -772,27 +843,30 @@ Call R_PositionBonesLerp to position bones before calling this.
 */
 
 //void R_DrawBonesFrameLerp (const meshbuffer_t *mb, model_t *mod, float backlerp, qboolean shadow)
-void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
+static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 {
 	int				i/*, meshnum*/;
-	int				j, k, l;
+	int				j, l;
+#ifndef ENABLE_SIMD_INTRINSICS
+	int				k;
+#endif
 	mskmesh_t		*mesh;
 	mskvertex_t		*skmverts;
 	mskbonevert_t	*boneverts;
 	int				numtris, numverts; // jit
-	register float	light; // jit
 	int				*indexes; // jit
 	mskmodel_t		*skmodel = mod->skmodel;
 	rscript_t		*rs; // jitrscript
 	image_t			*skin_image;
 	axis_origin_t	*pose;
 	qboolean		counttris = true;
+	qboolean		hardware_light_enabled = r_hardware_light->value > 0.0f;
 
 	// hidden object
 	if (e->flags & RF_TRANSLUCENT && !e->alpha)
 		return;
 
-#ifdef DEBUG
+#if 0 //def DEBUG
 	{
 		int err;
 
@@ -813,30 +887,31 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 		if (e->flags & RF_SHELL_HALF_DAM)
 		{
-			shadelight[0] = 0.56;
-			shadelight[1] = 0.59;
-			shadelight[2] = 0.45;
+			shadelight[0] = 0.56f;
+			shadelight[1] = 0.59f;
+			shadelight[2] = 0.45f;
 		}
 
 		if (e->flags & RF_SHELL_DOUBLE)
 		{
-			shadelight[0] = 0.9;
-			shadelight[1] = 0.7;
+			shadelight[0] = 0.9f;
+			shadelight[1] = 0.7f;
 		}
 
 		if (e->flags & RF_SHELL_RED)
-			shadelight[0] = 1.0;
+			shadelight[0] = 1.0f;
 
 		if (e->flags & RF_SHELL_GREEN)
-			shadelight[1] = 1.0;
+			shadelight[1] = 1.0f;
 
 		if (e->flags & RF_SHELL_BLUE)
-			shadelight[2] = 1.0;
+			shadelight[2] = 1.0f;
 	}
 	else if (e->flags & RF_FULLBRIGHT)
 	{
-		for (i = 0; i < 3; i++)
-			shadelight[i] = 1.0;
+		shadelight[0] = 1.0f;
+		shadelight[1] = 1.0f;
+		shadelight[2] = 1.0f;
 	}
 	else
 	{
@@ -860,15 +935,15 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 	if (e->flags & RF_MINLIGHT)
 	{
-		for (i = 0; i < 3; i++)
-			if (shadelight[i] > 0.1)
+		for (i = 0; i < 3; ++i)
+			if (shadelight[i] > 0.1f)
 				break;
 
 		if (i == 3)
 		{
-			shadelight[0] = 0.1;
-			shadelight[1] = 0.1;
-			shadelight[2] = 0.1;
+			shadelight[0] = 0.1f;
+			shadelight[1] = 0.1f;
+			shadelight[2] = 0.1f;
 		}
 	}
 
@@ -879,9 +954,9 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 		scale = 0.1f * sin(r_newrefdef.time * 7.0f);
 
-		for (i = 0; i < 3; i++)
+		for (i = 0; i < 3; ++i)
 		{
-			min = shadelight[i] * 0.8;
+			min = shadelight[i] * 0.8f;
 			shadelight[i] += scale;
 
 			if (shadelight[i] < min)
@@ -891,9 +966,9 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 	if (r_newrefdef.rdflags & RDF_IRGOGGLES && e->flags & RF_IR_VISIBLE)
 	{
-		shadelight[0] = 1.0;
-		shadelight[1] = 0.0;
-		shadelight[2] = 0.0;
+		shadelight[0] = 1.0f;
+		shadelight[1] = 0.0f;
+		shadelight[2] = 0.0f;
 	}
 
 	numtris = mesh->numtris;
@@ -902,16 +977,56 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	indexes = mesh->indexes;
 
 	// translate vertexes.
-	// jitodo: optimize
 	for (j = 0, skmverts = mesh->vertexes; j < numverts; ++j, ++skmverts)
 	{
+#ifdef ENABLE_SIMD_INTRINSICS
+		register __m128 vert = _mm_setzero_ps();
+		register __m128 normal = _mm_setzero_ps();
+#else
 		VectorClear(inVertsArray[j]);
 		VectorClear(inNormalsArray[j]);
+#endif
 
 		for (l = 0, boneverts = skmverts->verts; l < skmverts->numbones; ++l, ++boneverts)
 		{
-			pose = skmbonepose + boneverts->bonenum;
+			pose = g_skmbonepose + boneverts->bonenum;
 
+#ifdef ENABLE_SIMD_INTRINSICS // jitopt - SIMD instructions
+			{
+				__m128 boneVertOrigin = _mm_loadu_ps(boneverts->origin);
+				__m128 boneVertNormal = boneverts->normal;
+				__m128 boneVertX = _mm_shuffle_ps(boneVertOrigin, boneVertOrigin, 0x00);
+				__m128 boneVertY = _mm_shuffle_ps(boneVertOrigin, boneVertOrigin, 0x55);
+				__m128 boneVertZ = _mm_shuffle_ps(boneVertOrigin, boneVertOrigin, 0xaa);
+				__m128 boneVertNormalX = _mm_shuffle_ps(boneVertNormal, boneVertNormal, 0x00);
+				__m128 boneVertNormalY = _mm_shuffle_ps(boneVertNormal, boneVertNormal, 0x55);
+				__m128 boneVertNormalZ = _mm_shuffle_ps(boneVertNormal, boneVertNormal, 0xaa);
+				__m128 boneVertInfluence = _mm_loadu_ps(&boneverts->influence);
+
+				boneVertInfluence = _mm_shuffle_ps(boneVertInfluence, boneVertInfluence, 0x00);
+				vert = _mm_add_ps(vert,
+							_mm_add_ps(
+								_mm_add_ps(
+									_mm_add_ps(
+										_mm_mul_ps(boneVertX, pose->axis[0]),
+										_mm_mul_ps(boneVertY, pose->axis[1])
+									),
+									_mm_mul_ps(boneVertZ, pose->axis[2])
+								),
+								_mm_mul_ps(boneVertInfluence, pose->origin)
+							)
+						);
+				normal = _mm_add_ps(normal,
+							_mm_add_ps(
+								_mm_add_ps(
+									_mm_mul_ps(boneVertNormalX, pose->axis[0]),
+									_mm_mul_ps(boneVertNormalY, pose->axis[1])
+								),
+								_mm_mul_ps(boneVertNormalZ, pose->axis[2])
+							)
+						);
+			}
+#else
 			for (k = 0; k < 3; k++)
 			{
 				inVertsArray[j][k] +=
@@ -924,7 +1039,13 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 					boneverts->normal[1] * pose->axis[k][1] +
 					boneverts->normal[2] * pose->axis[k][2];
 			}
+#endif
 		}
+
+#ifdef ENABLE_SIMD_INTRINSICS
+		_mm_storeu_ps(inVertsArray[j], vert); // Note: This will overflow 1 float into inNormalsArray if verts are maxed out, but that should be ok.
+		_mm_storeu_ps(inNormalsArray[j], normal); // Note: This will overflow 1 float into color array if verts are maxed out.
+#endif
 	}
 
 #ifdef GLSTATE_DISABLE_BLEND
@@ -932,12 +1053,10 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 #else
 	qglDisable(GL_BLEND);
 #endif
-	//GL_TexEnv(GL_MODULATE); temp -- put this back for tutorial
-	// todo: 
-	//qglDisable(GL_TEXTURE_2D);
+
 	GL_TexEnv(GL_COMBINE_EXT); // jitbright
 	qglShadeModel(GL_SMOOTH);
-	qglColor3fv(shadelight);
+	qglColor3f(1.0f, 1.0f, 1.0f);
 
 	skin_image = e->skins[meshnum];
 
@@ -955,14 +1074,17 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 		c_alias_polys += numtris;
 
 	// Lighting done in software for now -- just vertex colors.  Simulates Q2 style MD2 lighting.
-	for (j = 0; j < numverts; j++)
+	if (!hardware_light_enabled)
 	{
-		//light = (DotProduct(inNormalsArray[j], default_lightdir) + 1.0f) / 2.0f * 1.4f + 0.6f;
-		light = (DotProduct(inNormalsArray[j], default_lightdir) + 1.0f) / 2.0f * 0.7f + 0.3f;
-		VectorScale(shadelight, light, colorArray[j]);
+		for (j = 0; j < numverts; ++j)
+		{
+			//light = (DotProduct(inNormalsArray[j], default_lightdir) + 1.0f) / 2.0f * 1.4f + 0.6f;
+			register double light = (DotProduct(inNormalsArray[j], default_lightdir) + 1.0) * 0.5 * 0.7 + 0.3; // jitopt - for some reason, using a double here is much faster...
+			VectorScale(shadelight, light, colorArray[j]);
+		}
 	}
 
-#ifdef DEBUG
+#if 0 //def DEBUG
 	{
 		int err;
 
@@ -981,7 +1103,7 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 		if (!rs->ready)
 			RS_ReadyScript(rs);
 
-#ifdef DEBUG
+#if 0 //def DEBUG
 		{
 			int err;
 
@@ -992,7 +1114,7 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 		while (stage)
 		{
-			neednormals = false;
+			neednormals = hardware_light_enabled;
 
 			if (stage->anim_count)
 				GL_Bind(RS_Animate(stage));
@@ -1016,7 +1138,7 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 			}
 			else
 			{
-				txm = 0;
+				txm = 0.0f;
 			}
 
 			if (stage->scroll.speedY)
@@ -1036,12 +1158,12 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 			}
 			else
 			{
-				tym = 0;
+				tym = 0.0f;
 			}
 
 			if (stage->blendfunc.blend)
 			{
-#ifdef DEBUG
+#if 0 //def DEBUG
 				{
 					int err;
 
@@ -1051,7 +1173,7 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 #endif
 				qglBlendFunc(stage->blendfunc.source, stage->blendfunc.dest);
 				GLSTATE_ENABLE_BLEND
-#ifdef DEBUG
+#if 0 //def DEBUG
 				{
 					int err;
 
@@ -1092,7 +1214,7 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 			if (stage->tcGen == TC_GEN_ENVIRONMENT)
 			{
-#ifdef DEBUG
+#if 0 // def DEBUG
 				{
 					int err;
 
@@ -1105,7 +1227,7 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 				qglTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 				GLSTATE_ENABLE_TEXGEN;
 				neednormals = true;
-#ifdef DEBUG
+#if 0 //def DEBUG
 				{
 					int err;
 
@@ -1134,26 +1256,43 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 			{
 				texcoords = mesh->stcoords;
 			}
-			
+
 			// render the model
-			qglEnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
+
+			if (hardware_light_enabled)
+			{
+				R_EnableLighting(default_lightdir);
+			}
+			else
+			{
+				if (neednormals)
+				{
+					qglEnableClientState(GL_NORMAL_ARRAY);
+					qglNormalPointer(GL_FLOAT, 0, inNormalsArray);
+				}
+
+				qglEnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
+				qglColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
+			}
+
 			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			qglEnableClientState(GL_VERTEX_ARRAY);
-			qglColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
 			qglVertexPointer(3, GL_FLOAT, 0, inVertsArray);
 			qglTexCoordPointer(2, GL_FLOAT, 0, texcoords);
-
-			if (neednormals)
-			{
-				qglEnableClientState(GL_NORMAL_ARRAY);
-				qglNormalPointer(GL_FLOAT, 0, inNormalsArray);
-			}
 
 			// doesn't work: qglColor4f(1.0f, 1.0f, 1.0f, alpha);
 			qglDrawElements(GL_TRIANGLES, numtris * 3, GL_UNSIGNED_INT, indexes);
 			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
 			qglDisableClientState(GL_VERTEX_ARRAY);
-			qglDisableClientState(GL_COLOR_ARRAY);
+
+			if (hardware_light_enabled)
+			{
+				R_DisableLighting();
+			}
+			else
+			{
+				qglDisableClientState(GL_COLOR_ARRAY);
+			}
 
 			if (neednormals)
 				qglDisableClientState(GL_NORMAL_ARRAY);
@@ -1165,25 +1304,43 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 			qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			GLSTATE_DISABLE_TEXGEN;
 
-			stage=stage->next;
+			stage = stage->next;
 		}
-		// todo;
 	}
 	else
 	{
 		// render the model with no script
 		GL_Bind(skin_image->texnum);
-		qglEnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
+
 		qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		qglEnableClientState(GL_VERTEX_ARRAY);
-		qglColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
+		
+		if (hardware_light_enabled)
+		{
+			R_EnableLighting(default_lightdir);
+		}
+		else
+		{
+			qglEnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
+			qglColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
+		}
+
 		qglVertexPointer(3, GL_FLOAT, 0, inVertsArray);
 		qglTexCoordPointer(2, GL_FLOAT, 0, mesh->stcoords);
-		qglDrawElements(GL_TRIANGLES, numtris*3, GL_UNSIGNED_INT, indexes);
+		qglDrawElements(GL_TRIANGLES, numtris * 3, GL_UNSIGNED_INT, indexes);
 		qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		qglDisableClientState(GL_VERTEX_ARRAY);
-		qglDisableClientState(GL_COLOR_ARRAY);
-#ifdef DEBUG
+
+		if (hardware_light_enabled)
+		{
+			R_DisableLighting();
+		}
+		else
+		{
+			qglDisableClientState(GL_COLOR_ARRAY);
+		}
+
+#if 0 //def DEBUG
 		{
 			int err;
 
@@ -1240,24 +1397,23 @@ void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	qglEnd();
 	qglEnable(GL_DEPTH_TEST);
 #endif
+
 #ifdef DEBUG
 	{
-		int err;
-
-		err = qglGetError();
+		int err = qglGetError();
 		assert(err == GL_NO_ERROR);
 	}
 #endif
 }
 
-void R_HackDrawWeaponModel (entity_t *player_e, model_t *model, model_t *weaponmodel) // jitskm -- quick hack to put the weapon in the player's hand
+static void R_HackDrawWeaponModel (entity_t *player_e, model_t *model, model_t *weaponmodel) // jitskm -- quick hack to put the weapon in the player's hand
 {
 	mskmodel_t *skm = model->skmodel;
 	register int i, total = skm->numbones;
 	mskbone_t *bone = skm->bones;
 
 	// find the right hand and position the weapon there.
-	for (i = 0; i < total; i++, bone++)
+	for (i = 0; i < total; ++i, ++bone)
 	{
 		if (Q_streq(bone->name, "bip01 r hand"))
 		{
@@ -1265,11 +1421,16 @@ void R_HackDrawWeaponModel (entity_t *player_e, model_t *model, model_t *weaponm
 			entity_t e; // only the angles and origin are used from this
 
 			memset(&e, 0, sizeof(e)); // make sure all the flags and such are cleared so it doesn't do anything crazy
-			VectorCopy(skmbonepose[i].origin, e.origin);
-			Matrix_EulerAngles2(skmbonepose[i].axis, e.angles);
+#ifdef ENABLE_SIMD_INTRINSICS
+			_mm_storeu_ps(e.origin, g_skmbonepose[i].origin);
+			Matrix_EulerAngles2_SIMD(g_skmbonepose[i].axis, e.angles);
+#else
+			VectorCopy(g_skmbonepose[i].origin, e.origin);
+			Matrix_EulerAngles2(g_skmbonepose[i].axis, e.angles);
+#endif
 			R_PositionBonesLerp(&e, weaponmodel, 0);
 
-			for (i = 0; i < nummeshes; i++)
+			for (i = 0; i < nummeshes; ++i)
 				R_DrawSkeletalMesh(&e, weaponmodel, i);
 
 			return;
@@ -1295,7 +1456,7 @@ void R_DrawSkeletalModel (entity_t *e)
 	// hack the depth range to prevent view model from poking into walls
 	if (e->flags & RF_WEAPONMODEL)
 	{
-		qglDepthRange(gldepthmin, gldepthmin + 0.3 *(gldepthmax - gldepthmin));
+		qglDepthRange(gldepthmin, gldepthmin + 0.3f *(gldepthmax - gldepthmin));
 	}
 	else // jit
 	{

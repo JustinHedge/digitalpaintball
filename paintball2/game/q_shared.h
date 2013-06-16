@@ -42,6 +42,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdlib.h>
 #include <time.h>
 
+#define ENABLE_SIMD_INTRINSICS // jitopt - simd/sse performance optimizations
+#ifdef ENABLE_SIMD_INTRINSICS
+#include <xmmintrin.h>
+#endif
+
 #ifdef _WIN32
 #else
 #include <signal.h>
@@ -285,6 +290,9 @@ void Matrix_TransformVector (vec3_t m[3], vec3_t v, vec3_t out);
 void Matrix_Transpose (vec3_t in[3], vec3_t out[3]);
 void Matrix_EulerAngles (vec3_t m[3], vec3_t angles);
 void Matrix_EulerAngles2 (vec3_t m[3], vec3_t angles); // jitskm
+#ifdef ENABLE_SIMD_INTRINSICS
+void Matrix_EulerAngles2_SIMD (__m128 *m, vec3_t angles); // jitskm
+#endif
 void Matrix_Rotate (vec3_t m[3], vec_t angle, vec_t x, vec_t y, vec_t z);
 void Matrix_FromPoints (const vec3_t v1, const vec3_t v2, const vec3_t v3, vec3_t m[3]);
 
@@ -297,7 +305,11 @@ vec_t Quat_Inverse (const quat_t q1, quat_t q2);
 void Quat_Multiply (const quat_t q1, const quat_t q2, quat_t out);
 void Quat_Lerp (const quat_t q1, const quat_t q2, vec_t t, quat_t out);
 void Quat_Vectors (const quat_t q, vec3_t f, vec3_t r, vec3_t u);
+#ifdef ENABLE_SIMD_INTRINSICS
+void Quat_Matrix (const quat_t q, __m128 *m);
+#else
 void Quat_Matrix (const quat_t q, vec3_t m[3]);
+#endif
 void Matrix_Quat (vec3_t m[3], quat_t q);
 void Quat_TransformVector (const quat_t q, const vec3_t v, vec3_t out);
 void Quat_ConcatTransforms (const quat_t q1, const vec3_t v1, const quat_t q2, const vec3_t v2, quat_t q, vec3_t v);

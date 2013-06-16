@@ -127,6 +127,8 @@ typedef struct msurface_s
 	float		cached_light[MAXLIGHTMAPS];	// values currently used in lightmap
 	byte		*samples;		// [numstyles*surfsize]
 	byte		*stain_samples;		// stainmapping
+
+	entity_t	*entity; // used for transparent brush entity fix.
 } msurface_t;
 
 typedef struct mnode_s
@@ -188,7 +190,11 @@ typedef struct
 {
 	vec3_t			origin;
 	float			influence;
+#ifdef ENABLE_SIMD_INTRINSICS
+	__m128			normal;
+#else
 	vec3_t			normal;
+#endif
 	unsigned int	bonenum;
 } mskbonevert_t;
 

@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <math.h> // jitskm
 
+
 #define DEG2RAD( a ) ( (float)a * (float)M_PI ) / 180.0F
 #define RAD2DEG( a ) ( a * 180.0F ) / M_PI
 
@@ -1036,6 +1037,50 @@ void Quat_Lerp (const quat_t q1, const quat_t q2, vec_t t, quat_t out)
 	out[3] = scale0 * p1[3] + scale1 * q2[3];
 }
 
+#ifdef ENABLE_SIMD_INTRINSICS
+void Quat_Matrix (const quat_t q, __m128 *m)
+{
+	float colA[4], colB[4], colC[4]; // todo: align these so we can use load instead of loadu
+	vec_t wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
+
+	x2 = q[0] + q[0];
+	y2 = q[1] + q[1];
+	z2 = q[2] + q[2];
+
+	xx = q[0] * x2;
+	xy = q[0] * y2;
+	xz = q[0] * z2;
+
+	yy = q[1] * y2;
+	yz = q[1] * z2;
+
+	zz = q[2] * z2;
+
+	wx = q[3] * x2;
+	wy = q[3] * y2;
+	wz = q[3] * z2;
+
+	colA[0] = 1.0f - yy - zz;
+	colA[1] = xy + wz;
+	colA[2] = xz - wy;
+	colA[3] = 0.0f;
+
+	colB[0] = xy - wz;
+	colB[1] = 1.0f - xx - zz;
+	colB[2] = yz + wx;
+	colB[3] = 0.0f;
+
+	colC[0] = xz + wy;
+	colC[1] = yz - wx;
+	colC[2] = 1.0f - xx - yy;
+	colC[3] = 0.0f;
+
+	m[0] = _mm_loadu_ps(colA);
+	m[1] = _mm_loadu_ps(colB);
+	m[2] = _mm_loadu_ps(colC);
+	m[3] = _mm_setzero_ps();
+}
+#else
 void Quat_Vectors (const quat_t q, vec3_t f, vec3_t r, vec3_t u)
 {
 	vec_t wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
@@ -1071,6 +1116,7 @@ void Quat_Matrix (const quat_t q, vec3_t m[3])
 {
 	Quat_Vectors(q, m[0], m[1], m[2]);
 }
+#endif
 
 void Quat_TransformVector (const quat_t q, const vec3_t v, vec3_t out)
 {
@@ -1181,6 +1227,20 @@ void Matrix_EulerAngles (vec3_t m[3], vec3_t angles)
 }
 */
 
+#ifdef ENABLE_SIMD_INTRINSICS
+void Matrix_EulerAngles2_SIMD (__m128 *m128, vec3_t angles) // jitskm, modified to work the way I think it should.
+{
+	vec_t	c;
+	float	m[4][4]; // todo: align so we can use store instead of storeu
+	_mm_storeu_ps(m[0], m128[0]);
+	_mm_storeu_ps(m[1], m128[1]);
+	_mm_storeu_ps(m[2], m128[2]);
+
+	c = 1.0f / fabs(cos(angles[PITCH] = RAD2DEG((-asin(m[0][2])))));
+	angles[YAW] = RAD2DEG(atan2(m[0][1] * c, m[0][0] * c));
+	angles[ROLL] = -RAD2DEG(atan2(-m[1][2] * c, m[2][2] * c));
+}
+#else
 void Matrix_EulerAngles2 (vec3_t m[3], vec3_t angles) // jitskm, modified to work the way I think it should.
 {
 	vec_t	c;
@@ -1189,6 +1249,7 @@ void Matrix_EulerAngles2 (vec3_t m[3], vec3_t angles) // jitskm, modified to wor
 	angles[YAW] = RAD2DEG(atan2(m[1][0] * c, m[0][0] * c));
 	angles[ROLL] = -RAD2DEG(atan2(-m[2][1] * c, m[2][2] * c));
 }
+#endif
 
 // jitskm
 //====================================================================================
@@ -2347,6 +2408,129 @@ void Q_strncpyzna (char *dest, const char *src, size_t size)
 	}
 #endif
 }
+
+#if 0 // tests showed this as being slower (5% overall FPS drop) than memcpy.  Maybe it's faster for aligned memory and would be useful later?
+void *RB_MemCpy(void *dst, const void *src, size_t count)
+{
+	__asm
+	{
+		mov			esi, dword ptr [src]
+		mov			edi, dword ptr [dst]
+
+		cmp			dword ptr [count], 64
+		jl			TryCopyQWord32
+
+CopyQWord64:
+		movq		mm0, [esi]
+		movq		mm1, [esi + 8]
+		movq		mm2, [esi + 16]
+		movq		mm3, [esi + 24]
+		movq		mm4, [esi + 32]
+		movq		mm5, [esi + 40]
+		movq		mm6, [esi + 48]
+		movq		mm7, [esi + 56]
+		add			esi, 64
+
+		movntq		[edi], mm0
+		movntq		[edi + 8], mm1
+		movntq		[edi + 16], mm2
+		movntq		[edi + 24], mm3
+		movntq		[edi + 32], mm4
+		movntq		[edi + 40], mm5
+		movntq		[edi + 48], mm6
+		movntq		[edi + 56], mm7
+		add			edi, 64
+
+		sub			dword ptr [count], 64
+		cmp			dword ptr [count], 64
+		jge			CopyQWord64
+
+TryCopyQWord32:
+		cmp			dword ptr [count], 32
+		jl			TryCopyQWord16
+
+CopyQWord32:
+		movq		mm0, [esi]
+		movq		mm1, [esi + 8]
+		movq		mm2, [esi + 16]
+		movq		mm3, [esi + 24]
+		add			esi, 32
+
+		movntq		[edi], mm0
+		movntq		[edi + 8], mm1
+		movntq		[edi + 16], mm2
+		movntq		[edi + 24], mm3
+		add			edi, 32
+
+		sub			dword ptr [count], 32
+		cmp			dword ptr [count], 32
+		jge			CopyQWord32
+
+TryCopyQWord16:
+		cmp			dword ptr [count], 16
+		jl			TryCopyQWord8
+
+CopyQWord16:
+		movq		mm0, [esi]
+		movq		mm1, [esi + 8]
+		add			esi, 16
+
+		movntq		[edi], mm0
+		movntq		[edi + 8], mm1
+		add			edi, 16
+
+		sub			dword ptr [count], 16
+		cmp			dword ptr [count], 16
+		jge			CopyQWord16
+
+TryCopyQWord8:
+		cmp			dword ptr [count], 8
+		jl			TryCopyDWord
+
+CopyQWord8:
+		movq		mm0, [esi]
+		add			esi, 8
+
+		movntq		[edi], mm0
+		add			edi, 8
+
+		sub			dword ptr [count], 8
+		cmp			dword ptr [count], 8
+		jge			CopyQWord8
+
+TryCopyDWord:
+		cmp			dword ptr [count], 3
+		jle			TryCopyWord
+
+		mov			ecx, dword ptr [count]
+		shr			ecx, 2
+		mov			eax, ecx
+		rep	movsd
+
+		shl			eax, 2
+		sub			dword ptr [count], eax
+
+TryCopyWord:
+		cmp			dword ptr [count], 1
+		jle			TryCopyByte
+
+		movsw
+
+		sub			dword ptr [count], 2
+
+TryCopyByte:
+		cmp			dword ptr [count], 0
+		je			CopyDone
+
+		movsb
+
+CopyDone:
+		emms
+		sfence
+		mov			eax, [dst]
+	}
+}
+#endif
 
 
 // Remap for extended codes so they don't mess up the console.

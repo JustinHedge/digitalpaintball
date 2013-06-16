@@ -205,6 +205,8 @@ extern	cvar_t	*gl_flashblend;
 extern	cvar_t	*gl_lightmaptype;
 //extern	cvar_t	*gl_modulate;
 extern	cvar_t	*gl_lightmapgamma;
+extern	cvar_t	*r_oldlightpoint; // jit
+extern	cvar_t	*r_hardware_light; // jit
 extern	cvar_t	*gl_drawbuffer;
 extern	cvar_t	*gl_3dlabs_broken;
 extern  cvar_t  *gl_driver;
