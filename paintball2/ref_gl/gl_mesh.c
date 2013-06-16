@@ -1021,30 +1021,30 @@ void R_DrawAliasModel (entity_t *e)
 
 		if (currententity->flags & RF_SHELL_HALF_DAM)
 		{
-				shadelight[0] = 0.56;
-				shadelight[1] = 0.59;
-				shadelight[2] = 0.45;
+				shadelight[0] = 0.56f;
+				shadelight[1] = 0.59f;
+				shadelight[2] = 0.45f;
 		}
 
 		if (currententity->flags & RF_SHELL_DOUBLE)
 		{
-			shadelight[0] = 0.9;
-			shadelight[1] = 0.7;
+			shadelight[0] = 0.9f;
+			shadelight[1] = 0.7f;
 		}
 
 		if (currententity->flags & RF_SHELL_RED)
-			shadelight[0] = 1.0;
+			shadelight[0] = 1.0f;
 
 		if (currententity->flags & RF_SHELL_GREEN)
-			shadelight[1] = 1.0;
+			shadelight[1] = 1.0f;
 
 		if (currententity->flags & RF_SHELL_BLUE)
-			shadelight[2] = 1.0;
+			shadelight[2] = 1.0f;
 	}
 	else if (currententity->flags & RF_FULLBRIGHT)
 	{
-		for (i=0; i<3; i++)
-			shadelight[i] = 1.0;
+		for (i = 0; i < 3; ++i)
+			shadelight[i] = 1.0f;
 	}
 	else
 	{

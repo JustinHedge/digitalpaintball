@@ -1151,9 +1151,9 @@ void CM_ClipBoxToBrush (vec3_t mins, vec3_t maxs, vec3_t p1, vec3_t p2,
 	startout = false;
 	leadside = NULL;
 
-	for (i=0 ; i<brush->numsides ; i++)
+	for (i = 0; i < brush->numsides; ++i)
 	{
-		side = &map_brushsides[brush->firstbrushside+i];
+		side = &map_brushsides[brush->firstbrushside + i];
 		plane = side->plane;
 
 		// FIXME: special case for axial
@@ -1164,14 +1164,15 @@ void CM_ClipBoxToBrush (vec3_t mins, vec3_t maxs, vec3_t p1, vec3_t p2,
 			// push the plane out apropriately for mins/maxs
 
 			// FIXME: use signbits into 8 way lookup for each mins/maxs
-			for (j=0 ; j<3 ; j++)
+			for (j = 0; j < 3; ++j)
 			{
 				if (plane->normal[j] < 0)
 					ofs[j] = maxs[j];
 				else
 					ofs[j] = mins[j];
 			}
-			dist = DotProduct (ofs, plane->normal);
+
+			dist = DotProduct(ofs, plane->normal);
 			dist = plane->dist - dist;
 		}
 		else
@@ -1179,11 +1180,12 @@ void CM_ClipBoxToBrush (vec3_t mins, vec3_t maxs, vec3_t p1, vec3_t p2,
 			dist = plane->dist;
 		}
 
-		d1 = DotProduct (p1, plane->normal) - dist;
-		d2 = DotProduct (p2, plane->normal) - dist;
+		d1 = DotProduct(p1, plane->normal) - dist;
+		d2 = DotProduct(p2, plane->normal) - dist;
 
 		if (d2 > 0)
 			getout = true;	// endpoint is not in solid
+
 		if (d1 > 0)
 			startout = true;
 
@@ -1196,8 +1198,10 @@ void CM_ClipBoxToBrush (vec3_t mins, vec3_t maxs, vec3_t p1, vec3_t p2,
 
 		// crosses face
 		if (d1 > d2)
-		{	// enter
-			f = (d1-DIST_EPSILON) / (d1-d2);
+		{
+			// enter
+			f = (d1 - DIST_EPSILON) / (d1 - d2);
+
 			if (f > enterfrac)
 			{
 				enterfrac = f;
@@ -1207,25 +1211,31 @@ void CM_ClipBoxToBrush (vec3_t mins, vec3_t maxs, vec3_t p1, vec3_t p2,
 		}
 		else
 		{	// leave
-			f = (d1+DIST_EPSILON) / (d1-d2);
+			f = (d1 + DIST_EPSILON) / (d1 - d2);
+
 			if (f < leavefrac)
 				leavefrac = f;
 		}
 	}
 
 	if (!startout)
-	{	// original point was inside brush
+	{
+		// original point was inside brush
 		trace->startsolid = true;
+
 		if (!getout)
 			trace->allsolid = true;
+
 		return;
 	}
+
 	if (enterfrac < leavefrac)
 	{
 		if (enterfrac > -1 && enterfrac < trace->fraction)
 		{
 			if (enterfrac < 0)
 				enterfrac = 0;
+
 			trace->fraction = enterfrac;
 			trace->plane = *clipplane;
 			trace->surface = &(leadside->surface->c);
@@ -1301,24 +1311,29 @@ void CM_TraceToLeaf (int leafnum)
 	cbrush_t	*b;
 
 	leaf = &map_leafs[leafnum];
-	if ( !(leaf->contents & trace_contents))
+
+	if (!(leaf->contents & trace_contents))
 		return;
+
 	// trace line against all brushes in the leaf
-	for (k=0 ; k<leaf->numleafbrushes ; k++)
+	for (k = 0; k < leaf->numleafbrushes; ++k)
 	{
-		brushnum = map_leafbrushes[leaf->firstleafbrush+k];
+		brushnum = map_leafbrushes[leaf->firstleafbrush + k];
 		b = &map_brushes[brushnum];
+
 		if (b->checkcount == checkcount)
 			continue;	// already checked this brush in another leaf
+
 		b->checkcount = checkcount;
 
-		if ( !(b->contents & trace_contents))
+		if (!(b->contents & trace_contents))
 			continue;
-		CM_ClipBoxToBrush (trace_mins, trace_maxs, trace_start, trace_end, &trace_trace, b);
+
+		CM_ClipBoxToBrush(trace_mins, trace_maxs, trace_start, trace_end, &trace_trace, b);
+
 		if (!trace_trace.fraction)
 			return;
 	}
-
 }
 
 

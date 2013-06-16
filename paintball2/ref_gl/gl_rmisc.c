@@ -469,7 +469,7 @@ void GL_UpdateSwapInterval (void)
 #ifdef _WIN32
 			if (qwglSwapIntervalEXT)
 			{
-				qwglSwapIntervalEXT(!gl_swapinterval->value); // jitest -- ugly hack
+				qwglSwapIntervalEXT(!gl_swapinterval->value); // jit -- ugly hack
 				qwglSwapIntervalEXT(gl_swapinterval->value);
 			}
 #endif
