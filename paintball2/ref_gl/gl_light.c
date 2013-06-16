@@ -21,6 +21,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "gl_local.h"
 
+#ifdef DEBUG
+#define DEBUG_FLOATS
+#endif
+
+#ifdef DEBUG_FLOATS
+#include <float.h> // jitdebug - trying to catch bad floating point numbers in point lights
+#endif
+
 int	r_dlightframecount;
 
 extern cvar_t *gl_lightmap_saturation; // jitlight
@@ -187,15 +195,6 @@ LIGHT SAMPLING
 =============================================================================
 */
 
-int round16 (float val) // jit - rounds to the nearest multiple of 16
-{
-	if (val < 0.0f)
-		val -= 8.0f;
-	else
-		val += 8.0f;
-
-	return (int)val;
-}
 
 vec3_t			pointcolor;
 vec3_t			lightspot;
@@ -207,6 +206,12 @@ static int LightPoint_RecursiveBSPNode (model_t *model, vec3_t ambientcolor, con
 	int side;
 	float front, back;
 	float mid, distz = endz - startz;
+
+#ifdef DEBUG_FLOATS // jitdebug trying to catch bad floating point values..
+	_clearfp();
+//	_controlfp(0, _MCW_EM);
+	_controlfp(_controlfp(0, 0) & ~(_EM_INVALID | _EM_ZERODIVIDE | _EM_OVERFLOW), _MCW_EM);
+#endif
 
 loc0:
 	//if (!node->plane)
@@ -261,7 +266,7 @@ loc0:
 		if (node->numsurfaces)
 		{
 			unsigned int i;
-			int dsi, dti, lmwidth, lmheight;
+			int lmwidth, lmheight;
 			float ds, dt;
 			msurface_t *surface;
 			unsigned char *lightmap;
@@ -281,45 +286,56 @@ loc0:
 				ds = ((x * surface->texinfo->vecs[0][0] + y * surface->texinfo->vecs[0][1] + mid * surface->texinfo->vecs[0][2] + surface->texinfo->vecs[0][3]) - surface->texturemins[0]) * 0.0625f;
 				dt = ((x * surface->texinfo->vecs[1][0] + y * surface->texinfo->vecs[1][1] + mid * surface->texinfo->vecs[1][2] + surface->texinfo->vecs[1][3]) - surface->texturemins[1]) * 0.0625f;
 
-				// check the bounds
-				dsi = (int)ds;
-				dti = (int)dt;
-				lmwidth = ((surface->extents[0] >> 4) + 1);
-				lmheight = ((surface->extents[1] >> 4) + 1);
-
-				// is it in bounds?
-				if (dsi >= 0 && dsi <= lmwidth - 1 && dti >= 0 && dti <= lmheight - 1) // jit - fix for black models right on brush splits.
+				if (ds >= 0.0f && dt >= 0.0f) // jit - fix for negative light values
 				{
-					// calculate bilinear interpolation factors
-					// and also multiply by fixedpoint conversion factors
-					dsfrac = ds - dsi;
-					dtfrac = dt - dti;
+					int dsi = (int)ds;
+					int dti = (int)dt;
 
-					w00 = (1 - dsfrac) * (1 - dtfrac) * (1.0f / 255.0f);
-					w01 = (    dsfrac) * (1 - dtfrac) * (1.0f / 255.0f);
-					w10 = (1 - dsfrac) * (    dtfrac) * (1.0f / 255.0f);
-					w11 = (    dsfrac) * (    dtfrac) * (1.0f / 255.0f);
+					lmwidth = ((surface->extents[0] >> 4) + 1);
+					lmheight = ((surface->extents[1] >> 4) + 1);
 
-					// values for pointer math
-					line3 = lmwidth * 3;
-					size3 = lmwidth * lmheight * 3;
-
-					// look up the pixel
-					//lightmap = surface->samples + dti * line3 + dsi * 3;
-					lightmap = surface->stain_samples + dti * line3 + dsi * 3; // Note: comment this line out and use the one above if you do not have stainmaps
-
-					// bilinear filter each lightmap style, and sum them
-					for (maps = 0; maps < MAXLIGHTMAPS && surface->styles[maps] != 255; maps++)
+					// is it in bounds?
+					if (dsi < lmwidth && dti < lmheight) // jit - fix for black models right on brush splits.
 					{
-						VectorMA(ambientcolor, w00, lightmap            , ambientcolor);
-						VectorMA(ambientcolor, w01, lightmap + 3        , ambientcolor);
-						VectorMA(ambientcolor, w10, lightmap + line3    , ambientcolor);
-						VectorMA(ambientcolor, w11, lightmap + line3 + 3, ambientcolor);
+						// calculate bilinear interpolation factors
+						// and also multiply by fixedpoint conversion factors
+						dsfrac = ds - dsi;
+						dtfrac = dt - dti;
 
-						lightmap += size3;
+						w00 = (1 - dsfrac) * (1 - dtfrac) * (1.0f / 255.0f);
+						w01 = (    dsfrac) * (1 - dtfrac) * (1.0f / 255.0f);
+						w10 = (1 - dsfrac) * (    dtfrac) * (1.0f / 255.0f);
+						w11 = (    dsfrac) * (    dtfrac) * (1.0f / 255.0f);
+
+						// values for pointer math
+						line3 = lmwidth * 3;
+						size3 = lmwidth * lmheight * 3;
+
+						// look up the pixel
+						//lightmap = surface->samples + dti * line3 + dsi * 3;
+						lightmap = surface->stain_samples + dti * line3 + dsi * 3; // Note: comment this line out and use the one above if you do not have stainmaps
+
+						// bilinear filter each lightmap style, and sum them
+						for (maps = 0; maps < MAXLIGHTMAPS && surface->styles[maps] != 255; maps++)
+						{
+							VectorMA(ambientcolor, w00, lightmap            , ambientcolor);
+							VectorMA(ambientcolor, w01, lightmap + 3        , ambientcolor);
+							VectorMA(ambientcolor, w10, lightmap + line3    , ambientcolor);
+							VectorMA(ambientcolor, w11, lightmap + line3 + 3, ambientcolor);
+							lightmap += size3;
+						}
+
+#ifdef DEBUG // jitdebug - check for screwed up floating point values.
+						assert(ambientcolor[0] == ambientcolor[0]);
+						assert(ambientcolor[1] == ambientcolor[1]);
+						assert(ambientcolor[2] == ambientcolor[2]);
+
+						assert(ambientcolor[0] >= 0.0f);
+						assert(ambientcolor[1] >= 0.0f);
+						assert(ambientcolor[2] >= 0.0f);
+#endif
+						return true; // success
 					}
-
-					return true; // success
 				}
 			}
 		}
@@ -333,6 +349,7 @@ loc0:
 }
 
 
+// Old function -- should be deleted after we've verified there are no bugs with the new one.
 static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 {
 	float		front, back, frac;
@@ -386,14 +403,8 @@ static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 			continue;	// no lightmaps
 
 		tex = surf->texinfo;
-#if 0
-		// jit - attempt to fix lighting of models being offset from lightmap visuals.  Doesn't work. :(
-		s = round16(DotProduct(mid, tex->vecs[0]) + tex->vecs[0][3]);
-		t = round16(DotProduct(mid, tex->vecs[1]) + tex->vecs[1][3]);
-#else
 		s = DotProduct(mid, tex->vecs[0]) + tex->vecs[0][3];
 		t = DotProduct(mid, tex->vecs[1]) + tex->vecs[1][3];
-#endif
 
 		if (s < surf->texturemins[0] || t < surf->texturemins[1])
 			continue;
@@ -444,7 +455,7 @@ void R_LightPoint (vec3_t p, vec3_t color) // jitodo -- light points on average 
 	float		light;
 	vec3_t		dist;
 	float		add;
-	
+
 	if (!r_worldmodel || !r_worldmodel->lightdata)
 	{
 		color[0] = color[1] = color[2] = 1.0f;
@@ -507,6 +518,12 @@ void R_LightPoint (vec3_t p, vec3_t color) // jitodo -- light points on average 
 		if (add > 0)
 			VectorMA(color, add, dl->color, color);
 	}
+
+#ifdef DEBUG // jitdebug - check for screwed up floating point values.
+	assert(color[0] == color[0]);
+	assert(color[1] == color[1]);
+	assert(color[2] == color[2]);
+#endif
 
 	//VectorScale (color, gl_modulate->value, color);
 	//VectorScale (color, gl_modulate->value/1.5f, color); // jit, ents too bright
