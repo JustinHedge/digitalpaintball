@@ -1851,6 +1851,105 @@ void SCR_UpdateScreen (void)
 					}
 				}
 
+				if (cl_maptime->value) // T3RR0R15T: elapsed maptime (from AprQ2)
+				{
+					char	temp[32];
+					int		time, hour, mins, secs;
+					
+					time = cl.time / 1000;
+					hour = time/3600;
+					mins = (time%3600) /60;
+					secs = time%60;
+					
+					if (hour > 0)
+					{
+						if(cl_maptime->value == 2)
+							Com_sprintf(temp, sizeof(temp), "%i:%02i:%02i h", hour, mins, secs);
+						else
+							Com_sprintf(temp, sizeof(temp), "  %i:%02i:%02i", hour, mins, secs);
+					}
+					else
+					{
+						if (mins > 0)
+						{
+							if (cl_maptime->value == 2)
+								Com_sprintf(temp, sizeof(temp), " %i:%02i min", mins, secs);
+							else
+								Com_sprintf(temp, sizeof(temp), "     %i:%02i", mins, secs);
+						}
+						else
+						{
+							if (cl_maptime->value == 2)
+								Com_sprintf(temp, sizeof(temp), "   %02i sec", secs);
+							else
+								Com_sprintf(temp, sizeof(temp), "       %02i", secs);
+						}
+					}
+				
+					if (cl_maptimex->value == -1 && cl_maptimey->value == -1)
+					{
+						re.DrawString(viddef.width/2 - 64,9 * hudscale, temp);
+					}
+					else
+					{
+						re.DrawString(cl_maptimex->value,cl_maptimey->value, temp);
+					}
+				}
+				
+				if (cl_drawping->value) // T3RR0R15T: display ping on HUD
+				{
+					int  ping = 0;
+					int  ping2 = 0;
+					int  in;
+					static int ping_min = 999;
+					static int ping_sum = 0;
+					static int ping_count = 0;
+					static int lasttime = 0;
+					static char drawping[10];
+
+					if (curtime - lasttime > 500 && ping_count != 0) // 500ms = .5s
+					{
+						lasttime = curtime;
+
+						if(cl_drawping->value == 2)
+						{
+							ping2 = ping_sum / ping_count;		// average
+						}
+						else
+						{
+							ping2 = ping_min;					// lowest
+						}
+
+						if (ping2 > 999)
+							ping2 = 999;
+						
+						if (ping2 != 0) // don't show it on game start
+						{
+							Com_sprintf(drawping, sizeof(drawping), "%3.0iPng", ping2);
+						}
+
+						ping_min = 999;
+						ping_sum = 0;
+						ping_count = 0;
+					}
+					else
+					{
+						in = cls.netchan.incoming_acknowledged & (CMD_BACKUP-1);
+						ping = cls.realtime - cl.cmd_time[in];
+						
+						if (ping > 999)
+							ping = 999;
+
+						if (ping < ping_min)
+							ping_min = ping;
+
+						ping_sum += ping;
+						ping_count++;
+					}
+					
+					re.DrawString(viddef.width - 56 * hudscale, 80 * hudscale, drawping);
+				}
+
 				if (cl_drawpps->value) // jitnetfps
 				{
 					extern char pps_string[15];

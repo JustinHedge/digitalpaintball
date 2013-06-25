@@ -105,6 +105,10 @@ cvar_t	*cl_menu; // T3RR0R15T: custom menu files
 cvar_t	*cl_drawclock; // viciouz - real time clock
 cvar_t	*cl_drawclockx; // T3RR0R15T: clock position
 cvar_t	*cl_drawclocky; // T3RR0R15T: clock position
+cvar_t  *cl_maptime; // T3RR0R15T: elapsed maptime (from AprQ2)
+cvar_t  *cl_maptimex; // T3RR0R15T: maptime position
+cvar_t  *cl_maptimey; // T3RR0R15T: maptime position
+cvar_t  *cl_drawping; // T3RR0R15T: display ping on HUD
 cvar_t  *cl_swearfilter; // viciouz - swear filter
 cvar_t  *cl_blockedwords; // viciouz - swear filter
 cvar_t	*cl_passwordpopup; // viciouz - password popup
@@ -2295,6 +2299,10 @@ void CL_InitLocal (void)
 	cl_drawclock =		Cvar_Get("cl_drawclock", "0", CVAR_ARCHIVE); // viciouz - real time clock
 	cl_drawclockx =		Cvar_Get("cl_drawclockx", "-1", CVAR_ARCHIVE); // T3RR0R15T: clock position
 	cl_drawclocky =		Cvar_Get("cl_drawclocky", "-1", CVAR_ARCHIVE); // T3RR0R15T: clock position
+	cl_maptime =		Cvar_Get("cl_maptime", "0", CVAR_ARCHIVE); // T3RR0R15T: elapsed maptime (from AprQ2)
+	cl_maptimex =		Cvar_Get("cl_maptimex", "-1", CVAR_ARCHIVE); // T3RR0R15T: maptime position
+	cl_maptimey =		Cvar_Get("cl_maptimey", "-1", CVAR_ARCHIVE); // T3RR0R15T: maptime position
+	cl_drawping =		Cvar_Get("cl_drawping", "0", CVAR_ARCHIVE); // T3RR0R15T: display ping on HUD
 	cl_swearfilter =	Cvar_Get("cl_swearfilter", "1", CVAR_ARCHIVE); // viciouz - swear filter
 	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,liner,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,walled,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch, ass ,owned,ownd,suck,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,idiot,horribad,newbed,sieg heil,hitler,your mum,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,kacker,kakker,fehlgeburt,nazi,sukkar,sukar,suckar,lucker,stupid,gay,bastard,hure,nutte", 0); // viciouz - swear filter - jit, added some more - T3RR0R15T, added some more again
 	strtolower(cl_blockedwords->string);

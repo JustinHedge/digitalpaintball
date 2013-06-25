@@ -338,6 +338,10 @@ extern	cvar_t	*cl_showclamp;
 extern  cvar_t  *cl_drawclock; // viciouz - computer time clock
 extern  cvar_t  *cl_drawclockx; // T3RR0R15T: clock position
 extern  cvar_t  *cl_drawclocky; // T3RR0R15T: clock position
+extern  cvar_t  *cl_maptime; // T3RR0R15T: elapsed maptime (from AprQ2)
+extern  cvar_t  *cl_maptimex; // T3RR0R15T: maptime position
+extern  cvar_t  *cl_maptimey; // T3RR0R15T: maptime position
+extern  cvar_t  *cl_drawping; // T3RR0R15T: display ping on HUD
 
 extern	cvar_t	*lookspring;
 extern	cvar_t	*lookstrafe;
