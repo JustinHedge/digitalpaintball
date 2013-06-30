@@ -2803,7 +2803,7 @@ static menu_screen_t* M_LoadMenuScreen (const char *menu_name)
 {
 	menu_screen_t *menu;
 
-	menu = M_GetNewMenuScreen(menu_name, "conback"); // todo - customizeable backgrounds
+	menu = M_GetNewMenuScreen(menu_name, cl_menuback->string);
 	menu_from_file(menu, false, NULL);
 
 	return menu;
@@ -2815,13 +2815,16 @@ static menu_screen_t* M_FindMenuScreen (const char *menu_name)
 
 	menu = root_menu;
 
-	// look through "cached" menus
-	while (menu)
+	if(!cl_menuback->modified)
 	{
-		if (Q_streq(menu_name, menu->name))
-			return menu;
-
-		menu = menu->next;
+		// look through "cached" menus
+		while (menu)
+		{
+			if (Q_streq(menu_name, menu->name))
+				return menu;
+			
+			menu = menu->next;
+		}
 	}
 
 	// not found, load from file:

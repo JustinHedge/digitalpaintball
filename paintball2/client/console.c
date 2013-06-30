@@ -689,7 +689,7 @@ void Con_DrawConsole (float frac)
 		lines = height;
 
 	// draw the background
-	re.DrawStretchPic(0.0f, lines - height, width, height, "conback"); // jitodo, cl_conback->string
+	re.DrawStretchPic(0.0f, lines - height, width, height, cl_conback->string);
 	SCR_AddDirtyPoint(0,0);
 	SCR_AddDirtyPoint(viddef.width-1, lines-1);
 

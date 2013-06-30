@@ -98,6 +98,8 @@ cvar_t	*cl_timestamp; // jit
 cvar_t	*cl_dialogprint; // jit
 cvar_t	*cl_hudscale; // jit
 cvar_t	*cl_consoleheight; // T3RR0R15T: console height
+cvar_t	*cl_conback; // T3RR0R15T: console background
+cvar_t	*cl_menuback; // T3RR0R15T: menu background
 cvar_t  *cl_crosshairscale; // viciouz - crosshair scale
 cvar_t	*cl_drawhud; // jithud
 cvar_t	*cl_language; // jittrans
@@ -2316,10 +2318,11 @@ void CL_InitLocal (void)
 	
 	if (cl_hudscale->value < 1.0)
 		Cvar_Set("cl_hudscale", "1");
-
 	hudscale = cl_hudscale->value;
 
 	cl_consoleheight = Cvar_Get("cl_consoleheight", "0.5", CVAR_ARCHIVE);		// T3RR0R15T: console height
+	cl_conback = Cvar_Get("cl_conback", "conback", CVAR_ARCHIVE);				// T3RR0R15T: console background
+	cl_menuback = Cvar_Get("cl_menuback", "conback", CVAR_ARCHIVE);				// T3RR0R15T: menu background
 
 	serverlist_source =		Cvar_Get("serverlist_source", 
 		"http://dplogin.com/servers.txt", 0); // jitserverlist / jitmenu / T3RR0R15T: changed to dplogin.com

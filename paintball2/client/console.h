@@ -51,6 +51,8 @@ typedef struct
 extern	console_t	con;
 extern qboolean	key_insert;
 
+extern cvar_t *cl_conback;
+
 void Con_CheckResize (void);
 void Con_Init (void);
 void Con_DrawConsole (float frac);

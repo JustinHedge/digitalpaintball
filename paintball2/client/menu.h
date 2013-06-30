@@ -313,6 +313,7 @@ typedef struct M_SERVERLIST_S {
 } m_serverlist_t;
 
 extern cvar_t *cl_hudscale;
+extern cvar_t *cl_menuback;
 
 #define MENU_SOUND_FLAG_OPEN	(1 << 0)
 #define MENU_SOUND_FLAG_SELECT	(1 << 1)
