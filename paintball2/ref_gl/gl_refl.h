@@ -8,8 +8,6 @@ void R_setupArrays (int maxNoReflections);
 void R_clear_refl (void);
 void R_add_refl (float x, float y, float z);
 
-static int txm_genTexObject(unsigned char *texData, int w, int h,
-								int format, qboolean repeat, qboolean mipmap);
 void R_RecursiveFindRefl (mnode_t *node); //may try this again
 void R_DrawDebugReflTexture (void);
 void R_UpdateReflTex (refdef_t *fd);
@@ -34,4 +32,6 @@ extern float *g_refl_Z;
 extern int *g_tex_num;
 extern int g_active_refl;
 extern int g_num_refl;
-extern unsigned int g_water_program_id; // jitwater
+extern unsigned int g_water_fragment_program_id; // jitwater
+extern unsigned int g_water_vertex_program_id; // jitwater
+

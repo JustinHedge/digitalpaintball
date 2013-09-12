@@ -465,6 +465,7 @@ void Fake_glColorTableEXT( GLenum target, GLenum internalformat,
 
 extern int QGL_TEXTURE0, QGL_TEXTURE1, QGL_TEXTURE2;
 
+#define  GL_VERTEX_PROGRAM_ARB				0x8620 // jitwater
 #define  GL_FRAGMENT_PROGRAM_ARB			0x8804 // jitwater
 #define  GL_PROGRAM_FORMAT_ASCII_ARB		0x8875 // jitwater
 

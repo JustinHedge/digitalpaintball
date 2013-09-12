@@ -253,7 +253,7 @@ void GL_TextureMode(const char *string )
 	// change all the existing mipmap texture objects
 	for (i = 0, glt = gltextures; i < numgltextures; i++, glt++)
 	{
-		if (glt->type != it_pic && glt->type != it_sky && glt->type != it_sharppic) // jitrscript
+		if (glt->type != it_pic && glt->type != it_sky && glt->type != it_sharppic && glt->type != it_reflection) // jitrscript, jitwater
 		{
 			GL_Bind(glt->texnum);
 			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
@@ -1389,7 +1389,8 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	byte		*scan;
 	int			comp;
 	GLint		max_size;
-	qboolean	mipmap = (imagetype != it_pic && imagetype != it_sharppic && imagetype != it_sky); // jitrscript
+	qboolean	mipmap = (imagetype != it_pic && imagetype != it_sharppic && imagetype != it_sky && imagetype != it_reflection); // jitrscript
+	qboolean	repeat = (imagetype != it_sky && imagetype != it_reflection); // jitwater
 
 #ifdef DEBUG
 	{
@@ -1552,38 +1553,18 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 #endif
 	}
 
-	if (imagetype == it_sky) // jitsky
-	{
-#ifdef DEBUG
-		{
-			int err;
-
-			err = qglGetError();
-			assert(err == GL_NO_ERROR);
-		}
-#endif
-
-		// Clamp to edge not supported until 1.2
-		if (gl_config.version >= 1.2f)
-		{
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		}
-
-#ifdef DEBUG
-		{
-			int err;
-
-			err = qglGetError();
-			assert(err == GL_NO_ERROR);
-		}
-#endif
-	}
-	else
+	// Clamp to edge not supported until 1.2
+	if (repeat || gl_config.version < 1.2f) // jitsky, jitwater
 	{
 		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	}
+	else
+	{
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+
 
 	if (upload_width != width || upload_height != height)
 		free(scaled);

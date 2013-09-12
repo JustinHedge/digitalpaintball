@@ -23,7 +23,8 @@ float	*g_refl_Z;				// the Z (vertical) value of each reflection
 float	*g_waterDistance;		// the rough distance from player to water .. we want to render the closest water surface.
 image_t	**g_refl_images;
 int		maxReflections;			// maximum number of reflections
-unsigned int g_water_program_id; // jitwater
+unsigned int g_water_fragment_program_id; // jitwater
+unsigned int g_water_vertex_program_id; // jitwater
 image_t *distort_tex = NULL; // jitwater
 image_t *water_normal_tex = NULL; // jitwater
 
@@ -107,7 +108,7 @@ void R_init_refl (int maxNoReflections)
 
 	for (i = 0; i < maxReflections; i++)
 	{
-		g_refl_images[i] = GL_CreateBlankImage("_reflection", g_reflTexW, g_reflTexH, it_pic);
+		g_refl_images[i] = GL_CreateBlankImage("_reflection", g_reflTexW, g_reflTexH, it_reflection);
 
 		if (gl_debug->value)
 			ri.Con_Printf(PRINT_ALL, "Reflection texture %d texnum = %d.\n", i, g_refl_images[i]->texnum);
@@ -123,9 +124,12 @@ void R_init_refl (int maxNoReflections)
 	// === jitwater - fragment program initializiation
 	if (gl_state.fragment_program)
 	{
-		qglGenProgramsARB(1, &g_water_program_id);
-		qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_program_id);
-		qglProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2, 1.0f, 0.1f, 0.6f, 0.5f); // jitest
+		int err = 0;
+
+		// Fragment program
+		qglGenProgramsARB(1, &g_water_fragment_program_id);
+		qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_fragment_program_id);
+		//qglProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2, 1.0f, 0.1f, 0.6f, 0.5f); // jitest
 		len = ri.FS_LoadFileZ("scripts/water1.arbf", (void *)&fragment_program_text);
 
 		if (len > 0)
@@ -139,19 +143,37 @@ void R_init_refl (int maxNoReflections)
 		}
 		
 		// Make sure the program loaded correctly
+		err = qglGetError();
+		if (err != GL_NO_ERROR)
 		{
-			int err = 0;
-
-			err = qglGetError();
-
-			if (err != GL_NO_ERROR)
-				ri.Con_Printf(PRINT_ALL, "OpenGL error with ARB fragment program: 0x%x\n", err);
-
-#ifdef WIN32 // since linux is retarded and kills the whole program
+			ri.Con_Printf(PRINT_ALL, "OpenGL error with ARB fragment program: 0x%x\n", err);
 			assert(err == GL_NO_ERROR);
-#endif
 		}
 
+		// Vertex program
+		qglGenProgramsARB(1, &g_water_vertex_program_id);
+		qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, g_water_vertex_program_id);
+		len = ri.FS_LoadFileZ("scripts/water1.arbv", (void *)&fragment_program_text);
+
+		if (len > 0)
+		{
+			qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, len, fragment_program_text);
+			ri.FS_FreeFile(fragment_program_text);
+		}
+		else
+		{
+			ri.Con_Printf(PRINT_ALL, "Unable to find scripts/water1.arbv.\n");
+		}
+
+		// Make sure the program loaded correctly
+		err = qglGetError();
+		if (err != GL_NO_ERROR)
+		{
+			ri.Con_Printf(PRINT_ALL, "OpenGL error with ARB fragment program: 0x%x\n", err);
+			assert(err == GL_NO_ERROR);
+		}
+
+		// Textures
 		distort_tex = Draw_FindPic("/textures/sfx/water/distort1.tga");
 		water_normal_tex = Draw_FindPic("/textures/sfx/water/normal1.tga");
 	}
@@ -188,7 +210,10 @@ void R_init_refl (int maxNoReflections)
 void R_shutdown_refl (void) // jitodo - call this.
 {
 	if (gl_state.fragment_program)
-		qglDeleteProgramsARB(1, &g_water_program_id);
+	{
+		qglDeleteProgramsARB(1, &g_water_fragment_program_id);
+		qglDeleteProgramsARB(1, &g_water_vertex_program_id);
+	}
 }
 
 /*
@@ -297,191 +322,6 @@ void R_add_refl (float x, float y, float z)
 	}
 }
 
-
-
-static int txm_genTexObject(unsigned char *texData, int w, int h,
-								int format, qboolean repeat, qboolean mipmap)
-{
-	unsigned int texNum;
-
-	qglGenTextures(1, &texNum);
-	qglGenTextures(1, &texNum);
-
-	if (gl_debug->value)
-		ri.Con_Printf(PRINT_ALL, "Reflection texnum = %d\n", texNum);
-
-	repeat = false;
-	mipmap = false;
-
-	if (texData)
-	{
-		qglBindTexture(GL_TEXTURE_2D, texNum);
-
-		// Set the tiling mode
-		if (repeat)
-		{
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		}
-		else
-		{
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
-		}
-
-		// Set the filtering
-		if (mipmap)
-		{
-			int scaled_width = w, scaled_height = h, miplevel = 0; // jit
-
-			qglTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			qglTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-#if 1 // jit -  q2 compatible code
-			qglTexImage2D(GL_TEXTURE_2D, 0, format, scaled_width, scaled_height,
-				0, GL_RGBA, GL_UNSIGNED_BYTE, texData);
-
-			while (scaled_width > 1 || scaled_height > 1)
-			{
-				GL_MipMap((byte*)texData, scaled_width, scaled_height);
-				scaled_width >>= 1;
-				scaled_height >>= 1;
-
-				if (scaled_width < 1)
-					scaled_width = 1;
-
-				if (scaled_height < 1)
-					scaled_height = 1;
-
-				miplevel++;
-				qglTexImage2D(GL_TEXTURE_2D, miplevel, format, scaled_width, scaled_height,
-					0, GL_RGBA, GL_UNSIGNED_BYTE, texData);
-			}
-#else
-			gluBuild2DMipmaps(GL_TEXTURE_2D, format, w, h, format, 
-				GL_UNSIGNED_BYTE, texData);
-#endif
-		}
-		else
-		{
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			qglTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, 
-				GL_UNSIGNED_BYTE, texData);
-		}
-	}
-
-	return texNum;
-}
-
-#if 0
-// based off of R_RecursiveWorldNode,
-// this locates all reflective surfaces and their associated height
-// old method - delete this if you want
-void R_RecursiveFindRefl (mnode_t *node)
-{
-	int			c, side, sidebit;
-	cplane_t	*plane;
-	msurface_t	*surf, **mark;
-	mleaf_t		*pleaf;
-	float		dot;
-
-	if (node->contents == CONTENTS_SOLID)
-		return;		// solid
-
-	if (node->visframe != r_visframecount)
-		return;
-
-	// MPO : if this function returns true, it means that the polygon is not visible
-	// in the frustum, therefore drawing it would be a waste of resources
-	if (R_CullBox(node->minmaxs, node->minmaxs+3))
-		return;
-
-	// if a leaf node, draw stuff
-	if (node->contents != -1)
-	{
-		pleaf = (mleaf_t *)node;
-
-		// check for door connected areas
-		if (r_newrefdef.areabits)
-			if (!(r_newrefdef.areabits[pleaf->area>>3] & (1<<(pleaf->area&7))))
-				return;		// not visible
-
-		mark = pleaf->firstmarksurface;
-		c = pleaf->nummarksurfaces;
-
-		if (c)
-		{
-			do
-			{
-				(*mark)->visframe = r_framecount;
-				mark++;
-			} while (--c);
-		}
-
-		return;
-	}
-
-	// node is just a decision point, so go down the apropriate sides
-
-	// find which side of the node we are on
-	plane = node->plane;
-
-	switch (plane->type)
-	{
-	case PLANE_X:
-		dot = r_newrefdef.vieworg[0] - plane->dist;
-		break;
-	case PLANE_Y:
-		dot = r_newrefdef.vieworg[1] - plane->dist;
-		break;
-	case PLANE_Z:
-		dot = r_newrefdef.vieworg[2] - plane->dist;
-		break;
-	default:
-		dot = DotProduct (r_newrefdef.vieworg, plane->normal) - plane->dist;
-		break;
-	}
-
-	if (dot >= 0)
-	{
-		side = 0;
-		sidebit = 0;
-	}
-	else
-	{
-		side = 1;
-		sidebit = SURF_PLANEBACK;
-	}
-
-	// recurse down the children, front side first
-	R_RecursiveFindRefl (node->children[side]);
-
-	for ( c = node->numsurfaces, surf = r_worldmodel->surfaces + node->firstsurface; c ; c--, surf++)
-	{
-		if (surf->visframe != r_framecount)
-			continue;
-
-		if ( (surf->flags & SURF_PLANEBACK) != sidebit )
-			continue;		// wrong side
-
-		// MPO : from this point onward, we should be dealing with visible surfaces
-		// start MPO
-		
-		// if this is a reflective surface ...
-		if (surf->flags & SURF_DRAWTURB)
-		{
-			// and if it is flat on the Z plane ...
-			if (plane->type == PLANE_Z)
-				R_add_refl(surf->polys->verts[0][0], surf->polys->verts[0][1], surf->polys->verts[0][2]);
-		}
-		// stop MPO
-	}
-
-	// recurse down the back side
-	R_RecursiveFindRefl(node->children[!side]);
-}
-#endif
 
 /*
 ================
@@ -601,6 +441,12 @@ void R_LoadReflMatrix (void)
 	R_DoReflTransform();
 	qglTranslatef(0.0f, 0.0f, 0.0f);
 	qglMatrixMode(GL_MODELVIEW);
+}
+
+void R_GetReflTexScale (float *w, float *h)
+{
+	*w = 0.5f * (float)g_reflTexW / (float)REFL_TEXW;
+	*h = 0.5f * (float)g_reflTexH / (float)REFL_TEXH;
 }
 
 /*

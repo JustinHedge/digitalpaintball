@@ -311,6 +311,7 @@ float CalcWave (float x, float y) // jitwater / MPO
 // === jitwater
 extern image_t *distort_tex;
 extern image_t *water_normal_tex;
+void R_GetReflTexScale (float *w, float *h);
 // MPO : this is my version...
 void EmitWaterPolys (msurface_t *fa)
 {
@@ -385,14 +386,14 @@ void EmitWaterPolys (msurface_t *fa)
 				#endif
 
 				s += scroll;
-				s *= (1.0/64);
+				s *= 0.015625f; // 1/64
 
 				#if !id386
 				t = ot + r_turbsin[(int)((os * 0.125f + rdt) * TURBSCALE) & 255];
 				#else
 				t = ot + r_turbsin[Q_ftol(((os * 0.125f + rdt) * TURBSCALE)) & 255];
 				#endif
-				t *= (1.0f / 64.0f);
+				t *= 0.015625f; // 1/64
 
 				// if it hasn't been initalized before
 				if (zValue == 0.0f)
@@ -416,15 +417,19 @@ void EmitWaterPolys (msurface_t *fa)
 
 	if (r_reflectivewater->value)
 	{
+#if 0
 		//====================
 		vec3_t	distanceVector;
 		float	distance;
 		//====================
+#endif
 
 		v = p->verts[0];
+#if 0
 		VectorSubtract(v, r_newrefdef.vieworg, distanceVector);
 		distance = VectorLength(distanceVector);
 		//R_add_refl(zValue, distance);
+#endif
 		R_add_refl(v[0], v[1], zValue);
 		g_refl_enabled = true;
 	}
@@ -438,14 +443,11 @@ void EmitWaterPolys (msurface_t *fa)
 			// === jitwater
 			if (gl_state.fragment_program)
 			{
+				qglEnable(GL_VERTEX_PROGRAM_ARB);
+				qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, g_water_vertex_program_id);
 				qglEnable(GL_FRAGMENT_PROGRAM_ARB);
-				qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_program_id);
-				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
-					rs_realtime * (flowing ? -0.3f : 0.2f), 1.0f, 1.0f, 1.0f);
-				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1,
-					rs_realtime * -0.2f, 10.0f, 1.0f, 1.0f);
-				qglProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2,
-					r_newrefdef.vieworg[0], r_newrefdef.vieworg[1], r_newrefdef.vieworg[2], 1.0f);
+				qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_fragment_program_id);
+
 				GL_MBind(QGL_TEXTURE1, distort_tex->texnum);      // Distortion texture
 				GL_MBind(QGL_TEXTURE2, water_normal_tex->texnum); // Normal texture
 			}
@@ -467,7 +469,21 @@ void EmitWaterPolys (msurface_t *fa)
 
 		GL_TexEnv(GL_MODULATE);
 		qglShadeModel(GL_SMOOTH);
-		R_LoadReflMatrix();
+
+		if (gl_state.fragment_program)
+		{
+			float w, h;
+			R_GetReflTexScale(&w, &h); // Probably unnecessary
+			qglProgramLocalParameter4fARB(GL_VERTEX_PROGRAM_ARB, 0,
+				w, h, rs_realtime * (flowing ? -0.3f : 0.2f), rs_realtime * -0.2f);
+			qglProgramLocalParameter4fARB(GL_VERTEX_PROGRAM_ARB, 1,
+				r_newrefdef.vieworg[0], r_newrefdef.vieworg[1], r_newrefdef.vieworg[2], 1.0f);
+		}
+		else
+		{
+			// Put UV coords in screen space for rendering the reflection texture.  Only need to do this when fragment programs are disabled.  It's handled in the vertex shader otherwise.
+			R_LoadReflMatrix();
+		}
 
   		// draw reflected water layer on top of regular
   		for (bp = fa->polys; bp; bp = bp->next)
@@ -476,13 +492,12 @@ void EmitWaterPolys (msurface_t *fa)
 			qglBegin(GL_TRIANGLE_FAN);
 			c_brush_polys += p->numverts / 3; // jitrspeeds
 
-			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v+=VERTEXSIZE)
+			for (i = 0, v = p->verts[0]; i < p->numverts; ++i, v += VERTEXSIZE)
 			{
 				if (gl_state.fragment_program)
 				{
-					qglMultiTexCoord3fvARB(QGL_TEXTURE0, v);
-					qglMultiTexCoord3fvARB(QGL_TEXTURE1, v);
-					qglMultiTexCoord3fvARB(QGL_TEXTURE2, v);
+					qglMultiTexCoord3fvARB(QGL_TEXTURE0, v); // Used for world space
+					qglMultiTexCoord3fvARB(QGL_TEXTURE1, v + 3); // Actual texture UV's.
 				}
 				else
 				{
@@ -524,7 +539,10 @@ void EmitWaterPolys (msurface_t *fa)
 			qglDisable(GL_BLEND);
 
 		if (gl_state.fragment_program) // jitwater
+		{
 			qglDisable(GL_FRAGMENT_PROGRAM_ARB);
+			qglDisable(GL_VERTEX_PROGRAM_ARB);
+		}
     }
 }
 // jitwater ===
