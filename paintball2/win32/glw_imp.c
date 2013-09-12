@@ -126,10 +126,25 @@ qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
 	}
 	else
 	{
+		POINT pt1, pt2;
+
 		vid_xpos = ri.Cvar_Get("vid_xpos", "0", 0);
 		vid_ypos = ri.Cvar_Get("vid_ypos", "0", 0);
 		x = vid_xpos->value;
 		y = vid_ypos->value;
+
+		// === jit - make sure the window is visible on a monitor so it doesn't get stuck off-screen somewhere.
+		pt1.x = x;
+		pt1.y = y;
+		pt2.x = x + 100;
+		pt2.y = x + 100;
+		
+		if (!(MonitorFromPoint(pt1, MONITOR_DEFAULTTONULL) && MonitorFromPoint(pt2, MONITOR_DEFAULTTONULL)))
+		{
+			x = 3;
+			y = 22;
+		}
+		// jit ===
 	}
 
 	glw_state.hWnd = CreateWindowEx (
