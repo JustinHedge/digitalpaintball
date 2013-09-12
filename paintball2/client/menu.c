@@ -2815,16 +2815,13 @@ static menu_screen_t* M_FindMenuScreen (const char *menu_name)
 
 	menu = root_menu;
 
-	if(!cl_menuback->modified)
+	// look through "cached" menus
+	while (menu)
 	{
-		// look through "cached" menus
-		while (menu)
-		{
-			if (Q_streq(menu_name, menu->name))
-				return menu;
-			
-			menu = menu->next;
-		}
+		if (Q_streq(menu_name, menu->name))
+			return menu;
+
+		menu = menu->next;
 	}
 
 	// not found, load from file:
@@ -2839,6 +2836,7 @@ static void reload_menu_screen (menu_screen_t *menu)
 
 	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 	menu->widget = free_widgets(menu->widget);
+	menu->background = re.DrawFindPic(cl_menuback->string);
 	menu_from_file(menu, false, NULL); // reload data from file
 	//pthread_mutex_unlock(&m_mut_widgets);
 }

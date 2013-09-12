@@ -1628,6 +1628,7 @@ text to the screen.
 */
 
 extern cvar_t *cl_drawhud; // jithud
+extern cvar_t *cl_menuback;
 
 void SCR_UpdateScreen (void)
 {
@@ -1697,14 +1698,20 @@ void SCR_UpdateScreen (void)
 		numframes = 1;
 	}
 
+	if (cl_hudscale->modified) // jithudscale / jitmenu
+	{
+		M_RefreshMenu();
+		cl_hudscale->modified = false;
+	}
+
+	if (cl_menuback->modified)
+	{
+		M_ReloadMenu();
+		cl_menuback->modified = false;
+	}
+
 	for (i = 0; i < numframes; i++)
 	{
-		if (cl_hudscale->modified) // jithudscale / jitmenu
-		{
-			M_RefreshMenu();
-			cl_hudscale->modified = false;
-		}
-
 		re.BeginFrame(separation[i]);
 
 		if (scr_draw_loading == 2)
