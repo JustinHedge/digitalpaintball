@@ -412,6 +412,7 @@ void SVC_DirectConnect (void)
 	// T3RR0R15T: Blocked player names. Prevent players with bad names from connecting.
 	Q_strncpyz(blockednames_list, sv_blockednames->string, sizeof(blockednames_list));
 	Q_strncpyz(lowercase_name, Info_ValueForKey(userinfo, "name"), sizeof(lowercase_name));
+	strip_garbage(lowercase_name, lowercase_name); // jit - strip out color codes and such.
 	strtolower(lowercase_name);
 	pname = strtok(blockednames_list, ",");
 
