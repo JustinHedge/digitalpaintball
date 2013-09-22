@@ -790,12 +790,13 @@ void Con_DrawDownloadBar (qboolean inConsole)
 			{
 				strcpy(dlbar, text);
 			}
+
 			strcat(dlbar, ": ");
 		}
 		else
 		{
 			translate_string(translated_text, sizeof(translated_text), "Downloading");
-			Cvar_ForceSet("cs_loadingstatus", va("%s %s",translated_text,text));
+			Cvar_ForceSet("cs_loadingstatus", va("%s %s", translated_text, text));
 		}
 		
 		i = strlen(dlbar);
@@ -838,20 +839,26 @@ void Con_DrawDownloadBar (qboolean inConsole)
 		if (cls.download3rate)
 		{
 			if (cls.download3rate > 1048576.0f)
+			{
 				if (inConsole)
 					Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fMB/s", cls.downloadpercent, cls.download3rate / 1048576.0f);
 				else
-					Cvar_ForceSet("cs_downloadspeed",va("%02d%% %1.2fMB/s", cls.downloadpercent, cls.download3rate / 1048576.0f));
+					Cvar_ForceSet("cs_downloadspeed", va("%02d%% %1.2fMB/s", cls.downloadpercent, cls.download3rate / 1048576.0f));
+			}
 			else if (cls.download3rate > 1024.0f)
+			{
 				if (inConsole)
 					Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fKB/s", cls.downloadpercent, cls.download3rate / 1024.0f);
 				else
-					Cvar_ForceSet("cs_downloadspeed",va("%02d%% %1.2fKB/s", cls.downloadpercent, cls.download3rate / 1024.0f));
+					Cvar_ForceSet("cs_downloadspeed", va("%02d%% %1.2fKB/s", cls.downloadpercent, cls.download3rate / 1024.0f));
+			}
 			else
+			{
 				if	(inConsole)
 					Com_sprintf(dlbar + len, sizeof(dlbar) - len, " %02d%% %1.2fB/s", cls.downloadpercent, cls.download3rate);
 				else
-					Cvar_ForceSet("cs_downloadspeed",va("%02d%% %1.2fB/s", cls.downloadpercent, cls.download3rate));
+					Cvar_ForceSet("cs_downloadspeed", va("%02d%% %1.2fB/s", cls.downloadpercent, cls.download3rate));
+			}
 		}
 		else
 #endif
