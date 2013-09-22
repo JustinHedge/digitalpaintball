@@ -799,6 +799,8 @@ SCR_BeginLoadingPlaque
 */
 void SCR_BeginLoadingPlaque (const char *mapname)
 {
+	char translated_text[1024];
+
 	S_StopAllSounds();
 	cl.sound_prepped = false;		// don't play ambients
 	CDAudio_Stop();
@@ -828,8 +830,10 @@ void SCR_BeginLoadingPlaque (const char *mapname)
 	SCR_UpdateScreen();
 	cls.disable_screen = Sys_Milliseconds();
 	cls.loading_screen = true;
-	Cvar_ForceSet("cs_loadingstatus", "Loading...");
 	cls.disable_servercount = cl.servercount;
+
+	translate_string(translated_text, sizeof(translated_text), "Loading...");
+	Cvar_ForceSet("cs_loadingstatus", translated_text);
 }
 
 /*
