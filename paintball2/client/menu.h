@@ -209,6 +209,7 @@ typedef struct MENU_WIDGET_S {
 	char *hovertext;	// text when mouse over widget
 	char *selectedtext;	// text when mouse clicked on widget
 	image_t *pic;		// image displayed by widget
+	image_t *missingpic;// optional pic to display if the pic can't be found (ex: "No Preview" for mapshots).
 	bordered_pic_data_t *bpic; // Bordered pic (for buttons)
 	char *picname;		// text name of pic
 	image_t *hoverpic;	// image displayed when mouse over widget

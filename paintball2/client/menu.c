@@ -2630,7 +2630,9 @@ static void menu_from_file (menu_screen_t *menu, qboolean include, const char *l
 							menu->command = text_copy(COM_Parse(&buf));
 					}
 					else if (Q_streq(token, "doubleclick") && widget)
+					{
 						widget->doubleclick = text_copy(COM_Parse(&buf));
+					}
 					else if (Q_streq(token, "pic") && widget)
 					{
 						char *picname = COM_Parse(&buf);
@@ -2649,6 +2651,11 @@ static void menu_from_file (menu_screen_t *menu, qboolean include, const char *l
 
 						if (!widget->picheight)
 							widget->picheight = widget->pic->height / 2.0f;
+					}
+					else if (Q_streq(token, "missingpic") && widget)
+					{
+						char *picname = COM_Parse(&buf);
+						widget->missingpic = re.DrawFindPic(Cmd_MacroExpandString(picname));
 					}
 					else if ((Q_streq(token, "bpic") || Q_streq(token, "borderpic")) && widget)
 					{
@@ -2669,9 +2676,13 @@ static void menu_from_file (menu_screen_t *menu, qboolean include, const char *l
 						widget->selectedbpic = CL_FindBPic(picname);
 					}
 					else if (Q_streq(token, "picwidth") && widget)
+					{
 						widget->picwidth = atoi(COM_Parse(&buf));
+					}
 					else if (Q_streq(token, "picheight") && widget)
+					{
 						widget->picheight = atoi(COM_Parse(&buf));
+					}
 					else if (Q_streq(token, "hoverpic") && widget)
 					{
 						char *picname = COM_Parse(&buf);
@@ -2692,9 +2703,13 @@ static void menu_from_file (menu_screen_t *menu, qboolean include, const char *l
 							widget->hoverpicheight = widget->hoverpic->height / 2.0f;
 					}
 					else if (Q_streq(token, "hoverpicwidth") && widget)
+					{
 						widget->hoverpicwidth = atoi(COM_Parse(&buf));
+					}
 					else if (Q_streq(token, "hoverpicheight") && widget)
+					{
 						widget->hoverpicheight = atoi(COM_Parse(&buf));
+					}
 					else if (Q_streq(token, "selectedpic") && widget)
 					{
 						char *picname = COM_Parse(&buf);
@@ -3202,6 +3217,12 @@ static void M_DrawWidget (menu_widget_t *widget)
 				pic = re.DrawFindPic(Cmd_MacroExpandString(widget->picname));
 			else
 				pic = widget->pic;
+
+			if (widget->missingpic)
+			{
+				if (pic == re.DrawFindPic("***r_notexture***"))
+					pic = widget->missingpic;
+			}
 		}
 
 		if (widget->bpic)
