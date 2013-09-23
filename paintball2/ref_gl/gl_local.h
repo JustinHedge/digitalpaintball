@@ -51,7 +51,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qgl.h"
 
-#define	REF_VERSION	"PB2GL 0.38" // jitversion / jitbuild
+#define	REF_VERSION	"PB2GL 0.39" // jitversion / jitbuild
 
 // up / down
 #define	PITCH	0
@@ -404,14 +404,14 @@ typedef struct
 } glconfig_t;
 
 
-#define GLSTATE_DISABLE_ALPHATEST	if (gl_state.alpha_test) { qglDisable(GL_ALPHA_TEST); gl_state.alpha_test=false; }
-#define GLSTATE_ENABLE_ALPHATEST	if (!gl_state.alpha_test) { qglEnable(GL_ALPHA_TEST); gl_state.alpha_test=true; }
+#define GLSTATE_DISABLE_ALPHATEST	if (gl_state.alpha_test) { qgl.Disable(GL_ALPHA_TEST); gl_state.alpha_test=false; }
+#define GLSTATE_ENABLE_ALPHATEST	if (!gl_state.alpha_test) { qgl.Enable(GL_ALPHA_TEST); gl_state.alpha_test=true; }
 
-#define GLSTATE_DISABLE_BLEND		if (gl_state.blend) { qglDisable(GL_BLEND); gl_state.blend=false; }
-#define GLSTATE_ENABLE_BLEND		if (!gl_state.blend) { qglEnable(GL_BLEND); gl_state.blend=true; }
+#define GLSTATE_DISABLE_BLEND		if (gl_state.blend) { qgl.Disable(GL_BLEND); gl_state.blend=false; }
+#define GLSTATE_ENABLE_BLEND		if (!gl_state.blend) { qgl.Enable(GL_BLEND); gl_state.blend=true; }
 
-#define GLSTATE_DISABLE_TEXGEN		if (gl_state.texgen) { qglDisable(GL_TEXTURE_GEN_S); qglDisable(GL_TEXTURE_GEN_T); qglDisable(GL_TEXTURE_GEN_R); gl_state.texgen=false; }
-#define GLSTATE_ENABLE_TEXGEN		if (!gl_state.texgen) { qglEnable(GL_TEXTURE_GEN_S); qglEnable(GL_TEXTURE_GEN_T); qglEnable(GL_TEXTURE_GEN_R); gl_state.texgen=true; }
+#define GLSTATE_DISABLE_TEXGEN		if (gl_state.texgen) { qgl.Disable(GL_TEXTURE_GEN_S); qgl.Disable(GL_TEXTURE_GEN_T); qgl.Disable(GL_TEXTURE_GEN_R); gl_state.texgen=false; }
+#define GLSTATE_ENABLE_TEXGEN		if (!gl_state.texgen) { qgl.Enable(GL_TEXTURE_GEN_S); qgl.Enable(GL_TEXTURE_GEN_T); qgl.Enable(GL_TEXTURE_GEN_R); gl_state.texgen=true; }
 
 typedef struct
 {

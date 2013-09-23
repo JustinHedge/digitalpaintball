@@ -52,7 +52,7 @@ static qboolean VerifyDriver (void)
 {
 	char buffer[1024];
 
-	strcpy(buffer, qglGetString(GL_RENDERER));
+	strcpy(buffer, qgl.GetString(GL_RENDERER));
 	strlwr(buffer);
 
 	if (Q_streq(buffer, "gdi generic"))
@@ -350,12 +350,12 @@ void GLimp_Shutdown( void )
 //jitgamma	if (vid_gamma_hw->value && gl_state.gammaramp)
 //		SetDeviceGammaRamp(glw_state.hDC, original_ramp);
 
-	if ( qwglMakeCurrent && !qwglMakeCurrent( NULL, NULL ) )
+	if ( qgl.wMakeCurrent && !qgl.wMakeCurrent( NULL, NULL ) )
 		ri.Con_Printf( PRINT_ALL, "ref_gl::R_Shutdown() - wglMakeCurrent failed.\n");
 
 	if ( glw_state.hGLRC )
 	{
-		if (  qwglDeleteContext && !qwglDeleteContext( glw_state.hGLRC ) )
+		if (  qgl.wDeleteContext && !qgl.wDeleteContext( glw_state.hGLRC ) )
 			ri.Con_Printf( PRINT_ALL, "ref_gl::R_Shutdown() - wglDeleteContext failed.\n");
 		glw_state.hGLRC = NULL;
 	}
@@ -507,19 +507,19 @@ qboolean GLimp_InitGL (void)
 
 	if (glw_state.minidriver)
 	{
-		if ((pixelformat = qwglChoosePixelFormat(glw_state.hDC, &pfd)) == 0)
+		if ((pixelformat = qgl.wChoosePixelFormat(glw_state.hDC, &pfd)) == 0)
 		{
-			ri.Con_Printf(PRINT_ALL, "GLimp_Init() - qwglChoosePixelFormat failed.\n");
+			ri.Con_Printf(PRINT_ALL, "GLimp_Init() - qgl.wChoosePixelFormat failed.\n");
 			return false;
 		}
 
-		if (qwglSetPixelFormat(glw_state.hDC, pixelformat, &pfd) == FALSE)
+		if (qgl.wSetPixelFormat(glw_state.hDC, pixelformat, &pfd) == FALSE)
 		{
-			ri.Con_Printf(PRINT_ALL, "GLimp_Init() - qwglSetPixelFormat failed.\n");
+			ri.Con_Printf(PRINT_ALL, "GLimp_Init() - qgl.wSetPixelFormat failed.\n");
 			return false;
 		}
 
-		qwglDescribePixelFormat(glw_state.hDC, pixelformat, sizeof(pfd), &pfd);
+		qgl.wDescribePixelFormat(glw_state.hDC, pixelformat, sizeof(pfd), &pfd);
 	}
 	else
 	{
@@ -583,15 +583,15 @@ qboolean GLimp_InitGL (void)
 	** startup the OpenGL subsystem by creating a context and making
 	** it current
 	*/
-	if ((glw_state.hGLRC = qwglCreateContext(glw_state.hDC)) == 0)
+	if ((glw_state.hGLRC = qgl.wCreateContext(glw_state.hDC)) == 0)
 	{
-		ri.Con_Printf (PRINT_ALL, "GLimp_Init() - qwglCreateContext failed.\n");
+		ri.Con_Printf (PRINT_ALL, "GLimp_Init() - qgl.wCreateContext failed.\n");
 		goto fail;
 	}
 
-    if (!qwglMakeCurrent(glw_state.hDC, glw_state.hGLRC))
+    if (!qgl.wMakeCurrent(glw_state.hDC, glw_state.hGLRC))
 	{
-		ri.Con_Printf (PRINT_ALL, "GLimp_Init() - qwglMakeCurrent failed.\n");
+		ri.Con_Printf (PRINT_ALL, "GLimp_Init() - qgl.wMakeCurrent failed.\n");
 		goto fail;
 	}
 
@@ -610,7 +610,7 @@ qboolean GLimp_InitGL (void)
 	{
 		char buffer[1024];
 
-		strcpy( buffer, qglGetString(GL_RENDERER));
+		strcpy( buffer, qgl.GetString(GL_RENDERER));
 
 		if (!((int)pfd.cStencilBits))  // jit
 		{
@@ -634,12 +634,12 @@ qboolean GLimp_InitGL (void)
 //jitrscript - moved	RS_ScanPathForScripts(ri.FS_Gamedir());		// load all found scripts
 
 	// Vertex arrays
-	/*qglEnableClientState (GL_VERTEX_ARRAY);
-	qglEnableClientState (GL_TEXTURE_COORD_ARRAY);
+	/*qgl.EnableClientState (GL_VERTEX_ARRAY);
+	qgl.EnableClientState (GL_TEXTURE_COORD_ARRAY);
 
-	qglTexCoordPointer (2, GL_FLOAT, sizeof(tex_array[0]), tex_array[0]);
-	qglVertexPointer (3, GL_FLOAT, sizeof(vert_array[0]), vert_array[0]);
-	qglColorPointer (4, GL_FLOAT, sizeof(col_array[0]), col_array[0]);*/
+	qgl.TexCoordPointer (2, GL_FLOAT, sizeof(tex_array[0]), tex_array[0]);
+	qgl.VertexPointer (3, GL_FLOAT, sizeof(vert_array[0]), vert_array[0]);
+	qgl.ColorPointer (4, GL_FLOAT, sizeof(col_array[0]), col_array[0]);*/
 
 	
 	/*
@@ -659,7 +659,7 @@ qboolean GLimp_InitGL (void)
 fail:
 	if ( glw_state.hGLRC )
 	{
-		qwglDeleteContext( glw_state.hGLRC );
+		qgl.wDeleteContext( glw_state.hGLRC );
 		glw_state.hGLRC = NULL;
 	}
 
@@ -690,15 +690,15 @@ void GLimp_BeginFrame( float camera_separation )
 
 	if (camera_separation < 0 && gl_state.stereo_enabled)
 	{
-		qglDrawBuffer(GL_BACK_LEFT);
+		qgl.DrawBuffer(GL_BACK_LEFT);
 	}
 	else if (camera_separation > 0 && gl_state.stereo_enabled)
 	{
-		qglDrawBuffer(GL_BACK_RIGHT);
+		qgl.DrawBuffer(GL_BACK_RIGHT);
 	}
 	else
 	{
-		qglDrawBuffer(GL_BACK);
+		qgl.DrawBuffer(GL_BACK);
 	}
 
 	//Heffo - CIN Texture Update
@@ -758,8 +758,8 @@ void CL_AnimDump (void)
 	buffer[14] = vid.height&255;
 	buffer[15] = vid.height>>8;
 	buffer[16] = 24;	// pixel size
-	qglPixelStorei(GL_PACK_ALIGNMENT, 1);
-	qglReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer + 18); 
+	qgl.PixelStorei(GL_PACK_ALIGNMENT, 1);
+	qgl.ReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer + 18); 
 	apply_gamma(buffer + 18, vid.width, vid.height); // jitgamma -- apply video gammaramp to screenshot
 	
 
@@ -795,7 +795,7 @@ void GLimp_EndFrame (void)
 	{
 		int err;
 
-		err = qglGetError();
+		err = qgl.GetError();
 		assert(err == GL_NO_ERROR);
 	}
 #endif
@@ -806,7 +806,7 @@ void GLimp_EndFrame (void)
 
 	if (Q_streq(gl_drawbuffer->string, "GL_BACK"))
 	{
-		if (!qwglSwapBuffers(glw_state.hDC))
+		if (!qgl.wSwapBuffers(glw_state.hDC))
 		{
 			static qboolean print = true;
 

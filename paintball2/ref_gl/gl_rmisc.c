@@ -227,8 +227,8 @@ void GL_ScreenShot_JPG (void)
 	}
 
 	// Read the framebuffer into our storage
-	qglPixelStorei(GL_PACK_ALIGNMENT, 1); // Make sure screenshots work with weird resolutions like 1366x768
-	qglReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, rgbdata);
+	qgl.PixelStorei(GL_PACK_ALIGNMENT, 1); // Make sure screenshots work with weird resolutions like 1366x768
+	qgl.ReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, rgbdata);
 	apply_gamma(rgbdata, vid.width, vid.height); // jitgamma -- apply video gammaramp to screenshot
 
 	// Initialise the JPEG compression object
@@ -352,8 +352,8 @@ void GL_ScreenShot_f (void)
 	buffer[14] = vid.height & 255;
 	buffer[15] = vid.height >> 8;
 	buffer[16] = 24;	// pixel size
-	qglPixelStorei(GL_PACK_ALIGNMENT, 1);
-	qglReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer + 18); 
+	qgl.PixelStorei(GL_PACK_ALIGNMENT, 1);
+	qgl.ReadPixels(0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer + 18); 
 	apply_gamma(buffer + 18, vid.width, vid.height); // jitgamma -- apply video gammaramp to screenshot
 
 	// swap rgb to bgr
@@ -400,44 +400,44 @@ extern qboolean fogenabled;
 extern vec3_t fogcolor;
 void GL_SetDefaultState (void)
 {
-	//qglClearColor (1,0, 0.5 , 0.5); jitclearcolor
+	//qgl.ClearColor (1,0, 0.5 , 0.5); jitclearcolor
 
-	qglCullFace(GL_FRONT);
-	qglEnable(GL_TEXTURE_2D);
+	qgl.CullFace(GL_FRONT);
+	qgl.Enable(GL_TEXTURE_2D);
 
-	qglEnable(GL_ALPHA_TEST);
-	qglAlphaFunc(GL_GREATER, 0.666f);
+	qgl.Enable(GL_ALPHA_TEST);
+	qgl.AlphaFunc(GL_GREATER, 0.666f);
 	gl_state.alpha_test=true;
 
-	qglDisable(GL_DEPTH_TEST);
-	qglDisable(GL_CULL_FACE);
-	qglDisable(GL_BLEND);
+	qgl.Disable(GL_DEPTH_TEST);
+	qgl.Disable(GL_CULL_FACE);
+	qgl.Disable(GL_BLEND);
 	gl_state.blend = false;
 
-	qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-	qglPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	qglShadeModel(GL_FLAT);
+	qgl.PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	qgl.ShadeModel(GL_FLAT);
 
 	GL_TextureMode( gl_texturemode->string );
 	GL_TextureAlphaMode( gl_texturealphamode->string );
 	GL_TextureSolidMode( gl_texturesolidmode->string );
 
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qgl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	GL_TexEnv(GL_REPLACE);
 
 	gl_state.texgen = false;
-	qglDisable(GL_TEXTURE_GEN_S);
-	qglDisable(GL_TEXTURE_GEN_T);
+	qgl.Disable(GL_TEXTURE_GEN_S);
+	qgl.Disable(GL_TEXTURE_GEN_T);
 
-	if (qglPointParameterfEXT)
+	if (qgl.PointParameterfEXT)
 	{
 		float attenuations[3];
 
@@ -451,10 +451,10 @@ void GL_SetDefaultState (void)
 		attenuations[1] = gl_particle_att_b->value;
 		attenuations[2] = gl_particle_att_c->value;
 
-		qglEnable(GL_POINT_SMOOTH);
-		qglPointParameterfEXT(GL_POINT_SIZE_MIN_EXT, gl_particle_min_size->value);
-		qglPointParameterfEXT(GL_POINT_SIZE_MAX_EXT, gl_particle_max_size->value);
-		qglPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, attenuations);
+		qgl.Enable(GL_POINT_SMOOTH);
+		qgl.PointParameterfEXT(GL_POINT_SIZE_MIN_EXT, gl_particle_min_size->value);
+		qgl.PointParameterfEXT(GL_POINT_SIZE_MAX_EXT, gl_particle_max_size->value);
+		qgl.PointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, attenuations);
 	}
 }
 
@@ -467,10 +467,10 @@ void GL_UpdateSwapInterval (void)
 		if (!gl_state.stereo_enabled)
 		{
 #ifdef _WIN32
-			if (qwglSwapIntervalEXT)
+			if (qgl.wSwapIntervalEXT)
 			{
-				qwglSwapIntervalEXT(!gl_swapinterval->value); // jit -- ugly hack
-				qwglSwapIntervalEXT(gl_swapinterval->value);
+				qgl.wSwapIntervalEXT(!gl_swapinterval->value); // jit -- ugly hack
+				qgl.wSwapIntervalEXT(gl_swapinterval->value);
 			}
 #endif
 		}

@@ -280,7 +280,7 @@ void RS_ReadyScript (rscript_t *rs)
 	{
 		int err;
 
-		err = qglGetError();
+		err = qgl.GetError();
 		assert(err == GL_NO_ERROR);
 	}
 #endif
@@ -1375,7 +1375,7 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 
 		if (stage->blendfunc.blend && (alphasurf || !firststage))
 		{
-			qglBlendFunc(stage->blendfunc.source, stage->blendfunc.dest);
+			qgl.BlendFunc(stage->blendfunc.source, stage->blendfunc.dest);
 			GLSTATE_ENABLE_BLEND
 		}
 		else
@@ -1444,7 +1444,7 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 			tym = 0;
 		}
 
-		qglColor4f (1, 1, 1, alpha);
+		qgl.Color4f (1, 1, 1, alpha);
 
 //		if (stage->envmap)
 //			GL_TexEnv(GL_MODULATE);
@@ -1466,7 +1466,7 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 			for (bp = surf->polys; bp; bp = bp->next)
 			{
 				p = bp;
-				qglBegin(GL_TRIANGLE_FAN);
+				qgl.Begin(GL_TRIANGLE_FAN);
 
 				for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
 				{
@@ -1493,35 +1493,35 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 
 					if (lightmap)
 					{
-						qglMultiTexCoord2fARB(QGL_TEXTURE0, os+txm, ot+tym);
-						qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
+						qgl.MultiTexCoord2fARB(QGL_TEXTURE0, os+txm, ot+tym);
+						qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 					}
 					else
 					{
-						qglTexCoord2f(os+txm, ot+tym); // jitrscript (added txm/tym)
+						qgl.TexCoord2f(os+txm, ot+tym); // jitrscript (added txm/tym)
 					}
 
 					if (!rs->warpsmooth)
 					{
-						qglVertex3fv(v);
+						qgl.Vertex3fv(v);
 					}
 					else
 					{
 						scale = rs->warpdist * sin(v[0]*rs->warpsmooth+time) *
 							sin(v[1]*rs->warpsmooth+time) * sin(v[2]*rs->warpsmooth+time);
 						VectorMA(v, scale, surf->plane->normal, wv);
-						qglVertex3fv (wv);
+						qgl.Vertex3fv (wv);
 					}
 				}
 
-				qglEnd();
+				qgl.End();
 			}
 		}
 		else
 		{
 			for (p = surf->polys; p; p = p->chain)
 			{
-				qglBegin(GL_TRIANGLE_FAN);
+				qgl.Begin(GL_TRIANGLE_FAN);
 
 				for (i = 0, v = p->verts[0]; i < nv; i++, v += VERTEXSIZE)
 				{
@@ -1546,37 +1546,37 @@ void RS_DrawSurface (msurface_t *surf, qboolean lightmap, rscript_t *rs) // jitr
 
 					RS_SetTexcoords(stage, &os, &ot, surf);
 
-					if (lightmap && qglMultiTexCoord2fARB)
+					if (lightmap && qgl.MultiTexCoord2fARB)
 					{
-						qglMultiTexCoord2fARB(QGL_TEXTURE0, os + txm, ot + tym);
-						qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
+						qgl.MultiTexCoord2fARB(QGL_TEXTURE0, os + txm, ot + tym);
+						qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 					}
 					else
 					{
-						qglTexCoord2f(os + txm, ot + tym); // jitrscript (added txm/tym)
+						qgl.TexCoord2f(os + txm, ot + tym); // jitrscript (added txm/tym)
 					}
 
 					if (!rs->warpsmooth)
 					{
-						qglVertex3fv(v);
+						qgl.Vertex3fv(v);
 					}
 					else
 					{
 						scale = rs->warpdist * sin(v[0] * rs->warpsmooth+time) * sin(v[1] * rs->warpsmooth + time) * sin(v[2] * rs->warpsmooth + time);
 						VectorMA(v, scale, surf->plane->normal, wv);
-						qglVertex3fv(wv);
+						qgl.Vertex3fv(wv);
 					}
 				}
 
-				qglEnd();
+				qgl.End();
 			}
 		}
 
 		//if (stage->envmap)
 		//	GL_TexEnv(GL_REPLACE);
 
-		qglColor4f(1, 1, 1, 1);
-		qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		qgl.Color4f(1, 1, 1, 1);
+		qgl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		GLSTATE_DISABLE_BLEND
 		GLSTATE_DISABLE_ALPHATEST

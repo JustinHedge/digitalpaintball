@@ -117,7 +117,7 @@ void GL_DrawAliasFrameLerpShell (dmdl_t *paliashdr, float backlerp)
 		alpha = 1.0;
 
 	// PMM - added double shell
-	qglDisable(GL_TEXTURE_2D);
+	qgl.Disable(GL_TEXTURE_2D);
 
 	frontlerp = 1.0f - backlerp;
 
@@ -157,11 +157,11 @@ void GL_DrawAliasFrameLerpShell (dmdl_t *paliashdr, float backlerp)
 		if (count < 0)
 		{
 			count = -count;
-			qglBegin(GL_TRIANGLE_FAN);
+			qgl.Begin(GL_TRIANGLE_FAN);
 		}
 		else
 		{
-			qglBegin(GL_TRIANGLE_STRIP);
+			qgl.Begin(GL_TRIANGLE_STRIP);
 		}
 
 		do
@@ -169,15 +169,15 @@ void GL_DrawAliasFrameLerpShell (dmdl_t *paliashdr, float backlerp)
 			index_xyz = order[2];
 			order += 3;
 
-			qglColor4f(shadelight[0], shadelight[1], shadelight[2], alpha);
-			qglVertex3fv(s_lerped[index_xyz]);
+			qgl.Color4f(shadelight[0], shadelight[1], shadelight[2], alpha);
+			qgl.Vertex3fv(s_lerped[index_xyz]);
 
 		} while (--count);
 
-		qglEnd();
+		qgl.End();
 	}
 
-	qglEnable(GL_TEXTURE_2D);
+	qgl.Enable(GL_TEXTURE_2D);
 }
 
 
@@ -244,7 +244,7 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 
 	lerp = s_lerped[0];
 	GL_LerpVerts(paliashdr->num_xyz, v, ov, verts, lerp, move, frontv, backv);
-	//qglEnableClientState(GL_COLOR_ARRAY);
+	//qgl.EnableClientState(GL_COLOR_ARRAY);
 	assert(currententity->skinnum >= 0 && currententity->skinnum < MAX_MD2SKINS);
 	rs = (rscript_t*)currententity->model->script[currententity->skinnum];
 
@@ -282,7 +282,7 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 				order += 3;
 			} while (--count);
 
-			qglDrawArrays(mode, 0, va);
+			qgl.DrawArrays(mode, 0, va);
 		}
 #else // old q2 code (with shells removed):
 		if (gl_vertex_arrays->value)
@@ -290,11 +290,11 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 #if 1
 			float colorArray[MAX_VERTS*4];
 
-			qglEnableClientState(GL_VERTEX_ARRAY);
-			qglVertexPointer(3, GL_FLOAT, 16, s_lerped);	// padded for SIMD
+			qgl.EnableClientState(GL_VERTEX_ARRAY);
+			qgl.VertexPointer(3, GL_FLOAT, 16, s_lerped);	// padded for SIMD
 
-			qglEnableClientState(GL_COLOR_ARRAY);
-			qglColorPointer(3, GL_FLOAT, 0, colorArray);
+			qgl.EnableClientState(GL_COLOR_ARRAY);
+			qgl.ColorPointer(3, GL_FLOAT, 0, colorArray);
 
 			//
 			// pre light everything
@@ -308,8 +308,8 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 				colorArray[i*3+2] = l * shadelight[2];
 			}
 
-			if (qglLockArraysEXT != 0)
-				qglLockArraysEXT(0, paliashdr->num_xyz);
+			if (qgl.LockArraysEXT != 0)
+				qgl.LockArraysEXT(0, paliashdr->num_xyz);
 
 			while (1)
 			{
@@ -320,30 +320,30 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 				if (count < 0)
 				{
 					count = -count;
-					qglBegin(GL_TRIANGLE_FAN);
+					qgl.Begin(GL_TRIANGLE_FAN);
 				}
 				else
 				{
-					qglBegin(GL_TRIANGLE_STRIP);
+					qgl.Begin(GL_TRIANGLE_STRIP);
 				}
 
 				do
 				{
 					// texture coordinates come from the draw list
-					qglTexCoord2f(((float *)order)[0], ((float *)order)[1]);
+					qgl.TexCoord2f(((float *)order)[0], ((float *)order)[1]);
 					index_xyz = order[2];
 					order += 3;
-					qglArrayElement(index_xyz);
+					qgl.ArrayElement(index_xyz);
 				} while (--count);
 
-				qglEnd();
+				qgl.End();
 			}
 
-			if (qglUnlockArraysEXT != 0)
-				qglUnlockArraysEXT();
+			if (qgl.UnlockArraysEXT != 0)
+				qgl.UnlockArraysEXT();
 			
-			qglDisableClientState(GL_VERTEX_ARRAY); // jit
-			qglDisableClientState(GL_COLOR_ARRAY); // jit
+			qgl.DisableClientState(GL_VERTEX_ARRAY); // jit
+			qgl.DisableClientState(GL_COLOR_ARRAY); // jit
 #else // (temp) testing beefquake code
 			while (1)
 			{
@@ -375,7 +375,7 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 					va++;
 					order += 3;
 				} while (--count);
-				qglDrawArrays(mode,0,va);
+				qgl.DrawArrays(mode,0,va);
 			}
 #endif
 		}
@@ -392,26 +392,26 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 				if (count < 0)
 				{
 					count = -count;
-					qglBegin(GL_TRIANGLE_FAN);
+					qgl.Begin(GL_TRIANGLE_FAN);
 				}
 				else
 				{
-					qglBegin(GL_TRIANGLE_STRIP);
+					qgl.Begin(GL_TRIANGLE_STRIP);
 				}
 
 				do
 				{
 					// texture coordinates come from the draw list
-					qglTexCoord2f(((float *)order)[0], ((float *)order)[1]);
+					qgl.TexCoord2f(((float *)order)[0], ((float *)order)[1]);
 					index_xyz = order[2];
 					order += 3;
 					// normals and vertexes come from the frame list
 					l = shadedots[verts[index_xyz].lightnormalindex];
-					qglColor4f(l * shadelight[0], l * shadelight[1], l * shadelight[2], alpha);
-					qglVertex3fv(s_lerped[index_xyz]);
+					qgl.Color4f(l * shadelight[0], l * shadelight[1], l * shadelight[2], alpha);
+					qgl.Vertex3fv(s_lerped[index_xyz]);
 				} while (--count);
 
-				qglEnd();
+				qgl.End();
 			}
 		}
 #endif
@@ -493,7 +493,7 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 
 				if (stage->blendfunc.blend)
 				{
-					qglBlendFunc(stage->blendfunc.source,stage->blendfunc.dest);
+					qgl.BlendFunc(stage->blendfunc.source,stage->blendfunc.dest);
 					GLSTATE_ENABLE_BLEND
 				}
 				else
@@ -529,8 +529,8 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 				//if (stage->envmap)
 				if (stage->tcGen == TC_GEN_ENVIRONMENT)
 				{
-					qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-					qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
+					qgl.TexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
+					qgl.TexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
 					GLSTATE_ENABLE_TEXGEN
 				}
 				if (stage->alphamask)
@@ -558,14 +558,14 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 					va++;
 					order += 3;
 				} while (--count);
-				qglDrawArrays(mode,0,va);
+				qgl.DrawArrays(mode,0,va);
 
 #else
-				qglBegin(mode);
+				qgl.Begin(mode);
 				do
 				{
 					// texture coordinates come from the draw list
-					qglTexCoord2f (((float *)order)[0]+txm,
+					qgl.TexCoord2f (((float *)order)[0]+txm,
 						((float *)order)[1]+tym);
 					index_xyz = order[2];
 					order += 3;
@@ -573,17 +573,17 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 					// normals and vertexes come from the frame list
 					l = shadedots[verts[index_xyz].lightnormalindex];
 
-					qglColor4f (l* shadelight[0], l*shadelight[1], 
+					qgl.Color4f (l* shadelight[0], l*shadelight[1], 
 						l*shadelight[2], alpha);
-					qglVertex3fv (s_lerped[index_xyz]);
+					qgl.Vertex3fv (s_lerped[index_xyz]);
 				} while (--count);
-				qglEnd();
+				qgl.End();
 #endif
 
 				GLSTATE_DISABLE_ALPHATEST;
 				GLSTATE_DISABLE_BLEND;
-				qglColor4f(1,1,1,1);
-				qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				qgl.Color4f(1,1,1,1);
+				qgl.BlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				GLSTATE_DISABLE_TEXGEN;
 
 				stage=stage->next;
@@ -591,8 +591,8 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 		}
 	}
 
-	//qglDisableClientState(GL_COLOR_ARRAY);
-	//qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	//qgl.DisableClientState(GL_COLOR_ARRAY);
+	//qgl.EnableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
 
@@ -612,22 +612,22 @@ void CastShadowEdge(vec3_t p1, vec3_t p2, vec3_t light, char pass)
 
 #ifdef CARMACK_REVERSE
 		if (pass==0) {
-			qglFrontFace(GL_CW);
-			qglStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
+			qgl.FrontFace(GL_CW);
+			qgl.StencilOp(GL_KEEP, GL_INCR, GL_KEEP);
 		} else {
-			qglFrontFace(GL_CCW);
-			qglStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
+			qgl.FrontFace(GL_CCW);
+			qgl.StencilOp(GL_KEEP, GL_DECR, GL_KEEP);
 		}
 #else
 		if (pass==0) {
-			qglFrontFace(GL_CCW);
-			qglStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+			qgl.FrontFace(GL_CCW);
+			qgl.StencilOp(GL_KEEP, GL_KEEP, GL_INCR);
 		} else {
-			qglFrontFace(GL_CW);
-			qglStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+			qgl.FrontFace(GL_CW);
+			qgl.StencilOp(GL_KEEP, GL_KEEP, GL_DECR);
 		}
 #endif
-		qglBegin(GL_QUADS);
+		qgl.Begin(GL_QUADS);
 			v[0][0]=(p1[0]-light[0])*5;
 			v[0][1]=(p1[1]-light[1])*5;
 			v[0][2]=(p1[2]-light[2])*5;
@@ -636,11 +636,11 @@ void CastShadowEdge(vec3_t p1, vec3_t p2, vec3_t light, char pass)
 			v[1][1]=(p2[1]-light[1])*5;
 			v[1][2]=(p2[2]-light[2])*5;
 
-			qglVertex3fv((float *)p1);
-			qglVertex3fv((float *)p2);
-			qglVertex4f(v[1][0],v[1][1],v[1][2],0);
-			qglVertex4f(v[0][0],v[0][1],v[0][2],0);
-		qglEnd();
+			qgl.Vertex3fv((float *)p1);
+			qgl.Vertex3fv((float *)p2);
+			qgl.Vertex4f(v[1][0],v[1][1],v[1][2],0);
+			qgl.Vertex4f(v[0][0],v[0][1],v[0][2],0);
+		qgl.End();
 }
 
 
@@ -717,16 +717,16 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 	// Stencil shadows - MrG
 	if (have_stencil && gl_shadows->value == 2)
 	{
-		qglEnable(GL_STENCIL_TEST);
-		qglStencilFunc(GL_GREATER, 2, 2);
-		qglStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		qgl.Enable(GL_STENCIL_TEST);
+		qgl.StencilFunc(GL_GREATER, 2, 2);
+		qgl.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	}
 	// End Stencil shadows - MrG
 
-	//qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	//qglEnableClientState(GL_COLOR_ARRAY);
-	qglDisable(GL_TEXTURE_2D);
-	qglColor4f(0, 0, 0, 0.2f);
+	//qgl.DisableClientState(GL_TEXTURE_COORD_ARRAY);
+	//qgl.EnableClientState(GL_COLOR_ARRAY);
+	qgl.Disable(GL_TEXTURE_2D);
+	qgl.Color4f(0, 0, 0, 0.2f);
 
 
 	while (1)
@@ -742,12 +742,12 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 		{
 			count = -count;
 			//mode = GL_TRIANGLE_FAN;
-			qglBegin(GL_TRIANGLE_FAN); // jit
+			qgl.Begin(GL_TRIANGLE_FAN); // jit
 		}
 		else
 		{
 			//mode = GL_TRIANGLE_STRIP;
-			qglBegin(GL_TRIANGLE_STRIP);
+			qgl.Begin(GL_TRIANGLE_STRIP);
 		}
 
 		do
@@ -758,24 +758,24 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 
 			//VA_SetElem3(vert_array[va],point[0],point[1],point[2]);
 			//VA_SetElem4(col_array[va],0, 0, 0, 0.2f);
-			qglVertex3fv(point); // jit
+			qgl.Vertex3fv(point); // jit
 			order += 3;
 			//va++;
 		} while (--count);
 
-		qglEnd (); // jit
+		qgl.End (); // jit
 
-		// jitest if (qglLockArraysEXT != 0) qglLockArraysEXT(0, paliashdr->num_xyz);
-		//qglDrawArrays(mode,0,va);
-		// jitest if (qglUnlockArraysEXT != 0) qglUnlockArraysEXT();
+		// jitest if (qgl.LockArraysEXT != 0) qgl.LockArraysEXT(0, paliashdr->num_xyz);
+		//qgl.DrawArrays(mode,0,va);
+		// jitest if (qgl.UnlockArraysEXT != 0) qgl.UnlockArraysEXT();
 	}	
 
-	//qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	//qglDisableClientState(GL_COLOR_ARRAY);
+	//qgl.EnableClientState(GL_TEXTURE_COORD_ARRAY);
+	//qgl.DisableClientState(GL_COLOR_ARRAY);
 
 	if (have_stencil && gl_shadows->value == 2)
 	{
-		qglDisable(GL_STENCIL_TEST); // Stencil shadows - MrG
+		qgl.Disable(GL_STENCIL_TEST); // Stencil shadows - MrG
 	}
 
 #else
@@ -784,15 +784,15 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 	v[1][0] =  15; v[1][1] =  20; v[1][2] = 50;
 	v[2][0] =  15; v[2][1] = -20; v[2][2] = 50;
 
-	qglEnable(GL_STENCIL_TEST);
-	qglTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-	qglBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	qgl.Enable(GL_STENCIL_TEST);
+	qgl.TexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+	qgl.BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-	qglDepthMask(0);
-	qglDepthFunc(GL_LEQUAL);
-	qglEnable(GL_STENCIL_TEST);
-	qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	qglStencilFunc(GL_ALWAYS, 1, 0xFFFFFFFFL);
+	qgl.DepthMask(0);
+	qgl.DepthFunc(GL_LEQUAL);
+	qgl.Enable(GL_STENCIL_TEST);
+	qgl.ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	qgl.StencilFunc(GL_ALWAYS, 1, 0xFFFFFFFFL);
 
 	point[0] = currententity->origin[0];
 	point[1] = currententity->origin[1];
@@ -810,12 +810,12 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 		CastShadowEdge(v[0], v[2], point, i);
 	}
 
-	qglFrontFace(GL_CCW);
-	qglColorMask(1, 1, 1, 1);
-	qglColor3f(1.0f, 1.0f, 1.0f);
-	qglEnable(GL_TEXTURE_2D);
-	qglDepthMask(1);
-	qglDisable(GL_STENCIL_TEST);
+	qgl.FrontFace(GL_CCW);
+	qgl.ColorMask(1, 1, 1, 1);
+	qgl.Color3f(1.0f, 1.0f, 1.0f);
+	qgl.Enable(GL_TEXTURE_2D);
+	qgl.DepthMask(1);
+	qgl.Disable(GL_STENCIL_TEST);
 #endif
 }
 
@@ -1138,40 +1138,40 @@ void R_DrawAliasModel (entity_t *e)
 	// draw all the triangles
 	//
 	if (currententity->flags & RF_DEPTHHACK) // hack the depth range to prevent view model from poking into walls
-		qglDepthRange (gldepthmin, gldepthmin + 0.3*(gldepthmax-gldepthmin));
+		qgl.DepthRange (gldepthmin, gldepthmin + 0.3*(gldepthmax-gldepthmin));
 /*
 	if ((currententity->flags & RF_WEAPONMODEL) && (r_lefthand->value == 1.0F))
 	{
 		extern void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar);
 
-		qglMatrixMode(GL_PROJECTION);
-		qglPushMatrix();
-		qglLoadIdentity();
-		qglScalef(-1, 1, 1);
+		qgl.MatrixMode(GL_PROJECTION);
+		qgl.PushMatrix();
+		qgl.LoadIdentity();
+		qgl.Scalef(-1, 1, 1);
 	    MYgluPerspective(r_newrefdef.fov_y, (float)r_newrefdef.width / (float)r_newrefdef.height, 4, 4096);
-		qglMatrixMode(GL_MODELVIEW);
-		qglCullFace(GL_BACK);
+		qgl.MatrixMode(GL_MODELVIEW);
+		qgl.CullFace(GL_BACK);
 	}
 */
 	if ((currententity->flags & RF_WEAPONMODEL) && r_lefthand->value != 2.0f) // jithand
 	{
 		extern void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar);
 
-		qglMatrixMode(GL_PROJECTION);
-		qglPushMatrix();
-		qglLoadIdentity();
+		qgl.MatrixMode(GL_PROJECTION);
+		qgl.PushMatrix();
+		qgl.LoadIdentity();
 
 		if (r_lefthand->value == 1.0f)
 		{
-			qglScalef(-1, 1, 1);
-			qglCullFace(GL_BACK);
+			qgl.Scalef(-1, 1, 1);
+			qgl.CullFace(GL_BACK);
 		}
 
 		MYgluPerspective(min(r_newrefdef.fov_y, 75.0f), (float)r_newrefdef.width / (float)r_newrefdef.height, 4.0f, 4096.0f);
-		qglMatrixMode(GL_MODELVIEW);
+		qgl.MatrixMode(GL_MODELVIEW);
 	}
 
-    qglPushMatrix();
+    qgl.PushMatrix();
 	e->angles[PITCH] = -e->angles[PITCH];	// sigh.
 	R_RotateForEntity(e);
 	e->angles[PITCH] = -e->angles[PITCH];	// sigh.
@@ -1210,7 +1210,7 @@ void R_DrawAliasModel (entity_t *e)
 
 	// draw it
 	GL_Bind(skin->texnum);
-	qglShadeModel(GL_SMOOTH);
+	qgl.ShadeModel(GL_SMOOTH);
 	GL_TexEnv(GL_COMBINE_EXT); // jitbright
 
 	if (currententity->flags & RF_TRANSLUCENT)
@@ -1249,51 +1249,51 @@ void R_DrawAliasModel (entity_t *e)
 	}
 
 	GL_TexEnv(GL_REPLACE);
-	qglShadeModel(GL_FLAT);
+	qgl.ShadeModel(GL_FLAT);
 
-	qglPopMatrix();
+	qgl.PopMatrix();
 
 	// === jit
 	if (gl_showbbox->value && !(currententity->flags & RF_WEAPONMODEL)) // r_drawbbox
 	{
-		qglDisable(GL_TEXTURE_2D);
-		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		qglBegin(GL_LINES);
-		qglVertex3fv(bbox[0]);
-		qglVertex3fv(bbox[1]);
-		qglVertex3fv(bbox[0]);
-		qglVertex3fv(bbox[2]);
-		qglVertex3fv(bbox[2]);
-		qglVertex3fv(bbox[3]);
-		qglVertex3fv(bbox[3]);
-		qglVertex3fv(bbox[1]);
-		qglVertex3fv(bbox[0]);
-		qglVertex3fv(bbox[4]);
-		qglVertex3fv(bbox[4]);
-		qglVertex3fv(bbox[5]);
-		qglVertex3fv(bbox[4]);
-		qglVertex3fv(bbox[6]);
-		qglVertex3fv(bbox[5]);
-		qglVertex3fv(bbox[7]);
-		qglVertex3fv(bbox[6]);
-		qglVertex3fv(bbox[7]);
-		qglVertex3fv(bbox[7]);
-		qglVertex3fv(bbox[3]);
-		qglVertex3fv(bbox[6]);
-		qglVertex3fv(bbox[2]);
-		qglVertex3fv(bbox[5]);
-		qglVertex3fv(bbox[1]);
-		qglEnd();
-		qglEnable(GL_TEXTURE_2D);
+		qgl.Disable(GL_TEXTURE_2D);
+		qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
+		qgl.Begin(GL_LINES);
+		qgl.Vertex3fv(bbox[0]);
+		qgl.Vertex3fv(bbox[1]);
+		qgl.Vertex3fv(bbox[0]);
+		qgl.Vertex3fv(bbox[2]);
+		qgl.Vertex3fv(bbox[2]);
+		qgl.Vertex3fv(bbox[3]);
+		qgl.Vertex3fv(bbox[3]);
+		qgl.Vertex3fv(bbox[1]);
+		qgl.Vertex3fv(bbox[0]);
+		qgl.Vertex3fv(bbox[4]);
+		qgl.Vertex3fv(bbox[4]);
+		qgl.Vertex3fv(bbox[5]);
+		qgl.Vertex3fv(bbox[4]);
+		qgl.Vertex3fv(bbox[6]);
+		qgl.Vertex3fv(bbox[5]);
+		qgl.Vertex3fv(bbox[7]);
+		qgl.Vertex3fv(bbox[6]);
+		qgl.Vertex3fv(bbox[7]);
+		qgl.Vertex3fv(bbox[7]);
+		qgl.Vertex3fv(bbox[3]);
+		qgl.Vertex3fv(bbox[6]);
+		qgl.Vertex3fv(bbox[2]);
+		qgl.Vertex3fv(bbox[5]);
+		qgl.Vertex3fv(bbox[1]);
+		qgl.End();
+		qgl.Enable(GL_TEXTURE_2D);
 	}
 	// jit ===
 
 	if ((currententity->flags & RF_WEAPONMODEL) && (r_lefthand->value != 2.0F)) // jithand
 	{
-		qglMatrixMode(GL_PROJECTION);
-		qglPopMatrix();
-		qglMatrixMode(GL_MODELVIEW);
-		qglCullFace(GL_FRONT);
+		qgl.MatrixMode(GL_PROJECTION);
+		qgl.PopMatrix();
+		qgl.MatrixMode(GL_MODELVIEW);
+		qgl.CullFace(GL_FRONT);
 	}
 
 	if (currententity->flags & RF_TRANSLUCENT)
@@ -1302,26 +1302,26 @@ void R_DrawAliasModel (entity_t *e)
 	}
 
 	if (currententity->flags & RF_DEPTHHACK)
-		qglDepthRange (gldepthmin, gldepthmax);
+		qgl.DepthRange (gldepthmin, gldepthmax);
 
 	if (gl_shadows->value && !(currententity->flags & (RF_TRANSLUCENT | RF_WEAPONMODEL)))
 	{
-		qglPushMatrix ();
+		qgl.PushMatrix ();
 
 		// Dont rotate shadows on ungodly axis' - MrG
-		qglTranslatef(e->origin[0],  e->origin[1],  e->origin[2]);
-		qglRotatef(e->angles[1],  0, 0, 1);
+		qgl.Translatef(e->origin[0],  e->origin[1],  e->origin[2]);
+		qgl.Rotatef(e->angles[1],  0, 0, 1);
 		// End
 
-		qglDisable(GL_TEXTURE_2D);
+		qgl.Disable(GL_TEXTURE_2D);
 		GLSTATE_ENABLE_BLEND
 		GL_DrawAliasShadow(paliashdr, currententity->frame);
-		qglEnable(GL_TEXTURE_2D);
+		qgl.Enable(GL_TEXTURE_2D);
 		GLSTATE_DISABLE_BLEND
-		qglPopMatrix ();
+		qgl.PopMatrix ();
 	}
 
-	qglColor4f (1,1,1,1);
+	qgl.Color4f (1,1,1,1);
 }
 
 

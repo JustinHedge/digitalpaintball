@@ -55,8 +55,8 @@ void Draw_InitLocal (void)
 		draw_chars = GL_FindImage("pics/conchars1.tga", it_pic); // jitconsole
 
 	GL_Bind(draw_chars->texnum);
-	//qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//qgl.TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//qgl.TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	LoadTGA("pics/char_colors.tga", &char_colors, &width, &height); // jittext
 
 	if (!char_colors || (width*height != 256))
@@ -106,18 +106,18 @@ void Draw_Char (float x, float y, int num) // jitodo -- try to remove all calls 
 	VA_SetElem2(vert_array[2],x+8*textscale, y+8*textscale);
 	VA_SetElem2(tex_array[3],fcol, frow + size);
 	VA_SetElem2(vert_array[3],x, y+8*textscale);
-	qglDrawArrays (GL_QUADS, 0, 4);
+	qgl.DrawArrays (GL_QUADS, 0, 4);
 #else
-	qglBegin(GL_QUADS);
-	qglTexCoord2f(fcol, frow);
-	qglVertex2f(x, y);
-	qglTexCoord2f(fcol + size, frow);
-	qglVertex2f(x + CHARWIDTH * textscale, y); // jithudscale...
-	qglTexCoord2f(fcol + size, frow + size);
-	qglVertex2f(x + CHARWIDTH * textscale, y+8*textscale);
-	qglTexCoord2f(fcol, frow + size);
-	qglVertex2f(x, y + 8 * textscale);
-	qglEnd();
+	qgl.Begin(GL_QUADS);
+	qgl.TexCoord2f(fcol, frow);
+	qgl.Vertex2f(x, y);
+	qgl.TexCoord2f(fcol + size, frow);
+	qgl.Vertex2f(x + CHARWIDTH * textscale, y); // jithudscale...
+	qgl.TexCoord2f(fcol + size, frow + size);
+	qgl.Vertex2f(x + CHARWIDTH * textscale, y+8*textscale);
+	qgl.TexCoord2f(fcol, frow + size);
+	qgl.Vertex2f(x, y + 8 * textscale);
+	qgl.End();
 #endif
 }
 
@@ -166,14 +166,14 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 		py = y;
 	}
 
-	qglBegin(GL_QUADS);
+	qgl.Begin(GL_QUADS);
 
 	do
 	{
 		if (shadowpass)
-			qglColor4f(0.0f, 0.0f, 0.0f, alpha * gl_textshadow->value);
+			qgl.Color4f(0.0f, 0.0f, 0.0f, alpha * gl_textshadow->value);
 		else
-			qglColor4f(1.0f, 1.0f, 1.0f, alpha);
+			qgl.Color4f(1.0f, 1.0f, 1.0f, alpha);
 
 		while (*s)
 		{
@@ -227,7 +227,7 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 					underlined = false;
 
 					if (!shadowpass)
-						qglColor4f(1.0f, 1.0f, 1.0f, alpha);
+						qgl.Color4f(1.0f, 1.0f, 1.0f, alpha);
 
 					//if (*s != '\0') // draw character if at end of string.
 						continue;
@@ -246,7 +246,7 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 				{
 					register int num4 = num * 4;
 
-					qglColor4f(*(char_colors + num4) / 255.0f, 
+					qgl.Color4f(*(char_colors + num4) / 255.0f, 
 						*(char_colors + num4 + 1) / 255.0f,
 						*(char_colors + num4 + 2) / 255.0f, alpha);
 				}
@@ -270,14 +270,14 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 				col = CHAR_UNDERLINE_NUM & 15;
 				frow = row * 0.0625f;
 				fcol = col * 0.0625f;
-				qglTexCoord2f(fcol, frow);
-				qglVertex2f(px, py + 4.0f * textscale);
-				qglTexCoord2f(fcol + size, frow);
-				qglVertex2f(px + CHARWIDTH * textscale, py + 4.0f * textscale); // jithudscale...
-				qglTexCoord2f(fcol + size, frow + size);
-				qglVertex2f(px + CHARWIDTH * textscale, py + 12.0f * textscale);
-				qglTexCoord2f(fcol, frow + size);
-				qglVertex2f(px, py + 12.0f * textscale);
+				qgl.TexCoord2f(fcol, frow);
+				qgl.Vertex2f(px, py + 4.0f * textscale);
+				qgl.TexCoord2f(fcol + size, frow);
+				qgl.Vertex2f(px + CHARWIDTH * textscale, py + 4.0f * textscale); // jithudscale...
+				qgl.TexCoord2f(fcol + size, frow + size);
+				qgl.Vertex2f(px + CHARWIDTH * textscale, py + 12.0f * textscale);
+				qgl.TexCoord2f(fcol, frow + size);
+				qgl.Vertex2f(px, py + 12.0f * textscale);
 			}
 
 			if ((num & 127) == 32)		// space
@@ -305,25 +305,25 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 
 			if (italicized)
 			{
-				qglTexCoord2f(fcol, frow);
-				qglVertex2f(px + 2.0f * textscale, py);
-				qglTexCoord2f(fcol + size, frow);
-				qglVertex2f(px + (2 + CHARWIDTH) * textscale, py); // jithudscale...
-				qglTexCoord2f(fcol + size, frow + size);
-				qglVertex2f(px + (CHARWIDTH - 2) * textscale, py + 8.0f * textscale);
-				qglTexCoord2f(fcol, frow + size);
-				qglVertex2f(px - 2.0f * textscale, py + 8.0f * textscale);
+				qgl.TexCoord2f(fcol, frow);
+				qgl.Vertex2f(px + 2.0f * textscale, py);
+				qgl.TexCoord2f(fcol + size, frow);
+				qgl.Vertex2f(px + (2 + CHARWIDTH) * textscale, py); // jithudscale...
+				qgl.TexCoord2f(fcol + size, frow + size);
+				qgl.Vertex2f(px + (CHARWIDTH - 2) * textscale, py + 8.0f * textscale);
+				qgl.TexCoord2f(fcol, frow + size);
+				qgl.Vertex2f(px - 2.0f * textscale, py + 8.0f * textscale);
 			}
 			else
 			{
-				qglTexCoord2f(fcol, frow);
-				qglVertex2f(px, py);
-				qglTexCoord2f(fcol + size, frow);
-				qglVertex2f(px + CHARWIDTH * textscale, py); // jithudscale...
-				qglTexCoord2f(fcol + size, frow + size);
-				qglVertex2f(px + CHARWIDTH * textscale, py + 8.0f * textscale);
-				qglTexCoord2f(fcol, frow + size);
-				qglVertex2f(px, py + 8.0f * textscale);
+				qgl.TexCoord2f(fcol, frow);
+				qgl.Vertex2f(px, py);
+				qgl.TexCoord2f(fcol + size, frow);
+				qgl.Vertex2f(px + CHARWIDTH * textscale, py); // jithudscale...
+				qgl.TexCoord2f(fcol + size, frow + size);
+				qgl.Vertex2f(px + CHARWIDTH * textscale, py + 8.0f * textscale);
+				qgl.TexCoord2f(fcol, frow + size);
+				qgl.Vertex2f(px, py + 8.0f * textscale);
 			}
 
 			s++;
@@ -347,11 +347,11 @@ void Draw_StringAlpha (float x, float y, const char *str, float alpha) // jit
 		}
 	} while(passagain);
 
-	qglEnd();
+	qgl.End();
 
 	if (coloredtext || alpha < 1.0f)
 	{
-		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
 	}
 
 	GL_TexEnv(GL_MODULATE); // jittext
@@ -451,19 +451,19 @@ void Draw_StretchPic2 (float x, float y, float w, float h, image_t *gl)
 		//GLSTATE_ENABLE_ALPHATEST //jitodo / jitmenu - reenable this after rscripts for menu stuff are made.
 		GLSTATE_DISABLE_ALPHATEST // jitodo (see above)
 		GLSTATE_ENABLE_BLEND // jitodo (see above)
-		qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		qgl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GL_Bind(gl->texnum);
 
-		qglBegin(GL_QUADS);
-		qglTexCoord2f(gl->sl, gl->tl);
-		qglVertex2f(x, y);
-		qglTexCoord2f(gl->sh, gl->tl);
-		qglVertex2f(x + w, y);
-		qglTexCoord2f(gl->sh, gl->th);
-		qglVertex2f(x + w, y + h);
-		qglTexCoord2f(gl->sl, gl->th);
-		qglVertex2f(x, y + h);
-		qglEnd();
+		qgl.Begin(GL_QUADS);
+		qgl.TexCoord2f(gl->sl, gl->tl);
+		qgl.Vertex2f(x, y);
+		qgl.TexCoord2f(gl->sh, gl->tl);
+		qgl.Vertex2f(x + w, y);
+		qgl.TexCoord2f(gl->sh, gl->th);
+		qgl.Vertex2f(x + w, y + h);
+		qgl.TexCoord2f(gl->sl, gl->th);
+		qgl.Vertex2f(x, y + h);
+		qgl.End();
 	}
 	else
 	{
@@ -528,7 +528,7 @@ void Draw_StretchPic2 (float x, float y, float w, float h, image_t *gl)
 
 			if (stage->blendfunc.blend)
 			{
-				qglBlendFunc(stage->blendfunc.source,stage->blendfunc.dest);
+				qgl.BlendFunc(stage->blendfunc.source,stage->blendfunc.dest);
 				GLSTATE_ENABLE_BLEND
 			}
 			else
@@ -558,14 +558,14 @@ void Draw_StretchPic2 (float x, float y, float w, float h, image_t *gl)
 				alpha=1.0f;
 			}
 
-			qglColor4f(1,1,1,alpha);
+			qgl.Color4f(1,1,1,alpha);
 			GL_TexEnv(GL_MODULATE); // jitrscript
 
 //			if (stage->envmap)
 			if (stage->tcGen == TC_GEN_ENVIRONMENT)
 			{
-				qglTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-				qglTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
+				qgl.TexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
+				qgl.TexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
 				GLSTATE_ENABLE_TEXGEN
 			}
 
@@ -578,42 +578,42 @@ void Draw_StretchPic2 (float x, float y, float w, float h, image_t *gl)
 				GLSTATE_DISABLE_ALPHATEST
 			}
 
-			qglBegin(GL_QUADS);
+			qgl.Begin(GL_QUADS);
 
 			s = stage_pic->sl;//0.0f;//gl->sl; //
 			t = stage_pic->tl;//0.0f;//gl->tl; //
 			RS_SetTexcoords2D(stage, &s, &t);
-			qglTexCoord2f(s+txm, t+tym);
-			qglVertex2f(x, y);
+			qgl.TexCoord2f(s+txm, t+tym);
+			qgl.Vertex2f(x, y);
 
 			s = stage_pic->sh;//1.0f;//gl->sh; //
 			t = stage_pic->tl;//0.0f;//gl->tl;//
 			RS_SetTexcoords2D(stage, &s, &t);
-			qglTexCoord2f(s+txm, t+tym);
-			qglVertex2f(x+w, y);
+			qgl.TexCoord2f(s+txm, t+tym);
+			qgl.Vertex2f(x+w, y);
 
 			s = stage_pic->sh;//1.0f;//gl->sh;//
 			t = stage_pic->th;//1.0f;//gl->th;//
 			RS_SetTexcoords2D(stage, &s, &t);
-			qglTexCoord2f(s+txm, t+tym);
-			qglVertex2f(x+w, y+h);
+			qgl.TexCoord2f(s+txm, t+tym);
+			qgl.Vertex2f(x+w, y+h);
 
 			s = stage_pic->sl;//0.0f;//gl->sl;//
 			t = stage_pic->th;//1.0f;//gl->th;//
 			RS_SetTexcoords2D(stage, &s, &t);
-			qglTexCoord2f(s+txm, t+tym);
-			qglVertex2f(x, y+h);
+			qgl.TexCoord2f(s+txm, t+tym);
+			qgl.Vertex2f(x, y+h);
 
-			qglEnd();
+			qgl.End();
 
-			//jit qglColor4f(1,1,1,1);
-			//jit qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			//jit qgl.Color4f(1,1,1,1);
+			//jit qgl.BlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			GLSTATE_DISABLE_TEXGEN
 
 			stage=stage->next;
 		}
-		qglColor4f(1,1,1,1);
-		qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		qgl.Color4f(1,1,1,1);
+		qgl.BlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		GLSTATE_ENABLE_ALPHATEST
 		GLSTATE_DISABLE_BLEND
 	}
@@ -716,14 +716,14 @@ void Draw_BorderedPic (bordered_pic_data_t *data, float x, float y, float w, flo
 
 	GLSTATE_DISABLE_ALPHATEST;
 	GLSTATE_ENABLE_BLEND;
-	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qgl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (alpha < 1.0f)
-		qglColor4f(1.0f, 1.0f, 1.0f, alpha);
+		qgl.Color4f(1.0f, 1.0f, 1.0f, alpha);
 
 	GL_Bind(gl->texnum);
 
-	qglBegin(GL_QUADS);
+	qgl.Begin(GL_QUADS);
 
 	// bordered pics are drawn in a spiral from upper left and around clockwise.
 	for (i = 0; i < BORDERED_PIC_COORD_COUNT; ++i)
@@ -752,20 +752,20 @@ void Draw_BorderedPic (bordered_pic_data_t *data, float x, float y, float w, flo
 			ystretch = ydiff;
 		}
 
-		qglTexCoord2f(data->texcoords[i][0], data->texcoords[i][1]);
-		qglVertex2f(x + xoff + data->screencoords[i][0] * scale, y + yoff + data->screencoords[i][1] * scale);
-		qglTexCoord2f(data->texcoords[i][2], data->texcoords[i][1]);
-		qglVertex2f(x + xoff + data->screencoords[i][2] * scale + xstretch, y + yoff + data->screencoords[i][1] * scale);
-		qglTexCoord2f(data->texcoords[i][2], data->texcoords[i][3]);
-		qglVertex2f(x + xoff + data->screencoords[i][2] * scale + xstretch, y + yoff + data->screencoords[i][3] * scale + ystretch);
-		qglTexCoord2f(data->texcoords[i][0], data->texcoords[i][3]);
-		qglVertex2f(x + xoff + data->screencoords[i][0] * scale, y + yoff + data->screencoords[i][3] * scale + ystretch);
+		qgl.TexCoord2f(data->texcoords[i][0], data->texcoords[i][1]);
+		qgl.Vertex2f(x + xoff + data->screencoords[i][0] * scale, y + yoff + data->screencoords[i][1] * scale);
+		qgl.TexCoord2f(data->texcoords[i][2], data->texcoords[i][1]);
+		qgl.Vertex2f(x + xoff + data->screencoords[i][2] * scale + xstretch, y + yoff + data->screencoords[i][1] * scale);
+		qgl.TexCoord2f(data->texcoords[i][2], data->texcoords[i][3]);
+		qgl.Vertex2f(x + xoff + data->screencoords[i][2] * scale + xstretch, y + yoff + data->screencoords[i][3] * scale + ystretch);
+		qgl.TexCoord2f(data->texcoords[i][0], data->texcoords[i][3]);
+		qgl.Vertex2f(x + xoff + data->screencoords[i][0] * scale, y + yoff + data->screencoords[i][3] * scale + ystretch);
 	}
 
-	qglEnd();
+	qgl.End();
 
 	if (alpha < 1.0f)
-		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 
@@ -793,16 +793,16 @@ void Draw_TileClear2 (int x, int y, int w, int h, image_t *image)
 
 	GL_Bind(image->texnum);
 
-	qglBegin(GL_QUADS);
-	qglTexCoord2f(x/256.0f, y/128.0f); // jit -- new pic dimensions
-	qglVertex2f(x, y);
-	qglTexCoord2f((x+w)/256.0f, y/128.0f);
-	qglVertex2f(x+w, y);
-	qglTexCoord2f((x+w)/256.0f, (y+h)/128.0f);
-	qglVertex2f(x+w, y+h);
-	qglTexCoord2f(x/256.0f, (y+h)/128.0f);
-	qglVertex2f(x, y+h);
-	qglEnd();
+	qgl.Begin(GL_QUADS);
+	qgl.TexCoord2f(x/256.0f, y/128.0f); // jit -- new pic dimensions
+	qgl.Vertex2f(x, y);
+	qgl.TexCoord2f((x+w)/256.0f, y/128.0f);
+	qgl.Vertex2f(x+w, y);
+	qgl.TexCoord2f((x+w)/256.0f, (y+h)/128.0f);
+	qgl.Vertex2f(x+w, y+h);
+	qgl.TexCoord2f(x/256.0f, (y+h)/128.0f);
+	qgl.Vertex2f(x, y+h);
+	qgl.End();
 
 	if (((gl_config.renderer == GL_RENDERER_MCD) ||
 		(gl_config.renderer & GL_RENDERER_RENDITION)) && !image->has_alpha)
@@ -846,17 +846,17 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 	if ((unsigned)c > 255)
 		ri.Sys_Error(ERR_FATAL, "Draw_Fill: bad color");
 
-	qglDisable(GL_TEXTURE_2D);
+	qgl.Disable(GL_TEXTURE_2D);
 	color.c = d_8to24table[c];
-	qglColor3f(color.v[0] / 255.0f, color.v[1] / 255.0f, color.v[2] / 255.0f);
-	qglBegin(GL_QUADS);
-	qglVertex2f(x, y);
-	qglVertex2f(x + w, y);
-	qglVertex2f(x + w, y + h);
-	qglVertex2f(x, y + h);
-	qglEnd();
-	qglColor3f(1.0f, 1.0f, 1.0f);
-	qglEnable(GL_TEXTURE_2D);
+	qgl.Color3f(color.v[0] / 255.0f, color.v[1] / 255.0f, color.v[2] / 255.0f);
+	qgl.Begin(GL_QUADS);
+	qgl.Vertex2f(x, y);
+	qgl.Vertex2f(x + w, y);
+	qgl.Vertex2f(x + w, y + h);
+	qgl.Vertex2f(x, y + h);
+	qgl.End();
+	qgl.Color3f(1.0f, 1.0f, 1.0f);
+	qgl.Enable(GL_TEXTURE_2D);
 }
 
 //=============================================================================
@@ -871,17 +871,17 @@ void Draw_FadeScreen (void)
 {
 	GLSTATE_DISABLE_ALPHATEST
 	GLSTATE_ENABLE_BLEND
-	qglDisable (GL_TEXTURE_2D);
-	qglColor4f (0, 0, 0, 0.5);
+	qgl.Disable (GL_TEXTURE_2D);
+	qgl.Color4f (0, 0, 0, 0.5);
 
 	VA_SetElem2(vert_array[0],0,0);
 	VA_SetElem2(vert_array[1],vid.width, 0);
 	VA_SetElem2(vert_array[2],vid.width, vid.height);
 	VA_SetElem2(vert_array[3],0, vid.height);
-	qglDrawArrays (GL_QUADS, 0, 4);
+	qgl.DrawArrays (GL_QUADS, 0, 4);
 
-	qglColor4f (1,1,1,1);
-	qglEnable (GL_TEXTURE_2D);
+	qgl.Color4f (1,1,1,1);
+	qgl.Enable (GL_TEXTURE_2D);
 	GLSTATE_DISABLE_BLEND
 	GLSTATE_ENABLE_ALPHATEST
 }
@@ -923,7 +923,7 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 
 	t = rows * hscale * 0.00390625;// / 256;
 
-	if (!qglColorTableEXT)
+	if (!qgl.ColorTableEXT)
 	{
 		unsigned *dest;
 
@@ -946,7 +946,7 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 			}
 		}
 
-		qglTexImage2D(GL_TEXTURE_2D, 0, gl_tex_solid_format, 256,
+		qgl.TexImage2D(GL_TEXTURE_2D, 0, gl_tex_solid_format, 256,
 			256, 0, GL_RGBA, GL_UNSIGNED_BYTE, image32);
 	}
 	else
@@ -972,12 +972,12 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 			}
 		}
 
-		qglTexImage2D(GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, 256,
+		qgl.TexImage2D(GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, 256,
 			256, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, image8);
 	}
 
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	if ((gl_config.renderer == GL_RENDERER_MCD) ||
 		(gl_config.renderer & GL_RENDERER_RENDITION))
@@ -985,16 +985,16 @@ void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data
 		GLSTATE_DISABLE_ALPHATEST
 	}
 
-	qglBegin(GL_QUADS);
-	qglTexCoord2f(0, 0);
-	qglVertex2f(x, y);
-	qglTexCoord2f(1, 0);
-	qglVertex2f(x+w, y);
-	qglTexCoord2f(1, t);
-	qglVertex2f(x+w, y+h);
-	qglTexCoord2f(0, t);
-	qglVertex2f(x, y+h);
-	qglEnd();
+	qgl.Begin(GL_QUADS);
+	qgl.TexCoord2f(0, 0);
+	qgl.Vertex2f(x, y);
+	qgl.TexCoord2f(1, 0);
+	qgl.Vertex2f(x+w, y);
+	qgl.TexCoord2f(1, t);
+	qgl.Vertex2f(x+w, y+h);
+	qgl.TexCoord2f(0, t);
+	qgl.Vertex2f(x, y+h);
+	qgl.End();
 
 	if ((gl_config.renderer == GL_RENDERER_MCD) ||
 		(gl_config.renderer & GL_RENDERER_RENDITION))

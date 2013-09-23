@@ -668,56 +668,56 @@ qboolean R_CullSkeletalModel (entity_t *e)
 
 //#define DRAW_BBOX
 #ifdef DRAW_BBOX
-			qglDisable(GL_TEXTURE_2D);
-			qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			qglBegin(GL_LINES);
-			qglVertex3fv(bbox[0]);
-			qglVertex3fv(bbox[1]);
-			qglVertex3fv(bbox[0]);
-			qglVertex3fv(bbox[2]);
-			qglVertex3fv(bbox[2]);
-			qglVertex3fv(bbox[3]);
-			qglVertex3fv(bbox[3]);
-			qglVertex3fv(bbox[1]);
-			qglVertex3fv(bbox[0]);
-			qglVertex3fv(bbox[4]);
-			qglVertex3fv(bbox[4]);
-			qglVertex3fv(bbox[5]);
-			qglVertex3fv(bbox[4]);
-			qglVertex3fv(bbox[6]);
-			qglVertex3fv(bbox[5]);
-			qglVertex3fv(bbox[7]);
-			qglVertex3fv(bbox[6]);
-			qglVertex3fv(bbox[7]);
-			qglVertex3fv(bbox[7]);
-			qglVertex3fv(bbox[3]);
-			qglVertex3fv(bbox[6]);
-			qglVertex3fv(bbox[2]);
-			qglVertex3fv(bbox[5]);
-			qglVertex3fv(bbox[1]);
+			qgl.Disable(GL_TEXTURE_2D);
+			qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
+			qgl.Begin(GL_LINES);
+			qgl.Vertex3fv(bbox[0]);
+			qgl.Vertex3fv(bbox[1]);
+			qgl.Vertex3fv(bbox[0]);
+			qgl.Vertex3fv(bbox[2]);
+			qgl.Vertex3fv(bbox[2]);
+			qgl.Vertex3fv(bbox[3]);
+			qgl.Vertex3fv(bbox[3]);
+			qgl.Vertex3fv(bbox[1]);
+			qgl.Vertex3fv(bbox[0]);
+			qgl.Vertex3fv(bbox[4]);
+			qgl.Vertex3fv(bbox[4]);
+			qgl.Vertex3fv(bbox[5]);
+			qgl.Vertex3fv(bbox[4]);
+			qgl.Vertex3fv(bbox[6]);
+			qgl.Vertex3fv(bbox[5]);
+			qgl.Vertex3fv(bbox[7]);
+			qgl.Vertex3fv(bbox[6]);
+			qgl.Vertex3fv(bbox[7]);
+			qgl.Vertex3fv(bbox[7]);
+			qgl.Vertex3fv(bbox[3]);
+			qgl.Vertex3fv(bbox[6]);
+			qgl.Vertex3fv(bbox[2]);
+			qgl.Vertex3fv(bbox[5]);
+			qgl.Vertex3fv(bbox[1]);
 
-			qglColor3f(1.0f, 0.0f, 0.0f);
-			qglVertex3fv(e->origin);
+			qgl.Color3f(1.0f, 0.0f, 0.0f);
+			qgl.Vertex3fv(e->origin);
 			VectorCopy(vectors[0], tmp);
 			VectorScale(tmp, 32, tmp);
 			VectorAdd(e->origin, tmp, tmp);
-			qglVertex3fv(tmp);
+			qgl.Vertex3fv(tmp);
 
-			qglColor3f(0.0f, 1.0f, 0.0f);
-			qglVertex3fv(e->origin);
+			qgl.Color3f(0.0f, 1.0f, 0.0f);
+			qgl.Vertex3fv(e->origin);
 			VectorCopy(vectors[1], tmp);
 			VectorScale(tmp, 32, tmp);
 			VectorAdd(e->origin, tmp, tmp);
-			qglVertex3fv(tmp);
+			qgl.Vertex3fv(tmp);
 
-			qglColor3f(0.0f, 0.0f, 1.0f);
-			qglVertex3fv(e->origin);
+			qgl.Color3f(0.0f, 0.0f, 1.0f);
+			qgl.Vertex3fv(e->origin);
 			VectorCopy(vectors[2], tmp);
 			VectorScale(tmp, 32, tmp);
 			VectorAdd(e->origin, tmp, tmp);
-			qglVertex3fv(tmp);
-			qglEnd();
-			qglEnable(GL_TEXTURE_2D);
+			qgl.Vertex3fv(tmp);
+			qgl.End();
+			qgl.Enable(GL_TEXTURE_2D);
 #endif
 			return false;
 		}
@@ -815,23 +815,23 @@ static void R_EnableLighting (vec_t *lightdir_in)
 
 	VectorCopy(lightdir_in, lightdir);
 	lightdir[3] = 0.0f;
-	qglEnableClientState(GL_NORMAL_ARRAY);
-	qglNormalPointer(GL_FLOAT, 0, inNormalsArray);
-	qglEnable(GL_LIGHTING);
-	qglEnable(GL_COLOR_MATERIAL);
-	qglMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, shadelight);
-	qglLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
-	qglEnable(GL_LIGHT0);
-	qglLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-	qglLightfv(GL_LIGHT0, GL_AMBIENT, zero);
-	qglLightfv(GL_LIGHT0, GL_POSITION, lightdir);
+	qgl.EnableClientState(GL_NORMAL_ARRAY);
+	qgl.NormalPointer(GL_FLOAT, 0, inNormalsArray);
+	qgl.Enable(GL_LIGHTING);
+	qgl.Enable(GL_COLOR_MATERIAL);
+	qgl.Materialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, shadelight);
+	qgl.LightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+	qgl.Enable(GL_LIGHT0);
+	qgl.Lightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+	qgl.Lightfv(GL_LIGHT0, GL_AMBIENT, zero);
+	qgl.Lightfv(GL_LIGHT0, GL_POSITION, lightdir);
 }
 
 
 static void R_DisableLighting (void)
 {
-	qglDisable(GL_LIGHTING);
-	qglDisableClientState(GL_NORMAL_ARRAY);
+	qgl.Disable(GL_LIGHTING);
+	qgl.DisableClientState(GL_NORMAL_ARRAY);
 }
 
 
@@ -870,7 +870,7 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	{
 		int err;
 
-		err = qglGetError();
+		err = qgl.GetError();
 		assert(err == GL_NO_ERROR);
 	}
 #endif
@@ -1051,12 +1051,12 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 #ifdef GLSTATE_DISABLE_BLEND
 	GLSTATE_DISABLE_BLEND // for beefquake based renderers
 #else
-	qglDisable(GL_BLEND);
+	qgl.Disable(GL_BLEND);
 #endif
 
 	GL_TexEnv(GL_COMBINE_EXT); // jitbright
-	qglShadeModel(GL_SMOOTH);
-	qglColor3f(1.0f, 1.0f, 1.0f);
+	qgl.ShadeModel(GL_SMOOTH);
+	qgl.Color3f(1.0f, 1.0f, 1.0f);
 
 	skin_image = e->skins[meshnum];
 
@@ -1088,7 +1088,7 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	{
 		int err;
 
-		err = qglGetError();
+		err = qgl.GetError();
 		assert(err == GL_NO_ERROR);
 	}
 #endif
@@ -1107,7 +1107,7 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 		{
 			int err;
 
-			err = qglGetError();
+			err = qgl.GetError();
 			assert(err == GL_NO_ERROR);
 		}
 #endif
@@ -1167,17 +1167,17 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 				{
 					int err;
 
-					err = qglGetError();
+					err = qgl.GetError();
 					assert(err == GL_NO_ERROR);
 				}
 #endif
-				qglBlendFunc(stage->blendfunc.source, stage->blendfunc.dest);
+				qgl.BlendFunc(stage->blendfunc.source, stage->blendfunc.dest);
 				GLSTATE_ENABLE_BLEND
 #if 0 //def DEBUG
 				{
 					int err;
 
-					err = qglGetError();
+					err = qgl.GetError();
 					assert(err == GL_NO_ERROR);
 				}
 #endif
@@ -1218,20 +1218,20 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 				{
 					int err;
 
-					err = qglGetError();
+					err = qgl.GetError();
 					assert(err == GL_NO_ERROR);
 				}
 #endif
 
-				qglTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-				qglTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+				qgl.TexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+				qgl.TexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 				GLSTATE_ENABLE_TEXGEN;
 				neednormals = true;
 #if 0 //def DEBUG
 				{
 					int err;
 
-					err = qglGetError();
+					err = qgl.GetError();
 					assert(err == GL_NO_ERROR);
 				}
 #endif
@@ -1267,23 +1267,23 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 			{
 				if (neednormals)
 				{
-					qglEnableClientState(GL_NORMAL_ARRAY);
-					qglNormalPointer(GL_FLOAT, 0, inNormalsArray);
+					qgl.EnableClientState(GL_NORMAL_ARRAY);
+					qgl.NormalPointer(GL_FLOAT, 0, inNormalsArray);
 				}
 
-				qglEnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
-				qglColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
+				qgl.EnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
+				qgl.ColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
 			}
 
-			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			qglEnableClientState(GL_VERTEX_ARRAY);
-			qglVertexPointer(3, GL_FLOAT, 0, inVertsArray);
-			qglTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+			qgl.EnableClientState(GL_TEXTURE_COORD_ARRAY);
+			qgl.EnableClientState(GL_VERTEX_ARRAY);
+			qgl.VertexPointer(3, GL_FLOAT, 0, inVertsArray);
+			qgl.TexCoordPointer(2, GL_FLOAT, 0, texcoords);
 
-			// doesn't work: qglColor4f(1.0f, 1.0f, 1.0f, alpha);
-			qglDrawElements(GL_TRIANGLES, numtris * 3, GL_UNSIGNED_INT, indexes);
-			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
-			qglDisableClientState(GL_VERTEX_ARRAY);
+			// doesn't work: qgl.Color4f(1.0f, 1.0f, 1.0f, alpha);
+			qgl.DrawElements(GL_TRIANGLES, numtris * 3, GL_UNSIGNED_INT, indexes);
+			qgl.DisableClientState(GL_TEXTURE_COORD_ARRAY);
+			qgl.DisableClientState(GL_VERTEX_ARRAY);
 
 			if (hardware_light_enabled)
 			{
@@ -1291,17 +1291,17 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 			}
 			else
 			{
-				qglDisableClientState(GL_COLOR_ARRAY);
+				qgl.DisableClientState(GL_COLOR_ARRAY);
 			}
 
 			if (neednormals)
-				qglDisableClientState(GL_NORMAL_ARRAY);
+				qgl.DisableClientState(GL_NORMAL_ARRAY);
 
 			// disable anything set in this stage
 			GLSTATE_DISABLE_ALPHATEST;
 			GLSTATE_DISABLE_BLEND;
-			qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
+			qgl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			GLSTATE_DISABLE_TEXGEN;
 
 			stage = stage->next;
@@ -1312,8 +1312,8 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 		// render the model with no script
 		GL_Bind(skin_image->texnum);
 
-		qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		qglEnableClientState(GL_VERTEX_ARRAY);
+		qgl.EnableClientState(GL_TEXTURE_COORD_ARRAY);
+		qgl.EnableClientState(GL_VERTEX_ARRAY);
 		
 		if (hardware_light_enabled)
 		{
@@ -1321,15 +1321,15 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 		}
 		else
 		{
-			qglEnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
-			qglColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
+			qgl.EnableClientState(GL_COLOR_ARRAY); // todo - put this at the beginning of model rendering
+			qgl.ColorPointer(3, GL_FLOAT, 0, colorArray); // todo GL_UNSIGNED_BYTE might be faster
 		}
 
-		qglVertexPointer(3, GL_FLOAT, 0, inVertsArray);
-		qglTexCoordPointer(2, GL_FLOAT, 0, mesh->stcoords);
-		qglDrawElements(GL_TRIANGLES, numtris * 3, GL_UNSIGNED_INT, indexes);
-		qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		qglDisableClientState(GL_VERTEX_ARRAY);
+		qgl.VertexPointer(3, GL_FLOAT, 0, inVertsArray);
+		qgl.TexCoordPointer(2, GL_FLOAT, 0, mesh->stcoords);
+		qgl.DrawElements(GL_TRIANGLES, numtris * 3, GL_UNSIGNED_INT, indexes);
+		qgl.DisableClientState(GL_TEXTURE_COORD_ARRAY);
+		qgl.DisableClientState(GL_VERTEX_ARRAY);
 
 		if (hardware_light_enabled)
 		{
@@ -1337,14 +1337,14 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 		}
 		else
 		{
-			qglDisableClientState(GL_COLOR_ARRAY);
+			qgl.DisableClientState(GL_COLOR_ARRAY);
 		}
 
 #if 0 //def DEBUG
 		{
 			int err;
 
-			err = qglGetError();
+			err = qgl.GetError();
 			assert(err == GL_NO_ERROR);
 		}
 #endif
@@ -1352,28 +1352,28 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 
 //#define DRAW_NORMALS
 #ifdef DRAW_NORMALS
-	qglColor3f(1, 0, 0);
-	qglBegin(GL_LINES);
+	qgl.Color3f(1, 0, 0);
+	qgl.Begin(GL_LINES);
 
 	for (j = 0; j < numtris*3; j++)
 	{
 		vec3_t tempvec1, tempvec2;
 
-		qglVertex3fv(inVertsArray[indexes[j]]);
+		qgl.Vertex3fv(inVertsArray[indexes[j]]);
 		VectorScale(inNormalsArray[indexes[j]], 2.5f, tempvec1);
 		VectorAdd(inVertsArray[indexes[j]], tempvec1, tempvec2);
-		qglVertex3fv(tempvec2);
+		qgl.Vertex3fv(tempvec2);
 	}
 		
-	qglEnd();
+	qgl.End();
 #endif
 
 //#define DRAW_BONES
 #ifdef DRAW_BONES
 	/// testing - draw bones
-	qglColor3f(1, 1, 0);
-	qglDisable(GL_DEPTH_TEST);
-	qglBegin(GL_LINES);
+	qgl.Color3f(1, 1, 0);
+	qgl.Disable(GL_DEPTH_TEST);
+	qgl.Begin(GL_LINES);
 	{
 		int numbones = (int)skmodel->numbones;
 
@@ -1383,24 +1383,24 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 		{
 			if (skmodel->bones[j].parent >= 0) 
 			{
-				qglVertex3f(
+				qgl.Vertex3f(
 					curboneposescache[skmodel->bones[j].parent].origin[0]/* + move[0]*/,
 					curboneposescache[skmodel->bones[j].parent].origin[1]/* + move[1]*/,
 					curboneposescache[skmodel->bones[j].parent].origin[2]/* + move[2]*/);
-				qglVertex3f(
+				qgl.Vertex3f(
 					curboneposescache[j].origin[0]/* + move[0]*/,
 					curboneposescache[j].origin[1]/* + move[1]*/,
 					curboneposescache[j].origin[2]/* + move[2]*/);
 			}
 		}
 	}
-	qglEnd();
-	qglEnable(GL_DEPTH_TEST);
+	qgl.End();
+	qgl.Enable(GL_DEPTH_TEST);
 #endif
 
 #ifdef DEBUG
 	{
-		int err = qglGetError();
+		int err = qgl.GetError();
 		assert(err == GL_NO_ERROR);
 	}
 #endif
@@ -1456,7 +1456,7 @@ void R_DrawSkeletalModel (entity_t *e)
 	// hack the depth range to prevent view model from poking into walls
 	if (e->flags & RF_WEAPONMODEL)
 	{
-		qglDepthRange(gldepthmin, gldepthmin + 0.3f *(gldepthmax - gldepthmin));
+		qgl.DepthRange(gldepthmin, gldepthmin + 0.3f *(gldepthmax - gldepthmin));
 	}
 	else // jit
 	{
@@ -1468,7 +1468,7 @@ void R_DrawSkeletalModel (entity_t *e)
 
 	// backface culling for left-handed weapons
 //	if (e->flags & RF_CULLHACK)
-//		qglFrontFace(GL_CW);
+//		qgl.FrontFace(GL_CW);
 
 	if (!r_lerpmodels->value)
 		e->backlerp = 0;
@@ -1482,8 +1482,8 @@ void R_DrawSkeletalModel (entity_t *e)
 		R_HackDrawWeaponModel(e, e->model, e->weapon_model);
 
 	if (e->flags & RF_WEAPONMODEL)
-		qglDepthRange(gldepthmin, gldepthmax);
+		qgl.DepthRange(gldepthmin, gldepthmax);
 
 	//if (e->flags & RF_CULLHACK)
-	//	qglFrontFace(GL_CCW);
+	//	qgl.FrontFace(GL_CCW);
 }

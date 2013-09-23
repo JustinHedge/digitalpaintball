@@ -62,21 +62,21 @@ void R_RenderDlight (dlight_t *light)
 	}
 #endif
 
-	qglBegin (GL_TRIANGLE_FAN);
-	qglColor3f (light->color[0]*0.2, light->color[1]*0.2, light->color[2]*0.2);
+	qgl.Begin(GL_TRIANGLE_FAN);
+	qgl.Color3f (light->color[0]*0.2, light->color[1]*0.2, light->color[2]*0.2);
 	for (i=0 ; i<3 ; i++)
 		v[i] = light->origin[i] - vpn[i]*rad;
-	qglVertex3fv (v);
-	qglColor3f (0,0,0);
+	qgl.Vertex3fv (v);
+	qgl.Color3f (0,0,0);
 	for (i=16 ; i>=0 ; i--)
 	{
 		a = i*0.39269875;
 		for (j=0 ; j<3 ; j++)
 			v[j] = light->origin[j] + vright[j]*cos(a)*rad
 				+ vup[j]*sin(a)*rad;
-		qglVertex3fv (v);
+		qgl.Vertex3fv (v);
 	}
-	qglEnd ();
+	qgl.End ();
 }
 
 /*
@@ -94,21 +94,21 @@ void R_RenderDlights (void)
 
 	r_dlightframecount = r_framecount + 1;	// because the count hasn't
 											//  advanced yet for this frame
-	qglDepthMask (0);
-	qglDisable (GL_TEXTURE_2D);
-	qglShadeModel (GL_SMOOTH);
+	qgl.DepthMask (0);
+	qgl.Disable (GL_TEXTURE_2D);
+	qgl.ShadeModel (GL_SMOOTH);
 	GLSTATE_ENABLE_BLEND
-	qglBlendFunc (GL_ONE, GL_ONE);
+	qgl.BlendFunc (GL_ONE, GL_ONE);
 
 	l = r_newrefdef.dlights;
 	for (i=0 ; i<r_newrefdef.num_dlights ; i++, l++)
 		R_RenderDlight (l);
 
-	qglColor3f (1,1,1);
+	qgl.Color3f (1,1,1);
 	GLSTATE_DISABLE_BLEND
-	qglEnable (GL_TEXTURE_2D);
-	qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	qglDepthMask (1);
+	qgl.Enable (GL_TEXTURE_2D);
+	qgl.BlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qgl.DepthMask (1);
 }
 
 

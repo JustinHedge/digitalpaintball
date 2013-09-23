@@ -54,19 +54,19 @@ int		gl_filter_max = GL_LINEAR;
 
 void GL_EnableMultitexture (qboolean enable)
 {
-	if (!qglSelectTextureSGIS && !qglActiveTextureARB)
+	if (!qgl.SelectTextureSGIS && !qgl.ActiveTextureARB)
 		return;
 
 	if (enable)
 	{
 		GL_SelectTexture(QGL_TEXTURE1);
-		qglEnable(GL_TEXTURE_2D);
+		qgl.Enable(GL_TEXTURE_2D);
 		GL_TexEnv(GL_REPLACE);
 	}
 	else
 	{
 		GL_SelectTexture(QGL_TEXTURE1);
-		qglDisable(GL_TEXTURE_2D);
+		qgl.Disable(GL_TEXTURE_2D);
 		GL_TexEnv(GL_REPLACE);
 	}
 
@@ -77,7 +77,7 @@ void GL_EnableMultitexture (qboolean enable)
 	{
 		int err;
 
-		err = qglGetError();
+		err = qgl.GetError();
 		assert(err == GL_NO_ERROR);
 	}
 #endif
@@ -87,7 +87,7 @@ void GL_SelectTexture (GLenum texture)
 {
 	int tmu;
 
-	if (!qglSelectTextureSGIS && !qglActiveTextureARB)
+	if (!qgl.SelectTextureSGIS && !qgl.ActiveTextureARB)
 		return;
 
 	/*if (texture == QGL_TEXTURE0)
@@ -101,14 +101,14 @@ void GL_SelectTexture (GLenum texture)
 
 	gl_state.currenttmu = tmu;
 
-	if (qglSelectTextureSGIS)
+	if (qgl.SelectTextureSGIS)
 	{
-		qglSelectTextureSGIS(texture);
+		qgl.SelectTextureSGIS(texture);
 	}
-	else if (qglActiveTextureARB)
+	else if (qgl.ActiveTextureARB)
 	{
-		qglActiveTextureARB(texture);
-		qglClientActiveTextureARB(texture);
+		qgl.ActiveTextureARB(texture);
+		qgl.ClientActiveTextureARB(texture);
 	}
 }
 
@@ -125,11 +125,11 @@ void GL_TexEnv(GLenum mode)
 		{
 			if (gl_state.texture_combine && gl_overbright->value)
 			{
-				qglTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+				qgl.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
 #ifdef QUAKE2
-				qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 4);
+				qgl.TexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 4);
 #else
-				qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
+				qgl.TexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
 #endif
 			}
 			else // failed to combine, default to modulate.
@@ -138,8 +138,8 @@ void GL_TexEnv(GLenum mode)
 			}
 		}
 
-		//qglTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode );
-		qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode); // jit - should be i, right?
+		//qgl.TexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode );
+		qgl.TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode); // jit - should be i, right?
 		lastmodes[gl_state.currenttmu] = mode;		
 	}
 }
@@ -158,7 +158,7 @@ void GL_Bind (int texnum)
 		return;
 
 	gl_state.currenttextures[gl_state.currenttmu] = texnum;
-	qglBindTexture(GL_TEXTURE_2D, texnum);
+	qgl.BindTexture(GL_TEXTURE_2D, texnum);
 }
 
 void GL_MBind (GLenum target, int texnum)
@@ -256,8 +256,8 @@ void GL_TextureMode(const char *string )
 		if (glt->type != it_pic && glt->type != it_sky && glt->type != it_sharppic && glt->type != it_reflection) // jitrscript, jitwater
 		{
 			GL_Bind(glt->texnum);
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+			qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+			qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 		}
 	}
 }
@@ -1396,7 +1396,7 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	{
 		int err;
 
-		err = qglGetError();
+		err = qgl.GetError();
 		assert(err == GL_NO_ERROR);
 	}
 #endif
@@ -1436,7 +1436,7 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	}
 
 	// find max size card can handle
-	qglGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
+	qgl.GetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
 
 	if (scaled_width > max_size)
 		scaled_width = max_size;
@@ -1491,14 +1491,14 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	{
 		if (gl_state.sgis_mipmap) 
 		{
-			qglTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-			qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+			qgl.TexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+			qgl.TexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 		} 
 		else
 		{
 			int miplevel = 0;
 
-			qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+			qgl.TexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 
 			while (scaled_width > 1 || scaled_height > 1)
 			{
@@ -1513,23 +1513,23 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 					scaled_height = 1;
 
 				miplevel++;
-				qglTexImage2D(GL_TEXTURE_2D, miplevel, comp, scaled_width, scaled_height,
+				qgl.TexImage2D(GL_TEXTURE_2D, miplevel, comp, scaled_width, scaled_height,
 					0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 			}
 		}
 
-		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+		qgl.TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 
 		if (gl_anisotropy->value) // jitanisotropy
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropy->value);
+			qgl.TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropy->value);
 		else
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+			qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 
 #ifdef DEBUG
 		{
 			int err;
 
-			err = qglGetError();
+			err = qgl.GetError();
 			assert(err == GL_NO_ERROR);
 		}
 #endif
@@ -1537,17 +1537,17 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	else
 	{
 		if (gl_state.sgis_mipmap)
-			qglTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
+			qgl.TexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
 
-		qglTexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sharp ? GL_NEAREST : gl_filter_max);
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sharp ? GL_NEAREST : gl_filter_max);
+		qgl.TexImage2D(GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+		qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sharp ? GL_NEAREST : gl_filter_max);
+		qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sharp ? GL_NEAREST : gl_filter_max);
 
 #ifdef DEBUG
 		{
 			int err;
 
-			err = qglGetError();
+			err = qgl.GetError();
 			assert(err == GL_NO_ERROR);
 		}
 #endif
@@ -1556,13 +1556,13 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	// Clamp to edge not supported until 1.2
 	if (repeat || gl_config.version < 1.2f) // jitsky, jitwater
 	{
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	}
 	else
 	{
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 
 
@@ -1573,7 +1573,7 @@ qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagety
 	{
 		int err;
 
-		err = qglGetError();
+		err = qgl.GetError();
 		assert(err == GL_NO_ERROR);
 	}
 #endif
@@ -2241,7 +2241,7 @@ void GL_FreeUnusedImages (void)
 		if (image->rscript) // jitrscript
 			image->rscript->img_ptr = NULL;
 
-		qglDeleteTextures (1, &image->texnum);
+		qgl.DeleteTextures (1, &image->texnum);
 		memset(image, 0, sizeof(image_t)); // jit (not sure if this makes a difference)
 	}
 }
@@ -2313,7 +2313,7 @@ void	GL_InitImages (void)
 */
 	Draw_GetPalette ();
 
-	if ( qglColorTableEXT )
+	if ( qgl.ColorTableEXT )
 	{
 		ri.FS_LoadFile("pics/16to8.dat", (void**)&gl_state.d_16to8table);
 
@@ -2384,7 +2384,7 @@ void GL_ShutdownImages (void)
 			image->rscript->img_ptr = NULL;
 
 		// free it
-		qglDeleteTextures(1, &image->texnum);
+		qgl.DeleteTextures(1, &image->texnum);
 
 		memset(image, 0, sizeof(*image));
 	}

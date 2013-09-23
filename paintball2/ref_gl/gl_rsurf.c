@@ -113,16 +113,16 @@ _inline void DrawGLPoly (glpoly_t *p)
 	int		i;
 	float	*v;
 
-	qglBegin(GL_POLYGON);
+	qgl.Begin(GL_POLYGON);
 	v = p->verts[0];
 
 	for (i=0; i<p->numverts; i++,v+=VERTEXSIZE)
 	{
-		qglTexCoord2f(v[3], v[4]);
-		qglVertex3fv(v);
+		qgl.TexCoord2f(v[3], v[4]);
+		qgl.Vertex3fv(v);
 	}
 
-	qglEnd();
+	qgl.End();
 }
 
 //============
@@ -152,18 +152,18 @@ void DrawGLFlowingPoly (msurface_t *fa)
 		VA_SetElem2(tex_array[i],(v[3]+scroll),v[4]);
 		VA_SetElem3(vert_array[i],v[0],v[1],v[2]);
 	}
-	// if (qglLockArraysEXT != 0) qglLockArraysEXT(0,p->numverts);
-	qglDrawArrays (GL_POLYGON, 0, p->numverts);
-	// if (qglUnlockArraysEXT != 0) qglUnlockArraysEXT();
+	// if (qgl.LockArraysEXT != 0) qgl.LockArraysEXT(0,p->numverts);
+	qgl.DrawArrays (GL_POLYGON, 0, p->numverts);
+	// if (qgl.UnlockArraysEXT != 0) qgl.UnlockArraysEXT();
 #else
-		qglBegin (GL_POLYGON);
+		qgl.Begin (GL_POLYGON);
 	v = p->verts[0];
 	for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
 	{
-		qglTexCoord2f ((v[3] + scroll), v[4]);
-		qglVertex3fv (v);
+		qgl.TexCoord2f ((v[3] + scroll), v[4]);
+		qgl.Vertex3fv (v);
 	}
-	qglEnd ();
+	qgl.End ();
 #endif
 }
 //PGM
@@ -181,14 +181,14 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
         return;
 
     // Guy: *\/\/\/ gl_showtris fix begin \/\/\/*
-    qglDisable(GL_DEPTH_TEST);
-	qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    qgl.Disable(GL_DEPTH_TEST);
+	qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     if (!surf)    // Guy: Called from non-multitexture mode; need to loop through surfaces defined by non-mtex functions
     {
         int j;
 
-        qglDisable(GL_TEXTURE_2D);
+        qgl.Disable(GL_TEXTURE_2D);
         
         for (i = 0; i < MAX_LIGHTMAPS; i++)
         {
@@ -198,18 +198,18 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
                 {
                     for (j = 2; j < p->numverts; j++)
                     {
-                        qglBegin(GL_LINE_STRIP);
-                            qglVertex3fv(p->verts[0]);
-                            qglVertex3fv(p->verts[j - 1]);
-                            qglVertex3fv(p->verts[j]);
-                            qglVertex3fv(p->verts[0]);
-                        qglEnd();
+                        qgl.Begin(GL_LINE_STRIP);
+                            qgl.Vertex3fv(p->verts[0]);
+                            qgl.Vertex3fv(p->verts[j - 1]);
+                            qgl.Vertex3fv(p->verts[j]);
+                            qgl.Vertex3fv(p->verts[0]);
+                        qgl.End();
                     }
                 }
             }
         }
 
-        qglEnable(GL_TEXTURE_2D);
+        qgl.Enable(GL_TEXTURE_2D);
     }
     
     else    // Guy: Called from multitexture mode; surface to be rendered in wireframe already passed in
@@ -218,13 +218,13 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
                  tex_state1;
 
         GL_SelectTexture(QGL_TEXTURE0);
-        qglGetTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_state0);
+        qgl.GetTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_state0);
 
         GL_SelectTexture(QGL_TEXTURE1);
-        qglGetTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_state1);
+        qgl.GetTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_state1);
 
         GL_EnableMultitexture(false);
-        qglDisable(GL_TEXTURE_2D);
+        qgl.Disable(GL_TEXTURE_2D);
 
         for (p = surf->polys; p; p = p->chain)
         {
@@ -232,18 +232,18 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
             {
 				//distcolor = p->verts[
 				
-                qglBegin(GL_LINE_STRIP);
-                    //qglColor4f(1, 1, 1, 1);
-					//qglColor4f(0,1,0,1);
-                    qglVertex3fv(p->verts[0]);
-                    qglVertex3fv(p->verts[i - 1]);
-                    qglVertex3fv(p->verts[i]);
-                    qglVertex3fv(p->verts[0]);
-                qglEnd();
+                qgl.Begin(GL_LINE_STRIP);
+                    //qgl.Color4f(1, 1, 1, 1);
+					//qgl.Color4f(0,1,0,1);
+                    qgl.Vertex3fv(p->verts[0]);
+                    qgl.Vertex3fv(p->verts[i - 1]);
+                    qgl.Vertex3fv(p->verts[i]);
+                    qgl.Vertex3fv(p->verts[0]);
+                qgl.End();
             }
         }
 
-        qglEnable(GL_TEXTURE_2D);
+        qgl.Enable(GL_TEXTURE_2D);
         GL_EnableMultitexture(true);
         
 		GL_SelectTexture(QGL_TEXTURE0);
@@ -253,7 +253,7 @@ void R_DrawTriangleOutlines(msurface_t *surf) // jit/GuyP, redone
 		GL_TexEnv(tex_state1);
 	}
 
-	qglEnable(GL_DEPTH_TEST);
+	qgl.Enable(GL_DEPTH_TEST);
 	// Guy: */\/\/\ gl_showtris fix end /\/\/\*
 }
 
@@ -263,9 +263,9 @@ void R_DrawTriangleOutlines (void)
 	int			i, j;
 	glpoly_t	*p;
 
-	qglDisable (GL_TEXTURE_2D);
-	qglDisable (GL_DEPTH_TEST);
-	qglColor4f (1,1,1,1);
+	qgl.Disable (GL_TEXTURE_2D);
+	qgl.Disable (GL_DEPTH_TEST);
+	qgl.Color4f (1,1,1,1);
 
 	for (i=0 ; i<MAX_LIGHTMAPS ; i++)
 	{
@@ -278,19 +278,19 @@ void R_DrawTriangleOutlines (void)
 			{
 				for (j=2 ; j<p->numverts ; j++ )
 				{
-					qglBegin (GL_LINE_STRIP);
-					qglVertex3fv (p->verts[0]);
-					qglVertex3fv (p->verts[j-1]);
-					qglVertex3fv (p->verts[j]);
-					qglVertex3fv (p->verts[0]);
-					qglEnd ();
+					qgl.Begin (GL_LINE_STRIP);
+					qgl.Vertex3fv (p->verts[0]);
+					qgl.Vertex3fv (p->verts[j-1]);
+					qgl.Vertex3fv (p->verts[j]);
+					qgl.Vertex3fv (p->verts[0]);
+					qgl.End ();
 				}
 			}
 		}
 	}
 
-	qglEnable (GL_DEPTH_TEST);
-	qglEnable (GL_TEXTURE_2D);
+	qgl.Enable (GL_DEPTH_TEST);
+	qgl.Enable (GL_TEXTURE_2D);
 }
 */
 
@@ -314,9 +314,9 @@ void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset )
 				VA_SetElem3(vert_array[j],v[0],v[1],v[2]);
 			}
 
-			// if (qglLockArraysEXT) qglLockArraysEXT(0,p->numverts);
-			qglDrawArrays (GL_POLYGON, 0, p->numverts);
-			// if (qglUnlockArraysEXT) qglUnlockArraysEXT();
+			// if (qgl.LockArraysEXT) qgl.LockArraysEXT(0,p->numverts);
+			qgl.DrawArrays (GL_POLYGON, 0, p->numverts);
+			// if (qgl.UnlockArraysEXT) qgl.UnlockArraysEXT();
 		}
 	}
 	else
@@ -332,9 +332,9 @@ void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset )
 				VA_SetElem2(tex_array[j],(v[5]-soffset),(v[6]-toffset));
 				VA_SetElem3(vert_array[j],v[0],v[1],v[2]);
 			}
-			// if (qglLockArraysEXT) qglLockArraysEXT(0,p->numverts);
-			qglDrawArrays (GL_POLYGON, 0, p->numverts);
-			// if (qglUnlockArraysEXT)	qglUnlockArraysEXT();
+			// if (qgl.LockArraysEXT) qgl.LockArraysEXT(0,p->numverts);
+			qgl.DrawArrays (GL_POLYGON, 0, p->numverts);
+			// if (qgl.UnlockArraysEXT)	qgl.UnlockArraysEXT();
 		}
 	}
 }
@@ -348,14 +348,14 @@ void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset )
 			float *v;
 			int j;
 
-			qglBegin (GL_POLYGON);
+			qgl.Begin (GL_POLYGON);
 			v = p->verts[0];
 			for (j=0 ; j<p->numverts ; j++, v+= VERTEXSIZE)
 			{
-				qglTexCoord2f (v[5], v[6] );
-				qglVertex3fv (v);
+				qgl.TexCoord2f (v[5], v[6] );
+				qgl.Vertex3fv (v);
 			}
-			qglEnd ();
+			qgl.End ();
 		}
 	}
 	else
@@ -365,14 +365,14 @@ void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset )
 			float *v;
 			int j;
 
-			qglBegin (GL_POLYGON);
+			qgl.Begin (GL_POLYGON);
 			v = p->verts[0];
 			for (j=0 ; j<p->numverts ; j++, v+= VERTEXSIZE)
 			{
-				qglTexCoord2f (v[5] - soffset, v[6] - toffset );
-				qglVertex3fv (v);
+				qgl.TexCoord2f (v[5] - soffset, v[6] - toffset );
+				qgl.Vertex3fv (v);
 			}
-			qglEnd ();
+			qgl.End ();
 		}
 	}
 }
@@ -400,12 +400,12 @@ void R_BlendLightmaps (void)
 	{
 		vec3_t v;
 		VectorSet(v, 0.0f, 0.0f, 0.0f);
-		qglFogfv(GL_FOG_COLOR, v); // jitodo
-		qglEnable(GL_FOG);
+		qgl.Fogfv(GL_FOG_COLOR, v); // jitodo
+		qgl.Enable(GL_FOG);
 	}
 
 	// don't bother writing Z
-	qglDepthMask( 0 );
+	qgl.DepthMask( 0 );
 
 	/*
 	** set the appropriate blending mode unless we're only looking at the
@@ -423,22 +423,22 @@ void R_BlendLightmaps (void)
 			case 'I':
 			case 'L':				
 				if (gl_overbright->value)
-					qglBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);// jitbright
+					qgl.BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);// jitbright
 				else
-					qglBlendFunc(GL_ZERO, GL_SRC_COLOR);
+					qgl.BlendFunc(GL_ZERO, GL_SRC_COLOR);
 				break;
 			case 'A':
 			default:
-				qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				qgl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				break;
 			}
 		}
 		else
 		{
 			if (gl_overbright->value)
-				qglBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);// jitbright
+				qgl.BlendFunc(GL_DST_COLOR, GL_SRC_COLOR);// jitbright
 			else
-				qglBlendFunc(GL_ZERO, GL_SRC_COLOR);
+				qgl.BlendFunc(GL_ZERO, GL_SRC_COLOR);
 		}
 	}
 
@@ -546,8 +546,8 @@ void R_BlendLightmaps (void)
 	** restore state
 	*/
 	GLSTATE_DISABLE_BLEND
-	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	qglDepthMask(1);
+	qgl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qgl.DepthMask(1);
 }
 
 void R_AddFog (void) // jitfog -- for when multitexture is disabled.
@@ -558,18 +558,18 @@ void R_AddFog (void) // jitfog -- for when multitexture is disabled.
 	extern vec3_t fogcolor;
 
 	// don't bother writing Z
-	qglDepthMask(0);
+	qgl.DepthMask(0);
 
-	qglFogfv(GL_FOG_COLOR, fogcolor);
-	//qglEnable(GL_FOG);
+	qgl.Fogfv(GL_FOG_COLOR, fogcolor);
+	//qgl.Enable(GL_FOG);
 
 	GL_TexEnv(GL_REPLACE); // jitest
-	qglDisable(GL_TEXTURE_2D);
+	qgl.Disable(GL_TEXTURE_2D);
 	GLSTATE_ENABLE_BLEND;
 
-	qglColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+	qgl.Color4f(0.0f, 0.0f, 0.0f, 1.0f);
 
-	qglBlendFunc(GL_ONE, GL_ONE);
+	qgl.BlendFunc(GL_ONE, GL_ONE);
 
 
 	for (i=0,image=gltextures; i<numgltextures; i++,image++) // jitodo, render fog on brush ents
@@ -589,11 +589,11 @@ void R_AddFog (void) // jitfog -- for when multitexture is disabled.
 	/*
 	** restore state
 	*/
-	qglEnable(GL_TEXTURE_2D);
-	//qglDisable(GL_FOG);
+	qgl.Enable(GL_TEXTURE_2D);
+	//qgl.Disable(GL_FOG);
 	GLSTATE_DISABLE_BLEND
-	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	qglDepthMask(1);
+	qgl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qgl.DepthMask(1);
 }
 
 
@@ -718,7 +718,7 @@ void R_RenderBrushPoly (msurface_t *fa)
 	{	
 		// warp texture, no lightmaps
 		GL_Bind(image->texnum);
-		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f); // jit
+		qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f); // jit
 		EmitWaterPolys(fa);
 		return;
 	}
@@ -785,7 +785,7 @@ dynamic:
 
 			GL_Bind(gl_state.lightmap_textures + fa->lightmaptexturenum);
 
-			qglTexSubImage2D( GL_TEXTURE_2D, 0,
+			qgl.TexSubImage2D( GL_TEXTURE_2D, 0,
 							  fa->light_s, fa->light_t, 
 							  smax, tmax, 
 							  GL_LIGHTMAP_FORMAT, 
@@ -817,23 +817,23 @@ void R_DrawCaustics (void) // jitcaustics
 		return;
 	}
 
-	qglDepthMask(0); // don't bother writing Z
+	qgl.DepthMask(0); // don't bother writing Z
 	GLSTATE_ENABLE_BLEND
 	GL_TexEnv(GL_MODULATE);
-	qglEnable(GL_POLYGON_OFFSET_FILL); 
-	qglPolygonOffset(-3, -2); 
+	qgl.Enable(GL_POLYGON_OFFSET_FILL); 
+	qgl.PolygonOffset(-3, -2); 
 	alphasurf = true;
 
 	for (s = r_caustic_surfaces; s; s = s->causticchain)
 		RS_DrawSurface(s, false, r_caustictexture->rscript);
 
 	alphasurf = false;
-	qglDisable(GL_POLYGON_OFFSET_FILL); 
+	qgl.Disable(GL_POLYGON_OFFSET_FILL); 
 	GL_TexEnv(GL_REPLACE);
-	qglColor4f(1,1,1,1);
-	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qgl.Color4f(1,1,1,1);
+	qgl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	GLSTATE_DISABLE_BLEND
-	qglDepthMask(1); // re-enable z writing
+	qgl.DepthMask(1); // re-enable z writing
 	r_caustic_surfaces = NULL;
 }
 
@@ -855,9 +855,9 @@ void R_DrawAlphaSurfaces (void)
 	alphasurf = true; // jitrscript
 
 	// go back to the world matrix
-    qglLoadMatrixf(r_world_matrix);
+    qgl.LoadMatrixf(r_world_matrix);
 	GLSTATE_ENABLE_BLEND
-	qglDepthMask(0); // jitalpha - disable depth writing
+	qgl.DepthMask(0); // jitalpha - disable depth writing
 	GL_TexEnv(GL_MODULATE);
 	currentmodel = r_worldmodel; // jit - we're drawing world polygons now.  Don't confuse them with whatever entity was drawn last.
 
@@ -871,7 +871,7 @@ void R_DrawAlphaSurfaces (void)
 		// moving trans brushes - spaz
 		if (s->entity)
 		{
-			qglLoadMatrixf(r_world_matrix);
+			qgl.LoadMatrixf(r_world_matrix);
 
 			s->entity->angles[0] = -s->entity->angles[0];	// stupid quake bug
 			s->entity->angles[2] = -s->entity->angles[2];	// stupid quake bug
@@ -898,17 +898,17 @@ void R_DrawAlphaSurfaces (void)
 			if (s->texinfo->flags & SURF_TRANS33)
 			{
 				if (s->texinfo->flags & SURF_TRANS66) // jittrans -- trans33+trans66 only uses texture transparency.
-					qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+					qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
 				else
-					qglColor4f(1.0f, 1.0f, 1.0f, 0.33f);
+					qgl.Color4f(1.0f, 1.0f, 1.0f, 0.33f);
 			}
 			else if (s->texinfo->flags & SURF_TRANS66)
 			{
-				qglColor4f(1.0f, 1.0f, 1.0f, 0.66f);
+				qgl.Color4f(1.0f, 1.0f, 1.0f, 0.66f);
 			}
 			else
 			{
-				qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+				qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
 			}
 
 			if (s->flags & SURF_DRAWTURB)
@@ -919,7 +919,7 @@ void R_DrawAlphaSurfaces (void)
 			{
 				DrawGLFlowingPoly(s);							// PGM
 			}
-			else if (qglMultiTexCoord2fARB) // jitlightmap
+			else if (qgl.MultiTexCoord2fARB) // jitlightmap
 			{
 				GL_EnableMultitexture(true);
 				GL_SelectTexture(QGL_TEXTURE0);
@@ -944,14 +944,14 @@ void R_DrawAlphaSurfaces (void)
 
 		if (s->entity)
 		{
-			qglLoadMatrixf(r_world_matrix);
+			qgl.LoadMatrixf(r_world_matrix);
 		}
 	}
 
 	GL_TexEnv(GL_REPLACE);
-	qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
 	GLSTATE_DISABLE_BLEND
-	qglDepthMask(1); // jitalpha - reenable depth writing
+	qgl.DepthMask(1); // jitalpha - reenable depth writing
 	r_alpha_surfaces = NULL;
 	alphasurf = false; // jitrscript
 }
@@ -972,7 +972,7 @@ void DrawTextureChains (void)
 
 //	GL_TexEnv( GL_REPLACE );
 
-	if (!qglSelectTextureSGIS && !qglActiveTextureARB)
+	if (!qgl.SelectTextureSGIS && !qgl.ActiveTextureARB)
 	{
 		for (i=0, image=gltextures; i<numgltextures; i++, image++)
 		{
@@ -1083,7 +1083,7 @@ dynamic:
 
 			lmtex = surf->lightmaptexturenum;
 
-			qglTexSubImage2D(GL_TEXTURE_2D, 0,
+			qgl.TexSubImage2D(GL_TEXTURE_2D, 0,
 							 surf->light_s, surf->light_t, 
 							 smax, tmax, 
 							 GL_LIGHTMAP_FORMAT, 
@@ -1101,7 +1101,7 @@ dynamic:
 
 			lmtex = 0;
 
-			qglTexSubImage2D(GL_TEXTURE_2D, 0,
+			qgl.TexSubImage2D(GL_TEXTURE_2D, 0,
 							 surf->light_s, surf->light_t, 
 							 smax, tmax, 
 							 GL_LIGHTMAP_FORMAT, 
@@ -1127,14 +1127,14 @@ dynamic:
 			for (p = surf->polys; p; p = p->chain)
 			{
 				v = p->verts[0];
-				qglBegin(GL_POLYGON);
+				qgl.Begin(GL_POLYGON);
 				for (i=0; i< nv; i++, v+= VERTEXSIZE)
 				{
-					qglMultiTexCoord2fARB(QGL_TEXTURE0, (v[3]+scroll), v[4]);
-					qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
-					qglVertex3fv(v);
+					qgl.MultiTexCoord2fARB(QGL_TEXTURE0, (v[3]+scroll), v[4]);
+					qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
+					qgl.Vertex3fv(v);
 				}
-				qglEnd();
+				qgl.End();
 			}
 		}
 		else
@@ -1150,14 +1150,14 @@ dynamic:
 				for (p = surf->polys; p; p = p->chain)
 				{
 					v = p->verts[0];
-					qglBegin(GL_POLYGON);
+					qgl.Begin(GL_POLYGON);
 					for (i=0; i<nv; i++, v+=VERTEXSIZE)
 					{
-						qglMultiTexCoord2fARB(QGL_TEXTURE0, v[3], v[4]);
-						qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
-						qglVertex3fv(v);
+						qgl.MultiTexCoord2fARB(QGL_TEXTURE0, v[3], v[4]);
+						qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
+						qgl.Vertex3fv(v);
 					}
-					qglEnd();
+					qgl.End();
 				}
 			}
 		}
@@ -1184,14 +1184,14 @@ dynamic:
 			for (p = surf->polys; p; p = p->chain)
 			{
 				v = p->verts[0];
-				qglBegin(GL_POLYGON);
+				qgl.Begin(GL_POLYGON);
 				for (i=0; i<nv; i++, v+=VERTEXSIZE)
 				{
-					qglMultiTexCoord2fARB(QGL_TEXTURE0, (v[3]+scroll), v[4]);
-					qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
-					qglVertex3fv (v);
+					qgl.MultiTexCoord2fARB(QGL_TEXTURE0, (v[3]+scroll), v[4]);
+					qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
+					qgl.Vertex3fv (v);
 				}
-				qglEnd();
+				qgl.End();
 			}
 		}
 		else
@@ -1212,16 +1212,16 @@ dynamic:
 				for (p = surf->polys; p; p = p->chain)
 				{
 					v = p->verts[0];
-					qglBegin(GL_POLYGON);
+					qgl.Begin(GL_POLYGON);
 
 					for (i=0 ; i<nv; i++, v+=VERTEXSIZE)
 					{
-						qglMultiTexCoord2fARB(QGL_TEXTURE0, v[3], v[4]);
-						qglMultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
-						qglVertex3fv(v);
+						qgl.MultiTexCoord2fARB(QGL_TEXTURE0, v[3], v[4]);
+						qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
+						qgl.Vertex3fv(v);
 					}
 
-					qglEnd();
+					qgl.End();
 				}
 			}
 //==========
@@ -1259,7 +1259,7 @@ void R_DrawInlineBModel (entity_t *e)
 	if (currententity->flags & RF_TRANSLUCENT)
 	{
 		GLSTATE_ENABLE_BLEND
-		qglColor4f(1,1,1,0.25);
+		qgl.Color4f(1,1,1,0.25);
 		GL_TexEnv(GL_MODULATE);
 	}
 
@@ -1289,11 +1289,11 @@ void R_DrawInlineBModel (entity_t *e)
 				r_alpha_surfaces = psurf;
 				psurf->entity = e; // From Quake2Max - fix transparent brush entities not moving.
 			}
-			else if (qglMultiTexCoord2fARB && !(psurf->flags & SURF_DRAWTURB))
+			else if (qgl.MultiTexCoord2fARB && !(psurf->flags & SURF_DRAWTURB))
 			{
 				GL_RenderLightmappedPoly(psurf);
 			}
-			else if (qglMultiTexCoord2fARB) // jitfog
+			else if (qgl.MultiTexCoord2fARB) // jitfog
 			{
 				GL_EnableMultitexture(false);
 				R_RenderBrushPoly(psurf);
@@ -1308,7 +1308,7 @@ void R_DrawInlineBModel (entity_t *e)
 				{
 					psurf->texturechain = gltextures->texturechain;
 					gltextures->texturechain = psurf;
-					qglDisable(GL_FOG);
+					qgl.Disable(GL_FOG);
 				}
 
 				R_RenderBrushPoly(psurf);
@@ -1318,7 +1318,7 @@ void R_DrawInlineBModel (entity_t *e)
 
 	if (!(currententity->flags & RF_TRANSLUCENT))
 	{
-		if (!qglMultiTexCoord2fARB)
+		if (!qgl.MultiTexCoord2fARB)
 		{
 			R_BlendLightmaps(); // jitodo, fog -- test doors
 
@@ -1329,7 +1329,7 @@ void R_DrawInlineBModel (entity_t *e)
 	else
 	{
 		GLSTATE_DISABLE_BLEND
-		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
 		GL_TexEnv(GL_REPLACE);
 	}
 }
@@ -1370,7 +1370,7 @@ void R_DrawBrushModel (entity_t *e)
 	if (R_CullBox (mins, maxs))
 		return;
 
-	qglColor3f(1.0f, 1.0f, 1.0f);
+	qgl.Color3f(1.0f, 1.0f, 1.0f);
 	memset(gl_lms.lightmap_surfaces, 0, sizeof(gl_lms.lightmap_surfaces));
 
 	// === jitwater
@@ -1400,7 +1400,7 @@ void R_DrawBrushModel (entity_t *e)
 		modelorg[2] = DotProduct(temp, up);
 	}
 
-	qglPushMatrix();
+	qgl.PushMatrix();
 	e->angles[0] = -e->angles[0];	// stupid quake bug
 	e->angles[2] = -e->angles[2];	// stupid quake bug
 	R_RotateForEntity (e);
@@ -1417,7 +1417,7 @@ void R_DrawBrushModel (entity_t *e)
 	R_DrawInlineBModel(e);
 	GL_EnableMultitexture(false);
 
-	qglPopMatrix();
+	qgl.PopMatrix();
 }
 
 /*
@@ -1554,15 +1554,15 @@ void R_RecursiveWorldNode (mnode_t *node)
 					unsigned char bytes[4];
 				} nodeptr;
 				nodeptr.ptr = node;
-				//qglColor3ub(r++, g+=200, b+=30);
-				//qglColor3ubv(nodeptr.bytes);
+				//qgl.Color3ub(r++, g+=200, b+=30);
+				//qgl.Color3ubv(nodeptr.bytes);
 				r=nodeptr.bytes[0]<<2;
 				g=nodeptr.bytes[1]+nodeptr.bytes[0];
 				b=nodeptr.bytes[2]+nodeptr.bytes[3];
-				qglColor3ub(r,g,b);
+				qgl.Color3ub(r,g,b);
 #endif
 				// jitest === *note, be sure to remove gl_combine_ext
-				if (qglMultiTexCoord2fARB && !(surf->flags & SURF_DRAWTURB))
+				if (qgl.MultiTexCoord2fARB && !(surf->flags & SURF_DRAWTURB))
 				{
 					GL_RenderLightmappedPoly(surf);
 				}
@@ -1577,7 +1577,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 				}
 			}
 
-			if (gl_showtris->value && qglMultiTexCoord2fARB) // jit / GuyP
+			if (gl_showtris->value && qgl.MultiTexCoord2fARB) // jit / GuyP
 				R_DrawTriangleOutlines(surf);    // Guy: gl_showtris fix
 		}
 	}
@@ -1616,11 +1616,11 @@ void R_DrawWorld (void)
 
 	gl_state.currenttextures[0] = gl_state.currenttextures[1] = -1;
 
-	qglColor3f(1.0f, 1.0f, 1.0f);
+	qgl.Color3f(1.0f, 1.0f, 1.0f);
 	memset(gl_lms.lightmap_surfaces, 0, sizeof(gl_lms.lightmap_surfaces));
 	R_ClearSkyBox();
 
-	if (qglMultiTexCoord2fARB)
+	if (qgl.MultiTexCoord2fARB)
 	{
 		GL_EnableMultitexture(true);
 		GL_SelectTexture(QGL_TEXTURE0);
@@ -1640,7 +1640,7 @@ void R_DrawWorld (void)
 		R_RecursiveWorldNode(r_worldmodel->nodes);
 		
 		if (fogenabled)
-			qglDisable(GL_FOG);
+			qgl.Disable(GL_FOG);
 		
 		//DrawLightmaps(); // jitfog / jitodo
 		DrawTextureChains(); // jitodo
@@ -1652,7 +1652,7 @@ void R_DrawWorld (void)
 
 	R_DrawSkyBox();
 
-	if (gl_showtris->value && !qglMultiTexCoord2fARB)
+	if (gl_showtris->value && !qgl.MultiTexCoord2fARB)
 		R_DrawTriangleOutlines(NULL);
 }
 
@@ -1774,8 +1774,8 @@ static void LM_UploadBlock( qboolean dynamic )
 	}
 
 	GL_Bind( gl_state.lightmap_textures + texture );
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	if ( dynamic )
 	{
@@ -1787,7 +1787,7 @@ static void LM_UploadBlock( qboolean dynamic )
 				height = gl_lms.allocated[i];
 		}
 
-		qglTexSubImage2D( GL_TEXTURE_2D, 
+		qgl.TexSubImage2D( GL_TEXTURE_2D, 
 						  0,
 						  0, 0,
 						  BLOCK_WIDTH, height,
@@ -1797,7 +1797,7 @@ static void LM_UploadBlock( qboolean dynamic )
 	}
 	else
 	{
-		qglTexImage2D( GL_TEXTURE_2D, 
+		qgl.TexImage2D( GL_TEXTURE_2D, 
 					   0, 
 					   gl_lms.internal_format,
 					   BLOCK_WIDTH, BLOCK_HEIGHT, 
@@ -2041,9 +2041,9 @@ void GL_BeginBuildingLightmaps (model_t *m)
 	** initialize the dynamic lightmap texture
 	*/
 	GL_Bind( gl_state.lightmap_textures + 0 );
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	qglTexImage2D( GL_TEXTURE_2D, 
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	qgl.TexImage2D( GL_TEXTURE_2D, 
 				   0, 
 				   gl_lms.internal_format,
 				   BLOCK_WIDTH, BLOCK_HEIGHT, 

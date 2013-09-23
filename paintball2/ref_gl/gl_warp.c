@@ -240,16 +240,16 @@ void CreateDSTTex()
 			data[x][y][1]=rand()%255-128;
 		}
 
-	qglGenTextures(1,&dst_texture);
-	qglBindTexture(GL_TEXTURE_2D, dst_texture);
-	qglTexImage2D(GL_TEXTURE_2D, 0, GL_DSDT8_NV, DST_SIZE, DST_SIZE, 0, GL_DSDT_NV,
+	qgl.GenTextures(1,&dst_texture);
+	qgl.BindTexture(GL_TEXTURE_2D, dst_texture);
+	qgl.TexImage2D(GL_TEXTURE_2D, 0, GL_DSDT8_NV, DST_SIZE, DST_SIZE, 0, GL_DSDT_NV,
 				GL_BYTE, data);
 
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	qgl.TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
 
 /*
@@ -278,7 +278,7 @@ void EmitWaterPolys_original (msurface_t *fa) // jitwater - old code
 	{
 		p = bp;
 
-		qglBegin(GL_TRIANGLE_FAN);
+		qgl.Begin(GL_TRIANGLE_FAN);
 
 		for (i=0, v=p->verts[0]; i<p->numverts; i++, v+=VERTEXSIZE)
 		{
@@ -294,11 +294,11 @@ void EmitWaterPolys_original (msurface_t *fa) // jitwater - old code
 			t *= 0.015625;	// ditto
 							// dont we love multilingual comments? :)
 
-			qglTexCoord2f(s,t);
-	 		qglVertex3fv(v);
+			qgl.TexCoord2f(s,t);
+	 		qgl.Vertex3fv(v);
 		}
 
-		qglEnd();
+		qgl.End();
 	}
 }
 
@@ -371,7 +371,7 @@ void EmitWaterPolys (msurface_t *fa)
 		for (bp = fa->polys; bp; bp = bp->next)
 		{
 			p = bp;
-			qglBegin(GL_TRIANGLE_FAN);
+			qgl.Begin(GL_TRIANGLE_FAN);
 			c_brush_polys += p->numverts / 3; // jitrspeeds
 
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
@@ -404,11 +404,11 @@ void EmitWaterPolys (msurface_t *fa)
 				else if (fabs(zValue - v[2]) > 0.1f)
 					waterNotFlat = true;
 
-				qglTexCoord2f(s, t);
-				qglVertex3f(v[0], v[1], v[2]);
+				qgl.TexCoord2f(s, t);
+				qgl.Vertex3f(v[0], v[1], v[2]);
 			}
 
-			qglEnd();
+			qgl.End();
 		}
 	}
 
@@ -443,10 +443,10 @@ void EmitWaterPolys (msurface_t *fa)
 			// === jitwater
 			if (gl_state.fragment_program)
 			{
-				qglEnable(GL_VERTEX_PROGRAM_ARB);
-				qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, g_water_vertex_program_id);
-				qglEnable(GL_FRAGMENT_PROGRAM_ARB);
-				qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_fragment_program_id);
+				qgl.Enable(GL_VERTEX_PROGRAM_ARB);
+				qgl.BindProgramARB(GL_VERTEX_PROGRAM_ARB, g_water_vertex_program_id);
+				qgl.Enable(GL_FRAGMENT_PROGRAM_ARB);
+				qgl.BindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_fragment_program_id);
 
 				GL_MBind(QGL_TEXTURE1, distort_tex->texnum);      // Distortion texture
 				GL_MBind(QGL_TEXTURE2, water_normal_tex->texnum); // Normal texture
@@ -462,21 +462,21 @@ void EmitWaterPolys (msurface_t *fa)
 	// if we found a reflective surface correctly, then go ahead and draw it
 	if (g_active_refl != g_num_refl)
 	{
-		qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 		if (!gl_state.blend)
-			qglEnable(GL_BLEND);
+			qgl.Enable(GL_BLEND);
 
 		GL_TexEnv(GL_MODULATE);
-		qglShadeModel(GL_SMOOTH);
+		qgl.ShadeModel(GL_SMOOTH);
 
 		if (gl_state.fragment_program)
 		{
 			float w, h;
 			R_GetReflTexScale(&w, &h); // Probably unnecessary
-			qglProgramLocalParameter4fARB(GL_VERTEX_PROGRAM_ARB, 0,
+			qgl.ProgramLocalParameter4fARB(GL_VERTEX_PROGRAM_ARB, 0,
 				w, h, rs_realtime * (flowing ? -0.3f : 0.2f), rs_realtime * -0.2f);
-			qglProgramLocalParameter4fARB(GL_VERTEX_PROGRAM_ARB, 1,
+			qgl.ProgramLocalParameter4fARB(GL_VERTEX_PROGRAM_ARB, 1,
 				r_newrefdef.vieworg[0], r_newrefdef.vieworg[1], r_newrefdef.vieworg[2], 1.0f);
 		}
 		else
@@ -489,21 +489,21 @@ void EmitWaterPolys (msurface_t *fa)
   		for (bp = fa->polys; bp; bp = bp->next)
   		{
 			p = bp;
-			qglBegin(GL_TRIANGLE_FAN);
+			qgl.Begin(GL_TRIANGLE_FAN);
 			c_brush_polys += p->numverts / 3; // jitrspeeds
 
 			for (i = 0, v = p->verts[0]; i < p->numverts; ++i, v += VERTEXSIZE)
 			{
 				if (gl_state.fragment_program)
 				{
-					qglMultiTexCoord3fvARB(QGL_TEXTURE0, v); // Used for world space
-					qglMultiTexCoord3fvARB(QGL_TEXTURE1, v + 3); // Actual texture UV's.
+					qgl.MultiTexCoord3fvARB(QGL_TEXTURE0, v); // Used for world space
+					qgl.MultiTexCoord3fvARB(QGL_TEXTURE1, v + 3); // Actual texture UV's.
 				}
 				else
 				{
 					vec3_t	vAngle;
 
-					qglTexCoord3f(v[0], v[1] + CalcWave(v[0], v[1]), v[2]);
+					qgl.TexCoord3f(v[0], v[1] + CalcWave(v[0], v[1]), v[2]);
 
 					if (r_newrefdef.rdflags & RDF_UNDERWATER)
 					{
@@ -513,7 +513,7 @@ void EmitWaterPolys (msurface_t *fa)
 						if (vAngle[2] > 0.55f)
 							vAngle[2] = 0.55f;
 
-						qglColor4f(1.0f, 1.0f, 1.0f, 0.9f - (vAngle[2] * 1.0f));
+						qgl.Color4f(1.0f, 1.0f, 1.0f, 0.9f - (vAngle[2] * 1.0f));
 					}
 					else
 					{
@@ -523,25 +523,25 @@ void EmitWaterPolys (msurface_t *fa)
 						if (vAngle[2] > 0.55f)
 							vAngle[2] = 0.55f;
 
-						qglColor4f(1.0f, 1.0f, 1.0f, 0.9f - (vAngle[2] * 1.0f));
+						qgl.Color4f(1.0f, 1.0f, 1.0f, 0.9f - (vAngle[2] * 1.0f));
 					}
 				}
 
-				qglVertex3f(v[0], v[1], v[2]);
+				qgl.Vertex3f(v[0], v[1], v[2]);
 			}
 
-			qglEnd();
+			qgl.End();
   		}
 
 		R_ClearReflMatrix();
 
 		if (!gl_state.blend)
-			qglDisable(GL_BLEND);
+			qgl.Disable(GL_BLEND);
 
 		if (gl_state.fragment_program) // jitwater
 		{
-			qglDisable(GL_FRAGMENT_PROGRAM_ARB);
-			qglDisable(GL_VERTEX_PROGRAM_ARB);
+			qgl.Disable(GL_FRAGMENT_PROGRAM_ARB);
+			qgl.Disable(GL_VERTEX_PROGRAM_ARB);
 		}
     }
 }
@@ -609,7 +609,7 @@ glBegin (GL_POLYGON);
 for (i=0; i<nump; i++, vecs+=3)
 {
 	VectorAdd(vecs, r_origin, v);
-	qglVertex3fv (v);
+	qgl.Vertex3fv (v);
 }
 glEnd();
 return;
@@ -845,8 +845,8 @@ void MakeSkyVec (float s, float t, int axis)
 		t = sky_max;
 
 	t = 1.0 - t;
-	qglTexCoord2f(s, t);
-	qglVertex3fv(v);
+	qgl.TexCoord2f(s, t);
+	qgl.Vertex3fv(v);
 }
 
 /*
@@ -861,7 +861,7 @@ void R_DrawSkyBox (void)
 	int		i;
 
 	if (fogenabled) // jitfog
-		qglDisable(GL_FOG);
+		qgl.Disable(GL_FOG);
 
 	if (skyrotate)
 	{	// check for no sky at all
@@ -873,13 +873,13 @@ void R_DrawSkyBox (void)
 			return;		// nothing visible
 	}
 
-	qglPushMatrix();
-	qglTranslatef(r_origin[0], r_origin[1], r_origin[2]);
-	qglRotatef(r_newrefdef.time * skyrotate, skyaxis[0], skyaxis[1], skyaxis[2]);
+	qgl.PushMatrix();
+	qgl.Translatef(r_origin[0], r_origin[1], r_origin[2]);
+	qgl.Rotatef(r_newrefdef.time * skyrotate, skyaxis[0], skyaxis[1], skyaxis[2]);
 
 	if (fogenabled && sky_images[0] == r_whitetexture) // jitfog
 	{
-		qglColor3fv(fogcolor);
+		qgl.Color3fv(fogcolor);
 		GLSTATE_ENABLE_BLEND
 		GL_TexEnv(GL_MODULATE);
 	}
@@ -900,21 +900,21 @@ void R_DrawSkyBox (void)
 
 		GL_Bind (sky_images[skytexorder[i]]->texnum);
 
-		qglBegin(GL_QUADS);
+		qgl.Begin(GL_QUADS);
 		MakeSkyVec(skymins[0][i], skymins[1][i], i);
 		MakeSkyVec(skymins[0][i], skymaxs[1][i], i);
 		MakeSkyVec(skymaxs[0][i], skymaxs[1][i], i);
 		MakeSkyVec(skymaxs[0][i], skymins[1][i], i);
-		qglEnd();
+		qgl.End();
 	}
 
-	qglPopMatrix();
+	qgl.PopMatrix();
 
 	if (fogenabled) // jitfog
 	{
-		qglColor3f(1, 1, 1);
+		qgl.Color3f(1, 1, 1);
 		GLSTATE_DISABLE_BLEND
-		qglEnable(GL_FOG);
+		qgl.Enable(GL_FOG);
 	}
 }
 

@@ -1107,15 +1107,6 @@ void CL_ParseStatusMessage (void)
 	M_AddToServerList(net_from, s, false);
 }
 
-void CL_Gst_f (void)
-{
-	char buf[64];
-
-	Com_sprintf(buf, sizeof(buf), "cmd gst1 %d\n", e.x("\x7f" "gs", 0x5862156a));
-	Cbuf_AddText(buf);
-}
-
-
 /*
 =================
 CL_Skins_f
@@ -2402,8 +2393,6 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("pause", CL_Pause_f);
 	Cmd_AddCommand("pingservers", CL_PingServers_f);
 	Cmd_AddCommand("skins", CL_Skins_f);
-	Cmd_AddCommand("gst", CL_Gst_f);
-	Cmd_AddCommand("\x7F" "gst", CL_Gst_f);
 	Cmd_AddCommand("userinfo", CL_Userinfo_f);
 	Cmd_AddCommand("snd_restart", CL_Snd_Restart_f);
 	Cmd_AddCommand("changing", CL_Changing_f);
@@ -2888,8 +2877,11 @@ int GetIntVarByID (int id)
 		return g_command_stuffed;
 	case VARID_BUILD:
 		return BUILD;
+	case VARID_SERVER_GAMEBUILD:
+		return cls.server_gamebuild;
 	case VARID_GL_INSTANCE:
-		return re.DrawGetIntVarByID(VARID_GL_INSTANCE);
+	case VARID_QGL:
+		return re.DrawGetIntVarByID(id);
 	default:
 		assert(0);
 		return 0;

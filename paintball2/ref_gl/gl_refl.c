@@ -74,7 +74,7 @@ void R_init_refl (int maxNoReflections)
 		maxNoReflections = 1;
 
 	R_setupArrays(maxNoReflections);	// setup number of reflections
-	assert((err = qglGetError()) == GL_NO_ERROR);
+	assert((err = qgl.GetError()) == GL_NO_ERROR);
 
 	//okay we want to set REFL_TEXH etc to be less than the resolution 
 	//otherwise white boarders are left .. we dont want that.
@@ -88,7 +88,7 @@ void R_init_refl (int maxNoReflections)
 		REFL_TEXH = power;  
 	}
 
-	qglGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);		//get max supported texture size
+	qgl.GetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);		//get max supported texture size
 
 	if (REFL_TEXW > maxSize)
 	{
@@ -127,14 +127,14 @@ void R_init_refl (int maxNoReflections)
 		int err = 0;
 
 		// Fragment program
-		qglGenProgramsARB(1, &g_water_fragment_program_id);
-		qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_fragment_program_id);
-		//qglProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2, 1.0f, 0.1f, 0.6f, 0.5f); // jitest
+		qgl.GenProgramsARB(1, &g_water_fragment_program_id);
+		qgl.BindProgramARB(GL_FRAGMENT_PROGRAM_ARB, g_water_fragment_program_id);
+		//qgl.ProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2, 1.0f, 0.1f, 0.6f, 0.5f); // jitest
 		len = ri.FS_LoadFileZ("scripts/water1.arbf", (void *)&fragment_program_text);
 
 		if (len > 0)
 		{
-			qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, len, fragment_program_text);
+			qgl.ProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, len, fragment_program_text);
 			ri.FS_FreeFile(fragment_program_text);
 		}
 		else
@@ -143,7 +143,7 @@ void R_init_refl (int maxNoReflections)
 		}
 		
 		// Make sure the program loaded correctly
-		err = qglGetError();
+		err = qgl.GetError();
 		if (err != GL_NO_ERROR)
 		{
 			ri.Con_Printf(PRINT_ALL, "OpenGL error with ARB fragment program: 0x%x\n", err);
@@ -151,13 +151,13 @@ void R_init_refl (int maxNoReflections)
 		}
 
 		// Vertex program
-		qglGenProgramsARB(1, &g_water_vertex_program_id);
-		qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, g_water_vertex_program_id);
+		qgl.GenProgramsARB(1, &g_water_vertex_program_id);
+		qgl.BindProgramARB(GL_VERTEX_PROGRAM_ARB, g_water_vertex_program_id);
 		len = ri.FS_LoadFileZ("scripts/water1.arbv", (void *)&fragment_program_text);
 
 		if (len > 0)
 		{
-			qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, len, fragment_program_text);
+			qgl.ProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, len, fragment_program_text);
 			ri.FS_FreeFile(fragment_program_text);
 		}
 		else
@@ -166,7 +166,7 @@ void R_init_refl (int maxNoReflections)
 		}
 
 		// Make sure the program loaded correctly
-		err = qglGetError();
+		err = qgl.GetError();
 		if (err != GL_NO_ERROR)
 		{
 			ri.Con_Printf(PRINT_ALL, "OpenGL error with ARB fragment program: 0x%x\n", err);
@@ -179,16 +179,16 @@ void R_init_refl (int maxNoReflections)
 	}
 #ifdef USE_FBO
 	// FBO initialization
-	qglGenFramebuffersEXT(1, &g_refl_framebuffer);
-	assert((err = qglGetError()) == GL_NO_ERROR);
-	qglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_refl_framebuffer);
-	assert((err = qglGetError()) == GL_NO_ERROR);
+	qgl.GenFramebuffersEXT(1, &g_refl_framebuffer);
+	assert((err = qgl.GetError()) == GL_NO_ERROR);
+	qgl.BindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_refl_framebuffer);
+	assert((err = qgl.GetError()) == GL_NO_ERROR);
 
-	qglGenRenderbuffersEXT(1, &g_refl_renderbuffer);
-	qglBindRenderbufferEXT(GL_RENDERBUFFER_EXT, g_refl_renderbuffer);
-	qglRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, g_reflTexW, g_reflTexH);
-	qglFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, g_refl_renderbuffer);
-	assert((err = qglGetError()) == GL_NO_ERROR);
+	qgl.GenRenderbuffersEXT(1, &g_refl_renderbuffer);
+	qgl.BindRenderbufferEXT(GL_RENDERBUFFER_EXT, g_refl_renderbuffer);
+	qgl.RenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, g_reflTexW, g_reflTexH);
+	qgl.FramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, g_refl_renderbuffer);
+	assert((err = qgl.GetError()) == GL_NO_ERROR);
 
 	if (gl_debug->value)
 	{
@@ -211,8 +211,8 @@ void R_shutdown_refl (void) // jitodo - call this.
 {
 	if (gl_state.fragment_program)
 	{
-		qglDeleteProgramsARB(1, &g_water_fragment_program_id);
-		qglDeleteProgramsARB(1, &g_water_vertex_program_id);
+		qgl.DeleteProgramsARB(1, &g_water_fragment_program_id);
+		qgl.DeleteProgramsARB(1, &g_water_vertex_program_id);
 	}
 }
 
@@ -333,13 +333,13 @@ so you can see whats going on
 */
 void R_DrawDebugReflTexture (void)
 {
-	qglBindTexture(GL_TEXTURE_2D, g_refl_images[0]->texnum);	// do the first texture
-	qglBegin(GL_QUADS);
-	qglTexCoord2f(1, 1); qglVertex3f(0, 0, 0);
-	qglTexCoord2f(0, 1); qglVertex3f(200, 0, 0);
-	qglTexCoord2f(0, 0); qglVertex3f(200, 200, 0);
-	qglTexCoord2f(1, 0); qglVertex3f(0, 200, 0);
-	qglEnd();
+	qgl.BindTexture(GL_TEXTURE_2D, g_refl_images[0]->texnum);	// do the first texture
+	qgl.Begin(GL_QUADS);
+	qgl.TexCoord2f(1, 1); qgl.Vertex3f(0, 0, 0);
+	qgl.TexCoord2f(0, 1); qgl.Vertex3f(200, 0, 0);
+	qgl.TexCoord2f(0, 0); qgl.Vertex3f(200, 200, 0);
+	qgl.TexCoord2f(1, 0); qgl.Vertex3f(0, 200, 0);
+	qgl.End();
 }
 
 /*
@@ -362,43 +362,43 @@ void R_UpdateReflTex (refdef_t *fd)
 	// go through each reflection and render it
 	for (g_active_refl = 0; g_active_refl < g_num_refl; g_active_refl++)
 	{
-		//qglClearColor(0, 0, 0, 1);								//clear screen
-		//qglClear(/*GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT); jitwater
+		//qgl.ClearColor(0, 0, 0, 1);								//clear screen
+		//qgl.Clear(/*GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT); jitwater
 #ifdef USE_FBO
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_refl_framebuffer); // todo - array of framebuffers
 #endif
-		qglPushAttrib(GL_VIEWPORT_BIT);
-		qglViewport(0, 0, g_reflTexW, g_reflTexH);
-		//qglBindTexture(GL_TEXTURE_2D, g_refl_images[g_active_refl]->texnum); // not necessary, but can't get the stupid texture rendered to
+		qgl.PushAttrib(GL_VIEWPORT_BIT);
+		qgl.Viewport(0, 0, g_reflTexW, g_reflTexH);
+		//qgl.BindTexture(GL_TEXTURE_2D, g_refl_images[g_active_refl]->texnum); // not necessary, but can't get the stupid texture rendered to
 		R_RenderView(fd);	// draw the scene here!
 #ifdef USE_FBO
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 #else
-		qglBindTexture(GL_TEXTURE_2D, g_refl_images[g_active_refl]->texnum);
-		qglCopyTexSubImage2D(GL_TEXTURE_2D, 0,
+		qgl.BindTexture(GL_TEXTURE_2D, g_refl_images[g_active_refl]->texnum);
+		qgl.CopyTexSubImage2D(GL_TEXTURE_2D, 0,
 			0,//(REFL_TEXW - g_reflTexW) >> 1,
 			0,//(REFL_TEXH - g_reflTexH) >> 1,
 			0, 0, g_reflTexW, g_reflTexH);
-		//qglViewport(0, 0, vid.width, vid.height);
+		//qgl.Viewport(0, 0, vid.width, vid.height);
 #endif // !USE_FBO
-		qglPopAttrib();
+		qgl.PopAttrib();
 
 		R_Clear(); // jitwater
 	}
 
 	g_drawing_refl = false;	// done drawing refl
-	// jitwater qglClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//clear stuff now cause we want to render scene
+	// jitwater qgl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//clear stuff now cause we want to render scene
 }															
 
 
 // sets modelview to reflection instead of normal view
 void R_DoReflTransform()
 {
-	//qglRotatef (180, 1, 0, 0);	// flip upside down (X-axis is forward)
-    qglRotatef(r_newrefdef.viewangles[2],  1, 0, 0);
-    qglRotatef(r_newrefdef.viewangles[0],  0, 1, 0);	// up/down rotation (reversed)
-    qglRotatef(-r_newrefdef.viewangles[1], 0, 0, 1);	// left/right rotation
-    qglTranslatef(-r_newrefdef.vieworg[0],
+	//qgl.Rotatef (180, 1, 0, 0);	// flip upside down (X-axis is forward)
+    qgl.Rotatef(r_newrefdef.viewangles[2],  1, 0, 0);
+    qgl.Rotatef(r_newrefdef.viewangles[0],  0, 1, 0);	// up/down rotation (reversed)
+    qgl.Rotatef(-r_newrefdef.viewangles[1], 0, 0, 1);	// left/right rotation
+    qgl.Translatef(-r_newrefdef.vieworg[0],
     	-r_newrefdef.vieworg[1],
     	-((2*g_refl_Z[g_active_refl]) - r_newrefdef.vieworg[2]));
 }
@@ -408,7 +408,7 @@ void R_DoReflTransform()
 void print_matrix(int which_matrix, const char *desc)
 {
 	GLfloat m[16];	// receives our matrix
-	qglGetFloatv(which_matrix, m);	// snag the matrix
+	qgl.GetFloatv(which_matrix, m);	// snag the matrix
 	
 	printf("[%s]\n", desc);
 	printf("%0.3f %0.3f %0.3f %0.3f\n", m[0], m[4], m[8],  m[12]);
@@ -423,24 +423,24 @@ void R_LoadReflMatrix (void)
 {
 	float aspect = (float)r_newrefdef.width/r_newrefdef.height;
 
-	qglMatrixMode(GL_TEXTURE);
-	qglLoadIdentity();
+	qgl.MatrixMode(GL_TEXTURE);
+	qgl.LoadIdentity();
 
-	qglTranslatef(0.5f, 0.5f, 0.0f); // Center texture
+	qgl.Translatef(0.5f, 0.5f, 0.0f); // Center texture
 
-	qglScalef(0.5f * (float)g_reflTexW / REFL_TEXW,
+	qgl.Scalef(0.5f * (float)g_reflTexW / REFL_TEXW,
 			  0.5f * (float)g_reflTexH / REFL_TEXH,
 			  1.0f);								/* Scale and bias */
 
 	MYgluPerspective(g_last_known_fov, aspect, 4, 4096);
 
-	qglRotatef(-90.0f, 1.0f, 0.0f, 0.0f);	    // put Z going up
-	qglRotatef(90.0f,  0.0f, 0.0f, 1.0f);	    // put Z going up
+	qgl.Rotatef(-90.0f, 1.0f, 0.0f, 0.0f);	    // put Z going up
+	qgl.Rotatef(90.0f,  0.0f, 0.0f, 1.0f);	    // put Z going up
 
 	// do transform
 	R_DoReflTransform();
-	qglTranslatef(0.0f, 0.0f, 0.0f);
-	qglMatrixMode(GL_MODELVIEW);
+	qgl.Translatef(0.0f, 0.0f, 0.0f);
+	qgl.MatrixMode(GL_MODELVIEW);
 }
 
 void R_GetReflTexScale (float *w, float *h)
@@ -454,9 +454,9 @@ void R_GetReflTexScale (float *w, float *h)
  */
 void R_ClearReflMatrix()
 {
-	qglMatrixMode(GL_TEXTURE);
-	qglLoadIdentity();
-	qglMatrixMode(GL_MODELVIEW);
+	qgl.MatrixMode(GL_TEXTURE);
+	qgl.LoadIdentity();
+	qgl.MatrixMode(GL_MODELVIEW);
 }
 
 // the frustum function from the Mesa3D Library
@@ -482,7 +482,7 @@ void mesa_frustum(GLdouble left, GLdouble right,
    M(3,0) = 0.0F;  M(3,1) = 0.0F;  M(3,2) = -1.0F;  M(3,3) = 0.0F;
 #undef M
 
-   qglMultMatrixd(m);
+   qgl.MultMatrixd(m);
 }
 
 
