@@ -1105,7 +1105,7 @@ void GLimp_BeginFrame( float camera_separation )
 */
 void GLimp_EndFrame (void)
 {
-	qglFlush();
+	qgl.Flush();
 	qglXSwapBuffers(dpy, win);
 	rs_realtime = (float)Sys_Milliseconds() * 0.001f; // jitrscript
 }
