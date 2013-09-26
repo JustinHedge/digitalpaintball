@@ -218,40 +218,6 @@ float	r_turbsin[] =
 #define TURBOSCALE (256.0f / ((float)M_PI / 4.0f)) // jitwater / dukey
 
 
-// MrG - texture shader stuffs
-#define DST_SIZE 16
-unsigned int dst_texture = 0;
-/*
-===============
-CreateDSTTex
-
-Create the texture which warps texture shaders
-===============
-*/
-void CreateDSTTex()
-{
-	signed char data[DST_SIZE][DST_SIZE][2];
-	int x,y;
-
-	for (x=0;x<DST_SIZE;x++)
-		for (y=0;y<DST_SIZE;y++)
-		{
-			data[x][y][0]=rand()%255-128;
-			data[x][y][1]=rand()%255-128;
-		}
-
-	qgl.GenTextures(1,&dst_texture);
-	qgl.BindTexture(GL_TEXTURE_2D, dst_texture);
-	qgl.TexImage2D(GL_TEXTURE_2D, 0, GL_DSDT8_NV, DST_SIZE, DST_SIZE, 0, GL_DSDT_NV,
-				GL_BYTE, data);
-
-	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	qgl.TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-}
-
 /*
 =============
 EmitWaterPolys

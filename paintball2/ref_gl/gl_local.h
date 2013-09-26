@@ -74,10 +74,7 @@ typedef struct
 extern	viddef_t	vid;
 
 
-#define	TEXNUM_LIGHTMAPS	1024
-#define	TEXNUM_SCRAPS		1152
-#define	TEXNUM_IMAGES		1153
-
+#define		MAX_LIGHTMAPS	128 // jitgentex
 #define		MAX_GLTEXTURES	1024
 
 
@@ -256,7 +253,6 @@ void R_PushDlights (void);
 extern	model_t	*r_worldmodel;
 
 extern	unsigned	d_8to24table[256];
-extern	float		d_8to24tablef[256][3];
 
 extern	int		registration_sequence;
 
@@ -415,14 +411,13 @@ typedef struct
 
 typedef struct
 {
-//	float inverse_intensity; jit, removed
 	qboolean fullscreen;
 
 	int     prev_mode;
 
 	unsigned char *d_16to8table;
 
-	int lightmap_textures;
+	int lightmap_texnums[MAX_LIGHTMAPS]; // jitgentex
 
 	int	currenttextures[32];
 	int currenttmu;
@@ -439,10 +434,8 @@ typedef struct
 	qboolean		reg_combiners;
 	qboolean		texshaders;
 	qboolean		sgis_mipmap;
-	unsigned int	dst_texture;
 	qboolean		gammaramp;
 
-	//qboolean		tex_rectangle;
 	long			tex_rectangle; // jitblur
 
 	// End - MrG

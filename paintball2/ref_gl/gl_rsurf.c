@@ -36,8 +36,6 @@ msurface_t	*r_caustic_surfaces; // jitcaustics
 #define	BLOCK_WIDTH		128
 #define	BLOCK_HEIGHT	128
 
-#define	MAX_LIGHTMAPS	128
-
 int		c_visible_lightmaps;
 int		c_visible_textures;
 
@@ -60,11 +58,11 @@ typedef struct
 static gllightmapstate_t gl_lms;
 
 
-static void		LM_InitBlock( void );
-static void		LM_UploadBlock( qboolean dynamic );
+static void		LM_InitBlock(void);
+static void		LM_UploadBlock(qboolean dynamic);
 static qboolean	LM_AllocBlock (int w, int h, int *x, int *y);
 
-extern void R_SetCacheState( msurface_t *surf );
+extern void R_SetCacheState(msurface_t *surf);
 extern void R_BuildLightMap (msurface_t *surf, byte *dest, int stride);
 
 extern qboolean fogenabled; // jitfog
@@ -141,13 +139,13 @@ void DrawGLFlowingPoly (msurface_t *fa)
 
 	p = fa->polys;
 
-	scroll = -64 * ( (r_newrefdef.time / 40.0) - (int)(r_newrefdef.time / 40.0) );
+	scroll = -64 * ((r_newrefdef.time / 40.0) - (int)(r_newrefdef.time / 40.0));
 	if (scroll == 0.0)
 		scroll = -64.0;
 
 #ifdef BEEFQUAKERENDER // jit3dfx
 	v = p->verts[0];
-	for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
+	for (i=0; i<p->numverts; i++, v+= VERTEXSIZE)
 	{
 		VA_SetElem2(tex_array[i],(v[3]+scroll),v[4]);
 		VA_SetElem3(vert_array[i],v[0],v[1],v[2]);
@@ -158,7 +156,7 @@ void DrawGLFlowingPoly (msurface_t *fa)
 #else
 		qgl.Begin (GL_POLYGON);
 	v = p->verts[0];
-	for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
+	for (i=0; i<p->numverts; i++, v+= VERTEXSIZE)
 	{
 		qgl.TexCoord2f ((v[3] + scroll), v[4]);
 		qgl.Vertex3fv (v);
@@ -267,16 +265,16 @@ void R_DrawTriangleOutlines (void)
 	qgl.Disable (GL_DEPTH_TEST);
 	qgl.Color4f (1,1,1,1);
 
-	for (i=0 ; i<MAX_LIGHTMAPS ; i++)
+	for (i=0; i<MAX_LIGHTMAPS; i++)
 	{
 		msurface_t *surf;
 
-		for ( surf = gl_lms.lightmap_surfaces[i]; surf != 0; surf = surf->lightmapchain )
+		for (surf = gl_lms.lightmap_surfaces[i]; surf != 0; surf = surf->lightmapchain)
 		{
 			p = surf->polys;
-			for ( ; p ; p=p->chain)
+			for (; p; p=p->chain)
 			{
-				for (j=2 ; j<p->numverts ; j++ )
+				for (j=2; j<p->numverts; j++)
 				{
 					qgl.Begin (GL_LINE_STRIP);
 					qgl.Vertex3fv (p->verts[0]);
@@ -298,17 +296,17 @@ void R_DrawTriangleOutlines (void)
 ** DrawGLPolyChain
 */
 #ifdef BEEFQUAKERENDER // jit3dfx
-void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset )
+void DrawGLPolyChain(glpoly_t *p, float soffset, float toffset)
 {
 	if (soffset == 0 && toffset == 0)
 	{
-		for ( ; p != 0; p = p->chain)
+		for (; p != 0; p = p->chain)
 		{
 			float *v;
 			int j;
 
 			v = p->verts[0];
-			for (j=0 ; j<p->numverts ; j++, v+= VERTEXSIZE)
+			for (j=0; j<p->numverts; j++, v+= VERTEXSIZE)
 			{
 				VA_SetElem2(tex_array[j],v[5],v[6]);
 				VA_SetElem3(vert_array[j],v[0],v[1],v[2]);
@@ -321,13 +319,13 @@ void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset )
 	}
 	else
 	{
-		for ( ; p != 0; p = p->chain)
+		for (; p != 0; p = p->chain)
 		{
 			float *v;
 			int j;
 
 			v = p->verts[0];
-			for (j=0 ; j<p->numverts ; j++, v+= VERTEXSIZE)
+			for (j=0; j<p->numverts; j++, v+= VERTEXSIZE)
 			{
 				VA_SetElem2(tex_array[j],(v[5]-soffset),(v[6]-toffset));
 				VA_SetElem3(vert_array[j],v[0],v[1],v[2]);
@@ -339,20 +337,20 @@ void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset )
 	}
 }
 #else // jit3dfx:
-void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset )
+void DrawGLPolyChain(glpoly_t *p, float soffset, float toffset)
 {
-	if ( soffset == 0 && toffset == 0 )
+	if (soffset == 0 && toffset == 0)
 	{
-		for ( ; p != 0; p = p->chain )
+		for (; p != 0; p = p->chain)
 		{
 			float *v;
 			int j;
 
 			qgl.Begin (GL_POLYGON);
 			v = p->verts[0];
-			for (j=0 ; j<p->numverts ; j++, v+= VERTEXSIZE)
+			for (j=0; j<p->numverts; j++, v+= VERTEXSIZE)
 			{
-				qgl.TexCoord2f (v[5], v[6] );
+				qgl.TexCoord2f (v[5], v[6]);
 				qgl.Vertex3fv (v);
 			}
 			qgl.End ();
@@ -360,16 +358,16 @@ void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset )
 	}
 	else
 	{
-		for ( ; p != 0; p = p->chain )
+		for (; p != 0; p = p->chain)
 		{
 			float *v;
 			int j;
 
 			qgl.Begin (GL_POLYGON);
 			v = p->verts[0];
-			for (j=0 ; j<p->numverts ; j++, v+= VERTEXSIZE)
+			for (j=0; j<p->numverts; j++, v+= VERTEXSIZE)
 			{
-				qgl.TexCoord2f (v[5] - soffset, v[6] - toffset );
+				qgl.TexCoord2f (v[5] - soffset, v[6] - toffset);
 				qgl.Vertex3fv (v);
 			}
 			qgl.End ();
@@ -405,7 +403,7 @@ void R_BlendLightmaps (void)
 	}
 
 	// don't bother writing Z
-	qgl.DepthMask( 0 );
+	qgl.DepthMask(0);
 
 	/*
 	** set the appropriate blending mode unless we're only looking at the
@@ -448,19 +446,19 @@ void R_BlendLightmaps (void)
 	/*
 	** render static lightmaps first
 	*/
-	for (i = 1; i < MAX_LIGHTMAPS; i++)
+	for (i = 1; i < MAX_LIGHTMAPS; ++i)
 	{
 		if (gl_lms.lightmap_surfaces[i])
 		{
 			if (currentmodel == r_worldmodel)
 				c_visible_lightmaps++;
 
-			GL_Bind(gl_state.lightmap_textures + i);
+			GL_Bind(gl_state.lightmap_texnums[i]); // jitgentex
 
 			for (surf = gl_lms.lightmap_surfaces[i]; surf != 0; surf = surf->lightmapchain)
 			{
-				if ( surf->polys )
-					DrawGLPolyChain( surf->polys, 0, 0 );
+				if (surf->polys)
+					DrawGLPolyChain(surf->polys, 0, 0);
 			}
 		}
 	}
@@ -472,7 +470,7 @@ void R_BlendLightmaps (void)
 	{
 		LM_InitBlock();
 
-		GL_Bind( gl_state.lightmap_textures+0 );
+		GL_Bind(gl_state.lightmap_texnums[0]); // jitgentex
 
 		if (currentmodel == r_worldmodel)
 			c_visible_lightmaps++;
@@ -506,8 +504,8 @@ void R_BlendLightmaps (void)
 				{
 					if (drawsurf->polys)
 						DrawGLPolyChain(drawsurf->polys, 
-							(drawsurf->light_s - drawsurf->dlight_s) * 0.0078125, // ( 1.0 / 128.0 ), 
-							(drawsurf->light_t - drawsurf->dlight_t) * 0.0078125); // ( 1.0 / 128.0 ) );
+							(drawsurf->light_s - drawsurf->dlight_s) * 0.0078125, // (1.0 / 128.0), 
+							(drawsurf->light_t - drawsurf->dlight_t) * 0.0078125); // (1.0 / 128.0));
 				}
 
 				newdrawsurf = drawsurf;
@@ -518,7 +516,7 @@ void R_BlendLightmaps (void)
 				// try uploading the block now
 				if (!LM_AllocBlock(smax, tmax, &surf->dlight_s, &surf->dlight_t))
 				{
-					ri.Sys_Error(ERR_FATAL, "Consecutive calls to LM_AllocBlock(%d,%d) failed (dynamic)\n", smax, tmax );
+					ri.Sys_Error(ERR_FATAL, "Consecutive calls to LM_AllocBlock(%d,%d) failed (dynamic)\n", smax, tmax);
 				}
 
 				base = gl_lms.lightmap_buffer;
@@ -537,8 +535,8 @@ void R_BlendLightmaps (void)
 		for (surf = newdrawsurf; surf != 0; surf = surf->lightmapchain)
 		{
 			if (surf->polys)
-				DrawGLPolyChain(surf->polys, (surf->light_s - surf->dlight_s) * 0.0078125f /*( 1.0 / 128.0 )*/,
-					(surf->light_t - surf->dlight_t) * 0.0078125f); // ( 1.0 / 128.0 ) );
+				DrawGLPolyChain(surf->polys, (surf->light_s - surf->dlight_s) * 0.0078125f /*(1.0 / 128.0)*/,
+					(surf->light_t - surf->dlight_t) * 0.0078125f); // (1.0 / 128.0));
 		}
 	}
 
@@ -615,9 +613,9 @@ void DrawLightmaps (void) // jitfog -- lightmaps need to be drawn before texture
 			if (currentmodel == r_worldmodel)
 				c_visible_lightmaps++;
 
-			GL_Bind(gl_state.lightmap_textures + i);
+			GL_Bind(gl_state.lightmap_texnums[i]); // jitgentex
 
-			for(surf=gl_lms.lightmap_surfaces[i]; surf!=0; surf=surf->lightmapchain)
+			for(surf = gl_lms.lightmap_surfaces[i]; surf != 0; surf = surf->lightmapchain)
 				if (surf->polys)
 					DrawGLPolyChain(surf->polys, 0, 0);
 		}
@@ -630,14 +628,14 @@ void DrawLightmaps (void) // jitfog -- lightmaps need to be drawn before texture
 	{
 		LM_InitBlock();
 
-		GL_Bind(gl_state.lightmap_textures + 0);
+		GL_Bind(gl_state.lightmap_texnums[0]); // jitgentex
 
 		if (currentmodel == r_worldmodel)
 			c_visible_lightmaps++;
 
 		newdrawsurf = gl_lms.lightmap_surfaces[0];
 
-		for (surf=gl_lms.lightmap_surfaces[0]; surf; surf=surf->lightmapchain)
+		for (surf = gl_lms.lightmap_surfaces[0]; surf; surf = surf->lightmapchain)
 		{
 			int		smax, tmax;
 			byte	*base;
@@ -650,7 +648,7 @@ void DrawLightmaps (void) // jitfog -- lightmaps need to be drawn before texture
 				base = gl_lms.lightmap_buffer;
 				base += (surf->dlight_t * BLOCK_WIDTH + surf->dlight_s) * LIGHTMAP_BYTES;
 
-				R_BuildLightMap(surf, base, BLOCK_WIDTH*LIGHTMAP_BYTES);
+				R_BuildLightMap(surf, base, BLOCK_WIDTH * LIGHTMAP_BYTES);
 			}
 			else
 			{
@@ -663,9 +661,11 @@ void DrawLightmaps (void) // jitfog -- lightmaps need to be drawn before texture
 				for (drawsurf = newdrawsurf; drawsurf != surf; drawsurf = drawsurf->lightmapchain)
 				{
 					if (drawsurf->polys)
+					{
 						DrawGLPolyChain(drawsurf->polys, 
-							(drawsurf->light_s - drawsurf->dlight_s) * 0.0078125, // ( 1.0 / 128.0 ), 
-							(drawsurf->light_t - drawsurf->dlight_t) * 0.0078125); // ( 1.0 / 128.0 ) );
+							(drawsurf->light_s - drawsurf->dlight_s) * 0.0078125f, // (1.0 / 128.0), 
+							(drawsurf->light_t - drawsurf->dlight_t) * 0.0078125f); // (1.0 / 128.0));
+					}
 				}
 
 				newdrawsurf = drawsurf;
@@ -681,7 +681,7 @@ void DrawLightmaps (void) // jitfog -- lightmaps need to be drawn before texture
 				base = gl_lms.lightmap_buffer;
 				base += (surf->dlight_t * BLOCK_WIDTH + surf->dlight_s) * LIGHTMAP_BYTES;
 
-				R_BuildLightMap(surf, base, BLOCK_WIDTH*LIGHTMAP_BYTES);
+				R_BuildLightMap(surf, base, BLOCK_WIDTH * LIGHTMAP_BYTES);
 			}
 		}
 
@@ -694,8 +694,8 @@ void DrawLightmaps (void) // jitfog -- lightmaps need to be drawn before texture
 		for (surf = newdrawsurf; surf != 0; surf = surf->lightmapchain)
 		{
 			if (surf->polys)
-				DrawGLPolyChain(surf->polys, (surf->light_s - surf->dlight_s) * 0.0078125 /*( 1.0 / 128.0 )*/,
-					(surf->light_t - surf->dlight_t) * 0.0078125); // ( 1.0 / 128.0 ) );
+				DrawGLPolyChain(surf->polys, (surf->light_s - surf->dlight_s) * 0.0078125 /*(1.0 / 128.0)*/,
+					(surf->light_t - surf->dlight_t) * 0.0078125); // (1.0 / 128.0));
 		}
 	}
 }
@@ -751,7 +751,7 @@ void R_RenderBrushPoly (msurface_t *fa)
 	/*
 	** check for lightmap modification
 	*/
-	for (maps=0; maps<MAXLIGHTMAPS && fa->styles[maps] != 255; maps++)
+	for (maps = 0; maps < MAXLIGHTMAPS && fa->styles[maps] != 255; ++maps)
 	{
 		if (r_newrefdef.lightstyles[fa->styles[maps]].white != fa->cached_light[maps])
 			goto dynamic;
@@ -783,13 +783,13 @@ dynamic:
 			R_BuildLightMap(fa, (void *)temp, smax*4);
 			R_SetCacheState(fa);
 
-			GL_Bind(gl_state.lightmap_textures + fa->lightmaptexturenum);
+			GL_Bind(gl_state.lightmap_texnums[fa->lightmaptexturenum]);
 
-			qgl.TexSubImage2D( GL_TEXTURE_2D, 0,
+			qgl.TexSubImage2D(GL_TEXTURE_2D, 0,
 							  fa->light_s, fa->light_t, 
 							  smax, tmax, 
 							  GL_LIGHTMAP_FORMAT, 
-							  GL_UNSIGNED_BYTE, temp );
+							  GL_UNSIGNED_BYTE, temp);
 
 			fa->lightmapchain = gl_lms.lightmap_surfaces[fa->lightmaptexturenum];
 			gl_lms.lightmap_surfaces[fa->lightmaptexturenum] = fa;
@@ -970,7 +970,7 @@ void DrawTextureChains (void)
 
 	c_visible_textures = 0;
 
-//	GL_TexEnv( GL_REPLACE );
+//	GL_TexEnv(GL_REPLACE);
 
 	if (!qgl.SelectTextureSGIS && !qgl.ActiveTextureARB)
 	{
@@ -986,7 +986,7 @@ void DrawTextureChains (void)
 
 			c_visible_textures++;
 
-			for ( ; s; s=s->texturechain)
+			for (; s; s=s->texturechain)
 				R_RenderBrushPoly(s);
 
 			if (!fogenabled) // jitfog
@@ -1079,7 +1079,7 @@ dynamic:
 			R_BuildLightMap(surf, (void*)temp, smax*4);
 			R_SetCacheState(surf);
 
-			GL_MBind(QGL_TEXTURE1, gl_state.lightmap_textures + surf->lightmaptexturenum);
+			GL_MBind(QGL_TEXTURE1, gl_state.lightmap_texnums[surf->lightmaptexturenum]); // jitgentex
 
 			lmtex = surf->lightmaptexturenum;
 
@@ -1097,7 +1097,7 @@ dynamic:
 
 			R_BuildLightMap(surf, (void*)temp, smax*4);
 
-			GL_MBind(QGL_TEXTURE1, gl_state.lightmap_textures + 0);
+			GL_MBind(QGL_TEXTURE1, gl_state.lightmap_texnums[0]); // jitgentex
 
 			lmtex = 0;
 
@@ -1111,7 +1111,7 @@ dynamic:
 
 		c_brush_polys++;
 
-		GL_MBind(QGL_TEXTURE1, gl_state.lightmap_textures + lmtex);
+		GL_MBind(QGL_TEXTURE1, gl_state.lightmap_texnums[lmtex]); // jitgentex
 
 //==========
 //PGM
@@ -1167,7 +1167,7 @@ dynamic:
 	else
 	{
 		c_brush_polys++;
-		GL_MBind(QGL_TEXTURE1, gl_state.lightmap_textures + lmtex);
+		GL_MBind(QGL_TEXTURE1, gl_state.lightmap_texnums[lmtex]); // jitgentex
 //==========
 //PGM
 		if (surf->texinfo->flags & SURF_FLOWING)
@@ -1214,7 +1214,7 @@ dynamic:
 					v = p->verts[0];
 					qgl.Begin(GL_POLYGON);
 
-					for (i=0 ; i<nv; i++, v+=VERTEXSIZE)
+					for (i=0; i<nv; i++, v+=VERTEXSIZE)
 					{
 						qgl.MultiTexCoord2fARB(QGL_TEXTURE0, v[3], v[4]);
 						qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
@@ -1283,7 +1283,7 @@ void R_DrawInlineBModel (entity_t *e)
 				r_caustic_surfaces = psurf;
 			}
 
-			if (psurf->texinfo->flags & (SURF_TRANS33|SURF_TRANS66) )
+			if (psurf->texinfo->flags & (SURF_TRANS33|SURF_TRANS66))
 			{	// add to the translucent chain
 				psurf->texturechain = r_alpha_surfaces;
 				r_alpha_surfaces = psurf;
@@ -1354,7 +1354,7 @@ void R_DrawBrushModel (entity_t *e)
 	if (e->angles[0] || e->angles[1] || e->angles[2])
 	{
 		rotated = true;
-		for (i=0 ; i<3 ; i++)
+		for (i=0; i<3; i++)
 		{
 			mins[i] = e->origin[i] - currentmodel->radius;
 			maxs[i] = e->origin[i] + currentmodel->radius;
@@ -1689,9 +1689,9 @@ void R_MarkLeaves (void)
 	if (r_novis->value || r_viewcluster == -1 || !r_worldmodel->vis)
 	{
 		// mark everything
-		for (i=0 ; i<r_worldmodel->numleafs ; i++)
+		for (i=0; i<r_worldmodel->numleafs; i++)
 			r_worldmodel->leafs[i].visframe = r_visframecount;
-		for (i=0 ; i<r_worldmodel->numnodes ; i++)
+		for (i=0; i<r_worldmodel->numnodes; i++)
 			r_worldmodel->nodes[i].visframe = r_visframecount;
 		return;
 	}
@@ -1703,12 +1703,12 @@ void R_MarkLeaves (void)
 		memcpy (fatvis, vis, (size_t)((r_worldmodel->numleafs+7.0)*0.125)); // jit, kill warning
 		vis = Mod_ClusterPVS (r_viewcluster2, r_worldmodel);
 		c = (r_worldmodel->numleafs+31)*0.03125;
-		for (i=0 ; i<c ; i++)
+		for (i=0; i<c; i++)
 			((int *)fatvis)[i] |= ((int *)vis)[i];
 		vis = fatvis;
 	}
 	
-	for (i=0,leaf=r_worldmodel->leafs ; i<r_worldmodel->numleafs ; i++, leaf++)
+	for (i=0,leaf=r_worldmodel->leafs; i<r_worldmodel->numleafs; i++, leaf++)
 	{
 		cluster = leaf->cluster;
 		if (cluster == -1)
@@ -1727,7 +1727,7 @@ void R_MarkLeaves (void)
 	}
 
 #if 0
-	for (i=0 ; i<r_worldmodel->vis->numclusters ; i++)
+	for (i=0; i<r_worldmodel->vis->numclusters; i++)
 	{
 		if (vis[i>>3] & (1<<(i&7)))
 		{
@@ -1754,17 +1754,17 @@ void R_MarkLeaves (void)
 =============================================================================
 */
 
-_inline static void LM_InitBlock( void )
+_inline static void LM_InitBlock(void)
 {
-	memset( gl_lms.allocated, 0, sizeof( gl_lms.allocated ) );
+	memset(gl_lms.allocated, 0, sizeof(gl_lms.allocated));
 }
 
-static void LM_UploadBlock( qboolean dynamic )
+static void LM_UploadBlock(qboolean dynamic)
 {
 	int texture;
 	int height = 0;
 
-	if ( dynamic )
+	if (dynamic)
 	{
 		texture = 0;
 	}
@@ -1773,40 +1773,40 @@ static void LM_UploadBlock( qboolean dynamic )
 		texture = gl_lms.current_lightmap_texture;
 	}
 
-	GL_Bind( gl_state.lightmap_textures + texture );
+	GL_Bind(gl_state.lightmap_texnums[texture]); // jitgentex
 	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	if ( dynamic )
+	if (dynamic)
 	{
 		int i;
 
-		for ( i = 0; i < BLOCK_WIDTH; i++ )
+		for (i = 0; i < BLOCK_WIDTH; i++)
 		{
-			if ( gl_lms.allocated[i] > height )
+			if (gl_lms.allocated[i] > height)
 				height = gl_lms.allocated[i];
 		}
 
-		qgl.TexSubImage2D( GL_TEXTURE_2D, 
+		qgl.TexSubImage2D(GL_TEXTURE_2D, 
 						  0,
 						  0, 0,
 						  BLOCK_WIDTH, height,
 						  GL_LIGHTMAP_FORMAT,
 						  GL_UNSIGNED_BYTE,
-						  gl_lms.lightmap_buffer );
+						  gl_lms.lightmap_buffer);
 	}
 	else
 	{
-		qgl.TexImage2D( GL_TEXTURE_2D, 
+		qgl.TexImage2D(GL_TEXTURE_2D, 
 					   0, 
 					   gl_lms.internal_format,
 					   BLOCK_WIDTH, BLOCK_HEIGHT, 
 					   0, 
 					   GL_LIGHTMAP_FORMAT, 
 					   GL_UNSIGNED_BYTE, 
-					   gl_lms.lightmap_buffer );
-		if ( ++gl_lms.current_lightmap_texture == MAX_LIGHTMAPS )
-			ri.Sys_Error( ERR_DROP, "LM_UploadBlock() - MAX_LIGHTMAPS exceeded\n" );
+					   gl_lms.lightmap_buffer);
+		if (++gl_lms.current_lightmap_texture == MAX_LIGHTMAPS)
+			ri.Sys_Error(ERR_DROP, "LM_UploadBlock() - MAX_LIGHTMAPS exceeded\n");
 	}
 }
 
@@ -1818,16 +1818,17 @@ static qboolean LM_AllocBlock (int w, int h, int *x, int *y)
 
 	best = BLOCK_HEIGHT;
 
-	for (i=0 ; i<BLOCK_WIDTH-w ; i++)
+	for (i = 0; i < BLOCK_WIDTH - w; ++i)
 	{
 		best2 = 0;
 
-		for (j=0 ; j<w ; j++)
+		for (j = 0; j < w; ++j)
 		{
-			if (gl_lms.allocated[i+j] >= best)
+			if (gl_lms.allocated[i + j] >= best)
 				break;
-			if (gl_lms.allocated[i+j] > best2)
-				best2 = gl_lms.allocated[i+j];
+
+			if (gl_lms.allocated[i + j] > best2)
+				best2 = gl_lms.allocated[i + j];
 		}
 		if (j == w)
 		{	// this is a valid spot
@@ -1839,7 +1840,7 @@ static qboolean LM_AllocBlock (int w, int h, int *x, int *y)
 	if (best + h > BLOCK_HEIGHT)
 		return false;
 
-	for (i=0 ; i<w ; i++)
+	for (i = 0; i < w; ++i)
 		gl_lms.allocated[*x + i] = best + h;
 
 	return true;
@@ -1982,21 +1983,15 @@ void GL_BeginBuildingLightmaps (model_t *m)
 	** setup the base lightstyles so the lightmaps won't have to be regenerated
 	** the first time they're seen
 	*/
-	for (i=0; i<MAX_LIGHTSTYLES; i++)
+	for (i = 0; i < MAX_LIGHTSTYLES; ++i)
 	{
 		lightstyles[i].rgb[0] = 1;
 		lightstyles[i].rgb[1] = 1;
 		lightstyles[i].rgb[2] = 1;
 		lightstyles[i].white = 3;
 	}
-	r_newrefdef.lightstyles = lightstyles;
 
-	if (!gl_state.lightmap_textures)
-	{
-		gl_state.lightmap_textures	= TEXNUM_LIGHTMAPS;
-//		gl_state.lightmap_textures	= gl_state.texture_extension_number;
-//		gl_state.texture_extension_number = gl_state.lightmap_textures + MAX_LIGHTMAPS;
-	}
+	r_newrefdef.lightstyles = lightstyles;
 
 	gl_lms.current_lightmap_texture = 1;
 
@@ -2013,22 +2008,22 @@ void GL_BeginBuildingLightmaps (model_t *m)
 	** only alpha lightmaps but that can at least support the GL_ALPHA
 	** format then we should change this code to use real alpha maps.
 	*/
-	if ( toupper( gl_monolightmap->string[0] ) == 'A' )
+	if (toupper(gl_monolightmap->string[0]) == 'A')
 	{
 		gl_lms.internal_format = gl_tex_alpha_format;
 	}
 	/*
 	** try to do hacked colored lighting with a blended texture
 	*/
-	else if ( toupper( gl_monolightmap->string[0] ) == 'C' )
+	else if (toupper(gl_monolightmap->string[0]) == 'C')
 	{
 		gl_lms.internal_format = gl_tex_alpha_format;
 	}
-	else if ( toupper( gl_monolightmap->string[0] ) == 'I' )
+	else if (toupper(gl_monolightmap->string[0]) == 'I')
 	{
 		gl_lms.internal_format = GL_INTENSITY8;
 	}
-	else if ( toupper( gl_monolightmap->string[0] ) == 'L' ) 
+	else if (toupper(gl_monolightmap->string[0]) == 'L') 
 	{
 		gl_lms.internal_format = GL_LUMINANCE8;
 	}
@@ -2040,17 +2035,17 @@ void GL_BeginBuildingLightmaps (model_t *m)
 	/*
 	** initialize the dynamic lightmap texture
 	*/
-	GL_Bind( gl_state.lightmap_textures + 0 );
+	GL_Bind(gl_state.lightmap_texnums[0]); // jitgentex
 	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	qgl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	qgl.TexImage2D( GL_TEXTURE_2D, 
+	qgl.TexImage2D(GL_TEXTURE_2D, 
 				   0, 
 				   gl_lms.internal_format,
 				   BLOCK_WIDTH, BLOCK_HEIGHT, 
 				   0, 
 				   GL_LIGHTMAP_FORMAT, 
 				   GL_UNSIGNED_BYTE, 
-				   dummy );
+				   dummy);
 }
 
 /*
@@ -2060,7 +2055,7 @@ GL_EndBuildingLightmaps
 */
 void GL_EndBuildingLightmaps (void)
 {
-	LM_UploadBlock( false );
-	GL_EnableMultitexture( false );
+	LM_UploadBlock(false);
+	GL_EnableMultitexture(false);
 }
 
