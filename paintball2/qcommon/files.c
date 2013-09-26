@@ -785,15 +785,23 @@ void FS_SetGamedir (char *dir)
 	}
 	else
 	{
+		char szGameDir[MAX_QPATH];
+
 		Cvar_FullSet("gamedir", dir, CVAR_SERVERINFO|CVAR_NOSET, true);
 
 		if (fs_cddir->string[0])
-			FS_AddGameDirectory(va("%s/%s", fs_cddir->string, dir));
+		{
+			Com_sprintf(szGameDir, sizeof(szGameDir), "%s/%s", fs_cddir->string, dir); // jit - fix bad case of string reuse.  va() is evil.
+			FS_AddGameDirectory(szGameDir); // jit
+		}
+
 #if defined (LIBDIR)
-		FS_AddGameDirectory(va("%s/%s", LIBDIR, dir));
+		Com_sprintf(szGameDir, sizeof(szGameDir), "%s/%s", LIBDIR, dir); // jit - fix bad case of string reuse.  va() is evil.
+		FS_AddGameDirectory(szGameDir); // jit
 #endif
 
-		FS_AddGameDirectory(va("%s/%s", fs_basedir->string, dir));
+		Com_sprintf(szGameDir, sizeof(szGameDir), "%s/%s", fs_basedir->string, dir); // jit - fix bad case of string reuse.  va() is evil.
+		FS_AddGameDirectory(szGameDir); // jit
 #if defined (DATADIR)
 		FS_AddHomeAsGameDirectory(dir);
 #endif
