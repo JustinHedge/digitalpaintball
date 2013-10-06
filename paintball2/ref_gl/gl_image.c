@@ -29,29 +29,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include <ctype.h>
 
-image_t		gltextures[MAX_GLTEXTURES];
-hash_table_t gltextures_hash; // jithash
-int			numgltextures;
-int			base_textureid;		// gltextures[i] = base_textureid+i
+image_t			gltextures[MAX_GLTEXTURES];
+hash_table_t	gltextures_hash; // jithash
+int				numgltextures;
+int				base_textureid;		// gltextures[i] = base_textureid+i
 
-static int	g_scrap_texnum = 0; // jitgentex
+static int		g_scrap_texnum = 0; // jitgentex
 
-cvar_t		*intensity;
+unsigned		d_8to24table[256];
 
-unsigned	d_8to24table[256];
+int				gl_solid_format = 3;
+int				gl_alpha_format = 4;
+
+int				gl_tex_solid_format = 3;
+int				gl_tex_alpha_format = 4;
+
+int				gl_filter_min = GL_LINEAR_MIPMAP_LINEAR;	// default to trilinear filtering - MrG
+int				gl_filter_max = GL_LINEAR;
+
 
 qboolean GL_Upload8 (byte *data, int width, int height, imagetype_t imagetype, qboolean sharp); // jitsky
 qboolean GL_Upload32 (unsigned *data, int width, int height, imagetype_t imagetype, qboolean sharp); // jitsky
 
-
-int		gl_solid_format = 3;
-int		gl_alpha_format = 4;
-
-int		gl_tex_solid_format = 3;
-int		gl_tex_alpha_format = 4;
-
-int		gl_filter_min = GL_LINEAR_MIPMAP_LINEAR;	// default to trilinear filtering - MrG
-int		gl_filter_max = GL_LINEAR;
 
 void GL_EnableMultitexture (qboolean enable)
 {
@@ -1225,49 +1224,6 @@ void GL_ResampleTexture (const unsigned *in, int inwidth, int inheight, unsigned
 
 /*
 ================
-GL_LightScaleTexture
-
-Scale up the pixel values in a texture to increase the
-lighting range
-================
-*/
-/* jitgamma GL_LightScaleTexture (unsigned *in, int inwidth, int inheight, qboolean only_gamma)
-{
-	if (only_gamma)
-	{
-		int		i, c;
-		byte	*p;
-
-		p = (byte *)in;
-
-		c = inwidth*inheight;
-		for (i=0; i<c; i++, p+=4)
-		{
-			p[0] = gammatable[p[0]];
-			p[1] = gammatable[p[1]];
-			p[2] = gammatable[p[2]];
-		}
-	}
-	else
-	{
-		int		i, c;
-		byte	*p;
-
-		p = (byte *)in;
-
-		c = inwidth*inheight;
-		for (i=0; i<c; i++, p+=4)
-		{
-			p[0] = gammatable[intensitytable[p[0]]];
-			p[1] = gammatable[intensitytable[p[1]]];
-			p[2] = gammatable[intensitytable[p[2]]];
-		}
-	}
-}
-*/
-
-/*
-================
 GL_MipMap
 
 Operates in place, quartering the size of the texture
@@ -2301,8 +2257,9 @@ int Draw_GetPalette (void)
 GL_InitImages
 ===============
 */
-void	GL_InitImages (void)
+void GL_InitImages (void)
 {
+	hash_table_init(&gltextures_hash, 0x200, NULL);
 	qgl.GenTextures(MAX_LIGHTMAPS, gl_state.lightmap_texnums); // jitgentex
 	Draw_GetPalette();
 
@@ -2313,40 +2270,7 @@ void	GL_InitImages (void)
 		if (!gl_state.d_16to8table)
 			ri.Sys_Error(ERR_FATAL, "Couldn't load pics/16to8.dat"); // jit, just bugged me
 	}
-/*
-	if (gl_config.renderer & (GL_RENDERER_VOODOO | GL_RENDERER_VOODOO2))
-	{
-		g = 1.0F;
-	}
-
-	for (i = 0; i < 256; i++)
-	{
-		if (g == 1)
-		{
-			gammatable[i] = i;
-		}
-		else
-		{
-			float inf;
-
-			inf = 255 * pow ((i+0.5)*0.0039138943248532289628180039138943 , g) + 0.5;
-			if (inf < 0)
-				inf = 0;
-			if (inf > 255)
-				inf = 255;
-			gammatable[i] = inf;
-		}
-	}
-
-	for (i=0; i<256; i++)
-	{
-		j = i*intensity->value;
-		if (j > 255)
-			j = 255;
-		intensitytable[i] = j;
-	}*/
 }
-
 
 
 /*
@@ -2354,11 +2278,6 @@ void	GL_InitImages (void)
 GL_ShutdownImages
 ===============
 */
-void GL_ShutdownImage (void *data) // jithash -- called from hash free function
-{
-	// guess we don't need this since the image is deleted using the below function:
-}
-
 void GL_ShutdownImages (void)
 {
 	int		i;
@@ -2393,9 +2312,4 @@ void GL_ShutdownImages (void)
 	}
 
 	hash_table_free(&gltextures_hash); // jithash
-}
-
-void init_image_hash_tables (void) // jithash
-{
-	hash_table_init(&gltextures_hash, 0x200, GL_ShutdownImage);
 }
