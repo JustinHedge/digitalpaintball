@@ -190,11 +190,7 @@ typedef struct
 {
 	vec3_t			origin;
 	float			influence;
-#ifdef ENABLE_SIMD_INTRINSICS
-	__m128			normal;
-#else
 	vec3_t			normal;
-#endif
 	unsigned int	bonenum;
 } mskbonevert_t;
 

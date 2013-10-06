@@ -34,7 +34,6 @@ char *strlwr(char*); // defined in q_shlinux.c
 
 qgl_t qgl; // jitglstruct
 
-
 static void (APIENTRY * dllAccum)(GLenum op, GLfloat value);
 static void (APIENTRY * dllAlphaFunc)(GLenum func, GLclampf ref);
 GLboolean (APIENTRY * dllAreTexturesResident)(GLsizei n, const GLuint *textures, GLboolean *residences);
@@ -5645,7 +5644,8 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	while((path = ri.FS_NextPath(path)) != NULL) // jitrscript -- get all game dirs
 		RS_ScanPathForScripts(path);
 
-	init_image_hash_tables();
+	gl_state.sse_enabled = Sys_HaveSSE() && ri.Cvar_Get("cl_sse", "1", 0)->value;
+	ri.Con_Printf(PRINT_ALL, gl_state.sse_enabled ? "SSE Enabled.\n" : "SSE Disabled.\n");
 	GL_InitImages();
 	Mod_Init();
 	R_InitNoTexture(); // jit, renamed

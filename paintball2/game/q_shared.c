@@ -1037,10 +1037,33 @@ void Quat_Lerp (const quat_t q1, const quat_t q2, vec_t t, quat_t out)
 	out[3] = scale0 * p1[3] + scale1 * q2[3];
 }
 
-#ifdef ENABLE_SIMD_INTRINSICS
-void Quat_Matrix (const quat_t q, __m128 *m)
+
+#if 0// OLD_ROW_ORDER_TEST
+void Quat_Matrix (const quat_t q, vec3_t m[3])
 {
-	float colA[4], colB[4], colC[4]; // todo: align these so we can use load instead of loadu
+	vec_t wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
+
+	x2 = q[0] + q[0]; y2 = q[1] + q[1]; z2 = q[2] + q[2];
+
+	xx = q[0] * x2; xy = q[0] * y2; xz = q[0] * z2;
+	yy = q[1] * y2; yz = q[1] * z2; zz = q[2] * z2;
+	wx = q[3] * x2; wy = q[3] * y2; wz = q[3] * z2;
+
+	m[0][0] = 1.0f - yy - zz;
+	m[0][1] = xy - wz;
+	m[0][2] = xz + wy;
+
+	m[1][0] = xy + wz;
+	m[1][1] = 1.0f - xx - zz;
+	m[1][2] = yz - wx;
+
+	m[2][0] = xz - wy;
+	m[2][1] = yz + wx;
+	m[2][2] = 1.0f - xx - yy;
+}
+#else
+void Quat_Matrix (const quat_t q, vec3_t m[3])
+{
 	vec_t wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
 
 	x2 = q[0] + q[0];
@@ -1060,63 +1083,20 @@ void Quat_Matrix (const quat_t q, __m128 *m)
 	wy = q[3] * y2;
 	wz = q[3] * z2;
 
-	colA[0] = 1.0f - yy - zz;
-	colA[1] = xy + wz;
-	colA[2] = xz - wy;
-	colA[3] = 0.0f;
+	m[0][0] = 1.0f - yy - zz;
+	m[0][1] = xy + wz;
+	m[0][2] = xz - wy;
 
-	colB[0] = xy - wz;
-	colB[1] = 1.0f - xx - zz;
-	colB[2] = yz + wx;
-	colB[3] = 0.0f;
+	m[1][0] = xy - wz;
+	m[1][1] = 1.0f - xx - zz;
+	m[1][2] = yz + wx;
 
-	colC[0] = xz + wy;
-	colC[1] = yz - wx;
-	colC[2] = 1.0f - xx - yy;
-	colC[3] = 0.0f;
-
-	m[0] = _mm_loadu_ps(colA);
-	m[1] = _mm_loadu_ps(colB);
-	m[2] = _mm_loadu_ps(colC);
-	m[3] = _mm_setzero_ps();
-}
-#else
-void Quat_Vectors (const quat_t q, vec3_t f, vec3_t r, vec3_t u)
-{
-	vec_t wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
-
-	x2 = q[0] + q[0]; y2 = q[1] + q[1]; z2 = q[2] + q[2];
-	xx = q[0] * x2; xy = q[0] * y2; xz = q[0] * z2;
-	yy = q[1] * y2; yz = q[1] * z2; zz = q[2] * z2;
-	wx = q[3] * x2; wy = q[3] * y2; wz = q[3] * z2;
-
-	if (f)
-	{
-		f[0] = 1.0f - yy - zz;
-		f[1] = xy - wz;
-		f[2] = xz + wy;
-	}
-
-	if (r)
-	{
-		r[0] = xy + wz;
-		r[1] = 1.0f - xx - zz;
-		r[2] = yz - wx;
-	}
-
-	if (u)
-	{
-		u[0] = xz - wy;
-		u[1] = yz + wx;
-		u[2] = 1.0f - xx - yy;
-	}
-}
-
-void Quat_Matrix (const quat_t q, vec3_t m[3])
-{
-	Quat_Vectors(q, m[0], m[1], m[2]);
+	m[2][0] = xz + wy;
+	m[2][1] = yz - wx;
+	m[2][2] = 1.0f - xx - yy;
 }
 #endif
+
 
 void Quat_TransformVector (const quat_t q, const vec3_t v, vec3_t out)
 {
@@ -1227,29 +1207,17 @@ void Matrix_EulerAngles (vec3_t m[3], vec3_t angles)
 }
 */
 
-#ifdef ENABLE_SIMD_INTRINSICS
-void Matrix_EulerAngles2_SIMD (__m128 *m128, vec3_t angles) // jitskm, modified to work the way I think it should.
+void Matrix_EulerAngles2 (vec3_t m[3], vec3_t angles) // jitskm, modified to work the way I think it should.
 {
-	vec_t	c;
-	float	m[4][4]; // todo: align so we can use store instead of storeu
-	_mm_storeu_ps(m[0], m128[0]);
-	_mm_storeu_ps(m[1], m128[1]);
-	_mm_storeu_ps(m[2], m128[2]);
+	vec_t c;
+	vec_t pitch = -asin(m[0][2]);
 
-	c = 1.0f / fabs(cos(angles[PITCH] = RAD2DEG((-asin(m[0][2])))));
+	angles[PITCH] = RAD2DEG(pitch);
+	c = 1.0f / fabs(cos(pitch));
 	angles[YAW] = RAD2DEG(atan2(m[0][1] * c, m[0][0] * c));
 	angles[ROLL] = -RAD2DEG(atan2(-m[1][2] * c, m[2][2] * c));
 }
-#else
-void Matrix_EulerAngles2 (vec3_t m[3], vec3_t angles) // jitskm, modified to work the way I think it should.
-{
-	vec_t	c;
 
-	c = 1.0f / fabs(cos(angles[PITCH] = RAD2DEG((-asin(m[2][0])))));
-	angles[YAW] = RAD2DEG(atan2(m[1][0] * c, m[0][0] * c));
-	angles[ROLL] = -RAD2DEG(atan2(-m[2][1] * c, m[2][2] * c));
-}
-#endif
 
 // jitskm
 //====================================================================================
@@ -2585,3 +2553,54 @@ void strip_garbage (char *cout, const char *cin) // jit
 
 	*sbuf = 0;
 }
+
+
+// === jitsimd: Copied from DarkPlaces with minor modifications...
+
+// for x86 cpus only...  (x64 has SSE2_PRESENT)
+// code from SDL, shortened as we can expect CPUID to work
+static int CPUID_Features(void)
+{
+	int features = 0;
+# if defined(__GNUC__) && defined(__i386__)
+        __asm__ (
+"        movl    %%ebx,%%edi\n"
+"        xorl    %%eax,%%eax                                           \n"
+"        incl    %%eax                                                 \n"
+"        cpuid                       # Get family/model/stepping/features\n"
+"        movl    %%edx,%0                                              \n"
+"        movl    %%edi,%%ebx\n"
+        : "=m" (features)
+        :
+        : "%eax", "%ecx", "%edx", "%edi"
+        );
+# elif (defined(_MSC_VER) && defined(_M_IX86)) || defined(__WATCOMC__)
+        __asm {
+        xor     eax, eax
+        inc     eax
+        cpuid                       ; Get family/model/stepping/features
+        mov     features, edx
+        }
+# else
+#  error no CPUID implementation
+# endif
+	return features;
+}
+
+qboolean Sys_HaveSSE (void)
+{/*
+	// COMMANDLINEOPTION: SSE: -nosse disables SSE support and detection
+	if (COM_CheckParm("-nosse"))
+		return false;
+
+	// COMMANDLINEOPTION: SSE: -forcesse enables SSE support and disables detection
+	if (COM_CheckParm("-forcesse") || COM_CheckParm("-forcesse2"))
+		return true;
+*/
+	if (CPUID_Features() & (1 << 25))
+		return true;
+
+	return false;
+}
+// jitsimd ===
+

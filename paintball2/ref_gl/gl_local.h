@@ -219,7 +219,6 @@ extern	cvar_t	*vid_gamma;
 extern	cvar_t	*vid_lighten; // jitgamma
 extern	cvar_t	*gl_debug; // jit
 extern	cvar_t	*gl_arb_fragment_program; // jit
-//extern	cvar_t	*intensity;
 extern	cvar_t	*r_caustics; // jitcaustics
 extern	cvar_t	*r_reflectivewater; // jitwater
 extern	cvar_t	*r_reflectivewater_debug; // jitwater
@@ -446,6 +445,7 @@ typedef struct
 	float		max_anisotropy; // jitanisotropy
 	qboolean	fragment_program; // jitwater
 	qboolean	fbo; // jitwater
+	qboolean	sse_enabled; // jitsimd
 
 	unsigned char originalRedGammaTable[256];
 	unsigned char originalGreenGammaTable[256];
@@ -518,6 +518,4 @@ void		GLimp_LogNewFrame (void);
 #define RSCRIPT_CONST  5 // jitrscript (for nonanimated rotations)
 
 extern unsigned char lightmap_gammatable[256]; // jitgamma
-
-void init_image_hash_tables(); // jithash
 

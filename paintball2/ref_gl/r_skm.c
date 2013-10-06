@@ -40,9 +40,8 @@ static float	shadelight[3]; // jitskm
 static vec3_t	inVertsArray[4096]; // jitskm
 static vec3_t	inNormalsArray[4096]; // jitskm
 static vec3_t	colorArray[4096]; // jitskm
-#ifdef ENABLE_SIMD_INTRINSICS
-static float	overflowDONOTUSE; // jitskm - possible for the simd store to overflow into this if there are 4096 verts... crappy temp solution for now.  Should ultimately make the arrays simd structures.
-#endif
+static float	overflowDONOTUSE; // jitskm/jitsimd - possible for the simd store to overflow into this if there are 4096 verts...
+
 
 static void SKM_TransformBoneposes (mskmodel_t *model, bonepose_t *boneposes,
 									bonepose_t *sourceboneposes, vec3_t angle, vec3_t origin)
@@ -282,14 +281,8 @@ void Mod_LoadSkeletalModel (model_t *mod, model_t *parent, void *buffer)
 				for (k = 0; k < 3; ++k)
 				{
 					poutbonevert->origin[k] = LittleFloat(pinbonevert->origin[k]);
-#ifndef ENABLE_SIMD_INTRINSICS
 					poutbonevert->normal[k] = LittleFloat(pinbonevert->normal[k]);
-#endif
 				}
-
-#ifdef ENABLE_SIMD_INTRINSICS
-				poutbonevert->normal = _mm_loadu_ps(pinbonevert->normal);
-#endif
 
 				poutbonevert->influence = LittleFloat(pinbonevert->influence);
 				poutbonevert->bonenum = LittleLong(pinbonevert->bonenum);
@@ -735,13 +728,8 @@ qboolean R_CullSkeletalModel (entity_t *e)
 }
 
 typedef struct {
-#ifdef ENABLE_SIMD_INTRINSICS
-	__m128 axis[3];
-	__m128 origin;
-#else
 	vec3_t axis[3];
 	vec3_t origin;
-#endif
 } axis_origin_t;
 
 axis_origin_t g_skmbonepose[SKM_MAX_BONES];
@@ -787,22 +775,10 @@ static void R_PositionBonesLerp (entity_t *e, model_t *mod, float backlerp) // j
 		// interpolate quaternions and origins
 		Quat_Lerp(oldbonepose->quat, bonepose->quat, frontlerp, quaternion);
 		Quat_Matrix(quaternion, out->axis);
-#ifdef ENABLE_SIMD_INTRINSICS
-		{
-			float origin[4];
 
-			// todo: SIMD this?
-			origin[0] = oldbonepose->origin[0] + (bonepose->origin[0] - oldbonepose->origin[0]) * frontlerp;
-			origin[1] = oldbonepose->origin[1] + (bonepose->origin[1] - oldbonepose->origin[1]) * frontlerp;
-			origin[2] = oldbonepose->origin[2] + (bonepose->origin[2] - oldbonepose->origin[2]) * frontlerp;
-			origin[3] = 0.0f;
-			out->origin = _mm_loadu_ps(origin);
-		}
-#else
 		out->origin[0] = oldbonepose->origin[0] + (bonepose->origin[0] - oldbonepose->origin[0]) * frontlerp;
 		out->origin[1] = oldbonepose->origin[1] + (bonepose->origin[1] - oldbonepose->origin[1]) * frontlerp;
 		out->origin[2] = oldbonepose->origin[2] + (bonepose->origin[2] - oldbonepose->origin[2]) * frontlerp;
-#endif
 	}
 }
 
@@ -847,9 +823,6 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 {
 	int				i/*, meshnum*/;
 	int				j, l;
-#ifndef ENABLE_SIMD_INTRINSICS
-	int				k;
-#endif
 	mskmesh_t		*mesh;
 	mskvertex_t		*skmverts;
 	mskbonevert_t	*boneverts;
@@ -858,7 +831,6 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	mskmodel_t		*skmodel = mod->skmodel;
 	rscript_t		*rs; // jitrscript
 	image_t			*skin_image;
-	axis_origin_t	*pose;
 	qboolean		counttris = true;
 	qboolean		hardware_light_enabled = r_hardware_light->value > 0.0f;
 
@@ -976,25 +948,19 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 	boneverts = mesh->vertexes->verts;
 	indexes = mesh->indexes;
 
-	// translate vertexes.
-	for (j = 0, skmverts = mesh->vertexes; j < numverts; ++j, ++skmverts)
+	if (gl_state.sse_enabled) // jitsimd
 	{
-#ifdef ENABLE_SIMD_INTRINSICS
-		register __m128 vert = _mm_setzero_ps();
-		register __m128 normal = _mm_setzero_ps();
-#else
-		VectorClear(inVertsArray[j]);
-		VectorClear(inNormalsArray[j]);
-#endif
-
-		for (l = 0, boneverts = skmverts->verts; l < skmverts->numbones; ++l, ++boneverts)
+		// translate vertexes.
+		for (j = 0, skmverts = mesh->vertexes; j < numverts; ++j, ++skmverts)
 		{
-			pose = g_skmbonepose + boneverts->bonenum;
+			register __m128 vert = _mm_setzero_ps();
+			register __m128 normal = _mm_setzero_ps();
 
-#ifdef ENABLE_SIMD_INTRINSICS // jitopt - SIMD instructions
+			for (l = 0, boneverts = skmverts->verts; l < skmverts->numbones; ++l, ++boneverts)
 			{
+				axis_origin_t *pose = g_skmbonepose + boneverts->bonenum;
 				__m128 boneVertOrigin = _mm_loadu_ps(boneverts->origin);
-				__m128 boneVertNormal = boneverts->normal;
+				__m128 boneVertNormal = _mm_loadu_ps(boneverts->normal);
 				__m128 boneVertX = _mm_shuffle_ps(boneVertOrigin, boneVertOrigin, 0x00);
 				__m128 boneVertY = _mm_shuffle_ps(boneVertOrigin, boneVertOrigin, 0x55);
 				__m128 boneVertZ = _mm_shuffle_ps(boneVertOrigin, boneVertOrigin, 0xaa);
@@ -1002,57 +968,91 @@ static void R_DrawSkeletalMesh (entity_t *e, model_t *mod, int meshnum)
 				__m128 boneVertNormalY = _mm_shuffle_ps(boneVertNormal, boneVertNormal, 0x55);
 				__m128 boneVertNormalZ = _mm_shuffle_ps(boneVertNormal, boneVertNormal, 0xaa);
 				__m128 boneVertInfluence = _mm_loadu_ps(&boneverts->influence);
+				__m128 axis[3];
+				__m128 poseOrigin = _mm_loadu_ps(pose->origin);
+
+				axis[0] = _mm_loadu_ps(pose->axis[0]);
+				axis[1] = _mm_loadu_ps(pose->axis[1]);
+				axis[2] = _mm_loadu_ps(pose->axis[2]);
 
 				boneVertInfluence = _mm_shuffle_ps(boneVertInfluence, boneVertInfluence, 0x00);
-				vert = _mm_add_ps(vert,
-							_mm_add_ps(
-								_mm_add_ps(
-									_mm_add_ps(
-										_mm_mul_ps(boneVertX, pose->axis[0]),
-										_mm_mul_ps(boneVertY, pose->axis[1])
-									),
-									_mm_mul_ps(boneVertZ, pose->axis[2])
-								),
-								_mm_mul_ps(boneVertInfluence, pose->origin)
-							)
-						);
-				normal = _mm_add_ps(normal,
-							_mm_add_ps(
-								_mm_add_ps(
-									_mm_mul_ps(boneVertNormalX, pose->axis[0]),
-									_mm_mul_ps(boneVertNormalY, pose->axis[1])
-								),
-								_mm_mul_ps(boneVertNormalZ, pose->axis[2])
-							)
-						);
-			}
-#else
-			for (k = 0; k < 3; k++)
-			{
-				inVertsArray[j][k] +=
-					boneverts->origin[0] * pose->axis[k][0] +
-					boneverts->origin[1] * pose->axis[k][1] +
-					boneverts->origin[2] * pose->axis[k][2] +
-					boneverts->influence * pose->origin[k];
-				inNormalsArray[j][k] +=
-					boneverts->normal[0] * pose->axis[k][0] +
-					boneverts->normal[1] * pose->axis[k][1] +
-					boneverts->normal[2] * pose->axis[k][2];
-			}
-#endif
-		}
 
-#ifdef ENABLE_SIMD_INTRINSICS
-		_mm_storeu_ps(inVertsArray[j], vert); // Note: This will overflow 1 float into inNormalsArray if verts are maxed out, but that should be ok.
-		_mm_storeu_ps(inNormalsArray[j], normal); // Note: This will overflow 1 float into color array if verts are maxed out.
+				vert = _mm_add_ps(vert,
+									_mm_add_ps(
+										_mm_add_ps(
+											_mm_add_ps(
+												_mm_mul_ps(boneVertX, axis[0]),
+												_mm_mul_ps(boneVertY, axis[1])
+											),
+											_mm_mul_ps(boneVertZ, axis[2])
+										),
+										_mm_mul_ps(boneVertInfluence, poseOrigin)
+									)
+								);
+
+				normal = _mm_add_ps(normal,
+										_mm_add_ps(
+											_mm_add_ps(
+												_mm_mul_ps(boneVertNormalX, axis[0]),
+												_mm_mul_ps(boneVertNormalY, axis[1])
+											),
+											_mm_mul_ps(boneVertNormalZ, axis[2])
+										)
+									);
+			}
+
+			_mm_storeu_ps(inVertsArray[j], vert); // Note: This will overflow 1 float into inNormalsArray if verts are maxed out, but that should be ok.
+			_mm_storeu_ps(inNormalsArray[j], normal); // Note: This will overflow 1 float into color array if verts are maxed out.
+		}
+	}
+	else // non-sse version
+	{
+		// translate vertexes.
+		for (j = 0, skmverts = mesh->vertexes; j < numverts; ++j, ++skmverts)
+		{
+			VectorClear(inVertsArray[j]);
+			VectorClear(inNormalsArray[j]);
+
+			for (l = 0, boneverts = skmverts->verts; l < skmverts->numbones; ++l, ++boneverts)
+			{
+				axis_origin_t *pose = g_skmbonepose + boneverts->bonenum;
+
+#if 0 // OLD_ORDER
+				int k;
+
+				for (k = 0; k < 3; k++)
+				{
+					inVertsArray[j][k] +=
+						boneverts->origin[0] * pose->axis[k][0] +
+						boneverts->origin[1] * pose->axis[k][1] +
+						boneverts->origin[2] * pose->axis[k][2] +
+						boneverts->influence * pose->origin[k];
+					inNormalsArray[j][k] +=
+						boneverts->normal[0] * pose->axis[k][0] +
+						boneverts->normal[1] * pose->axis[k][1] +
+						boneverts->normal[2] * pose->axis[k][2];
+				}
+#else
+				int k;
+
+				for (k = 0; k < 3; k++)
+				{
+					inVertsArray[j][k] +=
+						boneverts->origin[0] * pose->axis[0][k] +
+						boneverts->origin[1] * pose->axis[1][k] +
+						boneverts->origin[2] * pose->axis[2][k] +
+						boneverts->influence * pose->origin[k];
+					inNormalsArray[j][k] +=
+						boneverts->normal[0] * pose->axis[0][k] +
+						boneverts->normal[1] * pose->axis[1][k] +
+						boneverts->normal[2] * pose->axis[2][k];
+				}
 #endif
+			}
+		}
 	}
 
-#ifdef GLSTATE_DISABLE_BLEND
-	GLSTATE_DISABLE_BLEND // for beefquake based renderers
-#else
-	qgl.Disable(GL_BLEND);
-#endif
+	GLSTATE_DISABLE_BLEND
 
 	GL_TexEnv(GL_COMBINE_EXT); // jitbright
 	qgl.ShadeModel(GL_SMOOTH);
@@ -1421,13 +1421,9 @@ static void R_HackDrawWeaponModel (entity_t *player_e, model_t *model, model_t *
 			entity_t e; // only the angles and origin are used from this
 
 			memset(&e, 0, sizeof(e)); // make sure all the flags and such are cleared so it doesn't do anything crazy
-#ifdef ENABLE_SIMD_INTRINSICS
-			_mm_storeu_ps(e.origin, g_skmbonepose[i].origin);
-			Matrix_EulerAngles2_SIMD(g_skmbonepose[i].axis, e.angles);
-#else
+
 			VectorCopy(g_skmbonepose[i].origin, e.origin);
 			Matrix_EulerAngles2(g_skmbonepose[i].axis, e.angles);
-#endif
 			R_PositionBonesLerp(&e, weaponmodel, 0);
 
 			for (i = 0; i < nummeshes; ++i)
