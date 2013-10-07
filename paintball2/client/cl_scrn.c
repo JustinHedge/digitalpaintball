@@ -1936,7 +1936,7 @@ void SCR_UpdateScreen (void)
 						
 						if (ping2 != 0) // don't show it on game start
 						{
-							Com_sprintf(drawping, sizeof(drawping), "%3.0iPng", ping2);
+							Com_sprintf(drawping, sizeof(drawping), "%3.0ipng", ping2);
 						}
 
 						ping_min = 999;
