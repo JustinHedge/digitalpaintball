@@ -292,7 +292,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 
 		if (!(framecount & 0xF)) // once every 16 frames
 		{
-			Com_sprintf(pps_string, sizeof(pps_string), "%3.0fpps\n", 1000.0f * framecount / (curtime - lasttime));
+			Com_sprintf(pps_string, sizeof(pps_string), "%4.0fpps\n", 1000.0f * framecount / (curtime - lasttime));
 			lasttime = curtime;
 			framecount = 0;
 		}

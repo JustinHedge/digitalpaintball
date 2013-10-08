@@ -83,7 +83,7 @@ BEGIN
             VALUE "FileDescription", "Digital Paint: Paintball 2"
             VALUE "FileVersion", "Build " BUILD_S
             VALUE "InternalName", "paintball2"
-            VALUE "LegalCopyright", "Copyright (C) 1998-2012"
+            VALUE "LegalCopyright", "Copyright (C) 1998-2013"
             VALUE "OriginalFilename", "paintball2.exe"
             VALUE "ProductName", "Paintball 2"
             VALUE "ProductVersion", "Alpha"

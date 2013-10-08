@@ -2069,7 +2069,7 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 }
 
 //====================================================================
-// Hash Functions (c) 2004-2012 Nathan "jitspoe" Wulf
+// Hash Functions (c) 2004-2013 Nathan "jitspoe" Wulf
 // jithash:
 void hash_table_init (hash_table_t *table, unsigned int size, void *free_func)
 {
