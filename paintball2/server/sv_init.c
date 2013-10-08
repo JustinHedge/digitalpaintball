@@ -333,8 +333,11 @@ void SV_InitGame (void)
 	else
 	{
 		// make sure the client is down
-		CL_Drop();
-		SCR_BeginLoadingPlaque(NULL);
+		if (!dedicated->value)
+		{
+			CL_Drop();
+			SCR_BeginLoadingPlaque(NULL);
+		}
 	}
 
 	// get any latched variable changes (maxclients, etc)
@@ -486,7 +489,9 @@ void SV_Map (qboolean attractloop, const char *levelstring, qboolean loadgame)
 	{
 		char changing_cmd[1024];
 
-		SCR_BeginLoadingPlaque(level);			// for local system
+		if (!dedicated->value)
+			SCR_BeginLoadingPlaque(level);			// for local system
+
 		Com_sprintf(changing_cmd, sizeof(changing_cmd), "changing \"%s\"\n", level);
 		SV_BroadcastCommand(changing_cmd);
 		SV_SendClientMessages();
