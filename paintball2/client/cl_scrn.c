@@ -1634,6 +1634,8 @@ text to the screen.
 extern cvar_t *cl_drawhud; // jithud
 extern cvar_t *cl_menuback;
 
+#define FPS_DISPLAY_X_POS (viddef.width - 64 * hudscale)
+
 void SCR_UpdateScreen (void)
 {
 	int numframes;
@@ -1803,9 +1805,9 @@ void SCR_UpdateScreen (void)
 								t /= 1000.0f;
 
 							if (t > 0.0f)
-								Com_sprintf(s, sizeof(s), "%3.0ffps", framecount / t);
+								Com_sprintf(s, sizeof(s), "%4.0ffps", framecount / t);
 							else
-								Q_strncpyz(s, "???.?fps", sizeof(s));
+								Q_strncpyz(s, " ???fps", sizeof(s));
 
 							lasttime = curtime;
 							framecount = 0;
@@ -1816,7 +1818,7 @@ void SCR_UpdateScreen (void)
 						register float framerate;
 
 						framerate = 1.0f / cls.frametime;
-						Com_sprintf(s, sizeof(s), "%3.0ffps", framerate);
+						Com_sprintf(s, sizeof(s), "%4.0ffps", framerate);
 					}
 					else // Display the lowest framerate every .5 seconds
 					{
@@ -1834,11 +1836,11 @@ void SCR_UpdateScreen (void)
 						if (framerate < minframerate)
 							minframerate = framerate;
 
-						Com_sprintf(s, sizeof(s), "%3.0ffps", minframerate);
+						Com_sprintf(s, sizeof(s), "%4.0ffps", minframerate);
 					}
 
 					framecount++;
-					re.DrawString(viddef.width - 56 * hudscale, 64 * hudscale, s);
+					re.DrawString(FPS_DISPLAY_X_POS, 64 * hudscale, s);
 				}
 
 				if (cl_drawclock->value) // viciouz - real time clock
@@ -1930,13 +1932,10 @@ void SCR_UpdateScreen (void)
 						{
 							ping2 = ping_min;					// lowest
 						}
-
-						if (ping2 > 999)
-							ping2 = 999;
 						
 						if (ping2 != 0) // don't show it on game start
 						{
-							Com_sprintf(drawping, sizeof(drawping), "%3.0ipng", ping2);
+							Com_sprintf(drawping, sizeof(drawping), "%4dping", ping2);
 						}
 
 						ping_min = 999;
@@ -1958,14 +1957,14 @@ void SCR_UpdateScreen (void)
 						ping_count++;
 					}
 					
-					re.DrawString(viddef.width - 56 * hudscale, 80 * hudscale, drawping);
+					re.DrawString(FPS_DISPLAY_X_POS, 80 * hudscale, drawping);
 				}
 
 				if (cl_drawpps->value) // jitnetfps
 				{
-					extern char pps_string[15];
+					extern char pps_string[16];
 
-					re.DrawString(viddef.width - 56 * hudscale, 72 * hudscale, pps_string);
+					re.DrawString(FPS_DISPLAY_X_POS, 72 * hudscale, pps_string);
 				}
 
 				if (cl_drawtexinfo->value) // jit
