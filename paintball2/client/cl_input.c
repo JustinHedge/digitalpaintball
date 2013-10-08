@@ -200,7 +200,11 @@ float CL_KeyState (kbutton_t *key)
 	key->msec = 0;
 
 	if (key->state)
-	{	// still down
+	{
+		if (key->downtime == sys_frame_time) // jittiming -- fix edge case where time is equal, causing keys to be "released" at high framerates
+			return 1.0f;
+
+		// still down
 		msec += sys_frame_time - key->downtime;
 		key->downtime = sys_frame_time;
 	}
@@ -213,10 +217,12 @@ float CL_KeyState (kbutton_t *key)
 #endif
 
 	val = (float)msec / frame_msec;
-	if (val < 0)
-		val = 0;
-	if (val > 1)
-		val = 1;
+	
+	if (val < 0.0f)
+		val = 0.0f;
+
+	if (val > 1.0f)
+		val = 1.0f;
 
 	return val;
 }
@@ -282,33 +288,34 @@ Send the intended movement message to the server
 */
 void CL_BaseMove (usercmd_t *cmd)
 {	
-	CL_AdjustAngles ();
+	CL_AdjustAngles();
 	
-	memset (cmd, 0, sizeof(*cmd));
-	
-	VectorCopy (cl.viewangles, cmd->angles);
+	memset(cmd, 0, sizeof(*cmd));
+
+	VectorCopy(cl.viewangles, cmd->angles);
+
 	if (in_strafe.state & 1)
 	{
-		cmd->sidemove += cl_sidespeed->value * CL_KeyState (&in_right);
-		cmd->sidemove -= cl_sidespeed->value * CL_KeyState (&in_left);
+		cmd->sidemove += cl_sidespeed->value * CL_KeyState(&in_right);
+		cmd->sidemove -= cl_sidespeed->value * CL_KeyState(&in_left);
 	}
 
-	cmd->sidemove += cl_sidespeed->value * CL_KeyState (&in_moveright);
-	cmd->sidemove -= cl_sidespeed->value * CL_KeyState (&in_moveleft);
+	cmd->sidemove += cl_sidespeed->value * CL_KeyState(&in_moveright);
+	cmd->sidemove -= cl_sidespeed->value * CL_KeyState(&in_moveleft);
 
-	cmd->upmove += cl_upspeed->value * CL_KeyState (&in_up);
-	cmd->upmove -= cl_upspeed->value * CL_KeyState (&in_down);
+	cmd->upmove += cl_upspeed->value * CL_KeyState(&in_up);
+	cmd->upmove -= cl_upspeed->value * CL_KeyState(&in_down);
 
 	if (! (in_klook.state & 1) )
 	{
-		cmd->forwardmove += cl_forwardspeed->value * CL_KeyState (&in_forward);
-		cmd->forwardmove -= cl_forwardspeed->value * CL_KeyState (&in_back);
+		cmd->forwardmove += cl_forwardspeed->value * CL_KeyState(&in_forward);
+		cmd->forwardmove -= cl_forwardspeed->value * CL_KeyState(&in_back);
 	}
 
 //
 // adjust for speed key / running
 //
-	if ( (in_speed.state & 1) ^ (int)(cl_run->value) )
+	if ((in_speed.state & 1) ^ (int)(cl_run->value))
 	{
 		cmd->forwardmove *= 2;
 		cmd->sidemove *= 2;
@@ -557,7 +564,7 @@ void CL_SendCmd (void)
 		MSG_WriteString(&cls.netchan.message, Cvar_Userinfo());
 	}
 
-	SZ_Init (&buf, data, sizeof(data));
+	SZ_Init(&buf, data, sizeof(data));
 
 	if (cmd->buttons && cl.cinematictime > 0 && !cl.attractloop 
 		&& cls.realtime - cl.cinematictime > 1000)
