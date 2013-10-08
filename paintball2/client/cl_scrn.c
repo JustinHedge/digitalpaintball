@@ -1918,7 +1918,7 @@ void SCR_UpdateScreen (void)
 					static int ping_sum = 0;
 					static int ping_count = 0;
 					static int lasttime = 0;
-					static char drawping[10];
+					static char drawping[16];
 
 					if (curtime - lasttime > 500 && ping_count != 0) // 500ms = .5s
 					{
@@ -1933,7 +1933,7 @@ void SCR_UpdateScreen (void)
 							ping2 = ping_min;					// lowest
 						}
 						
-						if (ping2 != 0) // don't show it on game start
+						if (ping2 > 0) // don't show it on game start
 						{
 							Com_sprintf(drawping, sizeof(drawping), "%4dping", ping2);
 						}
