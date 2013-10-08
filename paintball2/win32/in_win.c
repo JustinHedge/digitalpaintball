@@ -80,6 +80,7 @@ cvar_t	*joy_upthreshold;
 cvar_t	*joy_upsensitivity;
 
 cvar_t *m_noaccel; // jitmouse
+cvar_t *m_rawinput; // jitmouse
 
 qboolean	joy_avail, joy_advancedinit, joy_haspov;
 DWORD		joy_oldbuttonstate, joy_oldpovstate;
@@ -93,6 +94,8 @@ static JOYINFOEX	ji;
 qboolean	in_appactive;
 static qboolean	g_windowed = false;
 
+int g_raw_mouse_x = 0; // jitmouse
+int g_raw_mouse_y = 0; // jitmouse
 
 // forward-referenced functions
 void IN_StartupJoystick (void);
@@ -241,6 +244,23 @@ void IN_ActivateMouse (qboolean clipcursor)
 	}
 
 	IN_HideCursor();
+
+	// jitmouse -- raw input support:
+	{
+#ifndef HID_USAGE_PAGE_GENERIC
+#define HID_USAGE_PAGE_GENERIC         ((USHORT) 0x01)
+#endif
+#ifndef HID_USAGE_GENERIC_MOUSE
+#define HID_USAGE_GENERIC_MOUSE        ((USHORT) 0x02)
+#endif
+
+		RAWINPUTDEVICE Rid[1];
+		Rid[0].usUsagePage = HID_USAGE_PAGE_GENERIC; 
+		Rid[0].usUsage = HID_USAGE_GENERIC_MOUSE; 
+		Rid[0].dwFlags = RIDEV_INPUTSINK;   
+		Rid[0].hwndTarget = cl_hwnd;
+		RegisterRawInputDevices(Rid, 1, sizeof(Rid[0]));
+	}
 }
 
 
@@ -358,8 +378,18 @@ void IN_MouseMove (usercmd_t *cmd)
 		return;
 	}
 
-	mx = current_pos.x - window_center_x;
-	my = current_pos.y - window_center_y;
+	if (m_rawinput->value) // jitmouse
+	{
+		mx = g_raw_mouse_x;
+		my = g_raw_mouse_y;
+		g_raw_mouse_x = 0;
+		g_raw_mouse_y = 0;
+	}
+	else
+	{
+		mx = current_pos.x - window_center_x;
+		my = current_pos.y - window_center_y;
+	}
 
 	// force the mouse to the center, so there's room to move
 	if (mx || my)
@@ -428,6 +458,7 @@ void IN_Init (void)
 	m_filter				= Cvar_Get ("m_filter",					"0",		CVAR_ARCHIVE);
     in_mouse				= Cvar_Get ("in_mouse",					"1",		CVAR_ARCHIVE);
 	m_noaccel				= Cvar_Get ("m_noaccel",				"1",		CVAR_ARCHIVE);
+	m_rawinput				= Cvar_Get ("m_rawinput",				"0",		0); // jitmouse
 
 	// joystick variables
 	in_joystick				= Cvar_Get ("in_joystick",				"0",		CVAR_ARCHIVE);

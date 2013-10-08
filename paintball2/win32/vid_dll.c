@@ -34,6 +34,7 @@ testexport_t e;
 cvar_t *win_noalttab;
 cvar_t *win_noaltenter = NULL; // jitkeyboard
 cvar_t *cl_customkeyboard; // jitkeyboard
+extern cvar_t *m_rawinput; // jitmouse
 
 #ifndef WM_MOUSEWHEEL
 #define WM_MOUSEWHEEL (WM_MOUSELAST+1)  // message that will be supported by the OS 
@@ -704,6 +705,25 @@ LONG WINAPI MainWndProc (
 			// ++ ARTHUR [9/04/03] - Mouse movement emulates keystroke
 			Key_Event(K_MOUSEMOVE, true, sys_msg_time);
 			// -- ARTHUR	
+		}
+		break;
+
+	case WM_INPUT: // jitmouse
+		if (m_rawinput->value)
+		{
+			UINT dwSize = 40;
+			static BYTE lpb[40];
+			RAWINPUT *raw;
+			GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
+			raw = (RAWINPUT*)lpb;
+
+			if (raw->header.dwType == RIM_TYPEMOUSE) 
+			{
+				extern int g_raw_mouse_x, g_raw_mouse_y;
+
+				g_raw_mouse_x += raw->data.mouse.lLastX;
+				g_raw_mouse_y += raw->data.mouse.lLastY;
+			}
 		}
 		break;
 
