@@ -2343,7 +2343,7 @@ void CL_InitLocal (void)
 	freelook =			Cvar_Get("freelook", "1", CVAR_ARCHIVE ); // jit, default to 1
 	lookspring =		Cvar_Get("lookspring", "0", CVAR_ARCHIVE);
 	lookstrafe =		Cvar_Get("lookstrafe", "0", CVAR_ARCHIVE);
-	sensitivity =		Cvar_Get("sensitivity", "10", CVAR_ARCHIVE); // jit, was "3"
+	sensitivity =		Cvar_Get("sensitivity", "5", CVAR_ARCHIVE); // jit, was "3"
 
 	m_pitch =			Cvar_Get("m_pitch", "0.022", CVAR_ARCHIVE);
 	m_yaw =				Cvar_Get("m_yaw", "0.022", 0);
