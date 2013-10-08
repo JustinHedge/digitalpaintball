@@ -92,7 +92,7 @@ DWORD		joy_numbuttons;
 static JOYINFOEX	ji;
 
 qboolean	in_appactive;
-static qboolean	g_windowed = false;
+qboolean	g_windowed = false;
 
 int g_raw_mouse_x = 0; // jitmouse
 int g_raw_mouse_y = 0; // jitmouse

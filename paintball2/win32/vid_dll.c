@@ -35,6 +35,7 @@ cvar_t *win_noalttab;
 cvar_t *win_noaltenter = NULL; // jitkeyboard
 cvar_t *cl_customkeyboard; // jitkeyboard
 extern cvar_t *m_rawinput; // jitmouse
+extern qboolean g_windowed;
 
 #ifndef WM_MOUSEWHEEL
 #define WM_MOUSEWHEEL (WM_MOUSELAST+1)  // message that will be supported by the OS 
@@ -709,7 +710,7 @@ LONG WINAPI MainWndProc (
 		break;
 
 	case WM_INPUT: // jitmouse
-		if (m_rawinput->value)
+		if (m_rawinput->value && !(cls.key_dest == key_console || g_windowed && M_MenuActive())) // Don't accumulate in-game mouse input when at the console or menu
 		{
 			UINT dwSize = 40;
 			static BYTE lpb[40];
