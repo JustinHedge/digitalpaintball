@@ -99,7 +99,7 @@ void R_InitNoTexture (void) /// jit, renamed
 	}
 
 	r_notexture = GL_LoadPic("***r_notexture***", (byte *)notex, 16, 16, it_wall, 32);
-	hash_add(&gltextures_hash, "***r_notexture***", r_notexture); // jithash
+	hash_add(&gltextures_hash, "pics/***r_notexture***", r_notexture); // jithash
 
 	// jitfog (solid white texture)
 	for (x = 0; x < 8; x++)
