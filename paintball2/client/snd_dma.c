@@ -80,7 +80,7 @@ playsound_t	s_playsounds[MAX_PLAYSOUNDS];
 playsound_t	s_freeplays;
 playsound_t	s_pendingplays;
 
-int			s_beginofs;
+double		s_beginofs; // jitsound - fix int overflow
 
 cvar_t		*s_volume;
 cvar_t		*s_testsound;
@@ -851,7 +851,7 @@ void S_StartSound (vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float 
 	sfxcache_t	*sc;
 	int			vol;
 	playsound_t	*ps, *sort;
-	int			start;
+	double		start; // jitsound - fix int overflow
 
 	//A3D CHANGE
 	if (!sound_started && !a3dsound_started)
