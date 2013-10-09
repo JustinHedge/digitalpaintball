@@ -4560,6 +4560,7 @@ void R_Clear (void)
 			clearbits |= GL_STENCIL_BUFFER_BIT;
 		}
 
+		qgl.ClearDepth(1.0); // jit - This is the default value, but, for some reason, a vid_restart on my crappy intel laptop causes the world to stop drawing.  This fixes it.
 		qgl.Clear(clearbits);
 		gldepthmin = 0;
 		gldepthmax = 1;
