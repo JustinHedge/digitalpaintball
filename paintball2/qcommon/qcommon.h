@@ -42,7 +42,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define BUILD_S		"40" // jitversion, for strings.
 #define BUILD_YEAR	2013 // jitversion
 #define BUILD_MONTH	10 // jitversion
-#define BUILD_DAY	7 // jitversion
+#define BUILD_DAY	8 // jitversion
 #define	BASEDIRNAME	"pball" // jit, was "baseq2"
 #endif
 
