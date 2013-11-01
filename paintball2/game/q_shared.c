@@ -27,9 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <math.h> // jitskm
 
 
-#define DEG2RAD( a ) ( (float)a * (float)M_PI ) / 180.0F
-#define RAD2DEG( a ) ( a * 180.0F ) / M_PI
-
 vec3_t vec3_origin = {0,0,0};
 
 //============================================================================
@@ -2008,7 +2005,7 @@ qboolean Info_Validate (char *s)
 }
 
 
-void Info_SetValueForKey (char *s, char *key, char *value)
+void Info_SetValueForKey (char *s, const char *key, const char *value)
 {
 	char	newi[MAX_INFO_STRING], *v;
 	//int		c;

@@ -177,6 +177,9 @@ typedef union {
 #define M_PI		3.14159265358979323846f	// matches value in gcc v2 math.h
 #endif
 
+#define DEG2RAD(a) (((float)a * (float)M_PI) / 180.0f)
+#define RAD2DEG(a) ((a * 180.0f) / (float)M_PI)
+
 struct cplane_s;
 
 extern vec3_t vec3_origin;
@@ -367,7 +370,7 @@ char	*va(char *format, ...);
 
 char *Info_ValueForKey (char *s, char *key);
 void Info_RemoveKey (char *s, const char *key);
-void Info_SetValueForKey (char *s, char *key, char *value);
+void Info_SetValueForKey (char *s, const char *key, const char *value);
 qboolean Info_Validate (char *s);
 
 /*
