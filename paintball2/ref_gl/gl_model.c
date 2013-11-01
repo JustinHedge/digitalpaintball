@@ -837,6 +837,7 @@ void Mod_LoadLeafs (lump_t *l)
 	mleaf_t 	*out;
 	int			i, j, count, p;
 	glpoly_t	*poly;
+	int			firstleafface;
 
 	in = (void *)(mod_base + l->fileofs);
 
@@ -860,9 +861,10 @@ void Mod_LoadLeafs (lump_t *l)
 		out->contents = p;
 		out->cluster = LittleShort(in->cluster);
 		out->area = LittleShort(in->area);
-		out->firstmarksurface = loadmodel->marksurfaces +
-			LittleShort(in->firstleafface);
-		out->nummarksurfaces = LittleShort(in->numleaffaces);
+		firstleafface = (unsigned short)LittleShort(in->firstleafface);
+		assert(firstleafface >= 0 && firstleafface < loadmodel->nummarksurfaces);
+		out->firstmarksurface = loadmodel->marksurfaces + firstleafface;
+		out->nummarksurfaces = (unsigned short)LittleShort(in->numleaffaces);
 
 		if (out->contents & (CONTENTS_WATER|CONTENTS_SLIME|CONTENTS_LAVA) && r_caustics->value) // jitcaustics
 		{

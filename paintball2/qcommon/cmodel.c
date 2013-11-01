@@ -422,11 +422,11 @@ void CMod_LoadLeafs (lump_t *l)
 
 	for (i = 0; i < count; i++, in++, out++)
 	{
-		out->contents = LittleLong (in->contents);
-		out->cluster = LittleShort (in->cluster);
-		out->area = LittleShort (in->area);
-		out->firstleafbrush = LittleShort (in->firstleafbrush);
-		out->numleafbrushes = LittleShort (in->numleafbrushes);
+		out->contents = LittleLong(in->contents);
+		out->cluster = LittleShort(in->cluster);
+		out->area = LittleShort(in->area);
+		out->firstleafbrush = (unsigned short)LittleShort(in->firstleafbrush);
+		out->numleafbrushes = (unsigned short)LittleShort(in->numleafbrushes);
 
 		if (out->cluster >= numclusters)
 			numclusters = out->cluster + 1;
