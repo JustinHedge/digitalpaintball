@@ -1,12 +1,20 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gamex86", "..\pball\src\paintball.vcproj", "{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}"
+	ProjectSection(ProjectDependencies) = postProject
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA} = {44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}
+		{370B8ED7-2016-4F3D-B829-18804879A927} = {370B8ED7-2016-4F3D-B829-18804879A927}
+	EndProjectSection
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "paintball2", "paintball2.vcproj", "{78DD81DB-C9E6-4AAC-AF53-B8A4F8E4C70D}"
 	ProjectSection(ProjectDependencies) = postProject
-		{370B8ED7-2016-4F3D-B829-18804879A927} = {370B8ED7-2016-4F3D-B829-18804879A927}
 		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10} = {3320FC8B-30BF-4A50-A3FB-00A02E99BA10}
+		{370B8ED7-2016-4F3D-B829-18804879A927} = {370B8ED7-2016-4F3D-B829-18804879A927}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ref_gl", "ref_gl\ref_gl.vcproj", "{370B8ED7-2016-4F3D-B829-18804879A927}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bots", "bots\bots.vcproj", "{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +65,22 @@ Global
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Release No Opt|Win32.ActiveCfg = Release No Opt|Win32
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Release|Win32.ActiveCfg = Release|Win32
 		{370B8ED7-2016-4F3D-B829-18804879A927}.Release|Win32.Build.0 = Release|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Debug Alpha|Win32.ActiveCfg = Debug|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Debug Alpha|Win32.Build.0 = Debug|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Debug|Win32.Build.0 = Debug|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.PB2Q2 - Debug|Win32.ActiveCfg = Debug|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.PB2Q2 - Debug|Win32.Build.0 = Debug|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.PB2Q2 - Release|Win32.ActiveCfg = Release|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.PB2Q2 - Release|Win32.Build.0 = Release|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Q2|Win32.ActiveCfg = Release|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Q2|Win32.Build.0 = Release|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Release Alpha|Win32.ActiveCfg = Release|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Release Alpha|Win32.Build.0 = Release|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Release No Opt|Win32.ActiveCfg = Release|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Release No Opt|Win32.Build.0 = Release|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Release|Win32.ActiveCfg = Release|Win32
+		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

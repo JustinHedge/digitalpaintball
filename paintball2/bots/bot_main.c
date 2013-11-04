@@ -1,0 +1,121 @@
+// Copyright (c) 2013 Nathan "jitspoe" Wulf
+// To be released under the GPL
+
+#include "bot_main.h"
+#include "bot_manager.h"
+
+#ifdef WIN32
+#define EXPORT __declspec(dllexport)
+#endif
+
+bot_export_t g_bot_export;
+bot_import_t bi;
+botmanager_t bots;
+
+
+EXPORT bot_export_t *GetBotAPI (bot_import_t *import)
+{
+	bi = *import;
+	g_bot_export.apiversion = BOT_API_VERSION; // need to actually validate this at some point.
+	g_bot_export.Init = BotInitLibrary;
+	g_bot_export.Shutdown = BotShutdown;
+	g_bot_export.GameEvent = BotHandleGameEvent;
+	g_bot_export.RunFrame = BotRunFrame;
+	g_bot_export.Command = BotCommand;
+	g_bot_export.ExitLevel = BotExitLevel;
+	g_bot_export.SpawnEntities = BotSpawnEntities;
+
+	return &g_bot_export;
+}
+
+void BotInitLibrary (void)
+{
+	bi.dprintf("DP Botlib Initialized.\n");
+	memset(&bots, 0, sizeof(bots));
+}
+
+
+void BotShutdown (void)
+{
+}
+
+
+void BotRunFrame (int msec)
+{
+	int i;
+
+	for (i = 0; i < bots.count; ++i)
+	{
+		BotMove(i, msec);
+	}
+}
+
+
+void BotExitLevel (void)
+{
+	int i;
+
+	for (i = 0; i < bots.count; ++i)
+	{
+		edict_t *ent = bots.ents[i];
+		const char *name = bi.GetClientName(ent);
+		Q_strncpyz(bots.names_to_readd[i], name, sizeof(bots.names_to_readd[i]));
+	}
+
+	bots.num_to_readd = bots.count;
+	bots.count = 0; // all clients and bots will disappear when the map changes and must be readded.
+}
+
+
+static void SetBotUserInfo (char *userinfo, size_t size, const char *name)
+{
+	memset(userinfo, 0, size);
+	Info_SetValueForKey(userinfo, "name", name);
+	Info_SetValueForKey(userinfo, "hand", "2"); // Bot is centerhanded
+	Info_SetValueForKey(userinfo, "skin", "male/pb2b");
+}
+
+
+void AddBot (const char *name)
+{
+	char userinfo[MAX_INFO_STRING];
+	edict_t *ent;
+
+	if (bots.count >= MAX_BOTS)
+	{
+		bi.dprintf("You cannot add more than %d bots.\n", MAX_BOTS);
+	}
+
+	if (!name || !*name)
+		name = "DPBot";
+
+	SetBotUserInfo(userinfo, sizeof(userinfo), name);
+	ent = bi.AddBotClient(userinfo);
+
+	if (ent)
+	{
+		bots.ents[bots.count] = ent;
+		bots.count++;
+
+		bi.dprintf("Adding bot: %s\n", name);
+	}
+	else
+	{
+		bi.dprintf("Failed to add bot.  Server full?  Try increasing maxclients.\n");
+	}
+}
+
+// Called each map start
+void BotSpawnEntities (void)
+{
+	int i;
+
+	bots.count = 0; // make sure bots are cleared out, otherwise things can get screwy.
+
+	for (i = 0; i < bots.num_to_readd; ++i)
+	{
+		AddBot(bots.names_to_readd[i]);
+	}
+
+	bots.num_to_readd = 0;
+}
