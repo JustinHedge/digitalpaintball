@@ -547,15 +547,15 @@ void SV_GameMap (const char *map) // jitmap - broke this into a separate functio
 	}
 
 	// start up the next map
-	SV_Map(false, map, false );
+	SV_Map(false, map, false);
 
 	// archive server state
-	Q_strncpyz(svs.mapcmd, Cmd_Argv(1), sizeof(svs.mapcmd)-1);
+	Q_strncpyz(svs.mapcmd, Cmd_Argv(1), sizeof(svs.mapcmd) - 1);
 
 	// copy off the level to the autosave slot
 	if (!deathmatch->value) // jit -- don't try to save during deathmatch...
 	{
-		SV_WriteServerFile (true);
+		SV_WriteServerFile(true);
 		SV_CopySaveGame("current", "save0");
 	}
 }
