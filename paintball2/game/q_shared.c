@@ -30,70 +30,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 vec3_t vec3_origin = {0,0,0};
 
 //============================================================================
-
 void RotatePointAroundVector (vec3_t dst, const vec3_t dir, const vec3_t point, float degrees)
 {
-	float	m[3][3];
-	float	im[3][3];
-	float	zrot[3][3];
-	float	tmpmat[3][3];
-	float	rot[3][3];
+	// jit - rewritten using code here for reference: http://www.blitzbasic.com/Community/posts.php?topic=57616
+	float u = dir[0], v = dir[1], w = dir[2];
+	float x = point[0], y = point[1], z = point[2];
+	float ux = u * x, uy = u * y, uz = u * z, vx = v * x, vy = v * y, vz = v * z, wx = w * x, wy = w * y, wz = w * z;
+	float uu = u * u, ww = w * w, vv = v * v;
+	float s = (float)sin(DEG2RAD(degrees));
+	float c = (float)cos(DEG2RAD(degrees));
 
-	vec3_t vr, vup, vf;
-
-	vf[0] = dir[0];
-	vf[1] = dir[1];
-	vf[2] = dir[2];
-
-	PerpendicularVector(vr, dir);
-	CrossProduct(vr, vf, vup);
-
-	m[0][0] = vr[0];
-	m[1][0] = vr[1];
-	m[2][0] = vr[2];
-
-	m[0][1] = vup[0];
-	m[1][1] = vup[1];
-	m[2][1] = vup[2];
-
-	m[0][2] = vf[0];
-	m[1][2] = vf[1];
-	m[2][2] = vf[2];
-
-	//r1: copies a bunch of stuff we overwrite, better to do individually
-	//memcpy( im, m, sizeof( im ) );
-
-	im[0][0] = m[0][0]; //r1
-	im[0][1] = m[1][0];
-	im[0][2] = m[2][0];
-
-	im[1][0] = m[0][1];
-	im[1][1] = m[1][1]; //r1
-	im[1][2] = m[2][1];
-
-	im[2][0] = m[0][2];
-	im[2][1] = m[1][2];
-	im[2][2] = m[2][2]; //r1
-
-	zrot[0][0] = (float)cos(DEG2RAD(degrees));
-	zrot[0][1] = (float)sin(DEG2RAD(degrees));
-	zrot[0][2] = 0;
-
-	zrot[1][0] = (float)-sin(DEG2RAD(degrees));
-	zrot[1][1] = (float)cos(DEG2RAD(degrees));
-	zrot[1][2] = 0;
-
-	zrot[2][0] = 0.0f;
-	zrot[2][1] = 0.0f;
-	zrot[2][2] = 1.0f;
-
-	R_ConcatRotations(m, zrot, tmpmat);
-	R_ConcatRotations(tmpmat, im, rot);
-
-	dst[0] = rot[0][0] * point[0] + rot[0][1] * point[1] + rot[0][2] * point[2];
-	dst[1] = rot[1][0] * point[0] + rot[1][1] * point[1] + rot[1][2] * point[2];
-	dst[2] = rot[2][0] * point[0] + rot[2][1] * point[1] + rot[2][2] * point[2];
+	dst[0] = u * (ux + vy + wz) + (x * (vv + ww) - u * (vy + wz)) * c + (vz - wy) * s;
+	dst[1] = v * (ux + vy + wz) + (y * (uu + ww) - v * (ux + wz)) * c + (wx - uz) * s;
+	dst[2] = w * (ux + vy + wz) + (z * (uu + vv) - w * (ux + vy)) * c + (uy - vx) * s;
 }
+
 
 float DampIIR (float src, float dest, float factor, float dt)
 {
@@ -158,39 +109,30 @@ void ProjectPointOnPlane (vec3_t dst, const vec3_t p, const vec3_t normal)
 	dst[2] = p[2] - d * n[2];
 }
 
-/*
-** assumes "src" is normalized
-*/
-void PerpendicularVector( vec3_t dst, const vec3_t src )
+// assumes "src" is normalized
+void PerpendicularVector (vec3_t dst, const vec3_t src)
 {
 	int	pos;
 	int i;
-	float minelem = 1.0F;
+	float minelem = 1.0f;
 	vec3_t tempvec;
 
-	/*
-	** find the smallest magnitude axially aligned vector
-	*/
-	for ( pos = 0, i = 0; i < 3; i++ )
+	// find the smallest magnitude axially aligned vector
+	for (pos = 0, i = 0; i < 3; ++i)
 	{
-		if ( fabs( src[i] ) < minelem )
+		if (fabs(src[i]) < minelem)
 		{
 			pos = i;
-			minelem = fabs( src[i] );
+			minelem = fabs(src[i]);
 		}
 	}
-	tempvec[0] = tempvec[1] = tempvec[2] = 0.0F;
-	tempvec[pos] = 1.0F;
 
-	/*
-	** project the point onto the plane defined by src
-	*/
-	ProjectPointOnPlane( dst, tempvec, src );
+	tempvec[0] = tempvec[1] = tempvec[2] = 0.0f;
+	tempvec[pos] = 1.0f;
 
-	/*
-	** normalize the result
-	*/
-	VectorNormalize( dst );
+	// project the point onto the plane defined by src
+	ProjectPointOnPlane(dst, tempvec, src);
+	VectorNormalize(dst);
 }
 
 
@@ -882,6 +824,18 @@ int Q_Round (float val) // jit
 	}
 }
 
+// Clamp the values from -1 to 1.  Invalid floating point values are generated outside of these bounds
+float Q_asin (vec_t v) // jit
+{
+	if (v > 1.0f)
+		v = 1.0f;
+
+	if (v < -1.0f)
+		v = -1.0f;
+
+	return asin(v);
+}
+
 //============================================================================
 // jitskm
 // taken from qfusion
@@ -1146,7 +1100,7 @@ void Quat_ToEulerAngle (const quat_t q, vec3_t angle) // jitskm
 	q02 = q0*q0; q12 = q1*q1; q22 = q2*q2; q32 = q3*q3;
 
 	angle[YAW]  = RAD2DEG(atan2(2.0f * (q2*q3 + q0*q1), (q02-q12-q22+q32))); // phi
-	angle[ROLL] = RAD2DEG(asin(-2.0f * (q1*q3 - q0*q2))); // theta
+	angle[ROLL] = RAD2DEG(Q_asin(-2.0f * (q1*q3 - q0*q2))); // theta
 	angle[PITCH]   = RAD2DEG(atan2(2.0f * (q1*q2 + q0*q3), (q02+q12-q22-q32))); // psi
 }
 
@@ -1177,7 +1131,7 @@ void Matrix_EulerAngles (vec3_t m[3], vec3_t angles)
 	vec_t	c;
 	vec_t	pitch, yaw, roll;
 
-	pitch = -asin(m[0][2]);
+	pitch = -Q_asin(m[0][2]);
 	c = cos(pitch);
 	pitch = RAD2DEG(pitch);
 
@@ -1207,7 +1161,7 @@ void Matrix_EulerAngles (vec3_t m[3], vec3_t angles)
 void Matrix_EulerAngles2 (vec3_t m[3], vec3_t angles) // jitskm, modified to work the way I think it should.
 {
 	vec_t c;
-	vec_t pitch = -asin(m[0][2]);
+	vec_t pitch = -Q_asin(m[0][2]);
 
 	angles[PITCH] = RAD2DEG(pitch);
 	c = 1.0f / fabs(cos(pitch));
