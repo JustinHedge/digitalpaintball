@@ -982,6 +982,18 @@ void jpeg_mem_src(j_decompress_ptr cinfo, byte *mem, int len)
 LoadJPG
 ==============
 */
+jmp_buf jpeg_error_jump;
+
+void jpeg_error_exit (j_common_ptr cinfo)
+{
+	// Display jpeg error.
+	char buffer[JMSG_LENGTH_MAX];
+
+	(*cinfo->err->format_message)(cinfo, buffer);
+	ri.Con_Printf(PRINT_ALL, "%s\n", buffer);
+	longjmp(jpeg_error_jump, -1);
+}
+
 void LoadJPG (char *filename, byte **pic, int *width, int *height)
 {
 	struct jpeg_decompress_struct	cinfo;
@@ -994,19 +1006,17 @@ void LoadJPG (char *filename, byte **pic, int *width, int *height)
 	if (!rawdata)
 		return;	
 
-	// Knightmare- check for bad data
-	if (rawdata[6] != 'J' ||
-		rawdata[7] != 'F' ||
-		rawdata[8] != 'I' ||
-		rawdata[9] != 'F')
+	// jits - If the library fails to load the image, it will jump back here.
+	if (setjmp(jpeg_error_jump))
 	{
-		ri.Con_Printf (PRINT_ALL, "Bad jpg file %s.\n", filename);
+		ri.Con_Printf(PRINT_ALL, "Bad jpg file: %s\n", filename);
 		ri.FS_FreeFile(rawdata);
 		return;
 	}
 
 	// Initialise libJpeg Object
 	cinfo.err = jpeg_std_error(&jerr);
+	cinfo.err->error_exit = jpeg_error_exit; // jit - don't exit on a bad jpeg image.
 	jpeg_create_decompress(&cinfo);
 
 	// Feed JPEG memory into the libJpeg Object
