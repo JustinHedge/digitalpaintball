@@ -1068,15 +1068,15 @@ dynamic:
 
 	if (is_dynamic)
 	{
-		unsigned	temp[128*128];
+		unsigned	temp[128 * 128];
 		int			smax, tmax;
 
 		if ((surf->styles[map] >= 32 || surf->styles[map] == 0) && (surf->dlightframe != r_framecount))
 		{
-			smax = (surf->extents[0]>>4)+1;
-			tmax = (surf->extents[1]>>4)+1;
+			smax = (surf->extents[0] >> 4) + 1;
+			tmax = (surf->extents[1] >> 4) + 1;
 
-			R_BuildLightMap(surf, (void*)temp, smax*4);
+			R_BuildLightMap(surf, (void*)temp, smax * 4);
 			R_SetCacheState(surf);
 
 			GL_MBind(QGL_TEXTURE1, gl_state.lightmap_texnums[surf->lightmaptexturenum]); // jitgentex
@@ -1092,10 +1092,10 @@ dynamic:
 		}
 		else
 		{
-			smax = (surf->extents[0]>>4)+1;
-			tmax = (surf->extents[1]>>4)+1;
+			smax = (surf->extents[0] >> 4) + 1;
+			tmax = (surf->extents[1] >> 4) + 1;
 
-			R_BuildLightMap(surf, (void*)temp, smax*4);
+			R_BuildLightMap(surf, (void*)temp, smax * 4);
 
 			GL_MBind(QGL_TEXTURE1, gl_state.lightmap_texnums[0]); // jitgentex
 
@@ -1120,20 +1120,24 @@ dynamic:
 			float scroll;
 			GL_MBind(QGL_TEXTURE0, image->texnum);
 	
-			scroll = -64 * ((r_newrefdef.time*0.025 /* / 40.0*/) - (int)(r_newrefdef.time*0.025 /* / 40.0 */));
+			scroll = -64.0f * ((r_newrefdef.time * 0.025f /* / 40.0*/) - (int)(r_newrefdef.time * 0.025f /* / 40.0 */));
+
 			if (scroll == 0.0)
-				scroll = -64.0;
+				scroll = -64.0f;
 
 			for (p = surf->polys; p; p = p->chain)
 			{
 				v = p->verts[0];
+
 				qgl.Begin(GL_POLYGON);
-				for (i=0; i< nv; i++, v+= VERTEXSIZE)
+
+				for (i = 0; i < nv; ++i, v += VERTEXSIZE)
 				{
-					qgl.MultiTexCoord2fARB(QGL_TEXTURE0, (v[3]+scroll), v[4]);
+					qgl.MultiTexCoord2fARB(QGL_TEXTURE0, (v[3] + scroll), v[4]);
 					qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 					qgl.Vertex3fv(v);
 				}
+
 				qgl.End();
 			}
 		}
@@ -1151,12 +1155,14 @@ dynamic:
 				{
 					v = p->verts[0];
 					qgl.Begin(GL_POLYGON);
-					for (i=0; i<nv; i++, v+=VERTEXSIZE)
+
+					for (i = 0; i < nv; ++i, v += VERTEXSIZE)
 					{
 						qgl.MultiTexCoord2fARB(QGL_TEXTURE0, v[3], v[4]);
 						qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
 						qgl.Vertex3fv(v);
 					}
+
 					qgl.End();
 				}
 			}
@@ -1164,7 +1170,7 @@ dynamic:
 //PGM
 //==========
 	}
-	else
+	else // not is_dynamic
 	{
 		c_brush_polys++;
 		GL_MBind(QGL_TEXTURE1, gl_state.lightmap_texnums[lmtex]); // jitgentex
@@ -1185,12 +1191,14 @@ dynamic:
 			{
 				v = p->verts[0];
 				qgl.Begin(GL_POLYGON);
-				for (i=0; i<nv; i++, v+=VERTEXSIZE)
+
+				for (i = 0; i < nv; i++, v += VERTEXSIZE)
 				{
-					qgl.MultiTexCoord2fARB(QGL_TEXTURE0, (v[3]+scroll), v[4]);
+					qgl.MultiTexCoord2fARB(QGL_TEXTURE0, (v[3] + scroll), v[4]);
 					qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
-					qgl.Vertex3fv (v);
+					qgl.Vertex3fv(v);
 				}
+
 				qgl.End();
 			}
 		}
@@ -1212,9 +1220,37 @@ dynamic:
 				for (p = surf->polys; p; p = p->chain)
 				{
 					v = p->verts[0];
+
+// jit - debugging tool that colors faces in the map based on how many triangles they have.
+//#define COLORPOLYCOUNT
+#ifdef COLORPOLYCOUNT // jitest
+					GL_TexEnv(GL_COMBINE_EXT);
+
+					switch (nv)
+					{
+					case 3:
+						qgl.Color3f(1.0f, 0.0f, 0.0f);
+						break;
+					case 4:
+						qgl.Color3f(0.0f, 1.0f, 0.0f);
+						break;
+					case 5:
+						qgl.Color3f(0.0f, 0.0f, 1.0f);
+						break;
+					case 6:
+						qgl.Color3f(1.0f, 1.0f, 0.0f);
+						break;
+					case 7:
+						qgl.Color3f(1.0f, 0.0f, 1.0f);
+						break;
+					default:
+						qgl.Color3f(1.0f, 1.0f, 1.0f);
+					}
+#endif
+
 					qgl.Begin(GL_POLYGON);
 
-					for (i=0; i<nv; i++, v+=VERTEXSIZE)
+					for (i = 0; i < nv; ++i, v += VERTEXSIZE)
 					{
 						qgl.MultiTexCoord2fARB(QGL_TEXTURE0, v[3], v[4]);
 						qgl.MultiTexCoord2fARB(QGL_TEXTURE1, v[5], v[6]);
@@ -1510,8 +1546,8 @@ void R_RecursiveWorldNode (mnode_t *node)
 		sidebit = SURF_PLANEBACK;
 	}
 
-// recurse down the children, front side first
-	R_RecursiveWorldNode (node->children[side]);
+	// recurse down the children, front side first
+	R_RecursiveWorldNode(node->children[side]);
 
 	// draw stuff
 	for (c = node->numsurfaces, surf = r_worldmodel->surfaces + node->firstsurface; c; c--, surf++)
@@ -1524,7 +1560,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 
 		if (surf->texinfo->flags & SURF_SKY)
 		{	// just adds to visible sky bounds
-			R_AddSkySurface (surf);
+			R_AddSkySurface(surf);
 		}
 		else if (surf->texinfo->flags & SURF_NODRAW)
 		{
@@ -1585,6 +1621,105 @@ void R_RecursiveWorldNode (mnode_t *node)
 	// recurse down the back side
 	R_RecursiveWorldNode(node->children[!side]);
 }
+
+
+//#define TEMP_DRAWGLVIEW // jittemp
+
+#ifdef TEMP_DRAWGLVIEW
+typedef struct glview_vertex_s {
+	vec3_t vert;
+	vec3_t color;
+} glview_vertex_t;
+
+#define MAX_GLVIEW_VERTS 4096
+#define MAX_GLVIEW_FACES 1024
+#define GLVIEW_SCALE 5.0f
+
+glview_vertex_t g_glview_verts[MAX_GLVIEW_VERTS];
+int g_glview_vertcounts[MAX_GLVIEW_FACES];
+int g_glview_facecount = 0;
+
+// jittemp - something to display the files output by -glview in qbsp3.
+void R_LoadGLView (void)
+{
+	char *data = NULL;
+	g_glview_facecount = 0;
+
+	if (ri.FS_LoadFileZ("maps/inprogress/_smallbrushtest2.gl", &data) > 0)
+	{
+		char *dataptr = data;
+		char *s = COM_Parse(&dataptr);
+		int globalvertindex = 0;
+
+		while (s && *s)
+		{
+			int numverts = atoi(s);
+			int i;
+
+			for (i = 0; i < numverts; ++i)
+			{
+				int j;
+
+				for (j = 0; j < 3; ++j)
+					g_glview_verts[globalvertindex].vert[j] = atof(COM_Parse(&dataptr)) * GLVIEW_SCALE;
+
+				for (j = 0; j < 3; ++j)
+					g_glview_verts[globalvertindex].color[j] = atof(COM_Parse(&dataptr));
+
+				++globalvertindex;
+
+				if (globalvertindex >= MAX_GLVIEW_VERTS)
+					goto glviewmaxed;
+			}
+
+			g_glview_vertcounts[g_glview_facecount] = numverts;
+			++g_glview_facecount;
+
+			if (g_glview_facecount >= MAX_GLVIEW_FACES)
+				goto glviewmaxed;
+
+			s = COM_Parse(&dataptr);
+		}
+
+glviewmaxed:
+		ri.FS_FreeFile(data);
+	}
+}
+
+
+void R_DrawGLView (void)
+{
+	static qboolean loaded = false;
+	int faceindex;
+	int vertindex = 0;
+
+	if (!loaded)
+	{
+		R_LoadGLView();
+		loaded = true;
+	}
+
+	qgl.Color3f(1, 1, 1);
+	GLSTATE_DISABLE_BLEND
+
+	for (faceindex = 0; faceindex < g_glview_facecount; ++faceindex)
+	{
+		int vertcount = g_glview_vertcounts[faceindex];
+		int i;
+
+		qgl.Begin(GL_TRIANGLE_FAN);
+
+		for (i = 0; i < vertcount; ++i)
+		{
+			qgl.Vertex3fv(g_glview_verts[vertindex].vert);
+			qgl.Color3fv(g_glview_verts[vertindex].color);
+			++vertindex;
+		}
+
+		qgl.End();
+	}
+}
+#endif
 
 
 /*
@@ -1650,6 +1785,9 @@ void R_DrawWorld (void)
 			R_AddFog(); // jitfog
 	}
 
+#ifdef TEMP_DRAWGLVIEW
+	R_DrawGLView(); // jittemp
+#endif
 	R_DrawSkyBox();
 
 	if (gl_showtris->value && !qgl.MultiTexCoord2fARB)
