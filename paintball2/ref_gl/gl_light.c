@@ -799,8 +799,8 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	// === jitlight
 	sat = gl_lightmap_saturation->value;
 
-	if (sat < 0.2f)
-		sat = 0.2f;
+	if (sat < 0.3f)
+		sat = 0.3f;
 
 	if (sat > 1.0f)
 		sat = 1.0f;

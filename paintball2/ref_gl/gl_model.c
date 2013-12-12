@@ -705,7 +705,7 @@ void Mod_LoadFaces (lump_t *l)
 			out->stain_samples = loadmodel->staindata + i;
 		}
 		
-	// set the drawing flags
+		// set the drawing flags
 		 
 		if (out->texinfo->flags & SURF_WARP)
 		{
@@ -717,7 +717,7 @@ void Mod_LoadFaces (lump_t *l)
 				out->texturemins[i] = -8192;
 			}
 
-			GL_SubdivideSurface (out);	// cut up polygon for warps
+			GL_SubdivideSurface(out);	// cut up polygon for warps
 		}
 
 		// create lightmaps and polygons
@@ -862,9 +862,9 @@ void Mod_LoadLeafs (lump_t *l)
 		out->cluster = LittleShort(in->cluster);
 		out->area = LittleShort(in->area);
 		firstleafface = (unsigned short)LittleShort(in->firstleafface);
-		assert(firstleafface >= 0 && firstleafface < loadmodel->nummarksurfaces);
 		out->firstmarksurface = loadmodel->marksurfaces + firstleafface;
 		out->nummarksurfaces = (unsigned short)LittleShort(in->numleaffaces);
+		assert(firstleafface < loadmodel->nummarksurfaces || !out->nummarksurfaces);
 
 		if (out->contents & (CONTENTS_WATER|CONTENTS_SLIME|CONTENTS_LAVA) && r_caustics->value) // jitcaustics
 		{

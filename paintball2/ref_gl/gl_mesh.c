@@ -315,8 +315,10 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 			{
 				// get the vertex count and primitive type
 				count = *order++;
+
 				if (!count)
 					break;		// done
+
 				if (count < 0)
 				{
 					count = -count;
