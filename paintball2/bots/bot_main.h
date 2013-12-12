@@ -22,6 +22,7 @@ void AddBot (const char *name);
 extern bot_import_t bi;
 
 // bot_move.c
-void BotMove (unsigned int botindex, int msec);
+void BotUpdateMovement (int msec);
+void BotObservePlayerInput (unsigned int player_index, edict_t *ent, pmove_t *pm);
 
 #endif

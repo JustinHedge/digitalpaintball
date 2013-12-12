@@ -17,6 +17,7 @@ typedef struct
 	qboolean	(*Command) (edict_t *ent, const char *cmd, const char *cmd2, const char *cmd3, const char *cmd4);
 	void		(*ExitLevel) (void); // called when level ends
 	void		(*SpawnEntities) (void); // called when level starts
+	void		(*ObservePlayerInput) (unsigned int player_index, edict_t *ent, pmove_t *pm); // called for each pm packet received from a client
 
 	// Block of unset data that will be zeroed out, in case of API changes, this will make new function pointers null,
 	// so crashes will be more obvious.

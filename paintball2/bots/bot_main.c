@@ -24,9 +24,11 @@ EXPORT bot_export_t *GetBotAPI (bot_import_t *import)
 	g_bot_export.Command = BotCommand;
 	g_bot_export.ExitLevel = BotExitLevel;
 	g_bot_export.SpawnEntities = BotSpawnEntities;
+	g_bot_export.ObservePlayerInput = BotObservePlayerInput;
 
 	return &g_bot_export;
 }
+
 
 void BotInitLibrary (void)
 {
@@ -42,12 +44,7 @@ void BotShutdown (void)
 
 void BotRunFrame (int msec)
 {
-	int i;
-
-	for (i = 0; i < bots.count; ++i)
-	{
-		BotMove(i, msec);
-	}
+	BotUpdateMovement(msec);
 }
 
 

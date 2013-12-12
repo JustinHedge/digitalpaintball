@@ -16,6 +16,8 @@ typedef struct botmovedata_s {
 	short			up; // jump/crouch
 	qboolean		shooting;
 	short			time_since_last_turn; // used for wandering
+	float			last_yaw;
+	float			last_pitch;
 } botmovedata_t;
 
 
