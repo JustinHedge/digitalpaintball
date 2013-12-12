@@ -815,6 +815,346 @@ void MakeSkyVec (float s, float t, int axis)
 	qgl.Vertex3fv(v);
 }
 
+
+//#define ENABLE_HYG_STARS // jittemp - render star data for skyboxes
+// http://astronexus.com/node/34
+#define HYG_STARS_MAP_TO_SPHERE
+#ifdef ENABLE_HYG_STARS
+
+#define MAX_HYG_STARS 180000
+//#define HYG_MIN_STARDIST 200.0f
+#define HYG_MIN_STARDIST 2000.0f
+#define HYG_STARDIST_SCALE 30.0f
+#define HYG_MIN_MAG 10
+
+//static vec3_t g_starpositions[MAX_HYG_STARS];
+typedef struct {
+	vec3_t origin;
+	byte color[4];
+	float scale;
+} starparticle_t;
+
+static starparticle_t g_starparticles[MAX_HYG_STARS];
+//particle_t g_starparticles[MAX_HYG_STARS];
+//particle_t g_starparticles_white[MAX_HYG_STARS];
+static qboolean g_starsloaded = false;
+static qboolean g_numstars = 0;
+
+// VC's atof is super slow on long buffers because it does a strlen.
+// Copy it to a small buffer temporarily to speed it up.  Meh.
+float Meh_AtoF (const char *s)
+{
+	char meh[32];
+
+	Q_strncpyzna(meh, s, sizeof(meh));
+	return atof(meh);
+}
+
+void StarColorIndexToRGB (float colorindex, vec_t *color)
+{
+	// I have no idea how accurate this is.  I'm just guessing based on this:
+	// http://domeofthesky.com/clicks/bv.html
+	// -.29 = blue
+	// 0 = white
+	// .59 = yellow
+	// .82 = orange
+	// 1.41 = red
+	// and http://curious.astro.cornell.edu/question.php?number=715
+	// -.33 = blue
+	// 0.15 = bluish white
+	// 0.44 = yellow-white
+	// 0.68 = yellow
+	// 1.15 = orange
+	// 1.64 = red
+	int i;
+
+	VectorSet(color, 1.0f, 1.0f, 1.0f);
+
+	colorindex -= 0.4f; // shift so 0 is white
+
+	if (colorindex < 0)
+	{
+		// remove red and green to make blue
+		color[0] += colorindex * 1.5f;
+		color[1] += colorindex * 1.5f;
+	}
+	else
+	{
+		// Just kind of guessing with arbitrary at this point to get something that looks decent.
+		color[1] -= colorindex / 2; // remove green
+		color[2] -= colorindex / 1.5; // remove blue
+	}
+
+	for (i = 0; i < 3; ++i)
+	{
+		if (color[i] < 0.0f)
+			color[i] = 0.0f;
+
+		if (color[i] > 1.0f)
+			color[i] = 1.0f;
+	}
+
+	VectorNormalize(color);
+}
+
+
+void R_LoadStars (void) // jittemp
+{
+	char *buff;
+	int file_len = ri.FS_LoadFileZ("hygxyz.csv", (void **)&buff);
+	vec3_t x_axis = { 1.0f, 0.0f, 0.0f };
+	vec3_t y_axis = { 0.0f, 1.0f, 0.0f };
+	
+	if (file_len > 0)
+	{
+		int commacount = 0;
+		char *s = buff;
+		int n = 0;
+		int i;
+
+		// Skip first 2 lines (header and sun)
+		for (i = 0; i < 2; ++i)
+		{
+			while (n < file_len && *s != '\n')
+			{
+				++n;
+				++s;
+			}
+
+			++n;
+			++s;
+		}
+
+		while (n < file_len && g_numstars < MAX_HYG_STARS)
+		{
+			float absmag = 9999999.f;
+			float mag = 99999.9f;
+			float colorindex = 0.0f;
+			qboolean has_proper_name = false;
+
+			while (*s != '\n' && n < file_len)
+			{
+				if (*s == ',')
+				{
+					++commacount;
+
+					if (commacount == 17) // X = up (vernal equinox)
+						g_starparticles[g_numstars].origin[2] = Meh_AtoF(s + 1);
+					else if (commacount == 18) // Y = along equator (RA)
+						g_starparticles[g_numstars].origin[0] = Meh_AtoF(s + 1);
+					else if (commacount == 19) // Z = toward north pole
+						g_starparticles[g_numstars].origin[1] = Meh_AtoF(s + 1);
+					else if (commacount == 14) // absmag
+						absmag = Meh_AtoF(s + 1);
+					else if (commacount == 13) // mag
+						mag = Meh_AtoF(s + 1);
+					else if (commacount == 16) // colorindex
+						colorindex = Meh_AtoF(s + 1);
+					else if (commacount == 6)
+					{
+						if (s[1] != ',')
+							has_proper_name = true;
+					}
+
+				}
+
+				++n;
+				++s;
+			}
+
+			++n;
+			++s;
+			commacount = 0;
+
+			if (absmag < 0)
+				absmag = 0;
+
+			if (absmag > 15)
+				absmag = 15;
+
+			if (mag < HYG_MIN_MAG)
+			{
+				float colormagscale;
+#ifdef HYG_STARS_MAP_TO_SPHERE
+				float magscale = (HYG_MIN_MAG - /*abs*/mag) / HYG_MIN_MAG;
+#else
+				float magscale = (HYG_MIN_MAG - absmag) / HYG_MIN_MAG;
+#endif
+				vec3_t color;
+				
+				StarColorIndexToRGB(colorindex, color);
+
+				if (magscale > 1.0f)
+					magscale = 1.0f;
+
+				if (magscale < 0.0f)
+					continue;
+
+#ifdef HYG_STARS_MAP_TO_SPHERE
+				colormagscale = 0.01f + powf(magscale, 2.5f) * 2.0f;
+
+				if (colormagscale > 1.0f)
+					colormagscale = 1.0f;
+#else
+				colormagscale = magscale * magscale;
+#endif
+
+#ifdef HYG_STARS_MAP_TO_SPHERE
+				VectorNormalize(g_starparticles[g_numstars].origin);
+
+				RotatePointAroundVector(g_starparticles[g_numstars].origin, y_axis, g_starparticles[g_numstars].origin, -100.0f);
+				RotatePointAroundVector(g_starparticles[g_numstars].origin, x_axis, g_starparticles[g_numstars].origin, 35.0f); // latitude of 35 degrees
+
+				VectorScale(g_starparticles[g_numstars].origin, HYG_MIN_STARDIST, g_starparticles[g_numstars].origin);
+				g_starparticles[g_numstars].scale = 4.0f + magscale * magscale* magscale * magscale * magscale * 30.0f;
+
+				if (g_starparticles[g_numstars].scale > 14.0f)
+					g_starparticles[g_numstars].scale = 14.0f;
+
+				g_starparticles[g_numstars].scale *= 0.8f;
+
+#else
+				VectorScale(g_starparticles[g_numstars].origin, HYG_STARDIST_SCALE, g_starparticles[g_numstars].origin);
+				g_starparticles[g_numstars].scale = 1 + magscale * magscale * magscale * magscale * 20;
+#endif
+				g_starparticles[g_numstars].color[0] = 255 * color[0] * colormagscale;
+				g_starparticles[g_numstars].color[1] = 255 * color[1] * colormagscale;// * (has_proper_name ? 1 : 0);
+				g_starparticles[g_numstars].color[2] = 255 * color[2] * colormagscale;
+				g_starparticles[g_numstars].color[3] = 255 * colormagscale;
+
+				
+
+				++g_numstars;
+			}
+		}
+
+		ri.FS_FreeFile(buff);
+		g_starsloaded = true;
+	}
+}
+
+void R_DrawStarHelper (const vec_t *origin, const vec_t *up_i, const vec_t *right_i, const byte *color, float scale)
+{
+	vec3_t v, up, right;
+
+	VectorScale(up_i, scale, up);
+	VectorScale(right_i, scale, right);
+
+	qgl.Color4ubv(color);
+
+	// Upper left
+	qgl.TexCoord2f(0.0f, 0.0f);
+	VectorAdd(origin, up, v);
+	VectorSubtract(v, right, v);
+	qgl.Vertex3fv(v);
+	// Upper right
+	qgl.TexCoord2f(1.0f, 0.0f);
+	VectorAdd(origin, up, v);
+	VectorAdd(v, right, v);
+	qgl.Vertex3fv(v);
+	// Lower right
+	qgl.TexCoord2f(1.0f, 1.0f);
+	VectorSubtract(origin, up, v);
+	VectorAdd(v, right, v);
+	qgl.Vertex3fv(v);
+	// Lower left
+	qgl.TexCoord2f(0.0f, 1.0f);
+	VectorSubtract(origin, up, v);
+	VectorSubtract(v, right, v);
+	qgl.Vertex3fv(v);
+}
+
+void R_DrawMoon (void)
+{
+	static image_t *r_moontexture = NULL;
+	vec3_t moon_angles = { 37.62f, -97.73f, 0.0f };
+	vec3_t moon_pos;
+	vec3_t vec_from_moon;
+	vec3_t up, right;
+	byte white[4] = { 255, 255, 255, 255 };
+	vec3_t			worldup = { 0.0f, 0.0f, 1.0f };
+
+	if (!r_moontexture)
+	{
+		r_moontexture = GL_FindImage("textures/temp/moon1.tga", it_wall);
+	}
+
+	AngleVectors(moon_angles, moon_pos, NULL, NULL);
+	VectorScale(moon_pos, HYG_MIN_STARDIST, moon_pos);
+
+	VectorSubtract(r_origin, moon_pos, vec_from_moon);
+	CrossProduct(worldup, vec_from_moon, right);
+	CrossProduct(vec_from_moon, right, up);
+	VectorNormalize(up);
+	VectorNormalize(right);
+	GL_Bind(r_moontexture->texnum);
+	qgl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qgl.Begin(GL_QUADS);
+	R_DrawStarHelper(moon_pos, up, right, white, 90.0f);
+	qgl.End();
+}
+
+void R_DrawStars (void)
+{
+	if (!g_starsloaded)
+	{
+		R_LoadStars();
+	}
+	else
+	{
+		const starparticle_t *p;
+		int				i;
+		vec3_t			up, right, vec_from_star;
+		vec3_t			worldup = { 0.0f, 0.0f, 1.0f };
+		float			scale;
+		byte			white_color[4];
+
+		qgl.PushMatrix();
+		qgl.Translatef(r_origin[0], r_origin[1], r_origin[2]);
+		//qgl.Rotatef(40.0f, 1.0f, 0.0f, 0.0f);
+		//qgl.Rotatef(-50.0f, 0.0f, 1.0f, 0.0f);
+		GL_Bind(r_startexture->texnum);
+		qgl.DepthMask(GL_FALSE);		// no z buffering
+		qgl.BlendFunc(GL_ONE, GL_ONE);
+		GLSTATE_ENABLE_BLEND;
+		GL_TexEnv(GL_MODULATE);
+		qgl.Begin(GL_QUADS);
+
+		//VectorScale(vup, 1.5, up);
+		//VectorScale(vright, 1.5, right);
+
+		for (p = g_starparticles, i = 0; i < g_numstars; ++i, ++p)
+		{
+			VectorSubtract(r_origin, p->origin, vec_from_star);
+			CrossProduct(worldup, vec_from_star, right);
+			CrossProduct(vec_from_star, right, up);
+			VectorNormalize(up);
+			VectorNormalize(right);
+
+			scale = p->scale;// * p->scale;
+			R_DrawStarHelper(p->origin, up, right, p->color, scale);
+			white_color[0] = p->color[3];
+			white_color[1] = p->color[3];
+			white_color[2] = p->color[3];
+			white_color[3] = p->color[3];
+			R_DrawStarHelper(p->origin, up, right, white_color, scale);
+		}
+
+		qgl.End();
+
+#ifdef HYG_STARS_MAP_TO_SPHERE
+		R_DrawMoon();
+#endif
+
+		qgl.PopMatrix();
+		GLSTATE_DISABLE_BLEND;
+		qgl.Color4f(1.0f, 1.0f, 1.0f, 1.0f);
+		qgl.DepthMask(GL_TRUE);		// back to normal Z buffering
+		GL_TexEnv(GL_REPLACE);
+	}
+}
+#endif // ENABLE_HYG_STARS
+
 /*
 ==============
 R_DrawSkyBox
@@ -824,17 +1164,23 @@ extern qboolean fogenabled;
 int	skytexorder[6] = {0,2,1,3,4,5};
 void R_DrawSkyBox (void)
 {
+#ifdef ENABLE_HYG_STARS
+	R_DrawStars(); // jittemp
+#else
 	int		i;
 
 	if (fogenabled) // jitfog
 		qgl.Disable(GL_FOG);
 
 	if (skyrotate)
-	{	// check for no sky at all
-		for (i=0; i<6; i++)
-			if (skymins[0][i] < skymaxs[0][i]
-			&& skymins[1][i] < skymaxs[1][i])
+	{
+		// check for no sky at all
+		for (i = 0; i < 6; ++i)
+		{
+			if (skymins[0][i] < skymaxs[0][i] && skymins[1][i] < skymaxs[1][i])
 				break;
+		}
+
 		if (i == 6)
 			return;		// nothing visible
 	}
@@ -850,21 +1196,21 @@ void R_DrawSkyBox (void)
 		GL_TexEnv(GL_MODULATE);
 	}
 
-	for (i=0; i<6; i++)
+	for (i = 0; i < 6; ++i)
 	{
 		if (skyrotate)
-		{	// hack, forces full sky to draw when rotating
+		{
+			// hack, forces full sky to draw when rotating
 			skymins[0][i] = -1;
 			skymins[1][i] = -1;
 			skymaxs[0][i] = 1;
 			skymaxs[1][i] = 1;
 		}
 
-		if (skymins[0][i] >= skymaxs[0][i]
-		|| skymins[1][i] >= skymaxs[1][i])
+		if (skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])
 			continue;
 
-		GL_Bind (sky_images[skytexorder[i]]->texnum);
+		GL_Bind(sky_images[skytexorder[i]]->texnum);
 
 		qgl.Begin(GL_QUADS);
 		MakeSkyVec(skymins[0][i], skymins[1][i], i);
@@ -882,6 +1228,7 @@ void R_DrawSkyBox (void)
 		GLSTATE_DISABLE_BLEND
 		qgl.Enable(GL_FOG);
 	}
+#endif
 }
 
 

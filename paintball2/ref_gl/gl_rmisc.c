@@ -64,6 +64,7 @@ byte	missing_texture[16][16] =
 };
 
 extern hash_table_t gltextures_hash; // jithash
+#define STARTEX_RES 16
 
 void R_InitNoTexture (void) /// jit, renamed
 {
@@ -71,6 +72,7 @@ void R_InitNoTexture (void) /// jit, renamed
 	byte	notex[16][16][4];
 	byte	data[8][8][4];
 	byte	white[8][8][4]; // jitfog
+	byte	startext[STARTEX_RES][STARTEX_RES][4]; // jittemp
 
 	// particle texture
 	for (x = 0; x < 8; x++)
@@ -85,6 +87,37 @@ void R_InitNoTexture (void) /// jit, renamed
 	}
 
 	r_particletexture = GL_LoadPic("***particle***", (byte *)data, 8, 8, it_sprite, 32);
+
+	// star texture
+	for (x = 0; x < STARTEX_RES; ++x)
+	{
+		for (y = 0; y < STARTEX_RES; ++y)
+		{
+			float halfres = STARTEX_RES / 2;
+			float fx = (halfres - x) / halfres;
+			float fy = (halfres - y) / halfres;
+			float dist = sqrt(fx * fx + fy * fy) - 0.1f;
+			float val;
+			
+			if (dist > 1)
+				dist *= 2.0f;
+			val = 1.0f - dist / 4.0f;
+			val = val * val * val * val * val * val * val * val * val * val * val * val * val * val * val * val * val * val * val;
+			
+			if (val < 0.01f)
+				val = 0.0f;
+
+			if (val > 1.0f)
+				val = 1.0f;
+
+			startext[y][x][0] = 255 * val; //star_texture[x][y] * 255 / 9;
+			startext[y][x][1] = 255 * val; //star_texture[x][y] * 255 / 9;
+			startext[y][x][2] = 255 * val; //star_texture[x][y] * 255 / 9;
+			startext[y][x][3] = 255;
+		}
+	}
+
+	r_startexture = GL_LoadPic("***star***", (byte *)startext, STARTEX_RES, STARTEX_RES, it_sprite, 32);
 
 	for (x = 0; x < 16; x++)
 	{

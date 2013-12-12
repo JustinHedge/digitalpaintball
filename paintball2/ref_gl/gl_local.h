@@ -123,6 +123,7 @@ extern	int			numgltextures;
 extern	image_t		*r_notexture;
 extern	image_t		*r_whitetexture; // jitfog
 extern	image_t		*r_particletexture;
+extern	image_t		*r_startexture; // jittemp
 extern	image_t		*r_caustictexture; // jitcaustics
 extern	entity_t	*currententity;
 extern	model_t		*currentmodel;

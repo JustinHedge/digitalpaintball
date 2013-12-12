@@ -3491,6 +3491,7 @@ glstate_t  gl_state;
 
 image_t		*r_notexture;		// use for bad textures
 image_t		*r_particletexture;	// little dot for particles
+image_t		*r_startexture;		// jittemp
 image_t		*r_whitetexture;	// jitfog
 image_t		*r_caustictexture = NULL;	// jitcaustics
 
