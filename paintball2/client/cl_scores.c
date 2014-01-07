@@ -412,6 +412,10 @@ void CL_Scoreboard_f (void)
 	if (cls.state != ca_active)
 		return;
 
+	// scoreboard disabled via console or esc, so force it to show again.
+	if (!M_MenuActive())
+		show = true;
+
 	if (cls.server_gamebuild < 126)
 	{
 		Cbuf_AddText("cmd score\n");
