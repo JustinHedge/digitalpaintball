@@ -6,6 +6,12 @@
 
 #define MAX_BOTS 64
 
+typedef struct botfollowpath_s {
+	qboolean		on_path; // Are we actively following a path?
+	int				path_index; // Which path are we following?
+	int				index_in_path; // Where are we along that path?
+} botfollowpath_t;
+
 typedef struct botmovedata_s {
 	int				timeleft; // time left for ucmd's.
 	float			last_trace_dist;
@@ -18,6 +24,7 @@ typedef struct botmovedata_s {
 	short			time_since_last_turn; // used for wandering
 	float			last_yaw;
 	float			last_pitch;
+	botfollowpath_t	path_info;
 } botmovedata_t;
 
 

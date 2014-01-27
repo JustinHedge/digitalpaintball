@@ -200,6 +200,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_observe.c"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_shared.c"
 				>
 			</File>
@@ -219,6 +223,10 @@
 			</File>
 			<File
 				RelativePath=".\bot_manager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\bot_observe.h"
 				>
 			</File>
 			<File

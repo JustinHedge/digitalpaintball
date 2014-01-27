@@ -6,9 +6,11 @@
 #include "../game/game.h"
 
 #define MOVE_SPEED 400 // 400 is the running speed in Quake2
-#define PLAYER_OBSERVE_MIN_MOVE_SPEED 301 // start recording players moving this fast
 #define BOT_UCMD_TIME 25 // 25ms is 40fps.  Should be enough for trick jumps
 
+
+extern usercmd_t g_lastplayercmd;
+extern usercmd_t g_playercmd;
 
 // Spin and move randomly. :)
 void BotDance (unsigned int botindex)
@@ -124,9 +126,6 @@ void BotWanderNoNav (unsigned int botindex, int msec)
 	movement->forward = MOVE_SPEED;
 }
 
-static usercmd_t g_lastplayercmd;
-static usercmd_t g_playercmd;
-
 void BotCopyPlayer (unsigned int botindex, int msec)
 {
 	botmovedata_t *movement = bots.movement + botindex;
@@ -139,6 +138,18 @@ void BotCopyPlayer (unsigned int botindex, int msec)
 	movement->side = g_playercmd.sidemove;
 	movement->up = g_playercmd.upmove;
 	movement->shooting = (g_playercmd.buttons & 1) != 0;
+}
+
+void BotFollowPlayerPaths (unsigned int botindex, int msec)
+{
+	botmovedata_t *movement = bots.movement + botindex;
+
+	if (movement->path_info.on_path)
+	{
+	}
+	else
+	{
+	}
 }
 
 // Called every game frame (100ms) for each bot
@@ -158,7 +169,8 @@ void BotMove (unsigned int botindex, int msec)
 
 			//BotDance(botindex);
 			//BotWanderNoNav(botindex, msec);
-			BotCopyPlayer(botindex, msec);
+			//BotCopyPlayer(botindex, msec);
+			BotFollowPlayerPaths(botindex, msec);
 
 			// Break movement up into smaller steps so strafe jumping and such work better
 			movement->timeleft += msec;
@@ -194,75 +206,4 @@ void BotUpdateMovement (int msec)
 	}
 	
 	g_lastplayercmd = g_playercmd;
-}
-
-
-typedef struct {
-	signed char forward;
-	signed char side;
-	signed char up;
-	unsigned short msec;
-	short angle;
-} player_input_data_t;
-
-#define MAX_PLAYER_OBSERVATION_PATH_POINTS 2048
-
-typedef struct {
-	vec3_t				start_pos; // should we use shorts instead?  What about for larger maps?
-	player_input_data_t	input_data[MAX_PLAYER_OBSERVATION_PATH_POINTS]; // todo: dynamically size?
-	int					path_index;
-	qboolean			path_active;
-	vec3_t				end_pos;
-	pmove_t				last_pm;
-	vec3_t				last_pos;
-} player_observation_t;
-
-#define MAX_PLAYERS_TO_RECORD 32
-
-player_observation_t g_player_observations[MAX_PLAYERS_TO_RECORD];
-
-float XYPMVelocitySquared(short *vel)
-{
-	float x = (float)vel[0] * 0.125f; // velocity is increased 8x's when cast to a short.
-	float y = (float)vel[1] * 0.125f;
-
-	return x * x + y * y;
-}
-
-void BotObservePlayerInput (unsigned int player_index, edict_t *ent, pmove_t *pm)
-{
-	// todo: cvar to disable this.
-	// todo: reset observation data on player disconnect/map change/etc.
-
-	if (player_index < MAX_PLAYERS_TO_RECORD)
-	{
-		player_observation_t *observation = g_player_observations + player_index;
-
-		if (!observation->path_active)
-		{
-			float xy_velocity_sq = XYPMVelocitySquared(pm->s.velocity);
-
-			if (xy_velocity_sq > PLAYER_OBSERVE_MIN_MOVE_SPEED * PLAYER_OBSERVE_MIN_MOVE_SPEED)
-			{
-				//bi.dprintf("Starting path\n");
-				observation->path_active = true;
-				observation->path_index = 0;
-			}
-		}
-		else
-		{
-			observation->path_index++;
-
-			if (XYPMVelocitySquared(pm->s.velocity) < PLAYER_OBSERVE_MIN_MOVE_SPEED * PLAYER_OBSERVE_MIN_MOVE_SPEED)
-			{
-				//bi.dprintf("Stopping path\n");
-				observation->path_active = false;
-			}
-		}
-
-		VectorCopy(ent->s.origin, observation->last_pos);
-		observation->last_pm = *pm;
-	}
-
-	g_playercmd = pm->cmd;
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Nathan "jitspoe" Wulf
+// Copyright (c) 2014 Nathan "jitspoe" Wulf
 // To be released under the GPL
 
 #ifndef _BOT_MAIN_H_
@@ -6,6 +6,10 @@
 
 #include "../game/q_shared.h"
 #include "bot_importexport.h"
+
+// memory tags to allow dynamic memory to be cleaned up
+#define	TAG_GAME	765		// clear when unloading the dll
+#define	TAG_LEVEL	766		// clear when loading a new level
 
 #define nu_rand(x)	((float)((float)(x) * (float)rand() / ((float)RAND_MAX + 1.0f)))
 
