@@ -24,7 +24,7 @@ usercmd_t g_playercmd; // used for BotCopyPlayer
 
 void BotAddPlayerObservation (player_observation_t *observation)
 {
-	int i, max_index = observation->path_index;
+	int i, total_points = observation->current_index;
 	int path_index = g_player_paths.num_paths;
 
 	if (!g_player_paths.path_capacity)
@@ -37,9 +37,9 @@ void BotAddPlayerObservation (player_observation_t *observation)
 	{
 		int total_msec = 0;
 		player_recorded_path_t *recorded_path = g_player_paths.paths + path_index;
-		player_input_data_t *input_data = bi.TagMalloc(sizeof(player_input_data_t) * max_index, TAG_LEVEL);
+		player_input_data_t *input_data = bi.TagMalloc(sizeof(player_input_data_t) * total_points, TAG_LEVEL);
 
-		for (i = 0; i < max_index; ++i)
+		for (i = 0; i < total_points; ++i)
 		{
 			// todo: Compression (only record points where input has changed)
 			input_data[i] = observation->input_data[i];
@@ -50,8 +50,9 @@ void BotAddPlayerObservation (player_observation_t *observation)
 		VectorCopy(observation->end_pos, recorded_path->end_pos);
 		recorded_path->time = total_msec / 1000.0f;
 		recorded_path->input_data = input_data;
+		recorded_path->total_points = total_points;
 		bi.dprintf("Path %d added.\n", path_index);
-		g_player_paths.num_paths++;
+		++g_player_paths.num_paths;
 	}
 	else
 	{
@@ -79,42 +80,38 @@ void BotCancelObservation (player_observation_t *observation)
 {
 	bi.dprintf("Observation path cancelled.\n");
 	observation->path_active = false;
-	observation->path_index = 0;
+	observation->current_index = 0;
 }
 
 
-void BotConvertPmoveToObservationPoint (player_input_data_t *input_data, pmove_t *pm)
+void BotConvertPmoveToObservationPoint (player_input_data_t *input_data, const edict_t *ent, const pmove_t *pm)
 {
-	input_data->angle = pm->viewangles[0]; // 0 or 1 here?  We may need both angles for water movement.
-	input_data->forward = pm->cmd.forwardmove >> 8; // no need for this much precision.  8 bits should be plenty, even if a joystick is used.
-	input_data->side = pm->cmd.sidemove >> 8;
-	input_data->up = pm->cmd.upmove >> 8;
+	short forward = pm->cmd.forwardmove;
+	short side = pm->cmd.sidemove;
+	short up = pm->cmd.upmove;
+
+	// It's possible players have these set to wonky values, so limit them to +/-400
+	if (forward > 400)
+		forward = 400;
+	else if (forward < -400)
+		forward = -400;
+
+	if (up > 400)
+		up = 400;
+	else if (up < -400)
+		up = -400;
+
+	if (side > 400)
+		side = 400;
+	else if (side < -400)
+		side = -400;
+
+	input_data->angle = pm->cmd.angles[YAW] + ent->client->ps.pmove.delta_angles[YAW]; // We may need both angles for water movement...
+	input_data->forward = forward / PMOVE_8BIT_SCALE; // no need for this much precision.  8 bits should be plenty, even if a joystick is used.
+	input_data->side = side / PMOVE_8BIT_SCALE;
+	input_data->up = up / PMOVE_8BIT_SCALE;
 	input_data->msec = pm->cmd.msec;
 }
-
-
-/* scratch this - we'll need to do the compression after collecting all the points.
-qboolean InputAlmostEqualToObservation (player_input_data_t *observation_data_2stepsback, player_input_data_t *observation_data_last, pmove_t *pm)
-{
-	signed char forward = pm->cmd.forwardmove >> 8;
-	signed char side = pm->cmd.sidemove >> 8;
-	signed char up = pm->cmd.upmove >> 8;
-
-	if (observation_data_last->forward == forward && observation_data_last->side == side && observation_data_last->up != up)
-	{
-		short angle = pm->viewangles[0];
-		short anglediff_prev = observation_data_last->angle - observation_data_2stepsback->angle;
-		short anglediff_new = pm->viewangles[0] - observation_data_2stepsback->angle;
-		int timediff_prev = observation_data_last->msec - observation_data_2stepsback->msec;
-		int timediff_new = timediff_prev + pm->cmd.msec;
-		float angular_velocity_prev
-
-		if (
-	}
-
-	return false;
-}
-*/
 
 
 void BotCompleteObservationPath (edict_t *ent, player_observation_t *observation)
@@ -126,36 +123,19 @@ void BotCompleteObservationPath (edict_t *ent, player_observation_t *observation
 }
 
 
-void BotAddObservationPoint (player_observation_t *observation, pmove_t *pm)
+void BotAddObservationPoint (player_observation_t *observation, const edict_t *ent, const pmove_t *pm)
 {
-/* scratch this - we'll need to do the compression after collecting all the points.
-	if (observation->path_index > 1)
+	if (observation->current_index < MAX_PLAYER_OBSERVATION_PATH_POINTS)
 	{
-		int msec_to_add = 0;
-		// If the input hasn't changed between this point and the last point, just drop the last one and replace it with the current and combine the total msec
-		if (InputAlmostEqualToObservation(observation->input_data + observation->path_index - 1, pmove_t *pm))
+		if (pm->cmd.msec > 0)
 		{
-			observation->path_index--;
-			msec_to_add = observation->input_data[observation->path_index].msec;
+			BotConvertPmoveToObservationPoint(observation->input_data + observation->current_index, ent, pm);
+			++observation->current_index;
 		}
-		
-
-		BotConvertPmoveToObservationPoint(observation->input_data + observation->path_index, pm);
-		observation->input_data[observation->path_index].msec += msec_to_add;
-		observation->path_index++;
-	}
-	else
-	{
-		// First 2 points in the player observation path, copy input verbatim, as there's no way to compress:
-		BotConvertPmoveToObservationPoint(observation->input_data, pm);
-		observation->path_index++;
-	}
-	*/
-
-	if (observation->path_index < MAX_PLAYER_OBSERVATION_PATH_POINTS)
-	{
-		BotConvertPmoveToObservationPoint(observation->input_data, pm);
-		observation->path_index++;
+		else
+		{
+			bi.dprintf("Observed msec == 0.\n"); // breakpoint
+		}
 	}
 	else
 	{
@@ -180,25 +160,24 @@ void BotObservePlayerInput (unsigned int player_index, edict_t *ent, pmove_t *pm
 			float xy_velocity_sq = XYPMVelocitySquared(pm->s.velocity);
 
 			// todo: start on jump as well
-			if (xy_velocity_sq > PLAYER_OBSERVE_MIN_MOVE_SPEED * PLAYER_OBSERVE_MIN_MOVE_SPEED)
+			if (xy_velocity_sq > PLAYER_OBSERVE_MIN_MOVE_SPEED * PLAYER_OBSERVE_MIN_MOVE_SPEED && pm->groundentity)
 			{
 				bi.dprintf("Starting path\n");
 				VectorCopy(ent->s.origin, observation->start_pos);
 				observation->path_active = true;
-				observation->path_index = 0;
+				observation->current_index = 0;
 			}
 		}
 		else
 		{
-			// todo: don't stop unless touching ground (slow air control may be necessary for some jumps)
-			if (XYPMVelocitySquared(pm->s.velocity) < PLAYER_OBSERVE_MIN_MOVE_SPEED * PLAYER_OBSERVE_MIN_MOVE_SPEED)
+			if (XYPMVelocitySquared(pm->s.velocity) < PLAYER_OBSERVE_MIN_MOVE_SPEED * PLAYER_OBSERVE_MIN_MOVE_SPEED && pm->groundentity)
 			{
 				BotCompleteObservationPath(ent, observation);
 			}
 		}
 
 		if (observation->path_active)
-			BotAddObservationPoint(observation, pm);
+			BotAddObservationPoint(observation, ent, pm);
 
 		VectorCopy(ent->s.origin, observation->last_pos);
 		observation->last_pm = *pm;

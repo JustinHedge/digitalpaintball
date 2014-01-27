@@ -5,6 +5,8 @@
 #define MAX_PLAYER_OBSERVATION_PATH_POINTS 2048
 #define MAX_RECORDED_PATHS 1024
 
+#define PMOVE_8BIT_SCALE 4 // pmove commands are scaled by this value so they can be stored in 8 bits and save memory
+
 
 typedef struct {
 	signed char forward;
@@ -18,7 +20,7 @@ typedef struct {
 typedef struct {
 	vec3_t				start_pos; // should we use shorts instead?  What about for larger maps?
 	player_input_data_t	input_data[MAX_PLAYER_OBSERVATION_PATH_POINTS]; // todo: dynamically size?
-	int					path_index;
+	int					current_index;
 	qboolean			path_active;
 	vec3_t				end_pos;
 	pmove_t				last_pm;
@@ -32,6 +34,7 @@ typedef struct {
 	float					time;
 	int						bot_failures; // todo: each time a bot fails to complete this path, increment this value and discard the path if it fails too frequently
 	player_input_data_t		*input_data;
+	int						total_points;
 } player_recorded_path_t;
 
 
@@ -40,4 +43,9 @@ typedef struct {
 	int						path_capacity;
 	player_recorded_path_t	*paths;
 } player_recorded_paths_t;
+
+
+
+extern player_recorded_paths_t		g_player_paths;
+
 

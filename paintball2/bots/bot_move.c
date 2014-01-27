@@ -4,6 +4,8 @@
 #include "bot_main.h"
 #include "bot_manager.h"
 #include "../game/game.h"
+#include "bot_observe.h"
+
 
 #define MOVE_SPEED 400 // 400 is the running speed in Quake2
 #define BOT_UCMD_TIME 25 // 25ms is 40fps.  Should be enough for trick jumps
@@ -35,6 +37,7 @@ void BotDance (unsigned int botindex)
 #define WALKABLE_NORMAL_Z 0.707106f // for walkable slopes (hills/ramps)
 #define BOT_WANDER_MAX_TURN_SPEED 180.0f // degrees/sec
 #define BOT_WANDER_CAST_INTERVAL 200 // cast every 200ms
+
 void BotWanderNoNav (unsigned int botindex, int msec)
 {
 	botmovedata_t *movement = bots.movement + botindex;
@@ -126,6 +129,8 @@ void BotWanderNoNav (unsigned int botindex, int msec)
 	movement->forward = MOVE_SPEED;
 }
 
+
+// Temporary test function that just remaps the last player cmd to bot movement
 void BotCopyPlayer (unsigned int botindex, int msec)
 {
 	botmovedata_t *movement = bots.movement + botindex;
@@ -140,17 +145,72 @@ void BotCopyPlayer (unsigned int botindex, int msec)
 	movement->shooting = (g_playercmd.buttons & 1) != 0;
 }
 
-void BotFollowPlayerPaths (unsigned int botindex, int msec)
+
+qboolean BotFollowPlayerPaths (unsigned int botindex, int msec)
 {
 	botmovedata_t *movement = bots.movement + botindex;
+	edict_t *ent = bots.ents[botindex];
+
+	if (!movement->path_info.on_path && g_player_paths.num_paths > 0)
+	{
+		// Find a path (just pick one randomly for now)
+		int path_index = (int)nu_rand(g_player_paths.num_paths);
+
+		bi.dprintf("Bot picked path %d.\n", path_index);
+		movement->path_info.on_path = true;
+		movement->path_info.path_index = path_index;
+		movement->path_info.index_in_path = 0;
+	}
 
 	if (movement->path_info.on_path)
 	{
+		int index = movement->path_info.index_in_path;
+		player_recorded_path_t *path = g_player_paths.paths + movement->path_info.path_index;
+		int total_points = path->total_points;
+		int msec_left = msec + movement->timeleft; // Since we probably won't end up exactly on the game time's 100ms interval, account for some overlap so bots don't "speedhack"
+		usercmd_t cmd;
+
+		memset(&cmd, 0, sizeof(cmd));
+
+		while (msec_left > 0 && index < total_points)
+		{
+			player_input_data_t *input = path->input_data + index;
+			int input_msec = input->msec;
+
+			// At the end of the path run the input until the end of the game frame so we don't have to deal with little left overs moving from path to path...
+			if (index == total_points - 1)
+			{
+				input_msec = msec_left;
+			}
+
+			msec_left -= input_msec;
+			cmd.angles[YAW] = input->angle - ent->client->ps.pmove.delta_angles[YAW];
+			cmd.msec = input_msec;
+			cmd.forwardmove = (short)(input->forward * PMOVE_8BIT_SCALE);
+			cmd.sidemove = (short)(input->side * PMOVE_8BIT_SCALE);
+			cmd.upmove = (short)(input->up * PMOVE_8BIT_SCALE);
+			cmd.buttons = 0;
+			bi.ClientThink(ent, &cmd);
+
+			++index;
+		}
+
+		if (index >= total_points)
+			movement->path_info.on_path = false;
+		else
+			movement->path_info.index_in_path = index;
+
+		movement->timeleft = msec_left;
+
+		return true;
 	}
 	else
 	{
+		// TODO: navigate toward paths
+		return false;
 	}
 }
+
 
 // Called every game frame (100ms) for each bot
 void BotMove (unsigned int botindex, int msec)
@@ -161,36 +221,41 @@ void BotMove (unsigned int botindex, int msec)
 
 		if (ent)
 		{
-			usercmd_t cmd;
-			botmovedata_t *movement = bots.movement + botindex;
-			float yaw = 0.0f;
-
-			movement->time_since_last_turn += msec;
-
-			//BotDance(botindex);
-			//BotWanderNoNav(botindex, msec);
-			//BotCopyPlayer(botindex, msec);
-			BotFollowPlayerPaths(botindex, msec);
-
-			// Break movement up into smaller steps so strafe jumping and such work better
-			movement->timeleft += msec;
-
-			while (movement->timeleft > 0)
+			if (BotFollowPlayerPaths(botindex, msec))
 			{
-				yaw = ent->s.angles[YAW];
-				movement->timeleft -= BOT_UCMD_TIME;
-				yaw += movement->yawspeed * msec / 1000.0f;
-				memset(&cmd, 0, sizeof(cmd));
-				cmd.angles[YAW] = ANGLE2SHORT(yaw) - ent->client->ps.pmove.delta_angles[YAW];
-				cmd.msec = BOT_UCMD_TIME;
-				cmd.forwardmove = movement->forward;
-				cmd.sidemove = movement->side;
-				cmd.upmove = movement->up;
-				cmd.buttons = movement->shooting ? 1 : 0;
-				bi.ClientThink(ent, &cmd);
 			}
+			else
+			{
+				usercmd_t cmd;
+				botmovedata_t *movement = bots.movement + botindex;
+				float yaw = 0.0f;
 
-			bots.movement[botindex].last_yaw = yaw;
+				movement->time_since_last_turn += msec;
+
+				//BotDance(botindex);
+				BotWanderNoNav(botindex, msec);
+				//BotCopyPlayer(botindex, msec);
+
+				// Break movement up into smaller steps so strafe jumping and such work better
+				movement->timeleft += msec;
+
+				while (movement->timeleft > 0)
+				{
+					yaw = ent->s.angles[YAW];
+					movement->timeleft -= BOT_UCMD_TIME;
+					yaw += movement->yawspeed * msec / 1000.0f;
+					memset(&cmd, 0, sizeof(cmd));
+					cmd.angles[YAW] = ANGLE2SHORT(yaw) - ent->client->ps.pmove.delta_angles[YAW];
+					cmd.msec = BOT_UCMD_TIME;
+					cmd.forwardmove = movement->forward;
+					cmd.sidemove = movement->side;
+					cmd.upmove = movement->up;
+					cmd.buttons = movement->shooting ? 1 : 0;
+					bi.ClientThink(ent, &cmd);
+				}
+
+				bots.movement[botindex].last_yaw = yaw;
+			}
 		}
 	}
 }
