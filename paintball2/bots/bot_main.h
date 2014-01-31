@@ -24,6 +24,7 @@ void BotSpawnEntities (void);
 void AddBot (const char *name);
 
 extern bot_import_t bi;
+extern bot_render_import_t ri;
 
 // bot_move.c
 void BotUpdateMovement (int msec);

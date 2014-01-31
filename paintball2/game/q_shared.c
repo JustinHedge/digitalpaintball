@@ -722,6 +722,15 @@ vec_t _DotProduct (vec3_t v1, vec3_t v2)
 	return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
+vec_t VectorSquareDistance (vec_t *a, vec_t *b) // jitvec
+{
+	register float dx = a[0] - b[0];
+	register float dy = a[1] - b[1];
+	register float dz = a[2] - b[2];
+
+	return dx * dx + dy * dy + dz * dz;
+}
+
 void _VectorSubtract (vec3_t veca, vec3_t vecb, vec3_t out)
 {
 	out[0] = veca[0]-vecb[0];

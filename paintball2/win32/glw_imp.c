@@ -821,6 +821,15 @@ void GLimp_EndFrame (void)
 
 	// rscript - MrG
 	rs_realtime = (float)Sys_Milliseconds() * 0.001f;
+
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qgl.GetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
 }
 
 void UpdateGammaRamp (void)

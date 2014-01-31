@@ -4053,7 +4053,7 @@ void R_DrawEntitiesOnList (void)
 	qgl.DepthMask(1);		// back to writing
 }
 
-void R_DrawSpritesOnList(void) // jit, draw sprites after water
+void R_DrawSpritesOnList (void) // jit, draw sprites after water
 {
 	int i;
 
@@ -4583,6 +4583,15 @@ void R_ApplyStains(void);
 
 void R_RenderView (refdef_t *fd)
 {
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qgl.GetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
+
 	if (r_norefresh->value)
 		return;
 
@@ -4626,6 +4635,15 @@ void R_RenderView (refdef_t *fd)
 	if (r_newrefdef.num_newstains > 0 && gl_stainmaps->value)
 		R_ApplyStains();
 
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qgl.GetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
+
 	R_SetupFrame();
 
 	R_SetFrustum();
@@ -4659,6 +4677,15 @@ void R_RenderView (refdef_t *fd)
 
 	R_MarkLeaves();	// done here so we know if we're in water
 
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qgl.GetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
+
 	R_DrawWorld();
 
 	R_DrawCaustics(); // jitcaustics
@@ -4674,6 +4701,8 @@ void R_RenderView (refdef_t *fd)
 	// todo R_DrawParticles();			// MPO dukey particles have to be drawn twice .. otherwise you dont get reflection of them.
 
 	R_DrawSpritesOnList(); // draw smoke after water so water doesn't cover it!
+
+	R_DrawDebug(); // jitdebugdraw
 
 	if (fogenabled)
 		qgl.Disable(GL_FOG);
@@ -4853,6 +4882,14 @@ R_RenderFrame
 */
 void R_RenderFrame (refdef_t *fd)
 {
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qgl.GetError();
+		assert(err == GL_NO_ERROR);
+	}
+#endif
 #if 1
 	// === jitwater
 	g_refl_enabled = false;
@@ -4899,6 +4936,14 @@ void R_RenderFrame (refdef_t *fd)
 	if (!g_refl_enabled)
 		R_clear_refl();
 	// end MPO
+#endif
+#ifdef DEBUG
+	{
+		int err;
+
+		err = qgl.GetError();
+		assert(err == GL_NO_ERROR);
+	}
 #endif
 }
 
@@ -5944,6 +5989,7 @@ void	Draw_Pic2 (float x, float y, image_t *gl);
 void	Draw_StringAlpha (float x, float y, const char *str, float alhpa); // jit
 void	Draw_SubPic (float x, float y, float w, float h, float tx1, float ty1, float tx2, float ty2, image_t *image); // jit
 void	Draw_BorderedPic (bordered_pic_data_t *data, float x, float y, float w, float h, float scale, float alpha); // jit
+int		Draw_DebugLine (vec_t *start, vec_t *end, float r, float g, float b, float time, int id); // jit
 
 int Draw_GetIntVarByID (int id)
 {
@@ -6014,6 +6060,7 @@ refexport_t GetRefAPI (refimport_t rimp)
 	re.AppActivate = GLimp_AppActivate;
 	re.DrawSubPic = Draw_SubPic;
 	re.DrawBorderedPic = Draw_BorderedPic;
+	re.DrawDebugLine = Draw_DebugLine;
 	Swap_Init();
 
 	return re;

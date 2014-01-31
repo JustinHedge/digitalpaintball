@@ -146,6 +146,55 @@ void BotCopyPlayer (unsigned int botindex, int msec)
 }
 
 
+// TODO: symmetrical paths if the map is mirrored
+
+#define MAX_DIST_TO_PLAYER_PATH 256 // 256 quake units, ~ 9m/27ft
+
+qboolean BotMoveTowardPlayerPath (unsigned int botindex, int msec)
+{
+	botmovedata_t *movement = bots.movement + botindex;
+	edict_t *ent = bots.ents[botindex];
+	int pathindex;
+	float bestdistsq = MAX_DIST_TO_PLAYER_PATH * MAX_DIST_TO_PLAYER_PATH;
+	int bestpathindex = -1;
+	//short yawangle_short = ANGLE2SHORT(ent->s.angles[YAW
+
+	for (pathindex = 0; pathindex < g_player_paths.num_paths; ++pathindex)
+	{
+		float distsq = VectorSquareDistance(ent->s.origin, g_player_paths.paths[pathindex].start_pos);
+
+		if (distsq < bestdistsq)
+		{
+			// TODO: Prefer path facing same angle... ent->s.angles[YAW]
+			// TODO: check line of sight/clear walking path
+			// TODO: add some randomization (and ultimately proper path finding)
+			bestpathindex = pathindex;
+			bestdistsq = distsq;
+		}
+	}
+
+	if (bestpathindex >= 0)
+	{
+		vec3_t vecToPathStart;
+
+		VectorSubtract(g_player_paths.paths[bestpathindex].start_pos, ent->s.origin, vecToPathStart);
+		// todo, orient and move toward path
+
+		// todo: if within epsilon of path start...
+		//bi.dprintf("Bot picked path %d.\n", bestpathindex);
+		movement->path_info.on_path = true;
+		movement->path_info.path_index = bestpathindex;
+		movement->path_info.index_in_path = 0;
+		return true;
+	}
+	else
+	{
+		// Found no path, bot will wander aimlessly. 
+		return false;
+	}
+}
+
+
 qboolean BotFollowPlayerPaths (unsigned int botindex, int msec)
 {
 	botmovedata_t *movement = bots.movement + botindex;
@@ -153,6 +202,10 @@ qboolean BotFollowPlayerPaths (unsigned int botindex, int msec)
 
 	if (!movement->path_info.on_path && g_player_paths.num_paths > 0)
 	{
+		if (!BotMoveTowardPlayerPath(botindex, msec))
+			return false;
+
+		/*
 		// Find a path (just pick one randomly for now)
 		int path_index = (int)nu_rand(g_player_paths.num_paths);
 
@@ -160,6 +213,7 @@ qboolean BotFollowPlayerPaths (unsigned int botindex, int msec)
 		movement->path_info.on_path = true;
 		movement->path_info.path_index = path_index;
 		movement->path_info.index_in_path = 0;
+		*/
 	}
 
 	if (movement->path_info.on_path)

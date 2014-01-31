@@ -291,6 +291,8 @@ void R_ClearSkyBox (void);
 void R_DrawSkyBox (void);
 void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
 
+void R_DrawDebug (void); // jitdebugdraw
+
 #if 0
 short LittleShort (short l);
 short BigShort (short l);
@@ -503,7 +505,7 @@ void		GLimp_LogNewFrame (void);
 
 // #define BEEFQUAKERENDER // this must be off for 3dfx compatibilty (jit3dfx)
 
-#if 0
+#if 1 // testing -- don't check in
 #define malloc(a) ri.Z_Malloc(a) // jitmalloc
 #define free(a) ri.Z_Free(a)
 #else

@@ -3,6 +3,7 @@
 
 typedef struct edict_s edict_t;
 
+// for use the game library (gamex86)
 typedef struct
 {
 	int			apiversion;
@@ -21,7 +22,7 @@ typedef struct
 
 	// Block of unset data that will be zeroed out, in case of API changes, this will make new function pointers null,
 	// so crashes will be more obvious.
-	char unset[256];
+	char		unset[64];
 } bot_export_t;
 
 typedef struct
@@ -44,4 +45,19 @@ typedef struct
 	edict_t		*(*AddBotClient) (char *userinfo);
 	const char	*(*GetClientName) (edict_t *ent);
 	void		(*DisconnectBot) (edict_t *ent);
+
+	char		unset[64];
 } bot_import_t;
+
+
+// for use with the rendering engine (just to pass rendering functions for debugging purposes)
+typedef struct
+{
+	int			apiversion;
+
+	int			(*DrawDebugLine) (vec_t *start, vec_t *end, float r, float g, float b, float time, int id);
+
+	char		unset[64];
+} bot_render_import_t;
+
+

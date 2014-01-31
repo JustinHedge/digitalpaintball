@@ -228,11 +228,20 @@ void R_setupArrays (int maxNoReflections)
 {
 	R_clear_refl();
 
-	free(g_refl_X);
-	free(g_refl_Y);
-	free(g_refl_Z);
-	free(g_refl_images); // TODO: Make sure there isn't a memory leak here.  Do we need to free the images, too?
-	free(g_waterDistance);
+	if (g_refl_X)
+		free(g_refl_X);
+
+	if (g_refl_Y)
+		free(g_refl_Y);
+
+	if (g_refl_Z)
+		free(g_refl_Z);
+
+	if (g_refl_images)
+		free(g_refl_images); // TODO: Make sure there isn't a memory leak here.  Do we need to free the images, too?
+
+	if (g_waterDistance)
+		free(g_waterDistance);
 
 	g_refl_X		= (float *)	malloc ( sizeof(float) * maxNoReflections );
 	g_refl_Y		= (float *)	malloc ( sizeof(float) * maxNoReflections );

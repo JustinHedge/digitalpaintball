@@ -10,6 +10,7 @@
 
 bot_export_t g_bot_export;
 bot_import_t bi;
+bot_render_import_t ri;
 botmanager_t bots;
 
 
@@ -27,6 +28,12 @@ EXPORT bot_export_t *GetBotAPI (bot_import_t *import)
 	g_bot_export.ObservePlayerInput = BotObservePlayerInput;
 
 	return &g_bot_export;
+}
+
+
+EXPORT void SetBotRendererAPI (bot_render_import_t *import)
+{
+	ri = *import;
 }
 
 

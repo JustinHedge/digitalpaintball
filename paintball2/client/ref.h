@@ -279,6 +279,9 @@ typedef struct
 	void	(*DrawSubPic) (float x, float y, float w, float h, float tx1, float ty1, float tx2, float ty2, image_t *image);
 	void	(*DrawBorderedPic) (bordered_pic_data_t *data, float x, float y, float w, float h, float scale, float alpha);
 
+	// jitbotlib - for debugging
+	int		(*DrawDebugLine) (vec_t *start, vec_t *end, float r, float g, float b, float time, int id); // use -1 for the ID to create a new line.
+
 } refexport_t;
 
 //

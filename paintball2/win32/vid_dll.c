@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "..\client\client.h"
 #include "winquake.h"
-//#include "zmouse.h"
+#include "../bots/bot_importexport.h" // jitbotlib
 
 // Structure containing functions exported from refresh DLL
 refexport_t	re;
@@ -53,6 +53,7 @@ cvar_t		*vid_fullscreen;
 // Global variables used internally by this module
 viddef_t	viddef;				// global video state; used by other modules
 HINSTANCE	reflib_library;		// Handle to refresh DLL 
+HINSTANCE	botlib = NULL;		// jitbotlib
 HINSTANCE	testlib = NULL;
 qboolean	reflib_active = 0;
 
@@ -947,6 +948,28 @@ qboolean VID_LoadRefresh (char *name)
 	Com_Printf("------------------------------------\n");
 	reflib_active = true;
 	vidref_val = VIDREF_GL;
+
+	/// === jitbotlib - load the botlib so we can pass in some rendering functions for debugging (not necessary to run bots, just for visual debugging)
+	if (!botlib)
+		botlib = LoadLibrary("dp_botlib.dll");
+
+	if (botlib)
+	{
+		void (*SetBotRendererAPI)(bot_render_import_t *import);
+		bot_render_import_t bri;
+
+		memset(&bri, 0, sizeof(bri));
+		bri.apiversion = 1;
+		bri.DrawDebugLine = re.DrawDebugLine;
+
+		SetBotRendererAPI = (void *)GetProcAddress(botlib, "SetBotRendererAPI");
+
+		if (SetBotRendererAPI)
+		{
+			SetBotRendererAPI(&bri);
+		}
+	}
+	// jitbotlib ===
 
 	return true;
 }

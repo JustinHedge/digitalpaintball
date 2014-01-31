@@ -226,6 +226,8 @@ extern long Q_ftol( float f );
 //#define VectorLength(v)			(sqrt((v)[0]*(v)[0]+(v)[1]*(v)[1]+(v)[2]*(v)[2]))
 #define VectorLengthSquared(v)	((v)[0]*(v)[0]+(v)[1]*(v)[1]+(v)[2]*(v)[2])
 
+vec_t VectorSquareDistance (vec_t *a, vec_t *b); // jitvec
+
 void _VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc);
 
 // just in case you don't want to use the macros

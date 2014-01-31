@@ -12,6 +12,8 @@
 
 #define PLAYER_OBSERVE_MIN_MOVE_SPEED 280 // start recording players moving this fast
 
+#define PLAYER_PATH_MIN_DIST 250 // quake units.  to cut back on short paths from strafing back and forth.
+
 
 
 player_observation_t		g_player_observations[MAX_PLAYERS_TO_RECORD];
@@ -21,6 +23,7 @@ player_recorded_paths_t		g_player_paths;
 usercmd_t g_lastplayercmd; // used for BotCopyPlayer
 usercmd_t g_playercmd; // used for BotCopyPlayer
 
+// TODO: discard small paths
 
 void BotAddPlayerObservation (player_observation_t *observation)
 {
@@ -31,6 +34,12 @@ void BotAddPlayerObservation (player_observation_t *observation)
 	{
 		g_player_paths.path_capacity = MAX_RECORDED_PATHS;
 		g_player_paths.paths = bi.TagMalloc(sizeof(player_recorded_path_t) * MAX_RECORDED_PATHS, TAG_LEVEL);
+	}
+
+	if (VectorSquareDistance(observation->start_pos, observation->end_pos) < PLAYER_PATH_MIN_DIST * PLAYER_PATH_MIN_DIST)
+	{
+		bi.dprintf("Path too short.  Discarded.\n");
+		return;
 	}
 
 	if (path_index < g_player_paths.path_capacity)
@@ -53,6 +62,7 @@ void BotAddPlayerObservation (player_observation_t *observation)
 		recorded_path->total_points = total_points;
 		bi.dprintf("Path %d added.\n", path_index);
 		++g_player_paths.num_paths;
+		//ri.DrawDebugLine(observation->start_pos, observation->end_pos, 1.0, .8, .1, 20.0f, -1);
 	}
 	else
 	{
@@ -178,6 +188,25 @@ void BotObservePlayerInput (unsigned int player_index, edict_t *ent, pmove_t *pm
 
 		if (observation->path_active)
 			BotAddObservationPoint(observation, ent, pm);
+
+		// temp debug
+		{
+			float vel = sqrt(pm->s.velocity[0] * pm->s.velocity[0] + pm->s.velocity[1] * pm->s.velocity[1] + pm->s.velocity[2] * pm->s.velocity[2]);
+			float b = vel / 8000.0f;
+			float g = vel / 16000.0f;
+			float r = vel / 4000.0f;
+
+			if (b > 1.0f)
+				b = 1.0f;
+
+			if (g > 1.0f)
+				g = 1.0f;
+
+			if (r > 1.0f)
+				r = 1.0f;
+
+			ri.DrawDebugLine(ent->s.origin, observation->last_pos, r, g, b, 70.0f, -1);
+		}
 
 		VectorCopy(ent->s.origin, observation->last_pos);
 		observation->last_pm = *pm;

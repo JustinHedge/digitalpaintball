@@ -724,6 +724,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\gl_debug.c"
+				>
+			</File>
+			<File
 				RelativePath=".\gl_draw.c"
 				>
 			</File>
@@ -991,11 +995,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\jpeglib.h"
+					RelativePath="jpeg\jpeglib.h"
 					>
 				</File>
 				<File
-					RelativePath="jpeg\jpeglib.h"
+					RelativePath=".\jpeglib.h"
 					>
 				</File>
 				<File
