@@ -1466,22 +1466,22 @@ void SV_UserinfoChanged (client_t *cl)
 	Q_strncpyzna(cl->name, Info_ValueForKey(cl->userinfo, "name"), sizeof(cl->name));
 
 	// rate command
-	val = Info_ValueForKey (cl->userinfo, "rate");
+	val = Info_ValueForKey(cl->userinfo, "rate");
 
 	if (strlen(val))
 	{
 		i = atoi(val);
 		cl->rate = i;
 
-		if (cl->rate < 100)
-			cl->rate = 100;
+		if (cl->rate < 3000) // jit, changed minimum from 100 to 3000
+			cl->rate = 3000;
 
-		if (cl->rate > 15000)
-			cl->rate = 15000;
+		if (cl->rate > 25000) // jit, changed max to 25000 from 15000
+			cl->rate = 25000;
 	}
 	else
 	{
-		cl->rate = 5000;
+		cl->rate = 15000; // jit - default to 15000 instead of 5000
 	}
 
 	// msg command
