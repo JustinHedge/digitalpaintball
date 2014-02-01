@@ -254,7 +254,7 @@ void GL_ScreenShot_JPG (void)
  	}
 
 	// Allocate room for a copy of the framebuffer
-	rgbdata = Z_Malloc(vid.width * vid.height * 3);
+	rgbdata = malloc(vid.width * vid.height * 3);
 
 	if (!rgbdata)
 	{
@@ -306,7 +306,7 @@ void GL_ScreenShot_JPG (void)
 	fclose(file);
 
 	// Free Temp Framebuffer
-	Z_Free(rgbdata);
+	free(rgbdata);
 
 	// Done!
 	if (picname[0] != 'x' && picname[1] != '_')

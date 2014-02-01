@@ -2586,14 +2586,13 @@ void CL_FixCvarCheats (void)
 	{
 		while (cheatvars[numcheatvars].name)
 		{
-			cheatvars[numcheatvars].var = Cvar_Get(cheatvars[numcheatvars].name,
-					cheatvars[numcheatvars].value, 0);
+			cheatvars[numcheatvars].var = Cvar_Get(cheatvars[numcheatvars].name, cheatvars[numcheatvars].value, 0);
 			numcheatvars++;
 		}
 	}
 
 	// make sure they are all set to the proper values
-	for (i=0, var = cheatvars; i<numcheatvars; i++, var++)
+	for (i = 0, var = cheatvars; i < numcheatvars; i++, var++)
 		if (!Q_streq(var->var->string, var->value))
 			Cvar_ForceSet(var->name, var->value); // jitcvar
 

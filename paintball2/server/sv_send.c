@@ -419,33 +419,34 @@ qboolean SV_SendClientDatagram (client_t *client)
 	byte		msg_buf[MAX_MSGLEN];
 	sizebuf_t	msg;
 
-	SV_BuildClientFrame (client);
+	SV_BuildClientFrame(client);
 
-	SZ_Init (&msg, msg_buf, sizeof(msg_buf));
+	SZ_Init(&msg, msg_buf, sizeof(msg_buf));
 	msg.allowoverflow = true;
 
 	// send over all the relevant entity_state_t
 	// and the player_state_t
-	SV_WriteFrameToClient (client, &msg);
+	SV_WriteFrameToClient(client, &msg);
 
 	// copy the accumulated multicast datagram
 	// for this client out to the message
 	// it is necessary for this to be after the WriteEntities
 	// so that entity references will be current
 	if (client->datagram.overflowed)
-		Com_Printf ("WARNING: Datagram overflowed for %s.\n", client->name);
+		Com_Printf("WARNING: Datagram overflowed for %s.\n", client->name);
 	else
-		SZ_Write (&msg, client->datagram.data, client->datagram.cursize);
-	SZ_Clear (&client->datagram);
+		SZ_Write(&msg, client->datagram.data, client->datagram.cursize);
+
+	SZ_Clear(&client->datagram);
 
 	if (msg.overflowed)
 	{	// must have room left for the packet header
-		Com_Printf ("WARNING: msg overflowed for %s.\n", client->name);
-		SZ_Clear (&msg);
+		Com_Printf("WARNING: msg overflowed for %s.\n", client->name);
+		SZ_Clear(&msg);
 	}
 
 	// send the datagram
-	Netchan_Transmit (&client->netchan, msg.cursize, msg.data);
+	Netchan_Transmit(&client->netchan, msg.cursize, msg.data);
 
 	// record the size for rate estimation
 	client->message_size[sv.framenum % RATE_MESSAGES] = msg.cursize;

@@ -505,7 +505,7 @@ void		GLimp_LogNewFrame (void);
 
 // #define BEEFQUAKERENDER // this must be off for 3dfx compatibilty (jit3dfx)
 
-#if 1 // testing -- don't check in
+#if 0
 #define malloc(a) ri.Z_Malloc(a) // jitmalloc
 #define free(a) ri.Z_Free(a)
 #else
