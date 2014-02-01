@@ -56,6 +56,7 @@ typedef struct
 	int			apiversion;
 
 	int			(*DrawDebugLine) (vec_t *start, vec_t *end, float r, float g, float b, float time, int id);
+	int			(*DrawDebugSphere) (vec_t *pos, float radius, float r, float g, float b, float time, int id);
 
 	char		unset[64];
 } bot_render_import_t;

@@ -63,6 +63,7 @@ void BotAddPlayerObservation (player_observation_t *observation)
 		bi.dprintf("Path %d added.\n", path_index);
 		++g_player_paths.num_paths;
 		//ri.DrawDebugLine(observation->start_pos, observation->end_pos, 1.0, .8, .1, 20.0f, -1);
+		ri.DrawDebugSphere(observation->end_pos, 16.0f, 1.0f, 0.f, 0.5f, 20.0f, -1);
 	}
 	else
 	{

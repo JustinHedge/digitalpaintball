@@ -961,6 +961,7 @@ qboolean VID_LoadRefresh (char *name)
 		memset(&bri, 0, sizeof(bri));
 		bri.apiversion = 1;
 		bri.DrawDebugLine = re.DrawDebugLine;
+		bri.DrawDebugSphere = re.DrawDebugSphere;
 
 		SetBotRendererAPI = (void *)GetProcAddress(botlib, "SetBotRendererAPI");
 
