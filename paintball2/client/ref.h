@@ -280,8 +280,8 @@ typedef struct
 	void	(*DrawBorderedPic) (bordered_pic_data_t *data, float x, float y, float w, float h, float scale, float alpha);
 
 	// jitdebugdraw / jitbotlib - for debugging
-	int		(*DrawDebugLine) (vec_t *start, vec_t *end, float r, float g, float b, float time, int id); // use -1 for the ID to create a new line.
-	int		(*DrawDebugSphere) (vec_t *pos, float radius, float r, float g, float b, float time, int id);
+	int		(*DrawDebugLine) (const vec_t *start, const vec_t *end, float r, float g, float b, float time, int id); // use -1 for the ID to create a new line.
+	int		(*DrawDebugSphere) (const vec_t *pos, float radius, float r, float g, float b, float time, int id);
 
 } refexport_t;
 

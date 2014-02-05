@@ -188,6 +188,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_debug.c"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_event.c"
 				>
 			</File>
@@ -197,6 +201,10 @@
 			</File>
 			<File
 				RelativePath=".\bot_move.c"
+				>
+			</File>
+			<File
+				RelativePath=".\bot_navmesh.c"
 				>
 			</File>
 			<File
@@ -213,6 +221,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\bot_debug.h"
+				>
+			</File>
 			<File
 				RelativePath=".\bot_importexport.h"
 				>

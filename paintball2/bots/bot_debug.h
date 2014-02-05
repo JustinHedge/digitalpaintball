@@ -18,8 +18,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "bot_main.h"
-
-#define Com_Printf bi.dprintf
-
-#include "../game/q_shared.c"
+int DrawDebugLine (const vec_t *start, const vec_t *end, float r, float g, float b, float time, int id);
+int DrawDebugSphere (const vec_t *pos, float radius, float r, float g, float b, float time, int id);

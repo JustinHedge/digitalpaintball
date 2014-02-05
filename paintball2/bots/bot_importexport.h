@@ -1,3 +1,22 @@
+/*
+Copyright (c) 2014 Nathan "jitspoe" Wulf, Digital Paint
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
 
 #define BOT_API_VERSION 1
 
@@ -12,6 +31,8 @@ typedef struct
 	// not each time a level is loaded.  Persistant data for clients
 	// and the server can be allocated in init.
 	void		(*Init) (void);
+	void		(*InitMap) (const char *mapname);
+	void		(*ShutdownMap) (void);
 	void		(*Shutdown) (void);
 	void		(*GameEvent) (game_event_t event, edict_t *ent, void *data1, void *data2);
 	void		(*RunFrame) (int msec); // should be called each game frame
@@ -55,8 +76,8 @@ typedef struct
 {
 	int			apiversion;
 
-	int			(*DrawDebugLine) (vec_t *start, vec_t *end, float r, float g, float b, float time, int id);
-	int			(*DrawDebugSphere) (vec_t *pos, float radius, float r, float g, float b, float time, int id);
+	int			(*DrawDebugLine) (const vec_t *start, const vec_t *end, float r, float g, float b, float time, int id);
+	int			(*DrawDebugSphere) (const vec_t *pos, float radius, float r, float g, float b, float time, int id);
 
 	char		unset[64];
 } bot_render_import_t;

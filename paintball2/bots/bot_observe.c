@@ -1,6 +1,23 @@
-// Copyright (c) 2014 Nathan "jitspoe" Wulf
-// To be released under the GPL
-//
+/*
+Copyright (c) 2014 Nathan "jitspoe" Wulf, Digital Paint
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
+
 // This file deals with functions that observe and record player movement, so bots can replay that information later to navigate maps with complex jumps.
 //
 
@@ -8,6 +25,7 @@
 #include "../game/game.h"
 #include "bot_manager.h"
 #include "bot_observe.h"
+#include "bot_debug.h"
 
 
 #define PLAYER_OBSERVE_MIN_MOVE_SPEED 280 // start recording players moving this fast
@@ -63,7 +81,7 @@ void BotAddPlayerObservation (player_observation_t *observation)
 		bi.dprintf("Path %d added.\n", path_index);
 		++g_player_paths.num_paths;
 		//ri.DrawDebugLine(observation->start_pos, observation->end_pos, 1.0, .8, .1, 20.0f, -1);
-		ri.DrawDebugSphere(observation->end_pos, 16.0f, 1.0f, 0.f, 0.5f, 20.0f, -1);
+		DrawDebugSphere(observation->end_pos, 8.0f, 1.0f, 0.f, 0.5f, 20.0f, -1);
 	}
 	else
 	{
@@ -77,7 +95,7 @@ void BotAddPlayerObservation (player_observation_t *observation)
 
 // todo: clear everything on map change.
 
-float XYPMVelocitySquared(short *vel)
+float XYPMVelocitySquared (const short *vel)
 {
 	float x = (float)vel[0] * 0.125f; // velocity is increased 8x's when cast to a short.
 	float y = (float)vel[1] * 0.125f;
@@ -125,7 +143,7 @@ void BotConvertPmoveToObservationPoint (player_input_data_t *input_data, const e
 }
 
 
-void BotCompleteObservationPath (edict_t *ent, player_observation_t *observation)
+void BotCompleteObservationPath (const edict_t *ent, player_observation_t *observation)
 {
 	bi.dprintf("Stopping path\n");
 	VectorCopy(ent->s.origin, observation->end_pos);
@@ -157,10 +175,11 @@ void BotAddObservationPoint (player_observation_t *observation, const edict_t *e
 
 
 // Called for each player input packet sent, while the player is alive
-void BotObservePlayerInput (unsigned int player_index, edict_t *ent, pmove_t *pm)
+void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const pmove_t *pm)
 {
 	// todo: cvar to disable this.
 	// todo: reset observation data on player disconnect/map change/etc.
+	BotAddPotentialNavmeshFromPmove(ent, pm);
 
 	if (player_index < MAX_PLAYERS_TO_RECORD)
 	{
@@ -193,8 +212,8 @@ void BotObservePlayerInput (unsigned int player_index, edict_t *ent, pmove_t *pm
 		// temp debug
 		{
 			float vel = sqrt(pm->s.velocity[0] * pm->s.velocity[0] + pm->s.velocity[1] * pm->s.velocity[1] + pm->s.velocity[2] * pm->s.velocity[2]);
-			float b = vel / 8000.0f;
-			float g = vel / 16000.0f;
+			float b = vel / 10000.0f;
+			float g = pm->cmd.upmove > 0 ? 1.0f : 0.0f; //vel / 16000.0f;
 			float r = vel / 4000.0f;
 
 			if (b > 1.0f)
@@ -206,7 +225,7 @@ void BotObservePlayerInput (unsigned int player_index, edict_t *ent, pmove_t *pm
 			if (r > 1.0f)
 				r = 1.0f;
 
-			ri.DrawDebugLine(ent->s.origin, observation->last_pos, r, g, b, 70.0f, -1);
+			DrawDebugLine(ent->s.origin, observation->last_pos, r, g, b, 70.0f, -1);
 		}
 
 		VectorCopy(ent->s.origin, observation->last_pos);
@@ -216,3 +235,14 @@ void BotObservePlayerInput (unsigned int player_index, edict_t *ent, pmove_t *pm
 	g_playercmd = pm->cmd;
 }
 
+
+// Called at level changes and shutdowns
+void FreeObservations (void)
+{
+	if (g_player_paths.num_paths > 0)
+	{
+		bi.TagFree(g_player_paths.paths);
+		g_player_paths.path_capacity = 0;
+		g_player_paths.num_paths = 0;
+	}
+}
