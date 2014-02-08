@@ -14,26 +14,6 @@
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
-//Edit by Richard
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_SEARCHPLAYER DIALOG 0, 0, 180, 249
-STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
-CAPTION "Player Search"
-FONT 8, "Ms Shell Dlg"
-{
-    DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
-    LTEXT           "Please enter the player's name:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
-    EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL
-    LISTBOX         IDC_SP_LIST, 7, 62, 166, 161, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY
-    LTEXT           "Results: ", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
-}
-
-IDC_SERVERBROWSER ACCELERATORS
-BEGIN
-    "F",			IDM_SEARCHPLAYER,		VIRTKEY, CONTROL, NOINVERT
-END
-
-
 /////////////////////////////////////////////////////////////////////////////
 // Czech resources
 
@@ -62,6 +42,21 @@ BEGIN
 END
 
 
+//Edit by Richard
+IDD_SEARCHPLAYER DIALOG 0, 0, 180, 249
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
+CAPTION "Najít hráce"
+FONT 8, "Ms Shell Dlg"
+{
+    EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
+    LISTBOX         IDC_SP_LIST, 7, 62, 166, 161, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY
+    LTEXT           "Prosím zadejte jméno hráce:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
+    LTEXT           "Výsledky:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    PUSHBUTTON   	"Aktualizovat", IDC_SP_UPDATE, 68, 228, 50, 14
+    DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
@@ -69,6 +64,7 @@ END
 
 IDC_SERVERBROWSER ACCELERATORS
 BEGIN
+    "F",			IDM_SEARCHPLAYER,		VIRTKEY, CONTROL, NOINVERT
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     VK_F5,          IDM_REFRESH,            VIRTKEY, NOINVERT
@@ -92,9 +88,17 @@ BEGIN
         MENUITEM "&Aktualizovat (F5)",          IDM_REFRESH
         MENUITEM "&Update (Shift+F5)",          IDM_UPDATE
     END
+    POPUP "&Hráci"
+    BEGIN
+        MENUITEM "&Najít hráce (Ctrl+F)",       IDM_SEARCHPLAYER
+        MENUITEM "&Registrovaní hráci",         IDM_WEBSITE_PLAYER
+    END
     POPUP "&Pomoc"
     BEGIN
         MENUITEM "&Webové stránky",             IDM_WEBSITE
+        MENUITEM "&Forum",                      IDM_WEBSITE_FORUM
+        MENUITEM "&Dokumentace",                IDM_WEBSITE_DOCS
+        MENUITEM "&Global Login System",        IDM_WEBSITE_GLS
         MENUITEM "&Info",                       IDM_ABOUT
     END
 END
@@ -103,6 +107,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Ukázat",                     ID_TRAY_RESTORE
+        MENUITEM "&Najít hráce",                IDM_SEARCHPLAYER
         MENUITEM "&Webové stránky",             IDM_WEBSITE
         MENUITEM "&Info",                       IDM_ABOUT
         MENUITEM "&Ukoncete",                   ID_TRAY_EXIT
@@ -127,6 +133,7 @@ BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
+	IDS_SP_NOPLAYERFOUND    "Hráci nenalezeni."
 END
 
 #endif    // Czech resources
@@ -161,6 +168,21 @@ BEGIN
 END
 
 
+//Edit by Richard
+IDD_SEARCHPLAYER DIALOG 0, 0, 180, 249
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
+CAPTION "Znajdz graczy"
+FONT 8, "Ms Shell Dlg"
+{
+    EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
+    LISTBOX         IDC_SP_LIST, 7, 62, 166, 161, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY
+    LTEXT           "Prosze podac imie gracza:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
+    LTEXT           "Rezultat:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    PUSHBUTTON   	"Odswiez", IDC_SP_UPDATE, 68, 228, 50, 14
+    DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
@@ -168,6 +190,7 @@ END
 
 IDC_SERVERBROWSER ACCELERATORS
 BEGIN
+    "F",			IDM_SEARCHPLAYER,		VIRTKEY, CONTROL, NOINVERT
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     VK_F5,          IDM_REFRESH,            VIRTKEY, NOINVERT
@@ -191,9 +214,17 @@ BEGIN
         MENUITEM "&Odswiez (F5)",               IDM_REFRESH
         MENUITEM "&Aktualizacja (Shift+F5)",    IDM_UPDATE
     END
+    POPUP "&Gracze"
+    BEGIN
+        MENUITEM "&Znajdz graczy (Ctrl+F)",     IDM_SEARCHPLAYER
+        MENUITEM "&Zarejestrowani gracze",      IDM_WEBSITE_PLAYER
+    END
     POPUP "&Pomoc"
     BEGIN
         MENUITEM "&Internetowej",               IDM_WEBSITE
+        MENUITEM "&Fora",                       IDM_WEBSITE_FORUM
+        MENUITEM "&Dokumenty",                  IDM_WEBSITE_DOCS
+        MENUITEM "&Globalny system logowania",  IDM_WEBSITE_GLS
         MENUITEM "&O programie",                IDM_ABOUT
     END
 END
@@ -202,6 +233,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Pokaz",                      ID_TRAY_RESTORE
+        MENUITEM "&Znajdz graczy",              IDM_SEARCHPLAYER
         MENUITEM "&Internetowej",               IDM_WEBSITE
         MENUITEM "&O programie",                IDM_ABOUT
         MENUITEM "&Wyjscie",                    ID_TRAY_EXIT
@@ -226,6 +259,7 @@ BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Wyszukiwarka serwerów"
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
+	IDS_SP_NOPLAYERFOUND    "Nie znaleziono gracza."
 END
 
 #endif    // Polish resources
@@ -260,6 +294,21 @@ BEGIN
 END
 
 
+//Edit by Richard
+IDD_SEARCHPLAYER DIALOG 0, 0, 180, 249
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
+CAPTION "Nájst Hráci"
+FONT 8, "Ms Shell Dlg"
+{
+    EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
+    LISTBOX         IDC_SP_LIST, 7, 62, 166, 161, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY
+    LTEXT           "Prosím, zadajte názov prehrávace:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
+    LTEXT           "Výsledky:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    PUSHBUTTON   	"Obnovit", IDC_SP_UPDATE, 68, 228, 50, 14
+    DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
@@ -267,6 +316,7 @@ END
 
 IDC_SERVERBROWSER ACCELERATORS
 BEGIN
+    "F",			IDM_SEARCHPLAYER,		VIRTKEY, CONTROL, NOINVERT
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     VK_F5,          IDM_REFRESH,            VIRTKEY, NOINVERT
@@ -290,9 +340,17 @@ BEGIN
         MENUITEM "&Obnovit (F5)",               IDM_REFRESH
         MENUITEM "&Update (Shift+F5)",          IDM_UPDATE
     END
+    POPUP "&Hráci"
+    BEGIN
+        MENUITEM "&Nájst Hráci (Ctrl+F)",       IDM_SEARCHPLAYER
+        MENUITEM "&Registrovaní hráci",         IDM_WEBSITE_PLAYER
+    END
     POPUP "&Pomoc"
     BEGIN
         MENUITEM "&Webové stránky",             IDM_WEBSITE
+        MENUITEM "&Fórum",                      IDM_WEBSITE_FORUM
+        MENUITEM "&Dokumentácia",               IDM_WEBSITE_DOCS
+        MENUITEM "&Global Login System",        IDM_WEBSITE_GLS
         MENUITEM "&O programe",                 IDM_ABOUT
     END
 END
@@ -301,6 +359,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Prejavit",                   ID_TRAY_RESTORE
+        MENUITEM "&Nájst Hráci",                IDM_SEARCHPLAYER
         MENUITEM "&Webové stránky",             IDM_WEBSITE
         MENUITEM "&O programe",                 IDM_ABOUT
         MENUITEM "&Skoncit",                    ID_TRAY_EXIT
@@ -325,6 +385,7 @@ BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
+	IDS_SP_NOPLAYERFOUND    "Žiadny hrác našiel."
 END
 
 #endif    // Slovak resources
@@ -427,6 +488,21 @@ BEGIN
 END
 
 
+//Edit by Richard
+IDD_SEARCHPLAYER DIALOG 0, 0, 180, 249
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
+CAPTION "Spieler suchen"
+FONT 8, "Ms Shell Dlg"
+{
+    EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
+    LISTBOX         IDC_SP_LIST, 7, 62, 166, 161, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY
+    LTEXT           "Bitte den Spielernamen eingeben:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
+    LTEXT           "Ergebnisse:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    PUSHBUTTON   	"Aktualisieren", IDC_SP_UPDATE, 68, 228, 50, 14
+    DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
@@ -434,6 +510,7 @@ END
 
 IDC_SERVERBROWSER ACCELERATORS
 BEGIN
+    "F",			IDM_SEARCHPLAYER,		VIRTKEY, CONTROL, NOINVERT
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     VK_F5,          IDM_REFRESH,            VIRTKEY, NOINVERT
@@ -457,9 +534,17 @@ BEGIN
         MENUITEM "&Aktualisieren (F5)",         IDM_REFRESH
         MENUITEM "&Neu Laden (Shift+F5)",       IDM_UPDATE
     END
+    POPUP "&Spieler"
+    BEGIN
+        MENUITEM "&Spieler suchen (Strg+F)",    IDM_SEARCHPLAYER
+        MENUITEM "&Registrierte Spieler",       IDM_WEBSITE_PLAYER
+    END
     POPUP "&Hilfe"
     BEGIN
         MENUITEM "&Website",                    IDM_WEBSITE
+        MENUITEM "&Forum",                      IDM_WEBSITE_FORUM
+        MENUITEM "&Dokumentation",              IDM_WEBSITE_DOCS
+        MENUITEM "&Global Login System",        IDM_WEBSITE_GLS
         MENUITEM "&Über",                       IDM_ABOUT
     END
 END
@@ -468,6 +553,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Anzeigen",                   ID_TRAY_RESTORE
+        MENUITEM "&Spieler suchen",             IDM_SEARCHPLAYER
         MENUITEM "&Website",                    IDM_WEBSITE
         MENUITEM "&Über",                       IDM_ABOUT
         MENUITEM "&Beenden",                    ID_TRAY_EXIT
@@ -492,6 +579,7 @@ BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
+	IDS_SP_NOPLAYERFOUND    "Kein Spieler gefunden."
 END
 
 #endif    // German (Germany) resources
@@ -526,6 +614,21 @@ BEGIN
 END
 
 
+//Edit by Richard
+IDD_SEARCHPLAYER DIALOG 0, 0, 180, 249
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
+CAPTION "Find Players"
+FONT 8, "Ms Shell Dlg"
+{
+    EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
+    LISTBOX         IDC_SP_LIST, 7, 62, 166, 161, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY
+    LTEXT           "Please enter the player's name:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
+    LTEXT           "Results:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    PUSHBUTTON   	"Refresh", IDC_SP_UPDATE, 68, 228, 50, 14
+    DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
@@ -533,6 +636,7 @@ END
 
 IDC_SERVERBROWSER ACCELERATORS
 BEGIN
+    "F",			IDM_SEARCHPLAYER,		VIRTKEY, CONTROL, NOINVERT
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     VK_F5,          IDM_REFRESH,            VIRTKEY, NOINVERT
@@ -555,11 +659,18 @@ BEGIN
     BEGIN
         MENUITEM "&Refresh (F5)",               IDM_REFRESH
         MENUITEM "&Update (Shift+F5)",          IDM_UPDATE
-        MENUITEM "&Find Players (Ctrl-F)",      IDM_SEARCHPLAYER
+    END
+    POPUP "&Players"
+    BEGIN
+        MENUITEM "&Find Players (Ctrl+F)",      IDM_SEARCHPLAYER
+        MENUITEM "&Registered Players",         IDM_WEBSITE_PLAYER
     END
     POPUP "&Help"
     BEGIN
         MENUITEM "&Website",                    IDM_WEBSITE
+        MENUITEM "&Forums",                     IDM_WEBSITE_FORUM
+        MENUITEM "&Documentation",              IDM_WEBSITE_DOCS
+        MENUITEM "&Global Login System",        IDM_WEBSITE_GLS
         MENUITEM "&About",                      IDM_ABOUT
     END
 END
@@ -568,6 +679,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Show",                       ID_TRAY_RESTORE
+        MENUITEM "&Find Players",               IDM_SEARCHPLAYER
         MENUITEM "&Website",                    IDM_WEBSITE
         MENUITEM "&About",                      IDM_ABOUT
         MENUITEM "E&xit",                       ID_TRAY_EXIT
@@ -618,6 +731,7 @@ BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
+	IDS_SP_NOPLAYERFOUND    "No player found."
 END
 
 #endif    // English (U.S.) resources
@@ -652,6 +766,21 @@ BEGIN
 END
 
 
+//Edit by Richard
+IDD_SEARCHPLAYER DIALOG 0, 0, 180, 249
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
+CAPTION "Trouver joueurs"
+FONT 8, "Ms Shell Dlg"
+{
+    EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
+    LISTBOX         IDC_SP_LIST, 7, 62, 166, 161, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY
+    LTEXT           "S'il vous plaît entrez le nom du joueur:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
+    LTEXT           "Résultats:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    PUSHBUTTON   	"Rafraichir", IDC_SP_UPDATE, 68, 228, 50, 14
+    DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
@@ -659,6 +788,7 @@ END
 
 IDC_SERVERBROWSER ACCELERATORS
 BEGIN
+    "F",			IDM_SEARCHPLAYER,		VIRTKEY, CONTROL, NOINVERT
     "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
     VK_F5,          IDM_REFRESH,            VIRTKEY, NOINVERT
@@ -682,9 +812,17 @@ BEGIN
         MENUITEM "&Rafraichir (F5)",            IDM_REFRESH
         MENUITEM "&Mettre a Jour (Shift+F5)",   IDM_UPDATE
     END
+    POPUP "&Joueurs"
+    BEGIN
+        MENUITEM "&Trouver joueurs (Ctrl+F)",   IDM_SEARCHPLAYER
+        MENUITEM "&Les joueurs inscrits",       IDM_WEBSITE_PLAYER
+    END
     POPUP "&Aide"
     BEGIN
         MENUITEM "&Site web",                   IDM_WEBSITE
+        MENUITEM "&Forum",                      IDM_WEBSITE_FORUM
+        MENUITEM "&Documentation",              IDM_WEBSITE_DOCS
+        MENUITEM "&Global Login System",        IDM_WEBSITE_GLS
         MENUITEM "&A propos de",                IDM_ABOUT
     END
 END
@@ -693,6 +831,8 @@ IDR_MENU_TRAY MENU
 BEGIN
     POPUP "Tray"
     BEGIN
+        MENUITEM "&Montrer",                    ID_TRAY_RESTORE
+        MENUITEM "&Trouver joueurs",            IDM_SEARCHPLAYER
         MENUITEM "&Site web",                   IDM_WEBSITE
         MENUITEM "&A propos de",                IDM_ABOUT
         MENUITEM "&Sortir",                     ID_TRAY_EXIT
@@ -717,6 +857,7 @@ BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Recherche de serveur"
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
+	IDS_SP_NOPLAYERFOUND    "Aucun joueur trouvé."
 END
 
 #endif    // French (France) resources

@@ -460,7 +460,19 @@ static BOOL OnCommand (HWND hWnd, int wmId, HWND hWndCtl, UINT codeNotify)
 		DialogBox(g_hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
 		return TRUE;
 	case IDM_WEBSITE:
-		ShellExecute(NULL, "open", "www.digitalpaint.org", NULL, NULL, SW_SHOW);
+		ShellExecute(NULL, "open", "http://www.digitalpaint.org", NULL, NULL, SW_SHOW);
+		return TRUE;
+	case IDM_WEBSITE_GLS:
+		ShellExecute(NULL, "open", "http://www.dplogin.com/index.php?action=main", NULL, NULL, SW_SHOW);
+		return TRUE;
+	case IDM_WEBSITE_PLAYER:
+		ShellExecute(NULL, "open", "http://www.dplogin.com/index.php?action=displaymembers", NULL, NULL, SW_SHOW);
+		return TRUE;
+	case IDM_WEBSITE_FORUM:
+		ShellExecute(NULL, "open", "http://dplogin.com/forums/index.php", NULL, NULL, SW_SHOW);
+		return TRUE;
+	case IDM_WEBSITE_DOCS:
+		ShellExecute(NULL, "open", "http://digitalpaint.org/docs.html", NULL, NULL, SW_SHOW);
 		return TRUE;
 	case IDM_UPDATE:
 		UpdateList();
@@ -478,10 +490,10 @@ static BOOL OnCommand (HWND hWnd, int wmId, HWND hWndCtl, UINT codeNotify)
 	case ID_TRAY_EXIT:
 		DestroyWindow(hWnd);
 		return TRUE;
-/*	case ID_TRAY_RESTORE:
+	case ID_TRAY_RESTORE:
 		ShowWindow(hWnd, SW_SHOW);
 		SetForegroundWindow(hWnd);
-		return TRUE;*/
+		return TRUE;
 	case ID_RIGHTCLICK_COPYADDRESS:
 		return CopyAddress(hWnd, codeNotify, COPYTYPE_ADDRESS);
 	case ID_RIGHTCLICK_COPYURL:
@@ -1216,6 +1228,13 @@ static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam,
 			return TRUE;
 		}
 
+		if (LOWORD(wParam) == IDC_SP_UPDATE)
+		{
+			RefreshList();
+			SendMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_EDIT, EN_CHANGE), (LPARAM) GetDlgItem(hDlg, IDC_SP_EDIT));
+			return TRUE;
+		}
+
 		if ((LOWORD(wParam) == IDC_SP_EDIT) && (HIWORD(wParam) == EN_CHANGE))
 		{
 			std::string sContentBuffer;
@@ -1226,6 +1245,15 @@ static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam,
 			GetWindowText(GetDlgItem(hDlg, IDC_SP_EDIT), szNameBuffer,
 							sizeof(szNameBuffer) / sizeof (szNameBuffer[0]));
 			SearchPlayer(szNameBuffer, &vFound);
+
+			if (vFound.size() == 0)
+			{
+				LoadString(g_hInst, IDS_SP_NOPLAYERFOUND, szNameBuffer, sizeof(szNameBuffer)/sizeof(szNameBuffer[0]));
+				int index = SendDlgItemMessage(hDlg, IDC_SP_LIST, LB_ADDSTRING, 0, (LPARAM) szNameBuffer);
+				SendDlgItemMessage(hDlg, IDC_SP_LIST, LB_SETITEMDATA, index, (-1));
+				return TRUE;
+			}
+
 			for (size_t i = 0; i < vFound.size(); i++)
 			{
 				sContentBuffer.assign(g_mServers[vFound[i].first].vPlayers[vFound[i].second].sName);
@@ -1235,7 +1263,8 @@ static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam,
 									0, (LPARAM) sContentBuffer.c_str());
 				SendMessage(GetDlgItem(hDlg, IDC_SP_LIST), LB_SETITEMDATA, index, i);
 			}
-		}
+			return TRUE;
+ 		}
 
 		if (HIWORD(wParam) == LBN_SELCHANGE && LOWORD(wParam) == IDC_SP_LIST)
 		{
@@ -1246,6 +1275,11 @@ static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam,
 				LB_GETITEMDATA,
 				SendMessage (GetDlgItem(hDlg, IDC_SP_LIST), LB_GETCURSEL, 0, 0),
 				0);
+
+			if (iFoundIndex == (-1))
+			{
+				return TRUE;
+			}
 
 			iListId = GetListIDFromAddress(vFound[iFoundIndex].first.c_str());
 			if (iListId >= 0)
