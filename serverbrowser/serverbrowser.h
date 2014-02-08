@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -41,6 +41,9 @@ bool LaunchGame (const char *sAddress, const char *sPassword);
 bool MapExistsForAddress (const char *sAddress);
 bool ServerActive (const char *sAddress);
 void PingServer (const char *sServer);
+
+//Edit by Richard
+void SearchPlayer(std::string, std::vector < std::pair<std::string, int> > *);
 
 typedef struct PLAYERINFO {
 	string sName;

@@ -14,6 +14,26 @@
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
+//Edit by Richard
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDD_SEARCHPLAYER DIALOG 0, 0, 180, 249
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VISIBLE | WS_POPUP | WS_SYSMENU
+CAPTION "Player Search"
+FONT 8, "Ms Shell Dlg"
+{
+    DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
+    LTEXT           "Please enter the player's name:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
+    EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL
+    LISTBOX         IDC_SP_LIST, 7, 62, 166, 161, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY
+    LTEXT           "Results: ", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+}
+
+IDC_SERVERBROWSER ACCELERATORS
+BEGIN
+    "F",			IDM_SEARCHPLAYER,		VIRTKEY, CONTROL, NOINVERT
+END
+
+
 /////////////////////////////////////////////////////////////////////////////
 // Czech resources
 
@@ -35,9 +55,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -134,9 +154,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -233,9 +253,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -361,9 +381,9 @@ BEGIN
             VALUE "Comments", "http://www.digitalpaint.org"
             VALUE "CompanyName", "Digital Paint"
 			VALUE "FileDescription", "Digital Paint: Paintball 2 - Serverbrowser"
-            VALUE "FileVersion", "0.2011.07.24"
+            VALUE "FileVersion", "0.2014.02.07"
             VALUE "InternalName", "serverbrowser"
-            VALUE "LegalCopyright", "Copyright (C) 2006-2011"
+            VALUE "LegalCopyright", "Copyright (C) 2006-2014"
             VALUE "OriginalFilename", "serverbrowser.exe"
             VALUE "ProductName", "Paintball 2 - Serverbrowser"
             VALUE "ProductVersion", "Release"
@@ -400,9 +420,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -499,9 +519,9 @@ FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,20,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 
@@ -535,6 +555,7 @@ BEGIN
     BEGIN
         MENUITEM "&Refresh (F5)",               IDM_REFRESH
         MENUITEM "&Update (Shift+F5)",          IDM_UPDATE
+        MENUITEM "&Find Players (Ctrl-F)",      IDM_SEARCHPLAYER
     END
     POPUP "&Help"
     BEGIN
@@ -624,9 +645,9 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2011-07-24",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
     LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2011 by Digital Paint",IDC_STATIC,23,90,150,10
+    LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
 

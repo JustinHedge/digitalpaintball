@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -591,3 +591,40 @@ bool LaunchGame (const char *sAddress, const char *sPassword)
 #endif
 }
 
+//Edit by Richard
+//__IN_ sName	is the name to search for
+//_OUT_ vFound	is a vector of a pair containing 1. the key value of the server in g_mServers
+//                                                  where the player is playing
+//                                           and 2. his index in the vPlayers vector
+void SearchPlayer (std::string sName, std::vector < std::pair<std::string, int> > * vFound)
+{
+	std::string sPlayerNameCopy;
+	vFound->clear();
+
+	//make the name we search for lowercase so the search is case insensitive
+	for(int i = 0; sName[i]; i++)
+	{
+		sName[i] = tolower(sName[i]);
+	}
+
+	//loop through all servers
+	for (std::map<std::string, serverinfo_t>::iterator iServer = g_mServers.begin(); iServer != g_mServers.end(); iServer++)
+	{
+		for (size_t iPlayer = 0; iPlayer < iServer->second.vPlayers.size(); iPlayer++) //loop through all players
+		{
+			//first copy the players name so the original one doesn't get modified, then transform to lowercase
+			sPlayerNameCopy.assign(iServer->second.vPlayers[iPlayer].sName);
+
+			for(int i = 0; sPlayerNameCopy[i]; i++)
+			{
+				sPlayerNameCopy[i] = tolower(sPlayerNameCopy[i]);
+			}
+
+			//if sName is empty       or  playername contains the name we're searching for
+			if ((sName.length() == 0) || (sPlayerNameCopy.find(sName) != std::string::npos))
+			{
+				vFound->push_back(std::pair<std::string, int>(iServer->first, iPlayer));
+			}
+		}
+	}
+}

@@ -31,8 +31,18 @@
 #define ID_RIGHTCLICK_COPYFULLSERVERINFO 32776
 #define ID_RIGHTCLICK_COPYNAMEIP        32777
 
+//Edit by Richard
+#define IDM_SEARCHPLAYER				32778
+
+#ifndef IDC_STATIC
+	#define IDC_STATIC 					(-1)
+#endif
+#define IDD_SEARCHPLAYER				32779
+#define IDC_SP_EDIT						32780
+#define IDC_SP_LIST						32781
+
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        135

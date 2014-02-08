@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,6 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
+
+
+//ADAPTOINS TO COMPILE WITH GCC:
+/*
+#define strcpy_s strcpy
+#define _snprintf_s _snprintf
+#define sprintf_s sprintf
+*/
+
 
 #include "serverbrowser.h"
 #include <commctrl.h>
@@ -57,6 +66,9 @@ static DWORD g_iIconGLS1 = 0;
 static DWORD g_iIconGLS2 = 0;
 static bool g_bAlreadyOpen = false;
 static DWORD g_dwExistingProcess = 0;
+
+//Edit by Richard
+static LRESULT CALLBACK SearchPlayerDlg (HWND, UINT, WPARAM, LPARAM);
 
 char g_szGameDir[256];
 string g_sCurrentServerAddress;
@@ -134,8 +146,9 @@ void DeletePIDFile ()
 
 
 // Foward declarations of functions included in this code module:
-LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK About (HWND, UINT, WPARAM, LPARAM);
+//Edit by Richard: These functions are later defined as static, which was missing here
+static LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
+static LRESULT CALLBACK About (HWND, UINT, WPARAM, LPARAM);
 
 
 int APIENTRY WinMain (HINSTANCE hInstance,
@@ -161,7 +174,7 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_SERVERBROWSER, szWindowClass, MAX_LOADSTRING);
 	memset(&wcex, 0, sizeof(wcex));
-	wcex.cbSize			= sizeof(WNDCLASSEX); 
+	wcex.cbSize			= sizeof(WNDCLASSEX);
 	wcex.style			= CS_HREDRAW | CS_VREDRAW;
 	wcex.lpfnWndProc	= (WNDPROC)WndProc;
 	wcex.cbClsExtra		= 0;
@@ -193,7 +206,7 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 	InitApp();
 
 	// Main message loop:
-	while (GetMessage(&msg, NULL, 0, 0)) 
+	while (GetMessage(&msg, NULL, 0, 0))
 	{
 		if (!TranslateAccelerator(hWnd, hAccelTable, &msg))
 		{
@@ -233,7 +246,7 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 		WS_VISIBLE | CCS_BOTTOM | SBARS_SIZEGRIP,
 		"Ready.", hWnd, IDC_STATUSBAR);
 	ShowWindow(g_hStatus, SW_SHOW);
-	
+
 	if (SendMessage(g_hStatus, SB_GETRECT, 0, (LPARAM)&rect))
 		g_nStatusBarHeight = rect.bottom;
 
@@ -458,6 +471,10 @@ static BOOL OnCommand (HWND hWnd, int wmId, HWND hWndCtl, UINT codeNotify)
 	case IDM_EXIT:
 		DestroyWindow(hWnd);
 		return TRUE;
+	//Edit by Richard
+	case IDM_SEARCHPLAYER:
+		CreateDialog(g_hInst, (LPCTSTR)IDD_SEARCHPLAYER, hWnd, (DLGPROC)SearchPlayerDlg);
+		return TRUE;
 	case ID_TRAY_EXIT:
 		DestroyWindow(hWnd);
 		return TRUE;
@@ -631,7 +648,7 @@ static LRESULT ProcessCustomDraw (LPARAM lParam)
 {
     LPNMLVCUSTOMDRAW lplvcd = (LPNMLVCUSTOMDRAW)lParam;
 
-    switch (lplvcd->nmcd.dwDrawStage) 
+    switch (lplvcd->nmcd.dwDrawStage)
     {
 	case CDDS_PREPAINT:
 		return CDRF_NOTIFYITEMDRAW;
@@ -688,7 +705,7 @@ static LRESULT CustomDrawPlayerList (LPARAM lParam)
 	LPNMLVCUSTOMDRAW lplvcd = (LPNMLVCUSTOMDRAW)lParam;
 	char cColor;
 
-	switch (lplvcd->nmcd.dwDrawStage) 
+	switch (lplvcd->nmcd.dwDrawStage)
     {
 	case CDDS_PREPAINT:
 		return CDRF_NOTIFYITEMDRAW;
@@ -959,7 +976,7 @@ static BOOL OnSysCommand (HWND hWnd, UINT cmd, WPARAM wParam, LPARAM lParam)
 
 static LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message) 
+	switch (message)
 	{
 		HANDLE_MSG(hWnd, WM_NOTIFY, OnNotify);
 		HANDLE_MSG(hWnd, WM_SIZE, OnResize);
@@ -1070,8 +1087,8 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		LVITEM tLVItem;
 
 		memset(&tLVItem, 0, sizeof(tLVItem));
-		tLVItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM | LVIF_STATE | LVIF_DI_SETITEM; 
-		tLVItem.state = 0; 
+		tLVItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM | LVIF_STATE | LVIF_DI_SETITEM;
+		tLVItem.state = 0;
 		tLVItem.stateMask = 0;
 
 		tLVItem.iSubItem = 0;
@@ -1081,14 +1098,14 @@ void UpdateServerListGUI (const char *sAddress, serverinfo_t &tServerInfo)
 		tLVItem.pszText = "";
 		nID = ListView_InsertItem(g_hServerList, &tLVItem);
 
-		tLVItem.mask = LVIF_TEXT | LVIF_IMAGE; 
+		tLVItem.mask = LVIF_TEXT | LVIF_IMAGE;
 		tLVItem.iSubItem = 1;
 		tLVItem.iItem = nCount;
 		tLVItem.iImage = iImageNeedPassword;
 		tLVItem.pszText = "";
 		ListView_SetItem(g_hServerList, &tLVItem);
 
-		tLVItem.mask = LVIF_TEXT | LVIF_IMAGE; 
+		tLVItem.mask = LVIF_TEXT | LVIF_IMAGE;
 		tLVItem.iSubItem = 2;
 		tLVItem.iItem = nCount;
 		tLVItem.iImage = iImageGLS;
@@ -1179,3 +1196,70 @@ void LoadSettings (void)
 	}
 }
 
+//Edit by Richard
+//Message handler for Player Search Dialog
+static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		SendMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_EDIT, EN_CHANGE), (LPARAM) GetDlgItem(hDlg, IDC_SP_EDIT));
+		return TRUE;
+
+
+	case WM_COMMAND:
+		static std::vector <std::pair<std::string, int> > vFound;
+
+		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+		{
+			EndDialog(hDlg, LOWORD(wParam));
+			return TRUE;
+		}
+
+		if ((LOWORD(wParam) == IDC_SP_EDIT) && (HIWORD(wParam) == EN_CHANGE))
+		{
+			std::string sContentBuffer;
+			char szNameBuffer[256];
+
+			SendMessage(GetDlgItem(hDlg, IDC_SP_LIST), LB_RESETCONTENT, 0, 0);
+
+			GetWindowText(GetDlgItem(hDlg, IDC_SP_EDIT), szNameBuffer,
+							sizeof(szNameBuffer) / sizeof (szNameBuffer[0]));
+			SearchPlayer(szNameBuffer, &vFound);
+			for (size_t i = 0; i < vFound.size(); i++)
+			{
+				sContentBuffer.assign(g_mServers[vFound[i].first].vPlayers[vFound[i].second].sName);
+				sContentBuffer.append (" on ");
+				sContentBuffer.append (g_mServers[vFound[i].first].sHostName);
+				int index = SendMessage(GetDlgItem(hDlg, IDC_SP_LIST), LB_ADDSTRING,
+									0, (LPARAM) sContentBuffer.c_str());
+				SendMessage(GetDlgItem(hDlg, IDC_SP_LIST), LB_SETITEMDATA, index, i);
+			}
+		}
+
+		if (HIWORD(wParam) == LBN_SELCHANGE && LOWORD(wParam) == IDC_SP_LIST)
+		{
+			int iFoundIndex;
+			int iListId;
+
+			iFoundIndex = SendMessage(GetDlgItem(hDlg, IDC_SP_LIST),
+				LB_GETITEMDATA,
+				SendMessage (GetDlgItem(hDlg, IDC_SP_LIST), LB_GETCURSEL, 0, 0),
+				0);
+
+			iListId = GetListIDFromAddress(vFound[iFoundIndex].first.c_str());
+			if (iListId >= 0)
+			{
+				SetFocus(g_hServerList);
+				ListView_SetItemState(g_hServerList, -1, 0, 0x000F);
+				ListView_SetItemState(g_hServerList, iListId, LVIS_FOCUSED | LVIS_SELECTED, 0x000F);
+
+				UpdateInfoLists(iListId, false);
+			}
+			return TRUE;
+		}
+		break;
+	}
+
+    return FALSE;
+}
