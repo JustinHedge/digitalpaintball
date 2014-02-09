@@ -18,12 +18,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 
-//ADAPTOINS TO COMPILE WITH GCC:
+//ADAPTIONS TO COMPILE WITH GCC:
 /*
 #define strcpy_s strcpy
 #define _snprintf_s _snprintf
 #define sprintf_s sprintf
 */
+
 
 
 #include "serverbrowser.h"
@@ -251,8 +252,11 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 		g_nStatusBarHeight = rect.bottom;
 
 	// Main Server List
+	// Edit by Richard: Added LVS_SHOWSELALWAYS style, because when the main program loses focus the other
+	// list views will keep their content, so the selected server should still be visible. Also, it improves
+	// working with dialogs which select a server in the main window a lot.
 	g_hServerList = CreateWindowEx(0, WC_LISTVIEW, "",
-		WS_CHILD | WS_VISIBLE | LVS_REPORT | WS_BORDER | LVS_AUTOARRANGE | LVS_SINGLESEL,
+		WS_CHILD | WS_VISIBLE | LVS_REPORT | WS_BORDER | LVS_AUTOARRANGE | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
 		0, 0, 300, 300, hWnd, NULL, g_hInst, NULL);
 	ListView_SetExtendedListViewStyle(g_hServerList, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
 
@@ -1208,6 +1212,83 @@ void LoadSettings (void)
 	}
 }
 
+//Edit by Richard: Struct needed to pass multiple arguments via CreateThread()
+struct SearchThreadArgs
+{
+	HWND hDlg;
+	std::vector <std::pair<std::string, int> > * pvFound;
+	int iDelay;
+};
+
+//Edit by Richard: Thread for updating the search player dialog
+void SearchThread (SearchThreadArgs* args)
+{
+	std::string sContentBuffer;
+	char szNameBuffer[256];
+	char szOldEntry[256];
+	int index;
+	HWND hListBox = GetDlgItem(args->hDlg, IDC_SP_LIST);
+	HWND hEdit = GetDlgItem(args->hDlg, IDC_SP_EDIT);
+	
+	//animate the button while waiting so the user sees that something is loading
+	if (args->iDelay)
+	{
+		EnableWindow(GetDlgItem(args->hDlg, IDC_SP_UPDATE), FALSE);
+		EnableWindow(GetDlgItem(args->hDlg, IDC_SP_EDIT), FALSE);
+
+		GetDlgItemText(args->hDlg, IDC_SP_UPDATE, szOldEntry, sizeof(szOldEntry) / sizeof(szOldEntry[0]));
+		for (index = 0; index < 10; index++)
+		{
+			sprintf_s(szNameBuffer, "%.*s", index, "................");
+			SetDlgItemText(args->hDlg, IDC_SP_UPDATE, szNameBuffer);
+			Sleep(args->iDelay / 10);
+		}
+		SetDlgItemText(args->hDlg, IDC_SP_UPDATE, szOldEntry);
+	}
+	
+	index = SendMessage(hListBox, LB_GETCURSEL, 0, 0);
+	SendMessage(hListBox, LB_GETTEXT, index, (LPARAM) szOldEntry);
+
+	GetWindowText(hEdit, szNameBuffer, sizeof(szNameBuffer) / sizeof (szNameBuffer[0]));
+	SearchPlayer(szNameBuffer, args->pvFound);
+	
+	if (args->pvFound->size() == 0) //if no results, add the "no player found" text in the correct language
+	{
+		SendMessage(hListBox, LB_RESETCONTENT, 0, 0);
+		LoadString(g_hInst, IDS_SP_NOPLAYERFOUND, szNameBuffer, sizeof(szNameBuffer)/sizeof(szNameBuffer[0]));
+		index = SendMessage(hListBox, LB_ADDSTRING, 0, (LPARAM) szNameBuffer);
+		SendMessage(hListBox, LB_SETITEMDATA, index, (-1));
+		
+		if (args->iDelay)
+		{
+			EnableWindow(GetDlgItem(args->hDlg, IDC_SP_UPDATE), TRUE);
+			EnableWindow(GetDlgItem(args->hDlg, IDC_SP_EDIT), TRUE);
+		}
+		delete args;
+		return;
+	}
+	
+	SendMessage(hListBox, LB_RESETCONTENT, 0, 0);
+	for (size_t i = 0; i < args->pvFound->size(); i++) //add found results, also set itemdata to index in vPlayers
+	{
+		sContentBuffer.assign(g_mServers[args->pvFound->at(i).first].vPlayers[args->pvFound->at(i).second].sName);
+		sContentBuffer.append (" on ");
+		sContentBuffer.append (g_mServers[args->pvFound->at(i).first].sHostName);
+		int index = SendMessage(hListBox, LB_ADDSTRING, 0, (LPARAM) sContentBuffer.c_str());
+		SendMessage(hListBox, LB_SETITEMDATA, index, i);
+	}
+	index = SendMessage(hListBox, LB_FINDSTRING, -1, (LPARAM) szOldEntry);
+	SendMessage(hListBox, LB_SETCURSEL, index, 0);
+
+	if (args->iDelay)
+	{
+		EnableWindow(GetDlgItem(args->hDlg, IDC_SP_UPDATE), TRUE);
+		EnableWindow(GetDlgItem(args->hDlg, IDC_SP_EDIT), TRUE);
+	}
+	delete args;
+}
+
+
 //Edit by Richard
 //Message handler for Player Search Dialog
 static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -1215,9 +1296,9 @@ static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam,
 	switch (message)
 	{
 	case WM_INITDIALOG:
+		//fill the listbox with all players currently playing
 		SendMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_EDIT, EN_CHANGE), (LPARAM) GetDlgItem(hDlg, IDC_SP_EDIT));
 		return TRUE;
-
 
 	case WM_COMMAND:
 		static std::vector <std::pair<std::string, int> > vFound;
@@ -1231,38 +1312,21 @@ static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam,
 		if (LOWORD(wParam) == IDC_SP_UPDATE)
 		{
 			RefreshList();
-			SendMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_EDIT, EN_CHANGE), (LPARAM) GetDlgItem(hDlg, IDC_SP_EDIT));
+			SearchThreadArgs* args = new SearchThreadArgs;
+			args->hDlg = hDlg;
+			args->pvFound = &vFound;
+			args->iDelay = 1000; //wait one second after refreshing list before doing the search.
+			CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SearchThread, (LPVOID)args, 0, NULL);
 			return TRUE;
 		}
 
 		if ((LOWORD(wParam) == IDC_SP_EDIT) && (HIWORD(wParam) == EN_CHANGE))
 		{
-			std::string sContentBuffer;
-			char szNameBuffer[256];
-
-			SendMessage(GetDlgItem(hDlg, IDC_SP_LIST), LB_RESETCONTENT, 0, 0);
-
-			GetWindowText(GetDlgItem(hDlg, IDC_SP_EDIT), szNameBuffer,
-							sizeof(szNameBuffer) / sizeof (szNameBuffer[0]));
-			SearchPlayer(szNameBuffer, &vFound);
-
-			if (vFound.size() == 0)
-			{
-				LoadString(g_hInst, IDS_SP_NOPLAYERFOUND, szNameBuffer, sizeof(szNameBuffer)/sizeof(szNameBuffer[0]));
-				int index = SendDlgItemMessage(hDlg, IDC_SP_LIST, LB_ADDSTRING, 0, (LPARAM) szNameBuffer);
-				SendDlgItemMessage(hDlg, IDC_SP_LIST, LB_SETITEMDATA, index, (-1));
-				return TRUE;
-			}
-
-			for (size_t i = 0; i < vFound.size(); i++)
-			{
-				sContentBuffer.assign(g_mServers[vFound[i].first].vPlayers[vFound[i].second].sName);
-				sContentBuffer.append (" on ");
-				sContentBuffer.append (g_mServers[vFound[i].first].sHostName);
-				int index = SendMessage(GetDlgItem(hDlg, IDC_SP_LIST), LB_ADDSTRING,
-									0, (LPARAM) sContentBuffer.c_str());
-				SendMessage(GetDlgItem(hDlg, IDC_SP_LIST), LB_SETITEMDATA, index, i);
-			}
+			SearchThreadArgs* args = new SearchThreadArgs;
+			args->hDlg = hDlg;
+			args->pvFound = &vFound;
+			args->iDelay = 0;
+			SearchThread(args);
 			return TRUE;
  		}
 
@@ -1275,25 +1339,22 @@ static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam,
 				LB_GETITEMDATA,
 				SendMessage (GetDlgItem(hDlg, IDC_SP_LIST), LB_GETCURSEL, 0, 0),
 				0);
-
+			
 			if (iFoundIndex == (-1))
-			{
 				return TRUE;
-			}
 
+			//select the server the player is playing on in the main windoww
 			iListId = GetListIDFromAddress(vFound[iFoundIndex].first.c_str());
 			if (iListId >= 0)
 			{
-				SetFocus(g_hServerList);
 				ListView_SetItemState(g_hServerList, -1, 0, 0x000F);
 				ListView_SetItemState(g_hServerList, iListId, LVIS_FOCUSED | LVIS_SELECTED, 0x000F);
-
+				ListView_EnsureVisible(g_hServerList, iListId, FALSE);
 				UpdateInfoLists(iListId, false);
 			}
 			return TRUE;
 		}
 		break;
 	}
-
     return FALSE;
 }
