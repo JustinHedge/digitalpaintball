@@ -69,6 +69,7 @@ static bool g_bAlreadyOpen = false;
 static DWORD g_dwExistingProcess = 0;
 
 //Edit by Richard
+static HWND g_hSearchPlayerDlg;
 static LRESULT CALLBACK SearchPlayerDlg (HWND, UINT, WPARAM, LPARAM);
 
 char g_szGameDir[256];
@@ -209,7 +210,7 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
-		if (!TranslateAccelerator(hWnd, hAccelTable, &msg))
+		if (!TranslateAccelerator(hWnd, hAccelTable, &msg) && !IsDialogMessage (g_hSearchPlayerDlg, &msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -489,7 +490,7 @@ static BOOL OnCommand (HWND hWnd, int wmId, HWND hWndCtl, UINT codeNotify)
 		return TRUE;
 	//Edit by Richard
 	case IDM_SEARCHPLAYER:
-		CreateDialog(g_hInst, (LPCTSTR)IDD_SEARCHPLAYER, hWnd, (DLGPROC)SearchPlayerDlg);
+		g_hSearchPlayerDlg = CreateDialog(g_hInst, (LPCTSTR)IDD_SEARCHPLAYER, hWnd, (DLGPROC)SearchPlayerDlg);
 		return TRUE;
 	case ID_TRAY_EXIT:
 		DestroyWindow(hWnd);
@@ -1299,6 +1300,7 @@ static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam,
 		//fill the listbox with all players currently playing
 		SendMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_EDIT, EN_CHANGE), (LPARAM) GetDlgItem(hDlg, IDC_SP_EDIT));
 		return TRUE;
+
 
 	case WM_COMMAND:
 		static std::vector <std::pair<std::string, int> > vFound;
