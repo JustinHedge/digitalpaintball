@@ -70,7 +70,6 @@ static DWORD g_dwExistingProcess = 0;
 
 //Edit by Richard
 static HWND g_hSearchPlayerDlg;
-static LRESULT CALLBACK SearchPlayerDlg (HWND, UINT, WPARAM, LPARAM);
 
 char g_szGameDir[256];
 string g_sCurrentServerAddress;
@@ -151,6 +150,7 @@ void DeletePIDFile ()
 //Edit by Richard: These functions are later defined as static, which was missing here
 static LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK About (HWND, UINT, WPARAM, LPARAM);
+static LRESULT CALLBACK SearchPlayerDlg (HWND, UINT, WPARAM, LPARAM);
 
 
 int APIENTRY WinMain (HINSTANCE hInstance,
@@ -367,6 +367,14 @@ static void OnResize (HWND hWnd, UINT state, int cx, int cy)
 }
 
 
+static void OnRefresh (void)
+{
+	if (g_hSearchPlayerDlg != 0)
+		SendMessage(g_hSearchPlayerDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_UPDATE, 0), (LPARAM) GetDlgItem(g_hSearchPlayerDlg, IDC_SP_UPDATE));
+	else
+		RefreshList();
+}
+
 static BOOL CopyAddress (HWND hWnd, int nItem, copytype_t eCopyType)
 {
 	char szAddress[64];
@@ -483,7 +491,7 @@ static BOOL OnCommand (HWND hWnd, int wmId, HWND hWndCtl, UINT codeNotify)
 		UpdateList();
 		return TRUE;
 	case IDM_REFRESH:
-		RefreshList();
+		OnRefresh();
 		return TRUE;
 	case IDM_EXIT:
 		DestroyWindow(hWnd);
@@ -1213,15 +1221,13 @@ void LoadSettings (void)
 	}
 }
 
-//Edit by Richard: Struct needed to pass multiple arguments via CreateThread()
+//Edit by Richard: SearchThread which will refesh servers, then wait iDelay ms, then redo the search
 struct SearchThreadArgs
 {
 	HWND hDlg;
 	std::vector <std::pair<std::string, int> > * pvFound;
 	int iDelay;
 };
-
-//Edit by Richard: Thread for updating the search player dialog
 void SearchThread (SearchThreadArgs* args)
 {
 	std::string sContentBuffer;
@@ -1290,73 +1296,116 @@ void SearchThread (SearchThreadArgs* args)
 }
 
 
-//Edit by Richard
-//Message handler for Player Search Dialog
+
+
+//Edit by Richard: Message handlers for search players dialog
+int OnSearchPlayerDlgReload (HWND hDlg, int iDelay, std::vector <std::pair<std::string, int> > * pvFound)
+{
+	RefreshList();
+	SearchThreadArgs* args = new SearchThreadArgs;
+	args->hDlg = hDlg;
+	args->pvFound = pvFound;
+	args->iDelay = iDelay;
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SearchThread, (LPVOID)args, 0, NULL);
+	return TRUE;
+}
+
+int OnSearchPlayerDlgSelChange (HWND hDlg, std::vector <std::pair<std::string, int> > * pvFound)
+{
+	int iFoundIndex;
+	int iListId;
+
+	iFoundIndex = SendMessage(
+		GetDlgItem(hDlg, IDC_SP_LIST),
+		LB_GETITEMDATA,
+		SendDlgItemMessage(hDlg, IDC_SP_LIST, LB_GETCURSEL, 0, 0),
+		0);
+	
+	if (iFoundIndex == (-1))
+		return TRUE;
+
+	//select the server the player is playing on in the main windoww
+	iListId = GetListIDFromAddress(pvFound->at(iFoundIndex).first.c_str());
+	if (iListId >= 0)
+	{
+		ListView_SetItemState(g_hServerList, -1, 0, 0x000F);
+		ListView_SetItemState(g_hServerList, iListId, LVIS_FOCUSED | LVIS_SELECTED, 0x000F);
+		ListView_EnsureVisible(g_hServerList, iListId, FALSE);
+		UpdateInfoLists(iListId, false);
+	}
+	return TRUE;
+}
+
+int OnSearchPlayerDlgResize (HWND hDlg)
+{
+	RECT rcWin;
+	DWORD dwBaseUnits;
+	GetClientRect(hDlg, &rcWin);
+	dwBaseUnits = GetDialogBaseUnits();
+	int iMW = LOWORD(dwBaseUnits) / 4; //Multiplier width for base units to pixels
+    int iMH = HIWORD(dwBaseUnits) / 8; //Multiplier height for base units to pixels
+	
+	MoveWindow (GetDlgItem(hDlg, IDC_SP_EDIT), 5*iMW, 16*iMH, rcWin.right - 10*iMW,  12*iMH, false);
+	MoveWindow (GetDlgItem(hDlg, IDC_SP_LIST), 5*iMW, 50*iMH, rcWin.right - 10*iMW,  rcWin.bottom - 72*iMH, false);
+	MoveWindow (GetDlgItem(hDlg, IDC_SP_UPDATE), rcWin.right - 84*iMW, rcWin.bottom - 17*iMH, 37*iMW, 11*iMH, false);
+	MoveWindow (GetDlgItem(hDlg, IDOK),          rcWin.right - 42*iMW, rcWin.bottom - 17*iMH, 37*iMW, 11*iMH, false);
+
+	RedrawWindow(hDlg, NULL, NULL, RDW_ERASE | RDW_INVALIDATE);
+	return TRUE;
+}
+
+int OnSearchPlayerDlgInit (HWND hDlg)
+{
+	OnSearchPlayerDlgResize(hDlg);
+	//fill the listbox with all players currently playing, manually calling the function is not possible
+	//because we dont have the pvFound in this scope.
+	SendMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_EDIT, EN_CHANGE), (LPARAM) GetDlgItem(hDlg, IDC_SP_EDIT));
+	return TRUE;
+}
+
+int OnSearchPlayerDlgCommand (HWND hDlg, WPARAM wParam, LPARAM lParam)
+{
+	static std::vector <std::pair<std::string, int> > vFound;
+
+	if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+	{
+		g_hSearchPlayerDlg = 0;
+		EndDialog(hDlg, LOWORD(wParam));
+		return TRUE;
+	}
+
+	if (LOWORD(wParam) == IDC_SP_UPDATE)
+		return OnSearchPlayerDlgReload (hDlg, 1000, &vFound);
+
+	if ((LOWORD(wParam) == IDC_SP_EDIT) && (HIWORD(wParam) == EN_CHANGE))
+		return OnSearchPlayerDlgReload (hDlg, 0, &vFound);
+
+	if (HIWORD(wParam) == LBN_SELCHANGE && LOWORD(wParam) == IDC_SP_LIST)
+		return OnSearchPlayerDlgSelChange(hDlg, &vFound);
+	
+	return FALSE;
+}
+
 static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
-	case WM_INITDIALOG:
-		//fill the listbox with all players currently playing
-		SendMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_EDIT, EN_CHANGE), (LPARAM) GetDlgItem(hDlg, IDC_SP_EDIT));
-		return TRUE;
+	case WM_SIZE:
+		return OnSearchPlayerDlgResize(hDlg);
 
+	case WM_INITDIALOG:
+		return OnSearchPlayerDlgInit(hDlg);
 
 	case WM_COMMAND:
-		static std::vector <std::pair<std::string, int> > vFound;
+		return OnSearchPlayerDlgCommand(hDlg, wParam, lParam);
 
-		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+	case WM_GETMINMAXINFO:
 		{
-			EndDialog(hDlg, LOWORD(wParam));
-			return TRUE;
+			DWORD dwBaseUnits = GetDialogBaseUnits();
+			((MINMAXINFO*) lParam)->ptMinTrackSize.x = MulDiv(100, LOWORD(dwBaseUnits), 4);
+			((MINMAXINFO*) lParam)->ptMinTrackSize.y = MulDiv(120, HIWORD(dwBaseUnits), 8);
+			return DefWindowProc (hDlg, message, wParam, lParam);
 		}
-
-		if (LOWORD(wParam) == IDC_SP_UPDATE)
-		{
-			RefreshList();
-			SearchThreadArgs* args = new SearchThreadArgs;
-			args->hDlg = hDlg;
-			args->pvFound = &vFound;
-			args->iDelay = 1000; //wait one second after refreshing list before doing the search.
-			CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SearchThread, (LPVOID)args, 0, NULL);
-			return TRUE;
-		}
-
-		if ((LOWORD(wParam) == IDC_SP_EDIT) && (HIWORD(wParam) == EN_CHANGE))
-		{
-			SearchThreadArgs* args = new SearchThreadArgs;
-			args->hDlg = hDlg;
-			args->pvFound = &vFound;
-			args->iDelay = 0;
-			SearchThread(args);
-			return TRUE;
- 		}
-
-		if (HIWORD(wParam) == LBN_SELCHANGE && LOWORD(wParam) == IDC_SP_LIST)
-		{
-			int iFoundIndex;
-			int iListId;
-
-			iFoundIndex = SendMessage(GetDlgItem(hDlg, IDC_SP_LIST),
-				LB_GETITEMDATA,
-				SendMessage (GetDlgItem(hDlg, IDC_SP_LIST), LB_GETCURSEL, 0, 0),
-				0);
-			
-			if (iFoundIndex == (-1))
-				return TRUE;
-
-			//select the server the player is playing on in the main windoww
-			iListId = GetListIDFromAddress(vFound[iFoundIndex].first.c_str());
-			if (iListId >= 0)
-			{
-				ListView_SetItemState(g_hServerList, -1, 0, 0x000F);
-				ListView_SetItemState(g_hServerList, iListId, LVIS_FOCUSED | LVIS_SELECTED, 0x000F);
-				ListView_EnsureVisible(g_hServerList, iListId, FALSE);
-				UpdateInfoLists(iListId, false);
-			}
-			return TRUE;
-		}
-		break;
 	}
     return FALSE;
 }
