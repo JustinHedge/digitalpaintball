@@ -1299,7 +1299,7 @@ void SearchThread (SearchThreadArgs* args)
 
 
 //Edit by Richard: Message handlers for search players dialog
-int OnSearchPlayerDlgReload (HWND hDlg, int iDelay, std::vector <std::pair<std::string, int> > * pvFound)
+int OnSearchPlayerDlgUpdate (HWND hDlg, int iDelay, std::vector <std::pair<std::string, int> > * pvFound)
 {
 	RefreshList();
 	SearchThreadArgs* args = new SearchThreadArgs;
@@ -1307,6 +1307,16 @@ int OnSearchPlayerDlgReload (HWND hDlg, int iDelay, std::vector <std::pair<std::
 	args->pvFound = pvFound;
 	args->iDelay = iDelay;
 	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SearchThread, (LPVOID)args, 0, NULL);
+	return TRUE;
+}
+
+int OnSearchPlayerDlgEditChange(HWND hDlg, std::vector <std::pair<std::string, int> > * pvFound)
+{
+	SearchThreadArgs* args = new SearchThreadArgs;
+	args->hDlg = hDlg;
+	args->pvFound = pvFound;
+	args->iDelay = 0;
+	SearchThread(args);
 	return TRUE;
 }
 
@@ -1375,10 +1385,10 @@ int OnSearchPlayerDlgCommand (HWND hDlg, WPARAM wParam, LPARAM lParam)
 	}
 
 	if (LOWORD(wParam) == IDC_SP_UPDATE)
-		return OnSearchPlayerDlgReload (hDlg, 1000, &vFound);
+		return OnSearchPlayerDlgUpdate (hDlg, 1000, &vFound);
 
 	if ((LOWORD(wParam) == IDC_SP_EDIT) && (HIWORD(wParam) == EN_CHANGE))
-		return OnSearchPlayerDlgReload (hDlg, 0, &vFound);
+		return OnSearchPlayerDlgEditChange(hDlg, &vFound);
 
 	if (HIWORD(wParam) == LBN_SELCHANGE && LOWORD(wParam) == IDC_SP_LIST)
 		return OnSearchPlayerDlgSelChange(hDlg, &vFound);
