@@ -35,7 +35,7 @@ typedef struct
 	void		(*ShutdownMap) (void);
 	void		(*Shutdown) (void);
 	void		(*GameEvent) (game_event_t event, edict_t *ent, void *data1, void *data2);
-	void		(*RunFrame) (int msec); // should be called each game frame
+	void		(*RunFrame) (int msec, float game_time); // should be called each game frame
 	qboolean	(*Command) (edict_t *ent, const char *cmd, const char *cmd2, const char *cmd3, const char *cmd4);
 	void		(*ExitLevel) (void); // called when level ends
 	void		(*SpawnEntities) (void); // called when level starts
@@ -57,6 +57,7 @@ typedef struct
 	qboolean	(*inPVS) (vec3_t p1, vec3_t p2);
 	qboolean	(*inPHS) (vec3_t p1, vec3_t p2);
 	void		(*Pmove) (pmove_t *pmove);		// player movement code common with client prediction
+	int			(*pointcontents) (vec3_t point);
 	void		*(*TagMalloc) (int size, int tag);
 	void		(*TagFree) (void *block);
 	void		(*FreeTags) (int tag);

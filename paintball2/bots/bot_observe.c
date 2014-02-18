@@ -51,7 +51,7 @@ void BotAddPlayerObservation (player_observation_t *observation)
 	if (!g_player_paths.path_capacity)
 	{
 		g_player_paths.path_capacity = MAX_RECORDED_PATHS;
-		g_player_paths.paths = bi.TagMalloc(sizeof(player_recorded_path_t) * MAX_RECORDED_PATHS, TAG_LEVEL);
+		g_player_paths.paths = bi.TagMalloc(sizeof(player_recorded_path_t) * MAX_RECORDED_PATHS, 0/*TAG_LEVEL*/);
 	}
 
 	if (VectorSquareDistance(observation->start_pos, observation->end_pos) < PLAYER_PATH_MIN_DIST * PLAYER_PATH_MIN_DIST)
@@ -81,7 +81,7 @@ void BotAddPlayerObservation (player_observation_t *observation)
 		bi.dprintf("Path %d added.\n", path_index);
 		++g_player_paths.num_paths;
 		//ri.DrawDebugLine(observation->start_pos, observation->end_pos, 1.0, .8, .1, 20.0f, -1);
-		DrawDebugSphere(observation->end_pos, 8.0f, 1.0f, 0.f, 0.5f, 20.0f, -1);
+		//DrawDebugSphere(observation->end_pos, 8.0f, 1.0f, 0.f, 0.5f, 20.0f, -1);
 	}
 	else
 	{
@@ -174,6 +174,26 @@ void BotAddObservationPoint (player_observation_t *observation, const edict_t *e
 }
 
 
+#define HEATMAP_UPDATE_TIME .5f // take samples every 1/2 second
+
+void BotUpdatePlayerHeatmap (player_observation_t *observation, const edict_t *ent, const pmove_t *pm)
+{
+	// todo: clear observations on map change
+	if (bots.game_time - observation->last_heatmap_time >= HEATMAP_UPDATE_TIME)
+	{
+		if (pm->groundentity)
+		{
+			observation->last_heatmap_time = bots.game_time;
+
+			if (pm->groundentity)
+				DrawDebugSphere(ent->s.origin, 7, 1, 1, 1, 1000, -1);
+			else
+				DrawDebugSphere(ent->s.origin, 7, .5, .5, .5, 1000, -1);
+		}
+	}
+}
+
+
 // Called for each player input packet sent, while the player is alive
 void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const pmove_t *pm)
 {
@@ -184,6 +204,8 @@ void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const
 	if (player_index < MAX_PLAYERS_TO_RECORD)
 	{
 		player_observation_t *observation = g_player_observations + player_index;
+
+		BotUpdatePlayerHeatmap(observation, ent, pm);
 
 		if (!observation->path_active)
 		{

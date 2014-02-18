@@ -5989,8 +5989,8 @@ void	Draw_Pic2 (float x, float y, image_t *gl);
 void	Draw_StringAlpha (float x, float y, const char *str, float alhpa); // jit
 void	Draw_SubPic (float x, float y, float w, float h, float tx1, float ty1, float tx2, float ty2, image_t *image); // jit
 void	Draw_BorderedPic (bordered_pic_data_t *data, float x, float y, float w, float h, float scale, float alpha); // jit
-int		Draw_DebugLine (vec_t *start, vec_t *end, float r, float g, float b, float time, int id); // jitdebugdraw
-int		Draw_DebugSphere (vec_t *pos, float radius, float r, float g, float b, float time, int id); // jitdebugdraw
+int		Draw_DebugLine (const vec_t *start, const vec_t *end, float r, float g, float b, float time, int id); // jitdebugdraw
+int		Draw_DebugSphere (const vec_t *pos, float radius, float r, float g, float b, float time, int id); // jitdebugdraw
 
 
 int Draw_GetIntVarByID (int id)

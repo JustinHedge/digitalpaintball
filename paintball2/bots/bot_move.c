@@ -43,6 +43,86 @@ void BotDance (unsigned int botindex)
 	movement->shooting = false;
 }
 
+edict_t *g_botent = NULL;
+
+trace_t BotTrace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
+{
+	return bi.trace(start, mins, maxs, end, g_botent, MASK_PLAYERSOLID);
+}
+
+#define STRAFE_PMOVE_TRIES 8
+#define STRAFE_PMOVE_TIME 500 // try over .5sec
+#define STRAFE_PMOVE_MSEC 20 // 50fps
+
+void BotRandomStrafeJump (unsigned int botindex, int msec)
+{
+	edict_t *ent = bots.ents[botindex];
+	botmovedata_t *movedata = bots.movement + botindex;
+	struct gclient_s *client = ent->client;
+	pmove_t pm[STRAFE_PMOVE_TRIES];
+	float yawspeed[STRAFE_PMOVE_TRIES];
+	pmove_t pm_in;
+	int i;
+	vec3_t velocity;
+	float best_velocity_sq = -1;
+	int best_velocity_index = 0;
+	float velocity_sq;
+	float yaw = ent->s.angles[YAW];
+	short yaw_short = ANGLE2SHORT(yaw) - ent->client->ps.pmove.delta_angles[YAW];
+/*
+
+	movedata->time_since_last_turn += msec;
+
+	if (movedata->time_since_last_turn >= STRAFE_PMOVE_TIME)
+	{
+		movedata->time_since_last_turn = 0;
+	}
+	else
+	{
+		return;
+	}*/
+
+	g_botent = ent;
+	memset(&pm_in, 0, sizeof(pm_in));
+	memcpy(&pm_in.s, &client->ps.pmove, sizeof(pm_in.s));
+	pm_in.trace = BotTrace;
+	pm_in.pointcontents = bi.pointcontents;
+	VectorCopy(ent->mins, pm_in.mins);
+	VectorCopy(ent->maxs, pm_in.maxs);
+
+	for (i = 0; i < STRAFE_PMOVE_TRIES; ++i)
+	{
+		int pm_time;
+
+		memcpy(&pm[i], &pm_in, sizeof(pmove_t));
+		pm[i].cmd.upmove = nu_rand(1) < .5 ? 0 : 400;
+		pm[i].cmd.sidemove = nu_rand(1) < .5 ? -400 : 400;
+		pm[i].cmd.forwardmove = nu_rand(4) > 1 ? 400 : -400;
+		pm[i].cmd.msec = STRAFE_PMOVE_MSEC;
+		yawspeed[i] = nu_rand(300.0f) - nu_rand(300.0f); // +/- 200deg/sec
+
+		for (pm_time = 0; pm_time < STRAFE_PMOVE_TIME; pm_time += STRAFE_PMOVE_MSEC)
+		{
+			pm[i].cmd.angles[YAW] = yaw_short + ANGLE2SHORT(yawspeed[i] * (float)pm_time / 1000.0f); // todo: angular velocity, convert to short, etc.
+			bi.Pmove(&pm[i]);
+		}
+
+		VectorCopy(pm[i].s.velocity, velocity); // convert short to float
+		velocity_sq = VectorLengthSquared(velocity);
+
+		if (velocity_sq > best_velocity_sq)
+		{
+			best_velocity_sq = velocity_sq;
+			best_velocity_index = i;
+		}
+	}
+
+	//bi.ClientThink(ent, &pm[best_velocity_index].cmd);
+	movedata->forward = pm[best_velocity_index].cmd.forwardmove;
+	movedata->up = pm[best_velocity_index].cmd.upmove;
+	movedata->side = pm[best_velocity_index].cmd.sidemove;
+	movedata->yawspeed = yawspeed[best_velocity_index];
+}
 
 // Wander around with no navmesh
 #define BOT_WANDER_TRACE_DISTANCE 500.0f
@@ -292,10 +372,11 @@ void BotMove (unsigned int botindex, int msec)
 
 		if (ent)
 		{
+			/**
 			if (BotFollowPlayerPaths(botindex, msec))
 			{
 			}
-			else
+			else*/
 			{
 				usercmd_t cmd;
 				botmovedata_t *movement = bots.movement + botindex;
@@ -304,8 +385,9 @@ void BotMove (unsigned int botindex, int msec)
 				movement->time_since_last_turn += msec;
 
 				//BotDance(botindex);
-				BotWanderNoNav(botindex, msec);
+				//BotWanderNoNav(botindex, msec);
 				//BotCopyPlayer(botindex, msec);
+				BotRandomStrafeJump(botindex, msec);// return;
 
 				// Break movement up into smaller steps so strafe jumping and such work better
 				movement->timeleft += msec;
@@ -342,4 +424,13 @@ void BotUpdateMovement (int msec)
 	}
 	
 	g_lastplayercmd = g_playercmd;
+}
+
+
+
+void PmoveOriginToWorldOrigin (const pmove_t *pm, vec_t *origin_out)
+{
+	origin_out[0] = pm->s.origin[0] * 0.125f;
+	origin_out[1] = pm->s.origin[1] * 0.125f;
+	origin_out[2] = pm->s.origin[2] * 0.125f;
 }

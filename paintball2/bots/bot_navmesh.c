@@ -24,16 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 
-void PmoveOriginToWorldOrigin (const pmove_t *pm, vec_t *origin_out)
-{
-	origin_out[0] = pm->s.origin[0] * 0.125f;
-	origin_out[1] = pm->s.origin[1] * 0.125f;
-	origin_out[2] = pm->s.origin[2] * 0.125f;
-}
-
-
 void BotAddPotentialNavmeshFromPmove (const edict_t *ent, const pmove_t *pm)
 {
+	return; // not doing this for now.
+
 	if (pm->groundentity) // only do this if touching the ground.
 	{
 		pmove_t test_pm;

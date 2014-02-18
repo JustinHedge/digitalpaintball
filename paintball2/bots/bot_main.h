@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void BotInitLibrary (void);
 void BotShutdown (void);
 void BotHandleGameEvent (game_event_t event, edict_t *ent, void *data1, void *data2);
-void BotRunFrame (int msec);
+void BotRunFrame (int msec, float game_time);
 qboolean BotCommand (edict_t *ent, const char *cmd, const char *cmd2, const char *cmd3, const char *cmd4);
 void BotExitLevel (void);
 void BotSpawnEntities (void);
@@ -44,6 +44,9 @@ extern bot_import_t bi;
 
 // bot_move.c
 void BotUpdateMovement (int msec);
+void PmoveOriginToWorldOrigin (const pmove_t *pm, vec_t *origin_out);
+
+// bot_observe.c
 void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const pmove_t *pm);
 
 // bot_navmesh.c

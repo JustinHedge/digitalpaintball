@@ -85,8 +85,9 @@ void BotShutdown (void)
 }
 
 
-void BotRunFrame (int msec)
+void BotRunFrame (int msec, float game_time)
 {
+	bots.game_time = game_time;
 	BotUpdateMovement(msec);
 }
 
