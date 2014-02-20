@@ -2562,6 +2562,7 @@ cheatvar_t	cheatvars[] = {
 	{"gl_saturatelighting", "0"},
 	{"gl_lockpvs", "0"}, // jit
 	{"gl_showbbox", "0"}, // jit
+	{"gl_colorpolycount", "0"}, // jit
 	//{"gl_showtris", "0"}, // jit
 	{"cl_minfps", "0"}, // jit
 	{"r_drawworld", "1"}, // jit

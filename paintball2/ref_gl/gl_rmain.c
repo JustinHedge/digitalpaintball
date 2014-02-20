@@ -3603,6 +3603,7 @@ cvar_t	*gl_picmip;
 cvar_t	*gl_skymip;
 cvar_t	*gl_skyedge; // jitsky
 cvar_t	*gl_showtris;
+cvar_t	*gl_colorpolycount; // jitdebug
 cvar_t	*gl_ztrick;
 cvar_t	*gl_finish;
 cvar_t	*gl_clear;
@@ -5003,6 +5004,7 @@ void R_Register(void)
 	gl_skymip = ri.Cvar_Get("gl_skymip", "0", 0);
 	gl_skyedge = ri.Cvar_Get("gl_skyedge", "0", 0); // jitsky
 	gl_showtris = ri.Cvar_Get("gl_showtris", "0", 0);
+	gl_colorpolycount = ri.Cvar_Get("gl_colorpolycount", "0", 0); // jitdebug
 	gl_ztrick = ri.Cvar_Get("gl_ztrick", "0", 0);
 	gl_finish = ri.Cvar_Get("gl_finish", "0", CVAR_ARCHIVE);
 	gl_clear = ri.Cvar_Get("gl_clear", "0", 0);

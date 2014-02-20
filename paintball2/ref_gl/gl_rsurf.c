@@ -1222,29 +1222,32 @@ dynamic:
 					v = p->verts[0];
 
 // jit - debugging tool that colors faces in the map based on how many triangles they have.
-//#define COLORPOLYCOUNT
-#ifdef COLORPOLYCOUNT // jitest
-					GL_TexEnv(GL_COMBINE_EXT);
-
-					switch (nv)
+#define COLORPOLYCOUNT
+#ifdef COLORPOLYCOUNT
+					if (gl_colorpolycount->value)
 					{
-					case 3:
-						qgl.Color3f(1.0f, 0.0f, 0.0f);
-						break;
-					case 4:
-						qgl.Color3f(0.0f, 1.0f, 0.0f);
-						break;
-					case 5:
-						qgl.Color3f(0.0f, 0.0f, 1.0f);
-						break;
-					case 6:
-						qgl.Color3f(1.0f, 1.0f, 0.0f);
-						break;
-					case 7:
-						qgl.Color3f(1.0f, 0.0f, 1.0f);
-						break;
-					default:
-						qgl.Color3f(1.0f, 1.0f, 1.0f);
+						GL_TexEnv(GL_COMBINE_EXT);
+
+						switch (nv)
+						{
+						case 3: // red
+							qgl.Color3f(1.0f, 0.1f, 0.1f);
+							break;
+						case 4: // green
+							qgl.Color3f(0.1f, 1.0f, 0.1f);
+							break;
+						case 5: // blue
+							qgl.Color3f(0.1f, 0.1f, 1.0f);
+							break;
+						case 6: // yellow
+							qgl.Color3f(1.0f, 1.0f, 0.1f);
+							break;
+						case 7: // purple
+							qgl.Color3f(1.0f, 0.1f, 1.0f);
+							break;
+						default: // grey
+							qgl.Color3f(.35f, .35f, .35f);
+						}
 					}
 #endif
 
