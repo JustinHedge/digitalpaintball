@@ -79,6 +79,7 @@ qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
 	WNDCLASS		wc;
 	RECT			r;
 	cvar_t			*vid_xpos, *vid_ypos;
+	cvar_t			*vid_borderless = ri.Cvar_Get("vid_borderless", "0", 0); // jitborderless
 	int				stylebits;
 	int				x, y, w, h;
 	int				exstyle;
@@ -106,7 +107,11 @@ qboolean VID_CreateWindow (int width, int height, qboolean fullscreen)
 	else
 	{
 		exstyle = 0;
-		stylebits = WS_OVERLAPPEDWINDOW;
+
+		if (vid_borderless->value) // jitborderless
+			stylebits = WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_POPUP | WS_SYSMENU | WS_VISIBLE;
+		else
+			stylebits = WS_OVERLAPPEDWINDOW;
 	}
 
 	r.left = 0;
@@ -257,9 +262,9 @@ rserr_t GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 
 			gl_state.fullscreen = true;
 
-			ri.Con_Printf( PRINT_ALL, "ok\n" );
+			ri.Con_Printf(PRINT_ALL, "ok\n");
 
-			if ( !VID_CreateWindow (width, height, true) )
+			if (!VID_CreateWindow (width, height, true))
 				return rserr_invalid_mode;
 
 			return rserr_ok;
@@ -269,9 +274,9 @@ rserr_t GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen)
 			*pwidth = width;
 			*pheight = height;
 
-			ri.Con_Printf( PRINT_ALL, "failed\n" );
+			ri.Con_Printf(PRINT_ALL, "failed\n");
 
-			ri.Con_Printf( PRINT_ALL, "...calling CDS assuming dual monitors:" );
+			ri.Con_Printf(PRINT_ALL, "...calling CDS assuming dual monitors:");
 
 			dm.dmPelsWidth = width * 2;
 			dm.dmPelsHeight = height;

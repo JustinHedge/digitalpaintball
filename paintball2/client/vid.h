@@ -59,6 +59,7 @@ extern	cvar_t		*vid_ref;			// Name of Refresh DLL loaded
 extern	cvar_t		*vid_xpos;			// X coordinate of window position
 extern	cvar_t		*vid_ypos;			// Y coordinate of window position
 extern	cvar_t		*vid_fullscreen;
+extern	cvar_t		*vid_borderless;	// jitborderless
 
 #endif
 
