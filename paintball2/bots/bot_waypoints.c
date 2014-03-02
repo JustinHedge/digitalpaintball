@@ -26,9 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bot_debug.h"
 #include "bot_observe.h"
 
-//#define MAX_WAYPOINTS 2048
+#define MAX_WAYPOINTS 2048
 
-#define MAX_WAYPOINTS 100 // small number to test - todo: use larger value when done
+//#define MAX_WAYPOINTS 100 // small number to test - todo: use larger value when done
 #define MAX_WAYPOINT_CONNECTIONS 4 // waypoint will connect with 4 closest possible nodes
 #define MAX_WAYPOINT_DIST 256.0f
 #define MAX_WAYPOINT_DIST_SQ 65536.0f
@@ -57,6 +57,22 @@ typedef struct {
 bot_waypoints_t g_bot_waypoints;
 
 
+void PositionToColor (const vec3_t pos, float *r, float *g, float *b)
+{
+	int some_val = (int)pos[0] + (int)pos[1] * 2 + (int)pos[2] * 3;
+	int ri, gi, bi;
+
+	some_val *= 4623460215; // abritrary number
+	ri = some_val & 0xFF;
+	gi = (some_val >> 8) & 0xFF;
+	bi = (some_val >> 16) & 0xFF;
+
+	*r = (float)ri / 255.0f;
+	*g = (float)gi / 255.0f;
+	*b = (float)bi / 255.0f;
+}
+
+
 void BotInitWaypoints (void)
 {
 	memset(&g_bot_waypoints, 0, sizeof(g_bot_waypoints));
@@ -65,11 +81,15 @@ void BotInitWaypoints (void)
 }
 
 // Helper function to find the X closest points, given a squared distance
-void TryInsertCloserPoint (int *closest_points, float *closest_points_dist_sq, float dist_sq, int point_index)
+void TryInsertCloserPoint (const edict_t *ent, int *closest_points, float *closest_points_dist_sq, const vec3_t pos1, const vec3_t pos2, int point_index)
 {
 	int closest_point_index;
 	float old_dist_sq;
-	int old_point_index;
+	vec3_t diff_vec;
+	float dist_sq;
+
+	VectorSubtract(pos1, pos2, diff_vec);
+	dist_sq = VectorLengthSquared(diff_vec);
 
 	for (closest_point_index = 0; closest_point_index < MAX_WAYPOINT_CONNECTIONS; ++closest_point_index)
 	{
@@ -77,24 +97,58 @@ void TryInsertCloserPoint (int *closest_points, float *closest_points_dist_sq, f
 
 		if (dist_sq < old_dist_sq && dist_sq < MAX_WAYPOINT_DIST_SQ)
 		{
-			// todo: collision test
-			old_point_index = closest_points[closest_point_index];
-			closest_points_dist_sq[closest_point_index] = dist_sq;
-			closest_points[closest_point_index] = point_index;
-			TryInsertCloserPoint(closest_points, closest_points_dist_sq, old_dist_sq, old_point_index); // we've replaced this one, but it might still be a shorter distance than other waypoints in the array, so see if one of those can be replaced...
-			return;
+			trace_t trace;
+			qboolean hit_something = false;
+
+			trace = bi.trace(pos1, ent->mins, ent->maxs, pos2, ent, MASK_PLAYERSOLID);
+
+			if (trace.fraction < 1.0f)
+				hit_something = true;
+
+			if (trace.ent && trace.ent->client)
+				hit_something = false; // we need a better way to do this, as there could be a solid wall behind the client, but we don't want other clients blocking paths...
+
+			// If we hit something, move the origin points up slightly to see if it's something small we can step over.
+			if (hit_something)
+			{
+				vec3_t step_pos1, step_pos2;
+
+				VectorCopy(pos1, step_pos1);
+				VectorCopy(pos2, step_pos2);
+				step_pos1[2] += 16.0f;
+				step_pos2[2] += 1.0f; // keep some directionality on these.  For example, if I'm on a ledge, I might have a clear shot down, but I won't necessarily be able to get up.
+
+				trace = bi.trace(step_pos1, ent->mins, ent->maxs, step_pos2, ent, MASK_PLAYERSOLID);
+
+				if (trace.fraction == 1.0f)
+					hit_something = false;
+			}
+
+			if (!hit_something)
+			{
+				int shift_index;
+
+				// Shift all the previous points down and insert the new one.
+				for (shift_index = MAX_WAYPOINT_CONNECTIONS - 1; shift_index > closest_point_index; --shift_index)
+				{
+					closest_points_dist_sq[shift_index] = closest_points_dist_sq[shift_index - 1];
+					closest_points[shift_index] = closest_points[shift_index - 1];
+				}
+
+				closest_points_dist_sq[closest_point_index] = dist_sq;
+				closest_points[closest_point_index] = point_index;
+				return;
+			}
 		}
 	}
 }
 
 
-void BotWaypointUpdateConnections (int waypoint_index)
+void BotWaypointUpdateConnections (int waypoint_index, const edict_t *ent)
 {
 	int i;
 	int closest_points[MAX_WAYPOINT_CONNECTIONS];
 	float closest_points_dist_sq[MAX_WAYPOINT_CONNECTIONS];
-	vec3_t diff_vec;
-	float dist_sq;
 
 	// Initialize, to make sure we don't have any invalid data set from a previous use of the waypoint (in case it was replaced)
 	for (i = 0; i < MAX_WAYPOINT_CONNECTIONS; ++i)
@@ -110,9 +164,7 @@ void BotWaypointUpdateConnections (int waypoint_index)
 	{
 		if (i != waypoint_index) // ignore self
 		{
-			VectorSubtract(g_bot_waypoints.positions[waypoint_index], g_bot_waypoints.positions[i], diff_vec);
-			dist_sq = VectorLengthSquared(diff_vec);
-			TryInsertCloserPoint(closest_points, closest_points_dist_sq, dist_sq, i);
+			TryInsertCloserPoint(ent, closest_points, closest_points_dist_sq, g_bot_waypoints.positions[waypoint_index], g_bot_waypoints.positions[i], i);
 		}
 	}
 
@@ -125,7 +177,10 @@ void BotWaypointUpdateConnections (int waypoint_index)
 
 		if (g_bot_waypoints.connections[waypoint_index].nodes[i] >= 0)
 		{
-			g_bot_waypoints.connections[waypoint_index].debug_ids[i] = DrawDebugLine(g_bot_waypoints.positions[waypoint_index], g_bot_waypoints.positions[g_bot_waypoints.connections[waypoint_index].nodes[i]], 1, .5, 1, 99999999.9f, debug_id);
+			float r, g, b;
+
+			PositionToColor(g_bot_waypoints.positions[waypoint_index], &r, &g, &b);
+			g_bot_waypoints.connections[waypoint_index].debug_ids[i] = DrawDebugLine(g_bot_waypoints.positions[waypoint_index], g_bot_waypoints.positions[g_bot_waypoints.connections[waypoint_index].nodes[i]], r, g, b, 99999999.9f, debug_id);
 		}
 		else if (debug_id >= 0)
 		{
@@ -137,8 +192,9 @@ void BotWaypointUpdateConnections (int waypoint_index)
 }
 
 
-void BotAddWaypointAtIndex (int waypoint_index, const vec3_t pos, qboolean replacing)
+void BotAddWaypointAtIndex (const edict_t *ent, int waypoint_index, const vec3_t pos, qboolean replacing)
 {
+	int i;
 	int debug_sphere_id = g_bot_waypoints.debug_ids[waypoint_index]; // This value should be initialized to -1, so a new ID will be generated when the debug sphere is drawn
 
 	VectorCopy(pos, g_bot_waypoints.positions[waypoint_index]);
@@ -148,8 +204,6 @@ void BotAddWaypointAtIndex (int waypoint_index, const vec3_t pos, qboolean repla
 
 	if (replacing)
 	{
-		int i;
-
 		for (i = 0; i < g_bot_waypoints.num_points; ++i)
 		{
 			int j;
@@ -158,17 +212,34 @@ void BotAddWaypointAtIndex (int waypoint_index, const vec3_t pos, qboolean repla
 			 {
 				 if (g_bot_waypoints.connections[i].nodes[j] == waypoint_index)
 				 {
-					 BotWaypointUpdateConnections(i);
+					 BotWaypointUpdateConnections(i, ent);
 				 }
 			 }
 		}
 	}
 
-	g_bot_waypoints.debug_ids[waypoint_index] = DrawDebugSphere(pos, 6, 1, 1, 1, 99999, debug_sphere_id);
-	BotWaypointUpdateConnections(waypoint_index);
+	{
+		float r, g, b;
+
+		PositionToColor(pos, &r, &g, &b);
+		g_bot_waypoints.debug_ids[waypoint_index] = DrawDebugSphere(pos, 5.0f, r, g, b, 99999.0f, debug_sphere_id);
+	}
+
+	BotWaypointUpdateConnections(waypoint_index, ent);
+
+	// Since we just added a new waypoint, update all the ones it connects to, since they should probably connect to it as well.
+	for (i = 0; i < MAX_WAYPOINT_CONNECTIONS; ++i)
+	{
+		if (g_bot_waypoints.connections[waypoint_index].nodes[i] >= 0)
+			BotWaypointUpdateConnections(g_bot_waypoints.connections[waypoint_index].nodes[i], ent);
+	}
 }
 
-void BotTryAddWaypoint (const vec3_t pos)
+
+#define RANDOM_WAYPOINT_REMOVAL_POOL_SIZE 4 // When randomly removing a waypoint, pick between 4 at random, and see which is "best" to remove.
+
+
+void BotTryAddWaypoint (const edict_t *ent, const vec3_t pos)
 {
 	vec3_t diff_vec;
 	float dist_sq;
@@ -186,14 +257,47 @@ void BotTryAddWaypoint (const vec3_t pos)
 			return;
 	}
 
-	if (g_bot_waypoints.num_points < MAX_WAYPOINTS - 1)
+	if (g_bot_waypoints.num_points < MAX_WAYPOINTS)
 	{
-		BotAddWaypointAtIndex(g_bot_waypoints.num_points, pos, false);
+		BotAddWaypointAtIndex(ent, g_bot_waypoints.num_points, pos, false);
 	}
 	else
 	{
-		new_waypoint_index = (int)nu_rand(MAX_WAYPOINTS);
-		BotAddWaypointAtIndex(new_waypoint_index, pos, true);
+		int waypoint_connection_count = 0;
+		int best_waypoint_index = -1;
+		float total_weight;
+		float lowest_total_weight = FLT_MAX;
+		int i, j;
+
+		// Randomly try a few times to find a waypoint that has max connections and the lowest total weight of connections.
+		// This means it's likely surrounded by nearby nodes and can be removed without affecting much
+		for (i = 0; i < RANDOM_WAYPOINT_REMOVAL_POOL_SIZE; ++i)
+		{
+			new_waypoint_index = (int)nu_rand(MAX_WAYPOINTS);
+			waypoint_connection_count = 0;
+			total_weight = 0.0f;
+
+			for (j = 0; j < MAX_WAYPOINT_CONNECTIONS; ++j)
+			{
+				if (g_bot_waypoints.connections[new_waypoint_index].nodes[j] >= 0)
+				{
+					waypoint_connection_count++;
+					total_weight += g_bot_waypoints.connections[new_waypoint_index].weights[j];
+				}
+			}
+
+			if (waypoint_connection_count == MAX_WAYPOINT_CONNECTIONS && total_weight < lowest_total_weight)
+			{
+				best_waypoint_index = new_waypoint_index;
+				lowest_total_weight = total_weight;
+			}
+		}
+
+		// If we didn't find a good candidate, the new_waypoint_index will just be whatever we last tried.
+		if (best_waypoint_index >= 0)
+			new_waypoint_index = best_waypoint_index;
+
+		BotAddWaypointAtIndex(ent, new_waypoint_index, pos, true);
 	}
 }
 
@@ -202,7 +306,7 @@ void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const 
 {
 	if (pm->groundentity) // only add waypoints on the ground
 	{
-		BotTryAddWaypoint(ent->s.origin); // todo - throttle this with a timer or something
+		BotTryAddWaypoint(ent, ent->s.origin); // todo - throttle this with a timer or something
 		/*
 		vec3_t diff;
 		vec_t len_sq;

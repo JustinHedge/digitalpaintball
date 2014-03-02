@@ -53,9 +53,9 @@ typedef struct
 	void		(*bprintf) (int printlevel, char *fmt, ...);
 	void		(*cprintf) (edict_t *ent, int printlevel, char *fmt, ...);
 	void		(*dprintf) (char *fmt, ...);
-	trace_t		(*trace) (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passent, int contentmask);
-	qboolean	(*inPVS) (vec3_t p1, vec3_t p2);
-	qboolean	(*inPHS) (vec3_t p1, vec3_t p2);
+	trace_t		(*trace) (const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, const edict_t *passent, int contentmask);
+	qboolean	(*inPVS) (const vec3_t p1, const vec3_t p2);
+	qboolean	(*inPHS) (const vec3_t p1, const vec3_t p2);
 	void		(*Pmove) (pmove_t *pmove);		// player movement code common with client prediction
 	int			(*pointcontents) (vec3_t point);
 	void		*(*TagMalloc) (int size, int tag);

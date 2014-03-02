@@ -249,7 +249,7 @@ void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const
 			if (r > 1.0f)
 				r = 1.0f;
 
-			DrawDebugLine(ent->s.origin, observation->last_pos, r, g, b, 70.0f, -1);
+			//DrawDebugLine(ent->s.origin, observation->last_pos, r, g, b, 70.0f, -1);
 		}
 
 		VectorCopy(ent->s.origin, observation->last_pos);
