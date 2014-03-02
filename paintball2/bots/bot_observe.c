@@ -193,19 +193,21 @@ void BotUpdatePlayerHeatmap (player_observation_t *observation, const edict_t *e
 	}
 }
 
+void BotAddPotentialWaypointFromPmove(player_observation_t *observation, const edict_t *ent, const pmove_t *pm);
 
 // Called for each player input packet sent, while the player is alive
 void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const pmove_t *pm)
 {
 	// todo: cvar to disable this.
 	// todo: reset observation data on player disconnect/map change/etc.
-	BotAddPotentialNavmeshFromPmove(ent, pm);
+	//BotAddPotentialNavmeshFromPmove(ent, pm);
 
 	if (player_index < MAX_PLAYERS_TO_RECORD)
 	{
 		player_observation_t *observation = g_player_observations + player_index;
 
-		BotUpdatePlayerHeatmap(observation, ent, pm);
+		//BotUpdatePlayerHeatmap(observation, ent, pm);
+		BotAddPotentialWaypointFromPmove(observation, ent, pm);
 
 		if (!observation->path_active)
 		{

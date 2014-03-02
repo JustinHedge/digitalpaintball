@@ -43,6 +43,7 @@ typedef struct {
 	pmove_t				last_pm;
 	vec3_t				last_pos;
 	float				last_heatmap_time;
+	vec3_t				last_waypoint_pos;
 } player_observation_t;
 
 

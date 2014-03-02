@@ -215,6 +215,10 @@
 				RelativePath=".\bot_shared.c"
 				>
 			</File>
+			<File
+				RelativePath=".\bot_waypoints.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

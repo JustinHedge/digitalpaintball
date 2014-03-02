@@ -35,6 +35,7 @@ void FreeObservations (void);
 
 void BotInitMap (const char *mapname)
 {
+	BotInitWaypoints();
 	// todo - alocate/read in data.
 }
 
