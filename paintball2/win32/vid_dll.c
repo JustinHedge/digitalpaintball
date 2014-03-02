@@ -1118,6 +1118,7 @@ void VID_Init (void)
 	vid_ypos = Cvar_Get("vid_ypos", "22", CVAR_ARCHIVE);
 	vid_fullscreen = Cvar_Get("vid_fullscreen", "0", CVAR_ARCHIVE);
 	vid_borderless = Cvar_Get("vid_borderless", "0", CVAR_ARCHIVE); // jitborderless
+	vid_borderless->modified = false; // jitborderless - prevent immediate refresh
 	vid_gamma = Cvar_Get("vid_gamma", "1", CVAR_ARCHIVE);
 	Cvar_Get("vid_lighten", "0", CVAR_ARCHIVE); // jitgamma
 	Cvar_Get("gl_screenshot_applygamma", "1", CVAR_ARCHIVE); // jitgamma
