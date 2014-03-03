@@ -24,12 +24,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bot_main.h"
 #include "../game/game.h"
 #include "bot_debug.h"
+#include "bot_manager.h"
 #include "bot_observe.h"
 
-#define MAX_WAYPOINTS 2048
+//#define MAX_WAYPOINTS 2048
 
-//#define MAX_WAYPOINTS 100 // small number to test - todo: use larger value when done
-#define MAX_WAYPOINT_CONNECTIONS 4 // waypoint will connect with 4 closest possible nodes
+#define MAX_WAYPOINTS 100 // small number to test - todo: use larger value when done
+#define MAX_WAYPOINT_CONNECTIONS 6 // waypoint will connect with 6 closest possible nodes
 #define MAX_WAYPOINT_DIST 256.0f
 #define MAX_WAYPOINT_DIST_SQ 65536.0f
 #define MIN_WAYPOINT_DIFF 32.0f
@@ -48,7 +49,7 @@ typedef struct {
 typedef struct {
 	vec3_t		positions[MAX_WAYPOINTS];
 	bot_waypoint_connection_t connections[MAX_WAYPOINTS];
-	//shortpos_t	pos[MAX_WAYPOINTS];
+	int			usage_weights[MAX_WAYPOINTS]; // how often players touch this waypoint.
 	int			debug_ids[MAX_WAYPOINTS];
 	int			num_points;
 } bot_waypoints_t;
@@ -70,6 +71,17 @@ void PositionToColor (const vec3_t pos, float *r, float *g, float *b)
 	*r = (float)ri / 255.0f;
 	*g = (float)gi / 255.0f;
 	*b = (float)bi / 255.0f;
+}
+
+
+void WeightToColor (int waypoint_index, float *r, float *g, float *b)
+{
+	*r = 1.0f;
+	*b = 1.0f;
+	*g = (float)g_bot_waypoints.usage_weights[waypoint_index] / 10.0f;
+
+	if (*g > 1.0f)
+		*g = 1.0f;
 }
 
 
@@ -179,7 +191,7 @@ void BotWaypointUpdateConnections (int waypoint_index, const edict_t *ent)
 		{
 			float r, g, b;
 
-			PositionToColor(g_bot_waypoints.positions[waypoint_index], &r, &g, &b);
+			WeightToColor(waypoint_index, &r, &g, &b);
 			g_bot_waypoints.connections[waypoint_index].debug_ids[i] = DrawDebugLine(g_bot_waypoints.positions[waypoint_index], g_bot_waypoints.positions[g_bot_waypoints.connections[waypoint_index].nodes[i]], r, g, b, 99999999.9f, debug_id);
 		}
 		else if (debug_id >= 0)
@@ -191,12 +203,17 @@ void BotWaypointUpdateConnections (int waypoint_index, const edict_t *ent)
 	}
 }
 
+#define MAX_WAYPOINT_USAGE_WEIGHT 255
 
-void BotAddWaypointAtIndex (const edict_t *ent, int waypoint_index, const vec3_t pos, qboolean replacing)
+void BotAddWaypointAtIndex (const edict_t *ent, int waypoint_index, const vec3_t pos, qboolean replacing, int usage_weight)
 {
 	int i;
 	int debug_sphere_id = g_bot_waypoints.debug_ids[waypoint_index]; // This value should be initialized to -1, so a new ID will be generated when the debug sphere is drawn
 
+	if (usage_weight > MAX_WAYPOINT_USAGE_WEIGHT)
+		usage_weight = MAX_WAYPOINT_USAGE_WEIGHT;
+
+	g_bot_waypoints.usage_weights[waypoint_index] = usage_weight;
 	VectorCopy(pos, g_bot_waypoints.positions[waypoint_index]);
 
 	if (waypoint_index >= g_bot_waypoints.num_points)
@@ -221,7 +238,7 @@ void BotAddWaypointAtIndex (const edict_t *ent, int waypoint_index, const vec3_t
 	{
 		float r, g, b;
 
-		PositionToColor(pos, &r, &g, &b);
+		WeightToColor(waypoint_index, &r, &g, &b);
 		g_bot_waypoints.debug_ids[waypoint_index] = DrawDebugSphere(pos, 5.0f, r, g, b, 99999.0f, debug_sphere_id);
 	}
 
@@ -254,12 +271,17 @@ void BotTryAddWaypoint (const edict_t *ent, const vec3_t pos)
 		dist_sq = VectorLengthSquared(diff_vec);
 
 		if (dist_sq < MIN_WAYPOINT_DIFF_SQ)
+		{
+			int waypoint_usage = g_bot_waypoints.usage_weights[i];
+
+			BotAddWaypointAtIndex(ent, i, pos, true, waypoint_usage + 1);
 			return;
+		}
 	}
 
 	if (g_bot_waypoints.num_points < MAX_WAYPOINTS)
 	{
-		BotAddWaypointAtIndex(ent, g_bot_waypoints.num_points, pos, false);
+		BotAddWaypointAtIndex(ent, g_bot_waypoints.num_points, pos, false, 1);
 	}
 	else
 	{
@@ -297,37 +319,28 @@ void BotTryAddWaypoint (const edict_t *ent, const vec3_t pos)
 		if (best_waypoint_index >= 0)
 			new_waypoint_index = best_waypoint_index;
 
-		BotAddWaypointAtIndex(ent, new_waypoint_index, pos, true);
+		BotAddWaypointAtIndex(ent, new_waypoint_index, pos, true, 1);
 	}
 }
 
+#define WAYPOINT_ADD_TIME 1.0f // if this much time has elapsed since the last time a player has added a waypoint, try adding another.
+#define WAYPOINT_ADD_DIST 128.0f // if a player has moved at least this distance after adding the last waypoint, try adding another.
 
 void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const edict_t *ent, const pmove_t *pm)
 {
 	if (pm->groundentity) // only add waypoints on the ground
 	{
-		BotTryAddWaypoint(ent, ent->s.origin); // todo - throttle this with a timer or something
-		/*
 		vec3_t diff;
-		vec_t len_sq;
-		trace_t trace;
-		qboolean hit_something = false;
+		float dist_sq;
 
 		VectorSubtract(ent->s.origin, observation->last_waypoint_pos, diff);
-		len_sq = VectorLengthSquared(diff);
+		dist_sq = VectorLengthSquared(diff);
 
-		trace = bi.trace(ent->s.origin, pm->mins, pm->maxs, observation->last_waypoint_pos,  MASK_PLAYERSOLID);
-
-		if (trace.fraction < 1.0f)
-			hit_something = true;
-
-		//if (trace.ent && trace.ent->client)
-		// todo: figure out how to ignore paths blocked by players.
-
-		// Player width is 32 units, so if we're inside of that range, don't even bother checking anything else.
-		if (len_sq >= 128.0f * 128.0f || hit_something)
+		if (dist_sq >= WAYPOINT_ADD_DIST * WAYPOINT_ADD_DIST || bots.game_time - observation->last_waypoint_time >= WAYPOINT_ADD_TIME)
 		{
-			BotAddWaypoint(ent->s.origin, observation->last_waypoint_pos);
-		}*/
+			BotTryAddWaypoint(ent, ent->s.origin);
+			VectorCopy(ent->s.origin, observation->last_waypoint_pos);
+			observation->last_waypoint_time = bots.game_time;
+		}
 	}
 }

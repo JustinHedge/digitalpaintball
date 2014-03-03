@@ -174,25 +174,6 @@ void BotAddObservationPoint (player_observation_t *observation, const edict_t *e
 }
 
 
-#define HEATMAP_UPDATE_TIME .5f // take samples every 1/2 second
-
-void BotUpdatePlayerHeatmap (player_observation_t *observation, const edict_t *ent, const pmove_t *pm)
-{
-	// todo: clear observations on map change
-	if (bots.game_time - observation->last_heatmap_time >= HEATMAP_UPDATE_TIME)
-	{
-		if (pm->groundentity)
-		{
-			observation->last_heatmap_time = bots.game_time;
-
-			if (pm->groundentity)
-				DrawDebugSphere(ent->s.origin, 7, 1, 1, 1, 1000, -1);
-			else
-				DrawDebugSphere(ent->s.origin, 7, .5, .5, .5, 1000, -1);
-		}
-	}
-}
-
 void BotAddPotentialWaypointFromPmove(player_observation_t *observation, const edict_t *ent, const pmove_t *pm);
 
 // Called for each player input packet sent, while the player is alive
@@ -206,7 +187,6 @@ void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const
 	{
 		player_observation_t *observation = g_player_observations + player_index;
 
-		//BotUpdatePlayerHeatmap(observation, ent, pm);
 		BotAddPotentialWaypointFromPmove(observation, ent, pm);
 
 		if (!observation->path_active)
