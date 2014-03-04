@@ -87,6 +87,24 @@ void WeightToColor (int waypoint_index, float *r, float *g, float *b)
 
 void BotInitWaypoints (void)
 {
+	int i, j;
+	vec3_t zero = { 0.0f, 0.0f, 0.0f };
+
+	for (i = 0; i < g_bot_waypoints.num_points; ++i)
+	{
+		if (g_bot_waypoints.debug_ids[i] >= 0)
+		{
+			// draw with a time of 0 so it will get cleared out.
+			DrawDebugSphere(zero, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, g_bot_waypoints.debug_ids[i]);
+
+			for (j = 0; j < MAX_WAYPOINT_CONNECTIONS; ++j)
+			{
+				if (g_bot_waypoints.connections[i].debug_ids[j] >= 0)
+					DrawDebugLine(zero, zero, 0.0f, 0.0f, 0.0f, 0.0f, g_bot_waypoints.connections[i].debug_ids[j]);
+			}
+		}
+	}
+
 	memset(&g_bot_waypoints, 0, sizeof(g_bot_waypoints));
 	memset(&g_bot_waypoints.debug_ids, -1, sizeof(g_bot_waypoints.debug_ids));
 	memset(&g_bot_waypoints.connections, -1, sizeof(g_bot_waypoints.connections));
@@ -328,17 +346,43 @@ void BotTryAddWaypoint (const edict_t *ent, const vec3_t pos)
 
 void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const edict_t *ent, const pmove_t *pm)
 {
-	if (pm->groundentity) // only add waypoints on the ground
+	vec3_t diff;
+	float dist_sq;
+
+	VectorSubtract(ent->s.origin, observation->last_waypoint_pos, diff);
+	dist_sq = VectorLengthSquared(diff);
+
+	if (dist_sq >= WAYPOINT_ADD_DIST * WAYPOINT_ADD_DIST || bots.game_time - observation->last_waypoint_time >= WAYPOINT_ADD_TIME)
 	{
-		vec3_t diff;
-		float dist_sq;
+		qboolean add_waypoint = false;
+		qboolean ladder = false;
 
-		VectorSubtract(ent->s.origin, observation->last_waypoint_pos, diff);
-		dist_sq = VectorLengthSquared(diff);
+		// Add waypoints if we're touching the ground
+		if (pm->groundentity)
+			add_waypoint = true;
 
-		if (dist_sq >= WAYPOINT_ADD_DIST * WAYPOINT_ADD_DIST || bots.game_time - observation->last_waypoint_time >= WAYPOINT_ADD_TIME)
+		// Or we're on a ladder.
+		if (!add_waypoint)
 		{
-			BotTryAddWaypoint(ent, ent->s.origin);
+			vec3_t forward;
+			vec3_t forward_spot;
+			trace_t trace;
+
+			AngleVectors(pm->viewangles, forward, NULL, NULL);
+			VectorNormalize(forward);
+			VectorMA(ent->s.origin, 1.0f, forward, forward_spot);
+			trace = pm->trace(ent->s.origin, pm->mins, pm->maxs, forward_spot);
+
+			if ((trace.fraction < 1.0f) && (trace.contents & CONTENTS_LADDER))
+			{
+				ladder = true;
+				add_waypoint = true;
+			}
+		}
+
+		if (add_waypoint)
+		{
+			BotTryAddWaypoint(ent, ent->s.origin); // todo: waypoint types (ladder, ground, jump, etc?)
 			VectorCopy(ent->s.origin, observation->last_waypoint_pos);
 			observation->last_waypoint_time = bots.game_time;
 		}

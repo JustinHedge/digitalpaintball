@@ -21,6 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _BOT_MANAGER_H_
 #define _BOT_MANAGER_H_
 
+#include "bot_goals.h"
+
+typedef struct edict_s edict_t;
+
 #define MAX_BOTS 64
 
 typedef struct botfollowpath_s {
@@ -48,6 +52,7 @@ typedef struct botmovedata_s {
 typedef struct botmanager_s {
 	edict_t*		ents[MAX_BOTS];
 	botmovedata_t	movement[MAX_BOTS];
+	botgoal_t		goals[MAX_BOTS];
 	int				count; // total number of bots currently in the map
 	char			names_to_readd[MAX_BOTS][64]; // bots to readd after map change
 	int				num_to_readd; // number of botss to readd

@@ -55,4 +55,7 @@ void BotAddPotentialNavmeshFromPmove (const edict_t *ent, const pmove_t *pm);
 // bot_waypoints.c
 void BotInitWaypoints (void);
 
+// bot_goals.c
+void BotUpdateGoals (int msec);
+
 #endif

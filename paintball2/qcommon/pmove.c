@@ -1007,7 +1007,7 @@ void PM_CheckSpecialMovement (void)
 	VectorNormalize(flatforward);
 	VectorMA(pml.origin, 1, flatforward, spot);
 	trace = pm->trace(pml.origin, pm->mins, pm->maxs, spot);
-	
+
 	if ((trace.fraction < 1) && (trace.contents & CONTENTS_LADDER))
 		pml.ladder = true;
 
@@ -1113,8 +1113,8 @@ void PM_FlyMove (qboolean doclip)
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.sidemove;
 	
-	VectorNormalize (pml.forward);
-	VectorNormalize (pml.right);
+	VectorNormalize(pml.forward);
+	VectorNormalize(pml.right);
 
 	for (i = 0; i < 3; i++)
 		wishvel[i] = pml.forward[i]*fmove + pml.right[i]*smove;

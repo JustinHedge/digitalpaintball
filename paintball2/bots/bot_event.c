@@ -42,6 +42,8 @@ static void BotHandleDisconnect (const edict_t *ent)
 			removed = true;
 		}
 	}
+
+	// todo: BotUpdateGoals(); // Index may be offset for some bots, so we need to update all bots
 }
 
 

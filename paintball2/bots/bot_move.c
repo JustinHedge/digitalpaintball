@@ -45,7 +45,7 @@ void BotDance (unsigned int botindex)
 
 edict_t *g_botent = NULL;
 
-trace_t BotTrace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
+trace_t BotTrace (const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end)
 {
 	return bi.trace(start, mins, maxs, end, g_botent, MASK_PLAYERSOLID);
 }
@@ -387,7 +387,7 @@ void BotMove (unsigned int botindex, int msec)
 				//BotDance(botindex);
 				//BotWanderNoNav(botindex, msec);
 				//BotCopyPlayer(botindex, msec);
-				BotRandomStrafeJump(botindex, msec);// return;
+				//BotRandomStrafeJump(botindex, msec);// return;
 
 				// Break movement up into smaller steps so strafe jumping and such work better
 				movement->timeleft += msec;

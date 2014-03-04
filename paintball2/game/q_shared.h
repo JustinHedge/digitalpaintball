@@ -257,7 +257,7 @@ void R_ConcatTransforms (float in1[3][4], float in2[3][4], float out[3][4]);
 
 float DampIIR (float src, float dest, float factor, float dt);
 
-void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
+void AngleVectors (const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
 int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *plane);
 float	anglemod(float a);
 float LerpAngle (float a1, float a2, float frac);
@@ -692,7 +692,7 @@ typedef struct
 	int			waterlevel;
 
 	// callbacks to test the world
-	trace_t		(*trace) (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end);
+	trace_t		(*trace) (const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end);
 	int			(*pointcontents) (vec3_t point);
 } pmove_t;
 

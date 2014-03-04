@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "bot_main.h"
 #include "bot_manager.h"
+#include "../game/game.h"
 
 
 static void AddBotCommand (const char *name)
@@ -79,14 +80,21 @@ static void RemoveBotCommand (const char *nameToRemove)
 }
 
 
+// Debugging function to make bots move to player's location
+void BotHere (edict_t *ent)
+{
+	int bot_index;
+
+	for (bot_index = 0; bot_index < bots.count; ++bot_index)
+	{
+		BotSetGoal(bot_index, BOT_GOAL_REACH_POSITION, ent->s.origin);
+	}
+}
+
+
 qboolean BotCommand (edict_t *ent, const char *cmd, const char *cmd2, const char *cmd3, const char *cmd4)
 {
-	if (Q_strcaseeq(cmd, "bottest"))
-	{
-		bi.cprintf(ent, PRINT_HIGH, "Bottest just happened.\n");
-		return true;
-	}
-	else if (Q_strcaseeq(cmd, "addbot"))
+	if (Q_strcaseeq(cmd, "addbot"))
 	{
 		AddBotCommand(cmd2);
 		return true;
@@ -100,6 +108,10 @@ qboolean BotCommand (edict_t *ent, const char *cmd, const char *cmd2, const char
 	{
 		RemoveAllBots();
 		return true;
+	}
+	else if (Q_strcaseeq(cmd, "bot_here"))
+	{
+		BotHere(ent);
 	}
 
 	return false;
