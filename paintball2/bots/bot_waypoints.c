@@ -26,10 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bot_debug.h"
 #include "bot_manager.h"
 #include "bot_observe.h"
+#include "bot_files.h"
 
 //#define MAX_WAYPOINTS 2048
 
-#define MAX_WAYPOINTS 100 // small number to test - todo: use larger value when done
+#define MAX_WAYPOINTS 500 // small number to test - todo: use larger value when done
 #define MAX_WAYPOINT_CONNECTIONS 6 // waypoint will connect with 6 closest possible nodes
 #define MAX_WAYPOINT_DIST 256.0f
 #define MAX_WAYPOINT_DIST_SQ 65536.0f
@@ -53,6 +54,27 @@ typedef struct {
 	int			debug_ids[MAX_WAYPOINTS];
 	int			num_points;
 } bot_waypoints_t;
+
+typedef short vec3short_t[3];
+
+
+#define VEC_TO_SHORT_SCALE 8.0f // same as quake2
+
+
+void Vec3ToShort3 (const vec3_t v, short *s)
+{
+	s[0] = (short)(v[0] * VEC_TO_SHORT_SCALE);
+	s[1] = (short)(v[1] * VEC_TO_SHORT_SCALE);
+	s[2] = (short)(v[2] * VEC_TO_SHORT_SCALE);
+}
+
+
+void Short3ToVec3 (const vec3short_t s, vec_t *v)
+{
+	v[0] = (float)s[0] / VEC_TO_SHORT_SCALE;
+	v[1] = (float)s[1] / VEC_TO_SHORT_SCALE;
+	v[2] = (float)s[2] / VEC_TO_SHORT_SCALE;
+}
 
 
 bot_waypoints_t g_bot_waypoints;
@@ -110,6 +132,12 @@ void BotInitWaypoints (void)
 	memset(&g_bot_waypoints.connections, -1, sizeof(g_bot_waypoints.connections));
 }
 
+vec3_t standing_mins = { -16, -16, -24 };
+vec3_t standing_maxs = { 16, 16, 32 };
+vec3_t crouching_mins = { -16, -16, -24 }; // same as standing
+vec3_t crouching_maxs = { 16, 16, 4 };
+
+
 // Helper function to find the X closest points, given a squared distance
 void TryInsertCloserPoint (const edict_t *ent, int *closest_points, float *closest_points_dist_sq, const vec3_t pos1, const vec3_t pos2, int point_index)
 {
@@ -130,7 +158,7 @@ void TryInsertCloserPoint (const edict_t *ent, int *closest_points, float *close
 			trace_t trace;
 			qboolean hit_something = false;
 
-			trace = bi.trace(pos1, ent->mins, ent->maxs, pos2, ent, MASK_PLAYERSOLID);
+			trace = bi.trace(pos1, standing_mins, standing_maxs, pos2, ent, MASK_PLAYERSOLID);
 
 			if (trace.fraction < 1.0f)
 				hit_something = true;
@@ -138,20 +166,22 @@ void TryInsertCloserPoint (const edict_t *ent, int *closest_points, float *close
 			if (trace.ent && trace.ent->client)
 				hit_something = false; // we need a better way to do this, as there could be a solid wall behind the client, but we don't want other clients blocking paths...
 
-			// If we hit something, move the origin points up slightly to see if it's something small we can step over.
-			if (hit_something)
+			if (hit_something) // try a jump node
 			{
-				vec3_t step_pos1, step_pos2;
+				vec3_t jump_pos;
 
-				VectorCopy(pos1, step_pos1);
-				VectorCopy(pos2, step_pos2);
-				step_pos1[2] += 16.0f;
-				step_pos2[2] += 1.0f; // keep some directionality on these.  For example, if I'm on a ledge, I might have a clear shot down, but I won't necessarily be able to get up.
+				VectorCopy(pos1, jump_pos);
+				jump_pos[2] += 56.0f;
 
-				trace = bi.trace(step_pos1, ent->mins, ent->maxs, step_pos2, ent, MASK_PLAYERSOLID);
+				trace = bi.trace(pos1, standing_mins, standing_maxs, jump_pos, ent, MASK_PLAYERSOLID);
+				VectorCopy(trace.endpos, jump_pos);
+				trace = bi.trace(jump_pos, standing_mins, standing_maxs, pos2, ent, MASK_PLAYERSOLID);
 
-				if (trace.fraction == 1.0f)
+				if (!trace.startsolid && trace.fraction == 1.0f)
+				{
 					hit_something = false;
+					// todo: node types
+				}
 			}
 
 			if (!hit_something)
@@ -208,9 +238,12 @@ void BotWaypointUpdateConnections (int waypoint_index, const edict_t *ent)
 		if (g_bot_waypoints.connections[waypoint_index].nodes[i] >= 0)
 		{
 			float r, g, b;
+			vec3_t frompos;
 
+			VectorCopy(g_bot_waypoints.positions[waypoint_index], frompos);
+			frompos[2] += 5.0f;
 			WeightToColor(waypoint_index, &r, &g, &b);
-			g_bot_waypoints.connections[waypoint_index].debug_ids[i] = DrawDebugLine(g_bot_waypoints.positions[waypoint_index], g_bot_waypoints.positions[g_bot_waypoints.connections[waypoint_index].nodes[i]], r, g, b, 99999999.9f, debug_id);
+			g_bot_waypoints.connections[waypoint_index].debug_ids[i] = DrawDebugLine(frompos, g_bot_waypoints.positions[g_bot_waypoints.connections[waypoint_index].nodes[i]], r, g, b, 99999999.9f, debug_id);
 		}
 		else if (debug_id >= 0)
 		{
@@ -386,5 +419,85 @@ void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const 
 			VectorCopy(ent->s.origin, observation->last_waypoint_pos);
 			observation->last_waypoint_time = bots.game_time;
 		}
+	}
+}
+
+#define WAYPOINT_VERSION 1
+
+void BotWriteWaypoints (const char *mapname)
+{
+	char filename[MAX_QPATH];
+	FILE *fp;
+
+	Com_sprintf(filename, sizeof(filename), "botnav/%s", mapname);
+	FS_CreatePath(filename);
+	fp = fopen(filename, "wb");
+
+	if (fp)
+	{
+		int waypoint_index;
+		int version = WAYPOINT_VERSION;
+
+		fwrite("PB2BW", sizeof("PB2BW"), 1, fp);
+		fwrite(&version, sizeof(version), 1, fp);
+		fwrite(&g_bot_waypoints.num_points, sizeof(g_bot_waypoints.num_points), 1, fp);
+
+		for (waypoint_index = 0; waypoint_index < g_bot_waypoints.num_points; ++waypoint_index)
+		{
+			vec3short_t vs;
+			Vec3ToShort3(g_bot_waypoints.positions[waypoint_index], vs);
+			fwrite(vs, sizeof(vs), 1, fp);
+		}
+
+		fclose(fp);
+	}
+}
+
+
+void BotReadWaypoints (const char *mapname)
+{
+	char filename[MAX_QPATH];
+	FILE *fp;
+
+	BotInitWaypoints();
+	Com_sprintf(filename, sizeof(filename), "botnav/%s", mapname);
+	fp = fopen(filename, "rb");
+
+	if (fp)
+	{
+		char header[6];
+		fread(header, sizeof(header), 1, fp);
+
+		if (memcmp(header, "PB2BW", sizeof(header)) == 0)
+		{
+			int version;
+			fread(&version, sizeof(version), 1, fp);
+
+			if (version == WAYPOINT_VERSION)
+			{
+				int num_waypoints, waypoint_index;
+				vec3short_t pos_short;
+				vec3_t pos;
+
+				fread(&num_waypoints, sizeof(num_waypoints), 1, fp);
+
+				for (waypoint_index = 0; waypoint_index < num_waypoints; ++waypoint_index)
+				{
+					fread(pos_short, sizeof(pos_short), 1, fp);
+					Short3ToVec3(pos_short, pos);
+					BotTryAddWaypoint(NULL, pos);
+				}
+			}
+			else
+			{
+				bi.dprintf("%s - Bot waypoint version differs (%d != %d).  Discarding.\n", filename, version, WAYPOINT_VERSION);
+			}
+		}
+		else
+		{
+			bi.dprintf("%s - Invalid bot waypoint file or format has changed.  Discarding.\n", filename);
+		}
+
+		fclose(fp);
 	}
 }

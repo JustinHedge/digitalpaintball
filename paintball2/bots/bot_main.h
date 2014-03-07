@@ -53,7 +53,8 @@ void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const
 void BotAddPotentialNavmeshFromPmove (const edict_t *ent, const pmove_t *pm);
 
 // bot_waypoints.c
-void BotInitWaypoints (void);
+void BotReadWaypoints (const char *mapname);
+void BotWriteWaypoints (const char *mapname);
 
 // bot_goals.c
 void BotUpdateGoals (int msec);

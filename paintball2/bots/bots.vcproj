@@ -196,6 +196,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_files.c"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_goals.c"
 				>
 			</File>
@@ -227,6 +231,10 @@
 			>
 			<File
 				RelativePath=".\bot_debug.h"
+				>
+			</File>
+			<File
+				RelativePath=".\bot_files.h"
 				>
 			</File>
 			<File

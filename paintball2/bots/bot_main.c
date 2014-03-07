@@ -35,7 +35,8 @@ void FreeObservations (void);
 
 void BotInitMap (const char *mapname)
 {
-	BotInitWaypoints();
+	BotReadWaypoints(mapname);
+	Q_strncpyz(bots.levelname, mapname, sizeof(bots.levelname));
 	// todo - alocate/read in data.
 }
 
@@ -43,6 +44,7 @@ void BotInitMap (const char *mapname)
 void BotShutdownMap (void)
 {
 	bi.dprintf("DP Botlib closing map.\n");
+	BotWriteWaypoints(bots.levelname);
 	// todo - write data to file.
 	// todo - free map-specific data;
 	FreeObservations();
@@ -94,6 +96,7 @@ void BotRunFrame (int msec, float game_time)
 }
 
 
+// Called when the game changes levels
 void BotExitLevel (void)
 {
 	int i;

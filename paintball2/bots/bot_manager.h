@@ -57,6 +57,7 @@ typedef struct botmanager_s {
 	char			names_to_readd[MAX_BOTS][64]; // bots to readd after map change
 	int				num_to_readd; // number of botss to readd
 	float			game_time;
+	char			levelname[MAX_QPATH];
 } botmanager_t;
 
 extern botmanager_t bots;
