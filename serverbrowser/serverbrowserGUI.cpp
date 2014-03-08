@@ -1674,7 +1674,7 @@ static BOOL OnSearchPlayerDlgInit (HWND hDlg, HWND hwndFocus, LPARAM lParam)
 	LvCol.iSubItem = 1;
 	LvCol.pszText  = szBuffer;
 	LoadString(g_hInst, IDS_SP_ONSERVER, szBuffer, sizeof(szBuffer)/sizeof(szBuffer[0]));
-	ListView_InsertColumn(GetDlgItem(hDlg, IDC_SP_LIST), 0, &LvCol);
+	ListView_InsertColumn(GetDlgItem(hDlg, IDC_SP_LIST), 1, &LvCol);
 
 	//fill the listbox with all players currently playing, manually calling the function is not possible
 	//because we dont have vFound in this scope.

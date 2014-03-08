@@ -134,7 +134,7 @@ BEGIN
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Hráci nenalezeni."
 	IDS_SP_PLAYER			"hrác"
-	IDS_SP_ONSERVER			"o serveru"
+	IDS_SP_ONSERVER			"server"
 END
 
 #endif    // Czech resources
@@ -262,7 +262,7 @@ BEGIN
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Nie znaleziono gracza."
 	IDS_SP_PLAYER			"gracz"
-	IDS_SP_ONSERVER			"na serwerze"
+	IDS_SP_ONSERVER			"serwer"
 END
 
 #endif    // Polish resources
@@ -390,7 +390,7 @@ BEGIN
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Žiadny hrác našiel."
 	IDS_SP_PLAYER			"hrác"
-	IDS_SP_ONSERVER			"o serveri"
+	IDS_SP_ONSERVER			"server"
 END
 
 #endif    // Slovak resources
@@ -586,7 +586,7 @@ BEGIN
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Kein Spieler gefunden."
 	IDS_SP_PLAYER			"Spieler"
-	IDS_SP_ONSERVER			"auf Server"
+	IDS_SP_ONSERVER			"Server"
 END
 
 #endif    // German (Germany) resources
@@ -740,7 +740,7 @@ BEGIN
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "No player found."
 	IDS_SP_PLAYER			"player"
-	IDS_SP_ONSERVER			"on server"
+	IDS_SP_ONSERVER			"server"
 END
 
 #endif    // English (U.S.) resources
