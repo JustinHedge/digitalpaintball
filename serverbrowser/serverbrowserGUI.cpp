@@ -1686,11 +1686,14 @@ static BOOL OnSearchPlayerDlgInit (HWND hDlg, HWND hwndFocus, LPARAM lParam)
 	return TRUE;
 }
 
-static LRESULT OnSearchPlayerDlgNotify (HWND hDlg, int idCtrl, LPNMHDR pNMHdr)
+static LRESULT OnSearchPlayerDlgNotify (HWND hDlg, int idFrom, NMHDR* pNMHdr)
 {
 	if( (pNMHdr->code == LVN_ITEMCHANGED) && (pNMHdr->idFrom == IDC_SP_LIST) )
-		SendMessage (hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_LIST, LBN_SELCHANGE), 0);
-	//Generate own message so we can use the static vFound in OnSearchPlayerDlgCommand
+	{
+		if  ( ( ((NMLISTVIEW*)pNMHdr)->uNewState & (LVIS_FOCUSED | LVIS_SELECTED) ) == (LVIS_FOCUSED | LVIS_SELECTED) )
+			//Generate own message so we can use the static vFound in OnSearchPlayerDlgCommand
+			SendMessage (hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_LIST, LBN_SELCHANGE), 0);
+	}
 	return 0;
 }
 
