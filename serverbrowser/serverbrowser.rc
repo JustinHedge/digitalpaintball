@@ -132,6 +132,8 @@ BEGIN
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Hráci nenalezeni."
+	IDS_SP_PLAYER			"hrác"
+	IDS_SP_ONSERVER			"o serveru"
 END
 
 #endif    // Czech resources
@@ -258,6 +260,8 @@ BEGIN
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Nie znaleziono gracza."
+	IDS_SP_PLAYER			"gracz"
+	IDS_SP_ONSERVER			"na serwerze"
 END
 
 #endif    // Polish resources
@@ -384,6 +388,8 @@ BEGIN
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Žiadny hrác našiel."
+	IDS_SP_PLAYER			"hrác"
+	IDS_SP_ONSERVER			"o serveri"
 END
 
 #endif    // Slovak resources
@@ -578,6 +584,8 @@ BEGIN
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Kein Spieler gefunden."
+	IDS_SP_PLAYER			"Spieler"
+	IDS_SP_ONSERVER			"auf Server"
 END
 
 #endif    // German (Germany) resources
@@ -730,6 +738,8 @@ BEGIN
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "No player found."
+	IDS_SP_PLAYER			"player"
+	IDS_SP_ONSERVER			"on server"
 END
 
 #endif    // English (U.S.) resources
@@ -856,6 +866,8 @@ BEGIN
     IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Aucun joueur trouvé."
+	IDS_SP_PLAYER			"joueur"
+	IDS_SP_ONSERVER			"sur le serveur"
 END
 
 #endif    // French (France) resources

@@ -25,11 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define sprintf_s sprintf
 */
 
-
-
 #include "serverbrowser.h"
 #include <commctrl.h>
 #include <windowsx.h>
+#include <Shlwapi.h>
 
 #define MAX_LOADSTRING 100
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
@@ -41,6 +40,11 @@ static HWND g_hStatus;
 static HWND g_hServerList;
 static HWND g_hPlayerList;
 static HWND g_hServerInfoList;
+static HWND g_hSearchPlayerDlg;
+static HWND g_hVerticalSeperator;
+static HWND g_hHorizontalSeperator;
+static bool g_bVerticalSeperatorDragged = false;
+static bool g_bHorizontalSeperatorDragged = false;
 static bool g_abSortDirServers[8] = { false, false, true, false, false }; // Make # players sort highest to lowest by default
 static bool g_abSortDirPlayers[8];
 static bool g_abSortDirServerInfo[4];
@@ -67,9 +71,7 @@ static DWORD g_iIconGLS1 = 0;
 static DWORD g_iIconGLS2 = 0;
 static bool g_bAlreadyOpen = false;
 static DWORD g_dwExistingProcess = 0;
-
-//Edit by Richard
-static HWND g_hSearchPlayerDlg;
+static bool g_bThemed = false;
 
 char g_szGameDir[256];
 string g_sCurrentServerAddress;
@@ -147,10 +149,10 @@ void DeletePIDFile ()
 
 
 // Foward declarations of functions included in this code module:
-//Edit by Richard: These functions are later defined as static, which was missing here
 static LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK About (HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK SearchPlayerDlg (HWND, UINT, WPARAM, LPARAM);
+int CALLBACK OnSearchPlayerDlgSort (LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
 
 int APIENTRY WinMain (HINSTANCE hInstance,
@@ -166,10 +168,37 @@ int APIENTRY WinMain (HINSTANCE hInstance,
 	TCHAR szWindowClass[MAX_LOADSTRING];
 	HMENU hMenu;
 	hMenu = NULL;
+	HINSTANCE hinstDll;
+	DLLGETVERSIONPROC pDllGetVersion;
 
 	if (AlreadyOpen())
 	{
 		return 0;
+	}
+
+	//Use ComCtl32.dll v6 when available, set g_bThemed to true if ComCtl32.dll version >= 6
+	InitCommonControls();
+    hinstDll = GetModuleHandle("ComCtl32.dll");
+	if(hinstDll)
+    {
+        pDllGetVersion = (DLLGETVERSIONPROC)GetProcAddress(hinstDll, "DllGetVersion");
+        if(pDllGetVersion)
+        {
+            DLLVERSIONINFO2 dvi;
+            HRESULT hr;
+
+            ZeroMemory(&dvi, sizeof(dvi));
+            dvi.info1.cbSize = sizeof(dvi);
+
+            hr = (*pDllGetVersion)(&dvi.info1);
+            if(SUCCEEDED(hr))
+            {
+				if (dvi.info1.dwMajorVersion >= 6)
+					g_bThemed = true;
+				else
+					g_bThemed = false;
+			}
+		}
 	}
 
 	// Create the application window
@@ -253,13 +282,10 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 		g_nStatusBarHeight = rect.bottom;
 
 	// Main Server List
-	// Edit by Richard: Added LVS_SHOWSELALWAYS style, because when the main program loses focus the other
-	// list views will keep their content, so the selected server should still be visible. Also, it improves
-	// working with dialogs which select a server in the main window a lot.
 	g_hServerList = CreateWindowEx(0, WC_LISTVIEW, "",
-		WS_CHILD | WS_VISIBLE | LVS_REPORT | WS_BORDER | LVS_AUTOARRANGE | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+		WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_REPORT | LVS_AUTOARRANGE | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
 		0, 0, 300, 300, hWnd, NULL, g_hInst, NULL);
-	ListView_SetExtendedListViewStyle(g_hServerList, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
+	ListView_SetExtendedListViewStyle(g_hServerList, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES | LVS_EX_DOUBLEBUFFER);
 
 	for (i = 0; i < SERVERLIST_OFFSET_MAX; i++)
 	{
@@ -293,9 +319,9 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 
 	// Player List
 	g_hPlayerList = CreateWindowEx(0, WC_LISTVIEW, "",
-		WS_CHILD | WS_VISIBLE | LVS_REPORT | WS_BORDER | LVS_AUTOARRANGE | LVS_SINGLESEL,
+		WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_REPORT | LVS_AUTOARRANGE | LVS_SINGLESEL,
 		0, 0, 300, 200, hWnd, NULL, g_hInst, NULL);
-	ListView_SetExtendedListViewStyle(g_hPlayerList, LVS_EX_FULLROWSELECT);
+	ListView_SetExtendedListViewStyle(g_hPlayerList, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	for (i = 0; i < PLAYERLIST_OFFSET_MAX; i++)
 	{
@@ -311,9 +337,9 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 
 	// Server Info List
 	g_hServerInfoList = CreateWindowEx(0, WC_LISTVIEW, "",
-		WS_CHILD | WS_VISIBLE | LVS_REPORT | WS_BORDER | LVS_AUTOARRANGE | LVS_SINGLESEL,
+		WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_REPORT | LVS_AUTOARRANGE | LVS_SINGLESEL,
 		0, 0, 300, 200, hWnd, NULL, g_hInst, NULL);
-	ListView_SetExtendedListViewStyle(g_hServerInfoList, LVS_EX_FULLROWSELECT);
+	ListView_SetExtendedListViewStyle(g_hServerInfoList, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	for (i = 0; i < 2; i++)
 	{
@@ -338,32 +364,117 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 	g_tTrayIcon.uID = 0;
 	Shell_NotifyIcon(NIM_ADD, &g_tTrayIcon);
 
+	//movable Separators
+	GetClientRect (hWnd, &rect);
+	g_hHorizontalSeperator = CreateWindowEx(0, WC_STATIC, "", SS_SIMPLE | WS_VISIBLE | WS_CHILD,
+		0, rect.bottom / 2, 300, 3, hWnd, NULL, g_hInst, NULL);
+	g_hVerticalSeperator = CreateWindowEx(0, WC_STATIC, "", SS_SIMPLE | WS_VISIBLE | WS_CHILD,
+		rect.right / 2, 200, 3, 200, hWnd, NULL, g_hInst, NULL);
+
 	return TRUE;
 }
 
 
 static void TweakListviewWidths (void)
 {
-	ListView_SetColumnWidth(g_hServerList, SERVERLIST_ADDRESS_OFFSET, -2);
-	ListView_SetColumnWidth(g_hPlayerList, 2, -2);
-	ListView_SetColumnWidth(g_hServerInfoList, 1, -2);
+	ListView_SetColumnWidth(g_hServerList, SERVERLIST_ADDRESS_OFFSET, LVSCW_AUTOSIZE_USEHEADER);
+	ListView_SetColumnWidth(g_hPlayerList, 2, LVSCW_AUTOSIZE_USEHEADER);
+	ListView_SetColumnWidth(g_hServerInfoList, 1, LVSCW_AUTOSIZE_USEHEADER);
 }
 
 
 static void OnResize (HWND hWnd, UINT state, int cx, int cy)
 {
+	static int old_cx;
+	static int old_cy;
+
 	if (state != SIZE_MINIMIZED)
 	{
-		RECT rc;
-
+		RECT rc, rcVertSeperator, rcHorzSeperator, rcInvalidate;
 		GetClientRect(hWnd, &rc);
 		rc.bottom -= g_nStatusBarHeight;
-		MoveWindow(g_hServerList, rc.left, rc.top, rc.right, (rc.bottom + 3) / 2, TRUE);
-		MoveWindow(g_hPlayerList, rc.left, (rc.bottom + 1) / 2, (rc.right + 3) / 2, rc.bottom / 2, TRUE);
-		MoveWindow(g_hServerInfoList, (rc.right + 1) / 2, (rc.bottom + 1) / 2, rc.right / 2, rc.bottom / 2, TRUE);
+
+		GetWindowRect(g_hHorizontalSeperator, &rcHorzSeperator);
+		MapWindowPoints (HWND_DESKTOP, hWnd, (LPPOINT) &rcHorzSeperator, 2);
+		GetWindowRect(g_hVerticalSeperator, &rcVertSeperator);
+		MapWindowPoints (HWND_DESKTOP, hWnd, (LPPOINT) &rcVertSeperator, 2);
+
+		if (old_cy != cy && old_cy != 0) //adapt position of horizontal seperator
+		{
+			if (old_cy < cy)
+				MoveWindow (g_hHorizontalSeperator, 0, rcHorzSeperator.top * cy / old_cy + 1,
+					rc.right, rcHorzSeperator.bottom - rcHorzSeperator.top, FALSE);
+			else
+				MoveWindow (g_hHorizontalSeperator, 0, rcHorzSeperator.top * cy / old_cy,
+					rc.right, rcHorzSeperator.bottom - rcHorzSeperator.top, FALSE);
+			
+			GetWindowRect(g_hHorizontalSeperator, &rcHorzSeperator); //get new position
+			MapWindowPoints (HWND_DESKTOP, hWnd, (LPPOINT) &rcHorzSeperator, 2);
+		}
+		else
+		{
+			MoveWindow (g_hHorizontalSeperator, 0, rcHorzSeperator.top, rc.right - rc.left, //adapt width of horizontal seperator
+				rcHorzSeperator.bottom - rcHorzSeperator.top, FALSE);
+			
+			GetWindowRect(g_hHorizontalSeperator, &rcHorzSeperator); //get new position
+			MapWindowPoints (HWND_DESKTOP, hWnd, (LPPOINT) &rcHorzSeperator, 2);
+		}
+
+		if (old_cx != cx && old_cx != 0)
+		{
+			if (old_cx < cx)
+				MoveWindow (g_hVerticalSeperator, rcVertSeperator.left * cx / old_cx + 1,
+					rcHorzSeperator.bottom, rcVertSeperator.right - rcVertSeperator.left, rc.bottom - rcHorzSeperator.bottom , TRUE);
+			else
+				MoveWindow (g_hVerticalSeperator, rcVertSeperator.left * cx / old_cx,
+					rcHorzSeperator.bottom, rcVertSeperator.right - rcVertSeperator.left, rc.bottom - rcHorzSeperator.bottom, TRUE);
+			
+			GetWindowRect(g_hVerticalSeperator, &rcVertSeperator); //get new position
+			MapWindowPoints (HWND_DESKTOP, hWnd, (LPPOINT) &rcVertSeperator, 2);
+		}
+		else
+		{
+			MoveWindow (g_hVerticalSeperator, rcVertSeperator.left, rcHorzSeperator.bottom,  //adapt height and position of vertical seperator
+				rcVertSeperator.right - rcVertSeperator.left, rc.bottom - rcHorzSeperator.bottom, TRUE);
+
+			GetWindowRect(g_hVerticalSeperator, &rcVertSeperator); //get new position
+			MapWindowPoints (HWND_DESKTOP, hWnd, (LPPOINT) &rcVertSeperator, 2);
+		}
+		
+		MoveWindow(g_hServerList, rc.left, rc.top, rc.right, rcHorzSeperator.top, (old_cy == cy && old_cx == cx) ? TRUE : FALSE);
+		MoveWindow(g_hPlayerList, rc.left, rcHorzSeperator.bottom, rcVertSeperator.left, rc.bottom - rcHorzSeperator.bottom, (old_cy == cy && old_cx == cx) ? TRUE : FALSE);
+		MoveWindow(g_hServerInfoList, rcVertSeperator.right , rcHorzSeperator.bottom,
+			rc.right - rcVertSeperator.right, rc.bottom - rcHorzSeperator.bottom, (old_cy == cy && old_cx == cx) ? TRUE : FALSE);
 		TweakListviewWidths();
+
+		if (old_cy == cy && old_cx == cx)
+		{
+			GetClientRect(g_hPlayerList, &rcInvalidate); //Invalidate top border of the player list
+			rcInvalidate.bottom = g_nStatusBarHeight;
+			InvalidateRect(g_hPlayerList, &rcInvalidate, FALSE);
+			
+			GetClientRect(g_hServerInfoList, &rcInvalidate); //Invalidate top border of the server info list
+			rcInvalidate.bottom = g_nStatusBarHeight;
+			InvalidateRect(g_hServerInfoList, &rcInvalidate, FALSE);
+
+			if (!g_bThemed) //invalidate left border of server info list, smaller area necessary with ComCtl32.dll v6
+			{
+				GetClientRect(g_hServerInfoList, &rcInvalidate);
+				rcInvalidate.right = g_nStatusBarHeight * 2;
+				InvalidateRect(g_hServerInfoList, &rcInvalidate, TRUE);
+			}
+			else
+			{
+				GetClientRect(g_hServerInfoList, &rcInvalidate);
+				rcInvalidate.right = 5;
+				InvalidateRect(g_hServerInfoList, &rcInvalidate, TRUE);
+			}
+		}
+		
 		FORWARD_WM_SIZE(g_hStatus, state, cx, cy, SendMessage);
 	}
+	old_cx = cx;
+	old_cy = cy;
 }
 
 
@@ -998,6 +1109,132 @@ static BOOL OnSysCommand (HWND hWnd, UINT cmd, WPARAM wParam, LPARAM lParam)
 	}
 }
 
+static bool IsOnSeperator (HWND hwnd, int x, int y, HWND hSeperator)
+{
+	RECT rcSeperator;
+	GetWindowRect(hSeperator, &rcSeperator);
+	MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT) &rcSeperator, 2);
+	return ((rcSeperator.top - 1 <= y) && (y <= rcSeperator.bottom + 1) && (rcSeperator.left - 1 <= x) && (rcSeperator.right + 1>= x));
+}
+
+static BOOL OnLButtonDown (HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags)
+{
+	if (IsOnSeperator(hwnd, x, y, g_hHorizontalSeperator))
+	{
+		g_bHorizontalSeperatorDragged = true;
+		SetCapture(hwnd);
+		return FALSE;
+	}
+	else
+	{
+		if (IsOnSeperator(hwnd, x, y, g_hVerticalSeperator))
+		{
+			g_bVerticalSeperatorDragged = true;
+			SetCapture(hwnd);
+			return FALSE;
+		}
+	}
+	FORWARD_WM_LBUTTONDOWN(hwnd, fDoubleClick, x, y, keyFlags, DefWindowProc);
+	return FALSE;
+}
+
+static BOOL OnLButtonUp (HWND hwnd, int x, int y, UINT keyFlags)
+{
+	ReleaseCapture();
+	g_bVerticalSeperatorDragged = false;
+	g_bHorizontalSeperatorDragged = false;
+	FORWARD_WM_LBUTTONUP(hwnd, x, y, keyFlags, DefWindowProc);
+	return FALSE;
+}
+
+static BOOL OnMouseMove(HWND hwnd, int x, int y, UINT keyFlags)
+{
+	if (g_bHorizontalSeperatorDragged)
+	{
+		RECT rcHorz;
+		RECT rcMainWin;
+		GetClientRect(g_hHorizontalSeperator, &rcHorz);
+		GetClientRect(hwnd, &rcMainWin);
+
+		if (y < 0 || y > (rcMainWin.bottom - rcHorz.bottom - g_nStatusBarHeight))
+			return FALSE;
+		
+		GetWindowRect(g_hHorizontalSeperator, &rcHorz);
+		MapWindowPoints (HWND_DESKTOP, hwnd, (LPPOINT) &rcHorz, 2);
+
+		MoveWindow (g_hHorizontalSeperator, 0, y, rcMainWin.right - rcMainWin.left, rcHorz.bottom - rcHorz.top, TRUE);
+		
+		RedrawWindow(g_hVerticalSeperator, NULL, NULL, RDW_ERASE | RDW_INVALIDATE);
+		//Vertical seperator has to be redrawn, otherwise there might be graphical errors
+
+		OnResize(hwnd, SIZE_RESTORED, rcMainWin.right - rcMainWin.left, rcMainWin.bottom - rcMainWin.top);
+	}
+	
+	if (g_bVerticalSeperatorDragged)
+	{
+		RECT rcMainWin;
+		RECT rcWin;
+		GetClientRect(g_hVerticalSeperator, &rcWin);
+		GetClientRect(hwnd, &rcMainWin);
+
+		if (x < 0 || x > (rcMainWin.right - rcWin.right))
+			return FALSE;
+
+		GetWindowRect(g_hVerticalSeperator, &rcWin);
+		MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT) &rcWin, 2);
+
+		MoveWindow (g_hVerticalSeperator, x, rcWin.top, rcWin.right - rcWin.left, rcWin.bottom - rcWin.top, TRUE);
+		RedrawWindow(hwnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE);
+
+		OnResize(hwnd, SIZE_RESTORED, rcMainWin.right - rcMainWin.left, rcMainWin.bottom - rcMainWin.top);
+	}
+	return FALSE;
+}
+
+static BOOL OnSetCursor(HWND hwnd, HWND hwndCursor, UINT codeHitTest, UINT msg)
+{
+	if (hwndCursor == hwnd)
+	{
+		POINT pPoint;
+		GetCursorPos(&pPoint);
+		MapWindowPoints(HWND_DESKTOP, hwnd, &pPoint, 1);
+
+		if (IsOnSeperator(hwnd, pPoint.x, pPoint.y, g_hHorizontalSeperator))
+			SetCursor (LoadCursor(NULL, IDC_SIZENS));
+		else if (IsOnSeperator(hwnd, pPoint.x, pPoint.y, g_hVerticalSeperator))
+			SetCursor (LoadCursor(NULL, IDC_SIZEWE));
+		else
+			FORWARD_WM_SETCURSOR(hwnd, hwndCursor, codeHitTest, msg, DefWindowProc);
+
+		return TRUE;
+	}
+	else
+		FORWARD_WM_SETCURSOR(hwnd, hwndCursor, codeHitTest, msg, DefWindowProc);
+	
+	return TRUE;
+}
+
+static void OnPaint(HWND hwnd)
+{
+	PAINTSTRUCT Ps;
+	HDC hDC;
+	RECT rcPos;
+	DWORD dwColor = GetSysColor(COLOR_WINDOW + 1);
+
+	hDC = BeginPaint(hwnd, &Ps);
+
+	GetWindowRect(g_hHorizontalSeperator, &rcPos); //clear area of horizontal seperator
+	MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT) &rcPos, 2);
+	FillRect(hDC, &rcPos, (HBRUSH) COLOR_WINDOW);
+
+	GetWindowRect(g_hVerticalSeperator, &rcPos); //clear area of vertical seperator
+	MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT) &rcPos, 2);
+	FillRect(hDC, &rcPos, (HBRUSH) COLOR_WINDOW);
+
+	EndPaint(hwnd, &Ps);
+
+	FORWARD_WM_PAINT(hwnd, DefWindowProc);
+}
 
 static LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1011,11 +1248,15 @@ static LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		HANDLE_MSG(hWnd, WM_DESTROY, OnDestroy);
 		HANDLE_MSG(hWnd, WM_ERASEBKGND, OnErase);
 		HANDLE_MSG(hWnd, WM_TRAY_ICON_NOTIFY_MESSAGE, OnTrayNotify);
+		HANDLE_MSG(hWnd, WM_LBUTTONDOWN, OnLButtonDown);
+		HANDLE_MSG(hWnd, WM_LBUTTONUP, OnLButtonUp);
+		HANDLE_MSG(hWnd, WM_MOUSEMOVE, OnMouseMove);
+		HANDLE_MSG(hWnd, WM_SETCURSOR, OnSetCursor);
+		HANDLE_MSG(hWnd, WM_PAINT, OnPaint);
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
-
 
 // Mesage handler for about box.
 static LRESULT CALLBACK About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -1221,21 +1462,22 @@ void LoadSettings (void)
 	}
 }
 
-//Edit by Richard: SearchThread which will refesh servers, then wait iDelay ms, then redo the search
+// SearchThread which will refesh servers, then wait iDelay ms, then redo the search
 struct SearchThreadArgs
 {
 	HWND hDlg;
 	std::vector <std::pair<std::string, int> > * pvFound;
 	int iDelay;
 };
-void SearchThread (SearchThreadArgs* args)
+static void SearchThread (SearchThreadArgs* args)
 {
 	std::string sContentBuffer;
 	char szNameBuffer[256];
 	char szOldEntry[256];
 	int index;
-	HWND hListBox = GetDlgItem(args->hDlg, IDC_SP_LIST);
+	HWND hList = GetDlgItem(args->hDlg, IDC_SP_LIST);
 	HWND hEdit = GetDlgItem(args->hDlg, IDC_SP_EDIT);
+	LVITEM LvItem;
 	
 	//animate the button while waiting so the user sees that something is loading
 	if (args->iDelay)
@@ -1253,18 +1495,28 @@ void SearchThread (SearchThreadArgs* args)
 		SetDlgItemText(args->hDlg, IDC_SP_UPDATE, szOldEntry);
 	}
 	
-	index = SendMessage(hListBox, LB_GETCURSEL, 0, 0);
-	SendMessage(hListBox, LB_GETTEXT, index, (LPARAM) szOldEntry);
+	index = SendMessage(hList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+
+	LvItem.mask = LVIF_TEXT;
+	LvItem.iSubItem = 0;
+	LvItem.pszText = szOldEntry;
+	LvItem.cchTextMax = 256;
+	SendMessage(hList, LVM_GETITEMTEXT, index, (LPARAM) &LvItem);
 
 	GetWindowText(hEdit, szNameBuffer, sizeof(szNameBuffer) / sizeof (szNameBuffer[0]));
 	SearchPlayer(szNameBuffer, args->pvFound);
 	
 	if (args->pvFound->size() == 0) //if no results, add the "no player found" text in the correct language
 	{
-		SendMessage(hListBox, LB_RESETCONTENT, 0, 0);
+		SendMessage(hList, LVM_DELETEALLITEMS, 0, 0);
+
 		LoadString(g_hInst, IDS_SP_NOPLAYERFOUND, szNameBuffer, sizeof(szNameBuffer)/sizeof(szNameBuffer[0]));
-		index = SendMessage(hListBox, LB_ADDSTRING, 0, (LPARAM) szNameBuffer);
-		SendMessage(hListBox, LB_SETITEMDATA, index, (-1));
+		LvItem.mask = LVIF_TEXT | LVIF_PARAM;
+		LvItem.lParam = (-1);
+		LvItem.iSubItem = 0;
+		LvItem.iItem = 0;
+		LvItem.pszText = szNameBuffer;
+		SendMessage (hList, LVM_INSERTITEM, 0, (LPARAM) &LvItem);
 		
 		if (args->iDelay)
 		{
@@ -1275,17 +1527,31 @@ void SearchThread (SearchThreadArgs* args)
 		return;
 	}
 	
-	SendMessage(hListBox, LB_RESETCONTENT, 0, 0);
+	SendMessage(hList, LVM_DELETEALLITEMS, 0, 0);
 	for (size_t i = 0; i < args->pvFound->size(); i++) //add found results, also set itemdata to index in vPlayers
 	{
-		sContentBuffer.assign(g_mServers[args->pvFound->at(i).first].vPlayers[args->pvFound->at(i).second].sName);
-		sContentBuffer.append (" on ");
-		sContentBuffer.append (g_mServers[args->pvFound->at(i).first].sHostName);
-		int index = SendMessage(hListBox, LB_ADDSTRING, 0, (LPARAM) sContentBuffer.c_str());
-		SendMessage(hListBox, LB_SETITEMDATA, index, i);
+		LvItem.mask = LVIF_TEXT | LVIF_PARAM;
+		LvItem.lParam = i;
+		LvItem.iItem = 0;
+		LvItem.iSubItem = 0;
+		LvItem.pszText = (LPSTR) g_mServers[args->pvFound->at(i).first].vPlayers[args->pvFound->at(i).second].sName.c_str();
+		index = SendMessage (hList, LVM_INSERTITEM, 0, (LPARAM) &LvItem);
+
+		LvItem.iSubItem = 1;
+		LvItem.pszText = (LPSTR) g_mServers[args->pvFound->at(i).first].sHostName.c_str();
+		SendMessage (hList, LVM_SETITEMTEXT, index, (LPARAM) &LvItem);
+
+		if (strcmp(g_mServers[args->pvFound->at(i).first].vPlayers[args->pvFound->at(i).second].sName.c_str(), szOldEntry) == 0)
+		{
+			ListView_SetItemState(hList, -1, 0, 0x000F);
+			ListView_SetItemState(hList, index, LVIS_FOCUSED | LVIS_SELECTED, 0x000F);
+		}
 	}
-	index = SendMessage(hListBox, LB_FINDSTRING, -1, (LPARAM) szOldEntry);
-	SendMessage(hListBox, LB_SETCURSEL, index, 0);
+
+	ListView_SortItems(hList, OnSearchPlayerDlgSort, (LPARAM) args->pvFound);
+
+	index = ListView_GetNextItem(hList, -1, LVNI_SELECTED | LVNI_FOCUSED);
+	ListView_EnsureVisible(hList, index, FALSE);
 
 	if (args->iDelay)
 	{
@@ -1295,11 +1561,8 @@ void SearchThread (SearchThreadArgs* args)
 	delete args;
 }
 
-
-
-
-//Edit by Richard: Message handlers for search players dialog
-int OnSearchPlayerDlgUpdate (HWND hDlg, int iDelay, std::vector <std::pair<std::string, int> > * pvFound)
+// Message handlers for search players dialog
+static BOOL OnSearchPlayerDlgUpdate (HWND hDlg, int iDelay, std::vector <std::pair<std::string, int> > * pvFound)
 {
 	RefreshList();
 	SearchThreadArgs* args = new SearchThreadArgs;
@@ -1310,7 +1573,7 @@ int OnSearchPlayerDlgUpdate (HWND hDlg, int iDelay, std::vector <std::pair<std::
 	return TRUE;
 }
 
-int OnSearchPlayerDlgEditChange(HWND hDlg, std::vector <std::pair<std::string, int> > * pvFound)
+static BOOL OnSearchPlayerDlgEditChange(HWND hDlg, std::vector <std::pair<std::string, int> > * pvFound)
 {
 	SearchThreadArgs* args = new SearchThreadArgs;
 	args->hDlg = hDlg;
@@ -1320,22 +1583,22 @@ int OnSearchPlayerDlgEditChange(HWND hDlg, std::vector <std::pair<std::string, i
 	return TRUE;
 }
 
-int OnSearchPlayerDlgSelChange (HWND hDlg, std::vector <std::pair<std::string, int> > * pvFound)
+static BOOL OnSearchPlayerDlgSelChange (HWND hDlg, std::vector <std::pair<std::string, int> > * pvFound)
 {
-	int iFoundIndex;
 	int iListId;
+	LVITEM LvItem;
 
-	iFoundIndex = SendMessage(
-		GetDlgItem(hDlg, IDC_SP_LIST),
-		LB_GETITEMDATA,
-		SendDlgItemMessage(hDlg, IDC_SP_LIST, LB_GETCURSEL, 0, 0),
-		0);
+	memset(&LvItem, 0, sizeof(LvItem));
+	LvItem.iItem = ListView_GetNextItem(GetDlgItem(hDlg, IDC_SP_LIST), -1, LVNI_SELECTED | LVNI_FOCUSED);
+	LvItem.mask = LVIF_PARAM;
+
+	ListView_GetItem(GetDlgItem(hDlg, IDC_SP_LIST), &LvItem);
 	
-	if (iFoundIndex == (-1))
+	if (LvItem.lParam == (-1))
 		return TRUE;
 
 	//select the server the player is playing on in the main windoww
-	iListId = GetListIDFromAddress(pvFound->at(iFoundIndex).first.c_str());
+	iListId = GetListIDFromAddress(pvFound->at(LvItem.lParam).first.c_str());
 	if (iListId >= 0)
 	{
 		ListView_SetItemState(g_hServerList, -1, 0, 0x000F);
@@ -1346,7 +1609,7 @@ int OnSearchPlayerDlgSelChange (HWND hDlg, std::vector <std::pair<std::string, i
 	return TRUE;
 }
 
-int OnSearchPlayerDlgResize (HWND hDlg)
+static BOOL OnSearchPlayerDlgResize (HWND hDlg)
 {
 	RECT rcWin;
 	DWORD dwBaseUnits;
@@ -1360,20 +1623,43 @@ int OnSearchPlayerDlgResize (HWND hDlg)
 	MoveWindow (GetDlgItem(hDlg, IDC_SP_UPDATE), rcWin.right - 84*iMW, rcWin.bottom - 17*iMH, 37*iMW, 11*iMH, false);
 	MoveWindow (GetDlgItem(hDlg, IDOK),          rcWin.right - 42*iMW, rcWin.bottom - 17*iMH, 37*iMW, 11*iMH, false);
 
+	ListView_SetColumnWidth(GetDlgItem(hDlg, IDC_SP_LIST), 0, -1);
+	ListView_SetColumnWidth(GetDlgItem(hDlg, IDC_SP_LIST), 1, -2);
+
 	RedrawWindow(hDlg, NULL, NULL, RDW_ERASE | RDW_INVALIDATE);
 	return TRUE;
 }
 
-int OnSearchPlayerDlgInit (HWND hDlg)
+static BOOL OnSearchPlayerDlgInit (HWND hDlg)
 {
-	OnSearchPlayerDlgResize(hDlg);
+	LVCOLUMN LvCol;
+	char szBuffer[256];
+
+	ListView_SetExtendedListViewStyle(GetDlgItem(hDlg, IDC_SP_LIST), LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+
+	memset(&LvCol, 0, sizeof(LvCol));
+	LvCol.mask = LVCF_TEXT | LVCF_SUBITEM;
+	LvCol.pszText  = szBuffer;
+	
+	LvCol.iSubItem = 0;
+	LoadString(g_hInst, IDS_SP_PLAYER, szBuffer, sizeof(szBuffer)/sizeof(szBuffer[0]));
+	SendDlgItemMessage(hDlg, IDC_SP_LIST, LVM_INSERTCOLUMN, 0, (LPARAM)&LvCol);
+
+	LvCol.iSubItem = 1;
+	LvCol.pszText  = szBuffer;
+	LoadString(g_hInst, IDS_SP_ONSERVER, szBuffer, sizeof(szBuffer)/sizeof(szBuffer[0]));
+	SendDlgItemMessage(hDlg, IDC_SP_LIST, LVM_INSERTCOLUMN, 1, (LPARAM)&LvCol);
+
 	//fill the listbox with all players currently playing, manually calling the function is not possible
 	//because we dont have the pvFound in this scope.
 	SendMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_EDIT, EN_CHANGE), (LPARAM) GetDlgItem(hDlg, IDC_SP_EDIT));
+	
+	//resize and adapt column width
+	OnSearchPlayerDlgResize(hDlg);
 	return TRUE;
 }
 
-int OnSearchPlayerDlgCommand (HWND hDlg, WPARAM wParam, LPARAM lParam)
+static BOOL OnSearchPlayerDlgCommand (HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
 	static std::vector <std::pair<std::string, int> > vFound;
 
@@ -1390,16 +1676,29 @@ int OnSearchPlayerDlgCommand (HWND hDlg, WPARAM wParam, LPARAM lParam)
 	if ((LOWORD(wParam) == IDC_SP_EDIT) && (HIWORD(wParam) == EN_CHANGE))
 		return OnSearchPlayerDlgEditChange(hDlg, &vFound);
 
+	//will only happen if sent manually from OnSearchPlayerDlgNotify
 	if (HIWORD(wParam) == LBN_SELCHANGE && LOWORD(wParam) == IDC_SP_LIST)
 		return OnSearchPlayerDlgSelChange(hDlg, &vFound);
 	
 	return FALSE;
 }
 
+static BOOL OnSearchPlayerDlgNotify (HWND hDlg, WPARAM wParam, LPARAM lParam)
+{
+	if( ( ((LPNMHDR)lParam)->code == LVN_ITEMCHANGED) && (((LPNMHDR)lParam)->idFrom == IDC_SP_LIST))
+		SendMessage (hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_LIST, LBN_SELCHANGE), 0);
+	//Generate own message so we can use the static vFound in OnSearchPlayerDlgCommand
+	return TRUE;
+}
+
+
 static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
+	case WM_NOTIFY:
+		return OnSearchPlayerDlgNotify(hDlg, wParam, lParam);
+
 	case WM_SIZE:
 		return OnSearchPlayerDlgResize(hDlg);
 
@@ -1418,4 +1717,12 @@ static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam,
 		}
 	}
     return FALSE;
+}
+int CALLBACK OnSearchPlayerDlgSort (LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+{
+	//alphabetically sort the two given items
+	std::vector <std::pair<std::string, int> > vFound = *((std::vector <std::pair<std::string, int> > *) lParamSort);
+	
+	return g_mServers[vFound.at(lParam1).first].vPlayers[vFound.at(lParam1).second].sName.compare(
+				g_mServers[vFound.at(lParam2).first].vPlayers[vFound.at(lParam2).second].sName);			  
 }

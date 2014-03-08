@@ -42,12 +42,14 @@
 #define IDC_SP_LIST						32781
 #define IDC_SP_UPDATE					32782
 #define IDS_SP_NOPLAYERFOUND			32783
+#define IDS_SP_PLAYER					32784
+#define IDS_SP_ONSERVER					32785
 
-#define ID_TRAY_RESTORE                 32784
-#define IDM_WEBSITE_GLS                 32785
-#define IDM_WEBSITE_PLAYER              32786
-#define IDM_WEBSITE_FORUM               32787
-#define IDM_WEBSITE_DOCS                32788
+#define ID_TRAY_RESTORE                 32786
+#define IDM_WEBSITE_GLS                 32787
+#define IDM_WEBSITE_PLAYER              32788
+#define IDM_WEBSITE_FORUM               32789
+#define IDM_WEBSITE_DOCS                32790
 
 // Next default values for new objects
 //
