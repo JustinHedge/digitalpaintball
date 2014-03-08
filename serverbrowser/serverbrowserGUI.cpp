@@ -72,6 +72,7 @@ static DWORD g_iIconGLS2 = 0;
 static bool g_bAlreadyOpen = false;
 static DWORD g_dwExistingProcess = 0;
 static bool g_bThemed = false;
+static int g_iPlayerSearchSortOrder = 1; //sort order for list view in player search dialog; abs = column number; sign = ascending / descending
 
 char g_szGameDir[256];
 string g_sCurrentServerAddress;
@@ -1616,15 +1617,15 @@ static void OnSearchPlayerDlgSize (HWND hDlg, UINT state, int cx, int cy)
 	iMW = LOWORD(dwBaseUnits) / 4; //Multiplier width for base units to pixels
     iMH = HIWORD(dwBaseUnits) / 8; //Multiplier height for base units to pixels
 	
-	MoveWindow (GetDlgItem(hDlg, IDC_SP_EDIT), 5*iMW, 16*iMH, cx - 10*iMW, 12*iMH, FALSE);
-	MoveWindow (GetDlgItem(hDlg, IDC_SP_LIST), 5*iMW, 50*iMH, cx - 10*iMW, cy- 72*iMH, FALSE);
-	MoveWindow (GetDlgItem(hDlg, IDC_SP_UPDATE), cx - 84*iMW, cy - 17*iMH, 37*iMW, 11*iMH, FALSE);
-	MoveWindow (GetDlgItem(hDlg, IDOK),          cx - 42*iMW, cy - 17*iMH, 37*iMW, 11*iMH, FALSE);
+	MoveWindow (GetDlgItem(hDlg, IDC_SP_EDIT), 5*iMW, 16*iMH, cx - 10*iMW, 12*iMH, TRUE);
+	MoveWindow (GetDlgItem(hDlg, IDC_SP_LIST), 5*iMW, 50*iMH, cx - 10*iMW, cy- 72*iMH, TRUE);
+	MoveWindow (GetDlgItem(hDlg, IDC_SP_UPDATE), cx - 84*iMW, cy - 17*iMH, 37*iMW, 11*iMH, TRUE);
+	MoveWindow (GetDlgItem(hDlg, IDOK),          cx - 42*iMW, cy - 17*iMH, 37*iMW, 11*iMH, TRUE);
+	RedrawWindow(GetDlgItem(hDlg, IDOK), NULL, NULL, RDW_ERASE | RDW_INVALIDATE);
 
 	ListView_SetColumnWidth(GetDlgItem(hDlg, IDC_SP_LIST), 0, -1);
 	ListView_SetColumnWidth(GetDlgItem(hDlg, IDC_SP_LIST), 1, -2);
 
-	RedrawWindow(hDlg, NULL, NULL, RDW_ERASE | RDW_INVALIDATE);
 }
 
 static void OnSearchPlayerDlgCommand (HWND hDlg, int id, HWND hwndCtl, UINT codeNotify)
@@ -1648,9 +1649,11 @@ static void OnSearchPlayerDlgCommand (HWND hDlg, int id, HWND hwndCtl, UINT code
 				OnSearchPlayerDlgEditChange(hDlg, &vFound);
 			break;
 
-		case IDC_SP_LIST: //will only happen if sent manually from OnSearchPlayerDlgNotify
-			if (codeNotify == LBN_SELCHANGE)
+		case IDC_SP_LIST: //will only happen if sent manually from OnSearchPlayerDlgNotify, 
+			if (codeNotify == 0x800) //select right server in main window
 				OnSearchPlayerDlgSelChange(hDlg, &vFound);
+			else if (codeNotify = 0x800 + 1) //resort the items
+				ListView_SortItems(GetDlgItem(hDlg, IDC_SP_LIST), OnSearchPlayerDlgSort, &vFound);
 			break;
 	}
 }
@@ -1686,13 +1689,22 @@ static BOOL OnSearchPlayerDlgInit (HWND hDlg, HWND hwndFocus, LPARAM lParam)
 	return TRUE;
 }
 
+//used to forward all listview messages that come in as WM_NOTIFY messages
+//to the WM_COMMAND handler because it holds the static vFound
 static LRESULT OnSearchPlayerDlgNotify (HWND hDlg, int idFrom, NMHDR* pNMHdr)
 {
 	if( (pNMHdr->code == LVN_ITEMCHANGED) && (pNMHdr->idFrom == IDC_SP_LIST) )
 	{
 		if  ( ( ((NMLISTVIEW*)pNMHdr)->uNewState & (LVIS_FOCUSED | LVIS_SELECTED) ) == (LVIS_FOCUSED | LVIS_SELECTED) )
-			//Generate own message so we can use the static vFound in OnSearchPlayerDlgCommand
-			SendMessage (hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_LIST, LBN_SELCHANGE), 0);
+			SendMessage (hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_LIST, 0x800), 0);
+	}
+	else if ( (pNMHdr->code == LVN_COLUMNCLICK) &&(pNMHdr->idFrom == IDC_SP_LIST) )
+	{
+		g_iPlayerSearchSortOrder = (abs(g_iPlayerSearchSortOrder) == ((NMLISTVIEW*)pNMHdr)->iSubItem + 1)
+									? g_iPlayerSearchSortOrder * (-1)
+									: ((NMLISTVIEW*)pNMHdr)->iSubItem + 1;
+
+		SendMessage (hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_LIST, 0x800 + 1), 0);
 	}
 	return 0;
 }
@@ -1712,9 +1724,42 @@ static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam,
 
 static LRESULT CALLBACK OnSearchPlayerDlgSort (LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
-	//alphabetically sort the two given items
+	int iResult;
 	std::vector <std::pair<std::string, int> > vFound = *((std::vector <std::pair<std::string, int> > *) lParamSort);
-	
-	return _stricmp(g_mServers[vFound.at(lParam1).first].vPlayers[vFound.at(lParam1).second].sName.c_str(),
-					g_mServers[vFound.at(lParam2).first].vPlayers[vFound.at(lParam2).second].sName.c_str());			  
+
+	if (g_iPlayerSearchSortOrder == -2) //-2 for 2nd column, ascending
+	{
+		iResult = _stricmp(g_mServers[vFound.at(lParam2).first].sHostName.c_str(),
+							g_mServers[vFound.at(lParam1).first].sHostName.c_str());
+		iResult = (iResult != 0) ? iResult : _stricmp(g_mServers[vFound.at(lParam1).first].vPlayers[vFound.at(lParam1).second].sName.c_str(),
+											 g_mServers[vFound.at(lParam2).first].vPlayers[vFound.at(lParam2).second].sName.c_str());
+	}
+
+	else if (g_iPlayerSearchSortOrder == -1) //-1 for 1st column, ascending
+	{
+		iResult = _stricmp(g_mServers[vFound.at(lParam2).first].vPlayers[vFound.at(lParam2).second].sName.c_str(),
+							g_mServers[vFound.at(lParam1).first].vPlayers[vFound.at(lParam1).second].sName.c_str());
+		iResult = (iResult != 0) ? iResult : _stricmp(g_mServers[vFound.at(lParam1).first].sHostName.c_str(),
+											 g_mServers[vFound.at(lParam2).first].sHostName.c_str());
+	}
+
+	else if (g_iPlayerSearchSortOrder == 1) //1 for for 1st column, descending
+	{
+		iResult = _stricmp(g_mServers[vFound.at(lParam1).first].vPlayers[vFound.at(lParam1).second].sName.c_str(),
+							g_mServers[vFound.at(lParam2).first].vPlayers[vFound.at(lParam2).second].sName.c_str());
+		iResult = (iResult != 0) ? iResult : _stricmp(g_mServers[vFound.at(lParam1).first].sHostName.c_str(),
+											 g_mServers[vFound.at(lParam2).first].sHostName.c_str());
+	}
+
+	else if (g_iPlayerSearchSortOrder == 2) //2 for 2nd column, descending
+	{
+		iResult = _stricmp(g_mServers[vFound.at(lParam1).first].sHostName.c_str(),
+							g_mServers[vFound.at(lParam2).first].sHostName.c_str());
+		iResult = (iResult != 0) ? iResult : _stricmp(g_mServers[vFound.at(lParam1).first].vPlayers[vFound.at(lParam1).second].sName.c_str(),
+											 g_mServers[vFound.at(lParam2).first].vPlayers[vFound.at(lParam2).second].sName.c_str());
+	}
+	else
+		iResult = 0;
+
+	return iResult;
 }
