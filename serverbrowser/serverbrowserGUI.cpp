@@ -152,8 +152,7 @@ void DeletePIDFile ()
 static LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK About (HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK SearchPlayerDlg (HWND, UINT, WPARAM, LPARAM);
-int CALLBACK OnSearchPlayerDlgSort (LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
-
+static LRESULT CALLBACK OnSearchPlayerDlgSort (LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
 int APIENTRY WinMain (HINSTANCE hInstance,
                       HINSTANCE hPrevInstance,
@@ -1469,6 +1468,7 @@ struct SearchThreadArgs
 	std::vector <std::pair<std::string, int> > * pvFound;
 	int iDelay;
 };
+
 static void SearchThread (SearchThreadArgs* args)
 {
 	std::string sContentBuffer;
@@ -1495,28 +1495,23 @@ static void SearchThread (SearchThreadArgs* args)
 		SetDlgItemText(args->hDlg, IDC_SP_UPDATE, szOldEntry);
 	}
 	
-	index = SendMessage(hList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-
-	LvItem.mask = LVIF_TEXT;
-	LvItem.iSubItem = 0;
-	LvItem.pszText = szOldEntry;
-	LvItem.cchTextMax = 256;
-	SendMessage(hList, LVM_GETITEMTEXT, index, (LPARAM) &LvItem);
+	index = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+	ListView_GetItemText(hList, index, 0, szOldEntry, sizeof(szOldEntry) / sizeof(szOldEntry[0]));
 
 	GetWindowText(hEdit, szNameBuffer, sizeof(szNameBuffer) / sizeof (szNameBuffer[0]));
 	SearchPlayer(szNameBuffer, args->pvFound);
 	
+	ListView_DeleteAllItems(hList);
+
 	if (args->pvFound->size() == 0) //if no results, add the "no player found" text in the correct language
 	{
-		SendMessage(hList, LVM_DELETEALLITEMS, 0, 0);
-
 		LoadString(g_hInst, IDS_SP_NOPLAYERFOUND, szNameBuffer, sizeof(szNameBuffer)/sizeof(szNameBuffer[0]));
 		LvItem.mask = LVIF_TEXT | LVIF_PARAM;
 		LvItem.lParam = (-1);
 		LvItem.iSubItem = 0;
 		LvItem.iItem = 0;
 		LvItem.pszText = szNameBuffer;
-		SendMessage (hList, LVM_INSERTITEM, 0, (LPARAM) &LvItem);
+		ListView_InsertItem(hList, &LvItem);
 		
 		if (args->iDelay)
 		{
@@ -1527,15 +1522,14 @@ static void SearchThread (SearchThreadArgs* args)
 		return;
 	}
 	
-	SendMessage(hList, LVM_DELETEALLITEMS, 0, 0);
-	for (size_t i = 0; i < args->pvFound->size(); i++) //add found results, also set itemdata to index in vPlayers
+	for (size_t i = 0; i < args->pvFound->size(); i++) //add found results, also set lParam of each item to index of that player in pvFound
 	{
 		LvItem.mask = LVIF_TEXT | LVIF_PARAM;
 		LvItem.lParam = i;
 		LvItem.iItem = 0;
 		LvItem.iSubItem = 0;
 		LvItem.pszText = (LPSTR) g_mServers[args->pvFound->at(i).first].vPlayers[args->pvFound->at(i).second].sName.c_str();
-		index = SendMessage (hList, LVM_INSERTITEM, 0, (LPARAM) &LvItem);
+		index = ListView_InsertItem(hList, &LvItem);
 
 		LvItem.iSubItem = 1;
 		LvItem.pszText = (LPSTR) g_mServers[args->pvFound->at(i).first].sHostName.c_str();
@@ -1562,7 +1556,7 @@ static void SearchThread (SearchThreadArgs* args)
 }
 
 // Message handlers for search players dialog
-static BOOL OnSearchPlayerDlgUpdate (HWND hDlg, int iDelay, std::vector <std::pair<std::string, int> > * pvFound)
+static void OnSearchPlayerDlgUpdate (HWND hDlg, int iDelay, std::vector <std::pair<std::string, int> > * pvFound)
 {
 	RefreshList();
 	SearchThreadArgs* args = new SearchThreadArgs;
@@ -1570,20 +1564,18 @@ static BOOL OnSearchPlayerDlgUpdate (HWND hDlg, int iDelay, std::vector <std::pa
 	args->pvFound = pvFound;
 	args->iDelay = iDelay;
 	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SearchThread, (LPVOID)args, 0, NULL);
-	return TRUE;
 }
 
-static BOOL OnSearchPlayerDlgEditChange(HWND hDlg, std::vector <std::pair<std::string, int> > * pvFound)
+static void OnSearchPlayerDlgEditChange(HWND hDlg, std::vector <std::pair<std::string, int> > * pvFound)
 {
 	SearchThreadArgs* args = new SearchThreadArgs;
 	args->hDlg = hDlg;
 	args->pvFound = pvFound;
 	args->iDelay = 0;
 	SearchThread(args);
-	return TRUE;
 }
 
-static BOOL OnSearchPlayerDlgSelChange (HWND hDlg, std::vector <std::pair<std::string, int> > * pvFound)
+static void OnSearchPlayerDlgSelChange (HWND hDlg, std::vector <std::pair<std::string, int> > * pvFound)
 {
 	int iListId;
 	LVITEM LvItem;
@@ -1594,8 +1586,8 @@ static BOOL OnSearchPlayerDlgSelChange (HWND hDlg, std::vector <std::pair<std::s
 
 	ListView_GetItem(GetDlgItem(hDlg, IDC_SP_LIST), &LvItem);
 	
-	if (LvItem.lParam == (-1))
-		return TRUE;
+	if (LvItem.lParam == (-1)) //the lParam of the "no player found" text is -1
+		return;
 
 	//select the server the player is playing on in the main windoww
 	iListId = GetListIDFromAddress(pvFound->at(LvItem.lParam).first.c_str());
@@ -1606,34 +1598,68 @@ static BOOL OnSearchPlayerDlgSelChange (HWND hDlg, std::vector <std::pair<std::s
 		ListView_EnsureVisible(g_hServerList, iListId, FALSE);
 		UpdateInfoLists(iListId, false);
 	}
-	return TRUE;
 }
 
-static BOOL OnSearchPlayerDlgResize (HWND hDlg)
+static void OnSearchPlayerDlgGetMinMaxInfo(HWND hwnd, LPMINMAXINFO lpMinMaxInfo)
 {
-	RECT rcWin;
+	DWORD dwBaseUnits = GetDialogBaseUnits();
+	lpMinMaxInfo->ptMinTrackSize.x = MulDiv(100, LOWORD(dwBaseUnits), 4);
+	lpMinMaxInfo->ptMinTrackSize.y = MulDiv(120, HIWORD(dwBaseUnits), 8);
+}
+
+static void OnSearchPlayerDlgSize (HWND hDlg, UINT state, int cx, int cy)
+{
 	DWORD dwBaseUnits;
-	GetClientRect(hDlg, &rcWin);
+	int iMW, iMH; //multipliers to calculate pixel coordinates out of dialog unit coordinates
+
 	dwBaseUnits = GetDialogBaseUnits();
-	int iMW = LOWORD(dwBaseUnits) / 4; //Multiplier width for base units to pixels
-    int iMH = HIWORD(dwBaseUnits) / 8; //Multiplier height for base units to pixels
+	iMW = LOWORD(dwBaseUnits) / 4; //Multiplier width for base units to pixels
+    iMH = HIWORD(dwBaseUnits) / 8; //Multiplier height for base units to pixels
 	
-	MoveWindow (GetDlgItem(hDlg, IDC_SP_EDIT), 5*iMW, 16*iMH, rcWin.right - 10*iMW,  12*iMH, false);
-	MoveWindow (GetDlgItem(hDlg, IDC_SP_LIST), 5*iMW, 50*iMH, rcWin.right - 10*iMW,  rcWin.bottom - 72*iMH, false);
-	MoveWindow (GetDlgItem(hDlg, IDC_SP_UPDATE), rcWin.right - 84*iMW, rcWin.bottom - 17*iMH, 37*iMW, 11*iMH, false);
-	MoveWindow (GetDlgItem(hDlg, IDOK),          rcWin.right - 42*iMW, rcWin.bottom - 17*iMH, 37*iMW, 11*iMH, false);
+	MoveWindow (GetDlgItem(hDlg, IDC_SP_EDIT), 5*iMW, 16*iMH, cx - 10*iMW, 12*iMH, FALSE);
+	MoveWindow (GetDlgItem(hDlg, IDC_SP_LIST), 5*iMW, 50*iMH, cx - 10*iMW, cy- 72*iMH, FALSE);
+	MoveWindow (GetDlgItem(hDlg, IDC_SP_UPDATE), cx - 84*iMW, cy - 17*iMH, 37*iMW, 11*iMH, FALSE);
+	MoveWindow (GetDlgItem(hDlg, IDOK),          cx - 42*iMW, cy - 17*iMH, 37*iMW, 11*iMH, FALSE);
 
 	ListView_SetColumnWidth(GetDlgItem(hDlg, IDC_SP_LIST), 0, -1);
 	ListView_SetColumnWidth(GetDlgItem(hDlg, IDC_SP_LIST), 1, -2);
 
 	RedrawWindow(hDlg, NULL, NULL, RDW_ERASE | RDW_INVALIDATE);
-	return TRUE;
 }
 
-static BOOL OnSearchPlayerDlgInit (HWND hDlg)
+static void OnSearchPlayerDlgCommand (HWND hDlg, int id, HWND hwndCtl, UINT codeNotify)
+{
+	static std::vector <std::pair<std::string, int> > vFound;
+
+	switch (id)
+	{
+		case IDOK:
+		case IDCANCEL:
+			g_hSearchPlayerDlg = 0;
+			EndDialog(hDlg, id);
+			break;
+		
+		case IDC_SP_UPDATE:
+			OnSearchPlayerDlgUpdate (hDlg, 1000, &vFound);
+			break;
+
+		case IDC_SP_EDIT:
+			if (codeNotify == EN_CHANGE)
+				OnSearchPlayerDlgEditChange(hDlg, &vFound);
+			break;
+
+		case IDC_SP_LIST: //will only happen if sent manually from OnSearchPlayerDlgNotify
+			if (codeNotify == LBN_SELCHANGE)
+				OnSearchPlayerDlgSelChange(hDlg, &vFound);
+			break;
+	}
+}
+
+static BOOL OnSearchPlayerDlgInit (HWND hDlg, HWND hwndFocus, LPARAM lParam)
 {
 	LVCOLUMN LvCol;
 	char szBuffer[256];
+	RECT rect;
 
 	ListView_SetExtendedListViewStyle(GetDlgItem(hDlg, IDC_SP_LIST), LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
@@ -1643,86 +1669,49 @@ static BOOL OnSearchPlayerDlgInit (HWND hDlg)
 	
 	LvCol.iSubItem = 0;
 	LoadString(g_hInst, IDS_SP_PLAYER, szBuffer, sizeof(szBuffer)/sizeof(szBuffer[0]));
-	SendDlgItemMessage(hDlg, IDC_SP_LIST, LVM_INSERTCOLUMN, 0, (LPARAM)&LvCol);
+	ListView_InsertColumn(GetDlgItem(hDlg, IDC_SP_LIST), 0, &LvCol);
 
 	LvCol.iSubItem = 1;
 	LvCol.pszText  = szBuffer;
 	LoadString(g_hInst, IDS_SP_ONSERVER, szBuffer, sizeof(szBuffer)/sizeof(szBuffer[0]));
-	SendDlgItemMessage(hDlg, IDC_SP_LIST, LVM_INSERTCOLUMN, 1, (LPARAM)&LvCol);
+	ListView_InsertColumn(GetDlgItem(hDlg, IDC_SP_LIST), 0, &LvCol);
 
 	//fill the listbox with all players currently playing, manually calling the function is not possible
-	//because we dont have the pvFound in this scope.
+	//because we dont have vFound in this scope.
 	SendMessage(hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_EDIT, EN_CHANGE), (LPARAM) GetDlgItem(hDlg, IDC_SP_EDIT));
 	
-	//resize and adapt column width
-	OnSearchPlayerDlgResize(hDlg);
+	//position all controls and adapt column width
+	GetClientRect(hDlg, &rect);
+	OnSearchPlayerDlgSize(hDlg, SIZE_RESTORED, rect.right, rect.bottom); 
 	return TRUE;
 }
 
-static BOOL OnSearchPlayerDlgCommand (HWND hDlg, WPARAM wParam, LPARAM lParam)
+static LRESULT OnSearchPlayerDlgNotify (HWND hDlg, int idCtrl, LPNMHDR pNMHdr)
 {
-	static std::vector <std::pair<std::string, int> > vFound;
-
-	if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-	{
-		g_hSearchPlayerDlg = 0;
-		EndDialog(hDlg, LOWORD(wParam));
-		return TRUE;
-	}
-
-	if (LOWORD(wParam) == IDC_SP_UPDATE)
-		return OnSearchPlayerDlgUpdate (hDlg, 1000, &vFound);
-
-	if ((LOWORD(wParam) == IDC_SP_EDIT) && (HIWORD(wParam) == EN_CHANGE))
-		return OnSearchPlayerDlgEditChange(hDlg, &vFound);
-
-	//will only happen if sent manually from OnSearchPlayerDlgNotify
-	if (HIWORD(wParam) == LBN_SELCHANGE && LOWORD(wParam) == IDC_SP_LIST)
-		return OnSearchPlayerDlgSelChange(hDlg, &vFound);
-	
-	return FALSE;
-}
-
-static BOOL OnSearchPlayerDlgNotify (HWND hDlg, WPARAM wParam, LPARAM lParam)
-{
-	if( ( ((LPNMHDR)lParam)->code == LVN_ITEMCHANGED) && (((LPNMHDR)lParam)->idFrom == IDC_SP_LIST))
+	if( (pNMHdr->code == LVN_ITEMCHANGED) && (pNMHdr->idFrom == IDC_SP_LIST) )
 		SendMessage (hDlg, WM_COMMAND, MAKEWPARAM(IDC_SP_LIST, LBN_SELCHANGE), 0);
 	//Generate own message so we can use the static vFound in OnSearchPlayerDlgCommand
-	return TRUE;
+	return 0;
 }
-
 
 static LRESULT CALLBACK SearchPlayerDlg (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
-	case WM_NOTIFY:
-		return OnSearchPlayerDlgNotify(hDlg, wParam, lParam);
-
-	case WM_SIZE:
-		return OnSearchPlayerDlgResize(hDlg);
-
-	case WM_INITDIALOG:
-		return OnSearchPlayerDlgInit(hDlg);
-
-	case WM_COMMAND:
-		return OnSearchPlayerDlgCommand(hDlg, wParam, lParam);
-
-	case WM_GETMINMAXINFO:
-		{
-			DWORD dwBaseUnits = GetDialogBaseUnits();
-			((MINMAXINFO*) lParam)->ptMinTrackSize.x = MulDiv(100, LOWORD(dwBaseUnits), 4);
-			((MINMAXINFO*) lParam)->ptMinTrackSize.y = MulDiv(120, HIWORD(dwBaseUnits), 8);
-			return DefWindowProc (hDlg, message, wParam, lParam);
-		}
+		HANDLE_MSG(hDlg, WM_SIZE,			OnSearchPlayerDlgSize);
+		HANDLE_MSG(hDlg, WM_NOTIFY,			OnSearchPlayerDlgNotify);
+		HANDLE_MSG(hDlg, WM_COMMAND,		OnSearchPlayerDlgCommand);
+		HANDLE_MSG(hDlg, WM_INITDIALOG,		OnSearchPlayerDlgInit);
+		HANDLE_MSG(hDlg, WM_GETMINMAXINFO,	OnSearchPlayerDlgGetMinMaxInfo);
 	}
     return FALSE;
 }
-int CALLBACK OnSearchPlayerDlgSort (LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+
+static LRESULT CALLBACK OnSearchPlayerDlgSort (LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
 	//alphabetically sort the two given items
 	std::vector <std::pair<std::string, int> > vFound = *((std::vector <std::pair<std::string, int> > *) lParamSort);
 	
-	return g_mServers[vFound.at(lParam1).first].vPlayers[vFound.at(lParam1).second].sName.compare(
-				g_mServers[vFound.at(lParam2).first].vPlayers[vFound.at(lParam2).second].sName);			  
+	return _stricmp(g_mServers[vFound.at(lParam1).first].vPlayers[vFound.at(lParam1).second].sName.c_str(),
+					g_mServers[vFound.at(lParam2).first].vPlayers[vFound.at(lParam2).second].sName.c_str());			  
 }
