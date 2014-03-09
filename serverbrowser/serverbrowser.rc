@@ -49,7 +49,7 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
     CONTROL         "" IDC_SP_LIST, WC_LISTVIEW, WS_BORDER | WS_TABSTOP | WS_VSCROLL | LVS_REPORT | LVS_SHOWSELALWAYS, 7, 62, 166, 161
     LTEXT           "Prosím zadejte jméno hráce:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
-    LTEXT           "Výsledky:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    LTEXT           "Výsledky:", IDC_SP_RESULTS, 7, 49, 132, 8, SS_LEFT
     PUSHBUTTON   	"Aktualizovat", IDC_SP_UPDATE, 68, 228, 50, 14
     DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
 }
@@ -176,7 +176,7 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
     CONTROL         "" IDC_SP_LIST, WC_LISTVIEW, WS_BORDER | WS_TABSTOP | WS_VSCROLL | LVS_REPORT | LVS_SHOWSELALWAYS, 7, 62, 166, 161
     LTEXT           "Prosze podac imie gracza:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
-    LTEXT           "Rezultat:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    LTEXT           "Rezultat:", IDC_SP_RESULTS, 7, 49, 132, 8, SS_LEFT
     PUSHBUTTON   	"Odswiez", IDC_SP_UPDATE, 68, 228, 50, 14
     DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
 }
@@ -303,7 +303,7 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
     CONTROL         "" IDC_SP_LIST, WC_LISTVIEW, WS_BORDER | WS_TABSTOP | WS_VSCROLL | LVS_REPORT | LVS_SHOWSELALWAYS, 7, 62, 166, 161
     LTEXT           "Prosím, zadajte názov prehrávace:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
-    LTEXT           "Výsledky:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    LTEXT           "Výsledky:", IDC_SP_RESULTS, 7, 49, 132, 8, SS_LEFT
     PUSHBUTTON   	"Obnovit", IDC_SP_UPDATE, 68, 228, 50, 14
     DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
 }
@@ -498,7 +498,7 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
     CONTROL         "" IDC_SP_LIST, WC_LISTVIEW, WS_BORDER | WS_TABSTOP | WS_VSCROLL | LVS_REPORT | LVS_SHOWSELALWAYS, 7, 62, 166, 161
     LTEXT           "Bitte den Spielernamen eingeben:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
-    LTEXT           "Ergebnisse:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    LTEXT           "Ergebnisse:", IDC_SP_RESULTS, 7, 49, 132, 8, SS_LEFT
     PUSHBUTTON   	"Aktualisieren", IDC_SP_UPDATE, 68, 228, 50, 14
     DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
 }
@@ -625,7 +625,7 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
     CONTROL         "" IDC_SP_LIST, WC_LISTVIEW, WS_BORDER | WS_TABSTOP | WS_VSCROLL | LVS_REPORT | LVS_SHOWSELALWAYS, 7, 62, 166, 161
     LTEXT           "Please enter the player's name:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
-    LTEXT           "Results:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    LTEXT           "Results:", IDC_SP_RESULTS, 7, 49, 132, 8, SS_LEFT
     PUSHBUTTON   	"Refresh", IDC_SP_UPDATE, 68, 228, 50, 14
     DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
 }
@@ -778,7 +778,7 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_SP_EDIT, 7, 20, 166, 14, ES_AUTOHSCROLL //put as first so it receives initial focus
     CONTROL         "" IDC_SP_LIST, WC_LISTVIEW, WS_BORDER | WS_TABSTOP | WS_VSCROLL | LVS_REPORT | LVS_SHOWSELALWAYS, 7, 62, 166, 161
     LTEXT           "S'il vous plaît entrez le nom du joueur:", IDC_STATIC, 7, 7, 132, 8, SS_LEFT
-    LTEXT           "Résultats:", IDC_STATIC, 7, 49, 132, 8, SS_LEFT
+    LTEXT           "Résultats:", IDC_SP_RESULTS, 7, 49, 132, 8, SS_LEFT
     PUSHBUTTON   	"Rafraichir", IDC_SP_UPDATE, 68, 228, 50, 14
     DEFPUSHBUTTON   "OK", IDOK, 123, 228, 50, 14
 }

@@ -1475,6 +1475,7 @@ static void SearchThread (SearchThreadArgs* args)
 	std::string sContentBuffer;
 	char szNameBuffer[256];
 	char szOldEntry[256];
+	char * pStrTokResult;
 	int index;
 	HWND hList = GetDlgItem(args->hDlg, IDC_SP_LIST);
 	HWND hEdit = GetDlgItem(args->hDlg, IDC_SP_EDIT);
@@ -1501,6 +1502,11 @@ static void SearchThread (SearchThreadArgs* args)
 
 	GetWindowText(hEdit, szNameBuffer, sizeof(szNameBuffer) / sizeof (szNameBuffer[0]));
 	SearchPlayer(szNameBuffer, args->pvFound);
+
+	GetDlgItemText(args->hDlg, IDC_SP_RESULTS, szNameBuffer, sizeof(szNameBuffer) / sizeof (szNameBuffer[0]));
+	pStrTokResult = strtok (szNameBuffer, ":");
+	sprintf_s(szNameBuffer, sizeof(szNameBuffer) / sizeof (szNameBuffer[0]), "%s: %d", pStrTokResult, args->pvFound->size());
+	SetDlgItemText(args->hDlg, IDC_SP_RESULTS, szNameBuffer);
 	
 	ListView_DeleteAllItems(hList);
 
