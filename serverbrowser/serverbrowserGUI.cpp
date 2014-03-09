@@ -258,7 +258,7 @@ static BOOL OnCreate (HWND hWnd, LPCREATESTRUCT lpCreateStruct)
 	int i;
 	char *pServerList[] = { "C", "PW", "GLS", "Server Name", "Map", "Players", "Ping", "Address" };
 //	char *pServerList[] = { "Server Name", "Map", "Players", "Ping", "Address" };
-	int iaServerListWidths[] = { 18, 18, 18, 300, 150, 55, 40, -2 };
+	int iaServerListWidths[] = { 20, 20, 20, 300, 150, 55, 40, -2 };
 //	int iaServerListWidths[] = { 350, 150, 55, 40, -2 };
 	char *pPlayerList[] = { "Player Name", "Kills", "Ping" };
 	int iaPlayerListWidths[] = { 200, 60, -2 };

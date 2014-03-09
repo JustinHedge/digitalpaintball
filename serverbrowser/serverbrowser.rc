@@ -34,8 +34,8 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
-    LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-03-09",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Authors: jitspoe, T3RR0R15T, Richard",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
@@ -129,11 +129,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
-    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T, Richard"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Hráci nenalezeni."
-	IDS_SP_PLAYER			"hrác"
-	IDS_SP_ONSERVER			"server"
+	IDS_SP_PLAYER			"Hráci"
+	IDS_SP_ONSERVER			"Serveru"
 END
 
 #endif    // Czech resources
@@ -161,8 +161,8 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
-    LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-03-09",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Authors: jitspoe, T3RR0R15T, Richard",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
@@ -256,11 +256,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Wyszukiwarka serwerów"
-    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T, Richard"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Nie znaleziono gracza."
-	IDS_SP_PLAYER			"gracz"
-	IDS_SP_ONSERVER			"serwer"
+	IDS_SP_PLAYER			"Gracze"
+	IDS_SP_ONSERVER			"Serwera"
 END
 
 #endif    // Polish resources
@@ -288,8 +288,8 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
-    LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-03-09",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Authors: jitspoe, T3RR0R15T, Richard",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
@@ -383,11 +383,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
-    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T, Richard"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Žiadny hrác našiel."
-	IDS_SP_PLAYER			"hrác"
-	IDS_SP_ONSERVER			"server"
+	IDS_SP_PLAYER			"Hráci"
+	IDS_SP_ONSERVER			"Servera"
 END
 
 #endif    // Slovak resources
@@ -444,7 +444,7 @@ BEGIN
             VALUE "Comments", "http://www.digitalpaint.org"
             VALUE "CompanyName", "Digital Paint"
 			VALUE "FileDescription", "Digital Paint: Paintball 2 - Serverbrowser"
-            VALUE "FileVersion", "0.2014.02.07"
+            VALUE "FileVersion", "0.2014.03.09"
             VALUE "InternalName", "serverbrowser"
             VALUE "LegalCopyright", "Copyright (C) 2006-2014"
             VALUE "OriginalFilename", "serverbrowser.exe"
@@ -483,8 +483,8 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
-    LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-03-09",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Authors: jitspoe, T3RR0R15T, Richard",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
@@ -578,7 +578,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
-    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T, Richard"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Kein Spieler gefunden."
 	IDS_SP_PLAYER			"Spieler"
@@ -610,8 +610,8 @@ FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,20,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
-    LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-03-09",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Authors: jitspoe, T3RR0R15T, Richard",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
@@ -731,11 +731,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Serverbrowser"
-    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T, Richard"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "No player found."
-	IDS_SP_PLAYER			"player"
-	IDS_SP_ONSERVER			"server"
+	IDS_SP_PLAYER			"Players"
+	IDS_SP_ONSERVER			"Server"
 END
 
 #endif    // English (U.S.) resources
@@ -763,8 +763,8 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DPLOGO,IDC_MYICON,35,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "Digital Paint: Paintball 2 - Server Browser",IDC_STATIC,23,40,150,10,SS_NOPREFIX
-    LTEXT           "Build 2014-02-07",IDC_STATIC,23,55,150,10,SS_NOPREFIX
-    LTEXT           "Authors: jitspoe, T3RR0R15T",IDC_STATIC,23,75,150,10,SS_NOPREFIX
+    LTEXT           "Build 2014-03-09",IDC_STATIC,23,55,150,10,SS_NOPREFIX
+    LTEXT           "Authors: jitspoe, T3RR0R15T, Richard",IDC_STATIC,23,75,150,10,SS_NOPREFIX
     LTEXT           "Copyright (C) 2014 Digital Paint",IDC_STATIC,23,90,150,10
     PUSHBUTTON      "OK",IDOK,70,110,30,11,WS_GROUP
 END
@@ -858,11 +858,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Digital Paint: Paintball 2 - Recherche de serveur"
-    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T"
+    IDS_ABOUT_AUTHORS       "jitspoe, T3RR0R15T, Richard"
     IDC_SERVERBROWSER       "SERVERBROWSER"
 	IDS_SP_NOPLAYERFOUND    "Aucun joueur trouvé."
-	IDS_SP_PLAYER			"joueur"
-	IDS_SP_ONSERVER			"sur le serveur"
+	IDS_SP_PLAYER			"Joueurs"
+	IDS_SP_ONSERVER			"Serveur"
 END
 
 #endif    // French (France) resources
