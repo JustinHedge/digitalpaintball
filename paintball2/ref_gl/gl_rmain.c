@@ -3546,6 +3546,9 @@ cvar_t	*r_lefthand;
 
 cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 
+cvar_t	*r_drawdebug; // jitdebugdraw
+
+
 cvar_t	*gl_nosubimage;
 cvar_t	*gl_allow_software;
 
@@ -4703,7 +4706,8 @@ void R_RenderView (refdef_t *fd)
 
 	R_DrawSpritesOnList(); // draw smoke after water so water doesn't cover it!
 
-	R_DrawDebug(); // jitdebugdraw
+	if (r_drawdebug->value)
+		R_DrawDebug(); // jitdebugdraw
 
 	if (fogenabled)
 		qgl.Disable(GL_FOG);
@@ -4962,6 +4966,7 @@ void R_Register(void)
 	r_lerpmodels = ri.Cvar_Get("r_lerpmodels", "1", 0);
 	r_speeds = ri.Cvar_Get("r_speeds", "0", 0);
 	r_lightlevel = ri.Cvar_Get("r_lightlevel", "0", 0);
+	r_drawdebug = ri.Cvar_Get("r_drawdebug", "0", 0);
 	gl_nosubimage = ri.Cvar_Get("gl_nosubimage", "0", 0);
 	gl_allow_software = ri.Cvar_Get("gl_allow_software", "0", CVAR_ARCHIVE); // jits - archive this now
 	gl_particle_min_size = ri.Cvar_Get("gl_particle_min_size", "2", CVAR_ARCHIVE);

@@ -44,6 +44,7 @@ typedef struct {
 	vec3_t				last_pos;
 	float				last_waypoint_time;
 	vec3_t				last_waypoint_pos;
+	qboolean			was_on_ladder;
 } player_observation_t;
 
 

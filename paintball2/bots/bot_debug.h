@@ -18,5 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#define BOT_DEBUG
+
 int DrawDebugLine (const vec_t *start, const vec_t *end, float r, float g, float b, float time, int id);
 int DrawDebugSphere (const vec_t *pos, float radius, float r, float g, float b, float time, int id);
