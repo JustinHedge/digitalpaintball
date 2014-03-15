@@ -35,7 +35,7 @@ typedef struct
 	void		(*ShutdownMap) (void);
 	void		(*Shutdown) (void);
 	void		(*GameEvent) (game_event_t event, edict_t *ent, void *data1, void *data2);
-	void		(*RunFrame) (int msec, float game_time); // should be called each game frame
+	void		(*RunFrame) (int msec, float level_time); // should be called each game frame
 	qboolean	(*Command) (edict_t *ent, const char *cmd, const char *cmd2, const char *cmd3, const char *cmd4);
 	void		(*ExitLevel) (void); // called when level ends
 	void		(*SpawnEntities) (void); // called when level starts

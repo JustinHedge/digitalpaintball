@@ -27,11 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bot_manager.h"
 #include "bot_observe.h"
 #include "bot_files.h"
+#include "bot_waypoints.h"
 
-#define MAX_WAYPOINTS 2048
 
-//#define MAX_WAYPOINTS 500 // small number to test - todo: use larger value when done
-#define MAX_WAYPOINT_CONNECTIONS 8 // waypoint will connect with 8 closest possible nodes
 #define MAX_WAYPOINT_DIST 256.0f
 #define MAX_WAYPOINT_DIST_SQ 65536.0f
 #define MIN_WAYPOINT_DIFF 32.0f
@@ -41,23 +39,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 static int g_debug_trace_count = 0;
-
-
-typedef struct {
-	float	weights[MAX_WAYPOINT_CONNECTIONS];
-	int		nodes[MAX_WAYPOINT_CONNECTIONS];
-	int		debug_ids[MAX_WAYPOINT_CONNECTIONS];
-} bot_waypoint_connection_t;
-
-
-typedef struct {
-	vec3_t		positions[MAX_WAYPOINTS];
-	bot_waypoint_connection_t connections[MAX_WAYPOINTS];
-	int			usage_weights[MAX_WAYPOINTS]; // how often players touch this waypoint.
-	int			debug_ids[MAX_WAYPOINTS];
-	int			num_points;
-	float		last_moved_times[MAX_WAYPOINTS]; // Time the waypoint has last been moved/replaced, so we can avoid recalculating some stuff.
-} bot_waypoints_t;
 
 typedef short vec3short_t[3];
 
@@ -144,16 +125,57 @@ vec3_t crouching_mins = { -16, -16, -24 }; // same as standing
 vec3_t crouching_maxs = { 16, 16, 4 };
 
 
+// used for qsort
+int WaypointDistCompareFunc (const void *data1, const void *data2)
+{
+	int i1 = *(int *)data1;
+	int i2 = *(int *)data2;
+	float dist1, dist2;
+
+	dist1 = g_bot_waypoints.temp_dists_sq[i1];
+	dist2 = g_bot_waypoints.temp_dists_sq[i2];
+
+	return dist1 - dist2;
+}
+
+
+// Compute and sort the square distances from all waypoints to this one
+void WaypointSortSquareDistances (int waypoint_index)
+{
+	// potential opt: we could hash positions to avoid going through every single waypoint.
+	int i;
+	vec3_t diff_vec;
+
+	for (i = 0; i < g_bot_waypoints.num_points; ++i)
+	{
+		VectorSubtract(g_bot_waypoints.positions[i], g_bot_waypoints.positions[waypoint_index], diff_vec);
+		g_bot_waypoints.temp_dists_sq[i] = VectorLengthSquared(diff_vec);
+		g_bot_waypoints.temp_sorted_indexes[i] = i;
+	}
+
+	qsort(g_bot_waypoints.temp_sorted_indexes, g_bot_waypoints.num_points, sizeof(g_bot_waypoints.temp_sorted_indexes[0]), WaypointDistCompareFunc);
+}
+
+
+typedef enum {
+	CLOSER_POINT_SUCCESS,
+	CLOSER_POINT_COLLISION,
+	CLOSER_POINT_HEIGHT,
+	CLOSER_POINT_DISTANCE
+} closer_point_result_t;
+
+
 // Helper function to find the X closest points, given a squared distance
-void TryInsertCloserPoint (const edict_t *ent, int *closest_points, float *closest_points_dist_sq, const vec3_t pos1, const vec3_t pos2, int point_index)
+closer_point_result_t TryInsertCloserPoint (const edict_t *ent, int *closest_points, float *closest_points_dist_sq, const vec3_t pos1, const vec3_t pos2, int point_index)
 {
 	int closest_point_index;
 	float old_dist_sq;
-	vec3_t diff_vec;
 	float dist_sq;
 
-	VectorSubtract(pos1, pos2, diff_vec);
-	dist_sq = VectorLengthSquared(diff_vec);
+	dist_sq = g_bot_waypoints.temp_dists_sq[point_index];
+
+	if (pos1[2] - pos2[2] < -56.0f) // too high to reach
+		return CLOSER_POINT_HEIGHT; // todo: ladder and water checks
 
 	for (closest_point_index = 0; closest_point_index < MAX_WAYPOINT_CONNECTIONS; ++closest_point_index)
 	{
@@ -164,7 +186,7 @@ void TryInsertCloserPoint (const edict_t *ent, int *closest_points, float *close
 			trace_t trace;
 			qboolean hit_something = false;
 
-			trace = bi.trace(pos1, standing_mins, standing_maxs, pos2, ent, MASK_PLAYERSOLID);
+			trace = bi.trace(pos1, crouching_mins, crouching_maxs, pos2, ent, MASK_PLAYERSOLID);
 			++g_debug_trace_count;
 
 			if (trace.fraction < 1.0f || trace.startsolid)
@@ -177,23 +199,31 @@ void TryInsertCloserPoint (const edict_t *ent, int *closest_points, float *close
 			{
 				vec3_t jump_pos;
 
+				if (trace.startsolid) // this isn't going to get any better doing another raycast, so just bail out early
+					return CLOSER_POINT_COLLISION;
+
+				if (trace.plane.normal[2] < -0.8f) // hit a ceiling
+					return CLOSER_POINT_COLLISION;
+
 				VectorCopy(pos1, jump_pos);
 				jump_pos[2] += 56.0f;
 
-				trace = bi.trace(pos1, standing_mins, standing_maxs, jump_pos, ent, MASK_PLAYERSOLID);
+				// Just use crouching mins/maxes here to avoid doing more traces later.  It's possible that we'll generate an impossible node connection
+				// (one that requires jumping while crouched), but those seem rare enough to not waste the extra cycles, since traces/raycast are slow.
+				trace = bi.trace(pos1, crouching_mins, crouching_maxs, jump_pos, ent, MASK_PLAYERSOLID);
 				++g_debug_trace_count;
 				VectorCopy(trace.endpos, jump_pos);
-				trace = bi.trace(jump_pos, standing_mins, standing_maxs, pos2, ent, MASK_PLAYERSOLID);
+				trace = bi.trace(jump_pos, crouching_mins, crouching_maxs, pos2, ent, MASK_PLAYERSOLID);
 				++g_debug_trace_count;
 
 				if (!trace.startsolid && trace.fraction == 1.0f)
 				{
 					hit_something = false;
-					// todo: node types
+					// todo: node types (ladder, crouch, jump, etc)?
 				}
 			}
 
-			if (!hit_something)
+			if (!hit_something) // no collisions
 			{
 				int shift_index;
 
@@ -206,10 +236,16 @@ void TryInsertCloserPoint (const edict_t *ent, int *closest_points, float *close
 
 				closest_points_dist_sq[closest_point_index] = dist_sq;
 				closest_points[closest_point_index] = point_index;
-				return;
+				return CLOSER_POINT_SUCCESS;
+			}
+			else // hit_something
+			{
+				return CLOSER_POINT_COLLISION;
 			}
 		}
 	}
+
+	return CLOSER_POINT_DISTANCE;
 }
 
 // Look at all the nearby waypoints and try to add connections to them.
@@ -225,6 +261,7 @@ void BotWaypointUpdateConnections (int waypoint_index, const edict_t *ent)
 	int close_node_index = 0;
 
 	// Initialize, to make sure we don't have any invalid data set from a previous use of the waypoint (in case it was replaced)
+	// And populate with nodes that haven't changed, since we know we can reach them.
 	for (i = 0; i < MAX_WAYPOINT_CONNECTIONS; ++i)
 	{
 		closest_points[i] = -1;
@@ -232,9 +269,9 @@ void BotWaypointUpdateConnections (int waypoint_index, const edict_t *ent)
 		connected_node = g_bot_waypoints.connections[waypoint_index].nodes[i];
 
 		// If the positions of nodes we were previously connected to
-		if (connected_node != -1 && g_bot_waypoints.last_moved_times[waypoint_index] < bots.game_time)
+		if (connected_node != -1 && g_bot_waypoints.last_moved_times[waypoint_index] < bots.level_time)
 		{
-			if (g_bot_waypoints.last_moved_times[connected_node] < bots.game_time)
+			if (g_bot_waypoints.last_moved_times[connected_node] < bots.level_time)
 			{
 				vec3_t vec_diff;
 				vec_t dist_sq;
@@ -253,11 +290,17 @@ void BotWaypointUpdateConnections (int waypoint_index, const edict_t *ent)
 	}
 
 	skip_count = close_node_index;
+	WaypointSortSquareDistances(waypoint_index);
 
 	// Loop through all the existing waypoints and find the closest positions.
 	for (i = 0; i < g_bot_waypoints.num_points; ++i)
 	{
-		if (i != waypoint_index) // ignore self
+		int sorted_waypoint = g_bot_waypoints.temp_sorted_indexes[i];
+
+		if (g_bot_waypoints.temp_dists_sq[sorted_waypoint] > MAX_WAYPOINT_DIST_SQ)
+			break;
+
+		if (sorted_waypoint != waypoint_index) // ignore self
 		{
 			int skip_index;
 			qboolean skip = false;
@@ -266,7 +309,7 @@ void BotWaypointUpdateConnections (int waypoint_index, const edict_t *ent)
 			// todo: optimize - we could sort this so we don't have to check every element of the skip list against every waypoint id...
 			for (skip_index = 0; skip_index < skip_count; ++skip_index)
 			{
-				if (skip_nodes[skip_index] == i)
+				if (skip_nodes[skip_index] == sorted_waypoint)
 				{
 					skip = true;
 					break;
@@ -275,7 +318,11 @@ void BotWaypointUpdateConnections (int waypoint_index, const edict_t *ent)
 
 			if (!skip)
 			{
-				TryInsertCloserPoint(ent, closest_points, closest_points_dist_sq, g_bot_waypoints.positions[waypoint_index], g_bot_waypoints.positions[i], i);
+				closer_point_result_t result;
+				result = TryInsertCloserPoint(ent, closest_points, closest_points_dist_sq, g_bot_waypoints.positions[waypoint_index], g_bot_waypoints.positions[sorted_waypoint], sorted_waypoint);
+
+				if (result == CLOSER_POINT_DISTANCE)
+					break;
 			}
 		}
 	}
@@ -331,7 +378,7 @@ void BotAddWaypointAtIndex (const edict_t *ent, int waypoint_index, const vec3_t
 	if (!VectorCompare(pos, g_bot_waypoints.positions[waypoint_index]))
 	{
 		VectorCopy(pos, g_bot_waypoints.positions[waypoint_index]);
-		g_bot_waypoints.last_moved_times[waypoint_index] = bots.game_time;
+		g_bot_waypoints.last_moved_times[waypoint_index] = bots.level_time;
 	}
 
 	if (waypoint_index >= g_bot_waypoints.num_points)
@@ -399,7 +446,7 @@ void BotAddWaypointAtIndex (const edict_t *ent, int waypoint_index, const vec3_t
 		}
 	}
 
-	bi.dprintf("%d node connections updated.\n", debug_connection_updated_count);
+	//bi.dprintf("%d node connections updated.\n", debug_connection_updated_count);
 }
 
 
@@ -475,7 +522,7 @@ void BotTryAddWaypoint (const edict_t *ent, const vec3_t pos)
 
 #define WAYPOINT_ADD_TIME 1.0f // if this much time has elapsed since the last time a player has added a waypoint, try adding another.
 #define WAYPOINT_ADD_DIST 128.0f // if a player has moved at least this distance after adding the last waypoint, try adding another.
-#define WAYPOINT_ADD_DIST_LADDER 96.0f // ladders need better resolution to ensure connections
+#define WAYPOINT_ADD_DIST_LADDER 50.0f // ladders need better resolution to ensure connections
 
 void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const edict_t *ent, const pmove_t *pm)
 {
@@ -505,30 +552,37 @@ void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const 
 		}
 	}
 
-	if (dist_sq >= waypoint_add_dist_sq || bots.game_time - observation->last_waypoint_time >= WAYPOINT_ADD_TIME || observation->was_on_ladder && !on_ladder) // todo: limit this to once per game frame (so multiple players don't kill performance)
+	if (dist_sq >= waypoint_add_dist_sq || bots.level_time - observation->last_waypoint_time >= WAYPOINT_ADD_TIME || observation->was_on_ladder && !on_ladder) // todo: limit this to once per game frame (so multiple players don't kill performance)
 	{
 		qboolean add_waypoint = false;
 		vec3_t waypoint_pos;
 
-		// Add waypoints if we're touching the ground or a ladder
-		if (pm->groundentity || on_ladder)
-		{
-			add_waypoint = true;
-			VectorCopy(ent->s.origin, waypoint_pos);
-		}
-		else if (observation->was_on_ladder)
+		// If we just got off a ladder, add a waypoint at the very top
+		if (observation->was_on_ladder && !on_ladder)
 		{
 			// on ladder last frame, so use previous origin
 			add_waypoint = true;
 			VectorCopy(observation->last_pos, waypoint_pos);
+			waypoint_pos[2] += 16.0f; // move waypoint 16 units up to deal with small steps at the tops of ladders and ensure LOS
+		}
+		else if (pm->groundentity || on_ladder) // add waypoints if on the ground or on ladders
+		{
+			add_waypoint = true;
+			VectorCopy(ent->s.origin, waypoint_pos);
 		}
 
 		if (add_waypoint)
 		{
 			BotTryAddWaypoint(ent, waypoint_pos); // todo: waypoint types (ladder, ground, jump, etc?)
 			VectorCopy(waypoint_pos, observation->last_waypoint_pos);
-			observation->last_waypoint_time = bots.game_time;
+			observation->last_waypoint_time = bots.level_time;
 		}
+	}
+
+	if (g_debug_trace_count)
+	{
+		//bi.dprintf("Traces: %d\n", g_debug_trace_count);
+		g_debug_trace_count = 0;
 	}
 
 	observation->was_on_ladder = on_ladder;
@@ -540,6 +594,9 @@ void BotWriteWaypoints (const char *mapname)
 {
 	char filename[MAX_QPATH];
 	FILE *fp;
+
+	if (!mapname || !*mapname)
+		return;
 
 	Com_sprintf(filename, sizeof(filename), "botnav/%s", mapname);
 	FS_CreatePath(filename);

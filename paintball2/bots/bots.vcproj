@@ -184,6 +184,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\bot_astar.c"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_commands.c"
 				>
 			</File>
@@ -255,6 +259,10 @@
 			</File>
 			<File
 				RelativePath=".\bot_observe.h"
+				>
+			</File>
+			<File
+				RelativePath=".\bot_waypoints.h"
 				>
 			</File>
 			<File

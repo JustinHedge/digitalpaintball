@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#pragma once
+
 #ifndef _BOT_MAIN_H_
 #define _BOT_MAIN_H_
 
@@ -34,7 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void BotInitLibrary (void);
 void BotShutdown (void);
 void BotHandleGameEvent (game_event_t event, edict_t *ent, void *data1, void *data2);
-void BotRunFrame (int msec, float game_time);
+void BotRunFrame (int msec, float level_time);
 qboolean BotCommand (edict_t *ent, const char *cmd, const char *cmd2, const char *cmd3, const char *cmd4);
 void BotExitLevel (void);
 void BotSpawnEntities (void);

@@ -112,6 +112,17 @@ qboolean BotCommand (edict_t *ent, const char *cmd, const char *cmd2, const char
 	else if (Q_strcaseeq(cmd, "bot_here"))
 	{
 		BotHere(ent);
+		return true;
+	}
+	else if (Q_strcaseeq(cmd, "bot_debug_astar_start"))
+	{
+		AStarDebugStartPoint(ent->s.origin);
+		return true;
+	}
+	else if (Q_strcaseeq(cmd, "bot_debug_astar_end"))
+	{
+		AStarDebugEndPoint(ent->s.origin);
+		return true;
 	}
 
 	return false;
