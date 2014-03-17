@@ -192,8 +192,9 @@ closer_point_result_t TryInsertCloserPoint (const edict_t *ent, int *closest_poi
 			if (trace.fraction < 1.0f || trace.startsolid)
 				hit_something = true;
 
-			if (trace.ent && trace.ent->client)
-				hit_something = false; // we need a better way to do this, as there could be a solid wall behind the client, but we don't want other clients blocking paths...
+			// todo: we MUST come up with a way to filter out players!
+			//if (trace.ent && trace.ent->client)
+			//	hit_something = false; // we need a better way to do this, as there could be a solid wall behind the client, but we don't want other clients blocking paths...
 
 			if (hit_something) // try a jump node
 			{

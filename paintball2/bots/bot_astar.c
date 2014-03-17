@@ -158,6 +158,8 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 	return true;
 }
 
+
+// TODO: Trace check, as the closest waypoint may be behind a wall.
 int ClosestWaypointToPosition (vec3_t pos)
 {
 	int i;
@@ -178,6 +180,7 @@ int ClosestWaypointToPosition (vec3_t pos)
 
 	return best_node;
 }
+
 
 static int g_astar_debug_start = -1;
 

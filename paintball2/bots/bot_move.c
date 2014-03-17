@@ -128,11 +128,12 @@ void BotRandomStrafeJump (unsigned int botindex, int msec)
 #define BOT_WANDER_TRACE_DISTANCE 500.0f
 #define BOT_WANDER_SPIN_DIST 16.0f // 16 units from a wall - practically touching, time to turn around
 #define BOT_WANDER_RAND_ANGLE_FAR 10.0f
-#define BOT_WANDER_RAND_ANGLE_NEAR 90.0f
+#define BOT_WANDER_RAND_ANGLE_NEAR 100.0f
 #define BOT_WANDER_TRACE_FAR 400.0f // Beyond this point, use far angles
 #define BOT_WANDER_TRACE_NEAR 48.0f // Interpolate between this and far for the rand angles, use near rand angles below this value
 #define WALKABLE_NORMAL_Z 0.707106f // for walkable slopes (hills/ramps)
-#define BOT_WANDER_MAX_TURN_SPEED 180.0f // degrees/sec
+#define BOT_WANDER_MAX_TURN_SPEED_FAR 180.0f // degrees/sec
+#define BOT_WANDER_MAX_TURN_SPEED_NEAR 180.0f / 0.2f // Can spin 180 in 100ms
 #define BOT_WANDER_CAST_INTERVAL 200 // cast every 200ms
 
 void BotWanderNoNav (unsigned int botindex, int msec)
@@ -149,6 +150,7 @@ void BotWanderNoNav (unsigned int botindex, int msec)
 	trace_t trace_left, trace_right;
 	vec3_t mins;
 	vec3_t maxs;
+	float max_turn_speed = BOT_WANDER_MAX_TURN_SPEED_FAR;
 
 	if (movement->time_since_last_turn > BOT_WANDER_CAST_INTERVAL)
 	{
@@ -162,6 +164,7 @@ void BotWanderNoNav (unsigned int botindex, int msec)
 				ratio = 0.0f;
 
 			rand_angle = BOT_WANDER_RAND_ANGLE_FAR * ratio + BOT_WANDER_RAND_ANGLE_NEAR * (1.0f - ratio);
+			max_turn_speed = BOT_WANDER_MAX_TURN_SPEED_FAR * ratio + BOT_WANDER_MAX_TURN_SPEED_NEAR * (1.0f - ratio);
 		}
 
 		yaw_right = (yaw + nu_rand(rand_angle));
@@ -177,7 +180,7 @@ void BotWanderNoNav (unsigned int botindex, int msec)
 
 		VectorCopy(ent->mins, mins);
 		VectorCopy(ent->maxs, maxs);
-		mins[2] += 16.0f; // Account for steps and slopes
+		mins[2] += 18.0f; // Account for steps and slopes
 
 		if (mins[2] > 0)
 			mins[2] = -1;
@@ -192,7 +195,7 @@ void BotWanderNoNav (unsigned int botindex, int msec)
 			float tracedist = trace_left.fraction * BOT_WANDER_TRACE_DISTANCE;
 
 			if (tracedist < BOT_WANDER_SPIN_DIST)
-				yaw_left += 170.0f;
+				yaw_left -= 170.0f;
 
 			movement->yawspeed = (yaw_left - yaw) * 1000.0f / (float)BOT_WANDER_CAST_INTERVAL;
 			movement->last_trace_dist = tracedist;
@@ -217,11 +220,11 @@ void BotWanderNoNav (unsigned int botindex, int msec)
 		movement->time_since_last_turn = 0;
 	}
 
-	if (movement->yawspeed < -BOT_WANDER_MAX_TURN_SPEED)
-		movement->yawspeed = -BOT_WANDER_MAX_TURN_SPEED;
+	if (movement->yawspeed < -max_turn_speed)
+		movement->yawspeed = -max_turn_speed;
 
-	if (movement->yawspeed > BOT_WANDER_MAX_TURN_SPEED)
-		movement->yawspeed = BOT_WANDER_MAX_TURN_SPEED;
+	if (movement->yawspeed > max_turn_speed)
+		movement->yawspeed = max_turn_speed;
 
 	movement->forward = MOVE_SPEED;
 }
@@ -381,7 +384,7 @@ float VecToAngle (vec3_t vec)
 }
 
 
-#define WAYPOINT_REACHED_EPSILON_SQ		1024.0f // 32*32 // within 32 units.
+#define WAYPOINT_REACHED_EPSILON_SQ		2304.0f // 48*48 // within 32 units.
 
 void BotFollowWaypoint (unsigned int bot_index, int msec)
 {
@@ -395,15 +398,30 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 			edict_t *ent = bots.ents[bot_index];
 			int waypoint_index = path->nodes[path->current_node];
 			float dist_sq = VectorSquareDistance(g_bot_waypoints.positions[waypoint_index], ent->s.origin);
+			vec3_t bot_to_current_waypoint, current_to_next_waypoint;
 			vec3_t vec_diff;
 			float current_yaw;
 			float desired_yaw;
 			float delta_yaw;
+			qboolean waypoint_passed = false;
 
-			if (dist_sq <= WAYPOINT_REACHED_EPSILON_SQ)
+			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, bot_to_current_waypoint);
+
+			// To prevent bots from circling back to waypoints that were not quite touched, check if we've passed them and are moving toward the text waypoint
+			if (movement->waypoint_path.current_node < movement->waypoint_path.num_points - 1)
+			{
+				int next_waypoint_index = path->nodes[path->current_node + 1];
+
+				VectorSubtract(g_bot_waypoints.positions[next_waypoint_index], g_bot_waypoints.positions[waypoint_index], current_to_next_waypoint);
+
+				if (DotProduct(bot_to_current_waypoint, current_to_next_waypoint) < 0)
+					waypoint_passed = true;
+			}
+
+			if (waypoint_passed || dist_sq <= WAYPOINT_REACHED_EPSILON_SQ)
 			{
 				// Stop if we've reached our destination.
-				if (path->current_node >= path->num_points)
+				if (path->current_node >= path->num_points - 1)
 				{
 					path->active = false;
 					return;
