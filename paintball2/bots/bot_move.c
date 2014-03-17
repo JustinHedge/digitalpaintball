@@ -362,6 +362,75 @@ qboolean BotFollowPlayerPaths (unsigned int botindex, int msec)
 	}
 }
 
+// Converst a vector into a yaw angle
+float VecToAngle (vec3_t vec)
+{
+	float	yaw;
+
+	if (vec[0])
+		yaw = (atan2(vec[1], vec[0]) * 180.0f / M_PI);
+	else if (vec[1] > 0)
+		yaw = 90;
+	else
+		yaw = 270;
+
+	if (yaw < 0)
+		yaw += 360;
+
+	return yaw;
+}
+
+
+#define WAYPOINT_REACHED_EPSILON_SQ		1024.0f // 32*32 // within 32 units.
+
+void BotFollowWaypoint (unsigned int bot_index, int msec)
+{
+	if (bot_index < MAX_BOTS)
+	{
+		botmovedata_t *movement = bots.movement + bot_index;
+		bot_waypoint_path_t *path = &movement->waypoint_path;
+
+		if (path->active)
+		{
+			edict_t *ent = bots.ents[bot_index];
+			int waypoint_index = path->nodes[path->current_node];
+			float dist_sq = VectorSquareDistance(g_bot_waypoints.positions[waypoint_index], ent->s.origin);
+			vec3_t vec_diff;
+			float current_yaw;
+			float desired_yaw;
+			float delta_yaw;
+
+			if (dist_sq <= WAYPOINT_REACHED_EPSILON_SQ)
+			{
+				// Stop if we've reached our destination.
+				if (path->current_node >= path->num_points)
+				{
+					path->active = false;
+					return;
+				}
+
+				++path->current_node;
+				waypoint_index = path->nodes[path->current_node];
+			}
+
+			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, vec_diff);
+			desired_yaw = VecToAngle(vec_diff);
+			current_yaw = ent->s.angles[YAW];
+			delta_yaw = desired_yaw - current_yaw;
+
+			if (delta_yaw > 180.0f)
+				delta_yaw -= 360.0f;
+
+			if (delta_yaw < -180.0f)
+				delta_yaw += 360.0f;
+
+			movement->yawspeed = delta_yaw * 1000.0f / (float)msec; // turn this much in 1 movement update.
+			movement->forward = MOVE_SPEED;
+			movement->side = 0;
+			movement->up = 0;
+		}
+	}
+}
 
 // Called every game frame (100ms) for each bot
 void BotMove (unsigned int botindex, int msec)
@@ -383,6 +452,16 @@ void BotMove (unsigned int botindex, int msec)
 				float yaw = 0.0f;
 
 				movement->time_since_last_turn += msec;
+
+				if (movement->waypoint_path.active)
+				{
+					BotFollowWaypoint(botindex, msec);
+				}
+				else
+				{
+					// todo: Wander with navmesh
+					BotWanderNoNav(botindex, msec);
+				}
 
 				//BotDance(botindex);
 				//BotWanderNoNav(botindex, msec);

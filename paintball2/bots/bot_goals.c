@@ -20,13 +20,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "bot_manager.h"
 #include "bot_goals.h"
+#include "../game/game.h"
 
 
 void BotSetGoal (int bot_index, botgoaltype_t goaltype, vec3_t position)
 {
+	edict_t *ent = bots.ents[bot_index];
+
 	bots.goals[bot_index].type = goaltype;
 	bots.goals[bot_index].changed = true;
 	VectorCopy(position, bots.goals[bot_index].pos);
+	
+	bots.movement[bot_index].waypoint_path.active = AStarFindPathFromPositions(ent->s.origin, position, &bots.movement[bot_index].waypoint_path);
 }
 
 

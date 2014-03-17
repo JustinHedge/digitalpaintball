@@ -32,7 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_WAYPOINT_CONNECTIONS 7 // waypoint will connect with this many of the closest reachable nodes
 
 
-
 typedef struct {
 	float	weights[MAX_WAYPOINT_CONNECTIONS];
 	int		nodes[MAX_WAYPOINT_CONNECTIONS];
@@ -51,6 +50,19 @@ typedef struct {
 	int			temp_sorted_indexes[MAX_WAYPOINTS];
 } bot_waypoints_t;
 
+
+typedef struct {
+	int			num_points;
+	int			current_node;
+	qboolean	active;
+	int			nodes[MAX_WAYPOINTS];
+} bot_waypoint_path_t;
+
 extern bot_waypoints_t g_bot_waypoints;
+
+
+// bot_astar.c
+qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoint_path_t *path);
+qboolean AStarFindPathFromPositions (vec3_t start_pos, vec3_t end_pos, bot_waypoint_path_t *path);
 
 #endif // _BOT_WAYOINTS_H_

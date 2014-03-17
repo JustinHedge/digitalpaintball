@@ -40,20 +40,17 @@ int g_astar_list[MAX_WAYPOINTS];
 int g_astar_list_size;
 
 
-void AStarInitPath (void)
-{
-	g_astar_list_size = 0;
-	memset(g_astar_nodes, 0, sizeof(g_astar_nodes));
-}
-
-
-qboolean AStarFindPath (int start_node, int end_node)
+qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoint_path_t *path)
 {
 	int current_node = start_node;
 	int connection_index;
 	int list_index;
 
-	AStarInitPath();
+	if (path)
+	{
+		path->num_points = 0;
+		path->current_node = 0;
+	}
 
 	if (end_node < 0 || end_node >= MAX_WAYPOINTS)
 		return false;
@@ -61,13 +58,16 @@ qboolean AStarFindPath (int start_node, int end_node)
 	if (start_node < 0 || start_node >= MAX_WAYPOINTS)
 		return false;
 
+	g_astar_list_size = 0;
+	memset(g_astar_nodes, 0, sizeof(g_astar_nodes));
+
 	while (g_astar_nodes[end_node].node_status == ASTAR_UNSET)
 	{
 		assert(current_node < MAX_WAYPOINTS);
 
 		// Put current node on closed list
 		g_astar_nodes[current_node].node_status = ASTAR_CLOSED; // todo: opt: remove from g_astar_list.
-		DrawDebugSphere(g_bot_waypoints.positions[current_node], 7, 1, 0, 0, 5, -1);
+		DrawDebugSphere(g_bot_waypoints.positions[current_node], 7, 1, 1, 1, 5, -1);
 
 		// Put adjacent nodes on open list
 		for (connection_index = 0; connection_index < MAX_WAYPOINT_CONNECTIONS; ++connection_index)
@@ -90,7 +90,7 @@ qboolean AStarFindPath (int start_node, int end_node)
 					assert(g_astar_list_size < MAX_WAYPOINTS);
 					g_astar_list[g_astar_list_size] = connected_node;
 					++g_astar_list_size;
-					DrawDebugSphere(g_bot_waypoints.positions[connected_node], 7, 1, 1, 1, 5, -1);
+					DrawDebugSphere(g_bot_waypoints.positions[connected_node], 8, 1, 1, .5, 5, -1);
 				}
 				else if (new_g < g_astar_nodes[connected_node].g)
 				{
@@ -128,14 +128,31 @@ qboolean AStarFindPath (int start_node, int end_node)
 			return false;
 	}
 
-	// backtrack
-	// temp: just debug draw for now
-	current_node = end_node;
-
-	while (current_node != start_node)
+	// backtrack and create path.
 	{
-		DrawDebugSphere(g_bot_waypoints.positions[current_node], 10.0f, 0.0f, 1.0f, 0.2f, 5.0f, -1);
-		current_node = g_astar_nodes[current_node].parent_node;
+		int num_points = 1;
+		int i;
+
+		current_node = end_node;
+
+		while (current_node != start_node)
+		{
+			DrawDebugSphere(g_bot_waypoints.positions[current_node], 10.0f, 0.0f, 1.0f, 0.2f, 5.0f, -1);
+			current_node = g_astar_nodes[current_node].parent_node;
+			++num_points;
+		}
+
+		if (path)
+		{
+			path->num_points = num_points;
+			current_node = end_node;
+
+			for (i = num_points - 1; i >= 0; --i)
+			{
+				path->nodes[i] = current_node;
+				current_node = g_astar_nodes[current_node].parent_node;
+			}
+		}
 	}
 
 	return true;
@@ -174,6 +191,11 @@ void AStarDebugEndPoint (vec3_t pos)
 {
 	int debug_end = ClosestWaypointToPosition(pos);
 
-	AStarFindPath(g_astar_debug_start, debug_end);
+	AStarFindPathFromNodeIndexes(g_astar_debug_start, debug_end, NULL);
 }
 
+
+qboolean AStarFindPathFromPositions (vec3_t start_pos, vec3_t end_pos, bot_waypoint_path_t *path)
+{
+	return AStarFindPathFromNodeIndexes(ClosestWaypointToPosition(start_pos), ClosestWaypointToPosition(end_pos), path);
+}
