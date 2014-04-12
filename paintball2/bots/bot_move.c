@@ -124,6 +124,112 @@ void BotRandomStrafeJump (unsigned int botindex, int msec)
 	movedata->yawspeed = yawspeed[best_velocity_index];
 }
 
+
+// Converst a vector into a yaw angle
+float VecToAngle (vec3_t vec)
+{
+	float	yaw;
+
+	if (vec[0])
+		yaw = (atan2(vec[1], vec[0]) * 180.0f / M_PI);
+	else if (vec[1] > 0)
+		yaw = 90;
+	else
+		yaw = 270;
+
+	if (yaw < 0)
+		yaw += 360;
+
+	return yaw;
+}
+
+
+#define WAYPOINT_REACHED_EPSILON_SQ		2304.0f // 48 * 48
+
+void BotFollowWaypoint (unsigned int bot_index, int msec)
+{
+	if (bot_index < MAX_BOTS)
+	{
+		botmovedata_t *movement = bots.movement + bot_index;
+		bot_waypoint_path_t *path = &movement->waypoint_path;
+
+		if (path->active)
+		{
+			edict_t *ent = bots.ents[bot_index];
+			int waypoint_index = path->nodes[path->current_node];
+			float dist_sq = VectorSquareDistance(g_bot_waypoints.positions[waypoint_index], ent->s.origin);
+			vec3_t bot_to_current_waypoint, current_to_next_waypoint;
+			vec3_t vec_diff;
+			float current_yaw;
+			float desired_yaw;
+			float delta_yaw;
+			qboolean waypoint_passed = false;
+
+			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, bot_to_current_waypoint);
+
+			// To prevent bots from circling back to waypoints that were not quite touched, check if we've passed them and are moving toward the text waypoint
+			if (movement->waypoint_path.current_node < movement->waypoint_path.num_points - 1)
+			{
+				int next_waypoint_index = path->nodes[path->current_node + 1];
+
+				VectorSubtract(g_bot_waypoints.positions[next_waypoint_index], g_bot_waypoints.positions[waypoint_index], current_to_next_waypoint);
+
+				if (DotProduct(bot_to_current_waypoint, current_to_next_waypoint) < 0)
+					waypoint_passed = true;
+			}
+
+			if (waypoint_passed || dist_sq <= WAYPOINT_REACHED_EPSILON_SQ)
+			{
+				// Stop if we've reached our destination.
+				if (path->current_node >= path->num_points - 1)
+				{
+					path->active = false;
+					return;
+				}
+
+				++path->current_node;
+				waypoint_index = path->nodes[path->current_node];
+
+				if (waypoint_index < 0 || waypoint_index > MAX_WAYPOINTS)
+				{
+					// This should never happen, but just in case...
+					assert(0);
+					path->active = false;
+					return;
+				}
+			}
+			
+			if (!BotCanReachPosition(ent, ent->s.origin, g_bot_waypoints.positions[waypoint_index], &movement->need_jump))
+			{
+				path->active = false;
+				BotRetryGoal(bot_index);
+				return;
+			}
+
+			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, vec_diff);
+			desired_yaw = VecToAngle(vec_diff);
+			current_yaw = ent->s.angles[YAW];
+			delta_yaw = desired_yaw - current_yaw;
+
+			if (delta_yaw > 180.0f)
+				delta_yaw -= 360.0f;
+
+			if (delta_yaw < -180.0f)
+				delta_yaw += 360.0f;
+
+			movement->yawspeed = delta_yaw * 1000.0f / (float)msec; // turn this much in 1 movement update.
+			movement->forward = MOVE_SPEED;
+			movement->side = 0;
+			movement->up = 0;
+
+			// 50% chance of jumping each frame... in case we're not touching the ground or something
+			if (movement->need_jump && nu_rand(1.0f) > .5f)
+				movement->up = MOVE_SPEED;
+		}
+	}
+}
+
+
 // Wander around with no navmesh
 #define BOT_WANDER_TRACE_DISTANCE 500.0f
 #define BOT_WANDER_SPIN_DIST 16.0f // 16 units from a wall - practically touching, time to turn around
@@ -227,6 +333,32 @@ void BotWanderNoNav (unsigned int botindex, int msec)
 		movement->yawspeed = max_turn_speed;
 
 	movement->forward = MOVE_SPEED;
+}
+
+void BotWander (unsigned int bot_index, int msec)
+{
+	botmovedata_t *movement = bots.movement + bot_index;
+	edict_t *ent = bots.ents[bot_index];
+
+	if (movement->time_til_try_path <= 0)
+	{
+		int random_point = (int)nu_rand(g_bot_waypoints.num_points); // todo: pick randomly select several and use the most player-popular one.
+		
+		if (AStarFindPathFromEntityToPos(ent, g_bot_waypoints.positions[random_point], &movement->waypoint_path))
+		{
+			movement->waypoint_path.active = true;
+			BotFollowWaypoint(bot_index, msec);
+			return;
+		}
+
+		movement->time_til_try_path = 2000; // If we didn't find a path, don't try to pathfind again for 2 seconds.
+	}
+	else
+	{
+		movement->time_til_try_path -= msec;
+	}
+
+	BotWanderNoNav(bot_index, msec);
 }
 
 
@@ -365,90 +497,6 @@ qboolean BotFollowPlayerPaths (unsigned int botindex, int msec)
 	}
 }
 
-// Converst a vector into a yaw angle
-float VecToAngle (vec3_t vec)
-{
-	float	yaw;
-
-	if (vec[0])
-		yaw = (atan2(vec[1], vec[0]) * 180.0f / M_PI);
-	else if (vec[1] > 0)
-		yaw = 90;
-	else
-		yaw = 270;
-
-	if (yaw < 0)
-		yaw += 360;
-
-	return yaw;
-}
-
-
-#define WAYPOINT_REACHED_EPSILON_SQ		2304.0f // 48*48 // within 32 units.
-
-void BotFollowWaypoint (unsigned int bot_index, int msec)
-{
-	if (bot_index < MAX_BOTS)
-	{
-		botmovedata_t *movement = bots.movement + bot_index;
-		bot_waypoint_path_t *path = &movement->waypoint_path;
-
-		if (path->active)
-		{
-			edict_t *ent = bots.ents[bot_index];
-			int waypoint_index = path->nodes[path->current_node];
-			float dist_sq = VectorSquareDistance(g_bot_waypoints.positions[waypoint_index], ent->s.origin);
-			vec3_t bot_to_current_waypoint, current_to_next_waypoint;
-			vec3_t vec_diff;
-			float current_yaw;
-			float desired_yaw;
-			float delta_yaw;
-			qboolean waypoint_passed = false;
-
-			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, bot_to_current_waypoint);
-
-			// To prevent bots from circling back to waypoints that were not quite touched, check if we've passed them and are moving toward the text waypoint
-			if (movement->waypoint_path.current_node < movement->waypoint_path.num_points - 1)
-			{
-				int next_waypoint_index = path->nodes[path->current_node + 1];
-
-				VectorSubtract(g_bot_waypoints.positions[next_waypoint_index], g_bot_waypoints.positions[waypoint_index], current_to_next_waypoint);
-
-				if (DotProduct(bot_to_current_waypoint, current_to_next_waypoint) < 0)
-					waypoint_passed = true;
-			}
-
-			if (waypoint_passed || dist_sq <= WAYPOINT_REACHED_EPSILON_SQ)
-			{
-				// Stop if we've reached our destination.
-				if (path->current_node >= path->num_points - 1)
-				{
-					path->active = false;
-					return;
-				}
-
-				++path->current_node;
-				waypoint_index = path->nodes[path->current_node];
-			}
-
-			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, vec_diff);
-			desired_yaw = VecToAngle(vec_diff);
-			current_yaw = ent->s.angles[YAW];
-			delta_yaw = desired_yaw - current_yaw;
-
-			if (delta_yaw > 180.0f)
-				delta_yaw -= 360.0f;
-
-			if (delta_yaw < -180.0f)
-				delta_yaw += 360.0f;
-
-			movement->yawspeed = delta_yaw * 1000.0f / (float)msec; // turn this much in 1 movement update.
-			movement->forward = MOVE_SPEED;
-			movement->side = 0;
-			movement->up = 0;
-		}
-	}
-}
 
 // Called every game frame (100ms) for each bot
 void BotMove (unsigned int botindex, int msec)
@@ -477,8 +525,7 @@ void BotMove (unsigned int botindex, int msec)
 				}
 				else
 				{
-					// todo: Wander with navmesh
-					BotWanderNoNav(botindex, msec);
+					BotWander(botindex, msec);
 				}
 
 				//BotDance(botindex);

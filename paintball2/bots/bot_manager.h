@@ -39,17 +39,19 @@ typedef struct botfollowpath_s {
 typedef struct botmovedata_s {
 	int					timeleft; // time left for ucmd's.
 	float				last_trace_dist;
-	float				yawspeed;
-	float				pitchspeed;
+	float				yawspeed; // degrees/sec
+	//float				pitchspeed;
 	short				forward; // forward/back
 	short				side; // strafe left/right
 	short				up; // jump/crouch
 	qboolean			shooting;
 	short				time_since_last_turn; // used for wandering
+	short				time_til_try_path; // used for wandering
 	float				last_yaw;
 	float				last_pitch;
 	botfollowpath_t		path_info;
 	bot_waypoint_path_t	waypoint_path;
+	qboolean			need_jump; // need to jump next time we're on the ground.
 } botmovedata_t;
 
 

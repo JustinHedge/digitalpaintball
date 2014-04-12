@@ -37,5 +37,6 @@ typedef struct {
 
 
 void BotSetGoal (int bot_index, botgoaltype_t goal, vec3_t position);
+void BotRetryGoal (int bot_index);
 
 #endif // _BOT_GOALS_H_

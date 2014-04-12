@@ -18,6 +18,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#pragma once
+
+#ifndef _BOT_IMPORTEXPORT_H_
+#define _BOT_IMPORTEXPORT_H_
+
 #define BOT_API_VERSION 1
 
 typedef struct edict_s edict_t;
@@ -83,4 +88,4 @@ typedef struct
 	char		unset[64];
 } bot_render_import_t;
 
-
+#endif

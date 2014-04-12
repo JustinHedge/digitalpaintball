@@ -30,10 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bot_waypoints.h"
 
 
-#define MAX_WAYPOINT_DIST 256.0f
-#define MAX_WAYPOINT_DIST_SQ 65536.0f
-#define MIN_WAYPOINT_DIFF 32.0f
-#define MIN_WAYPOINT_DIFF_SQ 1024.0f
+
 
 //typedef short shortpos_t[3]; // net positions are compressed to shorts at 1/8 unit, anyway, so might as well store waypoints at that resolution to save memory.
 
@@ -165,6 +162,69 @@ typedef enum {
 } closer_point_result_t;
 
 
+qboolean BotCanReachPosition (const edict_t *ent, const vec3_t pos1, const vec3_t pos2, qboolean *need_jump)
+{
+	trace_t trace;
+	qboolean hit_something = false;
+	qboolean local_need_jump = false;
+
+	trace = bi.trace(pos1, crouching_mins, crouching_maxs, pos2, ent, MASK_PLAYERSOLID);
+	++g_debug_trace_count;
+
+	if (trace.fraction < 1.0f || trace.startsolid)
+		hit_something = true;
+
+	// todo: we MUST come up with a way to filter out players!
+	//if (trace.ent && trace.ent->client)
+	//	hit_something = false; // we need a better way to do this, as there could be a solid wall behind the client, but we don't want other clients blocking paths...
+
+	if (hit_something) // try a jump node
+	{
+		vec3_t jump_pos;
+
+		if (trace.startsolid) // this isn't going to get any better doing another raycast, so just bail out early
+			return false;
+
+		if (trace.plane.normal[2] < -0.8f) // hit a ceiling
+			return false;
+
+		VectorCopy(pos1, jump_pos);
+		jump_pos[2] += 56.0f;
+
+		// Just use crouching mins/maxes here to avoid doing more traces later.  It's possible that we'll generate an impossible node connection
+		// (one that requires jumping while crouched), but those seem rare enough to not waste the extra cycles, since traces/raycast are slow.
+		trace = bi.trace(pos1, crouching_mins, crouching_maxs, jump_pos, ent, MASK_PLAYERSOLID);
+		++g_debug_trace_count;
+		VectorCopy(trace.endpos, jump_pos);
+		trace = bi.trace(jump_pos, crouching_mins, crouching_maxs, pos2, ent, MASK_PLAYERSOLID);
+		++g_debug_trace_count;
+
+		if (!trace.startsolid && trace.fraction == 1.0f)
+		{
+			hit_something = false;
+			// todo: node types (ladder, crouch, jump, etc)?
+		}
+
+		local_need_jump = true;
+	}
+
+	if (need_jump)
+	{
+		vec3_t diff_vec;
+
+		VectorSubtract(pos2, pos1, diff_vec);
+
+		// more than 45 degrees from current location
+		if (diff_vec[2] * diff_vec[2] >= (diff_vec[1] * diff_vec[1] + diff_vec[0] * diff_vec[0]))
+			local_need_jump = true;
+
+		*need_jump = local_need_jump;
+	}
+
+	return !hit_something;
+}
+
+
 // Helper function to find the X closest points, given a squared distance
 closer_point_result_t TryInsertCloserPoint (const edict_t *ent, int *closest_points, float *closest_points_dist_sq, const vec3_t pos1, const vec3_t pos2, int point_index)
 {
@@ -183,48 +243,7 @@ closer_point_result_t TryInsertCloserPoint (const edict_t *ent, int *closest_poi
 
 		if (dist_sq < old_dist_sq && dist_sq < MAX_WAYPOINT_DIST_SQ)
 		{
-			trace_t trace;
-			qboolean hit_something = false;
-
-			trace = bi.trace(pos1, crouching_mins, crouching_maxs, pos2, ent, MASK_PLAYERSOLID);
-			++g_debug_trace_count;
-
-			if (trace.fraction < 1.0f || trace.startsolid)
-				hit_something = true;
-
-			// todo: we MUST come up with a way to filter out players!
-			//if (trace.ent && trace.ent->client)
-			//	hit_something = false; // we need a better way to do this, as there could be a solid wall behind the client, but we don't want other clients blocking paths...
-
-			if (hit_something) // try a jump node
-			{
-				vec3_t jump_pos;
-
-				if (trace.startsolid) // this isn't going to get any better doing another raycast, so just bail out early
-					return CLOSER_POINT_COLLISION;
-
-				if (trace.plane.normal[2] < -0.8f) // hit a ceiling
-					return CLOSER_POINT_COLLISION;
-
-				VectorCopy(pos1, jump_pos);
-				jump_pos[2] += 56.0f;
-
-				// Just use crouching mins/maxes here to avoid doing more traces later.  It's possible that we'll generate an impossible node connection
-				// (one that requires jumping while crouched), but those seem rare enough to not waste the extra cycles, since traces/raycast are slow.
-				trace = bi.trace(pos1, crouching_mins, crouching_maxs, jump_pos, ent, MASK_PLAYERSOLID);
-				++g_debug_trace_count;
-				VectorCopy(trace.endpos, jump_pos);
-				trace = bi.trace(jump_pos, crouching_mins, crouching_maxs, pos2, ent, MASK_PLAYERSOLID);
-				++g_debug_trace_count;
-
-				if (!trace.startsolid && trace.fraction == 1.0f)
-				{
-					hit_something = false;
-					// todo: node types (ladder, crouch, jump, etc)?
-				}
-			}
-
-			if (!hit_something) // no collisions
+			if (BotCanReachPosition(ent, pos1, pos2, NULL)) // no collisions
 			{
 				int shift_index;
 
@@ -333,6 +352,10 @@ void BotWaypointUpdateConnections (int waypoint_index, const edict_t *ent)
 		int debug_id = g_bot_waypoints.connections[waypoint_index].debug_ids[i];
 
 		g_bot_waypoints.connections[waypoint_index].nodes[i] = closest_points[i];
+
+		if (closest_points_dist_sq[i] < 1.0f) // avoid divide by 0.
+			closest_points_dist_sq[i] = 1.0f;
+
 		g_bot_waypoints.connections[waypoint_index].weights[i] = 1.0f / Q_rsqrt(closest_points_dist_sq[i]); // just store distance for now.  We may try to convert this to a time value later.
 
 #ifdef BOT_DEBUG

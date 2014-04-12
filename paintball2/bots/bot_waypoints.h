@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _BOT_WAYPOINTS_H_
 
 #include "../game/q_shared.h"
+#include "bot_importexport.h"
 
 #define MAX_WAYPOINTS 2048
 //#define MAX_WAYPOINTS 500 // small number to test - todo: use larger value when done
@@ -31,6 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Note: 6 seems too few, and 8 ends up being too CPU intensive with dynamic updatess, so going with 7 for this:
 #define MAX_WAYPOINT_CONNECTIONS 7 // waypoint will connect with this many of the closest reachable nodes
 
+#define MAX_WAYPOINT_DIST 256.0f
+#define MAX_WAYPOINT_DIST_SQ 65536.0f
+#define MIN_WAYPOINT_DIFF 32.0f
+#define MIN_WAYPOINT_DIFF_SQ 1024.0f
 
 typedef struct {
 	float	weights[MAX_WAYPOINT_CONNECTIONS];
@@ -60,9 +65,15 @@ typedef struct {
 
 extern bot_waypoints_t g_bot_waypoints;
 
+// bot_waypoints.c
+qboolean BotCanReachPosition (const edict_t *ent, const vec3_t pos1, const vec3_t pos2, qboolean *need_jump);
+void BotTryAddWaypoint (const edict_t *ent, const vec3_t pos);
 
 // bot_astar.c
 qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoint_path_t *path);
 qboolean AStarFindPathFromPositions (vec3_t start_pos, vec3_t end_pos, bot_waypoint_path_t *path);
+qboolean AStarFindPathFromEntityToPos (edict_t *ent, vec3_t end_pos, bot_waypoint_path_t *path);
+void AStarDebugStartPoint (vec3_t pos);
+void AStarDebugEndPoint (vec3_t pos);
 
 #endif // _BOT_WAYOINTS_H_

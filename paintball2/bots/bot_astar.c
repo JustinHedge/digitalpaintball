@@ -19,8 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include <float.h>
+#include "bot_main.h"
 #include "bot_waypoints.h"
 #include "bot_debug.h"
+#include "../game/game.h"
 
 typedef enum {
 	ASTAR_UNSET = 0,
@@ -45,6 +47,8 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 	int current_node = start_node;
 	int connection_index;
 	int list_index;
+	
+	bi.dprintf("AStarFindPathFromNodeIndexes\n");
 
 	if (path)
 	{
@@ -67,7 +71,7 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 
 		// Put current node on closed list
 		g_astar_nodes[current_node].node_status = ASTAR_CLOSED; // todo: opt: remove from g_astar_list.
-		DrawDebugSphere(g_bot_waypoints.positions[current_node], 7, 1, 1, 1, 5, -1);
+		//DrawDebugSphere(g_bot_waypoints.positions[current_node], 7, 1, 1, 1, 5, -1);
 
 		// Put adjacent nodes on open list
 		for (connection_index = 0; connection_index < MAX_WAYPOINT_CONNECTIONS; ++connection_index)
@@ -90,7 +94,7 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 					assert(g_astar_list_size < MAX_WAYPOINTS);
 					g_astar_list[g_astar_list_size] = connected_node;
 					++g_astar_list_size;
-					DrawDebugSphere(g_bot_waypoints.positions[connected_node], 8, 1, 1, .5, 5, -1);
+					//DrawDebugSphere(g_bot_waypoints.positions[connected_node], 8, 1, 1, .5, 5, -1);
 				}
 				else if (new_g < g_astar_nodes[connected_node].g)
 				{
@@ -137,7 +141,7 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 
 		while (current_node != start_node)
 		{
-			DrawDebugSphere(g_bot_waypoints.positions[current_node], 10.0f, 0.0f, 1.0f, 0.2f, 5.0f, -1);
+			//DrawDebugSphere(g_bot_waypoints.positions[current_node], 10.0f, 0.0f, 1.0f, 0.2f, 5.0f, -1);
 			current_node = g_astar_nodes[current_node].parent_node;
 			++num_points;
 		}
@@ -202,3 +206,44 @@ qboolean AStarFindPathFromPositions (vec3_t start_pos, vec3_t end_pos, bot_waypo
 {
 	return AStarFindPathFromNodeIndexes(ClosestWaypointToPosition(start_pos), ClosestWaypointToPosition(end_pos), path);
 }
+
+
+qboolean AStarFindPathFromEntityToPos (edict_t *ent, vec3_t end_pos, bot_waypoint_path_t *path)
+{
+	int closest_start_node = ClosestWaypointToPosition(ent->s.origin);
+	qboolean need_new_point = false;
+
+	if (closest_start_node < 0)
+	{
+		need_new_point = true;
+	}
+	else
+	{
+		vec3_t diff_vec;
+		vec_t dist_sq;
+
+		VectorSubtract(ent->s.origin, g_bot_waypoints.positions[closest_start_node], diff_vec);
+		dist_sq = VectorLengthSquared(diff_vec);
+
+		if (dist_sq > MIN_WAYPOINT_DIFF_SQ)
+		{
+			if (BotCanReachPosition(ent, ent->s.origin, end_pos, NULL))
+			{
+				need_new_point = true;
+			}
+		}
+	}
+
+	if (need_new_point)
+	{
+		// No reachable node nearby, try adding one
+		BotTryAddWaypoint(ent, ent->s.origin);
+
+		return AStarFindPathFromPositions(ent->s.old_origin, end_pos, path);
+	}
+	else
+	{
+		return AStarFindPathFromNodeIndexes(closest_start_node, ClosestWaypointToPosition(end_pos), path);
+	}
+}
+

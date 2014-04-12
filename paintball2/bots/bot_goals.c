@@ -30,8 +30,11 @@ void BotSetGoal (int bot_index, botgoaltype_t goaltype, vec3_t position)
 	bots.goals[bot_index].type = goaltype;
 	bots.goals[bot_index].changed = true;
 	VectorCopy(position, bots.goals[bot_index].pos);
-	
-	bots.movement[bot_index].waypoint_path.active = AStarFindPathFromPositions(ent->s.origin, position, &bots.movement[bot_index].waypoint_path);
+}
+
+void BotRetryGoal (int bot_index)
+{
+	bots.goals[bot_index].changed = true;
 }
 
 
@@ -43,7 +46,9 @@ void BotUpdateGoals (int msec)
 	{
 		if (bots.goals[bot_index].changed)
 		{
+			edict_t *ent = bots.ents[bot_index];
 			bots.goals[bot_index].changed = false;
+			bots.movement[bot_index].waypoint_path.active = AStarFindPathFromPositions(ent->s.origin, bots.goals[bot_index].pos, &bots.movement[bot_index].waypoint_path);
 			//todo;
 		}
 	}
