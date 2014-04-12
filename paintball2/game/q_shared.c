@@ -269,7 +269,8 @@ float	anglemod(float a)
 	else
 		a += 360*( 1 + (int)(-a/360) );
 #endif
-	a = (360.0/65536) * ((int)(a*(65536/360.0)) & 65535);
+	//a = (360.0/65536) * ((int)(a*(65536/360.0)) & 65535);
+	a = a - 360.0 * floor(a / 360.0); // jit - avoid integer overflow when playing on servers with a long uptime.
 	return a;
 }
 
