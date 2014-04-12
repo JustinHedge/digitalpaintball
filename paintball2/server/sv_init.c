@@ -296,7 +296,7 @@ void SV_SpawnServer (char *server, char *spawnpoint, server_state_t serverstate,
 	if (//cer_maxclients->value == 16 &&
 		(cer_elim >= 60.0f || cer_elim == 0.0f) &&
 		cer_fraglimit == 50.0f &&
-		cer_timelimit == 20.0f &&
+		cer_timelimit <= 20.0f && cer_timelimit >= 10.0f && // 1.930 - allow timelimit between 10 and 20.
 		//cer_sv_minclientbuild >= 28.0f &&
 		cer_guntemp_inc >= 10.5f && // 11 + some leeway
 		cer_guntemp_dec <= 4.2f && // 4 + some leeway
