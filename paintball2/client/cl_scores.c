@@ -270,7 +270,7 @@ static void SortScores (void)
 
 	cl_scores_count = 0;
 
-	for (i=0; i<MAX_CLIENTS; i++)
+	for (i = 0; i < MAX_CLIENTS; ++i)
 	{
 		if (!cl_scores[i].inuse)
 			continue;
@@ -284,11 +284,13 @@ static void SortScores (void)
 				score = cl_scores[i].team;
 		}
 		else
+		{
 			score = 0;
+		}
 
-		score = ((score)*1000) + cl_scores[i].kills;
+		score = (score * 10000) + cl_scores[i].caps * 8 + cl_scores[i].grabs * 4 + cl_scores[i].kills;
 	
-		for (j=0; j<cl_scores_count; j++)
+		for (j = 0; j < cl_scores_count; ++j)
 		{
 			if (score > sortedscores[j] ||
 				(score == sortedscores[j] &&
