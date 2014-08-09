@@ -289,6 +289,7 @@ typedef struct MENU_SCREEN_S {
 	menu_widget_t	*selected_widget;
 	menu_widget_t	*hover_widget;
 	qboolean		allow_game_input; // if true, input will go to the game while this menu is up
+	qboolean		from_file;
 	struct MENU_SCREEN_S *next;
 } menu_screen_t;
 

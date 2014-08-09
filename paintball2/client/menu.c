@@ -2317,7 +2317,7 @@ void M_PrintDialog (const char *text)
 {
 	char translated_text[1024];
 	menu_screen_t *menu;
-	menu = M_GetNewMenuScreen("dialog", NULL);
+	menu = M_GetNewMenuScreen("dialog", "black_50");
 	translate_string(translated_text, sizeof(translated_text), text);
 	M_DialogBox(menu, translated_text);
 	M_PushMenuScreen(menu, false);
@@ -2452,6 +2452,8 @@ static void menu_from_file (menu_screen_t *menu, qboolean include, const char *l
 	extern cvar_t *cl_menu;
 	extern cvar_t *cl_language;
 	const char *name = menu->name;
+
+	menu->from_file = true;
 
 	if (loadname)
 		name = loadname;
@@ -2849,11 +2851,14 @@ static void reload_menu_screen (menu_screen_t *menu)
 	if (!menu)
 		return;
 
-	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
-	menu->widget = free_widgets(menu->widget);
-	menu->background = re.DrawFindPic(cl_menuback->string);
-	menu_from_file(menu, false, NULL); // reload data from file
-	//pthread_mutex_unlock(&m_mut_widgets);
+	if (menu->from_file)
+	{
+		//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
+		menu->widget = free_widgets(menu->widget);
+		menu->background = re.DrawFindPic(cl_menuback->string);
+		menu_from_file(menu, false, NULL); // reload data from file
+		//pthread_mutex_unlock(&m_mut_widgets);
+	}
 }
 
 
