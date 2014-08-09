@@ -76,6 +76,7 @@ vidmode_t vid_modes[] =
 	{ "blah", 1920, 1440, 24 }, // T3RR0R15T
 	{ "blah", 1366, 768,  25 }, // T3RR0R15T
 	{ "blah", 1600, 900,  26 }, // T3RR0R15T
+	{ "blah", 2560, 1440, 27 }, // jit
 	// jitodo, custom resolution
 };
 
