@@ -31,7 +31,7 @@
 #include "snd_ogg.h"
 #include "../a3d/q2a3d.h"
 #include <errno.h>
-#include <vorbis/vorbisfile.h>
+#include "../extern/include/vorbis/vorbisfile.h"
 
 extern int	sound_started;		/* Sound initialization flag. */
 extern cvar_t	*fs_basedir;		/* Path to "music". */
