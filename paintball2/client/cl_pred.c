@@ -73,7 +73,7 @@ CL_ClipMoveToEntities
 
 ====================
 */
-void CL_ClipMoveToEntities ( vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, trace_t *tr )
+void CL_ClipMoveToEntities (const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, trace_t *tr)
 {
 	int			i, x, zd, zu;
 	trace_t		trace;
@@ -81,22 +81,23 @@ void CL_ClipMoveToEntities ( vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end,
 	float		*angles;
 	entity_state_t	*ent;
 	int			num;
-	cmodel_t		*cmodel;
+	cmodel_t	*cmodel;
 	vec3_t		bmins, bmaxs;
 
-	for (i=0 ; i<cl.frame.num_entities ; i++)
+	for (i = 0; i < cl.frame.num_entities; ++i)
 	{
-		num = (cl.frame.parse_entities + i)&(MAX_PARSE_ENTITIES-1);
+		num = (cl.frame.parse_entities + i) & (MAX_PARSE_ENTITIES - 1);
 		ent = &cl_parse_entities[num];
 
 		if (!ent->solid)
 			continue;
 
-		if (ent->number == cl.playernum+1)
+		if (ent->number == cl.playernum + 1)
 			continue;
 
 		if (ent->solid == 31)
-		{	// special value for bmodel
+		{
+			// special value for bmodel
 			cmodel = cl.model_clip[ent->modelindex];
 
 			if (!cmodel)
@@ -106,7 +107,8 @@ void CL_ClipMoveToEntities ( vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end,
 			angles = ent->angles;
 		}
 		else
-		{	// encoded bbox
+		{
+			// encoded bbox
 			x = 8 * (ent->solid & 31);
 			zd = 8 * ((ent->solid >> 5) & 31);
 			zu = 8 * ((ent->solid >> 10) & 63) - 32;
@@ -129,9 +131,7 @@ void CL_ClipMoveToEntities ( vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end,
 		if (tr->allsolid)
 			return;
 
-		trace = CM_TransformedBoxTrace(start, end,
-			mins, maxs, headnode, MASK_PLAYERSOLID,
-			ent->origin, angles);
+		trace = CM_TransformedBoxTrace(start, end, mins, maxs, headnode, MASK_PLAYERSOLID, ent->origin, angles);
 
 		if (trace.allsolid || trace.startsolid || trace.fraction < tr->fraction)
 		{
@@ -160,7 +160,7 @@ void CL_ClipMoveToEntities ( vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end,
 CL_PMTrace
 ================
 */
-trace_t CL_PMTrace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
+trace_t CL_PMTrace (const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end)
 {
 	trace_t	t;
 
@@ -176,7 +176,8 @@ trace_t CL_PMTrace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
 	return t;
 }
 
-int		CL_PMpointcontents (vec3_t point)
+
+int CL_PMpointcontents (vec3_t point)
 {
 	int			i;
 	entity_state_t	*ent;

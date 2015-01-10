@@ -207,6 +207,7 @@ extern long Q_ftol( float f );
 //#define VectorSet(v, x, y, z)	(v[0]=(x), v[1]=(y), v[2]=(z))
 // Taken from Quake2 Evolved (qfusion?)
 #define DotProduct(x,y)			((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2])
+#define DotProduct2(x,y)		((x)[0]*(y)[0]+(x)[1]*(y)[1]) // jit
 #define CrossProduct(x,y,o)		((o)[0]=(x)[1]*(y)[2]-(x)[2]*(y)[1],(o)[1]=(x)[2]*(y)[0]-(x)[0]*(y)[2],(o)[2]=(x)[0]*(y)[1]-(x)[1]*(y)[0])
 #define Distance(x,y)			(sqrt((((x)[0]-(y)[0])*((x)[0]-(y)[0])+((x)[1]-(y)[1])*((x)[1]-(y)[1])+((x)[2]-(y)[2])*((x)[2]-(y)[2]))))
 #define DistanceSquared(x,y)	(((x)[0]-(y)[0])*((x)[0]-(y)[0])+((x)[1]-(y)[1])*((x)[1]-(y)[1])+((x)[2]-(y)[2])*((x)[2]-(y)[2]))

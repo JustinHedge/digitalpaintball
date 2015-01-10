@@ -1380,7 +1380,7 @@ CM_RecursiveHullCheck
 
 ==================
 */
-void CM_RecursiveHullCheck (int num, float p1f, float p2f, vec3_t p1, vec3_t p2)
+void CM_RecursiveHullCheck (int num, float p1f, float p2f, const vec3_t p1, const vec3_t p2)
 {
 	cnode_t		*node;
 	cplane_t	*plane;
@@ -1499,9 +1499,7 @@ void CM_RecursiveHullCheck (int num, float p1f, float p2f, vec3_t p1, vec3_t p2)
 CM_BoxTrace
 ==================
 */
-trace_t CM_BoxTrace (vec3_t start, vec3_t end,
-                     vec3_t mins, vec3_t maxs,
-                     int headnode, int brushmask)
+trace_t CM_BoxTrace (const vec3_t start, const vec3_t end, const vec3_t mins, const vec3_t maxs, int headnode, int brushmask)
 {
 	int i;
 
@@ -1594,15 +1592,14 @@ Handles offseting and rotation of the end points for moving and
 rotating entities
 ==================
 */
+/* jitopt - disabling optimizer disabling -- probably an obsolete compiler bug.
 #ifdef _WIN32
 #pragma optimize( "", off )
 #endif
+*/
 
-
-trace_t		CM_TransformedBoxTrace (vec3_t start, vec3_t end,
-						  vec3_t mins, vec3_t maxs,
-						  int headnode, int brushmask,
-						  vec3_t origin, vec3_t angles)
+trace_t CM_TransformedBoxTrace (const vec3_t start, const vec3_t end, const vec3_t mins, const vec3_t maxs,
+								int headnode, int brushmask, const vec3_t origin, const vec3_t angles)
 {
 	trace_t		trace;
 	vec3_t		start_l, end_l;
@@ -1612,44 +1609,43 @@ trace_t		CM_TransformedBoxTrace (vec3_t start, vec3_t end,
 	qboolean	rotated;
 
 	// subtract origin offset
-	VectorSubtract (start, origin, start_l);
-	VectorSubtract (end, origin, end_l);
+	VectorSubtract(start, origin, start_l);
+	VectorSubtract(end, origin, end_l);
 
 	// rotate start and end into the models frame of reference
-	if (headnode != box_headnode && 
-	(angles[0] || angles[1] || angles[2]) )
+	if (headnode != box_headnode && (angles[0] || angles[1] || angles[2]))
 		rotated = true;
 	else
 		rotated = false;
 
 	if (rotated)
 	{
-		AngleVectors (angles, forward, right, up);
+		AngleVectors(angles, forward, right, up);
 
-		VectorCopy (start_l, temp);
-		start_l[0] = DotProduct (temp, forward);
-		start_l[1] = -DotProduct (temp, right);
-		start_l[2] = DotProduct (temp, up);
+		VectorCopy(start_l, temp);
+		start_l[0] = DotProduct(temp, forward);
+		start_l[1] = -DotProduct(temp, right);
+		start_l[2] = DotProduct(temp, up);
 
-		VectorCopy (end_l, temp);
-		end_l[0] = DotProduct (temp, forward);
-		end_l[1] = -DotProduct (temp, right);
-		end_l[2] = DotProduct (temp, up);
+		VectorCopy(end_l, temp);
+		end_l[0] = DotProduct(temp, forward);
+		end_l[1] = -DotProduct(temp, right);
+		end_l[2] = DotProduct(temp, up);
 	}
 
 	// sweep the box through the model
-	trace = CM_BoxTrace (start_l, end_l, mins, maxs, headnode, brushmask);
+	trace = CM_BoxTrace(start_l, end_l, mins, maxs, headnode, brushmask);
 
-	if (rotated && trace.fraction != 1.0)
+	if (rotated && trace.fraction != 1.0f)
 	{
 		// FIXME: figure out how to do this with existing angles
-		VectorNegate (angles, a);
-		AngleVectors (a, forward, right, up);
+		VectorNegate(angles, a);
+		AngleVectors(a, forward, right, up);
 
-		VectorCopy (trace.plane.normal, temp);
-		trace.plane.normal[0] = DotProduct (temp, forward);
-		trace.plane.normal[1] = -DotProduct (temp, right);
-		trace.plane.normal[2] = DotProduct (temp, up);
+		VectorCopy(trace.plane.normal, temp);
+		trace.plane.normal[0] = DotProduct(temp, forward);
+		trace.plane.normal[1] = -DotProduct(temp, right);
+		trace.plane.normal[2] = DotProduct(temp, up);
 	}
 
 	trace.endpos[0] = start[0] + trace.fraction * (end[0] - start[0]);
@@ -1659,10 +1655,11 @@ trace_t		CM_TransformedBoxTrace (vec3_t start, vec3_t end,
 	return trace;
 }
 
+/* jitopt
 #ifdef _WIN32
 #pragma optimize( "", on )
 #endif
-
+*/
 
 
 /*
