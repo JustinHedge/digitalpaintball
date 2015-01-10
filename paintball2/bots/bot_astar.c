@@ -48,7 +48,7 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 	int connection_index;
 	int list_index;
 	
-	bi.dprintf("AStarFindPathFromNodeIndexes\n");
+	bi.dprintf("AStarFindPathFromNodeIndexes:");
 
 	if (path)
 	{
@@ -129,7 +129,10 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 		}
 		
 		if (current_node == -1)
+		{
+			bi.dprintf("failed.\n");
 			return false;
+		}
 	}
 
 	// backtrack and create path.
@@ -159,6 +162,7 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 		}
 	}
 
+	bi.dprintf("passed.\n");
 	return true;
 }
 

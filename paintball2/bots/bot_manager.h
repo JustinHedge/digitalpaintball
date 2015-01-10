@@ -64,6 +64,7 @@ typedef struct botmanager_s {
 	int					num_to_readd; // number of botss to readd
 	float				level_time;
 	char				levelname[MAX_QPATH];
+	int					time_since_last_pathfind;
 } botmanager_t;
 
 extern botmanager_t bots;

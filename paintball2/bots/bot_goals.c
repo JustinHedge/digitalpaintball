@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include "bot_main.h"
 #include "bot_manager.h"
 #include "bot_goals.h"
 #include "../game/game.h"
@@ -46,13 +47,17 @@ void BotUpdateGoals (int msec)
 	{
 		if (bots.goals[bot_index].changed)
 		{
+			botmovedata_t *movement = bots.movement + bot_index;
 			edict_t *ent = bots.ents[bot_index];
-			bots.goals[bot_index].changed = false;
-			bots.movement[bot_index].waypoint_path.active = AStarFindPathFromPositions(ent->s.origin, bots.goals[bot_index].pos, &bots.movement[bot_index].waypoint_path);
-			//todo;
+
+			// Avoid doing a bunch of pathfinds in one update
+			if (movement->time_til_try_path <= 0 && bots.time_since_last_pathfind > 0)
+			{
+				bots.goals[bot_index].changed = false;
+				movement->waypoint_path.active = AStarFindPathFromPositions(ent->s.origin, bots.goals[bot_index].pos, &bots.movement[bot_index].waypoint_path);
+				movement->time_til_try_path = 200 + (int)nu_rand(1000); // force some delay between path finds so bots don't spaz out and try to path find every single update.
+				bots.time_since_last_pathfind = 0;
+			}
 		}
 	}
 }
-
-// todo: bot goal to reach location.
-// todo: path finding.

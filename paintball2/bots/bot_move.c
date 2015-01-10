@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bot_manager.h"
 #include "../game/game.h"
 #include "bot_observe.h"
+#include "bot_debug.h"
 
 
 #define MOVE_SPEED 400 // 400 is the running speed in Quake2
@@ -143,8 +144,8 @@ float VecToAngle (vec3_t vec)
 	return yaw;
 }
 
-
-#define WAYPOINT_REACHED_EPSILON_SQ		2304.0f // 48 * 48
+//#define WAYPOINT_REACHED_EPSILON_SQ		2304.0f // 48 * 48
+#define WAYPOINT_REACHED_EPSILON_SQ		400.0f // 20 * 20
 
 void BotFollowWaypoint (unsigned int bot_index, int msec)
 {
@@ -160,13 +161,19 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 			float dist_sq = VectorSquareDistance(g_bot_waypoints.positions[waypoint_index], ent->s.origin);
 			vec3_t bot_to_current_waypoint, current_to_next_waypoint;
 			vec3_t vec_diff;
+//			vec3_t velocity;
+			vec3_t vec_to_face;
+			vec3_t forward, right;
+			float forward_dot, right_dot;
 			float current_yaw;
 			float desired_yaw;
 			float delta_yaw;
 			qboolean waypoint_passed = false;
+			static float test_vel_offset = 0.1f;
+			float test_threshold = 20.0f;
 
 			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, bot_to_current_waypoint);
-
+/*
 			// To prevent bots from circling back to waypoints that were not quite touched, check if we've passed them and are moving toward the text waypoint
 			if (movement->waypoint_path.current_node < movement->waypoint_path.num_points - 1)
 			{
@@ -176,10 +183,15 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 
 				if (DotProduct(bot_to_current_waypoint, current_to_next_waypoint) < 0)
 					waypoint_passed = true;
-			}
+			}*/
 
 			if (waypoint_passed || dist_sq <= WAYPOINT_REACHED_EPSILON_SQ)
 			{
+				if (waypoint_passed)
+					DrawDebugSphere(g_bot_waypoints.positions[waypoint_index], 8.0f, 0.8f, 1.0f, 0.0f, 1.0f, -1);
+				else
+					DrawDebugSphere(g_bot_waypoints.positions[waypoint_index], 8.0f, 0.0f, 1.0f, 0.8f, 1.0f, -1);
+
 				// Stop if we've reached our destination.
 				if (path->current_node >= path->num_points - 1)
 				{
@@ -201,16 +213,45 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 			
 			if (!BotCanReachPosition(ent, ent->s.origin, g_bot_waypoints.positions[waypoint_index], &movement->need_jump))
 			{
+				DrawDebugSphere(g_bot_waypoints.positions[waypoint_index], 9.0f, 1.0f, 0.0f, 0.0f, 1.0f, -1);
 				path->active = false;
 				BotRetryGoal(bot_index);
 				return;
 			}
 
+			DrawDebugSphere(g_bot_waypoints.positions[waypoint_index], 7.5f, 1.0f, 1.0f, 1.0f, 0.1f, -1);
 			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, vec_diff);
-			desired_yaw = VecToAngle(vec_diff);
+			//VectorScale(ent->client->ps.pmove.velocity, 0.125f, velocity); // pm version stored as 8x, so scale it back to normal
+			//VectorMA(vec_diff, -test_vel_offset, velocity, vec_to_face);
+			VectorCopy(vec_diff, vec_to_face);
+			desired_yaw = VecToAngle(vec_to_face);
 			current_yaw = ent->s.angles[YAW];
-			delta_yaw = desired_yaw - current_yaw;
+			delta_yaw = 0;//desired_yaw - current_yaw;
 
+			// Figure out where the target is relative to our current facing
+			AngleVectors(ent->s.angles, forward, right, NULL);
+			forward_dot = DotProduct2(forward, vec_diff);
+			right_dot = DotProduct2(right, vec_diff);
+
+			// Default moving forward
+			movement->forward = MOVE_SPEED;
+			movement->side = 0;
+
+			// If our target is significantly to the side or behind us, adjust
+			if (forward_dot < 0.0f)
+			{
+				movement->forward = 0;
+
+				if (forward_dot < -test_threshold)
+					movement->forward = -MOVE_SPEED;
+			}
+
+			if (right_dot > test_threshold)
+				movement->side = MOVE_SPEED;
+			else if (right_dot < -test_threshold)
+				movement->side = -MOVE_SPEED;
+
+			// Calculate turn speed
 			if (delta_yaw > 180.0f)
 				delta_yaw -= 360.0f;
 
@@ -218,13 +259,12 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 				delta_yaw += 360.0f;
 
 			movement->yawspeed = delta_yaw * 1000.0f / (float)msec; // turn this much in 1 movement update.
-			movement->forward = MOVE_SPEED;
-			movement->side = 0;
-			movement->up = 0;
 
 			// 50% chance of jumping each frame... in case we're not touching the ground or something
 			if (movement->need_jump && nu_rand(1.0f) > .5f)
 				movement->up = MOVE_SPEED;
+			else
+				movement->up = 0;
 		}
 	}
 }
@@ -352,10 +392,6 @@ void BotWander (unsigned int bot_index, int msec)
 		}
 
 		movement->time_til_try_path = 2000; // If we didn't find a path, don't try to pathfind again for 2 seconds.
-	}
-	else
-	{
-		movement->time_til_try_path -= msec;
 	}
 
 	BotWanderNoNav(bot_index, msec);
@@ -504,6 +540,7 @@ void BotMove (unsigned int botindex, int msec)
 	if (botindex < MAX_BOTS)
 	{
 		edict_t *ent = bots.ents[botindex];
+		botmovedata_t *movement = bots.movement + botindex;
 
 		if (ent)
 		{
@@ -514,7 +551,6 @@ void BotMove (unsigned int botindex, int msec)
 			else*/
 			{
 				usercmd_t cmd;
-				botmovedata_t *movement = bots.movement + botindex;
 				float yaw = 0.0f;
 
 				movement->time_since_last_turn += msec;
@@ -551,9 +587,12 @@ void BotMove (unsigned int botindex, int msec)
 					bi.ClientThink(ent, &cmd);
 				}
 
-				bots.movement[botindex].last_yaw = yaw;
+				movement->last_yaw = yaw;
 			}
 		}
+
+		if (movement->time_til_try_path > 0)
+			movement->time_til_try_path -= msec;
 	}
 }
 
@@ -567,6 +606,7 @@ void BotUpdateMovement (int msec)
 		BotMove(i, msec);
 	}
 	
+	bots.time_since_last_pathfind += msec;
 	g_lastplayercmd = g_playercmd;
 }
 
