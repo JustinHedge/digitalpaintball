@@ -458,7 +458,7 @@ void IN_Init (void)
 	m_filter				= Cvar_Get ("m_filter",					"0",		CVAR_ARCHIVE);
     in_mouse				= Cvar_Get ("in_mouse",					"1",		CVAR_ARCHIVE);
 	m_noaccel				= Cvar_Get ("m_noaccel",				"1",		CVAR_ARCHIVE);
-	m_rawinput				= Cvar_Get ("m_rawinput",				"0",		0); // jitmouse
+	m_rawinput				= Cvar_Get ("m_rawinput",				"1",		0); // jitmouse
 
 	// joystick variables
 	in_joystick				= Cvar_Get ("in_joystick",				"0",		CVAR_ARCHIVE);
