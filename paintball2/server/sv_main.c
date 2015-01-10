@@ -544,17 +544,6 @@ gotnewcl:
 }
 
 
-int Rcon_Validate (void)
-{
-	if (!strlen(rcon_password->string))
-		return 0;
-
-	if (!Q_streq(Cmd_Argv(1), rcon_password->string))
-		return 0;
-
-	return 1;
-}
-
 /*
 ===============
 SVC_RemoteCommand
@@ -566,36 +555,71 @@ Redirect all printfs
 */
 void SVC_RemoteCommand (void)
 {
-	int		i;
-	char	remaining[1024];
+	// === jit - revamped this function to be a little safer
+	char		command_str[1024];
+	int			command_len = 0;
+	qboolean	rcon_set = false;
+	qboolean	rcon_valid = false;
 
-	i = Rcon_Validate ();
+	if (strlen(rcon_password->string))
+		rcon_set = true;
 
-	if (i == 0)
-		Com_Printf ("Bad rcon from %s:\n%s\n", NET_AdrToString (net_from), net_message.data+4);
-	else
-		Com_Printf ("Rcon from %s:\n%s\n", NET_AdrToString (net_from), net_message.data+4);
+	if (rcon_set && Q_streq(Cmd_Argv(1), rcon_password->string))
+		rcon_valid = true;
 
-	Com_BeginRedirect (RD_PACKET, sv_outputbuf, SV_OUTPUTBUF_LENGTH, SV_FlushRedirect);
+	if (net_message.cursize > 4)
+		command_len = net_message.cursize - 4;
 
-	if (!Rcon_Validate ())
+	if (command_len >= sizeof(command_str))
 	{
-		Com_Printf ("Bad rcon_password.\n");
+		assert(0);
+		Com_Printf("Large (malicious?) rcon from %s.  Ignoring.\n", NET_AdrToString(net_from));
+		return;
+	}
+
+	memcpy(command_str, net_message.data + 4, command_len);
+	command_str[command_len] = 0;
+
+	if (!rcon_valid)
+		Com_Printf("Bad rcon from %s:\n%s\n", NET_AdrToString(net_from), command_str);
+	else
+		Com_Printf("Rcon from %s:\n%s\n", NET_AdrToString(net_from), command_str);
+
+	Com_BeginRedirect(RD_PACKET, sv_outputbuf, SV_OUTPUTBUF_LENGTH, SV_FlushRedirect);
+
+	if (!rcon_valid)
+	{
+		if (!rcon_set)
+			Com_Printf("rcon_password not set.\n");
+		else
+			Com_Printf("Bad rcon_password.\n");
 	}
 	else
 	{
-		remaining[0] = 0;
+		char *s = command_str;
 
-		for (i=2 ; i<Cmd_Argc() ; i++)
+		if (command_len > 5) // "rcon "
 		{
-			strcat (remaining, Cmd_Argv(i) );
-			strcat (remaining, " ");
-		}
+			s += 5;
 
-		Cmd_ExecuteString (remaining);
+			// Skip past the password
+			while (*s)
+			{
+				if (*s == ' ')
+				{
+					++s;
+					break;
+				}
+
+				++s;
+			}
+
+			Cmd_ExecuteString(s);
+		}
 	}
 
-	Com_EndRedirect ();
+	Com_EndRedirect();
+	// jit ===
 }
 
 #ifdef USE_DOWNLOAD3 // jitdownload
