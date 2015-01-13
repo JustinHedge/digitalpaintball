@@ -72,6 +72,7 @@ typedef struct
 	edict_t		*(*AddBotClient) (char *userinfo);
 	const char	*(*GetClientName) (edict_t *ent);
 	void		(*DisconnectBot) (edict_t *ent);
+	qboolean	(*IsGroundEntityWorld) (edict_t *ent);
 
 	char		unset[64];
 } bot_import_t;

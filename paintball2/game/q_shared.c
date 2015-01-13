@@ -723,7 +723,7 @@ vec_t _DotProduct (vec3_t v1, vec3_t v2)
 	return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
-vec_t VectorSquareDistance (vec_t *a, vec_t *b) // jitvec
+vec_t VectorSquareDistance (const vec_t *a, const vec_t *b) // jitvec
 {
 	register float dx = a[0] - b[0];
 	register float dy = a[1] - b[1];

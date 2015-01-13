@@ -166,41 +166,17 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 	return true;
 }
 
-
-// TODO: Trace check, as the closest waypoint may be behind a wall.
-int ClosestWaypointToPosition (vec3_t pos)
-{
-	int i;
-	float best_dist = FLT_MAX;
-	float dist;
-	int best_node = -1;
-
-	for (i = 0; i < g_bot_waypoints.num_points; ++i)
-	{
-		dist = VectorSquareDistance(pos, g_bot_waypoints.positions[i]);
-
-		if (dist < best_dist)
-		{
-			best_dist = dist;
-			best_node = i;
-		}
-	}
-
-	return best_node;
-}
-
-
 static int g_astar_debug_start = -1;
 
 void AStarDebugStartPoint (vec3_t pos)
 {
-	g_astar_debug_start = ClosestWaypointToPosition(pos);
+	g_astar_debug_start = ClosestWaypointToPosition(pos, NULL);
 }
 
 
 void AStarDebugEndPoint (vec3_t pos)
 {
-	int debug_end = ClosestWaypointToPosition(pos);
+	int debug_end = ClosestWaypointToPosition(pos, NULL);
 
 	AStarFindPathFromNodeIndexes(g_astar_debug_start, debug_end, NULL);
 }
@@ -208,13 +184,14 @@ void AStarDebugEndPoint (vec3_t pos)
 
 qboolean AStarFindPathFromPositions (vec3_t start_pos, vec3_t end_pos, bot_waypoint_path_t *path)
 {
-	return AStarFindPathFromNodeIndexes(ClosestWaypointToPosition(start_pos), ClosestWaypointToPosition(end_pos), path);
+	return AStarFindPathFromNodeIndexes(ClosestWaypointToPosition(start_pos, NULL), ClosestWaypointToPosition(end_pos, NULL), path);
 }
 
 
 qboolean AStarFindPathFromEntityToPos (edict_t *ent, vec3_t end_pos, bot_waypoint_path_t *path)
 {
-	int closest_start_node = ClosestWaypointToPosition(ent->s.origin);
+	float dist_sq = FLT_MAX;
+	int closest_start_node = ClosestWaypointToPosition(ent->s.origin, &dist_sq);
 	qboolean need_new_point = false;
 
 	if (closest_start_node < 0)
@@ -223,12 +200,6 @@ qboolean AStarFindPathFromEntityToPos (edict_t *ent, vec3_t end_pos, bot_waypoin
 	}
 	else
 	{
-		vec3_t diff_vec;
-		vec_t dist_sq;
-
-		VectorSubtract(ent->s.origin, g_bot_waypoints.positions[closest_start_node], diff_vec);
-		dist_sq = VectorLengthSquared(diff_vec);
-
 		if (dist_sq > MIN_WAYPOINT_DIFF_SQ)
 		{
 			if (BotCanReachPosition(ent, ent->s.origin, end_pos, NULL))
@@ -247,7 +218,7 @@ qboolean AStarFindPathFromEntityToPos (edict_t *ent, vec3_t end_pos, bot_waypoin
 	}
 	else
 	{
-		return AStarFindPathFromNodeIndexes(closest_start_node, ClosestWaypointToPosition(end_pos), path);
+		return AStarFindPathFromNodeIndexes(closest_start_node, ClosestWaypointToPosition(end_pos, NULL), path);
 	}
 }
 

@@ -145,7 +145,7 @@ float VecToAngle (vec3_t vec)
 }
 
 //#define WAYPOINT_REACHED_EPSILON_SQ		2304.0f // 48 * 48
-#define WAYPOINT_REACHED_EPSILON_SQ		400.0f // 20 * 20
+#define WAYPOINT_REACHED_EPSILON_SQ		1024.0f // 32 * 32
 
 void BotFollowWaypoint (unsigned int bot_index, int msec)
 {
@@ -173,7 +173,7 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 			float test_threshold = 20.0f;
 
 			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, bot_to_current_waypoint);
-/*
+
 			// To prevent bots from circling back to waypoints that were not quite touched, check if we've passed them and are moving toward the text waypoint
 			if (movement->waypoint_path.current_node < movement->waypoint_path.num_points - 1)
 			{
@@ -183,7 +183,7 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 
 				if (DotProduct(bot_to_current_waypoint, current_to_next_waypoint) < 0)
 					waypoint_passed = true;
-			}*/
+			}
 
 			if (waypoint_passed || dist_sq <= WAYPOINT_REACHED_EPSILON_SQ)
 			{
@@ -226,7 +226,7 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 			VectorCopy(vec_diff, vec_to_face);
 			desired_yaw = VecToAngle(vec_to_face);
 			current_yaw = ent->s.angles[YAW];
-			delta_yaw = 0;//desired_yaw - current_yaw;
+			delta_yaw = desired_yaw - current_yaw;
 
 			// Figure out where the target is relative to our current facing
 			AngleVectors(ent->s.angles, forward, right, NULL);
@@ -544,8 +544,20 @@ void BotMove (unsigned int botindex, int msec)
 
 		if (ent)
 		{
+			qboolean move = true;
+
+			if (skill->value < -1.0f)
+			{
+				movement->yawspeed = 0;
+				movement->forward = 0;
+				movement->side = 0;
+				movement->up = 0;
+				movement->shooting = false;
+				move = false;
+			}
+
 			/**
-			if (BotFollowPlayerPaths(botindex, msec))
+			if (move && BotFollowPlayerPaths(botindex, msec))
 			{
 			}
 			else*/
@@ -555,13 +567,12 @@ void BotMove (unsigned int botindex, int msec)
 
 				movement->time_since_last_turn += msec;
 
-				if (movement->waypoint_path.active)
+				if (move)
 				{
-					BotFollowWaypoint(botindex, msec);
-				}
-				else
-				{
-					BotWander(botindex, msec);
+					if (movement->waypoint_path.active)
+						BotFollowWaypoint(botindex, msec);
+					else
+						BotWander(botindex, msec);
 				}
 
 				//BotDance(botindex);

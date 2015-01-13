@@ -194,7 +194,7 @@ void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const
 			float xy_velocity_sq = XYPMVelocitySquared(pm->s.velocity);
 
 			// todo: start on jump as well
-			if (xy_velocity_sq > PLAYER_OBSERVE_MIN_MOVE_SPEED * PLAYER_OBSERVE_MIN_MOVE_SPEED && pm->groundentity)
+			if (xy_velocity_sq > PLAYER_OBSERVE_MIN_MOVE_SPEED * PLAYER_OBSERVE_MIN_MOVE_SPEED && bi.IsGroundEntityWorld(pm->groundentity))
 			{
 				bi.dprintf("Starting path\n");
 				VectorCopy(ent->s.origin, observation->start_pos);
@@ -204,7 +204,7 @@ void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const
 		}
 		else
 		{
-			if (XYPMVelocitySquared(pm->s.velocity) < PLAYER_OBSERVE_MIN_MOVE_SPEED * PLAYER_OBSERVE_MIN_MOVE_SPEED && pm->groundentity)
+			if (XYPMVelocitySquared(pm->s.velocity) < PLAYER_OBSERVE_MIN_MOVE_SPEED * PLAYER_OBSERVE_MIN_MOVE_SPEED && bi.IsGroundEntityWorld(pm->groundentity))
 			{
 				BotCompleteObservationPath(ent, observation);
 			}

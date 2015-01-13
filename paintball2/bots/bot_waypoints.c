@@ -544,9 +544,39 @@ void BotTryAddWaypoint (const edict_t *ent, const vec3_t pos)
 	}
 }
 
+// TODO: Trace check, as the closest waypoint may be behind a wall.
+int ClosestWaypointToPosition (const vec3_t pos, float *sq_dist)
+{
+	int i;
+	float best_dist = FLT_MAX;
+	float dist;
+	int best_node = -1;
+
+	for (i = 0; i < g_bot_waypoints.num_points; ++i)
+	{
+		dist = VectorSquareDistance(pos, g_bot_waypoints.positions[i]);
+
+		if (dist < best_dist)
+		{
+			best_dist = dist;
+			best_node = i;
+		}
+	}
+
+	if (sq_dist)
+		*sq_dist = best_dist;
+
+	return best_node;
+}
+
+
 #define WAYPOINT_ADD_TIME 1.0f // if this much time has elapsed since the last time a player has added a waypoint, try adding another.
 #define WAYPOINT_ADD_DIST 128.0f // if a player has moved at least this distance after adding the last waypoint, try adding another.
 #define WAYPOINT_ADD_DIST_LADDER 50.0f // ladders need better resolution to ensure connections
+
+#ifdef _DEBUG
+extern cvar_t *bot_remove_near_waypoints;
+#endif
 
 void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const edict_t *ent, const pmove_t *pm)
 {
@@ -554,6 +584,25 @@ void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const 
 	float dist_sq;
 	qboolean on_ladder = false;
 	float waypoint_add_dist_sq = WAYPOINT_ADD_DIST * WAYPOINT_ADD_DIST;
+
+#ifdef _DEBUG
+	if (bot_remove_near_waypoints->value)
+	{
+		float sq_dist;
+		int node = ClosestWaypointToPosition(ent->s.origin, &sq_dist);
+
+		if (node >= 0)
+		{
+			if (sq_dist < 1024.0f)
+			{
+				// No means for deleting waypoints currently.  Maybe we can add this later, but it's not really necessary.
+				///RemoveWaypoint(node);
+			}
+		}
+
+		return;
+	}
+#endif
 
 	VectorSubtract(ent->s.origin, observation->last_waypoint_pos, diff);
 	dist_sq = VectorLengthSquared(diff);
@@ -589,7 +638,7 @@ void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const 
 			VectorCopy(observation->last_pos, waypoint_pos);
 			waypoint_pos[2] += 16.0f; // move waypoint 16 units up to deal with small steps at the tops of ladders and ensure LOS
 		}
-		else if (pm->groundentity || on_ladder) // add waypoints if on the ground or on ladders
+		else if (bi.IsGroundEntityWorld(pm->groundentity) || on_ladder) // add waypoints if on the ground or on ladders
 		{
 			add_waypoint = true;
 			VectorCopy(ent->s.origin, waypoint_pos);
@@ -622,7 +671,7 @@ void BotWriteWaypoints (const char *mapname)
 	if (!mapname || !*mapname)
 		return;
 
-	Com_sprintf(filename, sizeof(filename), "botnav/%s", mapname);
+	Com_sprintf(filename, sizeof(filename), "botnav/%s.botnav", mapname);
 	FS_CreatePath(filename);
 	fp = fopen(filename, "wb");
 
@@ -653,7 +702,7 @@ void BotReadWaypoints (const char *mapname)
 	FILE *fp;
 
 	BotInitWaypoints();
-	Com_sprintf(filename, sizeof(filename), "botnav/%s", mapname);
+	Com_sprintf(filename, sizeof(filename), "botnav/%s.botnav", mapname);
 	fp = fopen(filename, "rb");
 
 	if (fp)

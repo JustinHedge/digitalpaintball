@@ -29,7 +29,10 @@ bot_export_t g_bot_export;
 bot_import_t bi;
 bot_render_import_t ri;
 botmanager_t bots;
-
+cvar_t *skill = NULL;
+#ifdef _DEBUG
+cvar_t *bot_remove_near_waypoints = NULL;
+#endif
 
 void FreeObservations (void);
 
@@ -80,6 +83,10 @@ void BotInitLibrary (void)
 {
 	bi.dprintf("DP Botlib Initialized.\n");
 	memset(&bots, 0, sizeof(bots));
+	skill = bi.cvar("skill", "0", 0);
+#ifdef _DEBUG
+	bot_remove_near_waypoints = bi.cvar("bot_remove_near_waypoints", "0", 0);
+#endif
 }
 
 
