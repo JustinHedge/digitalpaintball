@@ -5764,12 +5764,13 @@ void R_BeginFrame (float camera_separation)
 	gl_state.camera_separation = camera_separation;
 
 	// change modes if necessary
-	if (gl_mode->modified || vid_fullscreen->modified)
+	if (gl_mode->modified || vid_fullscreen->modified || gl_lightmapgamma->modified)
 	{	// FIXME: only restart if CDS is required
 		cvar_t	*ref;
 
 		ref = ri.Cvar_Get("vid_ref", "pbgl", 0);
 		ref->modified = true;
+		gl_lightmapgamma->modified = false;
 	}
 
 #ifdef _DEBUG
