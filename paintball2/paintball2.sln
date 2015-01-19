@@ -1,20 +1,10 @@
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gamex86", "..\pball\src\paintball.vcproj", "{3320FC8B-30BF-4A50-A3FB-00A02E99BA10}"
-	ProjectSection(ProjectDependencies) = postProject
-		{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA} = {44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}
-		{370B8ED7-2016-4F3D-B829-18804879A927} = {370B8ED7-2016-4F3D-B829-18804879A927}
-	EndProjectSection
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "paintball2", "paintball2.vcxproj", "{78DD81DB-C9E6-4AAC-AF53-B8A4F8E4C70D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "paintball2", "paintball2.vcproj", "{78DD81DB-C9E6-4AAC-AF53-B8A4F8E4C70D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{3320FC8B-30BF-4A50-A3FB-00A02E99BA10} = {3320FC8B-30BF-4A50-A3FB-00A02E99BA10}
-		{370B8ED7-2016-4F3D-B829-18804879A927} = {370B8ED7-2016-4F3D-B829-18804879A927}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ref_gl", "ref_gl\ref_gl.vcxproj", "{370B8ED7-2016-4F3D-B829-18804879A927}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ref_gl", "ref_gl\ref_gl.vcproj", "{370B8ED7-2016-4F3D-B829-18804879A927}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bots", "bots\bots.vcproj", "{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bots", "bots\bots.vcxproj", "{44AC0BCE-FC60-4BDE-8030-A96E3B7364FA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
