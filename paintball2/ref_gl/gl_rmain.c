@@ -4989,6 +4989,7 @@ void R_Register(void)
 	gl_showbbox = ri.Cvar_Get("gl_showbbox", "0", 0);  // jit / Guy
 //	gl_modulate = ri.Cvar_Get("gl_modulate", "1.6", CVAR_ARCHIVE); // jit, default to 1.6
 	gl_lightmapgamma = ri.Cvar_Get("gl_lightmapgamma", ".6", CVAR_ARCHIVE); // jitgamma
+	gl_lightmapgamma->modified = false; // jitgamma - prevent immediate restart
 	r_oldlightpoint = ri.Cvar_Get("r_oldlightpoint", "0", 0); // jit
 	r_hardware_light = ri.Cvar_Get("r_hardware_light", "1", 0); // jitlight
 	gl_textshadow = ri.Cvar_Get("gl_textshadow", "1", CVAR_ARCHIVE); // jittext
@@ -5760,17 +5761,16 @@ void UpdateGammaRamp ();
 
 void R_BeginFrame (float camera_separation)
 {
-
 	gl_state.camera_separation = camera_separation;
 
 	// change modes if necessary
-	if (gl_mode->modified || vid_fullscreen->modified || gl_lightmapgamma->modified)
+	if (gl_mode->modified || vid_fullscreen->modified || gl_lightmapgamma->modified) // jitgamma - restart on lightmap gamma change
 	{	// FIXME: only restart if CDS is required
 		cvar_t	*ref;
 
 		ref = ri.Cvar_Get("vid_ref", "pbgl", 0);
 		ref->modified = true;
-		gl_lightmapgamma->modified = false;
+		gl_lightmapgamma->modified = false; // jitgamma
 	}
 
 #ifdef _DEBUG
