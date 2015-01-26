@@ -315,6 +315,14 @@ void Com_Quit (void)
 	Sys_Quit();
 }
 
+#ifdef _DEBUG
+void Com_Crash (void)
+{
+	void (*testp)(void) = NULL;
+	testp();
+}
+#endif
+
 
 /*
 ==================
@@ -1536,6 +1544,10 @@ void Qcommon_Init (int argc, char **argv)
 		Cmd_AddCommand("quit", Com_Quit);
 		Cmd_AddCommand("exit", Com_Quit); // jit
 	}
+
+#ifdef _DEBUG
+	Cmd_AddCommand("crash", Com_Crash); // jit
+#endif
 
 	Sys_Init();
 	NET_Init();
