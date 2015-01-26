@@ -171,4 +171,6 @@ void BotSpawnEntities (void)
 	}
 
 	bots.num_to_readd = 0;
+	bots.last_waypoint_add_time = 0.0f;
 }
+

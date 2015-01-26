@@ -63,6 +63,7 @@ typedef struct botmanager_s {
 	char				names_to_readd[MAX_BOTS][64]; // bots to readd after map change
 	int					num_to_readd; // number of botss to readd
 	float				level_time;
+	float				last_waypoint_add_time;
 	char				levelname[MAX_QPATH];
 	int					time_since_last_pathfind;
 } botmanager_t;

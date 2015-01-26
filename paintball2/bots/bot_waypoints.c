@@ -571,6 +571,7 @@ int ClosestWaypointToPosition (const vec3_t pos, float *sq_dist)
 
 
 #define WAYPOINT_ADD_TIME 1.0f // if this much time has elapsed since the last time a player has added a waypoint, try adding another.
+#define WAYPOINT_ADD_TIME_GLOBAL_MAX 0.3f // won't try to add waypoints from any player unless 300ms has passed (prevent overload when lots of players are present).
 #define WAYPOINT_ADD_DIST 128.0f // if a player has moved at least this distance after adding the last waypoint, try adding another.
 #define WAYPOINT_ADD_DIST_LADDER 50.0f // ladders need better resolution to ensure connections
 
@@ -585,6 +586,7 @@ void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const 
 	qboolean on_ladder = false;
 	float waypoint_add_dist_sq = WAYPOINT_ADD_DIST * WAYPOINT_ADD_DIST;
 
+	// This block of code does nothing.  Ignore it for now.
 #ifdef _DEBUG
 	if (bot_remove_near_waypoints->value)
 	{
@@ -625,7 +627,8 @@ void BotAddPotentialWaypointFromPmove (player_observation_t *observation, const 
 		}
 	}
 
-	if (dist_sq >= waypoint_add_dist_sq || bots.level_time - observation->last_waypoint_time >= WAYPOINT_ADD_TIME || observation->was_on_ladder && !on_ladder) // todo: limit this to once per game frame (so multiple players don't kill performance)
+	if ((bots.level_time - bots.last_waypoint_add_time > WAYPOINT_ADD_TIME_GLOBAL_MAX) &&
+		(dist_sq >= waypoint_add_dist_sq || bots.level_time - observation->last_waypoint_time >= WAYPOINT_ADD_TIME || observation->was_on_ladder && !on_ladder))
 	{
 		qboolean add_waypoint = false;
 		vec3_t waypoint_pos;

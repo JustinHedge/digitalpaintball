@@ -36,21 +36,28 @@ static void RemoveBot (edict_t *ent)
 }
 
 
-static void RemoveAllBots (void)
+static void RemoveAllBots (edict_t *ent_cmd)
 {
+	int bot_count = bots.count;
+
 	while (bots.count)
 	{
 		RemoveBot(bots.ents[0]);
 	}
+
+	bi.cprintf(ent_cmd, PRINT_POPUP, "Removed %d bots.\n", bot_count);
 }
 
 
-static void RemoveBotCommand (const char *nameToRemove)
+static void RemoveBotCommand (const char *nameToRemove, edict_t *ent_cmd)
 {
 	int i;
 
 	if (Q_strcaseeq(nameToRemove, "all"))
-		RemoveAllBots();
+	{
+		RemoveAllBots(ent_cmd);
+		return;
+	}
 
 	// search for exact name:
 	for (i = 0; i < bots.count; ++i)
@@ -60,6 +67,7 @@ static void RemoveBotCommand (const char *nameToRemove)
 
 		if (Q_strcaseeq(name, nameToRemove))
 		{
+			bi.cprintf(ent_cmd, PRINT_POPUP, "Removed bot: %s\n", name);
 			RemoveBot(ent);
 			return;
 		}
@@ -73,10 +81,13 @@ static void RemoveBotCommand (const char *nameToRemove)
 
 		if (strstr(name, nameToRemove))
 		{
+			bi.cprintf(ent_cmd, PRINT_POPUP, "Removed bot: %s\n", name);
 			RemoveBot(ent);
 			return;
 		}
 	}
+
+	bi.cprintf(ent_cmd, PRINT_POPUP, "No bots found with a name containing \"%s\".\n", nameToRemove);
 }
 
 
@@ -101,12 +112,12 @@ qboolean BotCommand (edict_t *ent, const char *cmd, const char *cmd2, const char
 	}
 	else if (Q_strcaseeq(cmd, "removebot"))
 	{
-		RemoveBotCommand(cmd2);
+		RemoveBotCommand(cmd2, ent);
 		return true;
 	}
 	else if (Q_strcaseeq(cmd, "removeallbots"))
 	{
-		RemoveAllBots();
+		RemoveAllBots(ent);
 		return true;
 	}
 	else if (Q_strcaseeq(cmd, "bot_here"))

@@ -179,6 +179,11 @@ void BotAddPotentialWaypointFromPmove(player_observation_t *observation, const e
 // Called for each player input packet sent, while the player is alive
 void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const pmove_t *pm)
 {
+	if (bots.count < 1)
+	{
+		return;
+	}
+
 	// todo: cvar to disable this.
 	// todo: reset observation data on player disconnect/map change/etc.
 	//BotAddPotentialNavmeshFromPmove(ent, pm);
