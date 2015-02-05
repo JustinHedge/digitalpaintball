@@ -377,6 +377,7 @@ void CL_ParsePlayerstate (frame_t *oldframe, frame_t *newframe)
 	player_state_t	*state;
 	int			i;
 	int			statbits;
+	qboolean	no_demo_override = !(cl.attractloop && cl.playernum_demooverride); // jitdemo
 
 	state = &newframe->playerstate;
 
@@ -384,28 +385,49 @@ void CL_ParsePlayerstate (frame_t *oldframe, frame_t *newframe)
 	if (oldframe)
 		*state = oldframe->playerstate;
 	else
-		memset (state, 0, sizeof(*state));
+		memset(state, 0, sizeof(*state));
 
 	flags = MSG_ReadShort (&net_message);
 
-	//
 	// parse the pmove_state_t
-	//
 	if (flags & PS_M_TYPE)
 		state->pmove.pm_type = MSG_ReadByte(&net_message);
 
 	if (flags & PS_M_ORIGIN)
 	{
-		state->pmove.origin[0] = MSG_ReadShort (&net_message);
-		state->pmove.origin[1] = MSG_ReadShort (&net_message);
-		state->pmove.origin[2] = MSG_ReadShort (&net_message);
+		// === jitdemo - allow position to be overridden
+		short origin[3];
+
+		origin[0] = MSG_ReadShort(&net_message);
+		origin[1] = MSG_ReadShort(&net_message);
+		origin[2] = MSG_ReadShort(&net_message);
+
+		if (no_demo_override)
+		{
+			state->pmove.origin[0] = origin[0];
+			state->pmove.origin[1] = origin[1];
+			state->pmove.origin[2] = origin[2];
+#ifdef USE_PMOVE_FLOAT
+			// jitmove - floating point precision - testing (todo: ignore & use stored value if off by less than .125)
+			state->pmove.forigin[0] = state->pmove.origin[0] * 0.125f;
+			state->pmove.forigin[1] = state->pmove.origin[1] * 0.125f;
+			state->pmove.forigin[2] = state->pmove.origin[2] * 0.125f;
+#endif
+		}
+		// jitdemo ===
 	}
 
 	if (flags & PS_M_VELOCITY)
 	{
-		state->pmove.velocity[0] = MSG_ReadShort (&net_message);
-		state->pmove.velocity[1] = MSG_ReadShort (&net_message);
-		state->pmove.velocity[2] = MSG_ReadShort (&net_message);
+		state->pmove.velocity[0] = MSG_ReadShort(&net_message);
+		state->pmove.velocity[1] = MSG_ReadShort(&net_message);
+		state->pmove.velocity[2] = MSG_ReadShort(&net_message);
+#ifdef USE_PMOVE_FLOAT
+		// jitmove - floating point precision - testing (todo: ignore & use stored value if off by less than .125)
+		state->pmove.fvelocity[0] = state->pmove.velocity[0] * 0.125f;
+		state->pmove.fvelocity[1] = state->pmove.velocity[1] * 0.125f;
+		state->pmove.fvelocity[2] = state->pmove.velocity[2] * 0.125f;
+#endif
 	}
 
 	if (flags & PS_M_TIME)
@@ -415,40 +437,76 @@ void CL_ParsePlayerstate (frame_t *oldframe, frame_t *newframe)
 		state->pmove.pm_flags = MSG_ReadByte(&net_message);
 
 	if (flags & PS_M_GRAVITY)
-		state->pmove.gravity = MSG_ReadShort (&net_message);
+		state->pmove.gravity = MSG_ReadShort(&net_message);
 
 	if (flags & PS_M_DELTA_ANGLES)
 	{
-		state->pmove.delta_angles[0] = MSG_ReadShort (&net_message);
-		state->pmove.delta_angles[1] = MSG_ReadShort (&net_message);
-		state->pmove.delta_angles[2] = MSG_ReadShort (&net_message);
+		state->pmove.delta_angles[0] = MSG_ReadShort(&net_message);
+		state->pmove.delta_angles[1] = MSG_ReadShort(&net_message);
+		state->pmove.delta_angles[2] = MSG_ReadShort(&net_message);
 	}
 
+	// demo playback
 	if (cl.attractloop)
-		state->pmove.pm_type = PM_FREEZE;		// demo playback
+	{
+		state->pmove.pm_type = PM_FREEZE; // don't do any weird movement prediction; just interpolate.
+	}
 
 	//
 	// parse the rest of the player_state_t
 	//
 	if (flags & PS_VIEWOFFSET)
 	{
-		state->viewoffset[0] = MSG_ReadChar(&net_message) * 0.25;
-		state->viewoffset[1] = MSG_ReadChar(&net_message) * 0.25;
-		state->viewoffset[2] = MSG_ReadChar(&net_message) * 0.25;
+		// === jitdemo - override camera
+		int viewoffset[3];
+
+		viewoffset[0] = MSG_ReadChar(&net_message);
+		viewoffset[1] = MSG_ReadChar(&net_message);
+		viewoffset[2] = MSG_ReadChar(&net_message);
+
+		if (no_demo_override)
+		{
+			state->viewoffset[0] = viewoffset[0] * 0.25f;
+			state->viewoffset[1] = viewoffset[1] * 0.25f;
+			state->viewoffset[2] = viewoffset[2] * 0.25f;
+		}
+		// jitdemo ===
 	}
 
 	if (flags & PS_VIEWANGLES)
 	{
-		state->viewangles[0] = MSG_ReadAngle16(&net_message);
-		state->viewangles[1] = MSG_ReadAngle16(&net_message);
-		state->viewangles[2] = MSG_ReadAngle16(&net_message);
+		// === jitdemo - override view angles.
+		float angles[3];
+
+		angles[0] = MSG_ReadAngle16(&net_message);
+		angles[1] = MSG_ReadAngle16(&net_message);
+		angles[2] = MSG_ReadAngle16(&net_message);
+
+		if (no_demo_override)
+		{
+			state->viewangles[0] = angles[0];
+			state->viewangles[1] = angles[1];
+			state->viewangles[2] = angles[2];
+		}
+		// jitdemo ===
 	}
 
 	if (flags & PS_KICKANGLES)
 	{
-		state->kick_angles[0] = MSG_ReadChar(&net_message) * 0.25;
-		state->kick_angles[1] = MSG_ReadChar(&net_message) * 0.25;
-		state->kick_angles[2] = MSG_ReadChar(&net_message) * 0.25;
+		// === jitdemo - allow overriding of the camera
+		int kick_angles[3];
+
+		kick_angles[0] = MSG_ReadChar(&net_message);
+		kick_angles[1] = MSG_ReadChar(&net_message);
+		kick_angles[2] = MSG_ReadChar(&net_message);
+
+		if (no_demo_override)
+		{
+			state->kick_angles[0] = kick_angles[0] * 0.25f;
+			state->kick_angles[1] = kick_angles[1] * 0.25f;
+			state->kick_angles[2] = kick_angles[2] * 0.25f;
+		}
+		// jitdemo ===
 	}
 
 	if (flags & PS_WEAPONINDEX)
@@ -459,20 +517,20 @@ void CL_ParsePlayerstate (frame_t *oldframe, frame_t *newframe)
 	if (flags & PS_WEAPONFRAME)
 	{
 		state->gunframe = MSG_ReadByte(&net_message);
-		state->gunoffset[0] = MSG_ReadChar(&net_message)*0.25;
-		state->gunoffset[1] = MSG_ReadChar(&net_message)*0.25;
-		state->gunoffset[2] = MSG_ReadChar(&net_message)*0.25;
-		state->gunangles[0] = MSG_ReadChar(&net_message)*0.25;
-		state->gunangles[1] = MSG_ReadChar(&net_message)*0.25;
-		state->gunangles[2] = MSG_ReadChar(&net_message)*0.25;
+		state->gunoffset[0] = MSG_ReadChar(&net_message) * 0.25f;
+		state->gunoffset[1] = MSG_ReadChar(&net_message) * 0.25f;
+		state->gunoffset[2] = MSG_ReadChar(&net_message) * 0.25f;
+		state->gunangles[0] = MSG_ReadChar(&net_message) * 0.25f;
+		state->gunangles[1] = MSG_ReadChar(&net_message) * 0.25f;
+		state->gunangles[2] = MSG_ReadChar(&net_message) * 0.25f;
 	}
 
 	if (flags & PS_BLEND)
 	{
-		state->blend[0] = MSG_ReadByte(&net_message)*0.003921568627450980392156862745098;
-		state->blend[1] = MSG_ReadByte(&net_message)*0.003921568627450980392156862745098;
-		state->blend[2] = MSG_ReadByte(&net_message)*0.003921568627450980392156862745098;
-		state->blend[3] = MSG_ReadByte(&net_message)*0.003921568627450980392156862745098;
+		state->blend[0] = MSG_ReadByte(&net_message) * 0.003921568627450980392156862745098f;
+		state->blend[1] = MSG_ReadByte(&net_message) * 0.003921568627450980392156862745098f;
+		state->blend[2] = MSG_ReadByte(&net_message) * 0.003921568627450980392156862745098f;
+		state->blend[3] = MSG_ReadByte(&net_message) * 0.003921568627450980392156862745098f;
 	}
 
 	if (flags & PS_FOV)
@@ -482,10 +540,13 @@ void CL_ParsePlayerstate (frame_t *oldframe, frame_t *newframe)
 		state->rdflags = MSG_ReadByte(&net_message);
 
 	// parse stats
-	statbits = MSG_ReadLong (&net_message);
-	for (i=0 ; i<MAX_STATS ; i++)
-		if (statbits & (1<<i) )
+	statbits = MSG_ReadLong(&net_message);
+
+	for (i = 0; i < MAX_STATS; ++i)
+	{
+		if (statbits & (1 << i))
 			state->stats[i] = MSG_ReadShort(&net_message);
+	}
 }
 
 
@@ -525,17 +586,17 @@ void CL_ParseFrame (void)
 	int			len;
 	frame_t		*old;
 
-	memset (&cl.frame, 0, sizeof(cl.frame));
+	memset(&cl.frame, 0, sizeof(cl.frame));
 	cl.frame.serverframe = MSG_ReadLong(&net_message);
 	cl.frame.deltaframe = MSG_ReadLong(&net_message);
-	cl.frame.servertime = cl.frame.serverframe*100;
+	cl.frame.servertime = cl.frame.serverframe * 100;
 
 	// BIG HACK to let old demos continue to work
 	if (cls.serverProtocol != 26)
 		cl.surpressCount = MSG_ReadByte(&net_message);
 
 	if (cl_shownet->value == 3)
-		Com_Printf ("   frame:%i  delta:%i\n", cl.frame.serverframe, cl.frame.deltaframe);
+		Com_Printf("   frame:%i  delta:%i\n", cl.frame.serverframe, cl.frame.deltaframe);
 
 	// If the frame is delta compressed from data that we
 	// no longer have available, we must suck up the rest of
@@ -553,16 +614,17 @@ void CL_ParseFrame (void)
 
 		if (!old->valid)
 		{	// should never happen
-			Com_Printf ("Delta from invalid frame (not supposed to happen!).\n");
+			Com_Printf("Delta from invalid frame (not supposed to happen!).\n");
 		}
+
 		if (old->serverframe != cl.frame.deltaframe)
 		{	// The frame that the server did the delta from
 			// is too old, so we can't reconstruct it properly.
-			Com_Printf ("Delta frame too old.\n");
+			Com_Printf("Delta frame too old.\n");
 		}
 		else if (cl.parse_entities - old->parse_entities > MAX_PARSE_ENTITIES-128)
 		{
-			Com_Printf ("Delta parse_entities too old.\n");
+			Com_Printf("Delta parse_entities too old.\n");
 		}
 		else
 		{
@@ -597,7 +659,6 @@ void CL_ParseFrame (void)
 		Com_Error(ERR_DROP, "CL_ParseFrame: not packetentities");
 
 	CL_ParsePacketEntities(old, &cl.frame);
-
 
 	// save the frame off in the backup array for later delta comparisons
 	cl.frames[cl.frame.serverframe & UPDATE_MASK] = cl.frame;
@@ -804,11 +865,11 @@ void CL_AddPacketEntities (frame_t *frame)
 			{
 				a1 = cent->current.angles[i];
 				a2 = cent->prev.angles[i];
-				ent.angles[i] = LerpAngle (a2, a1, cl.lerpfrac);
+				ent.angles[i] = LerpAngle(a2, a1, cl.lerpfrac);
 			}
 		}
 
-		if (s1->number == cl.playernum+1)
+		if (s1->number == cl.playernum + 1)
 		{
 			ent.flags |= RF_VIEWERMODEL;	// only draw from mirrors
 			// FIXME: still pass to refresh
@@ -818,9 +879,27 @@ void CL_AddPacketEntities (frame_t *frame)
 			else if (effects & EF_FLAG2)
 				V_AddLight(ent.origin, 225, 0.1, 0.1, 1.0);
 			else if (effects & EF_TAGTRAIL)						//PGM
-				V_AddLight(ent.origin, 225, 1.0, 1.0, 0.0);	//PGM
+				V_AddLight(ent.origin, 225, 1.0, 1.0, 0.0);		//PGM
 			else if (effects & EF_TRACKERTRAIL)					//PGM
 				V_AddLight(ent.origin, 225, -1.0, -1.0, -1.0);	//PGM
+
+			// === jitdemo - override camera position with new target entity playernum
+			if (cl.playernum_demooverride)
+			{
+				player_state_t *ps = &frame->playerstate;
+
+				ps->pmove.origin[0] = ent.origin[0] * 8;
+				ps->pmove.origin[1] = ent.origin[1] * 8;
+				ps->pmove.origin[2] = ent.origin[2] * 8;
+				ps->viewoffset[0] = 0.0f;
+				ps->viewoffset[1] = 0.0f;
+				ps->viewoffset[2] = 22.0f; // todo: figure out if crouched and use a different offset.
+				ps->viewangles[PITCH] = ent.angles[PITCH] * 3.0f; // view angle is scaled by 3 so 3rd person player model doesn't look crazy going fully horizontal and such
+				ps->viewangles[YAW] = ent.angles[YAW];
+				ps->viewangles[ROLL] = ent.angles[ROLL];
+				VectorClear(ps->kick_angles);
+			}
+			// jitdemo ===
 
 			continue;
 		}

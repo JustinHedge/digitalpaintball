@@ -641,6 +641,11 @@ typedef struct
 	short		gravity;
 	short		delta_angles[3];	// add to command angles to get view direction
 									// changed by spawns, rotating objects, and teleporters
+#ifdef USE_PMOVE_FLOAT // can't have this here, as it screws up offsets between game and engine...
+	// jitmove - floating point versions, for more accuracy
+	vec3_t		forigin;	
+	vec3_t		fvelocity;
+#endif
 } pmove_state_t;
 
 

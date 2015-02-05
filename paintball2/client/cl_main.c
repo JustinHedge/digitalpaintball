@@ -2235,6 +2235,32 @@ void CL_Measure_f (void) // jitmeasure
 }
 
 
+void CL_DemoPlayerNumber_f (void)
+{
+	if (Cmd_Argc() == 2)
+	{
+		const char *s = Cmd_Argv(1);
+
+		if (*s >= '0' && *s <= '9')
+		{
+			if (cl.attractloop)
+			{
+				cl.playernum_demooverride = true;
+				cl.playernum = atoi(s);
+			}
+			else
+			{
+				Com_Printf("This command can only be used while playing demos.\n");
+			}
+
+			return;
+		}
+	}
+
+	Com_Printf("Usage: demo_playernumber <player number>\nOverrides the camera position in the demo with the entity position of the specified player number.\n");
+}
+
+
 /*
 =================
 CL_InitLocal
@@ -2469,13 +2495,15 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("removetbans", NULL);
 	Cmd_AddCommand("writeips", NULL);
 
-	CL_InitProfile(); // jitprofile
-
 	// Xile/NiceAss LOC
 	Cmd_AddCommand("loc_add", CL_AddLoc_f);
 	Cmd_AddCommand("loc_del", CL_DeleteLoc_f);
 	Cmd_AddCommand("loc_save", CL_SaveLoc_f);
 	Cmd_AddCommand("loc_help", CL_LocHelp_f);
+
+	Cmd_AddCommand("demo_playernumber", CL_DemoPlayerNumber_f); // jitdemo
+
+	CL_InitProfile(); // jitprofile
 }
 
 

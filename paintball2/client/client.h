@@ -175,6 +175,7 @@ typedef struct
 	int			servercount;	// server identification for prespawns
 	char		gamedir[MAX_QPATH];
 	int			playernum;
+	qboolean	playernum_demooverride; // jitdemo
 
 	char		configstrings[MAX_CONFIGSTRINGS][MAX_QPATH];
 

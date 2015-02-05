@@ -39,7 +39,7 @@ typedef struct pml_s
 	cplane_t	groundplane;
 	int			groundcontents;
 
-	vec3_t		previous_origin;
+	short		previous_origin[3]; // jitmove - this should have always been a short... probably didn't hurt anything, though, since floats have more precision.
 	qboolean	ladder;
 	qboolean	rampslide; // jitmove - special case ramp sliding so players can have control but air accel at the same time.
 	qboolean	crouchslide;
@@ -1284,7 +1284,11 @@ void PM_SnapPosition (void)
 	short	base[3];
 	// try all single bits first
 	static int jitterbits[8] = {0,4,1,2,3,5,6,7};
-
+#ifdef USE_PMOVE_FLOAT
+	// jitmove - testing, floating point precision
+	VectorCopy(pml.origin, pm->s.forigin);
+	VectorCopy(pml.velocity, pm->s.fvelocity);
+#endif
 	// snap velocity to eigths
 	for (i = 0; i < 3; i++)
 		pm->s.velocity[i] = (short)(pml.velocity[i] * 8.0f);
@@ -1357,9 +1361,19 @@ void PM_InitialSnapPosition (void)
 
 				if (PM_GoodPosition())
 				{
-					pml.origin[0] = (float)pm->s.origin[0] * 0.125f;
-					pml.origin[1] = (float)pm->s.origin[1] * 0.125f;
-					pml.origin[2] = (float)pm->s.origin[2] * 0.125f;
+#ifdef USE_PMOVE_FLOAT
+					if (1) // jitmove - todo, cvar, testing
+					{
+						VectorCopy(pm->s.forigin, pml.origin);
+					}
+					else
+#endif
+					{
+						pml.origin[0] = (float)pm->s.origin[0] * 0.125f;
+						pml.origin[1] = (float)pm->s.origin[1] * 0.125f;
+						pml.origin[2] = (float)pm->s.origin[2] * 0.125f;
+					}
+
 					VectorCopy(pm->s.origin, pml.previous_origin);
 					return;
 				}
@@ -1431,13 +1445,24 @@ void Pmove (pmove_t *pmove)
 	memset(&pml, 0, sizeof(pml));
 
 	// convert origin and velocity to float values
-	pml.origin[0] = pm->s.origin[0] * 0.125f;
-	pml.origin[1] = pm->s.origin[1] * 0.125f;
-	pml.origin[2] = pm->s.origin[2] * 0.125f;
+#ifdef USE_PMOVE_FLOAT
+	if (1) // testing
+	{
+		// Floating point, for more precision (but possible prediciton misses)
+		VectorCopy(pm->s.forigin, pml.origin);
+		VectorCopy(pm->s.fvelocity, pml.velocity);
+	}
+	else
+#endif
+	{
+		pml.origin[0] = pm->s.origin[0] * 0.125f;
+		pml.origin[1] = pm->s.origin[1] * 0.125f;
+		pml.origin[2] = pm->s.origin[2] * 0.125f;
 
-	pml.velocity[0] = pm->s.velocity[0] * 0.125f;
-	pml.velocity[1] = pm->s.velocity[1] * 0.125f;
-	pml.velocity[2] = pm->s.velocity[2] * 0.125f;
+		pml.velocity[0] = pm->s.velocity[0] * 0.125f;
+		pml.velocity[1] = pm->s.velocity[1] * 0.125f;
+		pml.velocity[2] = pm->s.velocity[2] * 0.125f;
+	}
 
 	// save old org in case we get stuck
 	VectorCopy(pm->s.origin, pml.previous_origin);
