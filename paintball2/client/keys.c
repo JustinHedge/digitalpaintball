@@ -671,6 +671,10 @@ void Key_Unbind_f (void)
 {
 	int		b;
 
+	// jit - Don't let malicious servers force clients to mess up their key bindings.
+	if (g_command_stuffed)
+		return;
+
 	if (Cmd_Argc() != 2)
 	{
 		Com_Printf("Usage: unbind <key> : Remove commands from a key.\n");
@@ -692,6 +696,10 @@ void Key_Unbindall_f (void)
 {
 	int		i;
 	
+	// jit - Don't let malicious servers force clients to mess up their key bindings.
+	if (g_command_stuffed)
+		return;
+
 	for (i = 0; i < 256; ++i)
 		if (keybindings[i])
 			Key_SetBinding(i, "");
@@ -707,7 +715,11 @@ void Key_Bind_f (void)
 {
 	int			i, c, b;
 	char		cmd[1024];
-	
+
+	// jit - Don't let malicious servers force clients to mess up their key bindings.
+	if (g_command_stuffed)
+		return;
+
 	c = Cmd_Argc();
 
 	if (c < 2)

@@ -955,4 +955,5 @@ void SV_Frame (int msec);
 #define VARID_SERVER_GAMEBUILD			6
 int GetIntVarByID (int id);
 
+extern qboolean g_command_stuffed;
 
