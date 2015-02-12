@@ -25,6 +25,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define BOT_API_VERSION 1
 
+typedef enum {
+	BOT_OBJECTIVE_TYPE_UNSET = 0,
+	BOT_OBJECTIVE_TYPE_FLAG = 1,
+	BOT_OBJECTIVE_TYPE_BASE = 2
+} bot_objective_type_t;
+
+
 typedef struct edict_s edict_t;
 
 // for use the game library (gamex86)
@@ -44,7 +51,12 @@ typedef struct
 	qboolean	(*Command) (edict_t *ent, const char *cmd, const char *cmd2, const char *cmd3, const char *cmd4);
 	void		(*ExitLevel) (void); // called when level ends
 	void		(*SpawnEntities) (void); // called when level starts
-	void		(*ObservePlayerInput) (unsigned int player_index, edict_t *ent, pmove_t *pm); // called for each pm packet received from a client
+	void		(*ObservePlayerInput) (unsigned int player_index, const edict_t *ent, const pmove_t *pm); // called for each pm packet received from a client
+	void		(*ClearObjectives) (void);
+	void		(*AddObjective) (bot_objective_type_t objective_type, int player_index, int team_index, const edict_t *ent); // Called from the game for things like flags and capture zones, player is specified when only specific players can reach the objective (ex: capture flag).
+	void		(*RemoveObjective) (bot_objective_type_t objective_type, const edict_t *ent); // Called when objectives go away (ex: flag grabbed)
+	void		(*PlayerSpawn) (int player_index, int team_index, const edict_t *ent);
+	void		(*PlayerDie) (int player_index, const edict_t *ent);
 
 	// Block of unset data that will be zeroed out, in case of API changes, this will make new function pointers null,
 	// so crashes will be more obvious.

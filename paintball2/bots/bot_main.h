@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014 Nathan "jitspoe" Wulf, Digital Paint
+Copyright (c) 2015 Nathan "jitspoe" Wulf, Digital Paint
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bot_importexport.h"
 
 extern cvar_t *skill;
+extern cvar_t *bot_debug;
 
 // memory tags to allow dynamic memory to be cleaned up
 #define	TAG_GAME	765		// clear when unloading the dll

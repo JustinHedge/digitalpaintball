@@ -48,7 +48,8 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 	int connection_index;
 	int list_index;
 	
-	bi.dprintf("AStarFindPathFromNodeIndexes:");
+	if (bot_debug->value > 2.0f)
+		bi.dprintf("AStarFindPathFromNodeIndexes:");
 
 	if (path)
 	{
@@ -130,7 +131,9 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 		
 		if (current_node == -1)
 		{
-			bi.dprintf("failed.\n");
+			if (bot_debug->value > 2.0f)
+				bi.dprintf("failed.\n");
+
 			return false;
 		}
 	}
@@ -162,7 +165,11 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 		}
 	}
 
-	bi.dprintf("passed.\n");
+	if (bot_debug->value > 2.0f)
+		bi.dprintf("passed.\n");
+
+	DrawDebugSphere(g_bot_waypoints.positions[end_node], 16.0f, 0.8f, 1.0f, 0.8f, 20.0f, -1);
+
 	return true;
 }
 
@@ -212,7 +219,8 @@ qboolean AStarFindPathFromEntityToPos (edict_t *ent, vec3_t end_pos, bot_waypoin
 	if (need_new_point)
 	{
 		// No reachable node nearby, try adding one
-		BotTryAddWaypoint(ent, ent->s.origin);
+		BotTryAddWaypoint(ent, ent->s.origin); // TODO: Blindly adding a waypoint here is bad, as the bot may be in the air, resulting in an unreachable waypoint.
+		// TODO: Add waypoint to target position as well, so bots will actually grab flags instead of just getting next to them.
 
 		return AStarFindPathFromPositions(ent->s.old_origin, end_pos, path);
 	}

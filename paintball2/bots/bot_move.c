@@ -196,6 +196,7 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 				if (path->current_node >= path->num_points - 1)
 				{
 					path->active = false;
+					BotPathfindComplete(bot_index); // We've reached our destination -- time for a new goal?
 					return;
 				}
 
@@ -383,15 +384,18 @@ void BotWander (unsigned int bot_index, int msec)
 	if (movement->time_til_try_path <= 0)
 	{
 		int random_point = (int)nu_rand(g_bot_waypoints.num_points); // todo: pick randomly select several and use the most player-popular one.
-		
+
 		if (AStarFindPathFromEntityToPos(ent, g_bot_waypoints.positions[random_point], &movement->waypoint_path))
 		{
+			if (bot_debug->value)
+				bi.dprintf("Wandering to random waypoint.\n");
+
 			movement->waypoint_path.active = true;
 			BotFollowWaypoint(bot_index, msec);
 			return;
 		}
 
-		movement->time_til_try_path = 2000; // If we didn't find a path, don't try to pathfind again for 2 seconds.
+		movement->time_til_try_path = 1500; // If we didn't find a path, don't try to pathfind again for 1.5 seconds.
 	}
 
 	BotWanderNoNav(bot_index, msec);
@@ -546,7 +550,7 @@ void BotMove (unsigned int botindex, int msec)
 		{
 			qboolean move = true;
 
-			if (skill->value < -1.0f)
+			if (bot_debug->value && skill->value < -1.0f)
 			{
 				movement->yawspeed = 0;
 				movement->forward = 0;

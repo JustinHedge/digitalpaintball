@@ -194,6 +194,7 @@ void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const
 
 		BotAddPotentialWaypointFromPmove(observation, ent, pm);
 
+#if 0 //  -- TODO: Figure out a better way for bots to follow player paths
 		if (!observation->path_active)
 		{
 			float xy_velocity_sq = XYPMVelocitySquared(pm->s.velocity);
@@ -239,6 +240,7 @@ void BotObservePlayerInput (unsigned int player_index, const edict_t *ent, const
 
 		VectorCopy(ent->s.origin, observation->last_pos);
 		observation->last_pm = *pm;
+#endif
 	}
 
 	g_playercmd = pm->cmd;

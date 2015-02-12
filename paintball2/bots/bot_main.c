@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "bot_main.h"
 #include "bot_manager.h"
+#include "bot_goals.h"
 
 #ifdef WIN32
 #define EXPORT __declspec(dllexport)
@@ -30,6 +31,7 @@ bot_import_t bi;
 bot_render_import_t ri;
 botmanager_t bots;
 cvar_t *skill = NULL;
+cvar_t *bot_debug = NULL;
 #ifdef _DEBUG
 cvar_t *bot_remove_near_waypoints = NULL;
 #endif
@@ -68,6 +70,9 @@ EXPORT bot_export_t *GetBotAPI (bot_import_t *import)
 	g_bot_export.ExitLevel = BotExitLevel;
 	g_bot_export.SpawnEntities = BotSpawnEntities;
 	g_bot_export.ObservePlayerInput = BotObservePlayerInput;
+	g_bot_export.AddObjective = BotAddObjective;
+	g_bot_export.RemoveObjective = BotRemoveObjective;
+	g_bot_export.ClearObjectives = BotClearObjectives;
 
 	return &g_bot_export;
 }
@@ -84,6 +89,7 @@ void BotInitLibrary (void)
 	bi.dprintf("DP Botlib Initialized.\n");
 	memset(&bots, 0, sizeof(bots));
 	skill = bi.cvar("skill", "0", 0);
+	bot_debug = bi.cvar("bot_debug", "0", 0);
 #ifdef _DEBUG
 	bot_remove_near_waypoints = bi.cvar("bot_remove_near_waypoints", "0", 0);
 #endif
@@ -98,8 +104,8 @@ void BotShutdown (void)
 void BotRunFrame (int msec, float level_time)
 {
 	bots.level_time = level_time;
+	BotUpdateGoals(msec);;
 	BotUpdateMovement(msec);
-	BotUpdateGoals(msec);
 }
 
 

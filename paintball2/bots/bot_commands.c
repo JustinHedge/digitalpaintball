@@ -49,27 +49,19 @@ static void RemoveAllBots (edict_t *ent_cmd)
 }
 
 
-static void RemoveBotCommand (const char *nameToRemove, edict_t *ent_cmd)
+static edict_t *GetBotEntByName (const char *name_to_find)
 {
 	int i;
-
-	if (Q_strcaseeq(nameToRemove, "all"))
-	{
-		RemoveAllBots(ent_cmd);
-		return;
-	}
-
+	
 	// search for exact name:
 	for (i = 0; i < bots.count; ++i)
 	{
 		edict_t *ent = bots.ents[i];
 		const char *name = bi.GetClientName(ent);
 
-		if (Q_strcaseeq(name, nameToRemove))
+		if (Q_strcaseeq(name, name_to_find))
 		{
-			bi.cprintf(ent_cmd, PRINT_POPUP, "Removed bot: %s\n", name);
-			RemoveBot(ent);
-			return;
+			return ent;
 		}
 	}
 
@@ -79,12 +71,34 @@ static void RemoveBotCommand (const char *nameToRemove, edict_t *ent_cmd)
 		edict_t *ent = bots.ents[i];
 		const char *name = bi.GetClientName(ent);
 
-		if (strstr(name, nameToRemove))
+		if (strstr(name, name_to_find)) // todo: make case insensitive
 		{
-			bi.cprintf(ent_cmd, PRINT_POPUP, "Removed bot: %s\n", name);
-			RemoveBot(ent);
-			return;
+			return ent;
 		}
+	}
+
+	return NULL;
+}
+
+static void RemoveBotCommand (const char *nameToRemove, edict_t *ent_cmd)
+{
+	edict_t *ent;
+
+	if (Q_strcaseeq(nameToRemove, "all"))
+	{
+		RemoveAllBots(ent_cmd);
+		return;
+	}
+
+	ent = GetBotEntByName(nameToRemove);
+
+	if (ent)
+	{
+		const char *name = bi.GetClientName(ent);
+
+		bi.cprintf(ent_cmd, PRINT_POPUP, "Removed bot: %s\n", name);
+		RemoveBot(ent);
+		return;
 	}
 
 	bi.cprintf(ent_cmd, PRINT_POPUP, "No bots found with a name containing \"%s\".\n", nameToRemove);
@@ -100,6 +114,30 @@ void BotHere (edict_t *ent)
 	{
 		BotSetGoal(bot_index, BOT_GOAL_REACH_POSITION, ent->s.origin);
 	}
+}
+
+
+void BotCmd (edict_t *ent_cmd, const char *name_to_command, const char *cmd1, const char *cmd2)
+{
+	edict_t *ent;
+
+	if (Q_strcaseeq(name_to_command, "all"))
+	{
+		bi.cprintf(ent_cmd, PRINT_POPUP, "Command not implemented yet.\n");
+		// todo - loop through all bots and execute command
+		return;
+	}
+
+	ent = GetBotEntByName(name_to_command);
+
+	if (ent)
+	{
+		bi.cprintf(ent_cmd, PRINT_POPUP, "Command not implemented yet.\n");
+		// todo
+		return;
+	}
+
+	bi.cprintf(ent_cmd, PRINT_POPUP, "No bots found with a name containing \"%s\".\n", name_to_command);
 }
 
 
@@ -120,20 +158,28 @@ qboolean BotCommand (edict_t *ent, const char *cmd, const char *cmd2, const char
 		RemoveAllBots(ent);
 		return true;
 	}
-	else if (Q_strcaseeq(cmd, "bot_here"))
+	else if (bot_debug->value)
 	{
-		BotHere(ent);
-		return true;
-	}
-	else if (Q_strcaseeq(cmd, "bot_debug_astar_start"))
-	{
-		AStarDebugStartPoint(ent->s.origin);
-		return true;
-	}
-	else if (Q_strcaseeq(cmd, "bot_debug_astar_end"))
-	{
-		AStarDebugEndPoint(ent->s.origin);
-		return true;
+		if (Q_strcaseeq(cmd, "bot_here"))
+		{
+			BotHere(ent);
+			return true;
+		}
+		else if (Q_strcaseeq(cmd, "bot_debug_astar_start"))
+		{
+			AStarDebugStartPoint(ent->s.origin);
+			return true;
+		}
+		else if (Q_strcaseeq(cmd, "bot_debug_astar_end"))
+		{
+			AStarDebugEndPoint(ent->s.origin);
+			return true;
+		}
+		else if (Q_strcaseeq(cmd, "botcmd"))
+		{
+			BotCmd(ent, cmd2, cmd3, cmd4);
+			return true;
+		}
 	}
 
 	return false;
