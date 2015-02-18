@@ -351,12 +351,16 @@ void FS_Read (void *buffer, int len, FILE *f)
 			}
 			else
 			{
+				assert(0);
 				Com_Error(ERR_FATAL, "FS_Read: 0 bytes read");
 			}
 		}
 
 		if (read == -1)
+		{
+			assert(0);
 			Com_Error(ERR_FATAL, "FS_Read: -1 bytes read");
+		}
 
 		// do some progress bar thing here...
 		remaining -= read;
