@@ -139,6 +139,7 @@ void AddBot (const char *name)
 {
 	char userinfo[MAX_INFO_STRING];
 	edict_t *ent;
+	char default_bot_name[32];
 
 	if (bots.count >= MAX_BOTS)
 	{
@@ -146,7 +147,10 @@ void AddBot (const char *name)
 	}
 
 	if (!name || !*name)
-		name = "DPBot";
+	{
+		Com_sprintf(default_bot_name, sizeof(default_bot_name), "DPBot%02d", bots.count + 1);
+		name = default_bot_name;
+	}
 
 	SetBotUserInfo(userinfo, sizeof(userinfo), name);
 	ent = bi.AddBotClient(userinfo);

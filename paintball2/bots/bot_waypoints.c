@@ -188,8 +188,7 @@ qboolean BotCanReachPosition (const edict_t *ent, const vec3_t pos1, const vec3_
 		if (trace.plane.normal[2] < -0.8f) // hit a ceiling
 			return false;
 
-		VectorCopy(pos1, jump_pos);
-		jump_pos[2] += 56.0f;
+		VectorCopyAddZ(pos1, jump_pos, 56.0f);
 
 		// Just use crouching mins/maxes here to avoid doing more traces later.  It's possible that we'll generate an impossible node connection
 		// (one that requires jumping while crouched), but those seem rare enough to not waste the extra cycles, since traces/raycast are slow.

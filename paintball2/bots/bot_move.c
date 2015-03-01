@@ -158,7 +158,7 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 		{
 			edict_t *ent = bots.ents[bot_index];
 			int waypoint_index = path->nodes[path->current_node];
-			float dist_sq = VectorSquareDistance(g_bot_waypoints.positions[waypoint_index], ent->s.origin);
+			float dist_sq;
 			vec3_t bot_to_current_waypoint, current_to_next_waypoint;
 			vec3_t vec_diff;
 //			vec3_t velocity;
@@ -171,16 +171,32 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 			qboolean waypoint_passed = false;
 			static float test_vel_offset = 0.1f;
 			float test_threshold = 20.0f;
+			const vec_t *current_waypoint_pos = movement->waypoint_path.end_pos;
+			const vec_t *next_waypoint_pos = movement->waypoint_path.end_pos;
 
 			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, bot_to_current_waypoint);
 
-			// To prevent bots from circling back to waypoints that were not quite touched, check if we've passed them and are moving toward the text waypoint
+			// Get the current waypoint position.
+			if (movement->waypoint_path.current_node < movement->waypoint_path.num_points)
+			{
+				current_waypoint_pos = g_bot_waypoints.positions[waypoint_index];
+			}
+
+			dist_sq = VectorSquareDistance(current_waypoint_pos, ent->s.origin); // distance from bot to current target waypoint.
+
+			// Get the next waypoint position.
 			if (movement->waypoint_path.current_node < movement->waypoint_path.num_points - 1)
 			{
 				int next_waypoint_index = path->nodes[path->current_node + 1];
 
-				VectorSubtract(g_bot_waypoints.positions[next_waypoint_index], g_bot_waypoints.positions[waypoint_index], current_to_next_waypoint);
+				next_waypoint_pos = g_bot_waypoints.positions[next_waypoint_index];
+			}
 
+			// To prevent bots from circling back to waypoints that were not quite touched, check if we've passed them and are moving toward the text waypoint
+			VectorSubtract(next_waypoint_pos, current_waypoint_pos, current_to_next_waypoint);
+
+			if (VectorLengthSquared(current_to_next_waypoint) > 4.0f) // 2 quake units
+			{
 				if (DotProduct(bot_to_current_waypoint, current_to_next_waypoint) < 0)
 					waypoint_passed = true;
 			}
@@ -192,36 +208,46 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 				else
 					DrawDebugSphere(g_bot_waypoints.positions[waypoint_index], 8.0f, 0.0f, 1.0f, 0.8f, 1.0f, -1);
 
+				current_waypoint_pos = next_waypoint_pos;
+
 				// Stop if we've reached our destination.
 				if (path->current_node >= path->num_points - 1)
 				{
-					path->active = false;
-					BotPathfindComplete(bot_index); // We've reached our destination -- time for a new goal?
-					return;
+					// Check this again, as we may have a final position that's different from the last waypoint position.
+					dist_sq = VectorSquareDistance(next_waypoint_pos, ent->s.origin);
+
+					if (dist_sq <= WAYPOINT_REACHED_EPSILON_SQ)
+					{
+						path->active = false;
+						BotPathfindComplete(bot_index); // We've reached our destination -- time for a new goal?
+						return;
+					}
 				}
-
-				++path->current_node;
-				waypoint_index = path->nodes[path->current_node];
-
-				if (waypoint_index < 0 || waypoint_index > MAX_WAYPOINTS)
+				else
 				{
-					// This should never happen, but just in case...
-					assert(0);
-					path->active = false;
-					return;
+					++path->current_node;
+					waypoint_index = path->nodes[path->current_node];
+
+					if (waypoint_index < 0 || waypoint_index > MAX_WAYPOINTS)
+					{
+						// This should never happen, but just in case...
+						assert(0);
+						path->active = false;
+						return;
+					}
 				}
 			}
 			
-			if (!BotCanReachPosition(ent, ent->s.origin, g_bot_waypoints.positions[waypoint_index], &movement->need_jump))
+			if (!BotCanReachPosition(ent, ent->s.origin, current_waypoint_pos, &movement->need_jump))
 			{
-				DrawDebugSphere(g_bot_waypoints.positions[waypoint_index], 9.0f, 1.0f, 0.0f, 0.0f, 1.0f, -1);
+				DrawDebugSphere(current_waypoint_pos, 9.0f, 1.0f, 0.0f, 0.0f, 1.0f, -1);
 				path->active = false;
 				BotRetryGoal(bot_index);
 				return;
 			}
 
-			DrawDebugSphere(g_bot_waypoints.positions[waypoint_index], 7.5f, 1.0f, 1.0f, 1.0f, 0.1f, -1);
-			VectorSubtract(g_bot_waypoints.positions[waypoint_index], ent->s.origin, vec_diff);
+			DrawDebugSphere(current_waypoint_pos, 7.5f, 1.0f, 1.0f, 1.0f, 0.1f, -1);
+			VectorSubtract(current_waypoint_pos, ent->s.origin, vec_diff);
 			//VectorScale(ent->client->ps.pmove.velocity, 0.125f, velocity); // pm version stored as 8x, so scale it back to normal
 			//VectorMA(vec_diff, -test_vel_offset, velocity, vec_to_face);
 			VectorCopy(vec_diff, vec_to_face);
@@ -378,6 +404,7 @@ void BotWanderNoNav (unsigned int botindex, int msec)
 
 void BotWander (unsigned int bot_index, int msec)
 {
+	/* No longer necesssary?  Wandering is now a goal.
 	botmovedata_t *movement = bots.movement + bot_index;
 	edict_t *ent = bots.ents[bot_index];
 
@@ -396,7 +423,7 @@ void BotWander (unsigned int bot_index, int msec)
 		}
 
 		movement->time_til_try_path = 1500; // If we didn't find a path, don't try to pathfind again for 1.5 seconds.
-	}
+	}*/
 
 	BotWanderNoNav(bot_index, msec);
 }
@@ -418,7 +445,7 @@ void BotCopyPlayer (unsigned int botindex, int msec)
 }
 
 
-// TODO: symmetrical paths if the map is mirrored
+// TODO: symmetrical paths if the map is mirrored?
 
 #define MAX_DIST_TO_PLAYER_PATH 256 // 256 quake units, ~ 9m/27ft
 

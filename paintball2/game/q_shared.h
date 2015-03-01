@@ -213,6 +213,7 @@ extern long Q_ftol( float f );
 #define DistanceSquared(x,y)	(((x)[0]-(y)[0])*((x)[0]-(y)[0])+((x)[1]-(y)[1])*((x)[1]-(y)[1])+((x)[2]-(y)[2])*((x)[2]-(y)[2]))
 #define	SnapVector(v)			((v)[0]=((int)((v)[0])),(v)[1]=((int)((v)[1])),(v)[2]=((int)((v)[2])))
 #define VectorCopy(i,o)			((o)[0]=(i)[0],(o)[1]=(i)[1],(o)[2]=(i)[2])
+#define VectorCopyAddZ(i,o,z)	((o)[0]=(i)[0],(o)[1]=(i)[1],(o)[2]=(i)[2] + z)
 #define VectorSet(v,x,y,z)		((v)[0]=(x),(v)[1]=(y),(v)[2]=(z))
 #define VectorClear(v)			((v)[0]=(v)[1]=(v)[2]=0.0f)
 #define VectorCompare(a,b)		((a)[0]==(b)[0]&&(a)[1]==(b)[1]&&(a)[2]==(b)[2])

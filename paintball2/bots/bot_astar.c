@@ -167,7 +167,8 @@ qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoin
 
 	if (bot_debug->value > 2.0f)
 		bi.dprintf("passed.\n");
-
+	
+	VectorCopy(g_bot_waypoints.positions[end_node], path->end_pos);
 	DrawDebugSphere(g_bot_waypoints.positions[end_node], 16.0f, 0.8f, 1.0f, 0.8f, 20.0f, -1);
 
 	return true;
@@ -189,14 +190,52 @@ void AStarDebugEndPoint (vec3_t pos)
 }
 
 
-qboolean AStarFindPathFromPositions (vec3_t start_pos, vec3_t end_pos, bot_waypoint_path_t *path)
+qboolean GenerateValidWaypointPos (const edict_t *ent, const vec3_t pos_in, vec_t *pos_out)
 {
-	return AStarFindPathFromNodeIndexes(ClosestWaypointToPosition(start_pos, NULL), ClosestWaypointToPosition(end_pos, NULL), path);
+	trace_t trace;
+	vec3_t pos_up, pos_down;
+
+	// If the end position is an entity, it may be too low or floating, so make sure we get an appropriate position.
+	VectorCopyAddZ(pos_in, pos_up, 32.0f);
+	VectorCopyAddZ(pos_in, pos_down, -32.0f);
+
+	// cast up
+	trace = bi.trace(pos_in, crouching_mins, crouching_maxs, pos_up, ent, MASK_PLAYERSOLID);
+	//++g_debug_trace_count;
+
+	if (!trace.startsolid)
+		VectorCopy(trace.endpos, pos_up);
+
+	// and back down to try to find a position on the ground
+	trace = bi.trace(pos_up, crouching_mins, crouching_maxs, pos_down, ent, MASK_PLAYERSOLID);
+	//++g_debug_trace_count;
+
+	if (!trace.startsolid)
+	{
+		VectorCopy(trace.endpos, pos_out);
+		return true;
+	}
+
+	VectorCopy(pos_in, pos_out);
+	return false;
 }
 
 
-qboolean AStarFindPathFromEntityToPos (edict_t *ent, vec3_t end_pos, bot_waypoint_path_t *path)
+qboolean AStarFindPathFromPositions (const edict_t *ent, const vec3_t start_pos, const vec3_t end_pos, bot_waypoint_path_t *path)
 {
+	if (AStarFindPathFromNodeIndexes(ClosestWaypointToPosition(start_pos, NULL), ClosestWaypointToPosition(end_pos, NULL), path))
+	{
+		GenerateValidWaypointPos(ent, end_pos, path->end_pos);
+		return true;
+	}
+
+	return false;
+}
+
+
+qboolean AStarFindPathFromEntityToPos (const edict_t *ent, const vec3_t end_pos, bot_waypoint_path_t *path)
+{
+	/* Disabling the adding for now - we need to make sure the bot is in a valid location and touching the ground before doing this.
 	float dist_sq = FLT_MAX;
 	int closest_start_node = ClosestWaypointToPosition(ent->s.origin, &dist_sq);
 	qboolean need_new_point = false;
@@ -222,11 +261,17 @@ qboolean AStarFindPathFromEntityToPos (edict_t *ent, vec3_t end_pos, bot_waypoin
 		BotTryAddWaypoint(ent, ent->s.origin); // TODO: Blindly adding a waypoint here is bad, as the bot may be in the air, resulting in an unreachable waypoint.
 		// TODO: Add waypoint to target position as well, so bots will actually grab flags instead of just getting next to them.
 
-		return AStarFindPathFromPositions(ent->s.old_origin, end_pos, path);
+		return AStarFindPathFromPositions(ent->s.origin, end_pos, path);
 	}
 	else
 	{
+
+		if (closest_start_node < 0)
+			return false;
+
 		return AStarFindPathFromNodeIndexes(closest_start_node, ClosestWaypointToPosition(end_pos, NULL), path);
-	}
+	}*/
+
+	return AStarFindPathFromPositions(ent, ent->s.origin, end_pos, path);
 }
 

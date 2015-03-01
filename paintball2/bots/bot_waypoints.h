@@ -59,9 +59,14 @@ typedef struct {
 typedef struct {
 	int			num_points;
 	int			current_node;
-	qboolean	active;
 	int			nodes[MAX_WAYPOINTS];
+	vec3_t		end_pos; // position to reach after the last waypoint.
+	qboolean	active;
 } bot_waypoint_path_t;
+
+
+extern vec3_t crouching_mins;
+extern vec3_t crouching_maxs;
 
 extern bot_waypoints_t g_bot_waypoints;
 
@@ -72,8 +77,8 @@ int ClosestWaypointToPosition (const vec3_t pos, float *sq_dist);
 
 // bot_astar.c
 qboolean AStarFindPathFromNodeIndexes (int start_node, int end_node, bot_waypoint_path_t *path);
-qboolean AStarFindPathFromPositions (vec3_t start_pos, vec3_t end_pos, bot_waypoint_path_t *path);
-qboolean AStarFindPathFromEntityToPos (edict_t *ent, vec3_t end_pos, bot_waypoint_path_t *path);
+qboolean AStarFindPathFromPositions (const edict_t *ent, const vec3_t start_pos, const vec3_t end_pos, bot_waypoint_path_t *path);
+qboolean AStarFindPathFromEntityToPos (const edict_t *ent, const vec3_t end_pos, bot_waypoint_path_t *path);
 void AStarDebugStartPoint (vec3_t pos);
 void AStarDebugEndPoint (vec3_t pos);
 

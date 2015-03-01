@@ -86,6 +86,7 @@ void BotRemoveObjective (bot_objective_type_t objective_type, const edict_t *ent
 		if (objective->active && objective->ent == ent && objective->objective_type == objective_type)
 		{
 			objective->active = false;
+			--g_bot_num_objectives;
 		}
 	}
 }
@@ -147,8 +148,8 @@ void BotUpdateGoals (int msec)
 		{
 			qboolean wander = true;
 
-			// 50% chance of wandering for a few seconds for now.
-			if (nu_rand(1) < 0.5f)
+			// 20% chance of wandering for a few seconds for now.
+			if (nu_rand(1) < 0.2f)
 			{
 				if (bot_debug->value)
 					bi.dprintf("Looking for a goal.\n");
@@ -193,18 +194,17 @@ void BotUpdateGoals (int msec)
 
 			if (wander)
 			{
+				int random_point = (int)nu_rand(g_bot_waypoints.num_points); // todo: pick randomly select several and use the most player-popular one.
+
 				if (bot_debug->value)
 					bi.dprintf("Wandering.\n");
 
 				goal->active = true;
 				goal->type = BOT_GOAL_WANDER;
+				goal->changed = true;
+				VectorCopy(g_bot_waypoints.positions[random_point], goal->pos);
 				goal->timeleft_msec = 10000; // 10 seconds
 			}
-		}
-
-		if (goal->type == BOT_GOAL_WANDER)
-		{
-			goal->changed = false;
 		}
 
 		if (goal->changed)
@@ -220,9 +220,12 @@ void BotUpdateGoals (int msec)
 				movement->time_til_try_path = 200 + (int)nu_rand(1000); // force some delay between path finds so bots don't spaz out and try to path find every single update.
 				bots.time_since_last_pathfind = 0;
 
+				if (!movement->waypoint_path.active)
+					goal->timeleft_msec = 100 + (int)nu_rand(500); // couldn't path find to goal.  Try to find another one quickly.
+
 				if (bot_debug->value)
 				{
-					bi.dprintf("Pathing to goal at %g, %g, %g: %s.\n", goal->pos[0], goal->pos[1], goal->pos[2], movement->waypoint_path.active ? "Success" : "Failed");
+					bi.dprintf("Pathfinding to goal at %g, %g, %g: %s.\n", goal->pos[0], goal->pos[1], goal->pos[2], movement->waypoint_path.active ? "Success" : "Failed");
 				}
 			}
 		}
