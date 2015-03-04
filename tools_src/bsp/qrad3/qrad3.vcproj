@@ -28,6 +28,7 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+				CommandLine=""
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -210,6 +211,7 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+				CommandLine=""
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -286,6 +288,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copy to bsp utils."
+				CommandLine="copy .\Release\qrad3.exe E:\Programs\bsp\pball2\quake2\util\qrad3r1jit.exe"
 			/>
 		</Configuration>
 	</Configurations>

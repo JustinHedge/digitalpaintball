@@ -34,6 +34,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <libc.h>
 #endif
 
+//#define	BASEDIRNAME	"paintball2"  // jit
 #define	BASEDIRNAME	"quake2"
 #define PATHSEPERATOR   '/'
 
@@ -127,7 +128,7 @@ void Error (char *error, ...)
 	va_end (argptr);
 
 	sprintf (text2, "%s\nGetLastError() = %i", text, err);
-    MessageBox(NULL, text2, "Error", 0 /* MB_OK */ );
+	MessageBox(NULL, text2, "Error", 0 /* MB_OK */ );
 
 	exit (1);
 }
@@ -174,15 +175,16 @@ void qprintf (char *format, ...)
 
 qdir will hold the path up to the quake directory, including the slash
 
-  f:\quake\
-  /raid/quake/
+f:\quake\
+/raid/quake/
 
 gamedir will hold qdir + the game directory (id1, id2, etc)
 
-  */
+*/
 
 char		qdir[1024];
 char		gamedir[1024];
+char		moddir[1024] = "";
 
 void SetQdirFromPath (char *path)
 {
@@ -219,7 +221,7 @@ void SetQdirFromPath (char *path)
 			Error ("No gamedir in %s", path);
 			return;
 		}
-	Error ("SetQdirFromPath: no '%s' in %s", BASEDIRNAME, path);
+		Error ("SetQdirFromPath: no '%s' in %s", BASEDIRNAME, path);
 }
 
 char *ExpandArg (char *path)
@@ -286,7 +288,7 @@ double I_FloatTime (void)
 
 	return t;
 #if 0
-// more precise, less portable
+	// more precise, less portable
 	struct timeval tp;
 	struct timezone tzp;
 	static int		secbase;
@@ -306,11 +308,11 @@ double I_FloatTime (void)
 void Q_getwd (char *out)
 {
 #ifdef WIN32
-   _getcwd (out, 256);
-   strcat (out, "\\");
+	_getcwd (out, 256);
+	strcat (out, "\\");
 #else
-   getwd (out);
-   strcat (out, "/");
+	getwd (out);
+	strcat (out, "/");
 #endif
 }
 
@@ -365,7 +367,7 @@ char *COM_Parse (char *data)
 	if (!data)
 		return NULL;
 
-// skip whitespace
+	// skip whitespace
 skipwhite:
 	while ( (c = *data) <= ' ')
 	{
@@ -377,7 +379,7 @@ skipwhite:
 		data++;
 	}
 
-// skip // comments
+	// skip // comments
 	if (c=='/' && data[1] == '/')
 	{
 		while (*data && *data != '\n')
@@ -386,7 +388,7 @@ skipwhite:
 	}
 
 
-// handle quoted strings specially
+	// handle quoted strings specially
 	if (c == '\"')
 	{
 		data++;
@@ -403,7 +405,7 @@ skipwhite:
 		} while (1);
 	}
 
-// parse single characters
+	// parse single characters
 	if (c=='{' || c=='}'|| c==')'|| c=='(' || c=='\'' || c==':')
 	{
 		com_token[len] = c;
@@ -412,14 +414,14 @@ skipwhite:
 		return data+1;
 	}
 
-// parse a regular word
+	// parse a regular word
 	do
 	{
 		com_token[len] = c;
 		data++;
 		len++;
 		c = *data;
-	if (c=='{' || c=='}'|| c==')'|| c=='(' || c=='\'' || c==':')
+		if (c=='{' || c=='}'|| c==')'|| c=='(' || c=='\'' || c==':')
 			break;
 	} while (c>32);
 
@@ -478,7 +480,7 @@ char *strlower (char *start)
 	in = start;
 	while (*in)
 	{
-		*in = tolower(*in);
+		*in = tolower(*in); 
 		in++;
 	}
 	return start;
@@ -488,7 +490,7 @@ char *strlower (char *start)
 /*
 =============================================================================
 
-						MISC FUNCTIONS
+MISC FUNCTIONS
 
 =============================================================================
 */
@@ -621,7 +623,7 @@ TryLoadFile
 Allows failure
 ==============
 */
-int    TryLoadFile (char *filename, void **bufferptr)
+int    TryLoadFile (char *filename, void **bufferptr, int print_error)
 {
 	FILE	*f;
 	int    length;
@@ -629,9 +631,17 @@ int    TryLoadFile (char *filename, void **bufferptr)
 
 	*bufferptr = NULL;
 
+
 	f = fopen (filename, "rb");
+
 	if (!f)
+	{
+		if(print_error)
+			printf("  File %s failed to open\n", filename);
+
 		return -1;
+	}
+
 	length = Q_filelength (f);
 	buffer = malloc (length+1);
 	((char *)buffer)[length] = 0;
@@ -643,6 +653,117 @@ int    TryLoadFile (char *filename, void **bufferptr)
 }
 
 
+/*
+==============
+TryLoadFileFromPak
+
+Allows failure
+==============
+*/
+typedef struct 
+{ 
+	unsigned char magic[4];      // Name of the new WAD format
+	long diroffset;               // Position of WAD directory from start of file
+	long dirsize;                 // Number of entries * 0x40 (64 char)
+
+	unsigned char bogus[50];
+} pakheader_t;
+
+typedef struct 
+{ 
+	unsigned char filename[0x38];        // Name of the file, Unix style, with extension, 
+	// 56 chars, padded with '\0'.
+	long offset;                  // Position of the entry in PACK file
+	long size;                    // Size of the entry in PACK file
+} pakentry_t;
+
+int    TryLoadFileFromPak (char *filename, void **bufferptr, char *gd)
+{
+	FILE	*f;
+	int     n, i, ret_len;
+	long    dir_ents;
+	void    *buffer;
+	pakheader_t pak_header;
+	pakentry_t *pak_entry;
+	char file[1024];
+
+	for(n = 0; filename[n] != 0; n++)
+	{
+		if(filename[n] == '\\')
+			filename[n] = '/';
+	}
+
+	*bufferptr = NULL;
+
+	ret_len = -1;
+
+	for(n = 0;; n++)
+	{
+		if(ret_len != -1)
+			break;
+
+		sprintf(file, "%spak%d.pak", gd, n);
+
+		f = fopen (file, "rb");
+
+		if(!f)
+		{
+			//if(errno == ENOENT) jit
+				return -1;
+
+			continue;
+		}
+
+		SafeRead(f, &pak_header, sizeof(pakheader_t));
+
+		dir_ents = pak_header.dirsize / sizeof(pakentry_t);
+
+		pak_entry = malloc(pak_header.dirsize);
+
+		if(pak_entry != NULL)
+		{
+			if(!fseek(f, pak_header.diroffset, SEEK_SET))
+			{
+				memset(pak_entry, 0, pak_header.dirsize);
+
+				SafeRead(f, pak_entry, pak_header.dirsize);
+
+				for(i = 0; i < dir_ents; i++)
+				{
+					for(n = 0; pak_entry[i].filename[n] != 0; n++)
+					{
+						if(pak_entry[i].filename[n] == '\\')
+							pak_entry[i].filename[n] = '/';
+					}
+
+					if(!strnicmp(pak_entry[i].filename, filename, 56))
+					{
+						if(!fseek(f, pak_entry[i].offset, SEEK_SET))
+						{
+							buffer = malloc (pak_entry[i].size+1);
+							((char *)buffer)[pak_entry[i].size] = 0;
+							SafeRead (f, buffer, pak_entry[i].size);
+							*bufferptr = buffer;
+
+							ret_len = pak_entry[i].size;
+						}
+
+						break;
+					}
+				}
+			}
+		}
+
+		if(pak_entry != NULL)
+			free(pak_entry);
+
+		fclose(f);
+	}
+
+	return ret_len;
+}
+/*
+*/
 /*
 ==============
 SaveFile
@@ -662,10 +783,10 @@ void    SaveFile (char *filename, void *buffer, int count)
 void DefaultExtension (char *path, char *extension)
 {
 	char    *src;
-//
-// if path doesnt have a .EXT, append extension
-// (extension should include the .)
-//
+	//
+	// if path doesnt have a .EXT, append extension
+	// (extension should include the .)
+	//
 	src = path + strlen(path) - 1;
 
 	while (*src != PATHSEPERATOR && src != path)
@@ -730,9 +851,9 @@ void ExtractFilePath (char *path, char *dest)
 
 	src = path + strlen(path) - 1;
 
-//
-// back up until a \ or the start
-//
+	//
+	// back up until a \ or the start
+	//
 	while (src != path && *(src-1) != '\\' && *(src-1) != '/')
 		src--;
 
@@ -746,9 +867,9 @@ void ExtractFileBase (char *path, char *dest)
 
 	src = path + strlen(path) - 1;
 
-//
-// back up until a \ or the start
-//
+	//
+	// back up until a \ or the start
+	//
 	while (src != path && *(src-1) != PATHSEPERATOR)
 		src--;
 
@@ -765,9 +886,9 @@ void ExtractFileExtension (char *path, char *dest)
 
 	src = path + strlen(path) - 1;
 
-//
-// back up until a . or the start
-//
+	//
+	// back up until a . or the start
+	//
 	while (src != path && *(src-1) != '.')
 		src--;
 	if (src == path)
@@ -825,7 +946,7 @@ int ParseNum (char *str)
 /*
 ============================================================================
 
-					BYTE ORDER FUNCTIONS
+BYTE ORDER FUNCTIONS
 
 ============================================================================
 */
@@ -1040,7 +1161,7 @@ void	CreatePath (char *path)
 ============
 QCopyFile
 
-  Used to archive source files
+Used to archive source files
 ============
 */
 void QCopyFile (char *from, char *to)
@@ -1053,3 +1174,5 @@ void QCopyFile (char *from, char *to)
 	SaveFile (to, buffer, length);
 	free (buffer);
 }
+
+

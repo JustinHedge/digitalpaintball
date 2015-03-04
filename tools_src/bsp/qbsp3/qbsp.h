@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "bspfile.h"
 
 #define	MAX_BRUSH_SIDES	128
-#define	CLIP_EPSILON	0.1
+//unused #define	CLIP_EPSILON	0.1
 
 #define	BOGUS_RANGE	8192
 
@@ -301,6 +301,7 @@ void MakeTreePortals (tree_t *tree);
 
 void OutputWinding (winding_t *w, FILE *glview);
 void WriteGLView (tree_t *tree, char *source);
+void WriteGLViewSingleBrush (mapbrush_t *b);
 
 //=============================================================================
 
@@ -350,3 +351,10 @@ void PrintTree_r (node_t *node, int depth);
 void FreeTreePortals_r (node_t *node);
 void PruneNodes_r (node_t *node);
 void PruneNodes (node_t *node);
+
+
+
+// if a brush just barely pokes onto the other side,
+// let it slide by without chopping
+#define	PLANESIDE_EPSILON	0.001
+

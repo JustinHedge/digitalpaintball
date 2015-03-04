@@ -169,7 +169,7 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, vec3_t origin)
 		bt->scale[1] = 1;
 
 
-	// 
+	// DWH: Fix for scaled textures using an origin brush
 	if(origfix)
 	{
 		VectorScale(origin,1.0/bt->scale[0],scaled_origin);
@@ -215,14 +215,14 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, vec3_t origin)
 		sv = 1;
 	else
 		sv = 2;
-				
+
 	if (vecs[1][0])
 		tv = 0;
 	else if (vecs[1][1])
 		tv = 1;
 	else
 		tv = 2;
-					
+
 	for (i=0 ; i<2 ; i++)
 	{
 		ns = cosv * vecs[i][sv] - sinv * vecs[i][tv];

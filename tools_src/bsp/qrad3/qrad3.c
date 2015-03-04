@@ -69,11 +69,12 @@ float	maxlight = 196;
 float	lightscale = 1.0;
 
 qboolean sun = false;
-qboolean sun_alt_color = false;
+qboolean sun_alt_color = true; // jit
 vec3_t sun_pos = {0.0f, 0.0f, 1.0f};
 int sun_main = 250.0f;
-int sun_ambient = 0.0f;
+int sun_ambient = 60.0f; // jit
 vec3_t sun_color = {1, 1, 1};
+vec3_t sun_angle = {146, -22, 0}; // jit
 
 qboolean	glview;
 qboolean    nocolor = false;
@@ -84,6 +85,8 @@ char		source[1024];
 
 float	direct_scale =	0.4;
 float	entity_scale =	1.0;
+//float	sky_scale = 0.00001f;
+float	sky_scale = 1.0f;
 
 /*
 ===================================================================
@@ -344,16 +347,16 @@ void MakeTransfers (int i)
     calc_trace = (save_trace && memory && first_transfer);
     test_trace = (save_trace && memory && !first_transfer);
 
-    if(calc_trace)
-        {
-        memset(trace_buf, 0, trace_buf_size);
-        }
-    else if(test_trace)
-        {
-        DecompressBytes(trace_buf_size, patch->trace_hit, trace_buf);
-        }
+	if (calc_trace)
+	{
+		memset(trace_buf, 0, trace_buf_size);
+	}
+	else if (test_trace)
+	{
+		DecompressBytes(trace_buf_size, patch->trace_hit, trace_buf);
+	}
 
-	for (j=0, patch2 = patches ; j< num_patches ; j++, patch2++)
+	for (j = 0, patch2 = patches; j < num_patches; ++j, ++patch2)
 	{
     	transfers[j] = 0;
 
@@ -364,9 +367,11 @@ void MakeTransfers (int i)
 		if (!nopvs)
 		{
 			cluster = patch2->cluster;
+
 			if (cluster == -1)
 				continue;
-			if ( ! ( pvs[cluster>>3] & (1<<(cluster&7)) ) )
+
+			if (!(pvs[cluster >> 3] & (1 << (cluster & 7))))
 				continue;		// not in pvs
 		}
 
@@ -374,32 +379,33 @@ void MakeTransfers (int i)
             continue;
 
 		// calculate vector
-		VectorSubtract (patch2->origin, origin, delta);
+		VectorSubtract(patch2->origin, origin, delta);
 		//dist = VectorNormalize (delta, delta);
 
         // Not calling normalize function to save function call overhead
-        dist = sqrt (delta[0]*delta[0] + delta[1]*delta[1] + delta[2]*delta[2]);
+        dist = sqrt(delta[0]*delta[0] + delta[1]*delta[1] + delta[2]*delta[2]);
 
-        if (dist == 0)
-	        {
-            continue;
-	        }
-        else
-            {
-            inv_dist = 1.0f / dist;
-            delta[0] *= inv_dist;
-            delta[1] *= inv_dist;
-            delta[2] *= inv_dist;
-            }
+		if (dist == 0)
+		{
+			continue;
+		}
+		else
+		{
+			inv_dist = 1.0f / dist;
+			delta[0] *= inv_dist;
+			delta[1] *= inv_dist;
+			delta[2] *= inv_dist;
+		}
 
 		// reletive angles
-		scale = DotProduct (delta, plane.normal);
-		scale *= -DotProduct (delta, patch2->plane->normal);
+		scale = DotProduct(delta, plane.normal);
+		scale *= -DotProduct(delta, patch2->plane->normal);
 		if (scale <= 0)
 			continue;
 
 		// check exact transfer
 		trans = scale * patch2->area * inv_dist * inv_dist;
+		// jitodo - remove the inv_dist squared for sky.
 
 //		if (trans < 0)
 //			trans = 0;		// rounding errors.
@@ -765,7 +771,6 @@ RadWorld
 */
 void RadWorld (void)
 {
-
 	if (numnodes == 0 || numfaces == 0)
 		Error ("Empty map");
 	MakeBackplanes ();
@@ -839,19 +844,12 @@ int main (int argc, char **argv)
 	char		name[1024];
     char		game_path[1024] = "";
     char *param, *param2;
+	const char *mapname = NULL;
 
 	printf ("----------- qrad3 ----------\n");
 	printf ("original code by id Software\n");
     printf ("Modified by Geoffrey DeWan\n");
-    printf ("Revision 1.05\n");
-    printf ("Beta revision - Do not distribute\n");
-//    printf ("Revision 1.04a2\n");
-//    printf ("Alpha build -- Do NOT Redistrubute\n");
-    #ifdef PPRO
-    printf ("Compiled for Pentium Pro processors\n");
-    #else
-    printf ("Compiled for Pentium processors\n");
-    #endif
+    printf ("Revision 1.05, jit r1\n");
     printf ("-----------------------------\n");
 
 	verbose = false;
@@ -862,6 +860,8 @@ int main (int argc, char **argv)
 
     while((param = WalkConfiguration()) != NULL)
 	{
+		mapname = param; // jit
+
 		if (!strcmp(param,"-dump"))
 			dumppatches = true;
 		else if (!strcmp(param,"-gamedir"))
@@ -972,8 +972,8 @@ int main (int argc, char **argv)
 			strcpy (outbase, "/tmp");
 		else if (param[0] == '+')
             LoadConfigurationFile(param+1, 1);
-		else
-			break;
+		/*else
+			break;*/
 	}
 
     if(memory)
@@ -983,80 +983,82 @@ int main (int argc, char **argv)
 
 	if (maxlight > 255)
 		maxlight = 255;
-
+/*jit
     if(param != NULL)
         param2 = WalkConfiguration();
 
-    if (param == NULL || param2 != NULL)
-        {
-        if(full_help)
-            {
-            printf ("usage: qrad3 [options] bspfile\n\n"
-		        "    -ambient #       -glview               -radmin #\n"
-                "    -bounce #        -help                 -savetrace\n"
-                "    -chop #          -maxlight #           -scale #\n"
-                "    -direct #        -memory               -threads #\n"
-                "    -dump            -moddir <path>        -tmpin\n"
-                "    -entity #        -noblock              -tmpout\n"
-                "    -extra           -nocolor              -v\n"
-                "    -gamedir <path>  -nopvs\n"
-                );
+	printf("debug: param = %s, param2 = %s\n", param, param2);*/
 
-            exit(1);
-            }
-        else
-            {
-		    Error ("usage: qrad3 [options] bspfile\n\n"
-                "    qrad3 -help for full help\n");
-            }
-        }
+	if (!mapname /*jit- param == NULL || param2 != NULL*/)
+	{
+		if(full_help)
+		{
+			printf ("usage: qrad3 [options] bspfile\n\n"
+				"    -ambient #       -glview               -radmin #\n"
+				"    -bounce #        -help                 -savetrace\n"
+				"    -chop #          -maxlight #           -scale #\n"
+				"    -direct #        -memory               -threads #\n"
+				"    -dump            -moddir <path>        -tmpin\n"
+				"    -entity #        -noblock              -tmpout\n"
+				"    -extra           -nocolor              -v\n"
+				"    -gamedir <path>  -nopvs\n"
+				);
 
+			exit(1);
+		}
+		else
+		{
+			Error ("usage: qrad3 [options] bspfile\n\n"
+				"    qrad3 -help for full help\n");
+		}
+	}
+/*jit-
     while(param2)  // make sure list is clean
-        param2 = WalkConfiguration();
+        param2 = WalkConfiguration();*/
 
 	start = I_FloatTime ();
 
-    if(game_path[0] != 0)
-        {
-        n = strlen(game_path);
+	if(game_path[0] != 0)
+	{
+		n = strlen(game_path);
 
-        if(n > 1 && n < 1023 && game_path[n-1] != '\\')
-            {
-            game_path[n] = '\\';
-            game_path[n+1] = 0;
-            }
+		if(n > 1 && n < 1023 && game_path[n-1] != '\\')
+		{
+			game_path[n] = '\\';
+			game_path[n+1] = 0;
+		}
 
-        strcpy(gamedir, game_path);
-        }
-    else
-        SetQdirFromPath (param);
+		strcpy(gamedir, game_path);
+	}
+	else
+		SetQdirFromPath(mapname/*jit- param*/);
 
     printf("gamedir set to %s\n", gamedir);
 
-    if(moddir[0] != 0)
-        {
-        n = strlen(moddir);
+	if(moddir[0] != 0)
+	{
+		n = strlen(moddir);
 
-        if(n > 1 && n < 1023 && moddir[n-1] != '\\')
-            {
-            moddir[n] = '\\';
-            moddir[n+1] = 0;
-            }
+		if(n > 1 && n < 1023 && moddir[n-1] != '\\')
+		{
+			moddir[n] = '\\';
+			moddir[n+1] = 0;
+		}
 
-        printf("moddir set to %s\n", moddir);
-        }
+		printf("moddir set to %s\n", moddir);
+	}
 
-	strcpy (source, ExpandArg(param));
-	StripExtension (source);
-	DefaultExtension (source, ".bsp");
+	strcpy(source, ExpandArg(mapname/*jit- param*/));
+	StripExtension(source);
+	DefaultExtension(source, ".bsp");
 
 //	ReadLightFile ();
 
-	sprintf (name, "%s%s", inbase, source);
-	printf ("reading %s\n", name);
-	LoadBSPFile (name);
-	ParseEntities ();
-	CalcTextureReflectivity ();
+	sprintf(name, "%s%s", inbase, source);
+	printf("reading %s\n", name);
+	LoadBSPFile(name);
+	ParseEntities();
+	CalcTextureReflectivity();
 
 	if (!visdatasize)
 	{
@@ -1065,7 +1067,7 @@ int main (int argc, char **argv)
 		ambient = 0.1;
 	}
 
-	RadWorld ();
+	RadWorld();
 
 	sprintf (name, "%s%s", outbase, source);
 	printf ("writing %s\n", name);

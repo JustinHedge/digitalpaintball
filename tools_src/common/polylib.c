@@ -334,11 +334,11 @@ void	ClipWindingEpsilon (winding_t *in, vec3_t normal, vec_t dist,
 		else if (dot < -epsilon)
 			sides[i] = SIDE_BACK;
 		else
-		{
 			sides[i] = SIDE_ON;
-		}
+
 		counts[sides[i]]++;
 	}
+
 	sides[i] = sides[0];
 	dists[i] = dists[0];
 
@@ -346,72 +346,76 @@ void	ClipWindingEpsilon (winding_t *in, vec3_t normal, vec_t dist,
 
 	if (!counts[0])
 	{
-		*back = CopyWinding (in);
+		*back = CopyWinding(in);
 		return;
 	}
+
 	if (!counts[1])
 	{
-		*front = CopyWinding (in);
+		*front = CopyWinding(in);
 		return;
 	}
 
-	maxpts = in->numpoints+4;	// cant use counts[0]+2 because
-								// of fp grouping errors
+	maxpts = in->numpoints + 4;	// cant use counts[0]+2 because of fp grouping errors
 
-	*front = f = AllocWinding (maxpts);
-	*back = b = AllocWinding (maxpts);
-
-	for (i=0 ; i<in->numpoints ; i++)
+	*front = f = AllocWinding(maxpts);
+	*back = b = AllocWinding(maxpts);
+		
+	for (i = 0; i < in->numpoints; i++)
 	{
 		p1 = in->p[i];
-
+		
 		if (sides[i] == SIDE_ON)
 		{
-			VectorCopy (p1, f->p[f->numpoints]);
+			VectorCopy(p1, f->p[f->numpoints]);
 			f->numpoints++;
-			VectorCopy (p1, b->p[b->numpoints]);
+			VectorCopy(p1, b->p[b->numpoints]);
 			b->numpoints++;
 			continue;
 		}
 
 		if (sides[i] == SIDE_FRONT)
 		{
-			VectorCopy (p1, f->p[f->numpoints]);
+			VectorCopy(p1, f->p[f->numpoints]);
 			f->numpoints++;
 		}
+
 		if (sides[i] == SIDE_BACK)
 		{
-			VectorCopy (p1, b->p[b->numpoints]);
+			VectorCopy(p1, b->p[b->numpoints]);
 			b->numpoints++;
 		}
 
-		if (sides[i+1] == SIDE_ON || sides[i+1] == sides[i])
+		if (sides[i + 1] == SIDE_ON || sides[i + 1] == sides[i])
 			continue;
+			
+		// generate a split point
+		p2 = in->p[(i + 1) % in->numpoints];
+		
+		dot = dists[i] / (dists[i] - dists[i + 1]);
 
-	// generate a split point
-		p2 = in->p[(i+1)%in->numpoints];
-
-		dot = dists[i] / (dists[i]-dists[i+1]);
-		for (j=0 ; j<3 ; j++)
-		{	// avoid round off error when possible
+		for (j = 0; j < 3; j++)
+		{
+			// avoid round off error when possible
 			if (normal[j] == 1)
 				mid[j] = dist;
 			else if (normal[j] == -1)
 				mid[j] = -dist;
 			else
-				mid[j] = p1[j] + dot*(p2[j]-p1[j]);
+				mid[j] = p1[j] + dot * (p2[j] - p1[j]);
 		}
-
-		VectorCopy (mid, f->p[f->numpoints]);
+			
+		VectorCopy(mid, f->p[f->numpoints]);
 		f->numpoints++;
-		VectorCopy (mid, b->p[b->numpoints]);
+		VectorCopy(mid, b->p[b->numpoints]);
 		b->numpoints++;
 	}
-
+	
 	if (f->numpoints > maxpts || b->numpoints > maxpts)
-		Error ("ClipWinding: points exceeded estimate");
+		Error("ClipWinding: points exceeded estimate");
+
 	if (f->numpoints > MAX_POINTS_ON_WINDING || b->numpoints > MAX_POINTS_ON_WINDING)
-		Error ("ClipWinding: MAX_POINTS_ON_WINDING");
+		Error("ClipWinding: MAX_POINTS_ON_WINDING");
 }
 
 
@@ -420,99 +424,140 @@ void	ClipWindingEpsilon (winding_t *in, vec3_t normal, vec_t dist,
 ChopWindingInPlace
 =============
 */
+extern int cur_root;
 void ChopWindingInPlace (winding_t **inout, vec3_t normal, vec_t dist, vec_t epsilon)
 {
 	winding_t	*in;
-	vec_t	dists[MAX_POINTS_ON_WINDING+4];
-	int		sides[MAX_POINTS_ON_WINDING+4];
-	int		counts[3];
-	static	vec_t	dot;		// VC 4.2 optimizer bug if not static
-	int		i, j;
-	vec_t	*p1, *p2;
-	vec3_t	mid;
+	vec_t		dists[MAX_POINTS_ON_WINDING + 4];
+	int			sides[MAX_POINTS_ON_WINDING + 4];
+	int			counts[3];
+	static		vec_t	dot;		// VC 4.2 optimizer bug if not static
+	int			i, j;
+	vec_t		*p1, *p2;
+	vec3_t		mid;
 	winding_t	*f;
-	int		maxpts;
+	int			maxpts;
 
 	in = *inout;
 	counts[0] = counts[1] = counts[2] = 0;
 
-// determine sides for each point
-	for (i=0 ; i<in->numpoints ; i++)
+	// determine sides for each point
+	for (i = 0; i < in->numpoints; i++)
 	{
-		dot = DotProduct (in->p[i], normal);
+		dot = DotProduct(in->p[i], normal);
 		dot -= dist;
 		dists[i] = dot;
+
 		if (dot > epsilon)
+		{
 			sides[i] = SIDE_FRONT;
+		}
 		else if (dot < -epsilon)
+		{
 			sides[i] = SIDE_BACK;
+		}
 		else
 		{
 			sides[i] = SIDE_ON;
 		}
+
 		counts[sides[i]]++;
 	}
+
 	sides[i] = sides[0];
 	dists[i] = dists[0];
-
+	
 	if (!counts[0])
 	{
-		FreeWinding (in);
+		FreeWinding(in);
 		*inout = NULL;
 		return;
 	}
+
 	if (!counts[1])
+	{
 		return;		// inout stays the same
+	}
 
-	maxpts = in->numpoints+4;	// cant use counts[0]+2 because
-								// of fp grouping errors
-
-	f = AllocWinding (maxpts);
-
-	for (i=0 ; i<in->numpoints ; i++)
+	maxpts = in->numpoints + 4;	// cant use counts[0]+2 because
+	f = AllocWinding(maxpts);
+		
+	for (i = 0; i < in->numpoints; i++)
 	{
 		p1 = in->p[i];
-
+		
 		if (sides[i] == SIDE_ON)
 		{
-			VectorCopy (p1, f->p[f->numpoints]);
+			VectorCopy(p1, f->p[f->numpoints]);
 			f->numpoints++;
 			continue;
 		}
-
+	
 		if (sides[i] == SIDE_FRONT)
 		{
-			VectorCopy (p1, f->p[f->numpoints]);
+			VectorCopy(p1, f->p[f->numpoints]);
 			f->numpoints++;
 		}
 
-		if (sides[i+1] == SIDE_ON || sides[i+1] == sides[i])
+		if (sides[i + 1] == SIDE_ON || sides[i + 1] == sides[i])
+		{
 			continue;
+		}
+			
+		// generate a split point
+		p2 = in->p[(i + 1) % in->numpoints];
+		dot = dists[i] / (dists[i] - dists[i + 1]);
 
-	// generate a split point
-		p2 = in->p[(i+1)%in->numpoints];
-
-		dot = dists[i] / (dists[i]-dists[i+1]);
-		for (j=0 ; j<3 ; j++)
-		{	// avoid round off error when possible
-			if (normal[j] == 1)
+		for (j = 0; j < 3; j++)
+		{
+			// avoid round off error when possible
+			if (normal[j] >= 1)
 				mid[j] = dist;
-			else if (normal[j] == -1)
+			else if (normal[j] <= -1)
 				mid[j] = -dist;
 			else
-				mid[j] = p1[j] + dot*(p2[j]-p1[j]);
+				mid[j] = p1[j] + dot * (p2[j] - p1[j]);
 		}
 
-		VectorCopy (mid, f->p[f->numpoints]);
+		VectorCopy(mid, f->p[f->numpoints]);
 		f->numpoints++;
 	}
 
-	if (f->numpoints > maxpts)
-		Error ("ClipWinding: points exceeded estimate");
-	if (f->numpoints > MAX_POINTS_ON_WINDING)
-		Error ("ClipWinding: MAX_POINTS_ON_WINDING");
+#ifdef _DEBUG
+	for (i = 0; i < f->numpoints; ++i)
+	{
+		int j;
 
-	FreeWinding (in);
+		for (j = i + 1; j < f->numpoints; ++j)
+		{
+			int k;
+			int diff = 0;
+
+			for (k = 0; k < 3; ++k)
+			{
+				if (fabs(f->p[i] - f->p[j]) > 0.1f)
+				{
+					++diff;
+					break;
+				}
+			}
+
+			if (!diff)
+			{
+				k = 0; // breakpoint
+			}
+		}
+	}
+
+#endif
+	
+	if (f->numpoints > maxpts)
+		Error("ClipWinding: points exceeded estimate");
+
+	if (f->numpoints > MAX_POINTS_ON_WINDING)
+		Error("ClipWinding: MAX_POINTS_ON_WINDING");
+
+	FreeWinding(in);
 	*inout = f;
 }
 
@@ -554,13 +599,13 @@ void CheckWinding (winding_t *w)
 
 	if (w->numpoints < 3)
 		Error ("CheckWinding: %i points",w->numpoints);
-
+	
 	area = WindingArea(w);
 	if (area < 1)
 		Error ("CheckWinding: %f area", area);
 
 	WindingPlane (w, facenormal, &facedist);
-
+	
 	for (i=0 ; i<w->numpoints ; i++)
 	{
 		p1 = w->p[i];
@@ -570,24 +615,24 @@ void CheckWinding (winding_t *w)
 				Error ("CheckFace: BUGUS_RANGE: %f",p1[j]);
 
 		j = i+1 == w->numpoints ? 0 : i+1;
-
+		
 	// check the point is on the face plane
 		d = DotProduct (p1, facenormal) - facedist;
 		if (d < -ON_EPSILON || d > ON_EPSILON)
 			Error ("CheckWinding: point off plane");
-
+	
 	// check the edge isnt degenerate
 		p2 = w->p[j];
 		VectorSubtract (p2, p1, dir);
-
+		
 		if (VectorLength (dir) < ON_EPSILON)
 			Error ("CheckWinding: degenerate edge");
-
+			
 		CrossProduct (facenormal, dir, edgenormal);
 		VectorNormalize (edgenormal, edgenormal);
 		edgedist = DotProduct (p1, edgenormal);
 		edgedist += ON_EPSILON;
-
+		
 	// all other points must be on front side
 		for (j=0 ; j<w->numpoints ; j++)
 		{

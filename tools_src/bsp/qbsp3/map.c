@@ -538,9 +538,9 @@ qboolean MakeBrushWindings (mapbrush_t *ob)
 				continue;
 			if (ob->original_sides[j].bevel)
 				continue;
-			plane = &mapplanes[ob->original_sides[j].planenum^1];
 
-			ChopWindingInPlace (&w, plane->normal, plane->dist, 0); //CLIP_EPSILON);
+			plane = &mapplanes[ob->original_sides[j].planenum ^ 1];
+			ChopWindingInPlace(&w, plane->normal, plane->dist, PLANESIDE_EPSILON); // jit, was 0); //CLIP_EPSILON);
 		}
 
 		side = &ob->original_sides[i];

@@ -69,6 +69,7 @@ void	Q_mkdir (char *path);
 
 extern	char		qdir[1024];
 extern	char		gamedir[1024];
+extern	char		moddir[1024];
 void SetQdirFromPath (char *path);
 char *ExpandArg (char *path);	// from cmd line
 char *ExpandPath (char *path);	// from scripts
@@ -86,7 +87,8 @@ void	SafeRead (FILE *f, void *buffer, int count);
 void	SafeWrite (FILE *f, void *buffer, int count);
 
 int		LoadFile (char *filename, void **bufferptr);
-int		TryLoadFile (char *filename, void **bufferptr);
+int		TryLoadFile (char *filename, void **bufferptr, int print_error);
+int		TryLoadFileFromPak (char *filename, void **bufferptr, char *gamedir);
 void	SaveFile (char *filename, void *buffer, int count);
 qboolean	FileExists (char *filename);
 
@@ -107,8 +109,6 @@ int		BigLong (int l);
 int		LittleLong (int l);
 float	BigFloat (float l);
 float	LittleFloat (float l);
-
-
 char *COM_Parse (char *data);
 
 extern	char		com_token[1024];
@@ -142,4 +142,5 @@ typedef struct
 } cblock_t;
 
 
+extern int context;
 #endif

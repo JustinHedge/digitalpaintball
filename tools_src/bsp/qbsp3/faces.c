@@ -34,9 +34,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // undefine for dumb linear searches
 #define	USE_HASHING
 
-#define	INTEGRAL_EPSILON	0.01
-#define	POINT_EPSILON		0.5
-#define	OFF_EPSILON			0.5
+#define	INTEGRAL_EPSILON	0.01 // jit, was 0.01
+#define	POINT_EPSILON		0.04 // jit, was 0.5
+#define	OFF_EPSILON			0.04 // jit, was 0.5
+
+
 
 int	c_merge;
 int	c_subdivide;
@@ -105,6 +107,9 @@ unsigned HashVec (vec3_t vec)
 	return y*HASH_SIZE + x;
 }
 
+vec_t g_min_vertex_diff_sq = 99999.9f; // jitdebug
+vec3_t g_min_vertex_pos; // jitdebug
+
 #ifdef USE_HASHING
 /*
 =============
@@ -135,11 +140,21 @@ int	GetVertexnum (vec3_t in)
 	
 	for (vnum=hashverts[h] ; vnum ; vnum=vertexchain[vnum])
 	{
+		vec3_t diff;
+		vec_t length_sq; // jit
+
 		p = dvertexes[vnum].point;
-		if ( fabs(p[0]-vert[0])<POINT_EPSILON
-		&& fabs(p[1]-vert[1])<POINT_EPSILON
-		&& fabs(p[2]-vert[2])<POINT_EPSILON )
+		VectorSubtract(p, vert, diff); // jit
+		length_sq = VectorLengthSq(diff); // jit
+
+		if (length_sq < POINT_EPSILON * POINT_EPSILON)
 			return vnum;
+
+		if (length_sq < g_min_vertex_diff_sq) // jitdebug
+		{
+			g_min_vertex_diff_sq = length_sq; // jitdebug
+			VectorCopy(p, g_min_vertex_pos);
+		}
 	}
 	
 // emit a vertex

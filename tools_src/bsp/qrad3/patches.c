@@ -125,6 +125,7 @@ void CalcTextureReflectivity (void)
 			r = color[j]/texels/255.0;
 			texture_reflectivity[i][j] = r;
 		}
+		/* jit- don't scale, pb2 textures are bright enough.
 		// scale the reflectivity up, because the textures are
 		// so dim
 		scale = ColorNormalize (texture_reflectivity[i],
@@ -133,7 +134,7 @@ void CalcTextureReflectivity (void)
 		{
 			scale *= 2;
 			VectorScale (texture_reflectivity[i], scale, texture_reflectivity[i]);
-		}
+		}*/
 #if 0
 texture_reflectivity[i][0] = 0.5;
 texture_reflectivity[i][1] = 0.5;

@@ -27,10 +27,6 @@ int		c_nodes;
 int		c_nonvis;
 int		c_active_brushes;
 
-// if a brush just barely pokes onto the other side,
-// let it slide by without chopping
-#define	PLANESIDE_EPSILON	0.001
-//0.1
 
 #define	PSIDE_FRONT			1
 #define	PSIDE_BACK			2
@@ -147,8 +143,9 @@ void CreateBrushWindings (bspbrush_t *brush)
 				continue;
 			if (brush->sides[j].bevel)
 				continue;
-			plane = &mapplanes[brush->sides[j].planenum^1];
-			ChopWindingInPlace (&w, plane->normal, plane->dist, 0); //CLIP_EPSILON);
+
+			plane = &mapplanes[brush->sides[j].planenum ^ 1];
+			ChopWindingInPlace(&w, plane->normal, plane->dist, PLANESIDE_EPSILON); // jit - was 0); //CLIP_EPSILON);
 		}
 
 		side->winding = w;
@@ -690,8 +687,10 @@ void CheckPlaneAgainstParents (int pnum, node_t *node, bspbrush_t	*brush)
 	for (p=node->parent ; p ; p=p->parent)
 	{
 		if (p->planenum == pnum)
-			Error ("Tried parent\n  Brush Bounds: %g %g %g -> %g %g %g\n", 
-			brush->mins[0], brush->mins[1], brush->mins[2], brush->maxs[0], brush->maxs[1], brush->maxs[2]);
+		{
+			Error("Tried parent\n  Brush Bounds: %g %g %g -> %g %g %g\n", 
+				brush->mins[0], brush->mins[1], brush->mins[2], brush->maxs[0], brush->maxs[1], brush->maxs[2]);
+		}
 	}
 }
 
@@ -920,7 +919,7 @@ void SplitBrush (bspbrush_t *brush, int planenum,
 	winding_t	*w, *cw[2], *midwinding;
 	plane_t		*plane, *plane2;
 	side_t		*s, *cs;
-	float		d, d_front, d_back;
+	vec_t		d, d_front, d_back; // jit (use higher precision, if enabled)
 
 	*front = *back = NULL;
 	plane = &mapplanes[planenum];
@@ -941,6 +940,8 @@ void SplitBrush (bspbrush_t *brush, int planenum,
 				d_back = d;
 		}
 	}
+
+	// If the brush only overaps the plane by .1 units, don't bother splitting it.
 	if (d_front < 0.1) // PLANESIDE_EPSILON)
 	{	// only on back
 		*back = CopyBrush (brush);
@@ -958,7 +959,7 @@ void SplitBrush (bspbrush_t *brush, int planenum,
 	for (i=0 ; i<brush->numsides && w ; i++)
 	{
 		plane2 = &mapplanes[brush->sides[i].planenum ^ 1];
-		ChopWindingInPlace (&w, plane2->normal, plane2->dist, 0); // PLANESIDE_EPSILON);
+		ChopWindingInPlace(&w, plane2->normal, plane2->dist, PLANESIDE_EPSILON); // jit - reenabled epsilon (was 0)
 	}
 
 	if (!w || WindingIsTiny (w) )
@@ -996,9 +997,10 @@ void SplitBrush (bspbrush_t *brush, int planenum,
 		w = s->winding;
 		if (!w)
 			continue;
-		ClipWindingEpsilon (w, plane->normal, plane->dist,
-			0 /*PLANESIDE_EPSILON*/, &cw[0], &cw[1]);
-		for (j=0 ; j<2 ; j++)
+
+		ClipWindingEpsilon(w, plane->normal, plane->dist, PLANESIDE_EPSILON, &cw[0], &cw[1]); // jit - reenabled epsilon (was 0)
+
+		for (j = 0; j < 2; j++)
 		{
 			if (!cw[j])
 				continue;
@@ -1078,21 +1080,22 @@ void SplitBrush (bspbrush_t *brush, int planenum,
 			cs->winding = midwinding;
 	}
 
-{
-	vec_t	v1;
-	int		i;
-
-	for (i=0 ; i<2 ; i++)
 	{
-		v1 = BrushVolume (b[i]);
-		if (v1 < 1.0)
+		vec_t	v1;
+		int		i;
+
+		for (i = 0; i < 2; i++)
 		{
-			FreeBrush (b[i]);
-			b[i] = NULL;
-//			qprintf ("tiny volume after clip\n");
+			v1 = BrushVolume(b[i]);
+
+			if (v1 < microvolume) // jit - allow for smaller brush volumes
+			{
+				FreeBrush(b[i]);
+				b[i] = NULL;
+				qprintf("tiny volume after clip\n");
+			}
 		}
 	}
-}
 
 	*front = b[0];
 	*back = b[1];

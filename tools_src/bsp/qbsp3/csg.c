@@ -267,7 +267,7 @@ bspbrush_t *MakeBspBrushList (int startbrush, int endbrush,
 	int			numsides;
 	int			vis;
 	vec3_t		normal;
-	float		dist;
+	vec_t		dist;  // jit (use higher precision, if enabled)
 
 	for (i=0 ; i<2 ; i++)
 	{

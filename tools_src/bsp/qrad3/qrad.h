@@ -36,7 +36,8 @@ typedef enum
 	emit_surface,
 	emit_point,
 	emit_spotlight,
-    emit_sky
+    emit_sky,
+	emit_sun
 } emittype_t;
 
 
@@ -144,6 +145,8 @@ void FinalLightFace (int facenum);
 
 qboolean PvsForOrigin (vec3_t org, byte *pvs);
 
+int TraceToSky (vec3_t scale, const vec3_t start, const vec3_t dir); // jit - "scale" is how much the light is scaled.  Should have a value when passed in. 0,0,0 if blocked.  Might be scaled darker if passing through transparent surfaces.
+
 int TestLine_r (int node, vec3_t start, vec3_t stop);
 
 void CreateDirectLights (void);
@@ -158,6 +161,7 @@ extern	float	subdiv;
 
 extern	float	direct_scale;
 extern	float	entity_scale;
+extern	float	sky_scale; // jit
 
 extern qboolean sun;
 extern qboolean sun_alt_color;
@@ -165,6 +169,7 @@ extern vec3_t sun_pos;
 extern int sun_main;
 extern int sun_ambient;
 extern vec3_t sun_color;
+extern vec3_t sun_angle;
 
 int	PointInLeafnum (vec3_t point);
 void MakeTnodes (dmodel_t *bm);

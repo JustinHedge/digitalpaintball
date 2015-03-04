@@ -28,7 +28,7 @@ extern	float subdivide_size;
 char		source[1024];
 char		name[1024];
 
-vec_t		microvolume = 1.0;
+vec_t		microvolume = 0.02f; // jit - was 1.0, but this messes up small brushes
 qboolean	noprune = false;
 qboolean	glview = false;
 qboolean	nodetail = false;
@@ -643,8 +643,15 @@ int main (int argc, char **argv)
 		ProcessModels ();
 	}
 
-	end = I_FloatTime ();
-	printf ("%5.0f seconds elapsed\n", end-start);
+	{
+		vec_t min_diff = sqrt(g_min_vertex_diff_sq);
+
+		if (min_diff < 0.5)
+			printf("Min vertex diff %g at (%g, %g, %g).\n", sqrt(g_min_vertex_diff_sq), g_min_vertex_pos[0], g_min_vertex_pos[1], g_min_vertex_pos[2]); // jitdebug
+	}
+
+	end = I_FloatTime();
+	printf("%5.0f seconds elapsed\n", end - start);
 
 	return 0;
 }

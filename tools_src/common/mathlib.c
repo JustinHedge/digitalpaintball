@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 vec3_t vec3_origin = {0,0,0};
 
+#ifndef MATH_INLINE
 
 double VectorLength(vec3_t v)
 {
@@ -172,3 +173,23 @@ void AddPointToBounds (vec3_t v, vec3_t mins, vec3_t maxs)
 			maxs[i] = val;
 	}
 }
+
+qboolean RayPlaneIntersect(vec3_t p_n, vec_t p_d, vec3_t l_o, vec3_t l_n,
+        vec3_t res)
+    {
+    float dot, t;
+
+    dot = DotProduct(p_n, l_n);
+
+    if(dot > -0.001)
+        return false;
+
+    t = (p_d - (l_o[0] * p_n[0]) - (l_o[1] * p_n[1]) - (l_o[2] * p_n[2])) / dot;
+
+    res[0] = l_o[0] + (t * l_n[0]);
+    res[1] = l_o[1] + (t * l_n[1]);
+    res[2] = l_o[2] + (t * l_n[2]);
+                
+    return true;
+    }
+#endif

@@ -147,3 +147,25 @@ void WriteGLView (tree_t *tree, char *source)
 	printf ("%5i c_glfaces\n", c_glfaces);
 }
 
+
+void WriteGLViewSingleBrush (mapbrush_t *b)
+{
+	char name[1024];
+	FILE *glview;
+	int i;
+
+	sprintf(name, "%s%s.gl", outbase, source);
+	printf("Writing %s\n", name);
+	glview = fopen(name, "w");
+
+	if (!glview)
+		Error("Couldn't open %s", name);
+
+	for (i = 0; i < b->numsides; ++i)
+	{
+		if (b->original_sides[i].visible && b->original_sides[i].winding)
+			OutputWinding(b->original_sides[i].winding, glview);
+	}
+
+	fclose(glview);
+}

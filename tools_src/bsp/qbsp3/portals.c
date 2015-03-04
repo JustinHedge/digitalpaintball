@@ -232,7 +232,7 @@ void RemovePortalFromNode (portal_t *portal, node_t *l)
 }
 
 //============================================================================
-
+/* unused
 void PrintPortal (portal_t *p)
 {
 	int			i;
@@ -242,7 +242,7 @@ void PrintPortal (portal_t *p)
 	for (i=0 ; i<w->numpoints ; i++)
 		printf ("(%5.0f,%5.0f,%5.0f)\n",w->p[i][0]
 		, w->p[i][1], w->p[i][2]);
-}
+}*/
 
 /*
 ================
