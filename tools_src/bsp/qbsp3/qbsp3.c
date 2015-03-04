@@ -142,10 +142,11 @@ void ProcessBlock_Thread (int blocknum)
 	maxs[2] = 4096;
 
 	// the makelist and chopbrushes could be cached between the passes...
-	brushes = MakeBspBrushList (brush_start, brush_end, mins, maxs);
+	brushes = MakeBspBrushList(brush_start, brush_end, mins, maxs);
+
 	if (!brushes)
 	{
-		node = AllocNode ();
+		node = AllocNode();
 		node->planenum = PLANENUM_LEAF;
 		node->contents = CONTENTS_SOLID;
 		block_nodes[xblock+5][yblock+5] = node;
@@ -155,10 +156,9 @@ void ProcessBlock_Thread (int blocknum)
 //	if (!nocsg)
 //		brushes = ChopBrushes (brushes);
 
-	tree = BrushBSP (brushes, mins, maxs);
+	tree = BrushBSP(brushes, mins, maxs);
 
-	block_nodes[xblock+5][yblock+5] = tree->headnode;
-
+	block_nodes[xblock + 5][yblock + 5] = tree->headnode;
 	free(tree);
 }
 
@@ -186,28 +186,34 @@ void ProcessWorldModel (void)
 	// perform per-block operations
 	//
 	if (block_xh * 1024 > map_maxs[0])
-		block_xh = floor(map_maxs[0]/1024.0);
-	if ( (block_xl+1) * 1024 < map_mins[0])
-		block_xl = floor(map_mins[0]/1024.0);
-	if (block_yh * 1024 > map_maxs[1])
-		block_yh = floor(map_maxs[1]/1024.0);
-	if ( (block_yl+1) * 1024 < map_mins[1])
-		block_yl = floor(map_mins[1]/1024.0);
+		block_xh = floor(map_maxs[0] / 1024.0);
 
-	if (block_xl <-4)
+	if ((block_xl + 1) * 1024 < map_mins[0])
+		block_xl = floor(map_mins[0] / 1024.0);
+
+	if (block_yh * 1024 > map_maxs[1])
+		block_yh = floor(map_maxs[1] / 1024.0);
+
+	if ((block_yl + 1) * 1024 < map_mins[1])
+		block_yl = floor(map_mins[1] / 1024.0);
+
+	if (block_xl < -4)
 		block_xl = -4;
-	if (block_yl <-4)
+
+	if (block_yl < -4)
 		block_yl = -4;
+
 	if (block_xh > 3)
 		block_xh = 3;
+
 	if (block_yh > 3)
 		block_yh = 3;
 
-	for (optimize = false ; optimize <= true ; optimize++)
+	for (optimize = false; optimize <= true; optimize++)
 	{
-		qprintf ("--------------------------------------------\n");
+		qprintf("--------------------------------------------\n");
 
-		RunThreadsOnIndividual ((block_xh-block_xl+1)*(block_yh-block_yl+1),
+		RunThreadsOnIndividual((block_xh-block_xl+1)*(block_yh-block_yl+1),
 			!verbose, ProcessBlock_Thread);
 
 		//
@@ -216,10 +222,10 @@ void ProcessWorldModel (void)
 		// will also get nodes.
 		//
 
-		qprintf ("--------------------------------------------\n");
+		qprintf("--------------------------------------------\n");
 
-		tree = AllocTree ();
-		tree->headnode = BlockTree (block_xl-1, block_yl-1, block_xh+1, block_yh+1);
+		tree = AllocTree();
+		tree->headnode = BlockTree(block_xl-1, block_yl-1, block_xh+1, block_yh+1);
 
 		tree->mins[0] = (block_xl)*1024;
 		tree->mins[1] = (block_yl)*1024;
@@ -232,46 +238,51 @@ void ProcessWorldModel (void)
 		//
 		// perform the global operations
 		//
-		MakeTreePortals (tree);
+		MakeTreePortals(tree);
 
-		if (FloodEntities (tree))
-			FillOutside (tree->headnode);
+		if (FloodEntities(tree))
+		{
+			FillOutside(tree->headnode);
+		}
 		else
 		{
-			printf ("**** leaked ****\n");
+			printf("**** leaked ****\n");
 			leaked = true;
-			LeakFile (tree);
+			LeakFile(tree);
+
 			if (leaktest)
 			{
-				printf ("--- MAP LEAKED ---\n");
-				exit (0);
+				printf("--- MAP LEAKED ---\n");
+				exit(0);
 			}
 		}
 
-		MarkVisibleSides (tree, brush_start, brush_end);
+		MarkVisibleSides(tree, brush_start, brush_end);
+
 		if (noopt || leaked)
 			break;
+
 		if (!optimize)
-		{
-			FreeTree (tree);
-		}
+			FreeTree(tree);
 	}
 
-	FloodAreas (tree);
+	FloodAreas(tree);
+
 	if (glview)
-		WriteGLView (tree, source);
-	MakeFaces (tree->headnode);
-	FixTjuncs (tree->headnode);
+		WriteGLView(tree, source);
+
+	MakeFaces(tree->headnode);
+	FixTjuncs(tree->headnode);
 
 	if (!noprune)
-		PruneNodes (tree->headnode);
+		PruneNodes(tree->headnode);
 
-	WriteBSP (tree->headnode);
+	WriteBSP(tree->headnode);
 
 	if (!leaked)
-		WritePortalFile (tree);
+		WritePortalFile(tree);
 
-	FreeTree (tree);
+	FreeTree(tree);
 }
 
 /*
@@ -314,28 +325,32 @@ ProcessModels
 */
 void ProcessModels (void)
 {
-	BeginBSPFile ();
+	BeginBSPFile();
 
-	for (entity_num=0 ; entity_num< num_entities ; entity_num++)
+	for (entity_num = 0; entity_num < num_entities; entity_num++)
 	{
 		if (!entities[entity_num].numbrushes)
 			continue;
 
-		qprintf ("############### model %i ###############\n", nummodels);
-		BeginModel ();
+		qprintf("############### model %i ###############\n", nummodels);
+		BeginModel();
+
 		if (entity_num == 0)
-			ProcessWorldModel ();
+			ProcessWorldModel();
 		else
-			ProcessSubModel ();
-		EndModel ();
+			ProcessSubModel();
+
+		EndModel();
 
 		if (!verboseentities)
 			verbose = false;	// don't bother printing submodels
 	}
 
-	EndBSPFile ();
+	EndBSPFile();
 }
 
+extern vec_t g_min_vertex_diff_sq; // jitdebug
+extern vec3_t g_min_vertex_pos; // jitdebug
 
 /*
 ============
@@ -354,7 +369,7 @@ int main (int argc, char **argv)
 	printf ("----------- qbsp3 -----------\n");
 	printf ("original code by id Software\n");
     printf ("Modified by Geoffrey DeWan\n");
-    printf ("Revision 1.09\n");
+    printf ("Revision 1.09r2jit\n");
     printf ("-----------------------------\n");
 
     full_help = false;
@@ -569,20 +584,22 @@ int main (int argc, char **argv)
 	ThreadSetDefault ();
     numthreads = 1;		// multiple threads aren't helping...
 
-    if(game_path[0] != 0)
-        {
-        n = strlen(game_path);
+	if(game_path[0] != 0)
+	{
+		n = strlen(game_path);
 
-        if(n > 1 && n < 1023 && game_path[n-1] != '\\')
-            {
-            game_path[n] = '\\';
-            game_path[n+1] = 0;
-            }
+		if(n > 1 && n < 1023 && game_path[n-1] != '\\')
+		{
+			game_path[n] = '\\';
+			game_path[n+1] = 0;
+		}
 
-        strcpy(gamedir, game_path);
-        }
-    else
-        SetQdirFromPath (param);
+		strcpy(gamedir, game_path);
+	}
+	else
+	{
+		SetQdirFromPath(param);
+	}
     
     printf("gamedir set to %s\n", gamedir);
     
@@ -605,11 +622,11 @@ int main (int argc, char **argv)
 	// delete portal and line files
 	sprintf (path, "%s.prt", source);
 	remove (path);
-	sprintf (path, "%s.lin", source);
-	remove (path);
+	sprintf(path, "%s.lin", source);
+	remove(path);
 
-	strcpy (name, ExpandArg (param));	
-	DefaultExtension (name, ".map");	// might be .reg
+	strcpy(name, ExpandArg (param));	
+	DefaultExtension(name, ".map");	// might be .reg
 
 	//
 	// if onlyents, just grab the entites and resave
@@ -618,29 +635,29 @@ int main (int argc, char **argv)
 	{
 		char out[1024];
 
-		sprintf (out, "%s.bsp", source);
-		LoadBSPFile (out);
+		sprintf(out, "%s.bsp", source);
+		LoadBSPFile(out);
 		num_entities = 0;
 
-		LoadMapFile (name);
-		SetModelNumbers ();
-		SetLightStyles ();
+		LoadMapFile(name);
+		SetModelNumbers();
+		SetLightStyles();
 
-		UnparseEntities ();
+		UnparseEntities();
 
-		WriteBSPFile (out);
+		WriteBSPFile(out);
 	}
 	else
 	{
 		//
 		// start from scratch
 		//
-		LoadMapFile (name);
+		LoadMapFile(name);
 
-		SetModelNumbers ();
-		SetLightStyles ();
+		SetModelNumbers();
+		SetLightStyles();
 
-		ProcessModels ();
+		ProcessModels();
 	}
 
 	{
