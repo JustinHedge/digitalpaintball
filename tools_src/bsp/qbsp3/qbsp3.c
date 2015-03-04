@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "qbsp.h"
+#include "parsecfg.h"
 
 extern	float subdivide_size;
 
@@ -28,24 +29,28 @@ char		source[1024];
 char		name[1024];
 
 vec_t		microvolume = 1.0;
-qboolean	noprune;
-qboolean	glview;
-qboolean	nodetail;
-qboolean	fulldetail;
-qboolean	onlyents;
-qboolean	nomerge;
-qboolean	nowater;
-qboolean	nofill;
-qboolean	nocsg;
-qboolean	noweld;
-qboolean	noshare;
-qboolean	nosubdiv;
-qboolean	notjunc;
-qboolean	noopt;
-qboolean	leaktest;
-qboolean	verboseentities;
+qboolean	noprune = false;
+qboolean	glview = false;
+qboolean	nodetail = false;
+qboolean	fulldetail = false;
+qboolean	onlyents = false;
+qboolean	nomerge = false;
+qboolean	nowater = false;
+qboolean	nofill = false;
+qboolean	nocsg = false;
+qboolean	noweld = false;
+qboolean	noshare = false;
+qboolean	nosubdiv = false;
+qboolean	notjunc = false;
+qboolean	noopt = false;
+qboolean	leaktest = false;
+qboolean	verboseentities = false;
+qboolean	badnormal_check = false;
+qboolean	origfix = false;
 
-char		outbase[32];
+float badnormal;
+
+char		outbase[32] = "";
 
 int			block_xl = -8, block_xh = 7, block_yl = -8, block_yh = 7;
 
@@ -147,12 +152,14 @@ void ProcessBlock_Thread (int blocknum)
 		return;
 	}
 
-	if (!nocsg)
-		brushes = ChopBrushes (brushes);
+//	if (!nocsg)
+//		brushes = ChopBrushes (brushes);
 
 	tree = BrushBSP (brushes, mins, maxs);
 
 	block_nodes[xblock+5][yblock+5] = tree->headnode;
+
+	free(tree);
 }
 
 /*
@@ -161,6 +168,7 @@ ProcessWorldModel
 
 ============
 */
+
 void ProcessWorldModel (void)
 {
 	entity_t	*e;
@@ -336,157 +344,262 @@ main
 */
 int main (int argc, char **argv)
 {
-	int		i;
+	int		n, full_help;
 	double		start, end;
 	char		path[1024];
+    char		game_path[1024] = "";
+    char *param, *param2;
 
-	printf ("---- qbsp3 ----\n");
 
-	for (i=1 ; i<argc ; i++)
+	printf ("----------- qbsp3 -----------\n");
+	printf ("original code by id Software\n");
+    printf ("Modified by Geoffrey DeWan\n");
+    printf ("Revision 1.09\n");
+    printf ("-----------------------------\n");
+
+    full_help = false;
+
+    LoadConfigurationFile("qbsp3", 0);
+    LoadConfiguration(argc-1, argv+1);
+	
+    while((param = WalkConfiguration()) != NULL)
 	{
-		if (!strcmp(argv[i],"-threads"))
+		if (!strcmp(param,"-threads"))
 		{
-			numthreads = atoi (argv[i+1]);
-			i++;
+            param2 = WalkConfiguration();
+			numthreads = atoi (param2);
 		}
-		else if (!strcmp(argv[i],"-glview"))
+		else if (!strcmp(param, "-origfix"))
 		{
+			printf ("origfix = true\n");
+			origfix = true;
+		}
+		else if (!strcmp(param,"-badnormal"))
+		{
+            param2 = WalkConfiguration();
+			badnormal = atof (param2);
+			badnormal_check = 1;
+
+			printf("badnormal = %g\n", badnormal);
+		}
+		else if (!strcmp(param,"-glview"))
+		{
+			printf ("glview = true\n");
 			glview = true;
 		}
-		else if (!strcmp(argv[i], "-v"))
+		else if (!strcmp(param,"-gamedir"))
+		{
+            param2 = WalkConfiguration();
+			strncpy(game_path, param2, 1024);
+		}
+		else if (!strcmp(param,"-moddir"))
+		{
+            param2 = WalkConfiguration();
+			strncpy(moddir, param2, 1024);
+		}
+		else if (!strcmp(param,"-help"))
+		{
+			full_help = true;
+		}
+		else if (!strcmp(param, "-v"))
 		{
 			printf ("verbose = true\n");
 			verbose = true;
 		}
-		else if (!strcmp(argv[i], "-draw"))
+		else if (!strcmp(param, "-draw"))
 		{
-			printf ("drawflag = true\n");
-			drawflag = true;
+//			printf ("drawflag = true\n");
+//			drawflag = true;
 		}
-		else if (!strcmp(argv[i], "-noweld"))
+		else if (!strcmp(param, "-noweld"))
 		{
 			printf ("noweld = true\n");
 			noweld = true;
 		}
-		else if (!strcmp(argv[i], "-nocsg"))
+		else if (!strcmp(param, "-nocsg"))
 		{
 			printf ("nocsg = true\n");
 			nocsg = true;
 		}
-		else if (!strcmp(argv[i], "-noshare"))
+		else if (!strcmp(param, "-noshare"))
 		{
 			printf ("noshare = true\n");
 			noshare = true;
 		}
-		else if (!strcmp(argv[i], "-notjunc"))
+		else if (!strcmp(param, "-notjunc"))
 		{
 			printf ("notjunc = true\n");
 			notjunc = true;
 		}
-		else if (!strcmp(argv[i], "-nowater"))
+		else if (!strcmp(param, "-nowater"))
 		{
 			printf ("nowater = true\n");
 			nowater = true;
 		}
-		else if (!strcmp(argv[i], "-noopt"))
+		else if (!strcmp(param, "-noopt"))
 		{
 			printf ("noopt = true\n");
 			noopt = true;
 		}
-		else if (!strcmp(argv[i], "-noprune"))
+		else if (!strcmp(param, "-noprune"))
 		{
 			printf ("noprune = true\n");
 			noprune = true;
 		}
-		else if (!strcmp(argv[i], "-nofill"))
+		else if (!strcmp(param, "-nofill"))
 		{
 			printf ("nofill = true\n");
 			nofill = true;
 		}
-		else if (!strcmp(argv[i], "-nomerge"))
+		else if (!strcmp(param, "-nomerge"))
 		{
 			printf ("nomerge = true\n");
 			nomerge = true;
 		}
-		else if (!strcmp(argv[i], "-nosubdiv"))
+		else if (!strcmp(param, "-nosubdiv"))
 		{
 			printf ("nosubdiv = true\n");
 			nosubdiv = true;
 		}
-		else if (!strcmp(argv[i], "-nodetail"))
+		else if (!strcmp(param, "-nodetail"))
 		{
 			printf ("nodetail = true\n");
 			nodetail = true;
 		}
-		else if (!strcmp(argv[i], "-fulldetail"))
+		else if (!strcmp(param, "-fulldetail"))
 		{
 			printf ("fulldetail = true\n");
 			fulldetail = true;
 		}
-		else if (!strcmp(argv[i], "-onlyents"))
+		else if (!strcmp(param, "-onlyents"))
 		{
 			printf ("onlyents = true\n");
 			onlyents = true;
 		}
-		else if (!strcmp(argv[i], "-micro"))
+		else if (!strcmp(param, "-micro"))
 		{
-			microvolume = atof(argv[i+1]);
+            param2 = WalkConfiguration();
+			microvolume = atof (param2);
 			printf ("microvolume = %f\n", microvolume);
-			i++;
 		}
-		else if (!strcmp(argv[i], "-leaktest"))
+		else if (!strcmp(param, "-leaktest"))
 		{
 			printf ("leaktest = true\n");
 			leaktest = true;
 		}
-		else if (!strcmp(argv[i], "-verboseentities"))
+		else if (!strcmp(param, "-verboseentities"))
 		{
 			printf ("verboseentities = true\n");
 			verboseentities = true;
 		}
-		else if (!strcmp(argv[i], "-chop"))
+		else if (!strcmp(param, "-chop"))
 		{
-			subdivide_size = atof(argv[i+1]);
+            param2 = WalkConfiguration();
+			subdivide_size = atof (param2);
 			printf ("subdivide_size = %f\n", subdivide_size);
-			i++;
 		}
-		else if (!strcmp(argv[i], "-block"))
+		else if (!strcmp(param, "-block"))
 		{
-			block_xl = block_xh = atoi(argv[i+1]);
-			block_yl = block_yh = atoi(argv[i+2]);
+            param2 = WalkConfiguration();
+			block_xl = atoi (param2);
+            param2 = WalkConfiguration();
+			block_yl = atoi (param2);
 			printf ("block: %i,%i\n", block_xl, block_yl);
-			i+=2;
 		}
-		else if (!strcmp(argv[i], "-blocks"))
+		else if (!strcmp(param, "-blocks"))
 		{
-			block_xl = atoi(argv[i+1]);
-			block_yl = atoi(argv[i+2]);
-			block_xh = atoi(argv[i+3]);
-			block_yh = atoi(argv[i+4]);
+            param2 = WalkConfiguration();
+			block_xl = atoi (param2);
+            param2 = WalkConfiguration();
+			block_yl = atoi (param2);
+            param2 = WalkConfiguration();
+			block_xh = atoi (param2);
+            param2 = WalkConfiguration();
+			block_yh = atoi (param2);
+
 			printf ("blocks: %i,%i to %i,%i\n", 
 				block_xl, block_yl, block_xh, block_yh);
-			i+=4;
 		}
-		else if (!strcmp (argv[i],"-tmpout"))
+		else if (!strcmp (param,"-tmpout"))
 		{
 			strcpy (outbase, "/tmp");
 		}
-		else if (argv[i][0] == '-')
-			Error ("Unknown option \"%s\"", argv[i]);
+		else if (param[0] == '+')
+            LoadConfigurationFile(param+1, 1);
+		else if (param[0] == '-')
+			Error ("Unknown option \"%s\"", param);
 		else
 			break;
 	}
 
-	if (i != argc - 1)
-		Error ("usage: qbsp3 [options] mapfile");
+    if(param != NULL)
+        param2 = WalkConfiguration();
+
+    if (param == NULL || param2 != NULL)
+        {
+        if(full_help)
+            {
+            printf ("usage: qbsp3 [options] mapfile\n\n"
+                "    -badnormal #          -micro #           -noprune\n"
+                "    -block # #            -moddir <path>     -notjunc\n"
+                "    -blocks # # # #       -nocsg             -nowater\n"
+                "    -chop #               -nodetail          -noweld\n"
+                "    (-draw removed)       -nofill            -onlyents\n"
+                "    -gamedir <path>       -nomerge           (-threads disabled)\n"
+                "    -help                 -noshare           -tmpout\n"
+                "    -fulldetail           -nosubdiv          -v\n"
+                "    -glview               -noopt             -verboseentities\n"
+                "    -leaktest\n"
+                );
+
+            exit(1);
+            }
+        else
+            {
+		    Error ("usage: qbsp3 [options] mapfile\n\n"
+                "    qbsp3 -help for full help\n");
+            }
+        }
+
+    while(param2)  // make sure list is clean
+        param2 = WalkConfiguration();
 
 	start = I_FloatTime ();
 
 	ThreadSetDefault ();
-numthreads = 1;		// multiple threads aren't helping...
-	SetQdirFromPath (argv[i]);
+    numthreads = 1;		// multiple threads aren't helping...
 
-	strcpy (source, ExpandArg (argv[i]));
+    if(game_path[0] != 0)
+        {
+        n = strlen(game_path);
+
+        if(n > 1 && n < 1023 && game_path[n-1] != '\\')
+            {
+            game_path[n] = '\\';
+            game_path[n+1] = 0;
+            }
+
+        strcpy(gamedir, game_path);
+        }
+    else
+        SetQdirFromPath (param);
+    
+    printf("gamedir set to %s\n", gamedir);
+    
+    if(moddir[0] != 0)
+        {
+        n = strlen(moddir);
+
+        if(n > 1 && n < 1023 && moddir[n-1] != '\\')
+            {
+            moddir[n] = '\\';
+            moddir[n+1] = 0;
+            }
+
+        printf("moddir set to %s\n", moddir);
+        }
+    
+	strcpy (source, ExpandArg (param));
 	StripExtension (source);
 
 	// delete portal and line files
@@ -495,7 +608,7 @@ numthreads = 1;		// multiple threads aren't helping...
 	sprintf (path, "%s.lin", source);
 	remove (path);
 
-	strcpy (name, ExpandArg (argv[i]));	
+	strcpy (name, ExpandArg (param));	
 	DefaultExtension (name, ".map");	// might be .reg
 
 	//
@@ -523,6 +636,7 @@ numthreads = 1;		// multiple threads aren't helping...
 		// start from scratch
 		//
 		LoadMapFile (name);
+
 		SetModelNumbers ();
 		SetLightStyles ();
 

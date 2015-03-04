@@ -120,6 +120,7 @@ typedef struct bspbrush_s
 #define	MAX_NODE_BRUSHES	8
 typedef struct node_s
 {
+	qboolean pruned;
 	// both leafs and nodes
 	int				planenum;	// -1 = leaf node
 	struct node_s	*parent;
@@ -172,7 +173,7 @@ extern	mapbrush_t	mapbrushes[MAX_MAP_BRUSHES];
 
 extern	vec3_t		map_mins, map_maxs;
 
-#define	MAX_MAP_SIDES		(MAX_MAP_BRUSHES*6)
+#define	MAX_MAP_SIDES		(MAX_MAP_BRUSHSIDES)
 
 extern	int			nummapbrushsides;
 extern	side_t		brushsides[MAX_MAP_SIDES];
@@ -186,6 +187,8 @@ extern	qboolean	nowater;
 extern	qboolean	noweld;
 extern	qboolean	noshare;
 extern	qboolean	notjunc;
+extern	qboolean	badnormal_check;
+extern float badnormal;
 
 extern	vec_t		microvolume;
 
@@ -195,7 +198,6 @@ extern	char	source[1024];
 
 void 	LoadMapFile (char *filename);
 int		FindFloatPlane (vec3_t normal, vec_t dist);
-
 //=============================================================================
 
 // textures.c
@@ -233,14 +235,9 @@ void	CreateBrush (int brushnum);
 // draw.c
 
 extern vec3_t	draw_mins, draw_maxs;
-extern	qboolean	drawflag;
 
 void Draw_ClearWindow (void);
 void DrawWinding (winding_t *w);
-
-void GLS_BeginScene (void);
-void GLS_Winding (winding_t *w, int code);
-void GLS_EndScene (void);
 
 //=============================================================================
 

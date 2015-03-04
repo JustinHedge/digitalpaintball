@@ -34,6 +34,9 @@ edgeshare_t	edgeshare[MAX_MAP_EDGES];
 int			facelinks[MAX_MAP_FACES];
 int			planelinks[2][MAX_MAP_PLANES];
 
+qboolean sun_ambient_once;
+qboolean sun_main_once;
+
 /*
 ============
 LinkPlaneFaces
@@ -547,8 +550,29 @@ void CalcFaceExtents (lightinfo_t *l)
 
 		l->texmins[i] = mins[i];
 		l->texsize[i] = maxs[i] - mins[i];
-		if (l->texsize[0] * l->texsize[1] > SINGLEMAP/4)	// div 4 for extrasamples
-			Error ("Surface to large to map");
+	}
+
+	if (l->texsize[0] * l->texsize[1] > SINGLEMAP/4)	// div 4 for extrasamples
+	{
+		char s[3] = {'X', 'Y', 'Z'};
+
+		for (i=0 ; i<2 ; i++)
+		{	
+			printf("Axis: %c\n", s[i]);
+
+			l->exactmins[i] = mins[i];
+			l->exactmaxs[i] = maxs[i];
+			
+			mins[i] = floor(mins[i]/16);
+			maxs[i] = ceil(maxs[i]/16);
+
+			l->texmins[i] = mins[i];
+			l->texsize[i] = maxs[i] - mins[i];
+
+			printf("  Mins = %10.3f, Maxs = %10.3f,  Size = %10.3f\n", (double)mins[i], (double)maxs[i], (double)(maxs[i] - mins[i]));
+		}
+
+		Error ("Surface to large to map");
 	}
 }
 
@@ -786,35 +810,9 @@ void CreateDirectLights (void)
 	vec3_t	dest;
 	char	*_color;
 	float	intensity;
-
-	//
-	// surfaces
-	//
-	for (i=0, p=patches ; i<num_patches ; i++, p++)
-	{
-		if (p->totallight[0] < DIRECT_LIGHT
-			&& p->totallight[1] < DIRECT_LIGHT
-			&& p->totallight[2] < DIRECT_LIGHT)
-			continue;
-
-		numdlights++;
-		dl = malloc(sizeof(directlight_t));
-		memset (dl, 0, sizeof(*dl));
-
-		VectorCopy (p->origin, dl->origin);
-
-		leaf = PointInLeaf (dl->origin);
-		cluster = leaf->cluster;
-		dl->next = directlights[cluster];
-		directlights[cluster] = dl;
-
-		dl->type = emit_surface;
-		VectorCopy (p->plane->normal, dl->normal);
-
-		dl->intensity = ColorNormalize (p->totallight, dl->color);
-		dl->intensity *= p->area * direct_scale;
-		VectorClear (p->totallight);	// all sent now
-	}
+    char    *sun_target;
+    char    *proc_num;
+    qboolean sun_light;
 
 	//
 	// entities
@@ -824,7 +822,73 @@ void CreateDirectLights (void)
 		e = &entities[i];
 		name = ValueForKey (e, "classname");
 		if (strncmp (name, "light", 5))
+            {
+            if (!strncmp (name, "worldspawn", 10))
+                {
+                sun_target = ValueForKey(e, "_sun");
+                if(strlen(sun_target) > 0)
+                    {
+                    printf("Sun activated.\n");
+                    sun = true;
+                    }
+
+                proc_num = ValueForKey(e, "_sun_ambient");
+                if(strlen(proc_num) > 0)
+                    {
+                    sun_ambient = atof(proc_num);
+                    }
+
+                proc_num = ValueForKey(e, "_sun_light");
+                if(strlen(proc_num) > 0)
+                    {
+                    sun_main = atof(proc_num);
+                    }
+
+                proc_num = ValueForKey(e, "_sun_color");
+                if(strlen(proc_num) > 0)
+                    {
+    				GetVectorForKey (e, "_sun_color", sun_color);
+
+                    sun_alt_color = true;
+        			ColorNormalize (sun_color, sun_color);
+                    }
+                }
+
+            continue;
+            }
+
+        sun_light = false;
+
+        target = ValueForKey (e, "target");
+
+        if(strlen(target) >= 1 && !strcmp(target, sun_target))
+            {
+            vec3_t sun_s, sun_t;
+
+            GetVectorForKey(e, "origin", sun_s);
+
+            sun_light = true;
+
+			e2 = FindTargetEntity (target);
+
+			if (!e2)
+                {
+				printf ("WARNING: sun missing target, 0,0,0 used\n");
+
+                sun_t[0] = 0;
+                sun_t[1] = 0;
+                sun_t[2] = 0;
+                }
+			else
+			{
+				GetVectorForKey (e2, "origin", sun_t);
+			}
+    
+    		VectorSubtract (sun_s, sun_t, sun_pos);
+			VectorNormalize (sun_pos, sun_pos);
+
 			continue;
+            }
 
 		numdlights++;
 		dl = malloc(sizeof(directlight_t));
@@ -843,19 +907,40 @@ void CreateDirectLights (void)
 		dl->next = directlights[cluster];
 		directlights[cluster] = dl;
 
-		intensity = FloatForKey (e, "light");
+        proc_num = ValueForKey(e, "_wait");
+        if(strlen(proc_num) > 0)
+            dl->wait = atof(proc_num);
+        else
+            {
+            proc_num = ValueForKey(e, "wait");
+            
+            if(strlen(proc_num) > 0)
+                dl->wait = atof(proc_num);
+            else
+                dl->wait = 1.0f;
+            }
+
+		proc_num = ValueForKey(e, "_angwait");
+        if(strlen(proc_num) > 0)
+            dl->adjangle = atof(proc_num);
+        else
+            dl->adjangle = 1.0f;
+
+        intensity = FloatForKey (e, "light");
 		if (!intensity)
 			intensity = FloatForKey (e, "_light");
 		if (!intensity)
 			intensity = 300;
+
 		_color = ValueForKey (e, "_color");
 		if (_color && _color[1])
-		{
+		    {
 			sscanf (_color, "%f %f %f", &dl->color[0],&dl->color[1],&dl->color[2]);
 			ColorNormalize (dl->color, dl->color);
-		}
+		    }
 		else
 			dl->color[0] = dl->color[1] = dl->color[2] = 1.0;
+
 		dl->intensity = intensity*entity_scale;
 		dl->type = emit_point;
 
@@ -904,6 +989,51 @@ void CreateDirectLights (void)
 		}
 	}
 
+
+	//
+	// surfaces
+	//
+	for (i=0, p=patches ; i<num_patches ; i++, p++)
+	{
+		if ((!sun || !p->sky) && p->totallight[0] < DIRECT_LIGHT
+			&& p->totallight[1] < DIRECT_LIGHT
+			&& p->totallight[2] < DIRECT_LIGHT)
+			continue;
+
+		numdlights++;
+		dl = malloc(sizeof(directlight_t));
+		memset (dl, 0, sizeof(*dl));
+
+		VectorCopy (p->origin, dl->origin);
+
+		leaf = PointInLeaf (dl->origin);
+		cluster = leaf->cluster;
+		dl->next = directlights[cluster];
+		directlights[cluster] = dl;
+
+        VectorCopy (p->plane->normal, dl->normal);
+
+		if(sun && p->sky)
+            {
+            dl->leaf = leaf;
+            dl->plane = p->plane;
+            dl->type = emit_sky;
+
+            dl->intensity = 1.0f;
+            }
+		else
+            {
+            dl->type = emit_surface;
+		
+		    dl->intensity = ColorNormalize (p->totallight, dl->color);
+
+		    dl->intensity *= p->area * direct_scale;
+            }
+
+		VectorClear (p->totallight);	// all sent now
+	}
+
+
 	qprintf ("%i direct lights\n", numdlights);
 }
 
@@ -912,19 +1042,26 @@ void CreateDirectLights (void)
 GatherSampleLight
 
 Lightscale is the normalizer for multisampling
+
+Testline folded in here to remove function call overhead
 =============
 */
+
 void GatherSampleLight (vec3_t pos, vec3_t normal,
 			float **styletable, int offset, int mapsize, float lightscale)
 {
 	int				i;
 	directlight_t	*l;
 	byte			pvs[(MAX_MAP_LEAFS+7)/8];
-	vec3_t			delta;
+	vec3_t			delta, target;
 	float			dot, dot2;
 	float			dist;
 	float			scale;
 	float			*dest;
+    float           inv;
+    float           main_val;
+    float           adj;
+    qboolean        set_main;
 
 	// get the PVS for the pos to limit the number of checks
 	if (!PvsForOrigin (pos, pvs))
@@ -940,23 +1077,87 @@ void GatherSampleLight (vec3_t pos, vec3_t normal,
 		for (l=directlights[i] ; l ; l=l->next)
 		{
 			VectorSubtract (l->origin, pos, delta);
-			dist = VectorNormalize (delta, delta);
+
+
+            // Not calling normalize function to save function call overhead
+            dist = sqrt (delta[0]*delta[0] + delta[1]*delta[1] + delta[2]*delta[2]);
+
+	        if (dist == 0)
+	            {
+		        VectorClear (delta);
+                inv = 0;
+		        dist = 0;
+	            }
+            else
+                {
+                inv = 1.0f / dist;
+                delta[0] *= inv;
+                delta[1] *= inv;
+                delta[2] *= inv;
+                }
+
 			dot = DotProduct (delta, normal);
 			if (dot <= 0.001)
 				continue;	// behind sample surface
+
+            if(l->adjangle == 1.0f)
+                adj = dot;
+            else if(l->adjangle = 0.0f)
+                adj = 1.0f;
+            else
+                {
+                adj = pow(dot, l->adjangle);
+                }
 
 			switch (l->type)
 			{
 			case emit_point:
 				// linear falloff
-				scale = (l->intensity - dist) * dot;
+				scale = (l->intensity - (l->wait * dist)) * adj;
 				break;
 
 			case emit_surface:
 				dot2 = -DotProduct (delta, l->normal);
 				if (dot2 <= 0.001)
 					goto skipadd;	// behind light surface
-				scale = (l->intensity / (dist*dist) ) * dot * dot2;
+				//scale = (l->intensity / (dist * dist)) * dot * dot2;
+				scale = (l->intensity * inv * inv ) * dot * dot2;
+
+				break;
+
+			case emit_sky:
+                if(sun_main_once)
+                    goto skipadd;
+                
+    		    dot2 = -DotProduct (delta, l->normal);
+
+    			if (dot2 <= 0.001)
+					goto skipadd;	// behind light surface
+
+                if(!sun_ambient_once)   // Ambient sky
+                    scale = sun_ambient;
+                else
+                    scale = 0.0f;
+
+                // Main sky
+	    		dot2 = DotProduct (sun_pos, normal);
+
+		    	if (dot2 > 0.001)   // Main sky
+                    {
+                    set_main = true;
+
+                    main_val = sun_main * dot2;
+                    }
+                else
+                    {
+                    if(sun_ambient_once)
+                        goto skipadd;
+
+                    set_main = false;
+
+                    main_val = 0.0f;
+                    }
+
 				break;
 
 			case emit_spotlight:
@@ -964,17 +1165,44 @@ void GatherSampleLight (vec3_t pos, vec3_t normal,
 				dot2 = -DotProduct (delta, l->normal);
 				if (dot2 <= l->stopdot)
 					goto skipadd;	// outside light cone
-				scale = (l->intensity - dist) * dot;
+				scale = (l->intensity - (l->wait * dist)) * adj;
 				break;
 			default:
 				Error ("Bad l->type");
 			}
 
-			if (TestLine_r (0, pos, l->origin))
-				continue;	// occluded
-
 			if (scale <= 0)
-				continue;
+                {
+                if(l->type == emit_sky && set_main > 0)
+                    scale = 0;
+                else
+				    continue;
+                }
+
+            if(l->type == emit_sky && main_val != 0.0f)
+                {
+	    		if(!noblock && !RayPlaneIntersect(l->plane->normal, l->plane->dist,
+                        pos, sun_pos, target))
+                    {
+                    set_main = sun_main_once;
+            
+                    main_val = 0.0f;
+                    }
+
+                else if(!noblock && TestLine_r (0, pos, target))
+                    {
+                    set_main = sun_main_once;
+            
+                    main_val = 0.0f;
+                    }
+                
+
+                scale += main_val;
+                main_val = 0; // done with it
+                }
+
+		    if (!noblock && TestLine_r (0, pos, l->origin))
+    			continue;	// occluded
 
 			// if this style doesn't have a table yet, allocate one
 			if (!styletable[l->style])
@@ -985,13 +1213,39 @@ void GatherSampleLight (vec3_t pos, vec3_t normal,
 
 			dest = styletable[l->style] + offset;			
 			// add some light to it
-			VectorMA (dest, scale*lightscale, l->color, dest);
+
+//			VectorMA (dest, scale*lightscale, l->color, dest);
+//          removed to remove function overhead
+          
+            if(l->type != emit_sky)
+                scale *= lightscale;
+
+            if(l->type == emit_sky && sun_alt_color)
+                {
+                dest[0] += scale * sun_color[0];
+                dest[1] += scale * sun_color[1];
+	            dest[2] += scale * sun_color[2];
+                }
+            else
+                {
+                dest[0] += scale * l->color[0];
+                dest[1] += scale * l->color[1];
+	            dest[2] += scale * l->color[2];
+                }
+
+            if(l->type == emit_sky)
+                {
+                sun_ambient_once = true;
+                sun_main_once = set_main;
+                }
+
 
 skipadd: ;
 		}
 	}
 
 }
+
 
 /*
 =============
@@ -1058,7 +1312,7 @@ void BuildFacelights (int facenum)
 	int			numsamples;
 	int			tablesize;
 	facelight_t		*fl;
-	
+
 	f = &dfaces[facenum];
 
 	if ( texinfo[f->texinfo].flags & (SURF_WARP|SURF_SKY) )
@@ -1102,6 +1356,10 @@ void BuildFacelights (int facenum)
 
 	for (i=0 ; i<l[0].numsurfpt ; i++)
 	{
+        sun_ambient_once = false;
+        sun_main_once = false;
+	
+
 		for (j=0 ; j<numsamples ; j++)
 		{
 			GatherSampleLight (l[j].surfpt[i], l[0].facenormal, styletable,
@@ -1295,6 +1553,15 @@ dlightdata[lightdatasize-(i+1)*3 + 1] = 255;
 			if (lb[2] > max)
 				max = lb[2];
 			newmax = max;
+
+            if(nocolor)  // Tramsform according via NTSC model
+                {
+                max = (0.299f * lb[0]) + (0.587f * lb[1]) * (0.144f * lb[2]);
+                lb[0] = max;
+                lb[1] = max;
+                lb[2] = max;
+                }
+
 			if (newmax < 0)
 				newmax = 0;		// roundoff problems
 			if (newmax < minlight)

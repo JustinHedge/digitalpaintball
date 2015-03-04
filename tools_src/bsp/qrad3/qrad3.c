@@ -21,8 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "qrad.h"
-
-
+#include "parsecfg.h"
 
 /*
 
@@ -51,6 +50,11 @@ int			fakeplanes;					// created planes for origin offset
 int		numbounce = 8;
 qboolean	extrasamples;
 
+int noblock = false;
+int memory = false;
+
+float patch_cutoff = 0.0f;
+
 float	subdiv = 64;
 qboolean	dumppatches;
 
@@ -64,9 +68,17 @@ float	maxlight = 196;
 
 float	lightscale = 1.0;
 
-qboolean	glview;
+qboolean sun = false;
+qboolean sun_alt_color = false;
+vec3_t sun_pos = {0.0f, 0.0f, 1.0f};
+int sun_main = 250.0f;
+int sun_ambient = 0.0f;
+vec3_t sun_color = {1, 1, 1};
 
+qboolean	glview;
+qboolean    nocolor = false;
 qboolean	nopvs;
+qboolean	save_trace = false;
 
 char		source[1024];
 
@@ -184,23 +196,126 @@ qboolean PvsForOrigin (vec3_t org, byte *pvs)
 }
 
 
-/*
-=============
-MakeTransfers
+typedef struct tnode_s
+{
+	int		type;
+	vec3_t	normal;
+	float	dist;
+	int		children[2];
+	int		pad;
+} tnode_t;
 
-=============
-*/
+extern tnode_t		*tnodes;
+
 int	total_transfer;
+
+static long total_mem;
+
+static int first_transfer = 1;
+
+#define MAX_TRACE_BUF ((MAX_PATCHES + 7) / 8)
+
+#define TRACE_BYTE(x) (((x)+7) >> 3)
+#define TRACE_BIT(x) ((x) & 0x1F)
+
+static byte trace_buf[MAX_TRACE_BUF + 1];
+static byte trace_tmp[MAX_TRACE_BUF + 1];
+static int trace_buf_size;
+
+int CompressBytes (int size, byte *source, byte *dest)
+{
+	int		j;
+	int		rep;
+	byte	*dest_p;
+
+	dest_p = dest + 1;
+
+	for (j=0 ; j<size ; j++)
+	{
+		*dest_p++ = source[j];
+
+        if((dest_p - dest - 1) >= size)
+            {
+            memcpy(dest+1, source, size);
+            dest[0] = 0;
+
+            return size + 1;
+            }
+
+		if (source[j])
+			continue;
+
+		rep = 1;
+		for ( j++; j<size ; j++)
+			if (source[j] || rep == 255)
+				break;
+			else
+				rep++;
+		*dest_p++ = rep;
+
+        if((dest_p - dest - 1) >= size)
+            {
+            memcpy(dest+1, source, size);
+            dest[0] = 0;
+
+            return size + 1;
+            }
+
+		j--;
+
+	}
+	
+    dest[0] = 1;
+	return dest_p - dest;
+}
+
+
+void DecompressBytes (int size, byte *in, byte *decompressed)
+{
+	int		c;
+	byte	*out;
+
+    if(in[0] == 0) // not compressed
+        {
+        memcpy(decompressed, in + 1, size);
+
+        return;
+        }
+
+	out = decompressed;
+    in++;
+
+	do
+	{
+		if (*in)
+		{
+			*out++ = *in++;
+			continue;
+		}
+	
+		c = in[1];
+		if (!c)
+			Error ("DecompressBytes: 0 repeat");
+		in += 2;
+		while (c)
+		{
+			*out++ = 0;
+			c--;
+		}
+	} while (out - decompressed < size);
+}
+
+static int trace_bytes = 0;
 
 void MakeTransfers (int i)
 {
 	int			j;
 	vec3_t		delta;
-	vec_t		dist, scale;
+	vec_t		dist, inv_dist, scale;
 	float		trans;
 	int			itrans;
 	patch_t		*patch, *patch2;
-	float		total;
+	float		total, inv_total;
 	dplane_t	plane;
 	vec3_t		origin;
 	float		transfers[MAX_PATCHES], *all_transfers;
@@ -209,7 +324,9 @@ void MakeTransfers (int i)
 	byte		pvs[(MAX_MAP_LEAFS+7)/8];
 	int			cluster;
 
-	patch = patches + i;
+    int calc_trace, test_trace;
+
+    patch = patches + i;
 	total = 0;
 
 	VectorCopy (patch->origin, origin);
@@ -223,9 +340,22 @@ void MakeTransfers (int i)
 
 	all_transfers = transfers;
 	patch->numtransfers = 0;
-	for (j=0, patch2 = patches ; j<num_patches ; j++, patch2++)
+
+    calc_trace = (save_trace && memory && first_transfer);
+    test_trace = (save_trace && memory && !first_transfer);
+
+    if(calc_trace)
+        {
+        memset(trace_buf, 0, trace_buf_size);
+        }
+    else if(test_trace)
+        {
+        DecompressBytes(trace_buf_size, patch->trace_hit, trace_buf);
+        }
+
+	for (j=0, patch2 = patches ; j< num_patches ; j++, patch2++)
 	{
-		transfers[j] = 0;
+    	transfers[j] = 0;
 
 		if (j == i)
 			continue;
@@ -240,11 +370,27 @@ void MakeTransfers (int i)
 				continue;		// not in pvs
 		}
 
+        if(test_trace && !(trace_buf[TRACE_BYTE(j)] & TRACE_BIT(j)))
+            continue;
+
 		// calculate vector
 		VectorSubtract (patch2->origin, origin, delta);
-		dist = VectorNormalize (delta, delta);
-		if (!dist)
-			continue;	// should never happen
+		//dist = VectorNormalize (delta, delta);
+
+        // Not calling normalize function to save function call overhead
+        dist = sqrt (delta[0]*delta[0] + delta[1]*delta[1] + delta[2]*delta[2]);
+
+        if (dist == 0)
+	        {
+            continue;
+	        }
+        else
+            {
+            inv_dist = 1.0f / dist;
+            delta[0] *= inv_dist;
+            delta[1] *= inv_dist;
+            delta[2] *= inv_dist;
+            }
 
 		// reletive angles
 		scale = DotProduct (delta, plane.normal);
@@ -252,24 +398,29 @@ void MakeTransfers (int i)
 		if (scale <= 0)
 			continue;
 
-		// check exact tramsfer
-		if (TestLine_r (0, patch->origin, patch2->origin) )
-			continue;
+		// check exact transfer
+		trans = scale * patch2->area * inv_dist * inv_dist;
 
-		trans = scale * patch2->area / (dist*dist);
+//		if (trans < 0)
+//			trans = 0;		// rounding errors.
 
-		if (trans < 0)
-			trans = 0;		// rounding errors...
-
-		transfers[j] = trans;
-		if (trans > 0)
+		if (trans > patch_cutoff)
 		{
+            if(!test_trace && !noblock && TestLine_r (0, patch->origin, patch2->origin))
+                {
+                transfers[j] = 0;
+    		    continue;
+                }
+
+    		transfers[j] = trans;
+
 			total += trans;
 			patch->numtransfers++;
-		}
+
+    	}
 	}
 
-	// copy the transfers out and normalize
+    // copy the transfers out and normalize
 	// total should be somewhere near PI if everything went right
 	// because partial occlusion isn't accounted for, and nearby
 	// patches have underestimated form factors, it will usually
@@ -277,11 +428,14 @@ void MakeTransfers (int i)
 	if (patch->numtransfers)
 	{
 		transfer_t	*t;
-		
-		if (patch->numtransfers < 0 || patch->numtransfers > MAX_PATCHES)
+
+        if (patch->numtransfers < 0 || patch->numtransfers > MAX_PATCHES)
 			Error ("Weird numtransfers");
 		s = patch->numtransfers * sizeof(transfer_t);
 		patch->transfers = malloc (s);
+
+        total_mem += s;
+
 		if (!patch->transfers)
 			Error ("Memory allocation failure");
 
@@ -291,21 +445,44 @@ void MakeTransfers (int i)
 		//
 		t = patch->transfers;
 		itotal = 0;
-		for (j=0 ; j<num_patches ; j++)
+
+        inv_total = 65536.0f / total;
+
+		for (j=0 ; j < num_patches; j++)
 		{
 			if (transfers[j] <= 0)
 				continue;
-			itrans = transfers[j]*0x10000 / total;
+
+			//itrans = transfers[j]*0x10000 / total;
+			itrans = transfers[j]*inv_total;
 			itotal += itrans;
 			t->transfer = itrans;
 			t->patch = j;
 			t++;
+
+            if(calc_trace)
+                {
+                trace_buf[TRACE_BYTE(j)] |= TRACE_BIT(j);
+                }
+
 		}
+
 	}
+
+    if(calc_trace)
+        {
+        j = CompressBytes(trace_buf_size, trace_buf, trace_tmp);
+        patch->trace_hit = malloc(j);
+        memcpy(patch->trace_hit, trace_tmp, j);
+
+        trace_bytes += j;
+        }
 
 	// don't bother locking around this.  not that important.
 	total_transfer += patch->numtransfers;
 }
+
+
 
 
 /*
@@ -319,8 +496,16 @@ void FreeTransfers (void)
 
 	for (i=0 ; i<num_patches ; i++)
 	{
-		free (patches[i].transfers);
-		patches[i].transfers = NULL;
+        if(!memory)
+            {
+		    free (patches[i].transfers);
+		    patches[i].transfers = NULL;
+            }
+        else if(patches[i].trace_hit != NULL)
+            {
+		    free (patches[i].trace_hit);
+		    patches[i].trace_hit = NULL;
+            }
 	}
 }
 
@@ -453,6 +638,9 @@ Send light out to other patches
   Run multi-threaded
 =============
 */
+int c_progress;
+int p_progress;
+
 void ShootLight (int patchnum)
 {
 	int			k, l;
@@ -468,14 +656,33 @@ void ShootLight (int patchnum)
 		send[k] = radiosity[patchnum][k] / 0x10000;
 	patch = &patches[patchnum];
 
+    if(memory)
+        {
+        c_progress = 10 * patchnum / num_patches;
+
+        if(c_progress != p_progress)
+            {
+			printf ("%i...", c_progress);
+            p_progress = c_progress;
+            }
+
+        MakeTransfers(patchnum);
+        }
+
 	trans = patch->transfers;
 	num = patch->numtransfers;
 
-	for (k=0 ; k<num ; k++, trans++)
+    for (k=0 ; k<num ; k++, trans++)
 	{
 		for (l=0 ; l<3 ; l++)
 			illumination[trans->patch][l] += send[l]*trans->transfer;
 	}
+
+    if(memory)
+        {
+		free (patches[patchnum].transfers);
+		patches[patchnum].transfers = NULL;
+        }
 }
 
 /*
@@ -485,7 +692,7 @@ BounceLight
 */
 void BounceLight (void)
 {
-	int		i, j;
+	int		i, j, start, stop;
 	float	added;
 	char	name[64];
 	patch_t	*p;
@@ -500,9 +707,29 @@ void BounceLight (void)
 		}
 	}
 
+    if(memory)
+        trace_buf_size = (num_patches + 7) / 8;
+
 	for (i=0 ; i<numbounce ; i++)
 	{
+        if(memory)
+            {
+            p_progress = -1;
+            start = I_FloatTime();
+            printf("[%d remaining]  ", numbounce - i);
+            total_mem = 0;
+            }
+
 		RunThreadsOnIndividual (num_patches, false, ShootLight);
+
+        first_transfer = 0;
+        
+        if(memory)
+            {
+            stop = I_FloatTime();
+    		printf (" (%i)\n", stop-start);
+            }
+
 		added = CollectLight ();
 
 		qprintf ("bounce:%i added:%f\n", i, added);
@@ -520,7 +747,7 @@ void BounceLight (void)
 
 void CheckPatches (void)
 {
-	int		i;
+    int i;
 	patch_t	*patch;
 
 	for (i=0 ; i<num_patches ; i++)
@@ -538,6 +765,7 @@ RadWorld
 */
 void RadWorld (void)
 {
+
 	if (numnodes == 0 || numfaces == 0)
 		Error ("Empty map");
 	MakeBackplanes ();
@@ -558,18 +786,30 @@ void RadWorld (void)
 
 	if (numbounce > 0)
 	{
+
 		// build transfer lists
-		RunThreadsOnIndividual (num_patches, true, MakeTransfers);
-		qprintf ("transfer lists: %5.1f megs\n"
-		, (float)total_transfer * sizeof(transfer_t) / (1024*1024));
+		if(!memory)
+            {
+    		RunThreadsOnIndividual (num_patches, true, MakeTransfers);
+
+		    qprintf ("transfer lists: %5.1f megs\n"
+		        , (float)total_transfer * sizeof(transfer_t) / (1024*1024));
+            }
 
 		// spread light around
 		BounceLight ();
-		
-		FreeTransfers ();
+
+        FreeTransfers ();
 
 		CheckPatches ();
 	}
+
+    if(memory)
+        {
+        printf("Non-memory conservation would require %4.1f\n",
+            (float)(total_mem - trace_bytes) / 1048576.0f);
+        printf("    megabytes more memory then currently used\n");
+        }
 
 	if (glview)
 		WriteGlView ();
@@ -580,6 +820,8 @@ void RadWorld (void)
 
 	lightdatasize = 0;
 	RunThreadsOnIndividual (numfaces, true, FinalLightFace);
+
+
 }
 
 
@@ -592,99 +834,219 @@ light modelfile
 */
 int main (int argc, char **argv)
 {
-	int		i;
+	int		n, full_help;
 	double		start, end;
 	char		name[1024];
+    char		game_path[1024] = "";
+    char *param, *param2;
 
-	printf ("----- Radiosity ----\n");
+	printf ("----------- qrad3 ----------\n");
+	printf ("original code by id Software\n");
+    printf ("Modified by Geoffrey DeWan\n");
+    printf ("Revision 1.05\n");
+    printf ("Beta revision - Do not distribute\n");
+//    printf ("Revision 1.04a2\n");
+//    printf ("Alpha build -- Do NOT Redistrubute\n");
+    #ifdef PPRO
+    printf ("Compiled for Pentium Pro processors\n");
+    #else
+    printf ("Compiled for Pentium processors\n");
+    #endif
+    printf ("-----------------------------\n");
 
 	verbose = false;
+    full_help = false;
 
-	for (i=1 ; i<argc ; i++)
+    LoadConfigurationFile("qrad3", 0);
+    LoadConfiguration(argc-1, argv+1);
+
+    while((param = WalkConfiguration()) != NULL)
 	{
-		if (!strcmp(argv[i],"-dump"))
+		if (!strcmp(param,"-dump"))
 			dumppatches = true;
-		else if (!strcmp(argv[i],"-bounce"))
+		else if (!strcmp(param,"-gamedir"))
 		{
-			numbounce = atoi (argv[i+1]);
-			i++;
+            param2 = WalkConfiguration();
+			strncpy(game_path, param2, 1024);
 		}
-		else if (!strcmp(argv[i],"-v"))
+		else if (!strcmp(param,"-moddir"))
+		{
+            param2 = WalkConfiguration();
+			strncpy(moddir, param2, 1024);
+		}
+		else if (!strcmp(param,"-help"))
+		{
+			full_help = true;
+		}
+		else if (!strcmp(param,"-bounce"))
+		{
+            param2 = WalkConfiguration();
+			numbounce = atoi (param2);
+		}
+		else if (!strcmp(param,"-v"))
 		{
 			verbose = true;
 		}
-		else if (!strcmp(argv[i],"-extra"))
+		else if (!strcmp(param,"-extra"))
 		{
 			extrasamples = true;
 			printf ("extrasamples = true\n");
 		}
-		else if (!strcmp(argv[i],"-threads"))
+		else if (!strcmp(param,"-nocolor"))
 		{
-			numthreads = atoi (argv[i+1]);
-			i++;
+			nocolor = true;
+			printf ("nocolor = true\n");
 		}
-		else if (!strcmp(argv[i],"-chop"))
+		else if (!strcmp(param,"-threads"))
 		{
-			subdiv = atoi (argv[i+1]);
-			i++;
+            param2 = WalkConfiguration();
+			numthreads = atoi (param2);
 		}
-		else if (!strcmp(argv[i],"-scale"))
+		else if (!strcmp(param,"-chop"))
 		{
-			lightscale = atof (argv[i+1]);
-			i++;
+            param2 = WalkConfiguration();
+			subdiv = atoi (param2);
 		}
-		else if (!strcmp(argv[i],"-direct"))
+		else if (!strcmp(param,"-radmin"))
 		{
-			direct_scale *= atof(argv[i+1]);
+            param2 = WalkConfiguration();
+			patch_cutoff = atof (param2);
+			printf("radiosity minimum set to %f\n", patch_cutoff);
+		}
+		else if (!strcmp(param,"-scale"))
+		{
+            param2 = WalkConfiguration();
+			lightscale = atoi (param2);
+		}
+		else if (!strcmp(param,"-direct"))
+		{
+            param2 = WalkConfiguration();
+			direct_scale *= atof (param2);
 			printf ("direct light scaling at %f\n", direct_scale);
-			i++;
 		}
-		else if (!strcmp(argv[i],"-entity"))
+		else if (!strcmp(param,"-entity"))
 		{
-			entity_scale *= atof(argv[i+1]);
+            param2 = WalkConfiguration();
+			entity_scale *= atof(param2);
 			printf ("entity light scaling at %f\n", entity_scale);
-			i++;
 		}
-		else if (!strcmp(argv[i],"-glview"))
+		else if (!strcmp(param,"-glview"))
 		{
 			glview = true;
 			printf ("glview = true\n");
 		}
-		else if (!strcmp(argv[i],"-nopvs"))
+		else if (!strcmp(param,"-noblock"))
+		{
+			noblock = true;
+			printf ("noblock = true\n");
+		}
+		else if (!strcmp(param,"-memory"))
+		{
+			memory = true;
+			printf ("memory = true (threads forced to 1)\n");
+		}
+		else if (!strcmp(param,"-savetrace"))
+		{
+			memory = true;
+			save_trace = true;
+			printf ("savetrace = true (memory set to true, threads forced to 1)\n");
+		}
+		else if (!strcmp(param,"-nopvs"))
 		{
 			nopvs = true;
 			printf ("nopvs = true\n");
 		}
-		else if (!strcmp(argv[i],"-ambient"))
+		else if (!strcmp(param,"-ambient"))
 		{
-			ambient = atof (argv[i+1]) * 128;
-			i++;
+            param2 = WalkConfiguration();
+			ambient = atof (param2);
 		}
-		else if (!strcmp(argv[i],"-maxlight"))
+		else if (!strcmp(param,"-maxlight"))
 		{
-			maxlight = atof (argv[i+1]) * 128;
-			i++;
+            param2 = WalkConfiguration();
+			maxlight = atof (param2) * 128.0f;
 		}
-		else if (!strcmp (argv[i],"-tmpin"))
+		else if (!strcmp (param,"-tmpin"))
 			strcpy (inbase, "/tmp");
-		else if (!strcmp (argv[i],"-tmpout"))
+		else if (!strcmp (param,"-tmpout"))
 			strcpy (outbase, "/tmp");
+		else if (param[0] == '+')
+            LoadConfigurationFile(param+1, 1);
 		else
 			break;
 	}
+
+    if(memory)
+        numthreads = 1;
 
 	ThreadSetDefault ();
 
 	if (maxlight > 255)
 		maxlight = 255;
 
-	if (i != argc - 1)
-		Error ("usage: qrad [-v] [-chop num] [-scale num] [-ambient num] [-maxlight num] [-threads num] bspfile");
+    if(param != NULL)
+        param2 = WalkConfiguration();
+
+    if (param == NULL || param2 != NULL)
+        {
+        if(full_help)
+            {
+            printf ("usage: qrad3 [options] bspfile\n\n"
+		        "    -ambient #       -glview               -radmin #\n"
+                "    -bounce #        -help                 -savetrace\n"
+                "    -chop #          -maxlight #           -scale #\n"
+                "    -direct #        -memory               -threads #\n"
+                "    -dump            -moddir <path>        -tmpin\n"
+                "    -entity #        -noblock              -tmpout\n"
+                "    -extra           -nocolor              -v\n"
+                "    -gamedir <path>  -nopvs\n"
+                );
+
+            exit(1);
+            }
+        else
+            {
+		    Error ("usage: qrad3 [options] bspfile\n\n"
+                "    qrad3 -help for full help\n");
+            }
+        }
+
+    while(param2)  // make sure list is clean
+        param2 = WalkConfiguration();
 
 	start = I_FloatTime ();
 
-	SetQdirFromPath (argv[i]);	
-	strcpy (source, ExpandArg(argv[i]));
+    if(game_path[0] != 0)
+        {
+        n = strlen(game_path);
+
+        if(n > 1 && n < 1023 && game_path[n-1] != '\\')
+            {
+            game_path[n] = '\\';
+            game_path[n+1] = 0;
+            }
+
+        strcpy(gamedir, game_path);
+        }
+    else
+        SetQdirFromPath (param);
+
+    printf("gamedir set to %s\n", gamedir);
+
+    if(moddir[0] != 0)
+        {
+        n = strlen(moddir);
+
+        if(n > 1 && n < 1023 && moddir[n-1] != '\\')
+            {
+            moddir[n] = '\\';
+            moddir[n+1] = 0;
+            }
+
+        printf("moddir set to %s\n", moddir);
+        }
+
+	strcpy (source, ExpandArg(param));
 	StripExtension (source);
 	DefaultExtension (source, ".bsp");
 
@@ -711,7 +1073,7 @@ int main (int argc, char **argv)
 
 	end = I_FloatTime ();
 	printf ("%5.0f seconds elapsed\n", end-start);
-	
+
 	return 0;
 }
 

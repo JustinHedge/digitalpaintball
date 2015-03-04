@@ -1,7 +1,6 @@
 /*
 ===========================================================================
 Copyright (C) 1997-2006 Id Software, Inc.
-
 This file is part of Quake 2 Tools source code.
 
 Quake 2 Tools source code is free software; you can redistribute it
@@ -20,9 +19,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#undef THIS_FILE
+static char THIS_FILE[] = __FILE__;
+#endif
+
 #include "cmdlib.h"
 #include "mathlib.h"
 #include "bspfile.h"
+#include "threads.h"
 
 #define	ON_EPSILON	0.1
 
@@ -32,7 +38,7 @@ typedef struct tnode_s
 	vec3_t	normal;
 	float	dist;
 	int		children[2];
-	int		pad;
+    int     pad;
 } tnode_t;
 
 tnode_t		*tnodes, *tnode_p;
@@ -62,13 +68,15 @@ void MakeTnode (int nodenum)
 	
 	for (i=0 ; i<2 ; i++)
 	{
-		if (node->children[i] < 0)
-			t->children[i] = (dleafs[-node->children[i] - 1].contents & CONTENTS_SOLID) | (1<<31);
+	    if (node->children[i] < 0)
+            {
+            t->children[i] = (dleafs[-node->children[i] - 1].contents & CONTENTS_SOLID) | (1<<31);
+            }
 		else
-		{
+    		{
 			t->children[i] = tnode_p - tnodes;
 			MakeTnode (node->children[i]);
-		}
+	    	}
 	}
 			
 }
@@ -91,21 +99,27 @@ void MakeTnodes (dmodel_t *bm)
 	MakeTnode (0);
 }
 
-
 //==========================================================
 
-
-int TestLine_r (int node, vec3_t start, vec3_t stop)
+int TestLine_r (int node, vec3_t set_start, vec3_t stop)
 {
 	tnode_t	*tnode;
 	float	front, back;
-	vec3_t	mid;
+	vec3_t	mid, start;
 	float	frac;
 	int		side;
 	int		r;
 
+    start[0] = set_start[0];
+    start[1] = set_start[1];
+    start[2] = set_start[2];
+
+re_test:
+
 	if (node & (1<<31))
+        {
 		return node & ~(1<<31);	// leaf node
+        }
 
 	tnode = &tnodes[node];
 	switch (tnode->type)
@@ -129,24 +143,46 @@ int TestLine_r (int node, vec3_t start, vec3_t stop)
 	}
 
 	if (front >= -ON_EPSILON && back >= -ON_EPSILON)
-		return TestLine_r (tnode->children[0], start, stop);
+        {
+        node = tnode->children[0];
+
+        goto re_test;
+
+//		return TestLine_r (tnode->children[0], start, stop);
+        }
 	
 	if (front < ON_EPSILON && back < ON_EPSILON)
-		return TestLine_r (tnode->children[1], start, stop);
+		{
+        node = tnode->children[1];
+
+        goto re_test;
+
+//		return TestLine_r (tnode->children[1], start, stop);
+        }
 
 	side = front < 0;
-	
-	frac = front / (front-back);
+
+    frac = front / (front-back);
 
 	mid[0] = start[0] + (stop[0] - start[0])*frac;
 	mid[1] = start[1] + (stop[1] - start[1])*frac;
 	mid[2] = start[2] + (stop[2] - start[2])*frac;
 
-	r = TestLine_r (tnode->children[side], start, mid);
-	if (r)
+    r = TestLine_r (tnode->children[side], start, mid);
+	
+    if (r)
 		return r;
-	return TestLine_r (tnode->children[!side], mid, stop);
-}
+
+    node = tnode->children[!side];
+
+    start[0] = mid[0];
+    start[1] = mid[1];
+    start[2] = mid[2];
+
+    goto re_test;
+
+//    return TestLine_r (tnode->children[!side], mid, stop);
+    }
 
 int TestLine (vec3_t start, vec3_t stop)
 {
@@ -291,5 +327,3 @@ qboolean _TestLine (vec3_t start, vec3_t stop)
 		node = tnode->children[side];		
 	}	
 }
-
-

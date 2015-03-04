@@ -213,6 +213,9 @@ bspbrush_t	*ClipBrushToBox (bspbrush_t *brush, vec3_t clipmins, vec3_t clipmaxs)
 		if (brush->maxs[j] > clipmaxs[j])
 		{
 			SplitBrush (brush, maxplanenums[j], &front, &back);
+
+			FreeBrush(brush);
+
 			if (front)
 				FreeBrush (front);
 			brush = back;
@@ -222,6 +225,9 @@ bspbrush_t	*ClipBrushToBox (bspbrush_t *brush, vec3_t clipmins, vec3_t clipmaxs)
 		if (brush->mins[j] < clipmins[j])
 		{
 			SplitBrush (brush, minplanenums[j], &front, &back);
+
+			FreeBrush(brush);
+
 			if (back)
 				FreeBrush (back);
 			brush = front;
@@ -308,13 +314,14 @@ bspbrush_t *MakeBspBrushList (int startbrush, int endbrush,
 		newbrush->original = mb;
 		newbrush->numsides = mb->numsides;
 		memcpy (newbrush->sides, mb->original_sides, numsides*sizeof(side_t));
-		for (j=0 ; j<numsides ; j++)
+		for (j=0 ; j<numsides; j++)
 		{
 			if (newbrush->sides[j].winding)
 				newbrush->sides[j].winding = CopyWinding (newbrush->sides[j].winding);
 			if (newbrush->sides[j].surf & SURF_HINT)
 				newbrush->sides[j].visible = true;	// hints are always visible
 		}
+
 		VectorCopy (mb->mins, newbrush->mins);
 		VectorCopy (mb->maxs, newbrush->maxs);
 

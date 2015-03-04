@@ -485,11 +485,13 @@ float d;
 
 	d = DotProduct (thread->base->origin, p->plane.normal);
 	d -= p->plane.dist;
-	if (d > p->radius)
+	if (d > thread->base->radius)
+//	if (d > p->radius)
 	{
 		continue;
 	}
-	else if (d < -p->radius)
+//	else if (d < -p->radius)
+	else if (d < -thread->base->radius)
 	{
 		stack.source = prevstack->source;
 	}
@@ -615,6 +617,7 @@ all seperating planes, and both portals must be behind the mew portal
 
 int		c_flood, c_vis;
 
+char test_leaf[MAX_MAP_LEAFS];
 
 /*
 ==================
@@ -622,6 +625,9 @@ SimpleFlood
 
 ==================
 */
+
+int cullerror = 0;
+
 void SimpleFlood (portal_t *srcportal, int leafnum)
 {
 	int		i;
@@ -629,12 +635,19 @@ void SimpleFlood (portal_t *srcportal, int leafnum)
 	portal_t	*p;
 	int		pnum;
 
+	if(cullerror && !test_leaf[leafnum])
+		return;
+
+	test_leaf[leafnum] = 0;
+
 	leaf = &leafs[leafnum];
-	
+
 	for (i=0 ; i<leaf->numportals ; i++)
 	{
 		p = leaf->portals[i];
+
 		pnum = p - portals;
+
 		if ( ! (srcportal->portalfront[pnum>>3] & (1<<(pnum&7)) ) )
 			continue;
 
@@ -646,7 +659,6 @@ void SimpleFlood (portal_t *srcportal, int leafnum)
 		SimpleFlood (srcportal, p->leaf);
 	}
 }
-
 /*
 ==============
 BasePortalVis
@@ -658,6 +670,8 @@ void BasePortalVis (int portalnum)
 	portal_t	*tp, *p;
 	float		d;
 	winding_t	*w;
+	vec3_t prenormal, normal;
+	float p_dot, tp_dot, p_rad, tp_rad;
 
 	p = portals+portalnum;
 
@@ -669,12 +683,20 @@ void BasePortalVis (int portalnum)
 	
 	p->portalvis = malloc (portalbytes);
 	memset (p->portalvis, 0, portalbytes);
-	
+
+	memset(test_leaf, 0, MAX_MAP_LEAFS);
+
 	for (j=0, tp = portals ; j<numportals*2 ; j++, tp++)
 	{
 		if (j == portalnum)
 			continue;
+		else if(cullerror && tp->leaf == p->owner_leaf)
+			continue;
+
+		test_leaf[tp->leaf] = 1;
+
 		w = tp->winding;
+
 		for (k=0 ; k<w->numpoints ; k++)
 		{
 			d = DotProduct (w->points[k], p->plane.normal)
@@ -693,12 +715,42 @@ void BasePortalVis (int portalnum)
 			if (d < -ON_EPSILON)
 				break;
 		}
+
 		if (k == w->numpoints)
-			continue;	// no points on front
+			continue;	// no points on front (or in range if maxdist set)
+
+		if(maxdist > 0.0)
+		{
+			// This approximation will consider 2 circles in 3d space with the centeer and radius of the
+			// polygons on the planes of the polygons.
+
+			prenormal[0] = p->origin[0] - tp->origin[0];
+			prenormal[1] = p->origin[1] - tp->origin[1];
+			prenormal[2] = p->origin[2] - tp->origin[2];
+
+			d = VectorNormalize(prenormal, normal);
+
+			p_dot = DotProduct(p->plane.normal, normal);
+
+			if(p_dot < 0.0)
+				p_rad = -p_dot * p->radius;
+			else
+				p_rad = p_dot * p->radius;
+
+			tp_dot = DotProduct(tp->plane.normal, normal);
+
+			if(tp_dot < 0.0)
+				tp_rad = -tp_dot * tp->radius;
+			else
+				tp_rad = tp_dot * tp->radius;
+
+			if(d > (maxdist + tp_rad + p_rad))
+				continue;
+		}
 
 		p->portalfront[j>>3] |= (1<<(j&7));
 	}
-	
+
 	SimpleFlood (p, p->leaf);
 
 	p->nummightsee = CountBits (p->portalflood, numportals*2);

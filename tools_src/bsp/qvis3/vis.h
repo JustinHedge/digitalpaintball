@@ -56,6 +56,7 @@ typedef struct
 {
 	plane_t		plane;	// normal pointing into neighbor
 	int			leaf;	// neighbor
+	int			owner_leaf;	// neighbor
 	
 	vec3_t		origin;	// for fast clip testing
 	float		radius;
@@ -130,12 +131,14 @@ extern	int			c_chains;
 extern	byte	*vismap, *vismap_p, *vismap_end;	// past visfile
 
 extern	int			testlevel;
+extern	float		maxdist;
 
 extern	byte		*uncompressed;
 
 extern	int		leafbytes, leaflongs;
 extern	int		portalbytes, portallongs;
 
+extern int cullerror;
 
 void LeafFlow (int leafnum);
 

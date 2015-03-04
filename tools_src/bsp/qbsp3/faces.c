@@ -589,8 +589,8 @@ face_t	*AllocFace (void)
 {
 	face_t	*f;
 
-	f = malloc(sizeof(*f));
-	memset (f, 0, sizeof(*f));
+	f = malloc(sizeof(face_t));
+	memset (f, 0, sizeof(face_t));
 	c_faces++;
 
 	return f;
@@ -837,9 +837,8 @@ void MergeNodeFaces (node_t *node)
 	face_t	*merged;
 	plane_t	*plane;
 
-	plane = &mapplanes[node->planenum];
 	merged = NULL;
-	
+
 	for (f1 = node->faces ; f1 ; f1 = f1->next)
 	{
 		if (f1->merged || f1->split[0] || f1->split[1])
@@ -848,6 +847,7 @@ void MergeNodeFaces (node_t *node)
 		{
 			if (f2->merged || f2->split[0] || f2->split[1])
 				continue;
+			plane = &mapplanes[f1->planenum];
 			merged = TryMerge (f1, f2, plane->normal);
 			if (!merged)
 				continue;
@@ -914,12 +914,13 @@ void SubdivideFace (node_t *node, face_t *f)
 			if (maxs - mins <= 0)
 				Error ("zero extents");
 #endif
-			if (axis == 2)
-			{	// allow double high walls
-				if (maxs - mins <= subdivide_size/* *2 */)
-					break;
-			}
-			else if (maxs - mins <= subdivide_size)
+//			if (axis == 2)
+//			{	// allow double high walls
+//				if (maxs - mins <= subdivide_size/* *2 */)
+//					break;
+//			}
+//			else
+			if (maxs - mins <= subdivide_size)
 				break;
 			
 		// split it
@@ -931,7 +932,8 @@ void SubdivideFace (node_t *node, face_t *f)
 
 			ClipWindingEpsilon (w, temp, dist, ON_EPSILON, &frontw, &backw);
 			if (!frontw || !backw)
-				Error ("SubdivideFace: didn't split the polygon");
+				Error ("SubdivideFace: didn't split the polygon\n  Node Bounds: %g %g %g -> %g %g %g\n",
+					node->mins[0], node->mins[1], node->mins[2], node->maxs[0], node->maxs[1], node->maxs[2]);
 
 			f->split[0] = NewFaceFromFace (f);
 			f->split[0]->w = frontw;

@@ -35,7 +35,8 @@ typedef enum
 {
 	emit_surface,
 	emit_point,
-	emit_spotlight
+	emit_spotlight,
+    emit_sky
 } emittype_t;
 
 
@@ -47,10 +48,15 @@ typedef struct directlight_s
 
 	float		intensity;
 	int			style;
+    float       wait;
+    float       adjangle;
 	vec3_t		origin;
 	vec3_t		color;
 	vec3_t		normal;		// for surfaces and spotlights
 	float		stopdot;		// for spotlights
+    dplane_t    *plane;
+    dleaf_t     *leaf;
+
 } directlight_t;
 
 
@@ -72,6 +78,7 @@ typedef struct patch_s
 	struct patch_s		*next;		// next in face
 	int			numtransfers;
 	transfer_t	*transfers;
+    byte *trace_hit;
 
 	int			cluster;			// for pvs checking
 	vec3_t		origin;
@@ -120,8 +127,10 @@ extern	float ambient, maxlight;
 
 void LinkPlaneFaces (void);
 
+extern qboolean    nocolor;
 extern	qboolean	extrasamples;
 extern int numbounce;
+extern int noblock;
 
 extern	directlight_t	*directlights[MAX_MAP_LEAFS];
 
@@ -149,6 +158,13 @@ extern	float	subdiv;
 
 extern	float	direct_scale;
 extern	float	entity_scale;
+
+extern qboolean sun;
+extern qboolean sun_alt_color;
+extern vec3_t sun_pos;
+extern int sun_main;
+extern int sun_ambient;
+extern vec3_t sun_color;
 
 int	PointInLeafnum (vec3_t point);
 void MakeTnodes (dmodel_t *bm);

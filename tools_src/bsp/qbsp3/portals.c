@@ -44,7 +44,7 @@ portal_t *AllocPortal (void)
 	
 	p = malloc (sizeof(portal_t));
 	memset (p, 0, sizeof(portal_t));
-	
+
 	return p;
 }
 
@@ -555,6 +555,8 @@ void MakeTreePortals_r (node_t *node)
 	if (node->mins[0] >= node->maxs[0])
 	{
 		printf ("WARNING: node without a volume\n");
+		printf("  Bounds: %g %g %g -> %g %g %g\n",
+			node->mins[0], node->mins[1], node->mins[2], node->maxs[0], node->maxs[1], node->maxs[2]);
 	}
 
 	for (i=0 ; i<3 ; i++)
@@ -562,6 +564,8 @@ void MakeTreePortals_r (node_t *node)
 		if (node->mins[i] < -8000 || node->maxs[i] > 8000)
 		{
 			printf ("WARNING: node with unbounded volume\n");
+			printf("  Bounds: %g %g %g -> %g %g %g\n",
+				node->mins[0], node->mins[1], node->mins[2], node->maxs[0], node->maxs[1], node->maxs[2]);
 			break;
 		}
 	}
@@ -759,7 +763,8 @@ void FloodAreas_r (node_t *node)
 		// note the current area as bounding the portal
 		if (e->portalareas[1])
 		{
-			printf ("WARNING: areaportal entity %i touches > 2 areas\n", b->original->entitynum);
+			printf ("WARNING: areaportal entity %i touches > 2 areas\n  Node Bounds: %g %g %g -> %g %g %g\n", b->original->entitynum,
+				node->mins[0], node->mins[1], node->mins[2], node->maxs[0], node->maxs[1], node->maxs[2]);
 			return;
 		}
 		if (e->portalareas[0])
@@ -853,7 +858,8 @@ void SetAreaPortalAreas_r (node_t *node)
 		node->area = e->portalareas[0];
 		if (!e->portalareas[1])
 		{
-			printf ("WARNING: areaportal entity %i doesn't touch two areas\n", b->original->entitynum);
+			printf ("WARNING: areaportal entity %i doesn't touch two areas\n  Node Bounds: %g %g %g -> %g %g %g\n", b->original->entitynum,
+					node->mins[0], node->mins[1], node->mins[2], node->maxs[0], node->maxs[1], node->maxs[2]);
 			return;
 		}
 	}

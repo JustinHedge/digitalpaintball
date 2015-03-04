@@ -50,13 +50,14 @@ node_t *NodeForPoint (node_t *node, vec3_t origin)
 FreeTreePortals_r
 =============
 */
+
 void FreeTreePortals_r (node_t *node)
 {
 	portal_t	*p, *nextp;
 	int			s;
 
 	// free children
-	if (node->planenum != PLANENUM_LEAF)
+	if (node->planenum != PLANENUM_LEAF || node->pruned)
 	{
 		FreeTreePortals_r (node->children[0]);
 		FreeTreePortals_r (node->children[1]);
@@ -84,13 +85,14 @@ void FreeTree_r (node_t *node)
 	face_t		*f, *nextf;
 
 	// free children
-	if (node->planenum != PLANENUM_LEAF)
+	if (node->planenum != PLANENUM_LEAF || node->pruned)
 	{
 		FreeTree_r (node->children[0]);
 		FreeTree_r (node->children[1]);
 	}
 
 	// free bspbrushes
+
 	FreeBrushList (node->brushlist);
 
 	// free faces
@@ -115,6 +117,7 @@ void FreeTree_r (node_t *node)
 FreeTree
 =============
 */
+
 void FreeTree (tree_t *tree)
 {
 	FreeTreePortals_r (tree->headnode);
@@ -171,6 +174,8 @@ PruneNodes_r
 void PruneNodes_r (node_t *node)
 {
 	bspbrush_t		*b, *next;
+//	portal_t	*p, *nextp;
+//	int			s;
 
 	if (node->planenum == PLANENUM_LEAF)
 		return;
@@ -186,6 +191,8 @@ void PruneNodes_r (node_t *node)
 			Error ("!node->faces with children");
 
 		// FIXME: free stuff
+
+		node->pruned = true;
 		node->planenum = PLANENUM_LEAF;
 		node->contents = CONTENTS_SOLID;
 		node->detail_seperator = false;
@@ -201,6 +208,21 @@ void PruneNodes_r (node_t *node)
 			next = b->next;
 			b->next = node->brushlist;
 			node->brushlist = b;
+		}
+
+		node->children[0]->brushlist = NULL;
+		node->children[1]->brushlist = NULL;
+
+		if(node->children[0]->volume != NULL)
+		{
+			FreeBrush(node->children[0]->volume);
+			node->children[0]->volume = NULL;
+		}
+
+		if(node->children[1]->volume != NULL)
+		{
+			FreeBrush(node->children[1]->volume);
+			node->children[1]->volume = NULL;
 		}
 
 		c_pruned++;

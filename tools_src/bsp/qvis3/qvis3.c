@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "vis.h"
 #include "threads.h"
 #include "stdlib.h"
+#include "parsecfg.h"
+
 
 int			numportals;
 int			portalclusters;
@@ -49,6 +51,7 @@ qboolean		fastvis;
 qboolean		nosort;
 
 int			testlevel = 2;
+float		maxdist = 0.0f;
 
 int		totalvis;
 
@@ -64,6 +67,7 @@ void PlaneFromWinding (winding_t *w, plane_t *plane)
 // calc plane
 	VectorSubtract (w->points[2], w->points[1], v1);
 	VectorSubtract (w->points[0], w->points[1], v2);
+	DotProduct(v1, v2);
 	CrossProduct (v2, v1, plane->normal);
 	VectorNormalize (plane->normal, plane->normal);
 	plane->dist = DotProduct (w->points[0], plane->normal);
@@ -132,6 +136,7 @@ int PComp (const void *a, const void *b)
 		return -1;
 	return 1;
 }
+
 void SortPortals (void)
 {
 	int		i;
@@ -212,7 +217,7 @@ void ClusterMerge (int leafnum)
 	numvis = LeafVectorFromPortalVector (portalvector, uncompressed);
 
 	if (uncompressed[leafnum>>3] & (1<<(leafnum&7)))
-		printf ("WARNING: Leaf portals saw into leaf\n");
+		printf ("WARNING: Leaf portals saw into leaf (%d)\n", leafnum);
 		
 	uncompressed[leafnum>>3] |= (1<<(leafnum&7));
 	numvis++;		// count the leaf itself
@@ -422,6 +427,7 @@ void LoadPortals (char *name)
 		VectorSubtract (vec3_origin, plane.normal, p->plane.normal);
 		p->plane.dist = -plane.dist;
 		p->leaf = leafnums[1];
+		p->owner_leaf = leafnums[0];
 		SetPortalSphere (p);
 		p++;
 		
@@ -441,6 +447,7 @@ void LoadPortals (char *name)
 
 		p->plane = plane;
 		p->leaf = leafnums[0];
+		p->owner_leaf = leafnums[1];
 		SetPortalSphere (p);
 		p++;
 
@@ -527,59 +534,102 @@ int main (int argc, char **argv)
 	char	portalfile[1024];
 	char		source[1024];
 	char		name[1024];
-	int		i;
+    char *param, *param2;
 	double		start, end;
 		
-	printf ("---- vis ----\n");
+	printf ("----------- qvis3 -----------\n");
+	printf ("original code by id Software\n");
+    printf ("Modified by Geoffrey DeWan\n");
+    printf ("Revision 1.03\n");
+    printf ("-----------------------------\n");
+
+    LoadConfigurationFile("qvis3", 0);
+    LoadConfiguration(argc-1, argv+1);
 
 	verbose = false;
-	for (i=1 ; i<argc ; i++)
+	
+    while((param = WalkConfiguration()) != NULL)
 	{
-		if (!strcmp(argv[i],"-threads"))
+		if (!strcmp(param,"-threads"))
 		{
-			numthreads = atoi (argv[i+1]);
-			i++;
+            param2 = WalkConfiguration();
+			numthreads = atoi (param2);
 		}
-		else if (!strcmp(argv[i], "-fast"))
+		else if (!strcmp(param, "-fast"))
 		{
 			printf ("fastvis = true\n");
 			fastvis = true;
 		}
-		else if (!strcmp(argv[i], "-level"))
+		else if (!strcmp(param, "-level"))
 		{
-			testlevel = atoi(argv[i+1]);
-			printf ("testlevel = %i\n", testlevel);
-			i++;
+            param2 = WalkConfiguration();
+			testlevel = atoi (param2);
+			printf ("Test level not used in qvis3\n");
 		}
-		else if (!strcmp(argv[i], "-v"))
+		else if (!strcmp(param, "-maxdist"))
+		{
+            param2 = WalkConfiguration();
+			maxdist = atof (param2);
+
+			printf ("maxdist = %.2f\n", maxdist);
+		}
+		else if (!strcmp(param, "-maxfovdist"))
+		{
+			float fov, tmpmaxdist;
+
+            param2 = WalkConfiguration();
+			fov = atof (param2);
+            param2 = WalkConfiguration();
+			tmpmaxdist = atof (param2);
+
+			maxdist = tmpmaxdist / (float)cos(atan(tan(fov * Q_PI / 360.0) * 5.0 / 4.0));
+
+			printf ("maxfovdist = %.2f %.2f -> %2f\n", fov, tmpmaxdist, maxdist);
+		}
+		else if (!strcmp(param, "-v"))
 		{
 			printf ("verbose = true\n");
 			verbose = true;
 		}
-		else if (!strcmp (argv[i],"-nosort"))
+		else if (!strcmp (param,"-nosort"))
 		{
 			printf ("nosort = true\n");
 			nosort = true;
 		}
-		else if (!strcmp (argv[i],"-tmpin"))
+		else if (!strcmp (param,"-cullerror"))
+		{
+			printf ("cullerror = true\n");
+			cullerror = true;
+		}
+		else if (!strcmp (param,"-tmpin"))
 			strcpy (inbase, "/tmp");
-		else if (!strcmp (argv[i],"-tmpout"))
+		else if (!strcmp (param,"-tmpout"))
 			strcpy (outbase, "/tmp");
-		else if (argv[i][0] == '-')
-			Error ("Unknown option \"%s\"", argv[i]);
+		else if (param[0] == '+')
+            LoadConfigurationFile(param+1, 1);
+		else if (param[0] == '-')
+			Error ("Unknown option \"%s\"", param);
 		else
 			break;
 	}
 
-	if (i != argc - 1)
-		Error ("usage: vis [-threads #] [-level 0-4] [-fast] [-v] bspfile");
+    if(param != NULL)
+        param2 = WalkConfiguration();
+
+    if (param == NULL || param2 != NULL)
+		Error ("usage: vis [-threads #] [-fast] [-nosort] [-cullerror] [-v] [-maxdist distance] [-maxfovdist fov distance] bspfile");
+
+    while(param2)  // make sure list is clean
+        param2 = WalkConfiguration();
 
 	start = I_FloatTime ();
 	
 	ThreadSetDefault ();
 
-	SetQdirFromPath (argv[i]);	
-	strcpy (source, ExpandArg(argv[i]));
+//    if(!IsFullPath(param))
+//	    SetQdirFromPath (param);	
+
+	strcpy (source, ExpandArg(param));
 	StripExtension (source);
 	DefaultExtension (source, ".bsp");
 
@@ -589,7 +639,7 @@ int main (int argc, char **argv)
 	if (numnodes == 0 || numfaces == 0)
 		Error ("Empty map");
 
-	sprintf (portalfile, "%s%s", inbase, ExpandArg(argv[i]));
+	sprintf (portalfile, "%s%s", inbase, ExpandArg(param));
 	StripExtension (portalfile);
 	strcat (portalfile, ".prt");
 	

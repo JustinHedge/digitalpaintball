@@ -30,29 +30,62 @@ textureref_t	textureref[MAX_MAP_TEXTURES];
 
 int	FindMiptex (char *name)
 {
-	int		i;
+	int		i, mod_fail;
 	char	path[1024];
+	char	pakpath[56];
 	miptex_t	*mt;
 
-	for (i=0 ; i<nummiptex ; i++)
-		if (!strcmp (name, textureref[i].name))
-		{
+    for (i=0 ; i<nummiptex ; i++)
+        {
+	    if (!strcmp (name, textureref[i].name))
+		    {
 			return i;
-		}
-	if (nummiptex == MAX_MAP_TEXTURES)
+		    }
+        }
+
+    if (nummiptex == MAX_MAP_TEXTURES)
 		Error ("MAX_MAP_TEXTURES");
+
 	strcpy (textureref[i].name, name);
 
-	// load the miptex to get the flags and values
-	sprintf (path, "%stextures/%s.wal", gamedir, name);
-	if (TryLoadFile (path, (void **)&mt) != -1)
-	{
-		textureref[i].value = LittleLong (mt->value);
-		textureref[i].flags = LittleLong (mt->flags);
-		textureref[i].contents = LittleLong (mt->contents);
-		strcpy (textureref[i].animname, mt->animname);
-		free (mt);
-	}
+    mod_fail = true;
+
+    sprintf (pakpath, "textures/%s.wal", name);
+
+    if(moddir[0] != 0)
+        {
+	    sprintf (path, "%s%s", moddir, pakpath);
+
+        // load the miptex to get the flags and values
+	    if (TryLoadFile (path, (void **)&mt, false) != -1 ||
+                TryLoadFileFromPak (pakpath, (void **)&mt, moddir) != -1)
+	        {
+		        textureref[i].value = LittleLong (mt->value);
+		        textureref[i].flags = LittleLong (mt->flags);
+		        textureref[i].contents = LittleLong (mt->contents);
+		        strcpy (textureref[i].animname, mt->animname);
+		        free (mt);
+
+                mod_fail = false;
+	        }
+        }
+
+    if(mod_fail)
+        {
+	    // load the miptex to get the flags and values
+        sprintf (path, "%s%s", gamedir, pakpath);
+
+	    if (TryLoadFile (path, (void **)&mt, false) != -1 ||
+                TryLoadFileFromPak (pakpath, (void **)&mt, gamedir) != -1)
+	        {
+		        textureref[i].value = LittleLong (mt->value);
+		        textureref[i].flags = LittleLong (mt->flags);
+		        textureref[i].contents = LittleLong (mt->contents);
+		        strcpy (textureref[i].animname, mt->animname);
+		        free (mt);
+	        }
+        }
+
 	nummiptex++;
 
 	if (textureref[i].animname[0])
@@ -102,6 +135,7 @@ void TextureAxisFromPlane(plane_t *pln, vec3_t xv, vec3_t yv)
 
 
 
+extern qboolean origfix;
 
 int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, vec3_t origin)
 {
@@ -114,6 +148,7 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, vec3_t origin)
 	float	shift[2];
 	brush_texture_t		anim;
 	int				mt;
+	vec3_t scaled_origin;
 
 	if (!bt->name[0])
 		return 0;
@@ -123,13 +158,30 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, vec3_t origin)
 
 	TextureAxisFromPlane(plane, vecs[0], vecs[1]);
 
-	shift[0] = DotProduct (origin, vecs[0]);
-	shift[1] = DotProduct (origin, vecs[1]);
+	/* Originally:
+	 shift[0] = DotProduct (origin, vecs[0]);
+	 shift[1] = DotProduct (origin, vecs[1]);
+	*/
 
 	if (!bt->scale[0])
 		bt->scale[0] = 1;
 	if (!bt->scale[1])
 		bt->scale[1] = 1;
+
+
+	// 
+	if(origfix)
+	{
+		VectorScale(origin,1.0/bt->scale[0],scaled_origin);
+		shift[0] = DotProduct (scaled_origin, vecs[0]);
+		VectorScale(origin,1.0/bt->scale[1],scaled_origin);
+		shift[1] = DotProduct (scaled_origin, vecs[1]);
+	}
+	else
+	{
+		shift[0] = DotProduct (origin, vecs[0]);
+		shift[1] = DotProduct (origin, vecs[1]);
+	}
 
 
 // rotate axis
@@ -147,6 +199,15 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, vec3_t origin)
 		sinv = sin(ang);
 		cosv = cos(ang);
 	}
+
+	 // DWH: and again...
+	 if(origfix)
+	 {
+	  ns = cosv * shift[0] - sinv * shift[1];
+	  nt = sinv * shift[0] + cosv * shift[1];
+	  shift[0] = ns;
+	  shift[1] = nt;
+	 }
 
 	if (vecs[0][0])
 		sv = 0;

@@ -97,7 +97,6 @@ void EmitMarkFace (dleaf_t *leaf_p, face_t *f)
 		dleaffaces[numleaffaces] =  facenum;
 		numleaffaces++;
 	}
-
 }
 
 
@@ -308,6 +307,25 @@ void WriteBSP (node_t *headnode)
 
 	oldfaces = numfaces;
 	dmodels[nummodels].headnode = EmitDrawNode_r (headnode);
+
+	// Workaround for bug in Quake 2. Make sure there is at least one leaf
+	// with contents==0.
+	{
+		int i;
+		dleaf_t *l;
+
+		for (i=numleafs,l=dleafs;i;i--,l++)
+
+		if (!l->contents)
+			break;
+
+		if (!i)
+		{
+			l->contents=0;
+			numleafs++;
+		}
+	}
+						   
 	EmitAreaPortals (headnode);
 
 	qprintf ("%5i nodes with faces\n", c_facenodes);
@@ -454,7 +472,6 @@ void EmitBrushes (void)
 					db->numsides++;
 				}
 			}
-
 	}
 
 }
@@ -499,8 +516,10 @@ EndBSPFile
 void EndBSPFile (void)
 {
 	char	path[1024];
+#if 0
 	int		len;
 	byte	*buf;
+#endif
 
 
 	EmitBrushes ();

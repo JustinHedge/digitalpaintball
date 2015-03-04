@@ -41,10 +41,12 @@ void CalcTextureReflectivity (void)
 {
 	int				i;
 	int				j, k, texels;
+    int             mod_fail;
 	int				color[3];
 	int				texel;
 	byte			*palette;
 	char			path[1024];
+    char            pakpath[56];
 	float			r, scale;
 	miptex_t		*mt;
 
@@ -73,15 +75,41 @@ void CalcTextureReflectivity (void)
 			continue;
 
 		// load the wal file
+        sprintf (pakpath, "textures/%s.wal", texinfo[i].texture);
+
+        mod_fail = true;
+
+
 		sprintf (path, "%stextures/%s.wal", gamedir, texinfo[i].texture);
-		if (TryLoadFile (path, (void **)&mt) == -1)
-		{
-			printf ("Couldn't load %s\n", path);
-			texture_reflectivity[i][0] = 0.5;
-			texture_reflectivity[i][1] = 0.5;
-			texture_reflectivity[i][2] = 0.5;
-			continue;
-		}
+
+        if(moddir[0] != 0)
+            {
+	        sprintf (path, "%s%s", moddir, pakpath);
+
+            // load the miptex to get the flags and values
+		    if (TryLoadFile (path, (void **)&mt, FALSE) != -1 ||
+                    TryLoadFileFromPak (pakpath, (void **)&mt, moddir) != -1)
+                {
+                mod_fail = false;
+                }
+            }
+
+        if(mod_fail)
+            {
+	        // load the miptex to get the flags and values
+            sprintf (path, "%s%s", gamedir, pakpath);
+
+		    if (TryLoadFile (path, (void **)&mt, FALSE) == -1 &&
+                    TryLoadFileFromPak (pakpath, (void **)&mt, gamedir) == -1)
+                {
+			    printf ("Couldn't load %s\n", path);
+			    texture_reflectivity[i][0] = 0.5;
+			    texture_reflectivity[i][1] = 0.5;
+			    texture_reflectivity[i][2] = 0.5;
+			    continue;
+                }
+            }
+
 		texels = LittleLong(mt->width)*LittleLong(mt->height);
 		color[0] = color[1] = color[2] = 0;
 
@@ -168,13 +196,19 @@ void BaseLightForFace (dface_t *f, vec3_t color)
 	// check for light emited by texture
 	//
 	tx = &texinfo[f->texinfo];
-	if (!(tx->flags & SURF_LIGHT) || tx->value == 0)
+
+    if (!(tx->flags & SURF_LIGHT) || tx->value == 0)
 	{
+        if(tx->flags & SURF_LIGHT)
+            {
+            printf("Surface light has 0 intensity.\n");
+            }
+
 		VectorClear (color);
 		return;
 	}
 
-	VectorScale (texture_reflectivity[f->texinfo], tx->value, color);
+    VectorScale (texture_reflectivity[f->texinfo], tx->value, color);
 }
 
 qboolean IsSky (dface_t *f)

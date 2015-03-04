@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "qbsp.h"
+#include "ctype.h"
 
 extern qboolean onlyents;
 
@@ -70,11 +71,11 @@ int	PlaneTypeForNormal (vec3_t normal)
 	vec_t	ax, ay, az;
 	
 // NOTE: should these have an epsilon around 1.0?		
-	if (normal[0] == 1.0 || normal[0] == -1.0)
+	if (normal[0] >= 1.0 || normal[0] <= -1.0)
 		return PLANE_X;
-	if (normal[1] == 1.0 || normal[1] == -1.0)
+	if (normal[1] >= 1.0 || normal[1] <= -1.0)
 		return PLANE_Y;
-	if (normal[2] == 1.0 || normal[2] == -1.0)
+	if (normal[2] >= 1.0 || normal[2] <= -1.0)
 		return PLANE_Z;
 		
 	ax = fabs(normal[0]);
@@ -135,12 +136,29 @@ void	AddPlaneToHash (plane_t *p)
 CreateNewFloatPlane
 ================
 */
+
+static int show_points = 0;
+float *last_points[3];
+
 int CreateNewFloatPlane (vec3_t normal, vec_t dist)
 {
 	plane_t	*p, temp;
 
-	if (VectorLength(normal) < 0.5)
-		Error ("FloatPlane: bad normal");
+	float len = VectorLength(normal);
+
+	if ((!badnormal_check && len < 0.5) || (badnormal_check &&
+		(len + badnormal < 1.0f || len - badnormal < -1.0f)))
+	{
+		if(show_points)
+			Error ("FloatPlane: bad normal\n  Plane Points: ( %g %g %g) ( %g %g %g) (%g %g %g)\n"
+			"  Brush: %s\n",
+				last_points[0][0],last_points[0][1],last_points[0][2],
+				last_points[1][0],last_points[1][1],last_points[1][2],
+				last_points[2][0],last_points[2][1],last_points[2][2],
+				brush_info);
+		else
+			Error ("FloatPlane: bad normal");
+	}
 	// create a new plane
 	if (nummapplanes+2 > MAX_MAP_PLANES)
 		Error ("MAX_MAP_PLANES");
@@ -267,10 +285,15 @@ int		FindFloatPlane (vec3_t normal, vec_t dist)
 PlaneFromPoints
 ================
 */
-int PlaneFromPoints (int *p0, int *p1, int *p2)
+
+int PlaneFromPoints (float *p0, float *p1, float *p2)
 {
 	vec3_t	t1, t2, normal;
 	vec_t	dist;
+
+	last_points[0] = p0;
+	last_points[1] = p1;
+	last_points[2] = p2;
 
 	VectorSubtract (p0, p1, t1);
 	VectorSubtract (p2, p1, t2);
@@ -279,7 +302,9 @@ int PlaneFromPoints (int *p0, int *p1, int *p2)
 
 	dist = DotProduct (p0, normal);
 
+	show_points = 1;
 	return FindFloatPlane (normal, dist);
+	show_points = 0;
 }
 
 
@@ -302,13 +327,13 @@ int	BrushContents (mapbrush_t *b)
 	contents = s->contents;
 	trans = texinfo[s->texinfo].flags;
 	for (i=1 ; i<b->numsides ; i++, s++)
-	{
+    {
 		s = &b->original_sides[i];
 		trans |= texinfo[s->texinfo].flags;
 		if (s->contents != contents)
 		{
-			printf ("Entity %i, Brush %i: mixed face contents\n"
-				, b->entitynum, b->brushnum);
+			printf ("Entity %i, Brush %i: mixed face contents\n  Brush: %s\n"
+				, b->entitynum, b->brushnum, brush_info);
 			break;
 		}
 	}
@@ -339,6 +364,8 @@ Adds any additional planes necessary to allow the brush to be expanded
 against axial bounding boxes
 =================
 */
+winding_t *t_w;
+int exceed = 0;
 void AddBrushBevels (mapbrush_t *b)
 {
 	int		axis, dir;
@@ -373,6 +400,7 @@ void AddBrushBevels (mapbrush_t *b)
 					Error ("MAX_MAP_BRUSHSIDES");
 				nummapbrushsides++;
 				b->numsides++;
+
 				VectorClear (normal);
 				normal[axis] = dir;
 				if (dir == 1)
@@ -489,6 +517,7 @@ MakeBrushWindings
 makes basewindigs for sides and mins / maxs for the brush
 ================
 */
+
 qboolean MakeBrushWindings (mapbrush_t *ob)
 {
 	int			i, j;
@@ -502,6 +531,7 @@ qboolean MakeBrushWindings (mapbrush_t *ob)
 	{
 		plane = &mapplanes[ob->original_sides[i].planenum];
 		w = BaseWindingForPlane (plane->normal, plane->dist);
+
 		for (j=0 ; j<ob->numsides && w; j++)
 		{
 			if (i == j)
@@ -509,6 +539,7 @@ qboolean MakeBrushWindings (mapbrush_t *ob)
 			if (ob->original_sides[j].bevel)
 				continue;
 			plane = &mapplanes[ob->original_sides[j].planenum^1];
+
 			ChopWindingInPlace (&w, plane->normal, plane->dist, 0); //CLIP_EPSILON);
 		}
 
@@ -524,15 +555,28 @@ qboolean MakeBrushWindings (mapbrush_t *ob)
 
 	for (i=0 ; i<3 ; i++)
 	{
-		if (ob->mins[0] < -4096 || ob->maxs[0] > 4096)
+		if (ob->mins[i] < -4096 || ob->maxs[i] > 4096)
+		{
 			printf ("entity %i, brush %i: bounds out of range\n", ob->entitynum, ob->brushnum);
-		if (ob->mins[0] > 4096 || ob->maxs[0] < -4096)
+			printf("  Brush: %s\n", brush_info);
+			printf("  Bounds: %g %g %g -> %g %g %g\n",
+				ob->mins[0], ob->mins[1], ob->mins[2], ob->maxs[0], ob->maxs[1], ob->maxs[2]);
+
+			return true;
+		}
+		if (ob->mins[i] > 4096 || ob->maxs[i] < -4096)
+		{
 			printf ("entity %i, brush %i: no visible sides on brush\n", ob->entitynum, ob->brushnum);
+			printf("  Brush: %s\n", brush_info);
+			printf("  Bounds: %g %g %g -> %g %g %g\n",
+				ob->mins[0], ob->mins[1], ob->mins[2], ob->maxs[0], ob->maxs[1], ob->maxs[2]);
+
+			return true;
+		}
 	}
 
 	return true;
 }
-
 
 /*
 =================
@@ -541,13 +585,16 @@ ParseBrush
 */
 void ParseBrush (entity_t *mapent)
 {
+	char *tl;
 	mapbrush_t		*b;
 	int			i,j, k;
 	int			mt;
 	side_t		*side, *s2;
 	int			planenum;
 	brush_texture_t	td;
-	int			planepts[3][3];
+	float			planepts[3][3];
+
+	MarkBrushBegin();
 
 	if (nummapbrushes == MAX_MAP_BRUSHES)
 		Error ("nummapbrushes == MAX_MAP_BRUSHES");
@@ -574,26 +621,30 @@ void ParseBrush (entity_t *mapent)
 			if (i != 0)
 				GetToken (true);
 			if (strcmp (token, "(") )
-				Error ("parsing brush");
+				Error ("parsing brush\n  Brush: %s", i+1, brush_info);
 			
 			for (j=0 ; j<3 ; j++)
 			{
 				GetToken (false);
-				planepts[i][j] = atoi(token);
+				planepts[i][j] = atof(token);
 			}
 			
 			GetToken (false);
 			if (strcmp (token, ")") )
-				Error ("parsing brush");
+				Error ("parsing brush\n  Brush: %s", i+1, brush_info);
 				
 		}
-
 
 		//
 		// read the texturedef
 		//
 		GetToken (false);
-		strcpy (td.name, token);
+        strcpy (td.name, token);
+
+		tl = td.name;
+
+		for(tl = td.name; *tl != 0; tl++)
+			*tl = tolower(*tl);
 
 		GetToken (false);
 		td.shift[0] = atoi(token);
@@ -637,10 +688,10 @@ void ParseBrush (entity_t *mapent)
 		// hints and skips are never detail, and have no content
 		if (side->surf & (SURF_HINT|SURF_SKIP) )
 		{
-			side->contents = 0;
-			side->surf &= ~CONTENTS_DETAIL;
+			//side->contents = 0;
+			//side->surf &= ~CONTENTS_DETAIL;
+			side->contents &= CONTENTS_DETAIL;
 		}
-
 
 		//
 		// find the plane number
@@ -648,8 +699,8 @@ void ParseBrush (entity_t *mapent)
 		planenum = PlaneFromPoints (planepts[0], planepts[1], planepts[2]);
 		if (planenum == -1)
 		{
-			printf ("Entity %i, Brush %i: plane with no normal\n"
-				, b->entitynum, b->brushnum);
+			printf ("Entity %i, Brush %i: plane with no normal\n  Brush: %s\n"
+				, b->entitynum, b->brushnum, brush_info);
 			continue;
 		}
 
@@ -661,14 +712,14 @@ void ParseBrush (entity_t *mapent)
 			s2 = b->original_sides + k;
 			if (s2->planenum == planenum)
 			{
-				printf ("Entity %i, Brush %i: duplicate plane\n"
-					, b->entitynum, b->brushnum);
+				printf ("Entity %i, Brush %i: duplicate plane\n  Brush: %s\n"
+					, b->entitynum, b->brushnum, brush_info);
 				break;
 			}
 			if ( s2->planenum == (planenum^1) )
 			{
-				printf ("Entity %i, Brush %i: mirrored plane\n"
-					, b->entitynum, b->brushnum);
+				printf ("Entity %i, Brush %i: mirrored plane\n  Brush: %s\n"
+					, b->entitynum, b->brushnum, brush_info);
 				break;
 			}
 		}
@@ -710,7 +761,10 @@ void ParseBrush (entity_t *mapent)
 	}
 
 	// create windings for sides and bounds for brush
+
+	//MEM_LEAK
 	MakeBrushWindings (b);
+	t_w = b->original_sides[0].winding;
 
 	// brushes that will not be visible at all will never be
 	// used as bsp splitters
@@ -735,8 +789,8 @@ void ParseBrush (entity_t *mapent)
 
 		if (num_entities == 1)
 		{
-			Error ("Entity %i, Brush %i: origin brushes not allowed in world"
-				, b->entitynum, b->brushnum);
+			Error ("Entity %i, Brush %i: origin brushes not allowed in world\n  BrushL %s",
+				b->entitynum, b->brushnum, brush_info);
 			return;
 		}
 
@@ -813,6 +867,7 @@ void MoveBrushesToWorld (entity_t *mapent)
 ParseMapEntity
 ================
 */
+
 qboolean	ParseMapEntity (void)
 {
 	entity_t	*mapent;
@@ -823,11 +878,11 @@ qboolean	ParseMapEntity (void)
 	vec_t		newdist;
 	mapbrush_t	*b;
 
-	if (!GetToken (true))
+    if (!GetToken (true))
 		return false;
 
 	if (strcmp (token, "{") )
-		Error ("ParseEntity: { not found");
+		Error ("ParseEntity: { not found\n  Last brush: %s", brush_info);
 	
 	if (num_entities == MAX_MAP_ENTITIES)
 		Error ("num_entities == MAX_MAP_ENTITIES");
@@ -846,11 +901,13 @@ qboolean	ParseMapEntity (void)
 	do
 	{
 		if (!GetToken (true))
-			Error ("ParseEntity: EOF without closing brace");
+			Error ("ParseEntity: EOF without closing brace\n  Last brush: %s", brush_info);
 		if (!strcmp (token, "}") )
 			break;
 		if (!strcmp (token, "{") )
-			ParseBrush (mapent);
+            {
+            ParseBrush (mapent);
+            }
 		else
 		{
 			e = ParseEpair ();
@@ -878,6 +935,7 @@ qboolean	ParseMapEntity (void)
 				s->texinfo = TexinfoForBrushTexture (&mapplanes[s->planenum],
 					&side_brushtextures[s-brushsides], mapent->origin);
 			}
+
 			MakeBrushWindings (b);
 		}
 	}
@@ -898,7 +956,7 @@ qboolean	ParseMapEntity (void)
 		char	str[128];
 
 		if (mapent->numbrushes != 1)
-			Error ("Entity %i: func_areaportal can only be a single brush", num_entities-1);
+			Error ("Entity %i: func_areaportal can only be a single brush\n  Last Brush: %s", num_entities-1, brush_info);
 
 		b = &mapbrushes[nummapbrushes-1];
 		b->contents = CONTENTS_AREAPORTAL;
@@ -1000,9 +1058,9 @@ void TestExpandBrushes (void)
 
 			w = BaseWindingForPlane (mapplanes[s->planenum].normal, dist);
 
-			fprintf (f,"( %i %i %i ) ", (int)w->p[0][0], (int)w->p[0][1], (int)w->p[0][2]);
-			fprintf (f,"( %i %i %i ) ", (int)w->p[1][0], (int)w->p[1][1], (int)w->p[1][2]);
-			fprintf (f,"( %i %i %i ) ", (int)w->p[2][0], (int)w->p[2][1], (int)w->p[2][2]);
+			fprintf (f,"( %g %g %g ) ", w->p[0][0], w->p[0][1], w->p[0][2]);
+			fprintf (f,"( %g %g %g ) ", w->p[1][0], w->p[1][1], w->p[1][2]);
+			fprintf (f,"( %g %g %g ) ", w->p[2][0], w->p[2][1], w->p[2][2]);
 
 			fprintf (f, "%s 0 0 0 1 1\n", texinfo[s->texinfo].texture);
 			FreeWinding (w);
