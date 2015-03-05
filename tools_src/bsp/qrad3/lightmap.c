@@ -1203,6 +1203,7 @@ void GatherSampleLight (vec3_t pos, vec3_t normal,
 
 			dest = styletable[l->style] + offset;			
 			// add some light to it
+			scale *= lightscale; // lightscale used by multisampling so we're not 5x's as bright...
 			dest[0] += scale * l->color[0];
 			dest[1] += scale * l->color[1];
 			dest[2] += scale * l->color[2];
@@ -1215,7 +1216,7 @@ skipadd: ;
 	{
 		vec3_t scale_vec;
 
-		scale = -DotProduct(sun_pos, normal);
+		scale = -DotProduct(sun_pos, normal) * lightscale;
 
 		if (scale > 0)
 		{
