@@ -1213,6 +1213,7 @@ skipadd: ;
 	}
 
 	// jit - add sun light
+	if (sun)
 	{
 		vec3_t scale_vec;
 

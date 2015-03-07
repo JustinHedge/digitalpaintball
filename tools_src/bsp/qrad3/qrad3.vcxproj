@@ -150,7 +150,10 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <CustomBuildStep>
-      <Command>copy E:\projects\paintball2\utils3\bsp\qrad3\Release\qrad3.exe  E:\programs\bsp\pball2\quake2\util\qrad3r1jit.exe</Command>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
     </CustomBuildStep>
     <Midl>
       <TypeLibraryName>.\Release/qrad3.tlb</TypeLibraryName>
@@ -196,7 +199,8 @@
     </Bscmake>
     <PostBuildEvent>
       <Message>Copy to bsp utils.</Message>
-      <Command>copy .\Release\qrad3.exe E:\Programs\bsp\pball2\quake2\util\qrad3r1jit.exe</Command>
+      <Command>copy .\Release\qrad3.exe E:\Programs\bsp\pball2\quake2\util\qrad3r1jit.exe
+copy .\Release\qrad3.exe E:\Programs\bsp\quake2\util\qrad3r1jit.exe</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

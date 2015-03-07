@@ -67,6 +67,7 @@ float	ambient = 0;
 float	maxlight = 196;
 
 float	lightscale = 1.0;
+float	g_texscale = 1.0f; // jit
 
 qboolean sun = false;
 qboolean sun_alt_color = true; // jit
@@ -849,7 +850,7 @@ int main (int argc, char **argv)
 	printf ("----------- qrad3 ----------\n");
 	printf ("original code by id Software\n");
     printf ("Modified by Geoffrey DeWan\n");
-    printf ("Revision 1.05, jit r1\n");
+    printf ("Revision 1.05, jit r2 (2015-03-06a)\n");
     printf ("-----------------------------\n");
 
 	verbose = false;
@@ -917,6 +918,12 @@ int main (int argc, char **argv)
 		{
             param2 = WalkConfiguration();
 			lightscale = atoi (param2);
+		}
+		else if (!strcmp(param, "-texscale")) // jit - option to scale texture reflectivity
+		{
+			param2 = WalkConfiguration();
+			g_texscale = atof(param2);
+			printf("Texture reflectivity scale set to %g\n", g_texscale);
 		}
 		else if (!strcmp(param,"-direct"))
 		{
@@ -1001,7 +1008,7 @@ int main (int argc, char **argv)
 				"    -dump            -moddir <path>        -tmpin\n"
 				"    -entity #        -noblock              -tmpout\n"
 				"    -extra           -nocolor              -v\n"
-				"    -gamedir <path>  -nopvs\n"
+				"    -gamedir <path>  -nopvs                -texscale #\n"
 				);
 
 			exit(1);

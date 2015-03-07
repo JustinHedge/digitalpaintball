@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 vec3_t	texture_reflectivity[MAX_MAP_TEXINFO];
 
+extern float g_texscale; // jit
+
 /*
 ===================================================================
 
@@ -135,6 +137,21 @@ void CalcTextureReflectivity (void)
 			scale *= 2;
 			VectorScale (texture_reflectivity[i], scale, texture_reflectivity[i]);
 		}*/
+
+		// === jit - scale texture reflectivity (1.0 by default, overridden by -texscale)
+		VectorScale(texture_reflectivity[i], g_texscale, texture_reflectivity[i]);
+
+		for (j = 0; j < 3; ++j)
+		{
+			if (texture_reflectivity[i][j] > 1.0f)
+			{
+				printf("Reflectivity for %s is greater than 1.  Normalizing.\n", texinfo[i].texture);
+				ColorNormalize(texture_reflectivity[i], texture_reflectivity[i]);
+				break;
+			}
+		}
+		// jit ===
+
 #if 0
 texture_reflectivity[i][0] = 0.5;
 texture_reflectivity[i][1] = 0.5;

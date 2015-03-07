@@ -240,7 +240,7 @@ re_test:
 	{
 		int leafnum = (-1 - node_d);//node & ~(1<<31);	// leaf node
 
-		if (leafnum)
+		if (leafnum && (node & CONTENTS_SOLID)) // we might eventually check CONTENTS_WINDOW as well for transparent surface shadows.
 		{
 			int			k;
 			int			brushnum;
