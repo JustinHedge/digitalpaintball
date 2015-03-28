@@ -211,6 +211,8 @@ void Con_Dump_f (void)
 	FILE	*f;
 	char	buffer[1024];
 	char	name[MAX_OSPATH];
+	char	filename[MAX_QPATH]; // jitsecurity
+	char	*s;
 
 	if (Cmd_Argc() != 2)
 	{
@@ -218,7 +220,16 @@ void Con_Dump_f (void)
 		return;
 	}
 
-	Com_sprintf(name, sizeof(name), "%s/%s.txt", FS_Gamedir(), Cmd_Argv(1));
+	// === jitsecurity - don't allow .'s in filename
+	Q_strncpyz(filename, Cmd_Argv(1), sizeof(filename));
+	s = filename;
+	while (s = strchr(s, '.'))
+	{
+		*s = '_';
+	}
+	// jitsecurity ===
+
+	Com_sprintf(name, sizeof(name), "%s/%s.txt", FS_Gamedir(), filename);
 	Com_Printf("Dumped console text to %s.\n", name);
 	FS_CreatePath(name);
 	f = fopen(name, "w");
