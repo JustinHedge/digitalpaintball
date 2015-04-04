@@ -234,6 +234,24 @@ void CL_DeltaEntity (frame_t *frame, int newnum, entity_state_t *old, int bits)
 
 	ent->serverframe = cl.frame.serverframe;
 	ent->current = *state;
+
+	// === jitdemo - override camera position with new target entity playernum
+	if (cl.playernum_demooverride && cl.attractloop && state->number == cl.playernum + 1)
+	{
+		player_state_t *ps = &frame->playerstate;
+
+		ps->pmove.origin[0] = state->origin[0] * 8;
+		ps->pmove.origin[1] = state->origin[1] * 8;
+		ps->pmove.origin[2] = state->origin[2] * 8;
+		ps->viewoffset[0] = 0.0f;
+		ps->viewoffset[1] = 0.0f;
+		ps->viewoffset[2] = 22.0f; // todo: figure out if crouched and use a different offset.
+		ps->viewangles[PITCH] = state->angles[PITCH] * 3.0f; // view angle is scaled by 3 so 3rd person player model doesn't look crazy going fully horizontal and such
+		ps->viewangles[YAW] = state->angles[YAW];
+		ps->viewangles[ROLL] = state->angles[ROLL];
+		VectorClear(ps->kick_angles);
+	}
+	// jitdemo ===
 }
 
 /*
@@ -882,24 +900,6 @@ void CL_AddPacketEntities (frame_t *frame)
 				V_AddLight(ent.origin, 225, 1.0, 1.0, 0.0);		//PGM
 			else if (effects & EF_TRACKERTRAIL)					//PGM
 				V_AddLight(ent.origin, 225, -1.0, -1.0, -1.0);	//PGM
-
-			// === jitdemo - override camera position with new target entity playernum
-			if (cl.playernum_demooverride)
-			{
-				player_state_t *ps = &frame->playerstate;
-
-				ps->pmove.origin[0] = ent.origin[0] * 8;
-				ps->pmove.origin[1] = ent.origin[1] * 8;
-				ps->pmove.origin[2] = ent.origin[2] * 8;
-				ps->viewoffset[0] = 0.0f;
-				ps->viewoffset[1] = 0.0f;
-				ps->viewoffset[2] = 22.0f; // todo: figure out if crouched and use a different offset.
-				ps->viewangles[PITCH] = ent.angles[PITCH] * 3.0f; // view angle is scaled by 3 so 3rd person player model doesn't look crazy going fully horizontal and such
-				ps->viewangles[YAW] = ent.angles[YAW];
-				ps->viewangles[ROLL] = ent.angles[ROLL];
-				VectorClear(ps->kick_angles);
-			}
-			// jitdemo ===
 
 			continue;
 		}
