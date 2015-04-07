@@ -2144,7 +2144,7 @@ static select_map_list_t *get_new_select_map_list (char *cvar_string, char *stri
 }
 
 // get the list from the file, then store it in an array on the widget
-static void select_begin_list (menu_widget_t *widget, char *buf)
+static void select_begin_list (menu_widget_t *widget, char **buf)
 {
 	char *token;
 	char cvar_string[MAX_TOKEN_CHARS];
@@ -2154,7 +2154,7 @@ static void select_begin_list (menu_widget_t *widget, char *buf)
 	select_map_list_t *list_start = NULL;
 	select_map_list_t *finger;
 
-	token = COM_Parse(&buf);
+	token = COM_Parse(buf);
 
 	if (strstr(token, "pair") || strstr(token, "map") || strstr(token, "bind"))
 	{
@@ -2163,18 +2163,18 @@ static void select_begin_list (menu_widget_t *widget, char *buf)
 		if (strstr(token, "bind"))
 			widget->flags |= WIDGET_FLAG_BIND;
 
-		token = COM_Parse(&buf);
+		token = COM_Parse(buf);
 	
 		// read in map pair
 		while (token && *token && !Q_streq(token, "end"))
 		{
 			strcpy(cvar_string, token);
-			token = COM_Parse(&buf);
+			token = COM_Parse(buf);
 			new_map = get_new_select_map_list(cvar_string, token);
 			new_map->next = list_start;
 			list_start = new_map;
 			count ++;
-			token = COM_Parse(&buf);
+			token = COM_Parse(buf);
 		}
 
 		widget->select_totalitems = count;
@@ -2197,7 +2197,7 @@ static void select_begin_list (menu_widget_t *widget, char *buf)
 	else if (strstr(token, "single") || strstr(token, "list"))
 	{	
 		// read in list
-		token = COM_Parse(&buf);
+		token = COM_Parse(buf);
 
 		while (token && *token && !Q_streq(token, "end"))
 		{	
@@ -2205,7 +2205,7 @@ static void select_begin_list (menu_widget_t *widget, char *buf)
 			new_map->next = list_start;
 			list_start = new_map;
 			count ++;
-			token = COM_Parse(&buf);
+			token = COM_Parse(buf);
 		}
 
 		widget->select_totalitems = count;
@@ -2762,7 +2762,7 @@ static void menu_from_file (menu_screen_t *menu, qboolean include, const char *l
 					else if ((strstr(token, "size") || strstr(token, "rows") || strstr(token, "height")) && widget)
 						widget->select_rows = atoi(COM_Parse(&buf));
 					else if (strstr(token, "begin") && widget)
-						select_begin_list(widget, buf);
+						select_begin_list(widget, &buf);
 					else if (strstr(token, "file") && widget) // "filedir"
 						select_begin_file_list(widget, COM_Parse(&buf));
 					else if (Q_streq(token, "serverlist") && widget) // for backwards compatibility
