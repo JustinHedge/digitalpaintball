@@ -2154,6 +2154,11 @@ static void select_begin_list (menu_widget_t *widget, char **buf)
 	select_map_list_t *list_start = NULL;
 	select_map_list_t *finger;
 
+	if (widget->select_list) //might occur if a "begin pairs ... end" block exists and the "file" attribute is set
+	{
+		return; //just keep the content of whatever is first in the menu file
+	}
+
 	token = COM_Parse(buf);
 
 	if (strstr(token, "pair") || strstr(token, "map") || strstr(token, "bind"))
@@ -2244,6 +2249,11 @@ static void select_strip_from_list (menu_widget_t *widget, const char *striptext
 
 static void select_begin_file_list (menu_widget_t *widget, char *findname)
 {
+	if (widget->select_list) //might occur if a "begin pairs ... end" block exists and the "file" attribute is set
+	{
+		return; //just keep the content of whatever is first in the menu file
+	}
+
 	widget->select_list = FS_ListFiles(Cmd_MacroExpandString(findname), &widget->select_totalitems, 0, 0, true);
 	widget->select_totalitems--;
 	widget->flags |= WIDGET_FLAG_FILELIST;
