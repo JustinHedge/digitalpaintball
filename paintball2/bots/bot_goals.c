@@ -116,6 +116,12 @@ void BotRetryGoal (int bot_index)
 }
 
 
+void BotClearGoals (void)
+{
+	memset(bots.goals, 0, sizeof(bots.goals));
+}
+
+
 void BotPathfindComplete (int bot_index)
 {
 	botgoal_t *goal = bots.goals + bot_index;

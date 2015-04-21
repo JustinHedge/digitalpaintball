@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014 Nathan "jitspoe" Wulf, Digital Paint
+Copyright (c) 2014-2015 Nathan "jitspoe" Wulf, Digital Paint
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -126,7 +126,7 @@ void BotRandomStrafeJump (unsigned int botindex, int msec)
 }
 
 
-// Converst a vector into a yaw angle
+// Converts a vector into a yaw angle
 float VecToAngle (vec3_t vec)
 {
 	float	yaw;
@@ -595,6 +595,7 @@ void BotMove (unsigned int botindex, int msec)
 			{
 				usercmd_t cmd;
 				float yaw = 0.0f;
+				float pitch = 0.0f;
 
 				movement->time_since_last_turn += msec;
 
@@ -604,6 +605,8 @@ void BotMove (unsigned int botindex, int msec)
 						BotFollowWaypoint(botindex, msec);
 					else
 						BotWander(botindex, msec);
+
+					BotAimAndShoot(botindex, msec);
 				}
 
 				//BotDance(botindex);
@@ -616,11 +619,14 @@ void BotMove (unsigned int botindex, int msec)
 
 				while (movement->timeleft > 0)
 				{
-					yaw = ent->s.angles[YAW];
 					movement->timeleft -= BOT_UCMD_TIME;
+					yaw = ent->s.angles[YAW];
 					yaw += movement->yawspeed * msec / 1000.0f;
+					pitch = ent->s.angles[PITCH];
+					pitch += movement->pitchspeed * msec / 1000.0f;
 					memset(&cmd, 0, sizeof(cmd));
 					cmd.angles[YAW] = ANGLE2SHORT(yaw) - ent->client->ps.pmove.delta_angles[YAW];
+					cmd.angles[PITCH] = ANGLE2SHORT(pitch) - ent->client->ps.pmove.delta_angles[PITCH];
 					cmd.msec = BOT_UCMD_TIME;
 					cmd.forwardmove = movement->forward;
 					cmd.sidemove = movement->side;

@@ -83,8 +83,10 @@ typedef struct
 	void		(*ClientThink) (edict_t *ent, usercmd_t *ucmd);
 	edict_t		*(*AddBotClient) (char *userinfo);
 	const char	*(*GetClientName) (edict_t *ent);
+	edict_t		*(*GetNextPlayerEnt) (edict_t *ent, qboolean ignore_bots);
 	void		(*DisconnectBot) (edict_t *ent);
-	qboolean	(*IsGroundEntityWorld) (edict_t *ent);
+	qboolean	(*IsGroundEntityWorld) (const edict_t *ent);
+	qboolean	(*IsEnemy) (const edict_t *ent, const edict_t *other);
 
 	char		unset[64];
 } bot_import_t;

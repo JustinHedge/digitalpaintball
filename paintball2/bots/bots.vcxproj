@@ -97,6 +97,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bot_aim.c" />
     <ClCompile Include="bot_astar.c" />
     <ClCompile Include="bot_commands.c" />
     <ClCompile Include="bot_debug.c" />

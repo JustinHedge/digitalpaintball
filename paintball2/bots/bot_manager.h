@@ -40,7 +40,7 @@ typedef struct botmovedata_s {
 	int					timeleft; // time left for ucmd's.
 	float				last_trace_dist;
 	float				yawspeed; // degrees/sec
-	//float				pitchspeed;
+	float				pitchspeed;
 	short				forward; // forward/back
 	short				side; // strafe left/right
 	short				up; // jump/crouch
@@ -59,6 +59,7 @@ typedef struct botmanager_s {
 	edict_t				*ents[MAX_BOTS];
 	botmovedata_t		movement[MAX_BOTS];
 	botgoal_t			goals[MAX_BOTS];
+	edict_t				*targets[MAX_BOTS];
 	int					count; // total number of bots currently in the map
 	char				names_to_readd[MAX_BOTS][64]; // bots to readd after map change
 	int					num_to_readd; // number of botss to readd

@@ -40,6 +40,8 @@ void FreeObservations (void);
 
 void BotInitMap (const char *mapname)
 {
+	BotClearObjectives();
+	BotClearGoals();
 	BotReadWaypoints(mapname);
 	Q_strncpyz(bots.levelname, mapname, sizeof(bots.levelname));
 	// todo - alocate/read in data.

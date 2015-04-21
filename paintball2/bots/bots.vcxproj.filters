@@ -48,6 +48,9 @@
     <ClCompile Include="bot_waypoints.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bot_aim.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bot_debug.h">
