@@ -42,6 +42,7 @@ void BotInitMap (const char *mapname)
 {
 	BotClearObjectives();
 	BotClearGoals();
+	memset(bots.movement, 0, sizeof(bots.movement));
 	BotReadWaypoints(mapname);
 	Q_strncpyz(bots.levelname, mapname, sizeof(bots.levelname));
 	// todo - alocate/read in data.
@@ -52,8 +53,9 @@ void BotShutdownMap (void)
 {
 	bi.dprintf("DP Botlib closing map.\n");
 	BotWriteWaypoints(bots.levelname);
-	// todo - write data to file.
-	// todo - free map-specific data;
+	BotClearObjectives();
+	BotClearGoals();
+	memset(bots.movement, 0, sizeof(bots.movement));
 	FreeObservations();
 }
 
