@@ -38,13 +38,13 @@ void VecToAngles (vec3_t value1, vec3_t angles)
 	}
 	else
 	{
-		yaw = (int) (atan2(value1[1], value1[0]) * 180 / M_PI);
+		yaw = atan2(value1[1], value1[0]) * 180 / M_PI;
 
 		if (yaw < 0)
 			yaw += 360;
 
 		forward = sqrt (value1[0]*value1[0] + value1[1]*value1[1]);
-		pitch = (int) (atan2(value1[2], forward) * 180 / M_PI);
+		pitch = atan2(value1[2], forward) * 180 / M_PI;
 
 		if (pitch < 0)
 			pitch += 360;
@@ -64,9 +64,11 @@ void BotSetDesiredAimAnglesFromPoint (int botindex, const vec3_t point)
 	vec3_t desired_angles;
 
 	VectorSubtract(point, bot->s.origin, to_target);
+	VectorNormalize(to_target);
 	VecToAngles(to_target, desired_angles);
 	movement->desired_yaw = desired_angles[YAW];
 	movement->desired_pitch = desired_angles[PITCH];
+	//bi.bprintf(PRINT_HIGH, "Y: %f, P: %f\n", movement->desired_yaw, movement->desired_pitch);
 }
 
 
@@ -84,27 +86,31 @@ void BotAimTowardDesiredAngles (int botindex, int msec)
 		float old_yawspeed = movement->yawspeed;
 		float old_pitchspeed = movement->pitchspeed;
 		float new_yawspeed, new_pitchspeed;
-		int additional_frames = (int)nu_rand(4.0f);
-		float aim_time = dt; // I don't understand why this doesn't work: + dt * additional_frames;
-		float aim_time_rand = aim_time;// + nu_rand(aim_time * 0.5f) - nu_rand(aim_time * 0.5f); // +/- 50% time estimation, so bots "mess up" their aim a little.
+		int additional_frames = (int)nu_rand(3.0f);
+		float aim_time = dt + dt * additional_frames;
+		float aim_time_rand = aim_time + nu_rand(aim_time * 0.3f) - nu_rand(aim_time * 0.3f); // +/- 30% time estimation, so bots "mess up" their aim a little.
 
 		delta_yaw = movement->desired_yaw - bot->s.angles[YAW];
 		delta_pitch = movement->desired_pitch - bot->s.angles[PITCH];
 
-		// Calculate turn speed
 		if (delta_yaw > 180.0f)
 			delta_yaw -= 360.0f;
 
 		if (delta_yaw < -180.0f)
 			delta_yaw += 360.0f;
 
+		if (delta_pitch > 180.0f)
+			delta_pitch -= 360.0f;
+
+		if (delta_pitch < -180.0f)
+			delta_pitch += 360.0f;
+
+		// Calculate turn speed
 		new_yawspeed = delta_yaw / aim_time_rand;
 		new_pitchspeed = delta_pitch / aim_time_rand;
 		// damp yaw speed to make it less twitchy
-		//movement->yawspeed = DampIIR(old_yawspeed, new_yawspeed, 0.95f, aim_time);
-		//movement->pitchspeed = DampIIR(old_pitchspeed, new_pitchspeed, 0.95f, aim_time);
-		movement->yawspeed = new_yawspeed;
-		movement->pitchspeed = new_pitchspeed;
+		movement->yawspeed = DampIIR(old_yawspeed, new_yawspeed, 0.1f, aim_time);
+		movement->pitchspeed = DampIIR(old_pitchspeed, new_pitchspeed, 0.1f, aim_time);
 		movement->aimtimeleft = aim_time;
 	}
 }
@@ -143,11 +149,18 @@ void BotAimAndShoot (int botindex, int msec)
 
 	if (best_target)
 	{
+		botmovedata_t *movement = bots.movement + botindex;
+
 		BotSetDesiredAimAnglesFromPoint(botindex, best_target->s.origin);
+		movement->aim_target = best_target;
 
 		if (skill->value > -1)
 		{
-			bots.movement[botindex].shooting = nu_rand(1.0f) > 0.5f; // 50% chance of shooting every frame
+			movement->shooting = nu_rand(1.0f) > 0.5f; // 50% chance of shooting every frame
+		}
+		else
+		{
+			movement->shooting = false;
 		}
 	}
 

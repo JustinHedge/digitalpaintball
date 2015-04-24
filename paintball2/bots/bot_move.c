@@ -126,24 +126,6 @@ void BotRandomStrafeJump (unsigned int botindex, int msec)
 }
 
 
-// Converts a vector into a yaw angle
-float VecToAngle (vec3_t vec)
-{
-	float	yaw;
-
-	if (vec[0])
-		yaw = (atan2(vec[1], vec[0]) * 180.0f / M_PI);
-	else if (vec[1] > 0)
-		yaw = 90;
-	else
-		yaw = 270;
-
-	if (yaw < 0)
-		yaw += 360;
-
-	return yaw;
-}
-
 //#define WAYPOINT_REACHED_EPSILON_SQ		2304.0f // 48 * 48
 #define WAYPOINT_REACHED_EPSILON_SQ		1024.0f // 32 * 32
 
@@ -161,13 +143,8 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 			float dist_sq;
 			vec3_t bot_to_current_waypoint, current_to_next_waypoint;
 			vec3_t vec_diff;
-//			vec3_t velocity;
-			vec3_t vec_to_face;
 			vec3_t forward, right;
 			float forward_dot, right_dot;
-			float current_yaw;
-			float desired_yaw;
-			float delta_yaw;
 			qboolean waypoint_passed = false;
 			static float test_vel_offset = 0.1f;
 			float test_threshold = 20.0f;
@@ -247,13 +224,8 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 			}
 
 			DrawDebugSphere(current_waypoint_pos, 7.5f, 1.0f, 1.0f, 1.0f, 0.1f, -1);
+			BotSetDesiredAimAnglesFromPoint(bot_index, current_waypoint_pos);
 			VectorSubtract(current_waypoint_pos, ent->s.origin, vec_diff);
-			//VectorScale(ent->client->ps.pmove.velocity, 0.125f, velocity); // pm version stored as 8x, so scale it back to normal
-			//VectorMA(vec_diff, -test_vel_offset, velocity, vec_to_face);
-			VectorCopy(vec_diff, vec_to_face);
-			desired_yaw = VecToAngle(vec_to_face);
-			current_yaw = ent->s.angles[YAW];
-			delta_yaw = desired_yaw - current_yaw;
 
 			// Figure out where the target is relative to our current facing
 			AngleVectors(ent->s.angles, forward, right, NULL);
@@ -278,17 +250,8 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 			else if (right_dot < -test_threshold)
 				movement->side = -MOVE_SPEED;
 
-			// Calculate turn speed
-			if (delta_yaw > 180.0f)
-				delta_yaw -= 360.0f;
-
-			if (delta_yaw < -180.0f)
-				delta_yaw += 360.0f;
-
-			movement->yawspeed = delta_yaw * 1000.0f / (float)msec; // turn this much in 1 movement update.
-
 			// 50% chance of jumping each frame... in case we're not touching the ground or something
-			if (movement->need_jump && nu_rand(1.0f) > .5f)
+			if (movement->need_jump && nu_rand(1.0f) > 0.5f)
 				movement->up = MOVE_SPEED;
 			else
 				movement->up = 0;
@@ -324,6 +287,31 @@ void BotWanderNoNav (unsigned int botindex, int msec)
 	vec3_t mins;
 	vec3_t maxs;
 	float max_turn_speed = BOT_WANDER_MAX_TURN_SPEED_FAR;
+
+	// If we're wandering but have a target to aim at, move toward it and randomly strafe left and right.
+	if (movement->aim_target)
+	{
+		movement->forward = MOVE_SPEED;
+
+		if (nu_rand(1.0f) < 0.1f)
+		{
+			float r = nu_rand(1.0f);
+
+			if (r < 0.3f)
+				movement->side = MOVE_SPEED;
+			else if (r > 0.7f)
+				movement->side = -MOVE_SPEED;
+			else
+				movement->side = 0.0f;
+		}
+
+		if (nu_rand(1.0f) < 0.05f)
+			movement->up = MOVE_SPEED;
+		else
+			movement->up = 0;
+
+		return;
+	}
 
 	if (movement->time_since_last_turn > BOT_WANDER_CAST_INTERVAL)
 	{
@@ -594,8 +582,9 @@ void BotMove (unsigned int botindex, int msec)
 			else*/
 			{
 				usercmd_t cmd;
-				float yaw = 0.0f;
-				float pitch = 0.0f;
+				float yaw = ent->s.angles[YAW];
+				float pitch = ent->s.angles[PITCH];
+				float ucmd_dt = BOT_UCMD_TIME / 1000.0f;
 
 				movement->time_since_last_turn += msec;
 
@@ -620,10 +609,8 @@ void BotMove (unsigned int botindex, int msec)
 				while (movement->timeleft > 0)
 				{
 					movement->timeleft -= BOT_UCMD_TIME;
-					yaw = ent->s.angles[YAW];
-					yaw += movement->yawspeed * msec / 1000.0f;
-					pitch = ent->s.angles[PITCH];
-					pitch += movement->pitchspeed * msec / 1000.0f;
+					yaw += movement->yawspeed * ucmd_dt;
+					pitch += movement->pitchspeed * ucmd_dt;
 					memset(&cmd, 0, sizeof(cmd));
 					cmd.angles[YAW] = ANGLE2SHORT(yaw) - ent->client->ps.pmove.delta_angles[YAW];
 					cmd.angles[PITCH] = ANGLE2SHORT(pitch) - ent->client->ps.pmove.delta_angles[PITCH];

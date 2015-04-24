@@ -47,6 +47,7 @@ typedef struct botmovedata_s {
 	short				forward; // forward/back
 	short				side; // strafe left/right
 	short				up; // jump/crouch
+	edict_t				*aim_target;
 	qboolean			shooting;
 	short				time_since_last_turn; // used for wandering
 	short				time_til_try_path; // used for wandering
