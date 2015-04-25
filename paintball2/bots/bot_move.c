@@ -225,6 +225,11 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 
 			DrawDebugSphere(current_waypoint_pos, 7.5f, 1.0f, 1.0f, 1.0f, 0.1f, -1);
 			BotSetDesiredAimAnglesFromPoint(bot_index, current_waypoint_pos);
+
+			// Don't look directly down at waypoints when jumping.  Looks stupid.
+			if (movement->desired_pitch > 15.0f)
+				movement->desired_pitch = 15.0f;
+
 			VectorSubtract(current_waypoint_pos, ent->s.origin, vec_diff);
 
 			// Figure out where the target is relative to our current facing

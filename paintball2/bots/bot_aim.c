@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bot_main.h"
 #include "bot_manager.h"
 #include "../game/game.h"
+#include "bot_debug.h"
 
 
 void VecToAngles (vec3_t value1, vec3_t angles)
@@ -68,6 +69,13 @@ void BotSetDesiredAimAnglesFromPoint (int botindex, const vec3_t point)
 	VecToAngles(to_target, desired_angles);
 	movement->desired_yaw = desired_angles[YAW];
 	movement->desired_pitch = desired_angles[PITCH];
+
+	if (movement->desired_pitch < -180.0f)
+		movement->desired_pitch += 360.0f;
+
+	if (movement->desired_pitch > 180.0f)
+		movement->desired_pitch -= 360.0f;
+
 	//bi.bprintf(PRINT_HIGH, "Y: %f, P: %f\n", movement->desired_yaw, movement->desired_pitch);
 }
 
@@ -150,9 +158,29 @@ void BotAimAndShoot (int botindex, int msec)
 	if (best_target)
 	{
 		botmovedata_t *movement = bots.movement + botindex;
+		vec3_t best_target_predicted_location;
+		float rand_time = nu_rand(0.6f) - nu_rand(0.2f); // aim at where the target will be somewhere between -200 to 600 ms (might lead target, might lag).
 
-		BotSetDesiredAimAnglesFromPoint(botindex, best_target->s.origin);
-		movement->aim_target = best_target;
+		if (movement->aim_target == best_target)
+		{
+			// same target as last update.  Calculate velocity between old and new position.
+			vec3_t pos_diff;
+			vec3_t predicted_velocity;
+
+			VectorSubtract(best_target->s.origin, movement->last_target_pos, pos_diff);
+			VectorScale(pos_diff, 1000.0f / (float)msec, predicted_velocity);
+			VectorMA(best_target->s.origin, rand_time, predicted_velocity, best_target_predicted_location);
+		}
+		else
+		{
+			// New target, just aim directly toward it
+			VectorCopy(best_target->s.origin, best_target_predicted_location);
+			movement->aim_target = best_target;
+		}
+
+		BotSetDesiredAimAnglesFromPoint(botindex, best_target_predicted_location);
+		DrawDebugSphere(best_target_predicted_location, 20.0f, 1.0f, 0.4f, 0.1f, 0.2f, -1);
+		VectorCopy(best_target->s.origin, movement->last_target_pos);
 
 		if (skill->value > -1)
 		{
