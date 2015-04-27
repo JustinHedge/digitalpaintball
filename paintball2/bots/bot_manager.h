@@ -42,8 +42,7 @@ typedef struct botmovedata_s {
 	float				yawspeed; // degrees/sec
 	float				pitchspeed;
 	float				aimtimeleft; // when aiming, how much time is left before we reach our desired aim direction (so this can be randomized and not match the frame dt exactly)
-	float				desired_yaw;
-	float				desired_pitch;
+	vec3_t				desired_angles;
 	short				forward; // forward/back
 	short				side; // strafe left/right
 	short				up; // jump/crouch

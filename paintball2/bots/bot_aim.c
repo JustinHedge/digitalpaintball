@@ -62,19 +62,16 @@ void BotSetDesiredAimAnglesFromPoint (int botindex, const vec3_t point)
 	botmovedata_t *movement = bots.movement + botindex;
 	edict_t *bot = bots.ents[botindex];
 	vec3_t to_target;
-	vec3_t desired_angles;
 
 	VectorSubtract(point, bot->s.origin, to_target);
 	VectorNormalize(to_target);
-	VecToAngles(to_target, desired_angles);
-	movement->desired_yaw = desired_angles[YAW];
-	movement->desired_pitch = desired_angles[PITCH];
+	VecToAngles(to_target, movement->desired_angles);
 
-	if (movement->desired_pitch < -180.0f)
-		movement->desired_pitch += 360.0f;
+	if (movement->desired_angles[PITCH] < -180.0f)
+		movement->desired_angles[PITCH] += 360.0f;
 
-	if (movement->desired_pitch > 180.0f)
-		movement->desired_pitch -= 360.0f;
+	if (movement->desired_angles[PITCH] > 180.0f)
+		movement->desired_angles[PITCH] -= 360.0f;
 
 	//bi.bprintf(PRINT_HIGH, "Y: %f, P: %f\n", movement->desired_yaw, movement->desired_pitch);
 }
@@ -98,8 +95,8 @@ void BotAimTowardDesiredAngles (int botindex, int msec)
 		float aim_time = dt + dt * additional_frames;
 		float aim_time_rand = aim_time + nu_rand(aim_time * 0.3f) - nu_rand(aim_time * 0.3f); // +/- 30% time estimation, so bots "mess up" their aim a little.
 
-		delta_yaw = movement->desired_yaw - bot->s.angles[YAW];
-		delta_pitch = movement->desired_pitch - bot->s.angles[PITCH];
+		delta_yaw = movement->desired_angles[YAW] - bot->s.angles[YAW];
+		delta_pitch = movement->desired_angles[PITCH] - bot->s.angles[PITCH];
 
 		if (delta_yaw > 180.0f)
 			delta_yaw -= 360.0f;
@@ -126,6 +123,7 @@ void BotAimTowardDesiredAngles (int botindex, int msec)
 // Called every frame -- acquire and shoot at targets.
 void BotAimAndShoot (int botindex, int msec)
 {
+	botmovedata_t *movement = bots.movement + botindex;
 	edict_t *target = bi.GetNextPlayerEnt(NULL, false);
 	edict_t *self = bots.ents[botindex];
 	edict_t *best_target = NULL;
@@ -154,12 +152,31 @@ void BotAimAndShoot (int botindex, int msec)
 
 		target = bi.GetNextPlayerEnt(target, false);
 	}
+	
+	// By default, don't shoot.
+	movement->shooting = false;
 
 	if (best_target)
 	{
-		botmovedata_t *movement = bots.movement + botindex;
+		float dist_to_target;
+		vec3_t to_target;
 		vec3_t best_target_predicted_location;
-		float rand_time = nu_rand(0.6f) - nu_rand(0.2f); // aim at where the target will be somewhere between -200 to 600 ms (might lead target, might lag).
+		float rand_time, rand_min, rand_max;
+
+		// Distance to target
+		VectorSubtract(self->s.origin, best_target->s.origin, to_target);
+		dist_to_target = VectorLength(to_target);
+		rand_max = 0.2f + dist_to_target / 3000.0f;
+		rand_min = 80.0f / dist_to_target;
+
+		if (rand_max < 0.2f)
+			rand_max = 0.2f;
+
+		if (rand_min > 0.2f || dist_to_target < 0.01f)
+			rand_min = 0.2f;
+
+		rand_time = nu_rand(rand_max) - nu_rand(rand_min); // randomly lead targets a bit, based on distance.
+		//bi.dprintf("r: %g, min: %g, max: %g\n", rand_time, rand_min, rand_max);
 
 		if (movement->aim_target == best_target)
 		{
@@ -178,17 +195,33 @@ void BotAimAndShoot (int botindex, int msec)
 			movement->aim_target = best_target;
 		}
 
+		best_target_predicted_location[2] += nu_rand(48.0f) - nu_rand(48.0f); // add some randomization to the verticality to maybe hit crouching/jumping targets by chance.
 		BotSetDesiredAimAnglesFromPoint(botindex, best_target_predicted_location);
 		DrawDebugSphere(best_target_predicted_location, 20.0f, 1.0f, 0.4f, 0.1f, 0.2f, -1);
 		VectorCopy(best_target->s.origin, movement->last_target_pos);
 
+		// Shoot if we're aiming close enough to our desired target.
 		if (skill->value > -1)
 		{
-			movement->shooting = nu_rand(1.0f) > 0.5f; // 50% chance of shooting every frame
-		}
-		else
-		{
-			movement->shooting = false;
+			vec3_t desired_forward;
+			vec3_t current_forward;
+			float r = nu_rand(1.0f);
+			float dot;
+			
+			// Find difference between desired aim and current aim.
+			AngleVectors(self->s.angles, current_forward, NULL, NULL);
+			AngleVectors(movement->desired_angles, desired_forward, NULL, NULL);
+			dot = DotProduct(current_forward, desired_forward);
+
+			// Arbitrary calculation -- the further away something is, the more precise we want to be before shooting.  It looks stupid if the bot fails to shoot at a point-blank target because he's only a degree or two off.
+			if (dist_to_target > 0.0f)
+				r = powf(r, 16.0f / dist_to_target);
+
+			// The closer we're aiming to where we need to be, the more likely we are to shoot.
+			if (r < dot)
+				movement->shooting = true;
+
+			bi.dprintf("%s d: %g, r: %g\n", movement->shooting ? "S" : " ", dot, r);
 		}
 	}
 

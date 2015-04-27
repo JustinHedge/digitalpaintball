@@ -227,8 +227,8 @@ void BotFollowWaypoint (unsigned int bot_index, int msec)
 			BotSetDesiredAimAnglesFromPoint(bot_index, current_waypoint_pos);
 
 			// Don't look directly down at waypoints when jumping.  Looks stupid.
-			if (movement->desired_pitch > 15.0f)
-				movement->desired_pitch = 15.0f;
+			if (movement->desired_angles[PITCH] > 15.0f)
+				movement->desired_angles[PITCH] = 15.0f;
 
 			VectorSubtract(current_waypoint_pos, ent->s.origin, vec_diff);
 
