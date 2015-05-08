@@ -588,7 +588,7 @@ void BotMove (unsigned int botindex, int msec)
 			{
 				usercmd_t cmd;
 				float yaw = ent->s.angles[YAW];
-				float pitch = ent->s.angles[PITCH];
+				float pitch = ent->s.angles[PITCH] * 3.0f;
 				float ucmd_dt = BOT_UCMD_TIME / 1000.0f;
 
 				movement->time_since_last_turn += msec;

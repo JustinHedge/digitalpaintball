@@ -84,6 +84,7 @@ typedef struct
 	edict_t		*(*AddBotClient) (char *userinfo);
 	const char	*(*GetClientName) (edict_t *ent);
 	edict_t		*(*GetNextPlayerEnt) (edict_t *ent, qboolean ignore_bots);
+	float		(*GetViewHeight) (edict_t *ent);
 	void		(*DisconnectBot) (edict_t *ent);
 	qboolean	(*IsGroundEntityWorld) (const edict_t *ent);
 	qboolean	(*IsEnemy) (const edict_t *ent, const edict_t *other);

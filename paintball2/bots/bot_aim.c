@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../game/game.h"
 #include "bot_debug.h"
 
+static const vec3_t vec_zero = { 0.0f, 0.0f, 0.0f };
 
 void VecToAngles (vec3_t value1, vec3_t angles)
 {
@@ -77,6 +78,18 @@ void BotSetDesiredAimAnglesFromPoint (int botindex, const vec3_t point)
 }
 
 
+// Makes sure angle is +/- 180 degrees (only works for angles with +/- 360 degrees)
+float AngleTo180 (float angle)
+{
+	if (angle > 180.0f)
+		angle -= 360.0f;
+	else if (angle < -180.0f)
+		angle += 360.0f;
+
+	return angle;
+}
+
+
 void BotAimTowardDesiredAngles (int botindex, int msec)
 {
 	botmovedata_t *movement = bots.movement + botindex;
@@ -94,31 +107,22 @@ void BotAimTowardDesiredAngles (int botindex, int msec)
 		int additional_frames = (int)nu_rand(3.0f);
 		float aim_time = dt + dt * additional_frames;
 		float aim_time_rand = aim_time + nu_rand(aim_time * 0.3f) - nu_rand(aim_time * 0.3f); // +/- 30% time estimation, so bots "mess up" their aim a little.
+		float current_pitch = bot->s.angles[PITCH] * 3.0f; // entity pitch is 1/3 actual aim pitch.
 
-		delta_yaw = movement->desired_angles[YAW] - bot->s.angles[YAW];
-		delta_pitch = movement->desired_angles[PITCH] - bot->s.angles[PITCH];
-
-		if (delta_yaw > 180.0f)
-			delta_yaw -= 360.0f;
-
-		if (delta_yaw < -180.0f)
-			delta_yaw += 360.0f;
-
-		if (delta_pitch > 180.0f)
-			delta_pitch -= 360.0f;
-
-		if (delta_pitch < -180.0f)
-			delta_pitch += 360.0f;
+		delta_yaw = AngleTo180(movement->desired_angles[YAW] - bot->s.angles[YAW]);
+		delta_pitch = AngleTo180(movement->desired_angles[PITCH] - current_pitch);
 
 		// Calculate turn speed
 		new_yawspeed = delta_yaw / aim_time_rand;
 		new_pitchspeed = delta_pitch / aim_time_rand;
-		// damp yaw speed to make it less twitchy
+
+		// Damp yaw speed to make it less twitchy
 		movement->yawspeed = DampIIR(old_yawspeed, new_yawspeed, 0.1f, aim_time);
 		movement->pitchspeed = DampIIR(old_pitchspeed, new_pitchspeed, 0.1f, aim_time);
 		movement->aimtimeleft = aim_time;
 	}
 }
+
 
 // Called every frame -- acquire and shoot at targets.
 void BotAimAndShoot (int botindex, int msec)
@@ -141,11 +145,25 @@ void BotAimAndShoot (int botindex, int msec)
 
 			if (dist_sq < best_dist_sq)
 			{
-				// TODO: Line of sight check
 				if (bi.IsEnemy(self, target))
 				{
-					best_dist_sq = dist_sq;
-					best_target = target;
+					vec3_t viewpos, targetpos;
+					trace_t trace;
+
+					// Trace from the bot's eye position to the enemy's position + some randomization (so if only part of the enemy is showing, the bot might see it sometimes, but not all the time).
+					VectorCopy(self->s.origin, viewpos);
+					viewpos[2] += bi.GetViewHeight(self);
+					VectorCopy(target->s.origin, targetpos);
+					targetpos[2] += bi.GetViewHeight(target) + nu_rand(8) - nu_rand(16);
+					targetpos[0] += nu_rand(14) - nu_rand(14);
+					targetpos[1] += nu_rand(14) - nu_rand(14);
+					trace = bi.trace(viewpos, vec_zero, vec_zero, targetpos, self, MASK_PLAYERSOLID);
+
+					if (trace.fraction == 1.0f || trace.ent == target)
+					{
+						best_dist_sq = dist_sq;
+						best_target = target;
+					}
 				}
 			}
 		}
@@ -197,31 +215,34 @@ void BotAimAndShoot (int botindex, int msec)
 
 		best_target_predicted_location[2] += nu_rand(48.0f) - nu_rand(48.0f); // add some randomization to the verticality to maybe hit crouching/jumping targets by chance.
 		BotSetDesiredAimAnglesFromPoint(botindex, best_target_predicted_location);
-		DrawDebugSphere(best_target_predicted_location, 20.0f, 1.0f, 0.4f, 0.1f, 0.2f, -1);
+		DrawDebugSphere(best_target_predicted_location, 20.0f, 1.0f, 0.5f, 0.1f, 0.2f, -1);
+		DrawDebugSphere(best_target_predicted_location, 15.0f, 1.0f, 0.5f, 0.1f, 0.2f, -1);
+		DrawDebugSphere(best_target_predicted_location, 10.0f, 1.0f, 0.5f, 0.1f, 0.2f, -1);
+		DrawDebugSphere(best_target_predicted_location,  5.0f, 1.0f, 0.5f, 0.1f, 0.2f, -1);
 		VectorCopy(best_target->s.origin, movement->last_target_pos);
 
 		// Shoot if we're aiming close enough to our desired target.
 		if (skill->value > -1)
 		{
-			vec3_t desired_forward;
-			vec3_t current_forward;
-			float r = nu_rand(1.0f);
-			float dot;
+			float r;
+			float r_max = 180.0f;
+			float yaw_diff, pitch_diff;
 			
 			// Find difference between desired aim and current aim.
-			AngleVectors(self->s.angles, current_forward, NULL, NULL);
-			AngleVectors(movement->desired_angles, desired_forward, NULL, NULL);
-			dot = DotProduct(current_forward, desired_forward);
+			yaw_diff = fabs(AngleTo180(self->s.angles[YAW] - movement->desired_angles[YAW]));
+			pitch_diff = fabs(AngleTo180(self->s.angles[PITCH] * 3.0f - movement->desired_angles[PITCH]));
 
-			// Arbitrary calculation -- the further away something is, the more precise we want to be before shooting.  It looks stupid if the bot fails to shoot at a point-blank target because he's only a degree or two off.
-			if (dist_to_target > 0.0f)
-				r = powf(r, 16.0f / dist_to_target);
+			// The further away something is, the more precise we want to be.  Somewhat arbitrary -- just tweaked until it felt about right.
+			if (dist_to_target > 32.0f)
+				r_max /= (dist_to_target / 32.0f);
 
-			// The closer we're aiming to where we need to be, the more likely we are to shoot.
-			if (r < dot)
+			// Pick a random value within r_max degrees.  If the bot is aiming within that threshold, shoot.
+			r = nu_rand(r_max);
+
+			if (yaw_diff < r)
 				movement->shooting = true;
 
-			bi.dprintf("%s d: %g, r: %g\n", movement->shooting ? "S" : " ", dot, r);
+			bi.dprintf("%s d: %3.3f, rm: %3.3f, r: %3.3f\n", movement->shooting ? "S" : " ", yaw_diff, r_max, r);
 		}
 	}
 
