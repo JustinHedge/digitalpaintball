@@ -48,6 +48,7 @@ typedef struct botmovedata_s {
 	short				up; // jump/crouch
 	edict_t				*aim_target;
 	vec3_t				last_target_pos;
+	int					last_target_msec; // time since target was last seen, in ms.
 	qboolean			shooting;
 	short				time_since_last_turn; // used for wandering
 	short				time_til_try_path; // used for wandering

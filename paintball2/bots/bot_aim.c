@@ -157,7 +157,7 @@ void BotAimAndShoot (int botindex, int msec)
 					targetpos[2] += bi.GetViewHeight(target) + nu_rand(8) - nu_rand(16);
 					targetpos[0] += nu_rand(14) - nu_rand(14);
 					targetpos[1] += nu_rand(14) - nu_rand(14);
-					trace = bi.trace(viewpos, vec_zero, vec_zero, targetpos, self, MASK_PLAYERSOLID);
+					trace = bi.trace(viewpos, vec_zero, vec_zero, targetpos, self, MASK_SOLID);
 
 					if (trace.fraction == 1.0f || trace.ent == target)
 					{
@@ -203,7 +203,7 @@ void BotAimAndShoot (int botindex, int msec)
 			vec3_t predicted_velocity;
 
 			VectorSubtract(best_target->s.origin, movement->last_target_pos, pos_diff);
-			VectorScale(pos_diff, 1000.0f / (float)msec, predicted_velocity);
+			VectorScale(pos_diff, 1000.0f / (float)msec, predicted_velocity); // TODO: compensate for bot's own velocity as well.
 			VectorMA(best_target->s.origin, rand_time, predicted_velocity, best_target_predicted_location);
 		}
 		else
@@ -216,10 +216,8 @@ void BotAimAndShoot (int botindex, int msec)
 		best_target_predicted_location[2] += nu_rand(48.0f) - nu_rand(48.0f); // add some randomization to the verticality to maybe hit crouching/jumping targets by chance.
 		BotSetDesiredAimAnglesFromPoint(botindex, best_target_predicted_location);
 		DrawDebugSphere(best_target_predicted_location, 20.0f, 1.0f, 0.5f, 0.1f, 0.2f, -1);
-		DrawDebugSphere(best_target_predicted_location, 15.0f, 1.0f, 0.5f, 0.1f, 0.2f, -1);
-		DrawDebugSphere(best_target_predicted_location, 10.0f, 1.0f, 0.5f, 0.1f, 0.2f, -1);
-		DrawDebugSphere(best_target_predicted_location,  5.0f, 1.0f, 0.5f, 0.1f, 0.2f, -1);
 		VectorCopy(best_target->s.origin, movement->last_target_pos);
+		movement->last_target_msec = 0;
 
 		// Shoot if we're aiming close enough to our desired target.
 		if (skill->value > -1)
@@ -242,7 +240,21 @@ void BotAimAndShoot (int botindex, int msec)
 			if (yaw_diff < r)
 				movement->shooting = true;
 
-			bi.dprintf("%s d: %3.3f, rm: %3.3f, r: %3.3f\n", movement->shooting ? "S" : " ", yaw_diff, r_max, r);
+			//bi.dprintf("%s d: %3.3f, rm: %3.3f, r: %3.3f\n", movement->shooting ? "S" : " ", yaw_diff, r_max, r);
+		}
+	}
+	else if (movement->aim_target)
+	{
+		movement->last_target_msec += msec;
+
+		// Aim at the last known enemy position for a while, so the bot doesn't instantly turn his back when line of sight is obscurred.
+		if (nu_rand(movement->last_target_msec) < 1000.0f)
+		{
+			BotSetDesiredAimAnglesFromPoint(botindex, movement->last_target_pos);
+		}
+		else
+		{
+			movement->aim_target = NULL;
 		}
 	}
 

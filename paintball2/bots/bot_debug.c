@@ -27,17 +27,23 @@ extern bot_render_import_t ri;
 
 int DrawDebugSphere (const vec_t *pos, float radius, float r, float g, float b, float time, int id)
 {
-	if (ri.DrawDebugSphere)
-		return ri.DrawDebugSphere(pos, radius, r, g, b, time, id);
-	else
-		return -1;
+	if (bot_debug->value)
+	{
+		if (ri.DrawDebugSphere)
+			return ri.DrawDebugSphere(pos, radius, r, g, b, time, id);
+	}
+
+	return -1;
 }
 
 
 int DrawDebugLine (const vec_t *start, const vec_t *end, float r, float g, float b, float time, int id)
 {
-	if (ri.DrawDebugLine)
-		return ri.DrawDebugLine(start, end, r, g, b, time, id);
-	else
-		return -1;
+	if (bot_debug->value)
+	{
+		if (ri.DrawDebugLine)
+			return ri.DrawDebugLine(start, end, r, g, b, time, id);
+	}
+
+	return -1;
 }
