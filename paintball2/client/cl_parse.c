@@ -85,6 +85,21 @@ void clearfaileddownloads() // jitdownload
 		*lastfaileddownload[i] = '\0';
 }
 
+
+// xrichardx: replaces all '\' with '/' to avoid issues
+void filename_replace_backslashes(char * filename, size_t size)
+{
+	char *ptr;
+
+	for (ptr = filename; ptr < (filename + size); ptr++)
+	{
+		if (*ptr == '\\')
+		{
+			*ptr = '/';
+		}
+	}
+}
+
 qboolean CL_CheckOrDownloadFile (const char *check_filename)
 {
 	FILE	*fp;
@@ -246,6 +261,8 @@ qboolean CL_CheckOrDownloadFile (const char *check_filename)
 	}
 	// jit
 	// ===
+
+	filename_replace_backslashes(filename, strlen(filename));
 
 	Q_strncpyz(cls.downloadname, filename, sizeof(cls.downloadname));
 
