@@ -45,6 +45,7 @@ cvar_t	*sv_skyglide_maxvel; // jitmove - separate setting for sky gliding
 cvar_t	*sv_crouchslide; // jitmove
 cvar_t	*logfile_active;	// 1 = buffer log, 2 = flush after each print
 cvar_t	*timestamp_console; // jittimestamp
+cvar_t  *timestamp_date; // xrichardx: put date in front of time
 cvar_t	*showtrace;
 cvar_t	*dedicated;
 cvar_t	*deathmatch; // jit
@@ -181,7 +182,15 @@ void Com_Printf (char *fmt, ...)
 			lastday = nowtime->tm_mday;
 		}
 
-		strftime(timestamp, sizeof(timestamp), "[%H:%M:%S] ", nowtime);
+		if(timestamp_date->value)
+		{
+			strftime(timestamp, sizeof(timestamp), "[%Y-%m-%d %H:%M:%S] ", nowtime);
+		}
+		else
+		{
+			strftime(timestamp, sizeof(timestamp), "[%H:%M:%S] ", nowtime);
+		}
+
 		Sys_ConsoleOutput(timestamp);
 		ConsoleLogfile(timestamp);
 	}
@@ -1535,6 +1544,7 @@ void Qcommon_Init (int argc, char **argv)
 	deathmatch = Cvar_Get("deathmatch", "1", 0); // jit
 
 	timestamp_console = Cvar_Get("timestamp_console", dedicated->value ? "1" : "0", 0); // jittimestamp
+	timestamp_date = Cvar_Get("timestamp_date", "0", 0); // xrichardx: put date in front of time, non default
 
 	s = va("%4.2f %s %s %s (%s)", VERSION, CPUSTRING, __DATE__, BUILDSTRING, BUILD_S);
 	Cvar_Get("version", s, CVAR_SERVERINFO|CVAR_NOSET);
