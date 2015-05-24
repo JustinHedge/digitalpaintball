@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
+extern cvar_t *vid_resx; //xrichardx: custom resolutions with gl_mode -1
+extern cvar_t *vid_resy;
 
 /*
 ============
@@ -84,8 +86,18 @@ vidmode_t vid_modes[] =
 
 qboolean VID_GetModeInfo (int *width, int *height, int mode)
 {
+	//xrichardx: custom resolutions
+	if (mode == -1)
+	{
+		*width = (int)(vid_resx->value);
+		*height = (int)(vid_resy->value);
+		return true;
+	}
+
 	if (mode < 0 || mode >= VID_NUM_MODES)
+	{
 		return false;
+	}
 
 	*width  = vid_modes[mode].width;
 	*height = vid_modes[mode].height;
