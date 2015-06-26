@@ -2247,6 +2247,11 @@ void CL_DemoPlayerNumber_f (void)
 			{
 				cl.playernum_demooverride = true;
 				cl.playernum = atoi(s);
+
+				if (cl.playernum < 256)
+				{
+					Com_Printf("Changed camera view to player %d: %s\n", cl.playernum, cl.clientinfo[cl.playernum].name);
+				}
 			}
 			else
 			{
