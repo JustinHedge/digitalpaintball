@@ -19,6 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 // game.h -- game dll information visible to server
+#pragma once
+
+#ifndef GAME_INCLUDE
+#define GAME_INCLUDE
 
 #define	GAME_API_VERSION	3
 
@@ -52,8 +56,6 @@ typedef struct link_s
 typedef struct edict_s edict_t;
 typedef struct gclient_s gclient_t;
 
-
-#ifndef GAME_INCLUDE
 
 struct gclient_s
 {

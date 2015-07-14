@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bot_goals.h"
 #include "bot_waypoints.h"
 
-typedef struct edict_s edict_t;
+//typedef struct edict_s edict_t;
 
 #define MAX_BOTS 64
 

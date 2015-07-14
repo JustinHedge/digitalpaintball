@@ -24,6 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef WIN32
 #define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
 #endif
 
 bot_export_t g_bot_export;

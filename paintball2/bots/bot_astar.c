@@ -19,10 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include <float.h>
+//#include "../game/game.h"
 #include "bot_main.h"
 #include "bot_waypoints.h"
 #include "bot_debug.h"
-#include "../game/game.h"
 
 typedef enum {
 	ASTAR_UNSET = 0,

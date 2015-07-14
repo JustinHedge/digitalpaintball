@@ -31,8 +31,9 @@ typedef enum {
 	BOT_OBJECTIVE_TYPE_BASE = 2
 } bot_objective_type_t;
 
-
+#ifndef GAME_INCLUDE // stupid hack because things can't be redefined in gcc
 typedef struct edict_s edict_t;
+#endif
 
 // for use the game library (gamex86)
 typedef struct
@@ -82,7 +83,7 @@ typedef struct
 
 	void		(*ClientThink) (edict_t *ent, usercmd_t *ucmd);
 	edict_t		*(*AddBotClient) (char *userinfo);
-	const char	*(*GetClientName) (edict_t *ent);
+	const char	*(*GetClientName) (const edict_t *ent);
 	edict_t		*(*GetNextPlayerEnt) (edict_t *ent, qboolean ignore_bots);
 	float		(*GetViewHeight) (edict_t *ent);
 	void		(*DisconnectBot) (edict_t *ent);

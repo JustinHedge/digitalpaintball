@@ -31,6 +31,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../linux/rw_linux.h"
 
+#include "../bots/bot_importexport.h" // jitbotlib
+
 // Structure containing functions exported from refresh DLL
 refexport_t	re;
 testexport_t	e;

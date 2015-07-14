@@ -18,9 +18,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include "../game/q_shared.h"
+#include "../game/game.h"
 #include "bot_main.h"
 #include "bot_manager.h"
-#include "../game/game.h"
 #include "bot_debug.h"
 
 static const vec3_t vec_zero = { 0.0f, 0.0f, 0.0f };

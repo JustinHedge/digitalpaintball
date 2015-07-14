@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <float.h>
 
 #include "bot_main.h"
-#include "../game/game.h"
 #include "bot_debug.h"
 #include "bot_manager.h"
 #include "bot_observe.h"
@@ -67,7 +66,7 @@ void PositionToColor (const vec3_t pos, float *r, float *g, float *b)
 	int some_val = (int)pos[0] + (int)pos[1] * 2 + (int)pos[2] * 3;
 	int ri, gi, bi;
 
-	some_val *= 4623460215; // abritrary number
+	some_val *= 462346215; // abritrary number
 	ri = some_val & 0xFF;
 	gi = (some_val >> 8) & 0xFF;
 	bi = (some_val >> 16) & 0xFF;
