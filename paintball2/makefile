@@ -48,6 +48,11 @@ VERBOSE?=YES
 BUILD_PB2?=YES
 
 #=============================#
+# Bot library                 #
+#=============================#
+BUILD_BOTLIB?=YES
+
+#=============================#
 # Paintball2 dedicated server #
 #=============================#
 BUILD_DEDICATED?=NO
@@ -151,6 +156,7 @@ CLIENT_DIR=$(MOUNT_DIR)/client
 A3D_DIR=$(MOUNT_DIR)/a3d
 SERVER_DIR=$(MOUNT_DIR)/server
 REF_GL_DIR=$(MOUNT_DIR)/ref_gl
+BOTLIB_DIR=$(MOUNT_DIR)/bots
 COMMON_DIR=$(MOUNT_DIR)/qcommon
 LINUX_DIR=$(MOUNT_DIR)/linux
 GAME_DIR=$(MOUNT_DIR)/game
@@ -280,6 +286,10 @@ ifeq ($(strip $(BUILD_PB2)),YES)
 TARGETS += $(BINDIR)/paintball2
 endif
 
+ifeq ($(strip $(BUILD_BOTLIB)),YES)
+TARGETS += $(BINDIR)/dp_botlib.$(SHLIBEXT)
+endif
+
 ifeq ($(strip $(BUILD_DEDICATED)),YES)
 TARGETS += $(BINDIR)/pb2-ded
 endif
@@ -333,7 +343,12 @@ ifeq ($(strip $(BUILD_DEDICATED)),YES)
 	@-mkdir -p $(BUILD_DEBUG_DIR) \
 		$(BUILD_DEBUG_DIR)/ded 
 endif
-		
+
+ifeq ($(strip $(BUILD_BOTLIB)),YES)
+	@-mkdir -p $(BUILD_DEBUG_DIR) \
+		$(BUILD_DEBUG_DIR)/bots 
+endif
+
 ifeq ($(strip $(BUILD_GLX)),YES)
 	@-mkdir -p $(BUILD_DEBUG_DIR) \
 		$(BUILD_DEBUG_DIR)/ref_gl
@@ -360,7 +375,12 @@ ifeq ($(strip $(BUILD_DEDICATED)),YES)
 	@-mkdir -p $(BUILD_RELEASE_DIR) \
 		$(BUILD_RELEASE_DIR)/ded 
 endif
-		
+
+ifeq ($(strip $(BUILD_BOTLIB)),YES)
+	@-mkdir -p $(BUILD_RELEASE_DIR) \
+		$(BUILD_RELEASE_DIR)/bots 
+endif
+
 ifeq ($(strip $(BUILD_GLX)),YES)
 	@-mkdir -p $(BUILD_RELEASE_DIR) \
 		$(BUILD_RELEASE_DIR)/ref_gl 
@@ -602,7 +622,7 @@ REF_GL_OBJS = \
 	$(BUILDDIR)/ref_gl/gl_refl.o   $(BUILDDIR)/ref_gl/gl_model.o  $(BUILDDIR)/ref_gl/gl_rmain.o \
 	$(BUILDDIR)/ref_gl/gl_rmisc.o  $(BUILDDIR)/ref_gl/gl_rsurf.o  $(BUILDDIR)/ref_gl/gl_warp.o \
 	$(BUILDDIR)/ref_gl/qgl_linux.o $(BUILDDIR)/ref_gl/q_shared.o  $(BUILDDIR)/ref_gl/q_shlinux.o \
-	$(BUILDDIR)/ref_gl/glob.o      $(BUILDDIR)/ref_gl/gl_cin.o
+	$(BUILDDIR)/ref_gl/glob.o      $(BUILDDIR)/ref_gl/gl_cin.o    $(BUILDDIR)/ref_gl/gl_debug.o
 
 REF_GLX_OBJS = \
 	$(BUILDDIR)/ref_gl/gl_glx.o    $(BUILDDIR)/ref_gl/rw_linux.o  $(BUILDDIR)/ref_gl/joystick.o
@@ -634,6 +654,7 @@ $(BUILDDIR)/ref_gl/gl_script.o :  $(REF_GL_DIR)/gl_script.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/gl_draw.o :    $(REF_GL_DIR)/gl_draw.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/gl_image.o :   $(REF_GL_DIR)/gl_image.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/gl_cin.o :     $(REF_GL_DIR)/gl_cin.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/ref_gl/gl_debug.o :   $(REF_GL_DIR)/gl_debug.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/gl_light.o :   $(REF_GL_DIR)/gl_light.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/gl_refl.o :    $(REF_GL_DIR)/gl_refl.c;	$(DO_SHLIB_CC)
 $(BUILDDIR)/ref_gl/r_skm.o :      $(REF_GL_DIR)/r_skm.c;	$(DO_SHLIB_CC)
@@ -651,6 +672,39 @@ $(BUILDDIR)/ref_gl/gl_glx.o :     $(LINUX_DIR)/gl_glx.c;	$(DO_SHLIB_CC) $(GLXCFL
 $(BUILDDIR)/ref_gl/rw_linux.o :   $(LINUX_DIR)/rw_linux.c;	$(DO_SHLIB_CC) $(GLXCFLAGS)
 $(BUILDDIR)/ref_gl/joystick.o :   $(LINUX_DIR)/joystick.c;	$(DO_SHLIB_CC) $(GLXCFLAGS)
 $(BUILDDIR)/ref_gl/gl_sdl.o :     $(LINUX_DIR)/gl_sdl.c;	$(DO_SHLIB_CC) $(SDLGLCFLAGS)
+
+#############################################################################
+# BOTLIB
+#############################################################################
+
+BOTLIB_OBJS = \
+	$(BUILDDIR)/bots/bot_aim.o       $(BUILDDIR)/bots/bot_astar.o      $(BUILDDIR)/bots/bot_commands.o \
+	$(BUILDDIR)/bots/bot_debug.o     $(BUILDDIR)/bots/bot_event.o      $(BUILDDIR)/bots/bot_files.o \
+	$(BUILDDIR)/bots/bot_goals.o     $(BUILDDIR)/bots/bot_main.o       $(BUILDDIR)/bots/bot_move.o \
+	$(BUILDDIR)/bots/bot_observe.o   $(BUILDDIR)/bots/bot_shared.o     $(BUILDDIR)/bots/bot_waypoints.o
+
+$(BINDIR)/dp_botlib.$(SHLIBEXT) : $(BOTLIB_OBJS)
+	@echo
+	@echo "**Built BOTLIB cflags:"
+	@echo "$(CFLAGS)";
+	@echo
+	@echo "**Now linking BOTLIB with flags:"
+	@echo "$(SHLIBLDFLAGS)";
+	@echo
+	$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(BOTLIB_OBJS)
+
+$(BUILDDIR)/bots/bot_aim.o :       $(BOTLIB_DIR)/bot_aim.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_astar.o :     $(BOTLIB_DIR)/bot_astar.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_commands.o :  $(BOTLIB_DIR)/bot_commands.c;	$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_debug.o :     $(BOTLIB_DIR)/bot_debug.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_event.o :     $(BOTLIB_DIR)/bot_event.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_files.o :     $(BOTLIB_DIR)/bot_files.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_goals.o :     $(BOTLIB_DIR)/bot_goals.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_main.o :      $(BOTLIB_DIR)/bot_main.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_move.o :      $(BOTLIB_DIR)/bot_move.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_observe.o :   $(BOTLIB_DIR)/bot_observe.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_shared.o :    $(BOTLIB_DIR)/bot_shared.c;		$(DO_SHLIB_CC)
+$(BUILDDIR)/bots/bot_waypoints.o : $(BOTLIB_DIR)/bot_waypoints.c;	$(DO_SHLIB_CC)
 
 #############################################################################
 # MISC
