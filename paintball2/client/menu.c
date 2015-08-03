@@ -985,7 +985,7 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			}
 
 			widget->widgetSize.x = widget->listview_totalwidth * TEXT_WIDTH
-				+ widget->listview_column_separator_padding * (widget->listview_columncount);
+				+ widget->listview_column_separator_padding * (widget->listview_columncount) * scale;
 
 			widget->widgetSize.y = widget->listview_rowcount * 
 				(TEXT_HEIGHT+LISTVIEW_VSPACING) + LISTVIEW_VSPACING;
