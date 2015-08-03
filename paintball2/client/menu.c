@@ -985,10 +985,10 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			}
 
 			widget->widgetSize.x = widget->listview_totalwidth * TEXT_WIDTH
-				+ SELECT_HSPACING * (1+widget->listview_columncount);
+				+ widget->listview_column_separator_padding * (widget->listview_columncount);
 
 			widget->widgetSize.y = widget->listview_rowcount * 
-				(TEXT_HEIGHT+SELECT_VSPACING) + SELECT_VSPACING;
+				(TEXT_HEIGHT+LISTVIEW_VSPACING) + LISTVIEW_VSPACING;
 			break;
 		}
 
@@ -1071,6 +1071,11 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			case WIDGET_TYPE_SLIDER:
 				widget->textCorner.y = widget->widgetCorner.y + (SLIDER_TOTAL_HEIGHT - TEXT_HEIGHT) * 0.5f;
 				break;
+			}
+
+			if (widget->parent && widget->parent->type == WIDGET_TYPE_LISTVIEW)
+			{
+				widget->textCorner.x += widget->parent->listview_column_separator_padding * scale * 0.5f;
 			}
 
 			if (widget->mouseBoundaries.left > widget->textCorner.x)
@@ -1304,7 +1309,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 	char *s;
 	menu_widget_t *new_widget;
 	char temp;
-	int width, x, y;
+	int width, x, y, hpadding;
 	char *widget_text;
 	//image_t *image;
 
@@ -1352,12 +1357,16 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 
 	if (widget->subwidget)
 		widget->subwidget = free_widgets(widget->subwidget);
+	
+	hpadding = widget->listview_column_separator_padding;
+	if (hpadding < 1)
+		hpadding = 1;
 
 	x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale;
 	y = (widget->widgetCorner.y - (viddef.height - 240 * scale) / 2) / scale;
 
 	width = widget->listview_totalwidth * TEXT_WIDTH_UNSCALED
-		+ SELECT_HSPACING_UNSCALED * (widget->listview_columncount + 1);
+		+ hpadding * (widget->listview_columncount);
 
 	// create vertical scroll bar:
 	if (widget->listview_source)
@@ -1383,7 +1392,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL,
 				x + width,
 				y + widget->listview_visible_rows*
-				(TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + SELECT_VSPACING_UNSCALED*2 - 
+				(TEXT_HEIGHT_UNSCALED+LISTVIEW_VSPACING_UNSCALED) + LISTVIEW_VSPACING_UNSCALED*2 - 
 				SCROLL_ARROW_HEIGHT_UNSCALED, true, false);
 
 			new_widget->callback = callback_select_scrolldown;
@@ -1401,7 +1410,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 				x + width,
 				y + SCROLL_ARROW_HEIGHT_UNSCALED,
 				widget->listview_visible_rows *
-				(TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + SELECT_VSPACING_UNSCALED*2 - 
+				(TEXT_HEIGHT_UNSCALED+LISTVIEW_VSPACING_UNSCALED) + LISTVIEW_VSPACING_UNSCALED*2 - 
 				SCROLL_ARROW_HEIGHT_UNSCALED * 2,
 				widget->listview_source_rowcount + 1, widget->listview_visible_rows, widget->listview_vstart,
 				m_vscrollbar_tray_selected, true);
@@ -1438,7 +1447,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL,
 				x + width,
 				y + widget->listview_visible_rows*
-				(TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + SELECT_VSPACING_UNSCALED*2 - 
+				(TEXT_HEIGHT_UNSCALED+LISTVIEW_VSPACING_UNSCALED) + LISTVIEW_VSPACING_UNSCALED*2 - 
 				SCROLL_ARROW_HEIGHT_UNSCALED, true, false);
 
 			new_widget->callback = callback_select_scrolldown;
@@ -1456,7 +1465,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 				x + width,
 				y + SCROLL_ARROW_HEIGHT_UNSCALED,
 				widget->listview_visible_rows *
-				(TEXT_HEIGHT_UNSCALED+SELECT_VSPACING_UNSCALED) + SELECT_VSPACING_UNSCALED*2 - 
+				(TEXT_HEIGHT_UNSCALED+LISTVIEW_VSPACING_UNSCALED) + LISTVIEW_VSPACING_UNSCALED*2 - 
 				SCROLL_ARROW_HEIGHT_UNSCALED * 2,
 				widget->listview_rowcount - 1, widget->listview_visible_rows, widget->listview_vstart,
 				m_vscrollbar_tray_selected, true);
@@ -1472,8 +1481,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 	}
 	
 	//create the header widgets:
-	x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale;
-	x += SELECT_HSPACING_UNSCALED;
+	x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale + 1;
 	for (i = 0; i < widget->listview_columncount; i++)
 	{
 		widget_text = widget->listview_list[1][i];
@@ -1489,7 +1497,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
 				widget_text, NULL, NULL,
 				x,
-				y + SELECT_VSPACING_UNSCALED,
+				y + LISTVIEW_VSPACING_UNSCALED,
 				true,
 				false);
 
@@ -1500,7 +1508,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
 				widget_text, NULL, NULL,
 				x,
-				y + SELECT_VSPACING_UNSCALED,
+				y + LISTVIEW_VSPACING_UNSCALED,
 				true,
 				false);
 		}
@@ -1515,22 +1523,23 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 		}*/
 
 		new_widget->pic = re.DrawFindPic("select1bs");
-		new_widget->picheight = TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED;
+		new_widget->picheight = TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED;
 		new_widget->valign = WIDGET_VALIGN_MIDDLE;
-		new_widget->y += SELECT_VSPACING_UNSCALED*2;
-		new_widget->picwidth = atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED;
+		new_widget->y += LISTVIEW_VSPACING_UNSCALED*2;
+		new_widget->picwidth = atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding - 1;
 		new_widget->listview_pos = 1;
 		new_widget->listview_pos_x = i;
 		new_widget->parent = widget;
 		new_widget->callback = callback_listview_item;
 		new_widget->flags = widget->flags; // inherit flags from parent
 		new_widget->next = widget->subwidget;
+		new_widget->textCorner.x += 10;
 		widget->subwidget = new_widget;
 
-		x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED;
+		x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding;
 	}
 
-	y += TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED * 2;
+	y += TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED * 2;
 	// create a widget for each row visible from listview_list
 	if (!widget->listview_source)
 	{
@@ -1539,8 +1548,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 			&& j < widget->listview_rowcount;
 			j++)
 		{
-			x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale;
-			x += SELECT_HSPACING_UNSCALED;
+			x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale + 1;
 
 			for (i = 0; i < widget->listview_columncount; i++)
 			{
@@ -1556,7 +1564,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 					new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
 						widget_text, NULL, NULL,
 						x,
-						y + SELECT_VSPACING_UNSCALED,
+						y + LISTVIEW_VSPACING_UNSCALED,
 						true,
 						false);
 
@@ -1567,7 +1575,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 					new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
 						widget_text, NULL, NULL,
 						x,
-						y + SELECT_VSPACING_UNSCALED,
+						y + LISTVIEW_VSPACING_UNSCALED,
 						true,
 						false);
 				}
@@ -1583,10 +1591,10 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 					new_widget->hoverpic = re.DrawFindPic("select1bh");
 				}
 
-				new_widget->picheight = TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED;
+				new_widget->picheight = TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED;
 				new_widget->valign = WIDGET_VALIGN_MIDDLE;
-				new_widget->y += SELECT_VSPACING_UNSCALED*2;
-				new_widget->picwidth = atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED;
+				new_widget->y += LISTVIEW_VSPACING_UNSCALED*2;
+				new_widget->picwidth = atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding - 1;
 				new_widget->listview_pos = j;
 				new_widget->listview_pos_x = i;
 				new_widget->parent = widget;
@@ -1596,10 +1604,10 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 				new_widget->next = widget->subwidget;
 				widget->subwidget = new_widget;
 
-				x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED;
+				x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding;
 			}
 
-			y += TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED;
+			y += TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED;
 		}
 	}
 	//create a widget for every item in listview_source_list;
@@ -1610,8 +1618,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 			&& j < widget->listview_source_rowcount;
 			j++)
 		{
-			x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale;
-			x += SELECT_HSPACING_UNSCALED;
+			x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale + 1;
 
 			for (i = 0; i < widget->listview_columncount; i++)
 			{
@@ -1627,7 +1634,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 					new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
 						widget_text, NULL, NULL,
 						x,
-						y + SELECT_VSPACING_UNSCALED,
+						y + LISTVIEW_VSPACING_UNSCALED,
 						true,
 						false);
 
@@ -1638,7 +1645,7 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 					new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
 						widget_text, NULL, NULL,
 						x,
-						y + SELECT_VSPACING_UNSCALED,
+						y + LISTVIEW_VSPACING_UNSCALED,
 						true,
 						false);
 				}
@@ -1654,10 +1661,10 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 					new_widget->hoverpic = re.DrawFindPic("select1bh");
 				}
 
-				new_widget->picheight = TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED;
+				new_widget->picheight = TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED;
 				new_widget->valign = WIDGET_VALIGN_MIDDLE;
-				new_widget->y += SELECT_VSPACING_UNSCALED*2;
-				new_widget->picwidth = atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED;
+				new_widget->y += LISTVIEW_VSPACING_UNSCALED*2;
+				new_widget->picwidth = atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding - 1;
 				new_widget->listview_pos = j + 2; //compensate for missing column width and header caption at the beginning
 				new_widget->listview_pos_x = i;
 				new_widget->parent = widget;
@@ -1667,10 +1674,10 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 				new_widget->next = widget->subwidget;
 				widget->subwidget = new_widget;
 
-				x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED;
+				x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding;
 			}
 
-			y += TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED;
+			y += TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED;
 		}
 	}
 
@@ -1685,11 +1692,11 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 		for (i = 0; i < widget->listview_columncount; i++)
 		{
 			widget->subwidget = create_background(x, y, 
-				atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED * 2,
-				TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED*2,
+				atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding + 1,
+				TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED*2,
 				widget->subwidget);
 
-			x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED;
+			x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding;
 		}
 		
 		//column background:
@@ -1698,12 +1705,12 @@ static void update_listview_subwidgets (menu_widget_t *widget)
 		for (i = 0; i < widget->listview_columncount; i++)
 		{
 			widget->subwidget = create_background(x,
-				y + TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED*2, 
-				atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED * 2, 
-				(widget->listview_visible_rows - 1) * (TEXT_HEIGHT_UNSCALED + SELECT_VSPACING_UNSCALED) + SELECT_VSPACING_UNSCALED,
+				y + TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED*2, 
+				atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding + 1, 
+				(widget->listview_visible_rows - 1) * (TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED) + LISTVIEW_VSPACING_UNSCALED,
 				widget->subwidget);
 
-			x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + SELECT_HSPACING_UNSCALED;
+			x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding;
 		}
 	}
 	//pthread_mutex_unlock(&m_mut_widgets);
@@ -3593,16 +3600,18 @@ static void menu_from_file (menu_screen_t *menu, qboolean include, const char *l
 						widget->slider_inc = atof(COM_Parse(&buf));
 					// editbox/field options
 					else if ((strstr(token, "width") || strstr(token, "cols")) && widget)
-						widget->field_width = atoi(COM_Parse(&buf)); //xrichardx todo: allow horz. scrolling on a listview
+						widget->field_width = atoi(COM_Parse(&buf));
 					else if (Q_streq(token, "int") && widget)
 						widget->flags |= WIDGET_FLAG_INT; // jitodo
 					else if (Q_streq(token, "float") && widget)
 						widget->flags |= WIDGET_FLAG_FLOAT; // jitodo
 					// select/dropdown options
 					else if ((strstr(token, "size") || strstr(token, "rows") || strstr(token, "height")) && widget)
-						widget->select_rows = atoi(COM_Parse(&buf)); // will also set listview_rowcount because they are a union.
+						widget->select_rows = atoi(COM_Parse(&buf)); // will also set listview_visible_rows because they are a union.
+					else if ((strstr(token, "lvcolseppadding") || strstr(token, "lvpadding")) && widget)
+						widget->listview_column_separator_padding = atoi(COM_Parse(&buf));
 					else if (strstr(token, "begin") && widget)
-						select_begin_list(widget, &buf);
+						select_begin_list(widget, &buf); //also parses listview multicolumn blocks
 					else if (strstr(token, "file") && widget) // "filedir"
 						select_begin_file_list(widget, COM_Parse(&buf));
 					else if (Q_streq(token, "serverlist") && widget) // for backwards compatibility
@@ -4191,6 +4200,7 @@ static void M_DrawWidget (menu_widget_t *widget)
 			M_DrawField(widget);
 			break;
 		case WIDGET_TYPE_SELECT:
+		case WIDGET_TYPE_LISTVIEW:
 			break;
 		default:
 			break;

@@ -91,6 +91,9 @@ extern cvar_t *serverlist_udp_source1; // jitserverlist
 
 #define SELECT_BACKGROUND_SIZE		4
 
+#define LISTVIEW_VSPACING_UNSCALED	2
+#define LISTVIEW_VSPACING			(LISTVIEW_VSPACING_UNSCALED*scale)
+
 #define SCROLL_ARROW_WIDTH_UNSCALED	8
 #define SCROLL_ARROW_HEIGHT_UNSCALED 8
 
@@ -256,6 +259,7 @@ typedef struct MENU_WIDGET_S {
 		int picwidth;		// width to scale image to
 		int scrollbar_width;
 		int text_width;
+		int listview_column_separator_padding;
 	};
 	union {
 		int	field_start;
