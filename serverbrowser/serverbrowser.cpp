@@ -222,8 +222,18 @@ static void LoadListHttp (const char *sHttpSource)
 
 	if (!(pHostent = gethostbyname(szHostname)))
 	{
-		SetStatus("Failed to resolve hostname.");
-		UpdateList_Mirror();
+		if (sHttpSource == "http://otb-server.de/serverlist.txt") 
+		{
+//			SetStatus("Failed to resolve mirror hostname. Trying to load an old local file.");
+//			LoadList("templist.txt");									// Same as RefreshList
+			SetStatus("Failed to resolve mirror hostname. Trying dplogin.com again...");
+			LoadListHttp("http://dplogin.com/serverlist.php");			// Try dplogin.com and otb-server.de again and again
+		}
+		else 
+		{
+			SetStatus("Failed to resolve hostname. Trying mirror...");
+			UpdateList_Mirror();
+		}
 		return;
 	}
 
@@ -236,7 +246,7 @@ static void LoadListHttp (const char *sHttpSource)
 
 	if (connect(nSocket, (struct sockaddr *)&address, sizeof(struct sockaddr)) == -1)
 	{
-		SetStatus("Failed to connect.");
+		SetStatus("Failed to connect. Trying mirror...");
 		UpdateList_Mirror();
 		return;
 	}
@@ -247,14 +257,15 @@ static void LoadListHttp (const char *sHttpSource)
 
 	if (nSent < nLen)
 	{
-		SetStatus("HTTP connection rejected.");
+		SetStatus("HTTP connection rejected. Trying mirror...");
 		UpdateList_Mirror();
 		return;
 	}
 
 	if (!(fpTemp = fopen("templist.txt", "wb")))
 	{
-		SetStatus("Failed to open temporary list.");
+		SetStatus("Failed to open temporary list. Trying mirror...");
+		UpdateList_Mirror();
 		return;
 	}
 
@@ -291,12 +302,12 @@ void UpdateList (void)
 	LoadList("http://dplogin.com/serverlist.php");
 }
 
+
 void UpdateList_Mirror (void)
 {
-	SetStatus("Updating List (Mirror)...");
+//	SetStatus("Updating List (Mirror)...");
 	LoadList("http://otb-server.de/serverlist.txt");
 }
-
 
 void RefreshList (void)
 {
