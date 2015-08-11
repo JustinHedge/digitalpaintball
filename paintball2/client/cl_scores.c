@@ -307,8 +307,22 @@ static void SortScores (void)
 			score = 0;
 		}
 
-		score = (score * 10000) + cl_scores[i].caps * 8 + cl_scores[i].grabs * 4 + cl_scores[i].kills;
-	
+		switch ((int)(cl_scoreboard_sorting->value))
+		{
+		case 1:															// default until build 41
+			score = ((score)*1000) + cl_scores[i].kills;
+			break;
+		case 2:															// default since build 41
+			score = (score * 10000) + cl_scores[i].caps * 8 + cl_scores[i].grabs * 4 + cl_scores[i].kills;
+			break;
+		case 3:															// T3RR0R15T's favorite :) ---> need some tests
+			score = (score * 10000) + cl_scores[i].caps * 8 + cl_scores[i].grabs * 4 + cl_scores[i].kills - cl_scores[i].deaths / 2 + (600 - (cl.frame.servertime/1000 - cl_scores[i].starttime)/60);
+			break;
+		default:
+			score = (score * 10000) + cl_scores[i].caps * 8 + cl_scores[i].grabs * 4 + cl_scores[i].kills;
+			break;
+		}
+
 		for (j = 0; j < cl_scores_count; ++j)
 		{
 			if (score > sortedscores[j] ||

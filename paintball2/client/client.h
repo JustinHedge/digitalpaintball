@@ -343,6 +343,8 @@ extern  cvar_t  *cl_maptime; // T3RR0R15T: elapsed maptime (from AprQ2)
 extern  cvar_t  *cl_maptimex; // T3RR0R15T: maptime position
 extern  cvar_t  *cl_maptimey; // T3RR0R15T: maptime position
 extern  cvar_t  *cl_drawping; // T3RR0R15T: display ping on HUD
+extern  cvar_t  *cl_autorecord; // T3RR0R15T: client side autodemo
+extern  cvar_t  *cl_scoreboard_sorting; // T3RR0R15T: scoreboard sorting
 
 extern	cvar_t	*lookspring;
 extern	cvar_t	*lookstrafe;
