@@ -324,6 +324,7 @@ typedef struct MENU_SCREEN_S {
 	char			*name;
 	char			*command;
 	image_t			*background;
+	qboolean		use_temporary_background; //temporary background if there is nothing rendered behind so avoid artifacts
 	MENU_TYPE		type;
 	menu_widget_t	*widget;
 	menu_widget_t	*selected_widget;

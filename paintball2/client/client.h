@@ -746,6 +746,7 @@ void CL_TrapParticles (entity_t *ent);
 void M_Init (void);
 qboolean M_Keydown (int key);
 qboolean M_Keyup (int key); // jitmenu
+void M_CreateTemporaryBackground (void);
 void M_Draw (void);
 void M_Menu_Main_f (void);
 void M_ForceMenuOff (void);

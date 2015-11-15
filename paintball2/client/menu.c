@@ -45,6 +45,7 @@ static qboolean			m_vscrollbar_tray_selected = false;
 static int				m_menu_sound_flags = 0;
 static int				m_stored_menu_depth = 0;
 static menu_screen_t	*m_stored_menu_screens[MAX_MENU_SCREENS];
+static image_t			*m_temporary_background = NULL;
 
 // Globals
 pthread_mutex_t			m_mut_widgets;
@@ -54,100 +55,39 @@ extern m_serverlist_t	m_serverlist;
 static void M_UpdateDrawingInformation (menu_widget_t *widget);
 char *Cmd_MacroExpandString (const char *text);
 static void widget_complete (menu_widget_t *widget);
-static int listview_compare(char* stra, char* strb); //xrichardx: multi column listview compare function for sorting
+static int listview_compare(char* stra, char* strb, qboolean ascending); //xrichardx: multi column listview compare function for sorting
 static void listview_sort(menu_widget_t *widget, int column, qboolean ascending)
 {
 	int i, j;
 	char** buffer;
 	char* buffer2;
+	
+	char** map = widget->listview_source_map;
+	char*** list = widget->listview_source_list;
+	int start_index = 0;
+	int end_index = widget->listview_source_rowcount;
 
-	if (widget->listview_source)
+	if(!widget->listview_source)
 	{
-		if (ascending)
-		{
-			for (i = 0; i < (widget->listview_source_rowcount - 1); i++)
-			{
-				for (j = (i + 1); j < widget->listview_source_rowcount; j++)
-				{
-					if (listview_compare(widget->listview_source_list[i][column],
-						widget->listview_source_list[j][column])
-						> 0)
-					{
-						buffer = widget->listview_source_list[i]; //swap the whole lines by swapping the pointers.
-						widget->listview_source_list[i] = widget->listview_source_list[j];
-						widget->listview_source_list[j] = buffer;
-
-						buffer2 = widget->listview_source_map[i];
-						widget->listview_source_map[i] = widget->listview_source_map[j];
-						widget->listview_source_map[j] = buffer2;
-					}
-				}
-			}
-		}
-		else
-		{
-			for (i = 0; i < (widget->listview_source_rowcount - 1); i++)
-			{
-				for (j = (i + 1); j < widget->listview_source_rowcount; j++)
-				{
-					if (listview_compare(widget->listview_source_list[i][column],
-						widget->listview_source_list[j][column])
-						< 0)
-					{
-						buffer = widget->listview_source_list[i]; //swap the whole lines by swapping the pointers.
-						widget->listview_source_list[i] = widget->listview_source_list[j];
-						widget->listview_source_list[j] = buffer;
-
-						buffer2 = widget->listview_source_map[i];
-						widget->listview_source_map[i] = widget->listview_source_map[j];
-						widget->listview_source_map[j] = buffer2;
-					}
-				}
-			}
-		}
+		start_index = 2;
+		end_index = widget->listview_rowcount;
+		map = widget->listview_map;
+		list = widget->listview_list;
 	}
-	else
+
+	for (i = start_index; i < end_index - 1; i++)
 	{
-		if (ascending)
+		for (j = (i + 1); j < end_index; j++)
 		{
-			for (i = 2; i < (widget->listview_rowcount - 1); i++) //dont sort the first 2 (column width and header captions)
+			if (listview_compare(list[i][column], list[j][column], ascending) > 0)
 			{
-				for (j = (i + 1); j < widget->listview_rowcount; j++)
-				{
-					if (listview_compare(widget->listview_list[i][column],
-						widget->listview_list[j][column])
-						> 0)
-					{
-						buffer = widget->listview_list[i]; //swap the whole lines by swapping the pointers.
-						widget->listview_list[i] = widget->listview_list[j];
-						widget->listview_list[j] = buffer;
+				buffer = list[i]; //swap the whole lines by swapping the pointers.
+				list[i] = list[j];
+				list[j] = buffer;
 
-						buffer2 = widget->listview_map[i];
-						widget->listview_map[i] = widget->listview_map[j];
-						widget->listview_map[j] = buffer2;
-					}
-				}
-			}
-		}
-		else
-		{
-			for (i = 2; i < (widget->listview_rowcount - 1); i++) //dont sort the first 2 (column width and header captions)
-			{
-				for (j = (i + 1); j < widget->listview_rowcount; j++)
-				{
-					if (listview_compare(widget->listview_list[i][column],
-						widget->listview_list[j][column])
-						< 0)
-					{
-						buffer = widget->listview_list[i]; //swap the whole lines by swapping the pointers.
-						widget->listview_list[i] = widget->listview_list[j];
-						widget->listview_list[j] = buffer;
-
-						buffer2 = widget->listview_map[i];
-						widget->listview_map[i] = widget->listview_map[j];
-						widget->listview_map[j] = buffer2;
-					}
-				}
+				buffer2 = map[i];
+				map[i] = map[j];
+				map[j] = buffer2;
 			}
 		}
 	}
@@ -2831,7 +2771,7 @@ static char** listview_get_row_items (int columncount, char **buf)
 }
 
 //xrichardx: compare function for the listview content:
-static int listview_compare(char* stra, char* strb)
+static int listview_compare(char* stra, char* strb, qboolean ascending)
 {
 	int result;
 	char * stripped_a = (char*) Z_Malloc(sizeof(char) * (strlen(stra) +1) );
@@ -2853,7 +2793,7 @@ static int listview_compare(char* stra, char* strb)
 
 	Z_Free(stripped_a);
 	Z_Free(stripped_b);
-	return result;
+	return ascending ? result : -result;
 }
 
 static select_map_list_t *get_new_select_map_list (char *cvar_string, char *string)
@@ -2957,7 +2897,6 @@ static void select_begin_list (menu_widget_t *widget, char **buf)
 
 		// put the list into the widget's array, and free the list.
 		for (i = count-1; i >= 0; i--, finger = finger->next)
-		//xrichardx: why is there a "finger = finger->next" expression in the loop?
 		{
 			finger = list_start;
 			widget->select_list[i] = finger->string;
@@ -3856,6 +3795,12 @@ void M_MenuRestore_f (void)
 }
 
 
+void M_CreateTemporaryBackground()
+{
+	m_temporary_background = re.DrawFindPic(cl_menuback->string);
+}
+
+
 void M_Init (void)
 {
 	memset(&m_mouse, 0, sizeof(m_mouse));
@@ -4260,6 +4205,8 @@ static void draw_menu_screen (menu_screen_t *menu)
 
 	if (menu->background)
 		M_DrawBackground(menu->background);
+	else if (menu->use_temporary_background)
+		M_DrawBackground(m_temporary_background);
 
 	widget = menu->widget;
 
@@ -4288,9 +4235,22 @@ static void draw_menu_at_depth (int depth)
 		menu = m_menu_screens[depth-1];
 
 		// if a dialog, draw what's behind it first:
-		if (menu->type == MENU_TYPE_DIALOG)
+		if (menu->type == MENU_TYPE_DIALOG && depth > 1)
+		{
 			draw_menu_at_depth(depth-1);
-		
+		}
+		else
+		{
+			//Now, we've reached the first non-dialog menu
+			if (cls.state != ca_active && (menu->background == NULL || Q_streq(menu->background->name, "***r_notexture***")))
+			{
+				menu->use_temporary_background = true;
+			}
+			else
+			{
+				menu->use_temporary_background = false;
+			}
+		}
 		draw_menu_screen(menu);
 	}
 }
