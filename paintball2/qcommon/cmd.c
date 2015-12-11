@@ -773,7 +773,8 @@ char *Cmd_MacroExpandString (const char *text) // from q2pro by [SkulleR] - jitc
 		if (!scan[i])
 			break;
 
-		if (scan[i] == '"')
+		//xrichardx: Don't parse a quotation mark in a color code (UCHAR_COLOR + '"' is black)
+		if (scan[i] == '"' && (i == 0 || (unsigned char)scan[i-1] != UCHAR_COLOR))
 			inquote ^= 1;
 
 		if (inquote)
