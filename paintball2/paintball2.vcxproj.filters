@@ -216,6 +216,9 @@
     <ClCompile Include="a3d\q2a3d.c">
       <Filter>a3d</Filter>
     </ClCompile>
+    <ClCompile Include="client\cl_irc.c">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="xfire\xfiregameclient.h">

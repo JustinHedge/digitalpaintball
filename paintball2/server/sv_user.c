@@ -359,7 +359,7 @@ static qboolean CheckDownloadFilename (const char *name) // jitsecurity
 #ifdef WIN32
 		|| (strnicmp(name, "config", 6) == 0) // jitsecurity - don't allow downloads from configs dir.
 #else
-		|| (strncmp(name, "config", 6) == 0) // jitsecurity - don't allow downloads from configs dir.
+		|| (strncasecmp(name, "config", 6) == 0) // jitsecurity - don't allow downloads from configs dir.
 #endif
 		|| PathContainsInvalidCharacters(name) // jitdownload
 		)

@@ -14,8 +14,11 @@ n** as set forth in subdivision (c)(1)(ii) of the Rights in Technical Data
 ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished -
 ** rights reserved under the Copyright Laws of the United States.
 **
-** $Header: /home/classic/cvs/paintball2/paintball2/ref_gl/glidesys.h,v 1.3 2006-06-29 19:06:29 qudos Exp $
-** $Log: not supported by cvs2svn $
+** $Header: /cvsroot/paintball2/paintball2/ref_gl/glidesys.h,v 1.3 2006/06/29 19:06:29 qudos Exp $
+** $Log: glidesys.h,v $
+** Revision 1.3  2006/06/29 19:06:29  qudos
+** moved linux to unix, more os compatibility
+**
 ** Revision 1.2  2003/09/10 20:24:57  calrathan
 ** Current progress on alpha7 of Paintball2, up to the moment of creating this SVC account
 **

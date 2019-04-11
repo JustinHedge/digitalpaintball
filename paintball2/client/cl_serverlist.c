@@ -8,7 +8,6 @@
 
 #define INITIAL_SERVERLIST_SIZE 32
 #define UDP_SERVERLIST_PORT 27900
-#define LISTVIEW_COLUMN_COUNT 4
 
 // Local globals
 static pthread_mutex_t m_mut_serverlist;
@@ -340,43 +339,6 @@ static char *format_info_from_serverlist_server(m_serverlist_server_t *server)
 	return info;
 }
 
-static char **create_listview_info(m_serverlist_server_t *server)
-{
-	char **info;
-	char pingcolor;
-	char buffer[32]; //for creating the player count ("12/16")
-
-	info = Z_Malloc(sizeof(char*) * LISTVIEW_COLUMN_COUNT); 
-
-	info[0] = CopyString(server->servername);
-
-	// Fade ping color from white to orange (like co2 bar colors)
-	{
-		const int pingcolormin = 222; // white
-		const int pingcolormax = 208; // orange
-		const int pingmin = 40;
-		const int pingmax = 250;
-		int ping = server->ping;
-
-		if (ping < pingmin)
-			pingcolor = pingcolormin;
-		else if (ping > pingmax)
-			pingcolor = pingcolormax;
-		else
-			pingcolor = pingcolormin - (pingcolormin - pingcolormax) * (ping - pingmin) / (pingmax - pingmin);
-
-		Com_sprintf(buffer, sizeof(buffer), "%c%c%-3d%c ", SCHAR_COLOR, pingcolor, ping, SCHAR_ENDFORMAT);
-	}
-	info[1] = CopyString(buffer);
-
-	info[2] = CopyString(server->mapname);
-
-	Com_sprintf(buffer, sizeof(buffer), "%d/%d", server->players, server->maxplayers);
-	info[3] = CopyString(buffer);
-
-	return info;
-}
-
 static qboolean adrs_equal (netadr_t adr1, netadr_t adr2)
 {
 	if (adr1.type != adr2.type || adr1.port != adr2.port)
@@ -463,9 +425,6 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 
 				m_serverlist.info[m_serverlist.server[i].remap] =
 					text_copy(format_info_from_serverlist_server(&m_serverlist.server[i]));
-
-				m_serverlist.listview_info[m_serverlist.server[i].remap] =
-					create_listview_info(&m_serverlist.server[i]);
 			}
 
 			added = true;
@@ -481,20 +440,17 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 		// STL would be useful about now
 		if (i > m_serverlist.actualsize) 
 		{
-			char ***templistview_info;
 			char **tempinfo;
 			char **tempips;
 			m_serverlist_server_t *tempserver;
 
 			// Double the size:
-			templistview_info = Z_Malloc(sizeof(char**) * m_serverlist.actualsize * 2);
 			tempinfo = Z_Malloc(sizeof(char*) * m_serverlist.actualsize * 2);
 			tempips = Z_Malloc(sizeof(char*) * m_serverlist.actualsize * 2);
 			tempserver = Z_Malloc(sizeof(m_serverlist_server_t) * m_serverlist.actualsize * 2);
 
 			for(i = 0; i < m_serverlist.actualsize; i++)
 			{
-				templistview_info[i] = m_serverlist.listview_info[i];
 				tempinfo[i] = m_serverlist.info[i];
 				tempips[i] = m_serverlist.ips[i];
 				tempserver[i] = m_serverlist.server[i];
@@ -509,12 +465,10 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 			Z_Free(m_serverlist.info);
 			Z_Free(m_serverlist.ips);
 			Z_Free(m_serverlist.server);
-			Z_Free(m_serverlist.listview_info);
 
 			m_serverlist.info = tempinfo;
 			m_serverlist.ips = tempips;
 			m_serverlist.server = tempserver;
-			m_serverlist.listview_info = templistview_info;
 
 			m_serverlist.actualsize *= 2;
 		}
@@ -534,12 +488,8 @@ void M_AddToServerList (netadr_t adr, char *info, qboolean pinging)
 			ping = Sys_Milliseconds() - m_serverPingSartTime;
 			m_serverlist.ips[m_serverlist.nummapped] = text_copy(addrip);
 			update_serverlist_server(&m_serverlist.server[m_serverlist.numservers], info, ping);
-
 			m_serverlist.info[m_serverlist.nummapped] =
 				text_copy(format_info_from_serverlist_server(&m_serverlist.server[m_serverlist.numservers]));
-			m_serverlist.listview_info[m_serverlist.server[i].remap] =
-					create_listview_info(&m_serverlist.server[i]);
-
 			m_serverlist.server[m_serverlist.numservers].remap = m_serverlist.nummapped;
 			m_serverlist.nummapped++;
 		}
@@ -929,7 +879,6 @@ static void create_serverlist (int size)
 
 	memset(&m_serverlist, 0, sizeof(m_serverlist_t));
 	m_serverlist.actualsize = size;
-	m_serverlist.listview_info = Z_Malloc(sizeof(char**)*size); 
 	m_serverlist.info = Z_Malloc(sizeof(char*)*size); 
 	m_serverlist.ips = Z_Malloc(sizeof(char*)*size);
 	m_serverlist.server = Z_Malloc(sizeof(m_serverlist_server_t)*size);
@@ -954,7 +903,6 @@ static qboolean serverlist_load (void)
 	int size;
 	char *data;
 	char *ptr;
-	char buffer[MAX_TOKEN_CHARS];
 
 	size = FS_LoadFile("serverlist.dat", (void**)&data);
 
@@ -963,7 +911,6 @@ static qboolean serverlist_load (void)
 		int endiantest;
 		int actualsize;
 		register int i;
-		int j;
 
 		// Check header to make sure it's a valid file:
 		if (memcmp(data, "PB2Serverlist1.00", sizeof("PB2Serverlist1.00")-1) != 0)
@@ -1022,23 +969,6 @@ static qboolean serverlist_load (void)
 			ptr = skip_string(ptr);
 			m_serverlist.info[i] = text_copy(ptr);
 			ptr = skip_string(ptr);
-
-			//xrichardx todo: I think this should be done in another way. Maybe the way the data is stored should be changed
-			m_serverlist.listview_info[i] = (char**)(Z_Malloc(sizeof(char*)*LISTVIEW_COLUMN_COUNT));
-			for (j = 0; j <m_serverlist.numservers; j++) //make sure we assign the information correctly
-			{
-				NetAdrToString(m_serverlist.server[j].adr, buffer, sizeof(buffer));
-				if ( 0 == strcmp(buffer, m_serverlist.ips[i]) )
-				{
-					m_serverlist.listview_info[i][0] = CopyString(m_serverlist.server[j].servername);
-					Com_sprintf(buffer, sizeof(buffer), "%d", m_serverlist.server[j].ping);
-					m_serverlist.listview_info[i][1] = CopyString(buffer);
-					m_serverlist.listview_info[i][2] = CopyString(m_serverlist.server[j].mapname);
-					Com_sprintf(buffer, sizeof(buffer), "%d/%d", m_serverlist.server[j].players, m_serverlist.server[j].maxplayers);
-					m_serverlist.listview_info[i][3] = CopyString(buffer);
-					break;
-				}
-			}
 		}
 
 		FS_FreeFile(data);

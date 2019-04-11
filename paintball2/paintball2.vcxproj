@@ -418,6 +418,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="client\cl_irc.c" />
     <ClCompile Include="win32\cd_win.c" />
     <ClCompile Include="qcommon\cmd.c" />
     <ClCompile Include="qcommon\cmodel.c" />

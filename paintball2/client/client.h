@@ -343,8 +343,6 @@ extern  cvar_t  *cl_maptime; // T3RR0R15T: elapsed maptime (from AprQ2)
 extern  cvar_t  *cl_maptimex; // T3RR0R15T: maptime position
 extern  cvar_t  *cl_maptimey; // T3RR0R15T: maptime position
 extern  cvar_t  *cl_drawping; // T3RR0R15T: display ping on HUD
-extern  cvar_t  *cl_autorecord; // T3RR0R15T: client side autodemo
-extern  cvar_t  *cl_scoreboard_sorting; // T3RR0R15T: scoreboard sorting
 
 extern	cvar_t	*lookspring;
 extern	cvar_t	*lookstrafe;
@@ -746,7 +744,6 @@ void CL_TrapParticles (entity_t *ent);
 void M_Init (void);
 qboolean M_Keydown (int key);
 qboolean M_Keyup (int key); // jitmenu
-void M_CreateTemporaryBackground (void);
 void M_Draw (void);
 void M_Menu_Main_f (void);
 void M_ForceMenuOff (void);
@@ -820,6 +817,13 @@ void CL_PredictMovement (void);
 //
 void CL_ShutdownImages (void);
 bordered_pic_data_t *CL_FindBPic (const char *name);
+
+
+// cl_irc.c -- jitirc
+void CL_IRCSetup (void);
+void CL_InitIRC (void);
+void CL_IRCInitiateShutdown (void);
+void CL_IRCSay (void);
 
 
 #if id386

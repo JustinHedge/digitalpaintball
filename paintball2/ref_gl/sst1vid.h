@@ -14,8 +14,11 @@
 ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished -
 ** rights reserved under the Copyright Laws of the United States.
 **
-** $Header: /home/classic/cvs/paintball2/paintball2/ref_gl/sst1vid.h,v 1.2 2003-09-10 20:24:57 calrathan Exp $
-** $Log: not supported by cvs2svn $
+** $Header: /cvsroot/paintball2/paintball2/ref_gl/sst1vid.h,v 1.2 2003/09/10 20:24:57 calrathan Exp $
+** $Log: sst1vid.h,v $
+** Revision 1.2  2003/09/10 20:24:57  calrathan
+** Current progress on alpha7 of Paintball2, up to the moment of creating this SVC account
+**
  * 
  * 4     9/09/97 7:35p Sellers
  * Added 400x300 resolution

@@ -1560,10 +1560,11 @@ GL_Upload8
 Returns has_alpha
 ===============
 */
-
+#define MAX_8BIT_WIDTH 512
+#define MAX_8BIT_HEIGHT 256
 qboolean GL_Upload8 (byte *data, int width, int height, imagetype_t imagetype, qboolean sharp)
 {
-	unsigned	trans[512 * 256];
+	unsigned	trans[MAX_8BIT_WIDTH * MAX_8BIT_HEIGHT];
 	int			i, s;
 	int			p;
 
@@ -1572,7 +1573,15 @@ qboolean GL_Upload8 (byte *data, int width, int height, imagetype_t imagetype, q
 	if (s > sizeof(trans) / 4)
 	{
 		assert(0);
-		ri.Sys_Error(ERR_DROP, "GL_Upload8: too large");
+		ri.Con_Printf(PRINT_HIGH, "GL_Upload8: too large (%d x %d)", width, height);
+		
+		if (width > MAX_8BIT_WIDTH)
+			width = MAX_8BIT_WIDTH;
+
+		if (height > MAX_8BIT_HEIGHT)
+			height = MAX_8BIT_HEIGHT;
+
+		s = width * height; // texture will be corrupted, but at least it won't stop the map from loading.
 	}
 
 	for (i = 0; i < s; i++)

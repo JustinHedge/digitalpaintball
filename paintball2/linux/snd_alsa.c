@@ -19,7 +19,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: snd_alsa.c,v 1.4 2006-06-30 19:45:03 qudos Exp $
+	$Id: snd_alsa.c,v 1.4 2006/06/30 19:45:03 qudos Exp $
 */
 
 #include <alsa/asoundlib.h>

@@ -331,7 +331,7 @@ void GL_ScreenShot_f (void)
 		return;
 
 	// Heffo - JPEG Screenshots
-	if (gl_screenshot_jpeg->value)
+	if (gl_screenshot_jpeg->value || ri.GetIntVarByID(VARID_G_COMMAND_STUFFED))
 	{
 		GL_ScreenShot_JPG();
 		return;

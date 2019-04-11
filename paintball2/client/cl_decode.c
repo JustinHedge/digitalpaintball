@@ -365,21 +365,6 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 				cl_scores_setstarttime(index_array[2], index_array[current_element++]);
 		}
 
-//		if ((g_autorecord->value == 1 && nopassword) || g_autorecord->value != 2)		// T3RR0R15T - client side autodemo --> todo: this line (get values + only on own enter event)
-//		{
-//			switch ((int)(cl_autorecord->value))
-//			{
-//			case 1:
-//				Cbuf_AddText("record cl_auto\n");
-//				break;
-//			case 2:
-//				Cbuf_AddText("arecord cl_auto\n");
-//				break;
-//			default:
-//				break;
-//			}
-//		}
-
 		S_StartLocalSound("misc/enter.wav");
 
 		break;
@@ -445,6 +430,10 @@ void CL_ParsePrintEvent (const char *str) // jitevents
 
 		if (cl_centerprintkills->value)
 			event_print(event_text);
+
+
+
+		
 
 		break;
 	case EVENT_SUICIDE: // jitodo - fix all these offsets

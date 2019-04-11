@@ -24,8 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
-#define LISTVIEW_COLUMN_COUNT 9
-
 typedef struct cl_score_s {
 	int ping;
 	int kills;
@@ -45,7 +43,6 @@ static qboolean cl_scores_modified;
 
 char **cl_scores_nums;
 char **cl_scores_info;
-char ***cl_scores_listview_info;
 int cl_scores_count;
 
 int splat(int teamnum) 
@@ -113,7 +110,6 @@ void init_cl_scores (void)
 	// allocating memory for the scoreboard...
 	cl_scores_nums = Z_Malloc(sizeof(char*)*MAX_CLIENTS);
 	cl_scores_info = Z_Malloc(sizeof(char*)*MAX_CLIENTS);
-	cl_scores_listview_info = Z_Malloc(sizeof(char**)*MAX_CLIENTS);
 
 	for (i=0; i<MAX_CLIENTS; i++)
 	{
@@ -122,32 +118,17 @@ void init_cl_scores (void)
 	}
 
 	memset(cl_scores, 0, sizeof(cl_scores));
-	memset(cl_scores_listview_info, 0, sizeof(char**)*MAX_CLIENTS);
 
 	cl_scores_modified = true;
 }
 
 void shutdown_cl_scores (void) // jitodo
 {
-	int i, j;
-
 	if (cl_scores_nums)
 		Z_Free(cl_scores_nums);
 
 	if (cl_scores_info)
-		Z_Free(cl_scores_info); //xrichardx: isn't there a memory leak here?
-
-	if (cl_scores_listview_info)
-	{
-		for (i = 0; i < MAX_CLIENTS && cl_scores_listview_info[i]; i++)
-		{
-			for(j = 0; j < LISTVIEW_COLUMN_COUNT && cl_scores_listview_info[i][j]; j++)
-				Z_Free(cl_scores_listview_info[i][j]);
-
-			Z_Free(cl_scores_listview_info[i]);
-		}
-		Z_Free(cl_scores_listview_info);
-	}
+		Z_Free(cl_scores_info);
 }
 
 void cl_scores_refresh (void)
@@ -307,22 +288,8 @@ static void SortScores (void)
 			score = 0;
 		}
 
-		switch ((int)(cl_scoreboard_sorting->value))
-		{
-		case 1:															// default until build 41
-			score = ((score)*1000) + cl_scores[i].kills;
-			break;
-		case 2:															// default since build 41
-			score = (score * 10000) + cl_scores[i].caps * 8 + cl_scores[i].grabs * 4 + cl_scores[i].kills;
-			break;
-		case 3:															// T3RR0R15T's favorite :) ---> need some tests
-			score = (score * 10000) + cl_scores[i].caps * 8 + cl_scores[i].grabs * 4 + cl_scores[i].kills - cl_scores[i].deaths / 2 + (600 - (cl.frame.servertime/1000 - cl_scores[i].starttime)/60);
-			break;
-		default:
-			score = (score * 10000) + cl_scores[i].caps * 8 + cl_scores[i].grabs * 4 + cl_scores[i].kills;
-			break;
-		}
-
+		score = (score * 10000) + cl_scores[i].caps * 8 + cl_scores[i].grabs * 4 + cl_scores[i].kills;
+	
 		for (j = 0; j < cl_scores_count; ++j)
 		{
 			if (score > sortedscores[j] ||
@@ -421,62 +388,6 @@ qboolean cl_scores_prep_select_widget (void)
 			cl_scores_info[i], cl_scores[j].ping, cl_scores[j].kills,
 			cl_scores[j].deaths, cl_scores[j].grabs, cl_scores[j].caps,
  			(cl.frame.servertime/1000 - cl_scores[j].starttime)/60);
-	}
-
-	cl_scores_modified = false;
-	return true;
-}
-
-qboolean cl_scores_prep_listview_widget (void)
-{
-	int i, j, k;
-	char buffer[MAX_SCOREBOARD_STRING];
-
-	RequestPings();
-
-	if (!cl_scores_modified)
-		return false;
-
-	SortScores();
-
-	for (i = 0; i < cl_scores_count; i++)
-	{
-		j = cl_sorted_scorelist[i];
-		Com_sprintf(cl_scores_nums[i], 4, "%d", j);
-
-		for(k = 0; k < LISTVIEW_COLUMN_COUNT && cl_scores_listview_info[i] && cl_scores_listview_info[i][k]; k++)
-			Z_Free(cl_scores_listview_info[i][k]);
-
-		if (!cl_scores_listview_info[i])
-			cl_scores_listview_info[i] = Z_Malloc(sizeof(char**) * LISTVIEW_COLUMN_COUNT);
-
-		Com_sprintf(buffer, MAX_SCOREBOARD_STRING, "%c",
-			cl_scores[j].hasflag ? 25 : cl_scores[j].isalive ? 26 : ' ');
-		cl_scores_listview_info[i][0] = CopyString(buffer);
-
-		Com_sprintf(buffer, MAX_SCOREBOARD_STRING, "%c", splat(cl_scores[j].team));
-		cl_scores_listview_info[i][1] = CopyString(buffer);
-
-		Com_sprintf(buffer, MAX_SCOREBOARD_STRING, "%s", name_from_index(j));
-		cl_scores_listview_info[i][2] = CopyString(buffer);
-		
-		Com_sprintf(buffer, MAX_SCOREBOARD_STRING, "%d", cl_scores[j].ping);
-		cl_scores_listview_info[i][3] = CopyString(buffer);
-
-		Com_sprintf(buffer, MAX_SCOREBOARD_STRING, "%d", cl_scores[j].kills);
-		cl_scores_listview_info[i][4] = CopyString(buffer);
-
-		Com_sprintf(buffer, MAX_SCOREBOARD_STRING, "%d", cl_scores[j].deaths);
-		cl_scores_listview_info[i][5] = CopyString(buffer);
-
-		Com_sprintf(buffer, MAX_SCOREBOARD_STRING, "%d", cl_scores[j].grabs);
-		cl_scores_listview_info[i][6] = CopyString(buffer);
-
-		Com_sprintf(buffer, MAX_SCOREBOARD_STRING, "%d", cl_scores[j].caps);
-		cl_scores_listview_info[i][7] = CopyString(buffer);
-
-		Com_sprintf(buffer, MAX_SCOREBOARD_STRING, "%d", (cl.frame.servertime/1000 - cl_scores[j].starttime)/60);
-		cl_scores_listview_info[i][8] = CopyString(buffer);
 	}
 
 	cl_scores_modified = false;

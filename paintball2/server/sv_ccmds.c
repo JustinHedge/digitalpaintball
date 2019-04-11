@@ -1126,7 +1126,7 @@ void SV_Certificatedinfo_f (void)
 	//Com_Printf("maxclients: 16\n");
 	Com_Printf("elim: 60 or 0\n");
 	Com_Printf("fraglimit: 50\n");
-	Com_Printf("timelimit: 10-20\n");
+	Com_Printf("timelimit: 8-20\n"); // 1.931
 	//Com_Printf("sv_minclientbuild: 28 (or higher)\n");
 	Com_Printf("guntemp_inc: 11\n");
 	Com_Printf("guntemp_dec: 4\n");

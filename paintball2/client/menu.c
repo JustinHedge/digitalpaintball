@@ -45,7 +45,6 @@ static qboolean			m_vscrollbar_tray_selected = false;
 static int				m_menu_sound_flags = 0;
 static int				m_stored_menu_depth = 0;
 static menu_screen_t	*m_stored_menu_screens[MAX_MENU_SCREENS];
-static image_t			*m_temporary_background = NULL;
 
 // Globals
 pthread_mutex_t			m_mut_widgets;
@@ -55,43 +54,6 @@ extern m_serverlist_t	m_serverlist;
 static void M_UpdateDrawingInformation (menu_widget_t *widget);
 char *Cmd_MacroExpandString (const char *text);
 static void widget_complete (menu_widget_t *widget);
-static int listview_compare(char* stra, char* strb, qboolean ascending); //xrichardx: multi column listview compare function for sorting
-static void listview_sort(menu_widget_t *widget, int column, qboolean ascending)
-{
-	int i, j;
-	char** buffer;
-	char* buffer2;
-	
-	char** map = widget->listview_source_map;
-	char*** list = widget->listview_source_list;
-	int start_index = 0;
-	int end_index = widget->listview_source_rowcount;
-
-	if(!widget->listview_source)
-	{
-		start_index = 2;
-		end_index = widget->listview_rowcount;
-		map = widget->listview_map;
-		list = widget->listview_list;
-	}
-
-	for (i = start_index; i < end_index - 1; i++)
-	{
-		for (j = (i + 1); j < end_index; j++)
-		{
-			if (listview_compare(list[i][column], list[j][column], ascending) > 0)
-			{
-				buffer = list[i]; //swap the whole lines by swapping the pointers.
-				list[i] = list[j];
-				list[j] = buffer;
-
-				buffer2 = map[i];
-				map[i] = map[j];
-				map[j] = buffer2;
-			}
-		}
-	}
-}
 
 // same thing as strdup, only uses Z_Malloc - todo: replace with CopyString, which is exactly the same thing.
 char *text_copy (const char *in)
@@ -139,31 +101,6 @@ static void list_source (menu_widget_t *widget)
 		widget->select_list = cl_maplist_modes;
 		widget->select_map = cl_maplist_modes;
 		widget->select_totalitems = cl_maplist_modes_count;
-	}
-}
-
-static void listview_source (menu_widget_t *widget)
-{
-	extern char **cl_scores_nums; // jitodo - put these in a header or something
-	extern char ***cl_scores_listview_info;
-	extern int cl_scores_count;
-	qboolean cl_scores_prep_listview_widget (void);
-
-	if (!widget || !widget->listview_source)
-		return;
-
-	if (Q_streq(widget->listview_source, "serverlist"))
-	{
-		widget->listview_source_list = m_serverlist.listview_info;
-		widget->listview_source_map = m_serverlist.ips;
-		widget->listview_source_rowcount = m_serverlist.nummapped;
-	}
-	else if (Q_streq(widget->listsource, "scores"))
-	{
-		cl_scores_prep_listview_widget();
-		widget->listview_source_list = cl_scores_listview_info;
-		widget->listview_source_map = cl_scores_nums;
-		widget->listview_source_rowcount = cl_scores_count;
 	}
 }
 
@@ -335,30 +272,15 @@ static menu_widget_t *free_widgets (menu_widget_t *widget)
 	// free lists
 	if (!(widget->flags & WIDGET_FLAG_LISTSOURCE)) // don't free hardcoded lists!
 	{
-		if (widget->type == WIDGET_TYPE_SELECT && widget->select_map)
+		if (widget->select_map)
 			free_string_array(widget->select_map, widget->select_totalitems);
 
-		if (widget->type == WIDGET_TYPE_SELECT && widget->select_list)
+		if (widget->select_list)
 		{
 			if (widget->flags & WIDGET_FLAG_FILELIST)
 				FS_FreeFileList(widget->select_list, widget->select_totalitems+1);
 			else
 				free_string_array(widget->select_list, widget->select_totalitems);
-		}
-		
-		if (widget->type == WIDGET_TYPE_LISTVIEW && widget->listview_list) // xrichardx: multicolumn list view
-		{
-			int i;
-			for (i = 0; i < widget->listview_rowcount; i++)
-				free_string_array(widget->listview_list[i], widget->listview_columncount);
-		}
-
-		if (widget->type == WIDGET_TYPE_LISTVIEW && widget->listview_map && *widget->listview_map)
-		{
-			if (widget->flags & WIDGET_FLAG_FILELIST)
-				FS_FreeFileList(widget->listview_map, widget->listview_rowcount + 1);
-			else
-				free_string_array(widget->listview_map, widget->listview_rowcount);
 		}
 	}
 
@@ -443,7 +365,6 @@ static void callback_vscrollbar_tray_drag (menu_widget_t *widget)
 		switch (widget->parent->parent->type)
 		{
 		case WIDGET_TYPE_SELECT:
-		case WIDGET_TYPE_LISTVIEW:
 			if (widget->parent->scrollbar_pos != widget->parent->parent->select_vstart)
 			{
 				widget->parent->parent->select_vstart = widget->parent->scrollbar_pos;
@@ -541,7 +462,6 @@ static void callback_select_item (menu_widget_t *widget)
 }
 
 
-// will also be used as listview doubleclick callback:
 static void callback_doubleclick_item (menu_widget_t *widget)
 {
 	if (widget->parent->doubleclick)
@@ -551,7 +471,7 @@ static void callback_doubleclick_item (menu_widget_t *widget)
 	}
 }
 
-// will also do scrolling for listviews:
+
 static void callback_select_scrollup (menu_widget_t *widget)
 {
 	if (widget->parent->select_vstart > 0)
@@ -562,88 +482,14 @@ static void callback_select_scrollup (menu_widget_t *widget)
 }
 
 
-static qboolean listview_scrolldown_allowed(menu_widget_t *widget)
-{
-	if (widget->listview_source)
-	{
-		//compensate for the two rows that are given otherwise
-		if (widget->listview_source_rowcount - widget->listview_vstart - widget->listview_visible_rows > -1)
-		{
-			return true;
-		}
-	}
-	else
-	{
-		if (widget->listview_rowcount - widget->listview_vstart - widget->listview_visible_rows > 1)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-// will also do scrolling for listviews:
 static void callback_select_scrolldown (menu_widget_t *widget)
 {
-	if (widget->parent->type == WIDGET_TYPE_SELECT
-		&& widget->parent->select_totalitems - widget->parent->select_vstart - widget->parent->select_rows > 0)
+	if (widget->parent->select_totalitems - widget->parent->select_vstart - widget->parent->select_rows > 0)
 	{
 		widget->parent->select_vstart++;
 		widget->parent->modified = true;
 	}
-	else if (widget->parent->type == WIDGET_TYPE_LISTVIEW && listview_scrolldown_allowed(widget->parent))
-	{
-		widget->parent->listview_vstart++;
-		widget->parent->modified = true;
-	}
 }
-
-static void callback_listview_item (menu_widget_t *widget)
-{
-	if (widget->listview_pos == 1)
-	{
-		int column = widget->listview_pos_x;
-		
-		if (widget->parent->listview_sortedcolumn == column)
-		{
-			widget->parent->listview_sortorders[column] =
-				(widget->parent->listview_sortorders[column] == LISTVIEW_ASCENDING)
-				? LISTVIEW_DESCENDING : LISTVIEW_ASCENDING;
-		}
-		widget->parent->listview_sortedcolumn = column;
-
-		listview_sort(widget->parent, column, widget->parent->listview_sortorders[column] == LISTVIEW_ASCENDING);
-
-		widget->parent->modified = true;
-	}
-	// update the position of the selected item in the list
-	else if (widget->parent->listview_pos != widget->listview_pos)
-	{
-		widget->parent->modified = true;
-		widget->parent->listview_pos = widget->listview_pos;
-
-		// update the listview's cvar
-		if (!(widget->parent->flags & WIDGET_FLAG_NOAPPLY) && widget->parent->cvar)
-		{
-			if (widget->parent->listview_source)
-			{
-				//compensate for missing column widths and headers:
-				Cvar_Set(widget->parent->cvar, widget->parent->listview_source_map[widget->listview_pos - 2]);
-			}
-			else
-			{
-				Cvar_Set(widget->parent->cvar, widget->parent->listview_map[widget->listview_pos]);
-			}
-		}
-
-		if (widget->parent && widget->parent->command) //only execute command if the header was not clicked
-		{
-			Cbuf_AddText(Cmd_MacroExpandString(widget->parent->command));
-			Cbuf_AddText("\n");
-		}
-	}
-}
-
 
 static menu_widget_t *create_background (int x, int y, int w, int h, menu_widget_t *next)
 {
@@ -914,22 +760,6 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			widget->widgetSize.y = widget->select_rows * 
 				(TEXT_HEIGHT+SELECT_VSPACING) + SELECT_VSPACING;
 			break;
-
-		case WIDGET_TYPE_LISTVIEW:
-			widget->listview_totalwidth = 0;
-
-			{
-				int i;
-				for (i = 0; i < widget->listview_columncount; i++)
-					widget->listview_totalwidth += atoi(widget->listview_list[0][i]);
-			}
-
-			widget->widgetSize.x = widget->listview_totalwidth * TEXT_WIDTH
-				+ widget->listview_column_separator_padding * (widget->listview_columncount) * scale;
-
-			widget->widgetSize.y = widget->listview_rowcount * 
-				(TEXT_HEIGHT+LISTVIEW_VSPACING) + LISTVIEW_VSPACING;
-			break;
 		}
 
 		switch(widget->halign)
@@ -947,7 +777,6 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			case WIDGET_TYPE_CHECKBOX:
 			case WIDGET_TYPE_FIELD:
 			case WIDGET_TYPE_SELECT:
-			case WIDGET_TYPE_LISTVIEW:
 				widget->textCorner.x -= CHARWIDTH * scale + widget->widgetSize.x;
 				break;
 			default:
@@ -962,7 +791,6 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			case WIDGET_TYPE_CHECKBOX:
 			case WIDGET_TYPE_FIELD:
 			case WIDGET_TYPE_SELECT:
-			case WIDGET_TYPE_LISTVIEW:
 				widget->textCorner.x += CHARWIDTH * scale + widget->widgetSize.x;
 				break;
 			default:
@@ -1011,11 +839,6 @@ static void M_UpdateWidgetPosition (menu_widget_t *widget)
 			case WIDGET_TYPE_SLIDER:
 				widget->textCorner.y = widget->widgetCorner.y + (SLIDER_TOTAL_HEIGHT - TEXT_HEIGHT) * 0.5f;
 				break;
-			}
-
-			if (widget->parent && widget->parent->type == WIDGET_TYPE_LISTVIEW)
-			{
-				widget->textCorner.x += widget->parent->listview_column_separator_padding * scale * 0.5f;
 			}
 
 			if (widget->mouseBoundaries.left > widget->textCorner.x)
@@ -1241,421 +1064,6 @@ static void update_select_subwidgets (menu_widget_t *widget)
 	//pthread_mutex_unlock(&m_mut_widgets);
 }
 
-// xrichardx: multi column list view widgets
-static void update_listview_subwidgets (menu_widget_t *widget)
-{
-	int i, j;
-	char *nullpos;
-	char *s;
-	menu_widget_t *new_widget;
-	char temp;
-	int width, x, y, hpadding;
-	char *widget_text;
-	//image_t *image;
-
-	if (widget->listview_rowcount < 2)
-		return; //we need at least the column widths and headers...
-
-	M_UpdateWidgetPosition(widget);
-
-	//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
-	if (widget->flags & WIDGET_FLAG_LISTSOURCE)
-	{
-		listview_source(widget);
-	}
-
-	// find which position should be selected:
-	if (widget->cvar)
-	{
-		s = Cvar_Get(widget->cvar, widget->cvar_default, CVAR_ARCHIVE)->string;
-
-		widget->listview_pos = -1; // nothing selected;
-
-		if (widget->listview_source)
-		{
-			for (i = 0; i < widget->listview_source_rowcount; i++)
-			{
-				if (Q_streq(s, widget->listview_source_map[i]))
-				{
-					widget->listview_pos = i + 2; //compensate for missing column widths and headers
-					break;
-				}
-			}
-		}
-		else
-		{
-			for (i = 0; i < widget->listview_rowcount; i++)
-			{
-				if (Q_streq(s, widget->listview_map[i]))
-				{
-					widget->listview_pos = i;
-					break;
-				}
-			}
-		}
-	}
-
-	if (widget->subwidget)
-		widget->subwidget = free_widgets(widget->subwidget);
-	
-	hpadding = widget->listview_column_separator_padding;
-	if (hpadding < 1)
-		hpadding = 1;
-
-	x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale;
-	y = (widget->widgetCorner.y - (viddef.height - 240 * scale) / 2) / scale;
-
-	width = widget->listview_totalwidth * TEXT_WIDTH_UNSCALED
-		+ hpadding * (widget->listview_columncount);
-
-	// create vertical scroll bar:
-	if (widget->listview_source)
-	{
-		if (widget->listview_visible_rows < (widget->listview_source_rowcount - 1))
-		{
-			// Up arrow
-			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL,
-				x + width,
-				y, true, false);
-
-			new_widget->callback = callback_select_scrollup;
-			new_widget->picwidth = SCROLL_ARROW_WIDTH_UNSCALED;
-			new_widget->picheight = SCROLL_ARROW_HEIGHT_UNSCALED;
-			new_widget->pic = re.DrawFindPic("select1u");
-			new_widget->hoverpic = re.DrawFindPic("select1uh");
-			new_widget->selectedpic = re.DrawFindPic("select1us");
-			new_widget->parent = widget;
-			new_widget->next = widget->subwidget;
-			widget->subwidget = new_widget;
-
-			// Down arrow
-			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL,
-				x + width,
-				y + widget->listview_visible_rows*
-				(TEXT_HEIGHT_UNSCALED+LISTVIEW_VSPACING_UNSCALED) + LISTVIEW_VSPACING_UNSCALED*2 - 
-				SCROLL_ARROW_HEIGHT_UNSCALED, true, false);
-
-			new_widget->callback = callback_select_scrolldown;
-			new_widget->picwidth = SCROLL_ARROW_WIDTH_UNSCALED;
-			new_widget->picheight = SCROLL_ARROW_HEIGHT_UNSCALED;
-			new_widget->pic = re.DrawFindPic("select1d");
-			new_widget->hoverpic = re.DrawFindPic("select1dh");
-			new_widget->selectedpic = re.DrawFindPic("select1ds");
-			new_widget->parent = widget;
-			new_widget->next = widget->subwidget;
-			widget->subwidget = new_widget;
-
-			// Scroll bar
-			new_widget = M_CreateScrollbar(WIDGET_TYPE_VSCROLL,
-				x + width,
-				y + SCROLL_ARROW_HEIGHT_UNSCALED,
-				widget->listview_visible_rows *
-				(TEXT_HEIGHT_UNSCALED+LISTVIEW_VSPACING_UNSCALED) + LISTVIEW_VSPACING_UNSCALED*2 - 
-				SCROLL_ARROW_HEIGHT_UNSCALED * 2,
-				widget->listview_source_rowcount + 1, widget->listview_visible_rows, widget->listview_vstart,
-				m_vscrollbar_tray_selected, true);
-
-			new_widget->parent = widget;
-			new_widget->next = widget->subwidget;
-			widget->subwidget = new_widget;
-		}
-		else
-		{
-			widget->listview_vstart = 0;
-		}
-	}
-	else
-	{
-		if (widget->listview_visible_rows < (widget->listview_rowcount - 1))
-		{
-			// Up arrow
-			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL,
-				x + width,
-				y, true, false);
-
-			new_widget->callback = callback_select_scrollup;
-			new_widget->picwidth = SCROLL_ARROW_WIDTH_UNSCALED;
-			new_widget->picheight = SCROLL_ARROW_HEIGHT_UNSCALED;
-			new_widget->pic = re.DrawFindPic("select1u");
-			new_widget->hoverpic = re.DrawFindPic("select1uh");
-			new_widget->selectedpic = re.DrawFindPic("select1us");
-			new_widget->parent = widget;
-			new_widget->next = widget->subwidget;
-			widget->subwidget = new_widget;
-
-			// Down arrow
-			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC, NULL, NULL, NULL,
-				x + width,
-				y + widget->listview_visible_rows*
-				(TEXT_HEIGHT_UNSCALED+LISTVIEW_VSPACING_UNSCALED) + LISTVIEW_VSPACING_UNSCALED*2 - 
-				SCROLL_ARROW_HEIGHT_UNSCALED, true, false);
-
-			new_widget->callback = callback_select_scrolldown;
-			new_widget->picwidth = SCROLL_ARROW_WIDTH_UNSCALED;
-			new_widget->picheight = SCROLL_ARROW_HEIGHT_UNSCALED;
-			new_widget->pic = re.DrawFindPic("select1d");
-			new_widget->hoverpic = re.DrawFindPic("select1dh");
-			new_widget->selectedpic = re.DrawFindPic("select1ds");
-			new_widget->parent = widget;
-			new_widget->next = widget->subwidget;
-			widget->subwidget = new_widget;
-
-			// Scroll bar
-			new_widget = M_CreateScrollbar(WIDGET_TYPE_VSCROLL,
-				x + width,
-				y + SCROLL_ARROW_HEIGHT_UNSCALED,
-				widget->listview_visible_rows *
-				(TEXT_HEIGHT_UNSCALED+LISTVIEW_VSPACING_UNSCALED) + LISTVIEW_VSPACING_UNSCALED*2 - 
-				SCROLL_ARROW_HEIGHT_UNSCALED * 2,
-				widget->listview_rowcount - 1, widget->listview_visible_rows, widget->listview_vstart,
-				m_vscrollbar_tray_selected, true);
-
-			new_widget->parent = widget;
-			new_widget->next = widget->subwidget;
-			widget->subwidget = new_widget;
-		}
-		else
-		{
-			widget->listview_vstart = 0;
-		}
-	}
-	
-	//create the header widgets:
-	x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale + 1;
-	for (i = 0; i < widget->listview_columncount; i++)
-	{
-		widget_text = widget->listview_list[1][i];
-		width = atoi(widget->listview_list[0][i]);
-		
-
-		if (strlen_noformat(widget->listview_list[1][i]) > width)
-		{
-			nullpos = widget->listview_list[1][i] + width;
-			temp = *nullpos;
-			*nullpos = '\0';
-
-			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
-				widget_text, NULL, NULL,
-				x,
-				y + LISTVIEW_VSPACING_UNSCALED,
-				true,
-				false);
-
-			*nullpos = temp;
-		}
-		else
-		{
-			new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
-				widget_text, NULL, NULL,
-				x,
-				y + LISTVIEW_VSPACING_UNSCALED,
-				true,
-				false);
-		}
-		
-		//Problem: stretching and hilighting when hovered and selected
-		/*image = re.DrawFindPic(widget_text);
-		if (strcmp(image->name, "***r_notexture***"))
-		{
-			new_widget->pic = image;
-			if (strlen(new_widget->text) > 0)
-				new_widget->text[0] = '\0';
-		}*/
-
-		new_widget->pic = re.DrawFindPic("select1bs");
-		new_widget->picheight = TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED;
-		new_widget->valign = WIDGET_VALIGN_MIDDLE;
-		new_widget->y += LISTVIEW_VSPACING_UNSCALED*2;
-		new_widget->picwidth = atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding - 1;
-		new_widget->listview_pos = 1;
-		new_widget->listview_pos_x = i;
-		new_widget->parent = widget;
-		new_widget->callback = callback_listview_item;
-		new_widget->flags = widget->flags; // inherit flags from parent
-		new_widget->next = widget->subwidget;
-		new_widget->textCorner.x += 10;
-		widget->subwidget = new_widget;
-
-		x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding;
-	}
-
-	y += TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED * 2;
-	// create a widget for each row visible from listview_list
-	if (!widget->listview_source)
-	{
-		for (j = (widget->listview_vstart + 2);
-			j < (widget->listview_vstart + widget->listview_visible_rows + 1)
-			&& j < widget->listview_rowcount;
-			j++)
-		{
-			x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale + 1;
-
-			for (i = 0; i < widget->listview_columncount; i++)
-			{
-				widget_text = widget->listview_list[j][i];
-				width = atoi(widget->listview_list[0][i]);
-
-				if (strlen_noformat(widget_text) > width)
-				{
-					nullpos = widget_text + width;
-					temp = *nullpos;
-					*nullpos = '\0';
-
-					new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
-						widget_text, NULL, NULL,
-						x,
-						y + LISTVIEW_VSPACING_UNSCALED,
-						true,
-						false);
-
-					*nullpos = temp;
-				}
-				else
-				{
-					new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
-						widget_text, NULL, NULL,
-						x,
-						y + LISTVIEW_VSPACING_UNSCALED,
-						true,
-						false);
-				}
-				
-				if (j == widget->listview_pos) //for selected column
-				{
-					new_widget->pic = re.DrawFindPic("select1bs");
-					new_widget->hoverpic = re.DrawFindPic("select1bh");
-				}
-				else
-				{
-					new_widget->pic = NULL;
-					new_widget->hoverpic = re.DrawFindPic("select1bh");
-				}
-
-				new_widget->picheight = TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED;
-				new_widget->valign = WIDGET_VALIGN_MIDDLE;
-				new_widget->y += LISTVIEW_VSPACING_UNSCALED*2;
-				new_widget->picwidth = atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding - 1;
-				new_widget->listview_pos = j;
-				new_widget->listview_pos_x = i;
-				new_widget->parent = widget;
-				new_widget->callback = callback_listview_item;
-				new_widget->callback_doubleclick = callback_doubleclick_item;
-				new_widget->flags = widget->flags; // inherit flags from parent
-				new_widget->next = widget->subwidget;
-				widget->subwidget = new_widget;
-
-				x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding;
-			}
-
-			y += TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED;
-		}
-	}
-	//create a widget for every item in listview_source_list;
-	else
-	{
-		for (j = widget->listview_vstart;
-			j < (widget->listview_vstart + widget->listview_visible_rows - 1)
-			&& j < widget->listview_source_rowcount;
-			j++)
-		{
-			x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale + 1;
-
-			for (i = 0; i < widget->listview_columncount; i++)
-			{
-				widget_text = widget->listview_source_list[j][i];
-				width = atoi(widget->listview_list[0][i]);
-
-				if (strlen_noformat(widget_text) > width)
-				{
-					nullpos = widget_text + width;
-					temp = *nullpos;
-					*nullpos = '\0';
-
-					new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
-						widget_text, NULL, NULL,
-						x,
-						y + LISTVIEW_VSPACING_UNSCALED,
-						true,
-						false);
-
-					*nullpos = temp;
-				}
-				else
-				{
-					new_widget = M_GetNewMenuWidget(WIDGET_TYPE_PIC,
-						widget_text, NULL, NULL,
-						x,
-						y + LISTVIEW_VSPACING_UNSCALED,
-						true,
-						false);
-				}
-
-				if (j+2 == widget->listview_pos) //for selected column (missing first two array entried compensated)
-				{
-					new_widget->pic = re.DrawFindPic("select1bs");
-					new_widget->hoverpic = re.DrawFindPic("select1bh");
-				}
-				else
-				{
-					new_widget->pic = NULL;
-					new_widget->hoverpic = re.DrawFindPic("select1bh");
-				}
-
-				new_widget->picheight = TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED;
-				new_widget->valign = WIDGET_VALIGN_MIDDLE;
-				new_widget->y += LISTVIEW_VSPACING_UNSCALED*2;
-				new_widget->picwidth = atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding - 1;
-				new_widget->listview_pos = j + 2; //compensate for missing column width and header caption at the beginning
-				new_widget->listview_pos_x = i;
-				new_widget->parent = widget;
-				new_widget->callback = callback_listview_item;
-				new_widget->callback_doubleclick = callback_doubleclick_item;
-				new_widget->flags = widget->flags; // inherit flags from parent
-				new_widget->next = widget->subwidget;
-				widget->subwidget = new_widget;
-
-				x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding;
-			}
-
-			y += TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED;
-		}
-	}
-
-	
-	//create the background:
-	if (!(widget->flags & WIDGET_FLAG_NOBG))
-	{
-		//header background:
-		x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale;
-		y = (widget->widgetCorner.y - (viddef.height - 240 * scale) / 2) / scale;
-
-		for (i = 0; i < widget->listview_columncount; i++)
-		{
-			widget->subwidget = create_background(x, y, 
-				atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding + 1,
-				TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED*2,
-				widget->subwidget);
-
-			x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding;
-		}
-		
-		//column background:
-		x = (widget->widgetCorner.x - (viddef.width - 320 * scale) / 2) / scale;
-
-		for (i = 0; i < widget->listview_columncount; i++)
-		{
-			widget->subwidget = create_background(x,
-				y + TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED*2, 
-				atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding + 1, 
-				(widget->listview_visible_rows - 1) * (TEXT_HEIGHT_UNSCALED + LISTVIEW_VSPACING_UNSCALED) + LISTVIEW_VSPACING_UNSCALED,
-				widget->subwidget);
-
-			x += atoi(widget->listview_list[0][i]) * TEXT_WIDTH_UNSCALED + hpadding;
-		}
-	}
-	//pthread_mutex_unlock(&m_mut_widgets);
-}
-
 
 // ++ ARTHUR [9/04/03]
 static void M_UpdateDrawingInformation (menu_widget_t *widget)
@@ -1668,9 +1076,6 @@ static void M_UpdateDrawingInformation (menu_widget_t *widget)
 
 	if (widget->select_list)
 		update_select_subwidgets(widget);
-
-	if (widget->listview_list)
-		update_listview_subwidgets(widget);
 
 	widget->modified = false;
 }
@@ -2179,23 +1584,6 @@ static qboolean widget_is_select (menu_widget_t *widget, menu_widget_t **widget_
 	}
 }
 
-static qboolean widget_is_listview (menu_widget_t *widget, menu_widget_t **widget_out)
-{
-	if (widget)
-	{
-		if (widget->type == WIDGET_TYPE_LISTVIEW)
-		{
-			*widget_out = widget;
-			return true;
-		}
-		else if (widget->parent)
-		{
-			return widget_is_listview(widget->parent, widget_out);
-		}
-	}
-	return false;
-}
-
 static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 {
 	menu_widget_t *newSelection = NULL;
@@ -2260,7 +1648,7 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 				M_DeselectAllWidgets(menu->widget);
 			break;
 		case M_ACTION_SCROLLUP:
-			if (widget_is_select(newSelection, &widget) || widget_is_listview(newSelection, &widget))
+			if (widget_is_select(newSelection, &widget))
 			{
 				if (widget->select_vstart > 0)
 				{
@@ -2281,11 +1669,6 @@ static qboolean M_MouseAction (menu_screen_t *menu, MENU_ACTION action)
 					widget->select_vstart++; // todo - can we just use M_AdjustWidget?
 					widget->modified = true;
 				}
-			}
-			else if (widget_is_listview(newSelection, &widget) && listview_scrolldown_allowed(widget))
-			{
-				widget->select_vstart++; // todo - can we just use M_AdjustWidget?
-				widget->modified = true;
 			}
 			else if (newSelection->type == WIDGET_TYPE_SLIDER)
 			{
@@ -2738,64 +2121,6 @@ qboolean M_Keydown (int key)
 }
 
 
-
-//xrichardx: multi column listview. Gets the elements in a row without the cvar at the beginning
-static char** listview_get_row_items (int columncount, char **buf)
-{
-	int element;
-	char *token;
-	char **items;
-	
-	items = Z_Malloc(sizeof(char*) * columncount);
-	memset(items, 0, sizeof(char*) * columncount);
-
-	for (element = 0; element < columncount; element++)
-	{
-		token = COM_Parse(buf); //xricharx TODO: tokens like "" wont be returned, so there is no easy way to get empty space
-
-		if (!token || !*token || Q_streq(token, "end")) //should not happen
-		{
-			int i = 0;
-			for (i = 0; i < element; i++)
-			{
-				/*if (items[i])*/ Z_Free(items[i]);
-			}
-			/*if (items)*/ Z_Free(items);
-			return NULL;
-		}
-
-		items[element] = (char*)(Z_Malloc((strlen(token) + 1) * sizeof(char)));
-		strcpy(items[element], token);
-	}
-	return items;
-}
-
-//xrichardx: compare function for the listview content:
-static int listview_compare(char* stra, char* strb, qboolean ascending)
-{
-	int result;
-	char * stripped_a = (char*) Z_Malloc(sizeof(char) * (strlen(stra) +1) );
-	char * stripped_b = (char*) Z_Malloc(sizeof(char) * (strlen(strb) +1) );
-	strip_garbage(stripped_a, stra);
-	strip_garbage(stripped_b, strb);
-
-	if (strlen(stripped_a) > 0
-		&& strlen(stripped_b) > 0
-		&& isdigit((unsigned char)stripped_a[0])
-		&& isdigit((unsigned char)stripped_b[0]))
-	{
-		result = atoi(stripped_a) - atoi(stripped_b);
-	}
-	else
-	{
-		result = strcmpi(stripped_a, stripped_b);
-	}
-
-	Z_Free(stripped_a);
-	Z_Free(stripped_b);
-	return ascending ? result : -result;
-}
-
 static select_map_list_t *get_new_select_map_list (char *cvar_string, char *string)
 {
 	select_map_list_t *new_map;
@@ -2903,101 +2228,6 @@ static void select_begin_list (menu_widget_t *widget, char **buf)
 			list_start = finger->next;
 			Z_Free(finger);
 		}
-	}
-	else if (strstr(token, "multicolumn")) //xrichardx: multi column listview widget
-	{
-		/*
-		begin multi 5					// 5 columns
-		-2 10  10  10  10  10  30		// each column's width
-		-1 "1" "2" "3" "4" "5" "6000"	// each column's header
-		0  "a" "b" "c" "d" "e" "fooo"	// row text (1. row)
-		1  "g" "h" "i" "j" "k" "lmao"	// row text (2. row)
-		end
-		*/
-		listview_row_list_t *start;		//struct containing all cvar_values and mapped rows
-		listview_row_list_t *curr_row;
-		listview_row_list_t *next_row;
-		char** items;					//items in one row. Each string is one element
-		int columncount = 0, count = 0, i;
-		
-		curr_row = (listview_row_list_t*)(Z_Malloc(sizeof(listview_row_list_t)));
-		memset(curr_row, 0, sizeof(listview_row_list_t));
-
-		start = curr_row;
-
-		next_row = (listview_row_list_t*)(Z_Malloc(sizeof(listview_row_list_t)));
-		memset(next_row, 0, sizeof(listview_row_list_t));
-
-		token = COM_Parse(buf);
-		columncount = atoi(token);
-		
-		token = COM_Parse(buf);
-
-		while (token && *token && !Q_streq(token, "end"))
-		{
-			next_row->itemcount = 0;
-
-			strcpy(cvar_string, token);
-
-			items = listview_get_row_items(columncount, buf);
-
-			if (!items)
-			{
-				Z_Free(curr_row);
-				Z_Free(next_row);
-				return;
-			}
-
-			next_row->cvar_string = (char*)(Z_Malloc((strlen(cvar_string) + 1) * sizeof(char)));
-			strcpy(next_row->cvar_string, cvar_string);
-			next_row->items = (char**)(Z_Malloc (sizeof(char*) * columncount));
-
-			for (i = 0; i < columncount; i++)
-			{
-				next_row->items[i] = Z_Malloc((strlen(items[i]) + 1) * sizeof(char));
-				strcpy(next_row->items[i], items[i]);
-				next_row->itemcount += 1;
-				Z_Free(items[i]);
-			}
-			Z_Free(items);
-
-			if (!curr_row || !curr_row->cvar_string)
-			{
-				curr_row->cvar_string = next_row->cvar_string;
-				curr_row->items = next_row->items;
-				curr_row->itemcount = next_row->itemcount;
-			}
-			else
-			{
-				curr_row->next = next_row;
-				curr_row = next_row;
-				next_row = (listview_row_list_t*)(Z_Malloc(sizeof(listview_row_list_t)));
-				memset(next_row, 0, sizeof(listview_row_list_t));
-			}
-
-			count++;
-
-			token = COM_Parse(buf);
-		}
-		
-		widget->listview_rowcount = count;
-		widget->listview_columncount = columncount;
-		widget->listview_sortorders = (int*)(Z_Malloc(sizeof(int) * columncount));
-		memset(widget->listview_sortorders, 0, sizeof(int) * columncount);
-		widget->listview_sortedcolumn = -1;
-		widget->listview_map = (char**)(Z_Malloc(sizeof(char*)*count));
-		widget->listview_list = (char***)(Z_Malloc(sizeof(char**)*count));
-
-		for (i = 0; i < count; i++)
-		{
-			curr_row = start;
-			widget->listview_list[i] = curr_row->items;
-			widget->listview_map[i] = curr_row->cvar_string;
-
-			start = curr_row->next;
-			Z_Free(curr_row);
-		}
-
 	}
 }
 
@@ -3118,8 +2348,6 @@ static int M_WidgetGetType (const char *s)
 		return WIDGET_TYPE_SELECT;
 	if (Q_streq(s, "editbox") || Q_streq(s, "field"))
 		return WIDGET_TYPE_FIELD;
-	if (Q_streq(s, "listview")) //xrichardx: multi colum listview
-		return WIDGET_TYPE_LISTVIEW;
 
 	return WIDGET_TYPE_UNKNOWN;
 }
@@ -3178,10 +2406,6 @@ static void widget_complete (menu_widget_t *widget)
 		//pthread_mutex_lock(&m_mut_widgets); // jitmultithreading
 		select_widget_center_pos(widget);
 		//pthread_mutex_unlock(&m_mut_widgets);
-		break;
-	case WIDGET_TYPE_LISTVIEW: //xrichardx: multi column listview
-		widget->select_pos = -1;
-		update_listview_subwidgets(widget);
 		break;
 	case WIDGET_TYPE_FIELD:
 		if (widget->field_width < 3)
@@ -3546,11 +2770,9 @@ static void menu_from_file (menu_screen_t *menu, qboolean include, const char *l
 						widget->flags |= WIDGET_FLAG_FLOAT; // jitodo
 					// select/dropdown options
 					else if ((strstr(token, "size") || strstr(token, "rows") || strstr(token, "height")) && widget)
-						widget->select_rows = atoi(COM_Parse(&buf)); // will also set listview_visible_rows because they are a union.
-					else if ((strstr(token, "lvcolseppadding") || strstr(token, "lvpadding")) && widget)
-						widget->listview_column_separator_padding = atoi(COM_Parse(&buf));
+						widget->select_rows = atoi(COM_Parse(&buf));
 					else if (strstr(token, "begin") && widget)
-						select_begin_list(widget, &buf); //also parses listview multicolumn blocks
+						select_begin_list(widget, &buf);
 					else if (strstr(token, "file") && widget) // "filedir"
 						select_begin_file_list(widget, COM_Parse(&buf));
 					else if (Q_streq(token, "serverlist") && widget) // for backwards compatibility
@@ -3792,12 +3014,6 @@ void M_MenuRestore_f (void)
 	{
 		Cbuf_AddText("menu main\n");
 	}
-}
-
-
-void M_CreateTemporaryBackground()
-{
-	m_temporary_background = re.DrawFindPic(cl_menuback->string);
 }
 
 
@@ -4145,7 +3361,6 @@ static void M_DrawWidget (menu_widget_t *widget)
 			M_DrawField(widget);
 			break;
 		case WIDGET_TYPE_SELECT:
-		case WIDGET_TYPE_LISTVIEW:
 			break;
 		default:
 			break;
@@ -4205,8 +3420,6 @@ static void draw_menu_screen (menu_screen_t *menu)
 
 	if (menu->background)
 		M_DrawBackground(menu->background);
-	else if (menu->use_temporary_background)
-		M_DrawBackground(m_temporary_background);
 
 	widget = menu->widget;
 
@@ -4235,22 +3448,9 @@ static void draw_menu_at_depth (int depth)
 		menu = m_menu_screens[depth-1];
 
 		// if a dialog, draw what's behind it first:
-		if (menu->type == MENU_TYPE_DIALOG && depth > 1)
-		{
+		if (menu->type == MENU_TYPE_DIALOG)
 			draw_menu_at_depth(depth-1);
-		}
-		else
-		{
-			//Now, we've reached the first non-dialog menu
-			if (cls.state != ca_active && (menu->background == NULL || Q_streq(menu->background->name, "***r_notexture***")))
-			{
-				menu->use_temporary_background = true;
-			}
-			else
-			{
-				menu->use_temporary_background = false;
-			}
-		}
+		
 		draw_menu_screen(menu);
 	}
 }

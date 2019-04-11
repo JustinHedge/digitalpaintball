@@ -19,6 +19,114 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sys_win.h
 
+
+///// just testing:
+
+#ifdef WIN32
+#include <windows.h>
+#include <DelayImp.h>
+
+FARPROC WINAPI DelayLoadHook(unsigned dliNotify, PDelayLoadInfo pdli)
+{
+	exit(0);
+	/*
+    switch (dliNotify)
+    {
+    case dliStartProcessing:
+ 
+        // If you want to return control to the delay-load helper, return 0. 
+        // Otherwise, return a pointer to a FARPROC helper function that will 
+        // be used instead, thereby bypassing the rest of the helper.
+        break;
+ 
+    case dliNotePreLoadLibrary:
+ 
+        // If you want to return control to the delay-load helper, return 0.
+        // Otherwise, return your own HMODULE to be used by the helper 
+        // instead of having it call LoadLibrary itself.
+        {
+            // You can build the DLL path by yourself, and call LoadLibrary 
+            // to load the DLL from the path. For simplicity, the sample uses 
+            // the dll name to load the DLL, which is the default behavior of 
+            // the helper function.
+            HMODULE hLib = LoadLibraryA(pdli->szDll);
+            return reinterpret_cast<FARPROC>(hLib);
+        }
+ 
+    case dliNotePreGetProcAddress:
+ 
+        // If you want to return control to the delay-load helper, return 0. 
+        // If you choose you may supply your own FARPROC function address and 
+        // bypass the helper's call to GetProcAddress.
+        break;
+ 
+    case dliFailLoadLib : 
+ 
+        // LoadLibrary failed.
+        // If you don't want to handle this failure yourself, return 0. In 
+        // this case the helper will raise an exception (ERROR_MOD_NOT_FOUND) 
+        // and exit. If you want to handle the failure by loading an 
+        // alternate DLL (for example), then return the HMODULE for the 
+        // alternate DLL. The helper will continue execution with this 
+        // alternate DLL and attempt to find the requested entrypoint via 
+        // GetProcAddress.
+        {
+            printf("Failed to load the DLL %s w/err 0x%08lx.\n", pdli->szDll, 
+                pdli->dwLastError);
+            printf("Please input the path of the DLL file:\n");
+ 
+            wchar_t szDll[MAX_PATH];
+            fgetws(szDll, ARRAYSIZE(szDll), stdin);
+            wchar_t *p = wcschr(szDll, L'\n');
+            if (p != NULL)
+            {
+                *p = L'\0';  // Remove the trailing L'\n'
+            }
+ 
+            // Try to load the DLL again.
+            HMODULE hLib = LoadLibrary(szDll);
+            if (hLib == NULL)
+            {
+                wprintf(L"Still failed to load the DLL %s w/err 0x%08lx.\n", 
+                    szDll, GetLastError());
+            }
+            return reinterpret_cast<FARPROC>(hLib);
+        }
+ 
+        break;
+ 
+    case dliFailGetProc :
+ 
+        // GetProcAddress failed.
+        // If you don't want to handle this failure yourself, return 0. In 
+        // this case the helper will raise an exception (ERROR_PROC_NOT_FOUND) 
+        // and exit. If you choose you may handle the failure by returning an 
+        // alternate FARPROC function address.
+        printf("Failed to get the function %s.\n", pdli->dlp.szProcName);
+ 
+        break;
+ 
+    case dliNoteEndProcessing : 
+ 
+        // This notification is called after all processing is done. There is 
+        // no opportunity for modifying the helper's behavior at this point 
+        // except by longjmp()/throw()/RaiseException. No return value is 
+        // processed.
+ 
+        break;
+    }*/
+ 
+    return NULL;
+}
+ 
+ 
+// At the global level, set the delay-load hooks.
+PfnDliHook __pfnDliNotifyHook2 = DelayLoadHook;
+PfnDliHook __pfnDliFailureHook2 = DelayLoadHook;
+ 
+#endif
+
+
 #include "../qcommon/qcommon.h"
 #include "winquake.h"
 #include "resource.h"
@@ -62,6 +170,7 @@ SYSTEM IO
 
 ===============================================================================
 */
+
 
 
 void Sys_Error (char *error, ...)
