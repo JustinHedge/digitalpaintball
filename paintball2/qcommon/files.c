@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #include <direct.h> // jit - for getcwd
 #else
+#include <sys/types.h> // jitsecurity
+#include <sys/stat.h> // jitsecurity
 #include <unistd.h>
 #endif
 
@@ -287,6 +289,20 @@ int FS_FOpenFile (const char *filename, FILE **file)
 		{
 			// check a file in the directory tree
 			Com_sprintf(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
+#ifndef WIN32 // jitsecurity - b42 - make sure linux doesn't try to open directories as files, as those don't read.
+			{
+				struct stat statbuf;
+				if (stat(netpath, &statbuf) < 0)
+				{
+					continue; // file doesn't exist?
+				}
+				
+				if (!S_ISREG(statbuf.st_mode))
+				{
+					continue; // not a regular file.  Don't try to open it (could be a directory or something else that would cause problems).
+				}
+			}
+#endif
 			*file = fopen(netpath, "rb");
 
 			if (!*file)
