@@ -354,6 +354,7 @@ int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t s
 	register int charsize = CHARWIDTH * hudscale; // this will vary depending on character if/when variable sized fonts are supported.
 	register int current_line_width = 0;
 	qboolean colorchar = false;
+	int wrappable_line_width = 0;
 
 	assert(size_out > 0);
 
@@ -363,14 +364,19 @@ int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t s
 		{
 		case ' ':
 		case '[':
+		case ']':
 		case '-':
 		case '(':
+		case ')':
+		case '|':
 		case ':':
 		case ';':
 		case '/':
+		case '\\':
 		case '+':
 			wrappable_in = in;
 			wrappable_out = i_out;
+			wrappable_line_width = current_line_width;
 			break;
 		case '\r':
 			// Probably won't happen, but just in case we do something like try to wordwrap a windows text file, ignore cr's.
@@ -412,9 +418,37 @@ int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t s
 				while (*in == ' ')
 					++in;
 
+				// b42 - prefer to keep these files on the previous line if possible.
+				if (wrappable_line_width <= width && wrappable_out < size_out)
+				{
+					switch (*in)
+					{
+					case ')':
+					case '|':
+					case ';':
+					case ']':
+					case ':':
+					case '-':
+					case '+':
+					case '/':
+					case '\\':
+						text_out[wrappable_out++] = *in;
+						++in;
+					}
+				}
+				// todo: check if wrappable can be left on the first line.
 				text_out[wrappable_out] = '\n';
 				i_out = wrappable_out + 1;
 				wrappable_in = NULL;
+
+				// b42 - Move ahead 1 character if we can so we don't get into an infinite loop of trying to wordwrap on the same character if we have a really long string of non-breakable characters after this.
+				if (i_out < size_out)
+				{
+					text_out[i_out] = *in;
+					++in;
+					++i_out;
+					++wrappable_out;
+				}
 			}
 			else
 			{
@@ -433,7 +467,8 @@ int SCR_WordWrapText (const char *text_in, float width, char *text_out, size_t s
 		c = *in;
 	}
 
-	text_out[i_out] = 0; // null terminate
+	assert(i_out < size_out); // b42
+	text_out[min(i_out, (size_out - 1))] = 0; // null terminate
 	return linecount;
 }
 
