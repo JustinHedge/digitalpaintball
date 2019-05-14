@@ -91,6 +91,9 @@ extern cvar_t *serverlist_udp_source1; // jitserverlist
 
 #define SELECT_BACKGROUND_SIZE		4
 
+#define LISTVIEW_VSPACING_UNSCALED	2
+#define LISTVIEW_VSPACING			(LISTVIEW_VSPACING_UNSCALED*scale)
+
 #define SCROLL_ARROW_WIDTH_UNSCALED	8
 #define SCROLL_ARROW_HEIGHT_UNSCALED 8
 
@@ -123,7 +126,8 @@ typedef enum {
 	WIDGET_TYPE_PIC,
 	WIDGET_TYPE_FIELD,
 	WIDGET_TYPE_VSCROLL,
-	WIDGET_TYPE_HSCROLL
+	WIDGET_TYPE_HSCROLL,
+	WIDGET_TYPE_LISTVIEW //xrichardx: multi column list view
 } WIDGET_TYPE;
 
 typedef enum {
@@ -183,12 +187,24 @@ typedef enum {
 	M_ACTION_DRAG
 } MENU_ACTION;
 
+typedef enum { //xrichardx: for ascending and descending sorting.
+	LISTVIEW_ASCENDING = 0,
+	LISTVIEW_DESCENDING,
+} LISTVIEW_SORTORDERS;
+
 typedef struct SELECT_MAP_LIST_S {
 	char *cvar_string;
 	char *string;
 	struct SELECT_MAP_LIST_S *next;
 } select_map_list_t;
 
+//xrichardx: multi column list view.
+typedef struct LISTVIEW_ROW_LIST_S {
+	int itemcount; //items in that row
+	char *cvar_string; //the assigned internal value for the row
+	char **items; //array of strings, each item = one string.
+	struct LISTVIEW_ROW_LIST_S *next;
+} listview_row_list_t;
 
 typedef struct MENU_WIDGET_S {
 	WIDGET_TYPE type;
@@ -233,6 +249,7 @@ typedef struct MENU_WIDGET_S {
 	union {
 		int	field_cursorpos;
 		int select_pos;
+		int listview_pos;
 		int scrollbar_pos;
 		float slider_pos;
 	};
@@ -242,13 +259,16 @@ typedef struct MENU_WIDGET_S {
 		int picwidth;		// width to scale image to
 		int scrollbar_width;
 		int text_width;
+		int listview_column_separator_padding;
 	};
 	union {
 		int	field_start;
 		int select_vstart; // start point for vertical scroll
+		int listview_vstart;
 		int scrollbar_visible;
 	};
 	union {
+		int listview_visible_rows; //displayed rows (set by menu file)
 		int select_rows;
 		int picheight;		// height to scale image to
 		int scrollbar_height;
@@ -256,12 +276,32 @@ typedef struct MENU_WIDGET_S {
 	union {
 		int select_totalitems;
 		int scrollbar_total;
+		int listview_rowcount;
+	};
+	
+	union {
+		char *listsource; //select widget list source
+		char *listview_source; //listview widget list source
 	};
 
-	int		select_hstart; // start point for horizontal scroll.
+	union {
+		char **select_map;
+		char **listview_map;
+	};
+
 	char	**select_list;
-	char	**select_map;
-	char	*listsource;
+	int		select_hstart; // start point for horizontal scroll.
+	
+	int		listview_columncount;
+	int		listview_totalwidth;
+	int		listview_pos_x; //xrichardx: multicolumn listview: contains the column the widget is in.
+	int		*listview_sortorders; //xrichardx: ascending/descending. Will be initialized in select_begin_list()
+	int		listview_sortedcolumn; //xrichardx: needed so listsources can insert new items at the right location.
+
+	char	***listview_list; //pointer to rows; each row is an array of the entries; each entry is a char array.
+	char	***listview_source_list;
+	char	**listview_source_map;
+	int		listview_source_rowcount;
 
 	// Drawing Information
 	point_t widgetCorner;
@@ -284,6 +324,7 @@ typedef struct MENU_SCREEN_S {
 	char			*name;
 	char			*command;
 	image_t			*background;
+	qboolean		use_temporary_background; //temporary background if there is nothing rendered behind so avoid artifacts
 	MENU_TYPE		type;
 	menu_widget_t	*widget;
 	menu_widget_t	*selected_widget;
@@ -311,6 +352,7 @@ typedef struct M_SERVERLIST_S {
 	m_serverlist_server_t *server;
 	char **ips;
 	char **info;
+	char ***listview_info; //contains list view table like content (array of rows, each row is an array of elements)
 	qboolean sortthisframe;
 } m_serverlist_t;
 

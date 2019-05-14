@@ -111,6 +111,8 @@ cvar_t  *cl_maptime; // T3RR0R15T: elapsed maptime (from AprQ2)
 cvar_t  *cl_maptimex; // T3RR0R15T: maptime position
 cvar_t  *cl_maptimey; // T3RR0R15T: maptime position
 cvar_t  *cl_drawping; // T3RR0R15T: display ping on HUD
+cvar_t  *cl_autorecord; // T3RR0R15T: client side autodemo
+cvar_t  *cl_scoreboard_sorting; // T3RR0R15T: scoreboard sorting
 cvar_t  *cl_swearfilter; // viciouz - swear filter
 cvar_t  *cl_blockedwords; // viciouz - swear filter
 cvar_t	*cl_passwordpopup; // viciouz - password popup
@@ -2328,6 +2330,8 @@ void CL_InitLocal (void)
 	cl_maptimex =		Cvar_Get("cl_maptimex", "-1", CVAR_ARCHIVE); // T3RR0R15T: maptime position
 	cl_maptimey =		Cvar_Get("cl_maptimey", "-1", CVAR_ARCHIVE); // T3RR0R15T: maptime position
 	cl_drawping =		Cvar_Get("cl_drawping", "0", CVAR_ARCHIVE); // T3RR0R15T: display ping on HUD
+	cl_autorecord =		Cvar_Get("cl_autorecord", "0", CVAR_ARCHIVE); // T3RR0R15T: client side autodemo
+	cl_scoreboard_sorting =		Cvar_Get("cl_scoreboard_sorting", "2", CVAR_ARCHIVE); // T3RR0R15T: scoreboard sorting
 	cl_swearfilter =	Cvar_Get("cl_swearfilter", "1", CVAR_ARCHIVE); // viciouz - swear filter
 	cl_blockedwords =	Cvar_Get("cl_blockedwords", "rape,liner,fuck,fuc k,fuq,phuck,fukc,shit,sh!t,sh1t,dick,d ick,bitch,whore,cock,fag,horrible,terrible,nigg,pussy,cunt,slut,stfu,asshole,assmunch, ass ,owned,ownd,suck,retarded,dumbass,dumb ass,prick,douche,noob,pansy,slut,plowed,idiot,horribad,newbed,sieg heil,hitler,your mum,arsch,arschloch,fick,fotze,muschi,schwuchtel,schwutte,spast,spacko,scheise,scheisse,pisser,kacker,kakker,fehlgeburt,nazi,sukkar,sukar,suckar,lucker,stupid,gay,bastard,hure,nutte", 0); // viciouz - swear filter - jit, added some more - T3RR0R15T, added some more again
 	strtolower(cl_blockedwords->string);

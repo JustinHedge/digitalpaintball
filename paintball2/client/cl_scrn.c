@@ -1747,6 +1747,7 @@ void SCR_UpdateScreen (void)
 
 	if (cl_menuback->modified)
 	{
+		M_CreateTemporaryBackground();
 		M_ReloadMenu();
 		cl_menuback->modified = false;
 	}
