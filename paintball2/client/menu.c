@@ -2788,7 +2788,7 @@ static int listview_compare(char* stra, char* strb, qboolean ascending)
 	}
 	else
 	{
-		result = strcmpi(stripped_a, stripped_b);
+		result = Q_strcasecmp(stripped_a, stripped_b);
 	}
 
 	Z_Free(stripped_a);

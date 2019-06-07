@@ -425,6 +425,7 @@ PB2_OBJS = \
 	$(BUILDDIR)/client/glob.o      $(BUILDDIR)/client/$(NET_UDP).o    $(BUILDDIR)/client/net_common.o \
 	$(BUILDDIR)/client/net_tcp.o   $(BUILDDIR)/client/q_shared.o      $(BUILDDIR)/client/pmove.o \
 	$(BUILDDIR)/client/snd_ogg.o   $(BUILDDIR)/client/vid_common.o	  $(BUILDDIR)/client/cl_stats.o \
+	$(BUILDDIR)/client/cl_irc.o \
 	
 
 CD_OBJS = \
@@ -518,6 +519,7 @@ $(BUILDDIR)/client/cl_decode.o :     $(CLIENT_DIR)/cl_decode.c;		$(DO_CC)
 $(BUILDDIR)/client/cl_vote.o :       $(CLIENT_DIR)/cl_vote.c;		$(DO_CC)
 $(BUILDDIR)/client/cl_serverlist.o : $(CLIENT_DIR)/cl_serverlist.c;	$(DO_CC)
 $(BUILDDIR)/client/cl_images.o :     $(CLIENT_DIR)/cl_images.c;		$(DO_CC)
+$(BUILDDIR)/client/cl_irc.o :        $(CLIENT_DIR)/cl_irc.c;		$(DO_CC)
 $(BUILDDIR)/client/cl_stats.o :      $(CLIENT_DIR)/cl_stats.c;		$(DO_CC)
 $(BUILDDIR)/client/snd_dma.o :       $(CLIENT_DIR)/snd_dma.c;		$(DO_CC)
 $(BUILDDIR)/client/snd_mem.o :       $(CLIENT_DIR)/snd_mem.c;		$(DO_CC)
